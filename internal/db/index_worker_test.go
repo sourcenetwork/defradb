@@ -12,7 +12,6 @@ package db
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -219,7 +218,6 @@ func TestIndexWorker_ConcurrentBuilds_AllComplete(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc))
 
-	var wg sync.WaitGroup
 	descs := make([]client.IndexDescription, 3)
 	fields := []string{"name", "age", "score"}
 	for i, f := range fields {
@@ -229,7 +227,6 @@ func TestIndexWorker_ConcurrentBuilds_AllComplete(t *testing.T) {
 		require.NoError(t, err)
 		descs[i] = desc
 	}
-	wg.Wait()
 
 	collectionID := col.Version().CollectionID
 	for _, desc := range descs {
@@ -237,11 +234,12 @@ func TestIndexWorker_ConcurrentBuilds_AllComplete(t *testing.T) {
 	}
 }
 
-// TestInFlightKey_BuildAndDropDistinct checks that the in-flight key separates a build and a drop
-// of the same index, so they are never treated as the same in-flight unit.
-func TestInFlightKey_BuildAndDropDistinct(t *testing.T) {
-	key := keys.IndexStateKey{CollectionID: "col1", IndexID: 7}
-	build := inFlightKey(key, client.BackfillIndexAction)
-	drop := inFlightKey(key, client.DropIndexAction)
-	assert.NotEqual(t, build, drop)
+// TestInFlightKey_SharedAcrossActions checks that a build and a drop of the SAME index map to one
+// in-flight key, so they are mutually exclusive (a drop must not GC entries a build is still
+// writing). Different indexes get different keys.
+func TestInFlightKey_SharedAcrossActions(t *testing.T) {
+	a := keys.IndexStateKey{CollectionID: "col1", IndexID: 7}
+	b := keys.IndexStateKey{CollectionID: "col1", IndexID: 8}
+	assert.Equal(t, inFlightKey(a), inFlightKey(a), "same index is one key regardless of action")
+	assert.NotEqual(t, inFlightKey(a), inFlightKey(b), "different indexes get different keys")
 }

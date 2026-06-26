@@ -46,20 +46,24 @@ func TestConcurrentBuilds_SameCollection_BothComplete(t *testing.T) {
 	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
 
 	// Gate: park each build at its first batch boundary until released, so both are in flight at
-	// once. Each build blocks on its first gate call, so the two signal exactly once before parking.
+	// once. entered fires once per distinct index (tracked in seen), so a build re-entering the gate
+	// across batches cannot over-signal the WaitGroup regardless of batch count.
 	origGate := IndexBuildGate
 	defer func() { IndexBuildGate = origGate }()
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup
 	entered.Add(2)
-	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+	var seen sync.Map
+	IndexBuildGate = func(gateCtx context.Context, _ string, indexID uint32) {
 		select {
 		case <-release:
 			return // already released; let later batches run freely
 		default:
 		}
-		entered.Done()
+		if _, dup := seen.LoadOrStore(indexID, struct{}{}); !dup {
+			entered.Done()
+		}
 		// Honour ctx so Close (e.g. on a failed assertion) can unblock a parked build.
 		select {
 		case <-release:
@@ -197,4 +201,158 @@ func TestDeleteFailedIndex_ClearsBackfillRecord(t *testing.T) {
 
 	// No action record of any kind must remain (the leaked Errored backfill record is the bug).
 	requireNoIndexState(t, ctx, db, collectionID, failedID)
+}
+
+// TestDeleteIndex_WhileBuilding_NoOrphanEntries is the regression for the drop-vs-build race: a
+// whole-index drop range-deletes every epoch assuming no writer touches them, so it must not run
+// while a backfill of the same index is still writing entries. The in-flight guard keys build and
+// drop by index (not action) so they are mutually exclusive; the drop only GCs after the build
+// finishes, leaving no orphaned entries behind the dropped definition.
+func TestDeleteIndex_WhileBuilding_NoOrphanEntries(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	// Gate: hold the build at its first batch boundary until released.
+	origGate := IndexBuildGate
+	defer func() { IndexBuildGate = origGate }()
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var entered sync.WaitGroup
+	entered.Add(1)
+	var enteredOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		select {
+		case <-release:
+			return
+		default:
+		}
+		enteredOnce.Do(entered.Done)
+		select {
+		case <-release:
+		case <-gateCtx.Done():
+		}
+	}
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	const docCount = 40
+	for i := range docCount {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%02d"}`, i), col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+	}
+
+	idx, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+
+	// Wait until the build is parked mid-flight, then delete the index while it is building.
+	entered.Wait()
+	col, err = db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	require.NoError(t, col.DeleteIndex(ctx, idx.Name))
+
+	// Release the build and let everything settle.
+	releaseOnce.Do(func() { close(release) })
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	require.Eventually(t, func() bool {
+		return countIndexEntries(t, ctx, db, shortID, idx.ID) == 0 &&
+			noIndexActionRecords(t, ctx, db, collectionID, idx.ID)
+	}, 20*time.Second, 10*time.Millisecond, "index entries/records not fully cleaned up after delete-while-building")
+}
+
+// TestBuild_ConflictWithLiveWrite_ConvergesToReady checks that a backfill batch that conflicts with
+// a concurrent live document write still converges to ready with a full entry set, rather than
+// wedging in building. The gate parks the build at its first batch; a racing goroutine updates a
+// document the batch reads and commits, so the batch's commit conflicts. The build must recover
+// (inner retry, or a re-drained retry via scheduleRetry if the inner retries are exhausted) and
+// finish.
+func TestBuild_ConflictWithLiveWrite_ConvergesToReady(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	origGate := IndexBuildGate
+	defer func() { IndexBuildGate = origGate }()
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var entered sync.WaitGroup
+	entered.Add(1)
+	var enteredOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		select {
+		case <-release:
+			return
+		default:
+		}
+		enteredOnce.Do(entered.Done)
+		select {
+		case <-release:
+		case <-gateCtx.Done():
+		}
+	}
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	const docCount = 30
+	docs := make([]*client.Document, docCount)
+	for i := range docCount {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%02d"}`, i), col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+		docs[i] = doc
+	}
+
+	idx, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+
+	// While the build is parked at its first batch, update a document it will read, then release.
+	// The build's batch commit then conflicts with this committed write.
+	entered.Wait()
+	require.NoError(t, docs[0].Set(ctx, "name", "updated"))
+	require.NoError(t, col.UpdateDocument(ctx, docs[0]))
+	releaseOnce.Do(func() { close(release) })
+
+	// Despite the conflict, the index must converge to ready with one entry per live doc.
+	collectionID := col.Version().CollectionID
+	waitForIndexReady(t, ctx, db, collectionID, idx.ID)
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	require.Equal(t, docCount, countIndexEntries(t, ctx, db, shortID, idx.ID))
+	require.Len(t, queryUserByName(t, db, ctx, "updated"), 1)
+}
+
+// noIndexActionRecords reports whether the index has no action record of any kind.
+func noIndexActionRecords(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) bool {
+	t.Helper()
+	rawTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer rawTxn.Discard()
+	records, err := scanIndexStates(InitContext(ctx, rawTxn), indexActionCollectionPrefix(collectionID), false)
+	require.NoError(t, err)
+	for _, rec := range records {
+		if rec.Key.IndexID == indexID {
+			return false
+		}
+	}
+	return true
 }

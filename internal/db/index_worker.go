@@ -78,10 +78,13 @@ func (db *DB) newIndexBuildWorker() (*indexBuildWorker, error) {
 	}, nil
 }
 
-// inFlightKey identifies an in-flight build or drop. Build and drop are keyed separately so a
-// concurrent build and drop of the same index (a rebuild's superseded epoch) do not collide.
-func inFlightKey(key keys.IndexStateKey, action client.Action) string {
-	return key.CollectionID + "/" + indexSubject(key.IndexID) + "/" + indexSubject(uint32(action))
+// inFlightKey identifies an in-flight build or drop by its index. Build and drop of the same index
+// share one key so they are mutually exclusive: a whole-index drop range-deletes every epoch while
+// assuming no writer is touching them, so it must not run while a backfill of the same index is
+// still writing entries (which would leave orphaned entries past the drop). A rebuild's stale-epoch
+// sweep is bounded strictly below the live epoch and never dispatched here, so it is unaffected.
+func inFlightKey(key keys.IndexStateKey) string {
+	return key.CollectionID + "/" + indexSubject(key.IndexID)
 }
 
 // run drains pending records on start and on each wake-up until ctx is cancelled. It never blocks
@@ -204,12 +207,17 @@ func (w *indexBuildWorker) dispatch(
 	action client.Action,
 	work func(context.Context) error,
 ) {
-	guardKey := inFlightKey(key, action)
+	guardKey := inFlightKey(key)
 	if _, loaded := w.inFlight.LoadOrStore(guardKey, struct{}{}); loaded {
-		return // already building or dropping this index
+		return // a build or drop for this index is already in flight
 	}
 
 	w.builds.Go(func() {
+		// Re-drain after releasing the guard: another record for this index may have been
+		// guard-skipped while this work ran (e.g. a drop staged while a build held the index), and
+		// the build finishing is not otherwise a wake reason. The drain is a cheap no-op when
+		// nothing is pending.
+		defer w.notify()
 		defer w.inFlight.Delete(guardKey)
 
 		select {
