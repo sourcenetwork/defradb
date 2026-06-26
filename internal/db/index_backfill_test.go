@@ -303,7 +303,7 @@ func TestBackfillIndex_UniqueIndex_ToleratesSameDocEntry(t *testing.T) {
 	require.NoError(t, err)
 
 	// Re-run backfill: the entry already exists for the same docID, so it must be skipped.
-	err = db.backfillIndex(ctx, col.Version(), desc, immutable.None[string]())
+	err = db.backfillIndex(ctx, col.Version(), desc, immutable.None[uint64]())
 	require.NoError(t, err, "re-running backfill over an already-indexed doc must not error")
 
 	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
@@ -356,7 +356,7 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	// Run the batch body: reading the docs and writing entries puts the doc key range
 	// in txn1's read set and produces a write, both needed for a commit-time conflict.
 	fields := col1.Version().CollectIndexedFields()
-	_, _, err = col1.iterateDocsBatch(ctx1, fields, immutable.None[string](), 10, func(d *client.Document) error {
+	_, _, err = col1.iterateDocsBatch(ctx1, fields, immutable.None[uint64](), 10, func(d *client.Document) error {
 		return colIndex.Save(ctx1, d)
 	})
 	require.NoError(t, err)

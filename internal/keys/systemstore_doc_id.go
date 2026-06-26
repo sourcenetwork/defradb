@@ -25,7 +25,7 @@ import (
 //   - /d/s/{docShortID} -> DocID
 //   - /d/p/{docID} -> encoded DocRef
 //   - /d/r/{docShortID}/{docID} -> DocID
-//   - /d/b/{blockCID} -> DocID
+//   - /d/b/{blockCID}/{docID} -> {}
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
 // delete, and encryption blocks. It lets CID-only paths such as P2P access
@@ -145,16 +145,18 @@ func (k DocRefToDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// BlockCIDToDocIDKey maps a document-owned block CID to the DocID that owns it.
+// BlockCIDToDocIDKey records one DocID owner for a document-owned block CID.
 type BlockCIDToDocIDKey struct {
 	BlockCID string
+	DocID    string
 }
 
 var _ Key = (*BlockCIDToDocIDKey)(nil)
 
-func NewBlockCIDToDocIDKey(blockCID string) BlockCIDToDocIDKey {
+func NewBlockCIDToDocIDKey(blockCID string, docID string) BlockCIDToDocIDKey {
 	return BlockCIDToDocIDKey{
 		BlockCID: blockCID,
+		DocID:    docID,
 	}
 }
 
@@ -166,6 +168,7 @@ func (k BlockCIDToDocIDKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
 		[]byte(BLOCK_CID_TO_DOC_ID),
 		stringSegment(k.BlockCID),
+		stringSegment(k.DocID),
 	)
 }
 

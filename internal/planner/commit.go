@@ -47,7 +47,6 @@ type dagScanNode struct {
 	fetcherStarted bool
 	noResults      bool
 	prefix         immutable.Option[keys.HeadstoreKey]
-	prefixErr      error
 	commitSelect   *mapper.CommitSelect
 
 	linksScanNodes []*dagScanNode
@@ -105,10 +104,6 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	if n.prefixErr != nil {
-		return n.prefixErr
-	}
-
 	if !n.prefix.HasValue() && !n.commitSelect.Cids.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
 			docRef, found, err := n.getHeadstoreDocRef(n.commitSelect.DocIDs.Value()[0])
@@ -300,7 +295,7 @@ func (n *dagScanNode) Next() (bool, error) {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
 
-		docID, hasDocID, err := n.publicCommitDocID(dagBlock, *currentCid, cols[0].Version().CollectionID)
+		docID, hasDocID, err := n.publicCommitDocID(dagBlock, *currentCid)
 		if err != nil {
 			return false, err
 		}
@@ -468,7 +463,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
-	docIDStr, hasDocID, err := n.publicCommitDocID(block, link.Cid, cols[0].Version().CollectionID)
+	docIDStr, hasDocID, err := n.publicCommitDocID(block, link.Cid)
 	if err != nil {
 		return core.Doc{}, err
 	}
@@ -586,7 +581,6 @@ func (n *dagScanNode) reset() {
 	n.queuedCids = make([]*cid.Cid, 0)
 	n.depthVisited = 0
 	n.currentValue = core.Doc{}
-	n.prefixErr = nil
 	n.noResults = false
 	n.activePublicDocID = immutable.None[string]()
 	n.activeStorageDocID = immutable.None[uint64]()
@@ -611,13 +605,12 @@ func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
 func (n *dagScanNode) publicCommitDocID(
 	block *coreblock.Block,
 	blockCID cid.Cid,
-	collectionID string,
 ) (string, bool, error) {
 	if block.Delta.IsCollection() {
 		return "", false, nil
 	}
 
-	publicDocID, found, err := n.publicDocIDForBlockCID(collectionID, blockCID)
+	publicDocID, found, err := n.publicDocIDForBlockCID(blockCID)
 	if err != nil {
 		return "", false, err
 	}
@@ -636,7 +629,7 @@ func (n *dagScanNode) publicCommitDocID(
 		return n.activePublicDocID.Value(), true, nil
 	}
 	if n.activeStorageDocID.HasValue() {
-		publicDocID, err := n.publicDocIDForStoredDocID(collectionID, n.activeStorageDocID.Value())
+		publicDocID, err := n.publicDocIDForStoredDocID(n.activeStorageDocID.Value())
 		if err != nil {
 			return "", false, err
 		}
@@ -647,7 +640,7 @@ func (n *dagScanNode) publicCommitDocID(
 	return "", false, nil
 }
 
-func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.Cid) (string, bool, error) {
+func (n *dagScanNode) publicDocIDForBlockCID(blockCID cid.Cid) (string, bool, error) {
 	return id.GetDocIDForBlockFromStore(
 		n.planner.ctx,
 		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
@@ -655,7 +648,7 @@ func (n *dagScanNode) publicDocIDForBlockCID(collectionID string, blockCID cid.C
 	)
 }
 
-func (n *dagScanNode) publicDocIDForStoredDocID(collectionID string, docID uint64) (string, error) {
+func (n *dagScanNode) publicDocIDForStoredDocID(docID uint64) (string, error) {
 	publicDocID, found, err := id.GetDocID(n.planner.ctx, docID)
 	if err != nil {
 		return "", err

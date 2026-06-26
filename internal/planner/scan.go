@@ -94,7 +94,7 @@ func (n *scanNode) Init() error {
 	return n.initScan()
 }
 
-// filterWithDocIDAliases rewrites _docID and DocID-field filters from saved aliases to current public DocIDs.
+// filterWithDocIDAliases rewrites backup/import DocID aliases to the current DocID.
 func filterWithDocIDAliases(
 	ctx context.Context,
 	col client.Collection,
@@ -298,7 +298,10 @@ func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool,
 	if err != nil {
 		return "", false, err
 	}
-	if !found || publicDocID == docID {
+	if !found {
+		return "", false, client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	if publicDocID == docID {
 		return docID, false, nil
 	}
 	return publicDocID, true, nil

@@ -53,9 +53,10 @@ func (c *collection) getAllDocIDsChan(
 	if err != nil {
 		return nil, err
 	}
-	prefix := keys.NewShortIDToDocIDKey(0).ToString() + "/"
-	iter, err := systemstore.Iterator(ctx, corekv.IterOptions{
-		Prefix: []byte(prefix),
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   prefix,
+		KeysOnly: true,
 	})
 	if err != nil {
 		return nil, NewErrGetAllDocIDs(err)
@@ -94,7 +95,7 @@ func (c *collection) getAllDocIDsChan(
 				break
 			}
 
-			value, err := iter.Value()
+			key, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{
@@ -103,7 +104,7 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 
-			docID, err := client.NewDocIDFromString(string(value))
+			docIDString, found, err := id.GetDocIDFromStore(ctx, systemstore, key.DocShortID)
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{
@@ -111,22 +112,22 @@ func (c *collection) getAllDocIDsChan(
 				}
 				return
 			}
-			docRef, found, err := id.GetDocRefFromStore(ctx, systemstore, docID.String())
-			if err != nil {
-				closeIterator()
-				resCh <- docIDResult{
-					Err: err,
-				}
-				return
-			}
-			if !found || docRef.CollectionShortID != shortID {
+			if !found {
 				continue
+			}
+			docID, err := client.NewDocIDFromString(docIDString)
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
 			}
 
 			canRead, err := c.checkAccessOfDocWithACP(
 				ctx,
 				acpTypes.DocumentReadPerm,
-				docID.String(),
+				docIDString,
 			)
 
 			if err != nil {

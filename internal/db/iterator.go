@@ -40,7 +40,6 @@ func NewHeadBlocksIterator(
 	ctx context.Context,
 	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
-	collectionShortID uint32,
 	docShortID uint64,
 ) (*DocHeadBlocksIterator, error) {
 	headStoreKey := keys.HeadstoreDocKey{
@@ -79,7 +78,6 @@ func NewHeadBlocksIteratorFromTxn(
 		ctx,
 		txn.Headstore(),
 		txn.Blockstore(),
-		docRef.CollectionShortID,
 		docRef.DocShortID,
 	)
 }

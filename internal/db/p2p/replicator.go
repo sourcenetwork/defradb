@@ -234,7 +234,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			return client.ErrDocumentNotFoundOrNotAuthorized
 		}
 
-		err = p.pushHeadsForDoc(ctx, shortCollectionID, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
+		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return NewErrPushDocHeads(err, docID)
 		}
@@ -245,13 +245,12 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 // to the given peer.
 func (p *P2P) pushHeadsForDoc(
 	ctx context.Context,
-	collectionShortID uint32,
 	docShortID uint64,
 	docID string,
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeadsForShortDocID(ctx, collectionShortID, docShortID, docID)
+	heads, err := p.getHeadsForShortDocID(ctx, docShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -800,12 +799,11 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
 	}
 
-	return p.getHeadsForShortDocID(ctx, docRef.CollectionShortID, docRef.DocShortID, docID)
+	return p.getHeadsForShortDocID(ctx, docRef.DocShortID, docID)
 }
 
 func (p *P2P) getHeadsForShortDocID(
 	ctx context.Context,
-	collectionShortID uint32,
 	docShortID uint64,
 	docID string,
 ) ([]head, error) {

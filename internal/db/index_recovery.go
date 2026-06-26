@@ -104,8 +104,8 @@ func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state
 		return err
 	}
 
-	startAfter := immutable.None[string]()
-	if state.Watermark != "" {
+	startAfter := immutable.None[uint64]()
+	if state.Watermark != 0 {
 		startAfter = immutable.Some(state.Watermark)
 	}
 	return db.backfillIndex(ctx, def, desc, startAfter)
