@@ -58,6 +58,8 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
+	// apiHandler is the HTTP API handler.
+	apiHandler *http.Handler
 	// opts is the resolved options
 	opts *options.NodeOptions
 	// the URL the API is served at.
@@ -120,7 +122,10 @@ func DefaultNodeOptions() options.NodeOptions {
 		},
 		P2P: options.NodeP2POptions{},
 		HTTP: options.NodeHTTPOptions{
-			Address: http.DefaultHTTPAddress,
+			Address:       http.DefaultHTTPAddress,
+			TxnTTL:        http.DefaultTxnTTL,
+			TxnTTLTick:    http.DefaultTxnTTLTick,
+			TxnTTLBuckets: http.DefaultTxnTTLBuckets,
 		},
 	}
 }
@@ -187,6 +192,9 @@ func (n *Node) Close(ctx context.Context) error {
 	var err error
 	if n.server != nil {
 		err = n.server.Shutdown(ctx)
+	}
+	if n.apiHandler != nil {
+		n.apiHandler.Close()
 	}
 	if n.peer != nil {
 		n.peer.Close()

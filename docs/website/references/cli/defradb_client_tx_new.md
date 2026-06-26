@@ -13,8 +13,9 @@ defradb client tx new [flags]
 ### Options
 
 ```
-  -h, --help        help for new
-      --read-only   Transaction is read only
+  -h, --help         help for new
+      --read-only    Transaction is read only
+      --ttl string   Transaction idle TTL as a duration string, or seconds if no unit is provided
 ```
 
 ### Options inherited from parent commands
