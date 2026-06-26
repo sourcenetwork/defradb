@@ -255,11 +255,11 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	}
 	defer txn.Discard()
 
-	collectionShortID, err := id.GetShortCollectionID(ctx, collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, collection.Version().CollectionID)
 	if err != nil {
 		return err
 	}
-	docShortID, found, err := id.GetShortDocIDFromStore(ctx, systemstore, collectionShortID, docID)
+	docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, collectionShortID, docID)
 	if err != nil {
 		return err
 	}

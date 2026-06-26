@@ -129,14 +129,14 @@ func (c *collection) getWithACP(
 		return nil, err
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// construct target datastore key from the resolved short doc ID.
+	// construct target datastore key from the resolved document short ID.
 	targetKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		DocShortID:        primaryKey.DocShortID,
 	}
 	// run the doc fetcher

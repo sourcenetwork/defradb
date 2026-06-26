@@ -413,7 +413,7 @@ func resolveAggregates(
 	var collectionShortID uint32
 	if def.CollectionID != "" {
 		var err error
-		collectionShortID, err = id.GetShortCollectionID(ctx, def.CollectionID)
+		collectionShortID, err = id.GetCollectionShortID(ctx, def.CollectionID)
 		if err != nil {
 			return nil, err
 		}

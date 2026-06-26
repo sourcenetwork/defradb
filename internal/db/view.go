@@ -130,11 +130,11 @@ func (db *DB) refreshViews(
 			continue
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
-		db.lockSet.CollectionLock(txn, shortID)
+		db.lockSet.CollectionLock(txn, collectionShortID)
 
 		colObject, err := db.newCollection(ctx, col, immutable.Some(txn))
 		if err != nil {
@@ -298,12 +298,12 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 			return err
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(shortID, itemID)
+		itemKey := keys.NewViewCacheKey(collectionShortID, itemID)
 		err = ds.Set(ctx, itemKey, serializedItem)
 		if err != nil {
 			return NewErrStoreViewCacheItem(err)

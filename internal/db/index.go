@@ -223,7 +223,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 func (index *collectionBaseIndex) getDocumentsIndexKey(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 ) (keys.IndexDataStoreKey, error) {
 	fieldValues, err := index.getDocFieldValues(doc)
 	if err != nil {
@@ -236,14 +236,14 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 	var docShortID uint64
-	if appendDocID {
+	if appendDocShortID {
 		var found bool
-		docShortID, found, err = id.GetShortDocID(ctx, shortID, doc.ID().String())
+		docShortID, found, err = id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
 		if err != nil {
 			return keys.IndexDataStoreKey{}, err
 		}
@@ -252,7 +252,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		}
 	}
 
-	key := keys.NewIndexDataStoreKey(shortID, index.desc.ID, index.epoch, fields)
+	key := keys.NewIndexDataStoreKey(collectionShortID, index.desc.ID, index.epoch, fields)
 	key.DocShortID = docShortID
 	return key, nil
 }
@@ -298,11 +298,11 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 func (index *collectionBaseIndex) generateKeysAndProcess(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocShortID)
 	if err != nil {
 		return err
 	}
@@ -425,7 +425,7 @@ func saveUniqueKey(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	docShortID, found, err := id.GetShortDocID(ctx, key.CollectionShortID, doc.ID().String())
+	docShortID, found, err := id.GetDocShortID(ctx, key.CollectionShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}
@@ -478,12 +478,12 @@ func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
 	docShortID uint64,
 ) (keys.IndexDataStoreKey, []byte, error) {
-	encodedShortDocID := keys.EncodeDocShortID(docShortID)
+	encodedDocShortID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {
 		key.DocShortID = docShortID
 		return key, []byte{}, nil
 	} else {
-		return key, encodedShortDocID, nil
+		return key, encodedDocShortID, nil
 	}
 }
 
@@ -492,11 +492,11 @@ func (index *collectionUniqueIndex) Delete(
 	doc *client.Document,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return err
 	}
-	docShortID, found, err := id.GetShortDocID(ctx, shortID, doc.ID().String())
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}

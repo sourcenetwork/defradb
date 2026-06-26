@@ -48,9 +48,9 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 

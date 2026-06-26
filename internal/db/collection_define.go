@@ -78,9 +78,9 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
-		// Index epoch allocation needs the short collection ID, but SaveCollection only registers
+		// Index epoch allocation needs the collection short ID, but SaveCollection only registers
 		// it after the indexes are built, so register it now. The call is idempotent.
-		if err := id.SetShortCollectionID(ctx, def.Definition.CollectionID); err != nil {
+		if err := id.SetCollectionShortID(ctx, def.Definition.CollectionID); err != nil {
 			return nil, err
 		}
 

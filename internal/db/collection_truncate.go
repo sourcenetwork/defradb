@@ -63,12 +63,12 @@ func (c *collection) Truncate(
 
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.def.CollectionID, multistore.Systemstore())
+	collectionShortID, err := id.GetUncachedCollectionShortID(ctx, c.def.CollectionID, multistore.Systemstore())
 	if err != nil {
 		return err
 	}
 
-	c.db.lockSet.CollectionLock(txn, shortID)
+	c.db.lockSet.CollectionLock(txn, collectionShortID)
 
 	// Clear the transaction on the context used to write the action execution information, otherwise
 	// corekv will pick it up again, writing using the transaction.
@@ -104,7 +104,7 @@ func (c *collection) truncate(
 	ctx context.Context,
 ) error {
 	sysStore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Systemstore()
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.def.CollectionID, sysStore)
+	collectionShortID, err := id.GetUncachedCollectionShortID(ctx, c.def.CollectionID, sysStore)
 	if err != nil {
 		return err
 	}
@@ -121,40 +121,40 @@ func (c *collection) truncate(
 	// documents as some stores such as leveldb do not support the opening of multiple transactions
 	// at the same time.
 
-	err = c.hardDeleteDocKeysAndHeadstore(ctx, shortID)
+	err = c.hardDeleteDocKeysAndHeadstore(ctx, collectionShortID)
 	if err != nil {
 		return err
 	}
 
 	err = c.hardDeleteDatastorePrefix(ctx, keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 	})
 	if err != nil {
 		return err
 	}
 
 	err = c.hardDeleteDatastorePrefix(ctx, &keys.IndexDataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 	})
 	if err != nil {
 		return err
 	}
 
 	err = c.hardDeleteDatastorePrefix(ctx, keys.DatastoreSE{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 	})
 	if err != nil {
 		return err
 	}
 
 	err = c.hardDeleteDatastorePrefix(ctx, keys.ViewCacheKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 	})
 	if err != nil {
 		return err
 	}
 
-	err = c.hardDeleteCollectionBlocks(ctx, shortID)
+	err = c.hardDeleteCollectionBlocks(ctx, collectionShortID)
 	if err != nil {
 		return err
 	}
@@ -406,7 +406,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 
 func (c *collection) hardDeleteCollectionBlocks(
 	ctx context.Context,
-	shortID uint32,
+	collectionShortID uint32,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
@@ -416,7 +416,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 
 	for hasMore {
 		prefix := keys.HeadstoreColKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 		}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{

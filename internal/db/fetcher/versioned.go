@@ -272,11 +272,11 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint64) error {
 			return err
 		}
 		if block.Delta.IsComposite() && len(block.Heads) == 0 {
-			shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
+			collectionShortID, err := id.GetCollectionShortID(vf.ctx, vf.col.Version().CollectionID)
 			if err != nil {
 				return err
 			}
-			docShortID, err = vf.storageDocIDForBlock(shortID, block, cc)
+			docShortID, err = vf.storageDocIDForBlock(collectionShortID, block, cc)
 			if err != nil {
 				return err
 			}
@@ -374,7 +374,7 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
-	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -408,7 +408,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			docID = docShortID
 			if docID == 0 {
 				var err error
-				docID, err = vf.storageDocIDForBlock(shortID, block, current.cid)
+				docID, err = vf.storageDocIDForBlock(collectionShortID, block, current.cid)
 				if err != nil {
 					return err
 				}
@@ -420,7 +420,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 		case block.Delta.IsCollection():
 			mcrdt = crdt.NewCollection(
 				vf.col.Version().VersionID,
-				keys.NewHeadstoreColKey(shortID),
+				keys.NewHeadstoreColKey(collectionShortID),
 			)
 
 		case block.Delta.IsComposite():
@@ -428,7 +428,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				vf.store.Datastore(),
 				block.Delta.GetCollectionVersionID(),
 				keys.DataStoreKey{
-					CollectionShortID: shortID,
+					CollectionShortID: collectionShortID,
 					DocShortID:        docID,
 					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 				},
@@ -440,7 +440,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 			}
 
-			fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
+			fieldShortID, err := id.GetShortFieldID(vf.ctx, collectionShortID, field.FieldID)
 			if err != nil {
 				return err
 			}
@@ -451,7 +451,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				field.Typ,
 				field.Kind,
 				keys.DataStoreKey{
-					CollectionShortID: shortID,
+					CollectionShortID: collectionShortID,
 					DocShortID:        docID,
 					FieldID:           fmt.Sprint(fieldShortID),
 				},
@@ -493,7 +493,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		return 0, nil
 	}
 
-	publicDocID, found, err := id.GetDocIDForBlockFromStore(
+	docID, found, err := id.GetDocIDForBlockFromStore(
 		vf.ctx,
 		vf.txn.Systemstore(),
 		blockCID,
@@ -504,7 +504,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 	if !found {
 		if block.Delta.IsComposite() {
 			if len(block.Heads) == 0 {
-				publicDocID = client.NewDocIDV0(blockCID).String()
+				docID = client.NewDocIDV0(blockCID).String()
 			} else {
 				return vf.storageDocIDForCompositeHead(collectionShortID, block.Heads)
 			}
@@ -513,7 +513,7 @@ func (vf *VersionedFetcher) storageDocIDForBlock(
 		}
 	}
 
-	docShortID, found, err := id.GetShortDocID(vf.ctx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(vf.ctx, collectionShortID, docID)
 	if err != nil {
 		return 0, err
 	}

@@ -331,11 +331,11 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 		return core.ErrInvalidKey
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
-	shortDocID, found, err := id.GetShortDocID(ctx, shortID, docID)
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -344,8 +344,8 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 	}
 
 	datastoreKeyBase := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocShortID:        shortDocID,
+		CollectionShortID: collectionShortID,
+		DocShortID:        docShortID,
 		InstanceType:      keys.ValueKey,
 	}
 
@@ -359,7 +359,7 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 			continue
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fieldDesc.FieldID)
+		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.FieldID)
 		if err != nil {
 			return err
 		}

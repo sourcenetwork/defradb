@@ -194,7 +194,7 @@ func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 	collectionShortID uint32,
 	docID string,
 ) (uint64, error) {
-	docShortID, found, err := id.GetShortDocID(ctx, collectionShortID, docID)
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
 	if err != nil {
 		return 0, err
 	}
@@ -224,7 +224,7 @@ func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (key
 		}, nil
 	}
 
-	colShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+	colShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -449,9 +449,9 @@ func (mp *mergeProcessor) initCRDTForType(
 	txn := datastore.CtxMustGetTxn(ctx)
 	crdtUnion := block.Delta
 
-	colShortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	colShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, resolvedDocRef{}, NewErrGetShortIDForMerge(err, mp.col.Version().CollectionID)
+		return nil, resolvedDocRef{}, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {

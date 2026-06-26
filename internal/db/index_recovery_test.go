@@ -117,7 +117,7 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 		defer rawTxn.Discard()
 		txnCtx := InitContext(ctx, rawTxn)
 		for i, d := range docs {
-			docShortID, found, err := id.GetShortDocID(txnCtx, shortID, d.ID().String())
+			docShortID, found, err := id.GetDocShortID(txnCtx, shortID, d.ID().String())
 			require.NoError(t, err)
 			require.True(t, found)
 			docShortIDs[i] = docShortID

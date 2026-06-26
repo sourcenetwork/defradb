@@ -119,7 +119,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		}
 	}
 
-	colShortID, err := id.GetShortCollectionID(ctx, f.col.Version().CollectionID)
+	colShortID, err := id.GetCollectionShortID(ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}

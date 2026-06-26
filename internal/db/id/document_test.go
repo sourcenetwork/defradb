@@ -44,7 +44,7 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = GetShortDocID(ctx, collectionShortID, docID)
+	_, found, err = GetDocShortID(ctx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -80,7 +80,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, docID, gotDocID)
 
-	gotDocShortID, found, err := GetShortDocID(ctx, collectionShortID, docID)
+	gotDocShortID, found, err := GetDocShortID(ctx, collectionShortID, docID)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, docShortID, gotDocShortID)
@@ -106,7 +106,7 @@ func TestDocIDMappingRoundTrip(t *testing.T) {
 	require.Equal(t, docID, gotDocID)
 }
 
-func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
+func TestGetDocShortIDDoesNotCrossCollections(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -129,11 +129,11 @@ func TestGetShortDocIDDoesNotCrossCollections(t *testing.T) {
 	require.Equal(t, collectionShortID, gotDocRef.CollectionShortID)
 	require.Equal(t, docShortID, gotDocRef.DocShortID)
 
-	_, found, err = GetShortDocID(ctx, otherCollectionID, docID)
+	_, found, err = GetDocShortID(ctx, otherCollectionID, docID)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	_, found, err = GetShortDocID(ctx, otherCollectionID, legacyDocID)
+	_, found, err = GetDocShortID(ctx, otherCollectionID, legacyDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 }

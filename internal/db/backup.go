@@ -203,11 +203,11 @@ func updateImportedRelation(
 }
 
 func updatePendingImportRelation(ctx context.Context, relation pendingImportRelation, docID string) error {
-	publicDocID, err := client.NewDocIDFromString(relation.docID)
+	relationDocID, err := client.NewDocIDFromString(relation.docID)
 	if err != nil {
 		return err
 	}
-	doc, err := relation.col.GetDocument(ctx, publicDocID)
+	doc, err := relation.col.GetDocument(ctx, relationDocID)
 	if err != nil {
 		return err
 	}
@@ -230,11 +230,11 @@ func (db *DB) setImportedDocIDAlias(
 	}
 	defer txn.Discard()
 
-	colShortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
+	colShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
 	if err != nil {
 		return err
 	}
-	docShortID, found, err := id.GetShortDocID(ctx, colShortID, doc.ID().String())
+	docShortID, found, err := id.GetDocShortID(ctx, colShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}

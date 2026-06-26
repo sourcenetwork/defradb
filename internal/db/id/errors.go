@@ -13,13 +13,13 @@ package id
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errGetShortCollectionID    string = "failed to get short collection ID"
-	errParseShortCollectionID  string = "failed to parse short collection ID"
-	errCheckShortCollectionID  string = "failed to check short collection ID"
+	errGetCollectionShortID    string = "failed to get collection short ID"
+	errParseCollectionShortID  string = "failed to parse collection short ID"
+	errCheckCollectionShortID  string = "failed to check collection short ID"
 	errGetCollectionIDSequence string = "failed to get collection ID sequence"
 	errNextCollectionIDSeq     string = "failed to get next collection ID sequence value"
-	errStoreShortCollectionID  string = "failed to store short collection ID"
-	errDeleteShortCollectionID string = "failed to delete short collection ID"
+	errStoreCollectionShortID  string = "failed to store collection short ID"
+	errDeleteCollectionShortID string = "failed to delete collection short ID"
 	errGetShortFieldIDs        string = "failed to get short field IDs"
 	errParseShortFieldID       string = "failed to parse short field ID"
 	errCheckShortFieldID       string = "failed to check short field ID"
@@ -29,16 +29,16 @@ const (
 	errDeleteShortFieldID      string = "failed to delete short field ID"
 )
 
-func NewErrGetShortCollectionID(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortCollectionID, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortID(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortID, inner, errors.NewKV("CollectionID", collectionID))
 }
 
-func NewErrParseShortCollectionID(inner error, collectionID string) error {
-	return errors.Wrap(errParseShortCollectionID, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrParseCollectionShortID(inner error, collectionID string) error {
+	return errors.Wrap(errParseCollectionShortID, inner, errors.NewKV("CollectionID", collectionID))
 }
 
-func NewErrCheckShortCollectionID(inner error, collectionID string) error {
-	return errors.Wrap(errCheckShortCollectionID, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrCheckCollectionShortID(inner error, collectionID string) error {
+	return errors.Wrap(errCheckCollectionShortID, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrGetCollectionIDSequence(inner error, collectionID string) error {
@@ -49,12 +49,12 @@ func NewErrNextCollectionIDSeq(inner error, collectionID string) error {
 	return errors.Wrap(errNextCollectionIDSeq, inner, errors.NewKV("CollectionID", collectionID))
 }
 
-func NewErrStoreShortCollectionID(inner error, collectionID string) error {
-	return errors.Wrap(errStoreShortCollectionID, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrStoreCollectionShortID(inner error, collectionID string) error {
+	return errors.Wrap(errStoreCollectionShortID, inner, errors.NewKV("CollectionID", collectionID))
 }
 
-func NewErrDeleteShortCollectionID(inner error, collectionID string) error {
-	return errors.Wrap(errDeleteShortCollectionID, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrDeleteCollectionShortID(inner error, collectionID string) error {
+	return errors.Wrap(errDeleteCollectionShortID, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrGetShortFieldIDs(inner error, collectionShortID uint32, fieldID string) error {

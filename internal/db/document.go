@@ -49,11 +49,11 @@ func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan docIDResult, error) {
 	systemstore := c.db.Multistore().Systemstore()
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, systemstore)
+	collectionShortID, err := id.GetUncachedCollectionShortID(ctx, c.Version().CollectionID, systemstore)
 	if err != nil {
 		return nil, err
 	}
-	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: collectionShortID}
 	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
@@ -486,7 +486,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	colShortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	colShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
@@ -595,7 +595,7 @@ func (c *collection) save(
 	updateDocID := doc.ID().String()
 	if isAdd {
 		docID := client.NewDocIDV0(link.Cid)
-		docShortID, found, err := id.GetShortDocID(ctx, colShortID, docID.String())
+		docShortID, found, err := id.GetDocShortID(ctx, colShortID, docID.String())
 		if err != nil {
 			return err
 		}
@@ -651,13 +651,13 @@ func (c *collection) save(
 	})
 
 	if c.def.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
+			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(
@@ -795,7 +795,7 @@ func (c *collection) exists(
 		return false, false, nil
 	}
 
-	publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
+	docID, err := c.getDocIDFromPrimaryKey(ctx, primaryKey)
 	if err != nil {
 		return false, false, err
 	}
@@ -803,7 +803,7 @@ func (c *collection) exists(
 	canRead, err := c.checkAccessOfDocWithACP(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		publicDocID,
+		docID,
 	)
 	if err != nil {
 		return false, false, err
@@ -816,7 +816,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, publicDocID)
+		return false, false, NewErrGetDocStatus(err, docID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -836,28 +836,28 @@ func (c *collection) getPrimaryKeyFromDocIDString(
 	ctx context.Context,
 	docID string,
 ) (keys.PrimaryDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
-		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
+		return keys.PrimaryDataStoreKey{}, NewErrGetCollectionShortIDForDoc(err, c.Version().CollectionID)
 	}
 
-	docShortID, found, err := id.GetShortDocID(ctx, shortID, docID)
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, err
 	}
 	if found {
 		return keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 			DocShortID:        docShortID,
 		}, nil
 	}
 
 	return keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 	}, nil
 }
 
-func (c *collection) getPublicDocIDFromPrimaryKey(
+func (c *collection) getDocIDFromPrimaryKey(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (string, error) {

@@ -24,7 +24,7 @@ type DocRef struct {
 	DocShortID        uint64
 }
 
-// EncodeDocRef encodes a local collection/doc pair as a compact systemstore value.
+// EncodeDocRef encodes a collection/document short-ID pair as a systemstore value.
 func EncodeDocRef(collectionShortID uint32, docShortID uint64) []byte {
 	if collectionShortID == 0 || docShortID == 0 {
 		return nil
@@ -33,7 +33,7 @@ func EncodeDocRef(collectionShortID uint32, docShortID uint64) []byte {
 	return append(result, EncodeDocShortID(docShortID)...)
 }
 
-// DecodeDocRef decodes a local collection/doc pair from a compact systemstore value.
+// DecodeDocRef decodes a collection/document short-ID pair from a systemstore value.
 func DecodeDocRef(data []byte) (DocRef, error) {
 	rest, collectionShortID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {

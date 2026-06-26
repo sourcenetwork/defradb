@@ -23,11 +23,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// GetUncachedShortCollectionID returns the local, shortened, internal, collection id, which is used
-// only in locations where using the full CID would be a waste of storage space.
+// GetUncachedCollectionShortID returns the collection short ID used in storage keys.
 //
-// GetShortCollectionID should be preferred over this method because it utilizes the cache.
-func GetUncachedShortCollectionID(
+// GetCollectionShortID should be preferred over this method because it utilizes the cache.
+func GetUncachedCollectionShortID(
 	ctx context.Context,
 	collectionID string,
 	systemStore corekv.ReaderWriter,
@@ -36,43 +35,42 @@ func GetUncachedShortCollectionID(
 	valueBytes, err := systemStore.Get(ctx, key.Bytes())
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
-			err = NewErrGetShortCollectionID(client.ErrCollectionNotFound, collectionID)
+			err = NewErrGetCollectionShortID(client.ErrCollectionNotFound, collectionID)
 		}
 		return 0, err
 	}
 	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
 	if err != nil {
-		return 0, NewErrParseShortCollectionID(err, collectionID)
+		return 0, NewErrParseCollectionShortID(err, collectionID)
 	}
 	return uint32(v), nil
 }
 
-// GetShortCollectionID returns the local, shortened, internal, collection id, which is used
-// only in locations where using the full CID would be a waste of storage space.
-func GetShortCollectionID(
+// GetCollectionShortID returns the collection short ID used in storage keys.
+func GetCollectionShortID(
 	ctx context.Context,
 	collectionID string,
 ) (uint32, error) {
 	cache, ok := ctx.Value(collectionShortIDCacheKey{}).(collectionShortIDCache)
 	if ok {
-		shortID, ok := cache[collectionID]
+		collectionShortID, ok := cache[collectionID]
 		if ok {
-			return shortID, nil
+			return collectionShortID, nil
 		}
 	}
 	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, txn.Systemstore())
+	collectionShortID, err := GetUncachedCollectionShortID(ctx, collectionID, txn.Systemstore())
 	if err != nil {
 		return 0, err
 	}
 	if ok {
-		cache[collectionID] = shortID
+		cache[collectionID] = collectionShortID
 	}
-	return shortID, nil
+	return collectionShortID, nil
 }
 
-// SetShortCollectionID sets and stores the short collection id, if it does not already exist.
-func SetShortCollectionID(
+// SetCollectionShortID stores the collection short ID, if it does not already exist.
+func SetCollectionShortID(
 	ctx context.Context,
 	collectionID string,
 ) error {
@@ -87,7 +85,7 @@ func SetShortCollectionID(
 
 	hasShortID, err := txn.Systemstore().Has(ctx, key.Bytes())
 	if err != nil {
-		return NewErrCheckShortCollectionID(err, collectionID)
+		return NewErrCheckCollectionShortID(err, collectionID)
 	}
 	if hasShortID {
 		return nil
@@ -102,19 +100,19 @@ func SetShortCollectionID(
 	if err != nil {
 		return NewErrNextCollectionIDSeq(err, collectionID)
 	}
-	shortID := uint32(sID)
+	collectionShortID := uint32(sID)
 
-	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(shortID))))
+	err = txn.Systemstore().Set(ctx, key.Bytes(), []byte(strconv.Itoa(int(collectionShortID))))
 	if err != nil {
-		return NewErrStoreShortCollectionID(err, collectionID)
+		return NewErrStoreCollectionShortID(err, collectionID)
 	}
 
-	cache[collectionID] = shortID
+	cache[collectionID] = collectionShortID
 
 	return nil
 }
 
-func DeleteShortCollectionID(
+func DeleteCollectionShortID(
 	ctx context.Context,
 	collectionID string,
 ) error {
@@ -126,7 +124,7 @@ func DeleteShortCollectionID(
 
 	err := txn.Systemstore().Delete(ctx, key.Bytes())
 	if err != nil {
-		return NewErrDeleteShortCollectionID(err, collectionID)
+		return NewErrDeleteCollectionShortID(err, collectionID)
 	}
 	return nil
 }

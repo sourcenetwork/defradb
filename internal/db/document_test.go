@@ -43,7 +43,7 @@ func setDocIDSequence(t *testing.T, ctx context.Context, db *DB, value uint64) {
 
 	var buf [8]byte
 	binary.BigEndian.PutUint64(buf[:], value)
-	require.NoError(t, dbTxn.Systemstore().Set(ctx, keys.NewDocIDSequenceKey().Bytes(), buf[:]))
+	require.NoError(t, dbTxn.Systemstore().Set(ctx, keys.NewDocShortIDSequenceKey().Bytes(), buf[:]))
 	require.NoError(t, txn.Commit())
 }
 
@@ -84,7 +84,7 @@ func TestDocumentAdd_DerivesPublicDocIDFromCompositeCID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, doc.ID().String(), primaryKey.DocShortID)
 
-	publicDocID, err := c.getPublicDocIDFromPrimaryKey(txnCtx, primaryKey)
+	publicDocID, err := c.getDocIDFromPrimaryKey(txnCtx, primaryKey)
 	require.NoError(t, err)
 	require.Equal(t, doc.ID().String(), publicDocID)
 }
@@ -132,15 +132,15 @@ func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
 
 	ctxA := InitContext(ctx, txnA)
 	ctxB := InitContext(ctx, txnB)
-	collectionShortIDA, err := id.GetShortCollectionID(ctxA, colA.CollectionID())
+	collectionShortIDA, err := id.GetCollectionShortID(ctxA, colA.CollectionID())
 	require.NoError(t, err)
-	collectionShortIDB, err := id.GetShortCollectionID(ctxB, colB.CollectionID())
+	collectionShortIDB, err := id.GetCollectionShortID(ctxB, colB.CollectionID())
 	require.NoError(t, err)
 
-	shortIDA, found, err := id.GetShortDocID(ctxA, collectionShortIDA, docA.ID().String())
+	shortIDA, found, err := id.GetDocShortID(ctxA, collectionShortIDA, docA.ID().String())
 	require.NoError(t, err)
 	require.True(t, found)
-	shortIDB, found, err := id.GetShortDocID(ctxB, collectionShortIDB, docB.ID().String())
+	shortIDB, found, err := id.GetDocShortID(ctxB, collectionShortIDB, docB.ID().String())
 	require.NoError(t, err)
 	require.True(t, found)
 	require.NotEqual(t, shortIDA, shortIDB)

@@ -32,7 +32,7 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 	}{
 		{
 			name: "short to doc id",
-			key:  NewShortIDToDocIDKey(docShortID),
+			key:  NewDocShortIDToDocIDKey(docShortID),
 			want: "/d/s/" + docShortIDSegment,
 		},
 		{
@@ -42,7 +42,7 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 		},
 		{
 			name: "doc ref to doc id",
-			key:  NewDocRefToDocIDKey(docShortID, docID),
+			key:  NewDocShortIDToDocIDAliasKey(docShortID, docID),
 			want: "/d/r/" + docShortIDSegment + "/" + docID,
 		},
 		{

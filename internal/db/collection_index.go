@@ -273,11 +273,11 @@ func processNewIndexRequest(
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.
 func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
-	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, collectionID)
 	if err != nil {
 		return 0, err
 	}
-	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID))
+	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID))
 	if err != nil {
 		return 0, err
 	}
@@ -372,26 +372,26 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 // non-document keys are never visited.
 func (c *collection) collectDocShortIDsAfter(
 	ctx context.Context,
-	shortID uint32,
+	collectionShortID uint32,
 	watermark immutable.Option[uint64],
 	limit int,
 ) (docShortIDs []uint64, err error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	var startKey datastore.Key = keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		InstanceType:      keys.ValueKey,
 	}
 	if watermark.HasValue() {
 		startKey = keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 			InstanceType:      keys.ValueKey,
 			DocShortID:        watermark.Value(),
 		}.PrefixEnd()
 	}
 
 	endKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		InstanceType:      keys.ValueKey,
 	}.PrefixEnd()
 
@@ -446,7 +446,7 @@ func (c *collection) iterateDocsBatch(
 	limit int,
 	exec func(doc *client.Document) error,
 ) (lastDocShortID uint64, count int, err error) {
-	shortID, idErr := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, idErr := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if idErr != nil {
 		return 0, 0, idErr
 	}
@@ -454,7 +454,7 @@ func (c *collection) iterateDocsBatch(
 	var prefixes []keys.Walkable
 
 	if limit > 0 {
-		candidates, scanErr := c.collectDocShortIDsAfter(ctx, shortID, startAfter, limit)
+		candidates, scanErr := c.collectDocShortIDsAfter(ctx, collectionShortID, startAfter, limit)
 		if scanErr != nil {
 			return 0, 0, scanErr
 		}
@@ -468,13 +468,13 @@ func (c *collection) iterateDocsBatch(
 		prefixes = make([]keys.Walkable, len(candidates))
 		for i, docShortID := range candidates {
 			prefixes[i] = keys.DataStoreKey{
-				CollectionShortID: shortID,
+				CollectionShortID: collectionShortID,
 				DocShortID:        docShortID,
 			}
 		}
 	} else {
 		prefixes = []keys.Walkable{
-			keys.DataStoreKey{CollectionShortID: shortID},
+			keys.DataStoreKey{CollectionShortID: collectionShortID},
 		}
 	}
 
@@ -635,9 +635,9 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 		return nil, err
 	}
 
-	// Resolve the short collection ID now, while the staging transaction is live,
+	// Resolve the collection short ID now, while the staging transaction is live,
 	// so the deferred GC needs no transaction of its own to look it up.
-	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.def.CollectionID)
 	if err != nil {
 		c.def.Indexes = oldIndexes
 		return nil, err
@@ -654,7 +654,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 	collectionID := c.def.CollectionID
 	indexID := desc.ID
 	gc := func(gcCtx context.Context) error {
-		return c.db.gcIndex(gcCtx, collectionID, shortID, indexID, indexName)
+		return c.db.gcIndex(gcCtx, collectionID, collectionShortID, indexID, indexName)
 	}
 
 	return gc, nil
@@ -1061,7 +1061,7 @@ func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, de
 	if err := db.backfillIndex(ctx, col, desc, immutable.None[uint64]()); err != nil {
 		return err
 	}
-	shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
+	collectionShortID, err := db.resolveCollectionShortID(ctx, col.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -1069,5 +1069,5 @@ func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, de
 	if err != nil {
 		return err
 	}
-	return db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, desc.Name)
+	return db.gcStaleEpochs(ctx, collectionShortID, desc.ID, liveEpoch, desc.Name)
 }

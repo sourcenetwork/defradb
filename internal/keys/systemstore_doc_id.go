@@ -14,11 +14,11 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-// Doc ID mapping keys bridge local storage references, DocIDs, and block CIDs.
+// Doc ID mapping keys bridge storage references, DocIDs, and block CIDs.
 //
 // DocIDs are derived from the genesis composite CID, but the datastore
 // needs a stable key before that CID exists. Document data is therefore written
-// under a local short ID, and these systemstore keys record how that short ID
+// under a doc short ID, and these systemstore keys record how that short ID
 // maps to the DocID once the genesis block has been materialized.
 //
 // Key shapes:
@@ -34,10 +34,10 @@ import (
 // The path segments are intentionally short because these keys are persisted for
 // every document and document block.
 const (
-	SHORT_ID_TO_DOC_ID  = "s"
-	DOC_ID_TO_DOC_REF   = "p"
-	DOC_REF_TO_DOC_ID   = "r"
-	BLOCK_CID_TO_DOC_ID = "b"
+	DOC_SHORT_ID_TO_DOC_ID       = "s"
+	DOC_ID_TO_DOC_REF            = "p"
+	DOC_SHORT_ID_TO_DOC_ID_ALIAS = "r"
+	BLOCK_CID_TO_DOC_ID          = "b"
 )
 
 func newDocIDSystemstoreKey(segments ...[]byte) []byte {
@@ -58,35 +58,35 @@ func stringSegment(value string) []byte {
 	return []byte(value)
 }
 
-// ShortIDToDocIDKey maps a node-unique short doc ID to its DocID.
-type ShortIDToDocIDKey struct {
+// DocShortIDToDocIDKey maps a node-unique document short ID to its DocID.
+type DocShortIDToDocIDKey struct {
 	DocShortID uint64
 }
 
-var _ Key = (*ShortIDToDocIDKey)(nil)
+var _ Key = (*DocShortIDToDocIDKey)(nil)
 
-func NewShortIDToDocIDKey(docShortID uint64) ShortIDToDocIDKey {
-	return ShortIDToDocIDKey{
+func NewDocShortIDToDocIDKey(docShortID uint64) DocShortIDToDocIDKey {
+	return DocShortIDToDocIDKey{
 		DocShortID: docShortID,
 	}
 }
 
-func (k ShortIDToDocIDKey) ToString() string {
+func (k DocShortIDToDocIDKey) ToString() string {
 	return string(k.Bytes())
 }
 
-func (k ShortIDToDocIDKey) Bytes() []byte {
+func (k DocShortIDToDocIDKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
-		[]byte(SHORT_ID_TO_DOC_ID),
+		[]byte(DOC_SHORT_ID_TO_DOC_ID),
 		EncodeDocShortID(k.DocShortID),
 	)
 }
 
-func (k ShortIDToDocIDKey) ToDS() ds.Key {
+func (k DocShortIDToDocIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// DocIDToDocRefKey maps a DocID to this node's local DocRef.
+// DocIDToDocRefKey maps a DocID to this node's DocRef.
 type DocIDToDocRefKey struct {
 	DocID string
 }
@@ -114,34 +114,34 @@ func (k DocIDToDocRefKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// DocRefToDocIDKey indexes all DocID aliases for a local doc short ID.
-type DocRefToDocIDKey struct {
+// DocShortIDToDocIDAliasKey indexes all DocID aliases for a doc short ID.
+type DocShortIDToDocIDAliasKey struct {
 	DocShortID uint64
 	DocID      string
 }
 
-var _ Key = (*DocRefToDocIDKey)(nil)
+var _ Key = (*DocShortIDToDocIDAliasKey)(nil)
 
-func NewDocRefToDocIDKey(docShortID uint64, docID string) DocRefToDocIDKey {
-	return DocRefToDocIDKey{
+func NewDocShortIDToDocIDAliasKey(docShortID uint64, docID string) DocShortIDToDocIDAliasKey {
+	return DocShortIDToDocIDAliasKey{
 		DocShortID: docShortID,
 		DocID:      docID,
 	}
 }
 
-func (k DocRefToDocIDKey) ToString() string {
+func (k DocShortIDToDocIDAliasKey) ToString() string {
 	return string(k.Bytes())
 }
 
-func (k DocRefToDocIDKey) Bytes() []byte {
+func (k DocShortIDToDocIDAliasKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
-		[]byte(DOC_REF_TO_DOC_ID),
+		[]byte(DOC_SHORT_ID_TO_DOC_ID_ALIAS),
 		EncodeDocShortID(k.DocShortID),
 		stringSegment(k.DocID),
 	)
 }
 
-func (k DocRefToDocIDKey) ToDS() ds.Key {
+func (k DocShortIDToDocIDAliasKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 

@@ -53,7 +53,7 @@ func decodeShortIDPrefix(data []byte) ([]byte, uint64, error) {
 	return rest, shortID, nil
 }
 
-// DecodeCollectionShortIDPrefix decodes a local collection ID from a key prefix.
+// DecodeCollectionShortIDPrefix decodes a collection short ID from a key prefix.
 func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	rest, collectionShortID, err := decodeShortIDPrefix(data)
 	if err != nil {
@@ -65,17 +65,17 @@ func DecodeCollectionShortIDPrefix(data []byte) ([]byte, uint32, error) {
 	return rest, uint32(collectionShortID), nil
 }
 
-// EncodeDocShortID returns the encoded path form of a local document ID.
+// EncodeDocShortID returns the encoded path form of a document short ID.
 func EncodeDocShortID(docShortID uint64) []byte {
 	return encodeShortID(docShortID)
 }
 
-// DecodeDocShortID decodes a local document ID from one encoded value.
+// DecodeDocShortID decodes a document short ID from one encoded value.
 func DecodeDocShortID(data []byte) (uint64, error) {
 	return decodeShortID(data)
 }
 
-// DecodeDocShortIDPrefix decodes a local document ID from a key prefix.
+// DecodeDocShortIDPrefix decodes a document short ID from a key prefix.
 func DecodeDocShortIDPrefix(data []byte) ([]byte, uint64, error) {
 	return decodeShortIDPrefix(data)
 }

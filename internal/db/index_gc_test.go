@@ -100,7 +100,7 @@ func getCollectionShortID(t *testing.T, ctx context.Context, db *DB, collectionI
 	var shortID uint32
 	err := db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		var resolveErr error
-		shortID, resolveErr = id.GetShortCollectionID(txnCtx, collectionID)
+		shortID, resolveErr = id.GetCollectionShortID(txnCtx, collectionID)
 		return resolveErr
 	})
 	require.NoError(t, err)

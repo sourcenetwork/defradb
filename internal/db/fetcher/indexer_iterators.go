@@ -523,12 +523,12 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
+	return keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
@@ -538,12 +538,12 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, f.epoch, fields), nil
+	return keys.NewIndexDataStoreKey(collectionShortID, f.indexDesc.ID, f.epoch, fields), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.

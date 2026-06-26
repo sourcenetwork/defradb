@@ -315,7 +315,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// currently the least bad way of passing the cid in to the fetcher.
 			origScan.Prefixes(prefixes)
 		} else if n.selectReq.DocIDs.HasValue() && len(n.selectReq.DocIDs.Value()) > 0 {
-			shortID, err := id.GetShortCollectionID(
+			collectionShortID, err := id.GetCollectionShortID(
 				n.planner.ctx,
 				sourcePlan.collection.Version().CollectionID,
 			)
@@ -332,7 +332,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			prefixes := make([]keys.Walkable, 0, len(n.selectReq.DocIDs.Value()))
 
 			for _, docID := range n.selectReq.DocIDs.Value() {
-				docShortID, found, err := id.GetShortDocID(n.planner.ctx, shortID, docID)
+				docShortID, found, err := id.GetDocShortID(n.planner.ctx, collectionShortID, docID)
 				if err != nil {
 					return nil, nil, err
 				}
@@ -340,7 +340,7 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 					continue
 				}
 				prefixes = append(prefixes, keys.DataStoreKey{
-					CollectionShortID: shortID,
+					CollectionShortID: collectionShortID,
 					DocShortID:        docShortID,
 				})
 			}

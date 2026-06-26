@@ -96,7 +96,7 @@ func (db *DB) VerifySignature(
 		}
 		collection := collections[0]
 
-		docIDs, err := db.publicDocIDsForSignatureBlock(ctx, systemstore, parsedCid, block)
+		docIDs, err := db.docIDsForSignatureBlock(ctx, systemstore, parsedCid, block)
 		if err != nil {
 			return err
 		}
@@ -129,8 +129,8 @@ func (db *DB) VerifySignature(
 	return err
 }
 
-// publicDocIDsForSignatureBlock resolves the DocIDs that ACP may check for a signed block.
-func (db *DB) publicDocIDsForSignatureBlock(
+// docIDsForSignatureBlock resolves the DocIDs that ACP may check for a signed block.
+func (db *DB) docIDsForSignatureBlock(
 	ctx context.Context,
 	systemstore corekv.Reader,
 	blockCID cid.Cid,

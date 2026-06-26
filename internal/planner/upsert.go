@@ -133,14 +133,14 @@ func (n *upsertNode) Next() (bool, error) {
 }
 
 func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
-	shortID, err := id.GetShortCollectionID(n.p.ctx, desc.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, desc.CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	prefixes := make([]keys.Walkable, len(ids))
 	for i, docID := range ids {
-		docShortID, found, err := id.GetShortDocID(n.p.ctx, shortID, docID)
+		docShortID, found, err := id.GetDocShortID(n.p.ctx, collectionShortID, docID)
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +148,7 @@ func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersio
 			return nil, client.ErrDocumentNotFoundOrNotAuthorized
 		}
 		prefixes[i] = keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 			DocShortID:        docShortID,
 		}
 	}

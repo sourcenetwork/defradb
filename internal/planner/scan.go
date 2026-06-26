@@ -216,7 +216,7 @@ func expandDocIDAliasesInOpMap(
 				result[key] = value
 				continue
 			}
-			docID, docIDChanged, err := publicDocIDForFilterValue(ctx, docID)
+			docID, docIDChanged, err := docIDForFilterValue(ctx, docID)
 			if err != nil {
 				return nil, false, err
 			}
@@ -251,7 +251,7 @@ func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, bool, err
 			expandedValues = append(expandedValues, value)
 			continue
 		}
-		docID, docIDChanged, err := publicDocIDForFilterValue(ctx, docID)
+		docID, docIDChanged, err := docIDForFilterValue(ctx, docID)
 		if err != nil {
 			return nil, false, err
 		}
@@ -281,7 +281,7 @@ func isDocIDFilterField(col client.Collection, mapping *core.DocumentMapping, fi
 	return ok && fieldDef.Kind == client.FieldKind_DocID
 }
 
-func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool, error) {
+func docIDForFilterValue(ctx context.Context, docID string) (string, bool, error) {
 	if docID == "" {
 		return docID, false, nil
 	}
@@ -426,13 +426,13 @@ func (n *scanNode) initScan() error {
 		return nil
 	}
 	if len(n.prefixes) == 0 {
-		shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 
 		prefix := keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
@@ -469,12 +469,12 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
 	if err != nil {
 		return false, err
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
+	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, collectionShortID, doc, n.documentMapping, false)
 	if err != nil {
 		return false, err
 	}

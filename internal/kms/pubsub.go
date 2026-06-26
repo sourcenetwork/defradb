@@ -522,12 +522,12 @@ func (s *pubSubService) getEncryptionKeysLocally(
 		if err != nil {
 			return nil, nil, err
 		}
-		publicDocID, found, err := s.colRetriever.ResolveBlockDocID(ctx, encBlockCID)
+		docID, found, err := s.colRetriever.ResolveBlockDocID(ctx, encBlockCID)
 		if err != nil {
 			return nil, nil, err
 		}
 		if found {
-			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, publicDocID)
+			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -551,17 +551,17 @@ func (s *pubSubService) getEncryptionKeysLocally(
 
 // doesIdentityHaveDocPermission asks whether actorIdentity may read docID.
 // The collection lookup runs as the node itself (NAC), the DAC check runs as
-// the requester. publicDocID must be non-empty.
+// the requester. docID must be non-empty.
 func (s *pubSubService) doesIdentityHaveDocPermission(
 	ctx context.Context,
 	actorIdentity immutable.Option[identity.Identity],
-	publicDocID string,
+	docID string,
 ) (bool, error) {
 	if !s.documentACP.HasValue() {
 		return true, nil
 	}
 
-	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, publicDocID, s.nodeIdentity)
+	collection, err := s.colRetriever.RetrieveCollectionFromDocID(ctx, docID, s.nodeIdentity)
 	if err != nil {
 		return false, err
 	}
@@ -573,7 +573,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,
-		publicDocID,
+		docID,
 	)
 }
 

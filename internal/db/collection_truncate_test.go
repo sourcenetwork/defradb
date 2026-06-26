@@ -48,9 +48,9 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -74,7 +74,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.True(t, ok)
 	txnCtx = InitContext(ctx, dbTxn)
 
-	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 
@@ -121,9 +121,9 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
-	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -132,7 +132,7 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 
 	require.NoError(t, id.DeleteDocIDMappings(txnCtx, dbTxn.Systemstore(), docShortID))
 
-	_, found, err = id.GetShortDocID(txnCtx, collectionShortID, publicDocID)
+	_, found, err = id.GetDocShortID(txnCtx, collectionShortID, publicDocID)
 	require.NoError(t, err)
 	require.False(t, found)
 	_, found, err = id.GetDocID(txnCtx, docShortID)
@@ -175,7 +175,7 @@ func TestCollectionTruncateDeletesUnmappedStorageDoc(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
 
 	key := keys.DataStoreKey{
@@ -223,7 +223,7 @@ func TestCollectionTruncateDeletesStorageKeyWithoutDocID(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
 
 	malformedKey := keys.DataStoreKey{

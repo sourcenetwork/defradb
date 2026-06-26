@@ -32,7 +32,7 @@ func SetDocIDMapping(
 	txn := datastore.CtxMustGetTxn(ctx)
 	if err := txn.Systemstore().Set(
 		ctx,
-		keys.NewShortIDToDocIDKey(docShortID).Bytes(),
+		keys.NewDocShortIDToDocIDKey(docShortID).Bytes(),
 		[]byte(docID),
 	); err != nil {
 		return err
@@ -55,7 +55,7 @@ func SetDocIDToDocRefMapping(ctx context.Context, collectionShortID uint32, docS
 		return err
 	}
 
-	return txn.Systemstore().Set(ctx, keys.NewDocRefToDocIDKey(docShortID, docID).Bytes(), []byte(docID))
+	return txn.Systemstore().Set(ctx, keys.NewDocShortIDToDocIDAliasKey(docShortID, docID).Bytes(), []byte(docID))
 }
 
 func GetDocID(
@@ -71,7 +71,7 @@ func GetDocIDFromStore(
 	store corekv.Reader,
 	docShortID uint64,
 ) (string, bool, error) {
-	value, err := store.Get(ctx, keys.NewShortIDToDocIDKey(docShortID).Bytes())
+	value, err := store.Get(ctx, keys.NewDocShortIDToDocIDKey(docShortID).Bytes())
 	if errors.Is(err, corekv.ErrNotFound) {
 		return "", false, nil
 	}
@@ -81,16 +81,16 @@ func GetDocIDFromStore(
 	return string(value), true, nil
 }
 
-func GetShortDocID(
+func GetDocShortID(
 	ctx context.Context,
 	collectionShortID uint32,
 	docID string,
 ) (uint64, bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	return GetShortDocIDFromStore(ctx, txn.Systemstore(), collectionShortID, docID)
+	return GetDocShortIDFromStore(ctx, txn.Systemstore(), collectionShortID, docID)
 }
 
-func GetShortDocIDFromStore(
+func GetDocShortIDFromStore(
 	ctx context.Context,
 	store corekv.Reader,
 	collectionShortID uint32,
@@ -218,7 +218,7 @@ func DeleteDocIDMappings(
 		return nil
 	}
 
-	if err := deleteKeyIfExists(ctx, store, keys.NewShortIDToDocIDKey(docShortID).Bytes()); err != nil {
+	if err := deleteKeyIfExists(ctx, store, keys.NewDocShortIDToDocIDKey(docShortID).Bytes()); err != nil {
 		return err
 	}
 	return DeleteDocRefMappings(ctx, store, docShortID)
@@ -233,7 +233,7 @@ func DeleteDocRefMappings(
 		return nil
 	}
 
-	prefix := keys.NewDocRefToDocIDKey(docShortID, "").ToString() + "/"
+	prefix := keys.NewDocShortIDToDocIDAliasKey(docShortID, "").ToString() + "/"
 	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
 	if err != nil {
 		return err

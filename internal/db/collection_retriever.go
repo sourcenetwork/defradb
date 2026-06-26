@@ -62,7 +62,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 
 	defer txn.Discard()
 
-	docID, err = resolvePublicDocIDFromStore(ctx, txn.Systemstore(), docID)
+	docID, err = resolveDocIDFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 
 	for _, col := range cols {
-		collectionShortID, err := id.GetShortCollectionID(ctx, col.CollectionID())
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
 		if err != nil {
 			return nil, err
 		}
@@ -97,17 +97,17 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	return nil, client.ErrCollectionNotFound
 }
 
-func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
-	// Old encryption blocks may carry an encoded local document key.
+func resolveDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
+	// Old encryption blocks may carry an encoded DocRef.
 	docRef, err := keys.DecodeDocRef([]byte(docKey))
 	if err == nil {
-		publicDocID, found, err := id.GetDocIDFromStore(
+		docID, found, err := id.GetDocIDFromStore(
 			ctx,
 			store,
 			docRef.DocShortID,
 		)
 		if err != nil || found {
-			return publicDocID, err
+			return docID, err
 		}
 	}
 
@@ -115,10 +115,10 @@ func resolvePublicDocIDFromStore(ctx context.Context, store corekv.Reader, docKe
 	if err != nil || !found {
 		return docKey, err
 	}
-	publicDocID, found, err := id.GetDocIDFromStore(ctx, store, docRef.DocShortID)
+	docID, found, err := id.GetDocIDFromStore(ctx, store, docRef.DocShortID)
 	if err != nil || !found {
 		return docKey, err
 	}
 
-	return publicDocID, nil
+	return docID, nil
 }

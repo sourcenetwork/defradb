@@ -459,11 +459,11 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(scan.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
-	docShortID, found, err := id.GetShortDocID(scan.p.ctx, shortID, docID)
+	docShortID, found, err := id.GetDocShortID(scan.p.ctx, collectionShortID, docID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
@@ -472,7 +472,7 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	}
 
 	dsKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		DocShortID:        docShortID,
 	}
 
@@ -699,7 +699,7 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	targetDocID, _, err := publicDocIDForFilterValue(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
+	targetDocID, _, err := docIDForFilterValue(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
 	if err != nil {
 		return nil, err
 	}

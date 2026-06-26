@@ -134,7 +134,7 @@ func (c *collection) applyDelete(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) error {
-	publicDocID, err := c.getPublicDocIDFromPrimaryKey(ctx, primaryKey)
+	docID, err := c.getDocIDFromPrimaryKey(ctx, primaryKey)
 	if err != nil {
 		return err
 	}
@@ -148,14 +148,14 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(publicDocID)
+		return NewErrDocumentDeleted(docID)
 	}
 
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
 		acpTypes.DocumentDeletePerm,
-		publicDocID,
+		docID,
 	)
 
 	if err != nil {
@@ -165,12 +165,12 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	docID, err := client.NewDocIDFromString(publicDocID)
+	parsedDocID, err := client.NewDocIDFromString(docID)
 	if err != nil {
 		return err
 	}
 
-	if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
+	if err := c.deleteIndexedDocWithID(ctx, parsedDocID); err != nil {
 		return err
 	}
 
@@ -195,7 +195,7 @@ func (c *collection) applyDelete(
 	if err != nil {
 		return err
 	}
-	if err := id.SetBlockDocIDMapping(ctx, link.Cid, publicDocID); err != nil {
+	if err := id.SetBlockDocIDMapping(ctx, link.Cid, docID); err != nil {
 		return err
 	}
 	encryptionCIDs, err := appendEncryptionCID(nil, b)
@@ -203,14 +203,14 @@ func (c *collection) applyDelete(
 		return err
 	}
 	for _, encCID := range encryptionCIDs {
-		if err := id.SetBlockDocIDMapping(ctx, encCID, publicDocID); err != nil {
+		if err := id.SetBlockDocIDMapping(ctx, encCID, docID); err != nil {
 			return err
 		}
 	}
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{
-		DocID:        publicDocID,
+		DocID:        docID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        b,
@@ -220,14 +220,14 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
+			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(

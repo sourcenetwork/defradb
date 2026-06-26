@@ -190,7 +190,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	type unsafeDatastore interface {
 		Unsafe() corekv.ReaderWriter
 	}
-	shortCollectionID, err := id.GetUncachedShortCollectionID(
+	collectionShortID, err := id.GetUncachedCollectionShortID(
 		ctx,
 		col.Version().CollectionID,
 		p.db.Multistore().Systemstore(),
@@ -198,7 +198,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	if err != nil {
 		return err
 	}
-	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortCollectionID}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: collectionShortID}
 	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
@@ -250,7 +250,7 @@ func (p *P2P) pushHeadsForDoc(
 	collectionID string,
 	peerID string,
 ) error {
-	heads, err := p.getHeadsForShortDocID(ctx, docShortID, docID)
+	heads, err := p.getHeadsForDocShortID(ctx, docShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -799,10 +799,10 @@ func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
 		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
 	}
 
-	return p.getHeadsForShortDocID(ctx, docRef.DocShortID, docID)
+	return p.getHeadsForDocShortID(ctx, docRef.DocShortID, docID)
 }
 
-func (p *P2P) getHeadsForShortDocID(
+func (p *P2P) getHeadsForDocShortID(
 	ctx context.Context,
 	docShortID uint64,
 	docID string,

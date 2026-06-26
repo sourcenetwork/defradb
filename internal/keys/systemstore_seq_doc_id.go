@@ -14,23 +14,23 @@ import (
 	ds "github.com/ipfs/go-datastore"
 )
 
-// DocIDSequenceKey is used to key the node-local short document ID sequence.
-type DocIDSequenceKey struct{}
+// DocShortIDSequenceKey is used to key the node-local DocShortID sequence.
+type DocShortIDSequenceKey struct{}
 
-var _ Key = (*DocIDSequenceKey)(nil)
+var _ Key = (*DocShortIDSequenceKey)(nil)
 
-func NewDocIDSequenceKey() DocIDSequenceKey {
-	return DocIDSequenceKey{}
+func NewDocShortIDSequenceKey() DocShortIDSequenceKey {
+	return DocShortIDSequenceKey{}
 }
 
-func (k DocIDSequenceKey) ToString() string {
-	return DOC_ID_SEQ
+func (k DocShortIDSequenceKey) ToString() string {
+	return DOC_SHORT_ID_SEQ
 }
 
-func (k DocIDSequenceKey) Bytes() []byte {
+func (k DocShortIDSequenceKey) Bytes() []byte {
 	return []byte(k.ToString())
 }
 
-func (k DocIDSequenceKey) ToDS() ds.Key {
+func (k DocShortIDSequenceKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }

@@ -150,10 +150,10 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesPublicDocIDAndFieldMappings(t *test
 	dbTxn, ok := txn.(*Txn)
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, targetCol.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, targetCol.CollectionID())
 	require.NoError(t, err)
 
-	docShortID, found, err := id.GetShortDocID(txnCtx, collectionShortID, sourceDoc.ID().String())
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, sourceDoc.ID().String())
 	require.NoError(t, err)
 	require.True(t, found)
 	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
@@ -186,7 +186,7 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	collectionShortID, err := id.GetShortCollectionID(txnCtx, col.CollectionID())
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
 	require.NoError(t, err)
 
 	mp, err := db.newMergeProcessor(txnCtx, c, true)

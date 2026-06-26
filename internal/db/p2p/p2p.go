@@ -443,7 +443,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	docIDs, err := p.publicDocIDsForBlockCID(ctx, c, block)
+	docIDs, err := p.docIDsForBlockCID(ctx, c, block)
 	if err != nil {
 		log.ErrorE("Failed to resolve block doc ID", err)
 		return false
@@ -511,7 +511,7 @@ func (p *P2P) trySelfHasAccess(
 
 	docIDs := []string{docID}
 	if docID == "" {
-		docIDs, err = p.publicDocIDsForBlockCID(ctx, blockCID, block)
+		docIDs, err = p.docIDsForBlockCID(ctx, blockCID, block)
 		if err != nil {
 			return false, err
 		}
@@ -540,7 +540,7 @@ func (p *P2P) trySelfHasAccess(
 	return false, nil
 }
 
-func (p *P2P) publicDocIDsForBlockCID(
+func (p *P2P) docIDsForBlockCID(
 	ctx context.Context,
 	blockCID cid.Cid,
 	block *coreblock.Block,

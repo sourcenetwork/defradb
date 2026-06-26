@@ -33,11 +33,11 @@ import (
 // The sequence is seeded when the index is created, so a missing sequence is an inconsistent
 // state and returns an error rather than defaulting, which would scan the wrong namespace.
 func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
-	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, collectionID)
 	if err != nil {
 		return 0, err
 	}
-	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID).Bytes())
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID).Bytes())
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)
@@ -60,7 +60,7 @@ type indexFetcher struct {
 	indexDesc         client.IndexDescription
 	indexIter         indexIterator
 	currentDocID      immutable.Option[string]
-	currentShortDocID immutable.Option[uint64]
+	currentDocShortID immutable.Option[uint64]
 	collectionShortID uint32
 	execInfo          *ExecInfo
 	ordering          []mapper.OrderCondition
@@ -90,7 +90,7 @@ func newIndexFetcher(
 		return nil, nil
 	}
 
-	collectionShortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func newIndexFetcher(
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	f.currentDocID = immutable.None[string]()
-	f.currentShortDocID = immutable.None[uint64]()
+	f.currentDocShortID = immutable.None[uint64]()
 
 	res, err := f.indexIter.Next()
 	if err != nil {
@@ -160,28 +160,28 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		if err != nil {
 			return immutable.None[string](), err
 		}
-		docID, err := f.docIDFromShortDocID(docShortID)
+		docID, err := f.docIDFromDocShortID(docShortID)
 		if err != nil {
 			return immutable.None[string](), err
 		}
 		f.currentDocID = immutable.Some(docID)
-		f.currentShortDocID = immutable.Some(docShortID)
+		f.currentDocShortID = immutable.Some(docShortID)
 	} else {
 		// Non-unique index entries must carry the doc suffix.
 		if res.key.DocShortID == 0 {
 			return immutable.None[string](), NewErrUnexpectedTypeValue[uint64](res.key.DocShortID)
 		}
-		docID, err := f.docIDFromShortDocID(res.key.DocShortID)
+		docID, err := f.docIDFromDocShortID(res.key.DocShortID)
 		if err != nil {
 			return immutable.None[string](), err
 		}
 		f.currentDocID = immutable.Some(docID)
-		f.currentShortDocID = immutable.Some(res.key.DocShortID)
+		f.currentDocShortID = immutable.Some(res.key.DocShortID)
 	}
 	return f.currentDocID, nil
 }
 
-func (f *indexFetcher) docIDFromShortDocID(docShortID uint64) (string, error) {
+func (f *indexFetcher) docIDFromDocShortID(docShortID uint64) (string, error) {
 	docID, found, err := id.GetDocID(f.ctx, docShortID)
 	if err != nil {
 		return "", err
@@ -199,7 +199,7 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 
 	prefix := keys.DataStoreKey{
 		CollectionShortID: f.collectionShortID,
-		DocShortID:        f.currentShortDocID.Value(),
+		DocShortID:        f.currentDocShortID.Value(),
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)
