@@ -27,7 +27,7 @@ func MakeP2PDisconnectCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.Disconnect(), identity.FromContext(cmd.Context()))
-			return cliClient.Disconnect(cmd.Context(), args, opt)
+			return cliClient.Disconnect(cmd.Context(), parseAddresses(args), opt)
 		},
 	}
 
