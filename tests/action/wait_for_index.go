@@ -41,8 +41,8 @@ func (a *WaitForIndexReady) Execute() {
 	}
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index := range nodeIDs {
-		node := a.s.Nodes[index]
+	for _, nodeID := range nodeIDs {
+		node := a.s.Nodes[nodeID]
 		if node.Closed {
 			continue
 		}

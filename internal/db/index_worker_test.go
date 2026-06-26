@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -76,6 +77,10 @@ func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 
 	var starts atomic.Int32
 	release := make(chan struct{})
+	var releaseOnce sync.Once
+	// Always release, so a failing assertion before the explicit release does not strand the build
+	// goroutine blocked in the gate.
+	t.Cleanup(func() { releaseOnce.Do(func() { close(release) }) })
 	entered := make(chan struct{}, 1)
 	IndexBuildGate = func(_ context.Context, _ string, _ uint32) {
 		starts.Add(1)
@@ -97,7 +102,11 @@ func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 
 	// First drain: dispatches the build, which blocks in the gate.
 	go db.indexBuildWorker.drain(ctx)
-	<-entered
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("first build did not enter the gate")
+	}
 
 	// Second drain while the first build is in flight: the in-flight guard must skip it, so no
 	// second build starts. drain returns immediately (dispatch only).
@@ -110,7 +119,7 @@ func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	close(release)
+	releaseOnce.Do(func() { close(release) })
 	db.indexBuildWorker.builds.Wait()
 
 	assert.Equal(t, int32(1), starts.Load(), "exactly one build must run for the index")

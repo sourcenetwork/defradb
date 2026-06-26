@@ -182,6 +182,11 @@ func (w *indexBuildWorker) drainLocked(ctx context.Context) {
 	// in-flight build.
 	if err := w.db.recoverStaleEpochs(ctx); err != nil {
 		log.ErrorE("Failed to collect stale index epochs during drain", err)
+		// Stale epochs have no action record to guarantee another dispatch, so a conflict here
+		// would leave them uncollected until an unrelated wake. Re-drive like build/drop.
+		if errors.Is(err, corekv.ErrTxnConflict) {
+			w.scheduleRetry(ctx)
+		}
 	}
 }
 
