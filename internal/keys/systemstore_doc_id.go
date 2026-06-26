@@ -25,7 +25,7 @@ import (
 //   - /d/s/{docShortID} -> DocID
 //   - /d/p/{docID} -> encoded DocRef
 //   - /d/r/{docShortID}/{docID} -> DocID
-//   - /d/b/{blockCID}/{docID} -> {}
+//   - /d/b/{blockCID}/{docShortID} -> {}
 //
 // The block-CID mapping is only for document-owned blocks: composite, field,
 // delete, and encryption blocks. It lets CID-only paths such as P2P access
@@ -37,7 +37,7 @@ const (
 	DOC_SHORT_ID_TO_DOC_ID       = "s"
 	DOC_ID_TO_DOC_REF            = "p"
 	DOC_SHORT_ID_TO_DOC_ID_ALIAS = "r"
-	BLOCK_CID_TO_DOC_ID          = "b"
+	BLOCK_CID_TO_DOC_SHORT_ID    = "b"
 )
 
 func newDocIDSystemstoreKey(segments ...[]byte) []byte {
@@ -145,33 +145,33 @@ func (k DocShortIDToDocIDAliasKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }
 
-// BlockCIDToDocIDKey records one DocID owner for a document-owned block CID.
-type BlockCIDToDocIDKey struct {
-	BlockCID string
-	DocID    string
+// BlockCIDToDocShortIDKey records one document owner for a document-owned block CID.
+type BlockCIDToDocShortIDKey struct {
+	BlockCID   string
+	DocShortID uint64
 }
 
-var _ Key = (*BlockCIDToDocIDKey)(nil)
+var _ Key = (*BlockCIDToDocShortIDKey)(nil)
 
-func NewBlockCIDToDocIDKey(blockCID string, docID string) BlockCIDToDocIDKey {
-	return BlockCIDToDocIDKey{
-		BlockCID: blockCID,
-		DocID:    docID,
+func NewBlockCIDToDocShortIDKey(blockCID string, docShortID uint64) BlockCIDToDocShortIDKey {
+	return BlockCIDToDocShortIDKey{
+		BlockCID:   blockCID,
+		DocShortID: docShortID,
 	}
 }
 
-func (k BlockCIDToDocIDKey) ToString() string {
+func (k BlockCIDToDocShortIDKey) ToString() string {
 	return string(k.Bytes())
 }
 
-func (k BlockCIDToDocIDKey) Bytes() []byte {
+func (k BlockCIDToDocShortIDKey) Bytes() []byte {
 	return newDocIDSystemstoreKey(
-		[]byte(BLOCK_CID_TO_DOC_ID),
+		[]byte(BLOCK_CID_TO_DOC_SHORT_ID),
 		stringSegment(k.BlockCID),
-		stringSegment(k.DocID),
+		EncodeDocShortID(k.DocShortID),
 	)
 }
 
-func (k BlockCIDToDocIDKey) ToDS() ds.Key {
+func (k BlockCIDToDocShortIDKey) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
 }

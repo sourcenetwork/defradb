@@ -146,10 +146,15 @@ func TestBlockDocIDMappings(t *testing.T) {
 
 	const (
 		collectionShortID uint32 = 42
+		docShortID1       uint64 = 7
+		docShortID2       uint64 = 8
 		docID1                   = "bae-doc-one"
 		docID2                   = "bae-doc-two"
 	)
 	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
+
+	require.NoError(t, SetDocIDMapping(ctx, collectionShortID, docShortID1, docID1))
+	require.NoError(t, SetDocIDMapping(ctx, collectionShortID, docShortID2, docID2))
 
 	err := SetBlockDocIDMapping(ctx, fieldCID, docID1)
 	require.NoError(t, err)

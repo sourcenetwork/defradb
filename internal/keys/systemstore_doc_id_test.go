@@ -18,10 +18,9 @@ import (
 
 func TestSystemstoreDocIDKeys(t *testing.T) {
 	const (
-		collectionShortID uint32 = 42
-		docShortID        uint64 = 7
-		docID                    = "bae-doc"
-		fieldCID                 = "bafy-field-cid"
+		docShortID uint64 = 7
+		docID             = "bae-doc"
+		fieldCID          = "bafy-field-cid"
 	)
 	docShortIDSegment := string(EncodeDocShortID(docShortID))
 
@@ -46,9 +45,9 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 			want: "/d/r/" + docShortIDSegment + "/" + docID,
 		},
 		{
-			name: "block to doc id",
-			key:  NewBlockCIDToDocIDKey(fieldCID, docID),
-			want: "/d/b/" + fieldCID + "/" + docID,
+			name: "block to doc short id",
+			key:  NewBlockCIDToDocShortIDKey(fieldCID, docShortID),
+			want: "/d/b/" + fieldCID + "/" + docShortIDSegment,
 		},
 	}
 

@@ -135,14 +135,24 @@ func SetBlockDocIDMapping(
 		return nil
 	}
 
+	docRef, found, err := GetDocRef(ctx, docID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return corekv.ErrNotFound
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes(),
+		keys.NewBlockCIDToDocShortIDKey(blockCID.String(), docRef.DocShortID).Bytes(),
 		[]byte{},
 	)
 }
 
+// GetDocIDsForBlockFromStore returns every DocID that owns blockCID.
+// Field blocks can be byte-identical across documents now that blocks do not encode a DocID.
 func GetDocIDsForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
@@ -152,7 +162,7 @@ func GetDocIDsForBlockFromStore(
 		return nil, nil
 	}
 
-	prefix := keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes()
+	prefix := keys.NewBlockCIDToDocShortIDKey(blockCID.String(), 0).Bytes()
 	prefix = append(prefix, '/')
 	iter, err := store.Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix,
@@ -171,9 +181,20 @@ func GetDocIDsForBlockFromStore(
 		if !hasNext {
 			break
 		}
-		docID := bytes.TrimPrefix(iter.Key(), prefix)
-		if len(docID) != 0 {
-			docIDs = append(docIDs, string(docID))
+		docShortIDBytes := bytes.TrimPrefix(iter.Key(), prefix)
+		if len(docShortIDBytes) == 0 {
+			continue
+		}
+		docShortID, err := keys.DecodeDocShortID(docShortIDBytes)
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		docID, found, err := GetDocIDFromStore(ctx, store, docShortID)
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		if found {
+			docIDs = append(docIDs, docID)
 		}
 	}
 	if err := iter.Close(); err != nil {
@@ -206,7 +227,11 @@ func DeleteBlockDocIDMapping(
 	if !blockCID.Defined() || docID == "" {
 		return nil
 	}
-	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())
+	docRef, found, err := GetDocRefFromStore(ctx, store, docID)
+	if err != nil || !found {
+		return err
+	}
+	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocShortIDKey(blockCID.String(), docRef.DocShortID).Bytes())
 }
 
 func DeleteDocIDMappings(

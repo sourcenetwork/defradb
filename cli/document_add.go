@@ -137,8 +137,8 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
-	// Used by the CLI client adapter to copy save-assigned IDs back onto caller docs.
 	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
+	// tests/clients/cli needs saved IDs, normal CLI output should stay quiet.
 	cmd.Flags().Lookup("return-ids").Hidden = true
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
