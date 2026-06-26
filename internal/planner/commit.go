@@ -629,7 +629,7 @@ func (n *dagScanNode) commitDocID(
 		return n.activeDocID.Value(), true, nil
 	}
 	if n.activeDocShortID.HasValue() {
-		docID, err := n.docIDForDocShortID(n.activeDocShortID.Value())
+		docID, _, err := id.GetDocID(n.planner.ctx, n.activeDocShortID.Value())
 		if err != nil {
 			return "", false, err
 		}
@@ -646,15 +646,4 @@ func (n *dagScanNode) docIDForBlockCID(blockCID cid.Cid) (string, bool, error) {
 		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
 		blockCID,
 	)
-}
-
-func (n *dagScanNode) docIDForDocShortID(docShortID uint64) (string, error) {
-	docID, found, err := id.GetDocID(n.planner.ctx, docShortID)
-	if err != nil {
-		return "", err
-	}
-	if found {
-		return docID, nil
-	}
-	return "", nil
 }

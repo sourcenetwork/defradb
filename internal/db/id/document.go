@@ -152,7 +152,8 @@ func SetBlockDocIDMapping(
 }
 
 // GetDocIDsForBlockFromStore returns every DocID that owns blockCID.
-// Field blocks can be byte-identical across documents now that blocks do not encode a DocID.
+// Field blocks can be byte-identical across documents, so ownership is a set.
+// The index stores doc short IDs to avoid repeating DocIDs in every block key.
 func GetDocIDsForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
