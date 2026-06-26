@@ -14,14 +14,23 @@ package test_acp_dac_branchable
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // Making a collection branchable does not loosen document-level access control: a stranger still
 // cannot update a private document in a (branchable) permissioned collection.
 func TestACP_BranchableCollection_StrangerCannotUpdateDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		// A GQL update of an inaccessible document silently matches nothing rather than erroring, so
+		// this denial is asserted against the collection update API.
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
+		}),
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
