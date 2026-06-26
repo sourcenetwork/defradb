@@ -51,9 +51,6 @@ func NewWheel[K comparable](
 	if slotCount < 1 {
 		return nil, ErrInvalidSlotCount
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if onExpire == nil {
 		return nil, ErrInvalidExpireFunc
 	}
