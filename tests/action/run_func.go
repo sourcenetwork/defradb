@@ -17,7 +17,6 @@ package action
 type RunFunc struct {
 	stateful
 
-	// Func is the function to run.
 	Func func()
 }
 
