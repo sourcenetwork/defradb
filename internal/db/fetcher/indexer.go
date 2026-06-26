@@ -197,26 +197,9 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
 
-	docID := ""
-	var docShortID uint64
-	if f.currentShortDocID.HasValue() {
-		docShortID = f.currentShortDocID.Value()
-	} else {
-		var err error
-		docID = f.currentDocID.Value()
-		var found bool
-		docShortID, found, err = id.GetShortDocID(f.ctx, f.collectionShortID, docID)
-		if err != nil {
-			return immutable.None[EncodedDocument](), err
-		}
-		if !found {
-			return immutable.None[EncodedDocument](), nil
-		}
-	}
-
 	prefix := keys.DataStoreKey{
 		CollectionShortID: f.collectionShortID,
-		DocShortID:        docShortID,
+		DocShortID:        f.currentShortDocID.Value(),
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)
