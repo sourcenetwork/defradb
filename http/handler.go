@@ -23,10 +23,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// IsDevMode is a global variable for the development mode flag
-// This is checked by the http/handler_extras.go/Purge function to determine which response to send
-var IsDevMode bool = false
-
 const (
 	// VersionV0 is the identifier for the v0 API version.
 	//

@@ -169,6 +169,7 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
+		types.Any,
 		types.Blob,
 		types.JSON,
 

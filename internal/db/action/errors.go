@@ -19,9 +19,7 @@ const (
 	errActionInProgress string = "multiple actions of the same kind and collection cannot be submitted concurrently"
 )
 
-var (
-	ErrActionInProgress = errors.New(errActionInProgress)
-)
+var ErrActionInProgress = errors.New(errActionInProgress)
 
 func NewErrActionInProgress(collectionID string, action client.Action) error {
 	return errors.New(

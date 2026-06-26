@@ -365,13 +365,17 @@ func (p *Planner) Scan(
 type multiScanNode struct {
 	planNode   planNode
 	numReaders int
+
 	nextCount  int
 	initCount  int
 	startCount int
 	closeCount int
 
 	nextResult bool
-	err        error
+	nextErr    error
+	initErr    error
+	startErr   error
+	closeErr   error
 }
 
 // Init initializes the multiScanNode.
@@ -379,49 +383,38 @@ type multiScanNode struct {
 // doesn't not provide idempotency guarantees. Counting is purely for performance
 // reasons and removing it should be safe.
 func (n *multiScanNode) Init() error {
-	n.countAndCall(&n.initCount, func() error {
-		return n.planNode.Init()
-	})
-	return n.err
+	if n.initCount == 0 {
+		n.initErr = n.planNode.Init()
+	}
+	n.initCount++
+	if n.initCount == n.numReaders {
+		n.initCount = 0
+	}
+	return n.initErr
 }
 
 func (n *multiScanNode) Start() error {
-	n.countAndCall(&n.startCount, func() error {
-		return n.planNode.Start()
-	})
-	return n.err
-}
-
-// countAndCall keeps track of number of requests to call a given function by checking a
-// function's count.
-// The function is only called when the count is 0.
-// If the count is equal to the number of readers, the count is reset.
-// If the function returns an error, the error is stored in the multiScanNode.
-func (n *multiScanNode) countAndCall(count *int, f func() error) {
-	if *count == 0 {
-		err := f()
-		if err != nil {
-			n.err = err
-		}
+	if n.startCount == 0 {
+		n.startErr = n.planNode.Start()
 	}
-	*count++
-
-	// if the number of calls equals the numbers of readers
-	// reset the counter, so our next call actually executes the function
-	if *count == n.numReaders {
-		*count = 0
+	n.startCount++
+	if n.startCount == n.numReaders {
+		n.startCount = 0
 	}
+	return n.startErr
 }
 
 // Next only calls Next() on the underlying
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
-	n.countAndCall(&n.nextCount, func() (err error) {
-		n.nextResult, err = n.planNode.Next()
-		return
-	})
-
-	return n.nextResult, n.err
+	if n.nextCount == 0 {
+		n.nextResult, n.nextErr = n.planNode.Next()
+	}
+	n.nextCount++
+	if n.nextCount == n.numReaders {
+		n.nextCount = 0
+	}
+	return n.nextResult, n.nextErr
 }
 
 func (n *multiScanNode) Value() core.Doc {
@@ -441,10 +434,14 @@ func (n *multiScanNode) Kind() string {
 }
 
 func (n *multiScanNode) Close() error {
-	n.countAndCall(&n.closeCount, func() error {
-		return n.planNode.Close()
-	})
-	return n.err
+	if n.closeCount == 0 {
+		n.closeErr = n.planNode.Close()
+	}
+	n.closeCount++
+	if n.closeCount == n.numReaders {
+		n.closeCount = 0
+	}
+	return n.closeErr
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {

@@ -12,6 +12,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/spf13/cobra"
 
@@ -26,7 +27,11 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
-		Long:  `Delete documents by docID or filter and lists the number of documents deleted.`,
+		Long: `Delete documents by docID or filter and list the number of documents deleted.
+
+This is a soft delete. The document's data and commit history remain available locally
+and can be accessed using the --show-deleted flag on the 'document get' command
+or the showDeleted parameter on GraphQL queries.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
@@ -47,10 +52,15 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
+				var filterValue any
+				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+					return NewErrParsingArgument("filter", err)
+				}
+
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
 
-				res, err := col.DeleteDocumentsWithFilter(ctx, filter, deleteWithFilterOpt)
+				res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteWithFilterOpt)
 				if err != nil {
 					return err
 				}

@@ -465,28 +465,30 @@ As we add or update documents in the Article collection on *nodeA*, they will be
 
 ## Securing the HTTP API with TLS
 
-By default, DefraDB will expose its HTTP API at `http://localhost:9181/api`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
+By default, DefraDB exposes its HTTP API over plain HTTP at `http://localhost:9181/api`. It can instead serve the API over HTTPS using a TLS certificate.
 
-To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
-being the public key and `server.crt` being the private key, just do:
+DefraDB enables TLS automatically when both the certificate (`server.crt`) and the private key (`server.key`) are present in the `certs` directory inside the data and configuration directory (by default `~/.defradb/certs/`). With both files in place, just start the node:
 ```shell
-defradb start --tls
+defradb start
+```
+and the HTTP API is served over `https://localhost:9181` instead.
+
+Enabling TLS requires both files: if only one of `server.crt` and `server.key` is present (or only one of the paths below is set), `defradb start` fails with an error rather than silently starting without TLS. With neither present, DefraDB simply starts over plain HTTP.
+
+The certificate and key can be generated with your generator of choice, or with `make tls-certs`. Since they should live inside the DefraDB data and configuration directory, the recommended command is:
+```shell
+make tls-certs path="~/.defradb/certs"
 ```
 
-The keys can be generated with your generator of choice or with `make tls-certs`.
-
-Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
-
-If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be explicitly defined in addition to the `--tls` flag or `tls` set to `true` in the config.
-
-Then to start the server with TLS, using your generated keys in custom path:
+To use a certificate and key stored elsewhere, set both paths explicitly (both are required). The certificate path is `pubkeypath` and the private key path is `privkeypath`; they can be passed as flags or set in the config file:
 ```shell
-defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
-
+defradb start --pubkeypath ~/path-to/server.crt --privkeypath ~/path-to/server.key
 ```
+
+Because the certificates are self-signed, HTTPS clients must be configured to trust them (for example, `curl -k`). Note that the bundled `defradb` CLI does not yet connect to a TLS-enabled node.
 
 ## Access Control System
-Read more about the DefraDB ACP System [here](/acp/README.md)
+Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 ## Supporting CORS
 

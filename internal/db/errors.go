@@ -55,7 +55,6 @@ const (
 	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
-	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
 	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
@@ -134,6 +133,11 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 
 	errCreateMergeTxn         string = "failed to create merge transaction"
 	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
@@ -190,7 +194,6 @@ const (
 	errGetAllDocIDs               string = "failed to get all document IDs"
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
-	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
 	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
 		" first truncate it and then try again."
 )
@@ -205,6 +208,7 @@ var (
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
+	ErrUnexpectedTxnType                         = errors.New("unexpected transaction type")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
@@ -265,7 +269,6 @@ var (
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
-	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
 	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
@@ -309,11 +312,6 @@ func NewErrFailedToStoreIndexedField(key string, inner error) error {
 // description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
-}
-
-// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
-func NewCanNotDeleteIndexedField(inner error) error {
-	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was
@@ -1170,5 +1168,37 @@ func NewErrDematerializePopulatedView(name string, version string) error {
 		errDematerializePopulatedView,
 		errors.NewKV("Name", name),
 		errors.NewKV("VersionID", version),
+	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrCorruptIndexPayload returns a new error indicating that an index action's payload
+// could not be decoded.
+func NewErrCorruptIndexPayload(value []byte) error {
+	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
 	)
 }

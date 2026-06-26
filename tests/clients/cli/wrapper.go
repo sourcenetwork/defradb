@@ -53,7 +53,7 @@ type Wrapper struct {
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
 func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, nil)
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +471,7 @@ func (w *Wrapper) DeleteCollection(
 	if opt.ActiveOnly {
 		args = append(args, "--active-only")
 	}
-	args = append(args, strings.Join(names, ","))
+	args = append(args, "--collection-name", strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -683,14 +683,14 @@ func (w *Wrapper) GetCollections(
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	args := []string{"client", "index", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := json.Unmarshal(data, &indexes); err != nil {
 		return nil, err
 	}

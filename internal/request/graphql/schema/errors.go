@@ -34,7 +34,6 @@ const (
 	errPolicyUnknownArgument            string = "policy with unknown argument"
 	errPolicyInvalidIDProp              string = "policy directive with invalid id property"
 	errPolicyInvalidResourceProp        string = "policy directive with invalid resource property"
-	errDefaultValueType                 string = "default value type must match field type"
 	errDefaultValueNotAllowed           string = "default value is not allowed for this field type"
 	errDefaultValueInvalid              string = "default value is invalid"
 	errDefaultValueOneArg               string = "default value must specify one argument"
@@ -180,20 +179,13 @@ func NewErrDefaultValueOneArg(field string) error {
 	)
 }
 
-func NewErrDefaultValueInvalid(field string, arg string) error {
+func NewErrDefaultValueInvalid(fieldName string, expectedType string, actualType string, value any) error {
 	return errors.New(
 		errDefaultValueInvalid,
-		errors.NewKV("Field", field),
-		errors.NewKV("Arg", arg),
-	)
-}
-
-func NewErrDefaultValueType(name string, expected string, actual string) error {
-	return errors.New(
-		errDefaultValueType,
-		errors.NewKV("Name", name),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Expected", expectedType),
+		errors.NewKV("Actual", actualType),
+		errors.NewKV("Value", value),
 	)
 }
 
