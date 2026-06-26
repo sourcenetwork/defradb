@@ -369,3 +369,19 @@ func validateCLIArgs(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
+
+// parseAddresses splits each argument in the slice by commas, trims spaces, and
+// returns the resulting slice of non-empty addresses.
+func parseAddresses(args []string) []string {
+	var addresses []string
+	for _, arg := range args {
+		for _, addr := range strings.Split(arg, ",") {
+			addr = strings.TrimSpace(addr)
+			if addr == "" {
+				continue
+			}
+			addresses = append(addresses, addr)
+		}
+	}
+	return addresses
+}
