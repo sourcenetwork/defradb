@@ -539,7 +539,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 
 	defer txn.Discard()
 
-	err = db.refreshViews(ctx, opt, true, true)
+	err = db.refreshViews(ctx, opt)
 	if err != nil {
 		return err
 	}
