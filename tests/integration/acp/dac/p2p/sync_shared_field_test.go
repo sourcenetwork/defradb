@@ -105,11 +105,6 @@ func sharedFieldSyncTestCase(grantedAge, otherAge int) testUtils.TestCase {
 				`,
 			},
 
-			testUtils.AddCollectionSubscription{
-				NodeID:        1,
-				CollectionIDs: []int{0},
-			},
-
 			// The document node 1 will be granted access to (owned by identity 1).
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),
@@ -144,6 +139,18 @@ func sharedFieldSyncTestCase(grantedAge, otherAge int) testUtils.TestCase {
 				DocID:             0,
 				Relation:          "reader",
 				ExpectedExistence: false,
+			},
+
+			testUtils.AddCollectionSubscription{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+
+			testUtils.SyncDocs{
+				NodeID:       1,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				SourceNodes:  []int{0},
 			},
 
 			testUtils.WaitForSync{},
