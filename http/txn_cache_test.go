@@ -42,7 +42,7 @@ func TestTxnCache_HeldLeaseExpiresAfterRelease(t *testing.T) {
 	require.NoError(t, err)
 
 	cache := testTxnCache(t, 30*time.Millisecond)
-	require.NoError(t, cache.Store(tx, 0))
+	require.NoError(t, cache.Store(tx))
 
 	lease, ok := cache.Acquire(tx.ID())
 	require.True(t, ok)
@@ -63,7 +63,7 @@ func TestTxnCache_ConcurrentLeasesExpireAfterLastRelease(t *testing.T) {
 	require.NoError(t, err)
 
 	cache := testTxnCache(t, 30*time.Millisecond)
-	require.NoError(t, cache.Store(tx, 0))
+	require.NoError(t, cache.Store(tx))
 
 	firstLease, ok := cache.Acquire(tx.ID())
 	require.True(t, ok)
@@ -87,7 +87,7 @@ func TestTxnCache_LoadAndDeletePreventsReleaseReschedule(t *testing.T) {
 	require.NoError(t, err)
 
 	cache := testTxnCache(t, 30*time.Millisecond)
-	require.NoError(t, cache.Store(tx, 0))
+	require.NoError(t, cache.Store(tx))
 
 	lease, ok := cache.Acquire(tx.ID())
 	require.True(t, ok)
@@ -108,7 +108,7 @@ func TestTransactionMiddleware_HeldRequestExpiresAfterHandlerReturns(t *testing.
 	require.NoError(t, err)
 
 	cache := testTxnCache(t, 30*time.Millisecond)
-	require.NoError(t, cache.Store(tx, 0))
+	require.NoError(t, cache.Store(tx))
 
 	entered := make(chan struct{})
 	releaseHandler := make(chan struct{})

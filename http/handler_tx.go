@@ -31,7 +31,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	txs := mustGetContextTxnCache(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
-	txnTTL, err := parseTxnTTL(req)
+	txnTTL, hasTxnTTL, err := parseTxnTTL(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -42,7 +42,12 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := txs.Store(tx, txnTTL); err != nil {
+	if hasTxnTTL {
+		err = txs.StoreFor(tx, txnTTL)
+	} else {
+		err = txs.Store(tx)
+	}
+	if err != nil {
 		tx.Discard()
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -66,7 +71,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 
 	err = tx.Commit()
 	if err != nil {
-		if storeErr := txs.Store(tx, txnTTL); storeErr != nil {
+		if storeErr := txs.StoreFor(tx, txnTTL); storeErr != nil {
 			log.ErrorE("failed to restore transaction after commit error", storeErr)
 			tx.Discard()
 		}
@@ -95,20 +100,20 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func parseTxnTTL(req *http.Request) (time.Duration, error) {
+func parseTxnTTL(req *http.Request) (time.Duration, bool, error) {
 	raw := req.URL.Query().Get("ttl")
 	if raw == "" {
-		return 0, nil
+		return 0, false, nil
 	}
 	txnTTL, err := time.ParseDuration(raw)
 	if err == nil {
-		return txnTTL, nil
+		return txnTTL, true, nil
 	}
 	seconds, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
-	return time.Duration(seconds) * time.Second, nil
+	return time.Duration(seconds) * time.Second, true, nil
 }
 
 func (h *txHandler) bindRoutes(router *Router) {

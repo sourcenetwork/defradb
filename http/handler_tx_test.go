@@ -32,36 +32,50 @@ func TestParseTxnTTL(t *testing.T) {
 	t.Run("duration", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=150ms", nil)
 
-		txnTTL, err := parseTxnTTL(req)
+		txnTTL, hasTTL, err := parseTxnTTL(req)
 
 		require.NoError(t, err)
+		require.True(t, hasTTL)
 		require.Equal(t, 150*time.Millisecond, txnTTL)
 	})
 
 	t.Run("seconds", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=2", nil)
 
-		txnTTL, err := parseTxnTTL(req)
+		txnTTL, hasTTL, err := parseTxnTTL(req)
 
 		require.NoError(t, err)
+		require.True(t, hasTTL)
 		require.Equal(t, 2*time.Second, txnTTL)
+	})
+
+	t.Run("zero", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=0", nil)
+
+		txnTTL, hasTTL, err := parseTxnTTL(req)
+
+		require.NoError(t, err)
+		require.True(t, hasTTL)
+		require.Zero(t, txnTTL)
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx", nil)
 
-		txnTTL, err := parseTxnTTL(req)
+		txnTTL, hasTTL, err := parseTxnTTL(req)
 
 		require.NoError(t, err)
+		require.False(t, hasTTL)
 		require.Zero(t, txnTTL)
 	})
 
 	t.Run("invalid", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=soon", nil)
 
-		_, err := parseTxnTTL(req)
+		_, hasTTL, err := parseTxnTTL(req)
 
 		require.Error(t, err)
+		require.False(t, hasTTL)
 	})
 }
 
@@ -120,6 +134,31 @@ func TestTxHandler_GivenNoTTL_UsesDefaultTransactionTTL(t *testing.T) {
 	cached, ok := handler.txs.cache.Load(response.ID)
 	require.True(t, ok)
 	require.Equal(t, defaultTTL, cached.ttl)
+}
+
+func TestTxHandler_GivenZeroTTL_UsesZeroTransactionTTL(t *testing.T) {
+	cdb := setupDatabase(t)
+	handler, err := NewHandler(cdb, &options.NodeOptions{
+		HTTP: options.NodeHTTPOptions{
+			TxnTTL:        100 * time.Millisecond,
+			TxnTTLTick:    time.Second,
+			TxnTTLBuckets: 1,
+		},
+	})
+	require.NoError(t, err)
+	defer handler.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/tx?ttl=0", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Result().StatusCode)
+	var response CreateTxResponse
+	require.NoError(t, json.NewDecoder(rec.Result().Body).Decode(&response))
+
+	cached, ok := handler.txs.cache.Load(response.ID)
+	require.True(t, ok)
+	require.Zero(t, cached.ttl)
 }
 
 func TestTxHandler_GivenNegativeTTL_ReturnsError(t *testing.T) {
@@ -181,7 +220,7 @@ func TestTxHandlerCommit_GivenCommitError_RestoresTransaction(t *testing.T) {
 	tx := clientmocks.NewTxn(t)
 	tx.EXPECT().ID().Return(txID)
 	tx.EXPECT().Commit().Return(commitErr)
-	require.NoError(t, txs.Store(tx, txnTTL))
+	require.NoError(t, txs.StoreFor(tx, txnTTL))
 
 	routeCtx := chi.NewRouteContext()
 	routeCtx.URLParams.Add("id", strconv.FormatUint(txID, 10))

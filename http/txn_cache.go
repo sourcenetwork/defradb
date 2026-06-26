@@ -95,12 +95,13 @@ func txnCacheConfig(opts *options.NodeHTTPOptions) txnCacheConfiguration {
 	return cfg
 }
 
-// Store caches txn until it has been idle for txnTTL. A txnTTL of zero uses the
-// cache's default TTL.
-func (c *txnCache) Store(txn client.Txn, txnTTL time.Duration) error {
-	if txnTTL == 0 {
-		txnTTL = c.defaultTTL
-	}
+// Store caches txn until it has been idle for the cache's default TTL.
+func (c *txnCache) Store(txn client.Txn) error {
+	return c.StoreFor(txn, c.defaultTTL)
+}
+
+// StoreFor caches txn until it has been idle for txnTTL.
+func (c *txnCache) StoreFor(txn client.Txn, txnTTL time.Duration) error {
 	return c.cache.Store(txn.ID(), cachedTxn{txn: txn, ttl: txnTTL}, txnTTL)
 }
 
