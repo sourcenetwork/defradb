@@ -31,6 +31,11 @@ import (
 // multi-batch runs.
 var indexBackfillBatchSize = 100
 
+// IndexBuildGate is a test hook called at each backfill batch boundary. Tests set it to block a
+// build at the building state so that window is observable. It is nil in production (only the nil
+// check runs) and exported so tests in other packages can install it.
+var IndexBuildGate func(ctx context.Context, collectionID string, indexID uint32)
+
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context
 // and commits it afterwards. When the attempt or the commit fails with a transaction
 // conflict, the attempt is re-run with a new transaction, up to db.MaxTxnRetries() times;
@@ -131,6 +136,10 @@ func (db *DB) fillIndexBatches(
 	watermark := startAfter
 
 	for {
+		if IndexBuildGate != nil {
+			IndexBuildGate(ctx, def.CollectionID, desc.ID)
+		}
+
 		var (
 			lastDocID string
 			n         int

@@ -12,6 +12,9 @@
 package action
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -40,6 +43,13 @@ type DeleteIndex struct {
 
 	// The index name of the secondary index within the collection.
 	IndexName string
+
+	// Async, when true, returns without waiting for the entry GC. The index leaves ListIndexes at
+	// once (the definition is removed synchronously), but a dropping record persists until the
+	// worker finishes collecting the entries.
+	//
+	// By default the action waits for the GC, so a following raw-entry assertion sees them gone.
+	Async bool
 
 	// Any error expected from the action. Optional.
 	//
@@ -87,10 +97,50 @@ func (a *DeleteIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
+		// Capture the index ID before deletion so the wait below can target its drop record.
+		indexID, hadIndex := indexIDByName(a.s, collection, a.IndexName)
+
 		err = collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+
+		// Unless the test wants to observe the dropping window, wait for the drop record to clear
+		// so a following raw-entry assertion sees them gone.
+		if err == nil && !a.Async && hadIndex {
+			waitForIndexDropped(a.s, node, collection.Version().CollectionID, indexID)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// indexIDByName returns the ID of the named index on the collection, and whether it was found.
+func indexIDByName(s *state.State, collection client.Collection, name string) (uint32, bool) {
+	results, err := collection.ListIndexes(s.Ctx)
+	require.NoError(s.T, err)
+	for _, r := range results {
+		if r.Description.Name == name {
+			return r.Description.ID, true
+		}
+	}
+	return 0, false
+}
+
+// waitForIndexDropped blocks until no in-progress drop record remains for the index, i.e. the GC has
+// finished and cleared it. It polls ListActions so it composes with explicit Wait actions.
+func waitForIndexDropped(s *state.State, node *state.NodeState, collectionID string, indexID uint32) {
+	subject := strconv.FormatUint(uint64(indexID), 10)
+	require.Eventually(s.T, func() bool {
+		actions, err := node.ListActions(s.Ctx)
+		require.NoError(s.T, err)
+		for _, ex := range actions {
+			if ex.CollectionID == collectionID &&
+				ex.Action == client.DropIndexAction &&
+				ex.Subject == subject &&
+				ex.Status == client.InProgressActionStatus {
+				return false
+			}
+		}
+		return true
+	}, indexBuildTimeout, time.Millisecond, "timed out waiting for index %d drop to finish", indexID)
 }

@@ -85,7 +85,7 @@ func TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	oldEpoch := readEpoch(t, ctx, db, collectionID, desc.ID)
@@ -125,7 +125,7 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 	oldEpoch := readEpoch(t, ctx, db, collectionID, desc.ID) // epoch 1
 
@@ -157,7 +157,7 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable with stale epoch", name)
 	}
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
 	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))

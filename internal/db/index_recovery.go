@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -23,63 +22,14 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// recoverIndexStates inspects all index state records and resolves any that were
-// left in a transient state by a previous interrupted shutdown.
+// The functions in this file resolve a single index's transient state: a building record left by an
+// interrupted backfill, a dropping record left by interrupted GC, or superseded epochs left by an
+// interrupted rebuild. The indexBuildWorker dispatches them, both on startup and on demand for an
+// async NewIndex/DeleteIndex. See index_worker.go for the drain loop and concurrency control.
 //
-// A building record means a backfill was interrupted; the build is resumed from
-// its persisted watermark.
-// A dropping record means GC was interrupted; deletion is resumed.
-// Failed and ready records are left untouched.
-//
-// Errors from individual recoveries are logged and skipped so that a partially
-// recoverable database can still open.
-//
-// Indexes are the only action recovered on startup for v1; truncate and datastore refresh
-// are not yet resumed (tracked by https://github.com/sourcenetwork/defradb/issues/4874). They
-// are recovered because a half-built index returns incomplete query results.
-func (db *DB) recoverIndexStates(ctx context.Context) error {
-	// Each recovery helper opens its own transaction, so the listing below is read in a
-	// separate short-lived transaction that is discarded before any mutation. Recovery thus
-	// never holds two transactions at once, keeping it safe on stores that forbid concurrent
-	// transactions (leveldb).
-	states, err := db.listAllIndexStates(ctx)
-	if err != nil {
-		log.ErrorE("Failed to list index states during recovery", err)
-		return nil
-	}
-
-	for _, rec := range states {
-		if ctx.Err() != nil {
-			return nil
-		}
-		switch {
-		case rec.State.isBuilding():
-			if err := db.recoverBuilding(ctx, rec.Key, rec.State); err != nil {
-				log.ErrorE("Failed to recover building index", err,
-					corelog.String("collectionID", rec.Key.CollectionID),
-					corelog.Any("indexID", rec.Key.IndexID),
-				)
-			}
-		case rec.State.isDropping():
-			if err := db.recoverDropping(ctx, rec.Key); err != nil {
-				log.ErrorE("Failed to recover dropping index", err,
-					corelog.String("collectionID", rec.Key.CollectionID),
-					corelog.Any("indexID", rec.Key.IndexID),
-				)
-			}
-		default:
-			// A failed index requires no recovery action.
-		}
-	}
-
-	// A rebuild leaves superseded epochs with no record, and may have crashed after its build
-	// finished but before collecting them. Sweep every index so any such stale entries are
-	// collected; it is a no-op for an index with only its live epoch present.
-	if err := db.recoverStaleEpochs(ctx); err != nil {
-		log.ErrorE("Failed to collect stale index epochs during recovery", err)
-	}
-	return nil
-}
+// Only index actions are recovered; truncate and datastore refresh are not yet resumed (tracked by
+// https://github.com/sourcenetwork/defradb/issues/4874). A half-built index returns incomplete
+// query results, so it must be recovered.
 
 // listAllIndexStates opens a read-only transaction, scans all index state records,
 // and returns them. The transaction is discarded before returning.

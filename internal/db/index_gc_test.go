@@ -124,7 +124,7 @@ func TestGCIndex_MultiBatch_DeletesAllEntries(t *testing.T) {
 		addUserDoc(t, ctx, col, fmt.Sprintf("name%02d", i))
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -138,7 +138,7 @@ func TestGCIndex_MultiBatch_DeletesAllEntries(t *testing.T) {
 	col, err = db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	require.NoError(t, col.DeleteIndex(ctx, desc.Name))
+	deleteIndexSync(t, ctx, db, col, desc.Name)
 
 	// The state record must be gone.
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
@@ -161,13 +161,13 @@ func TestGCIndex_EmptyIndex_Succeeds(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	require.NoError(t, col.DeleteIndex(ctx, desc.Name))
+	deleteIndexSync(t, ctx, db, col, desc.Name)
 
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
 

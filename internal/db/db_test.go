@@ -35,6 +35,20 @@ func newBadgerDB(ctx context.Context) (*DB, error) {
 	return newDB(ctx, rootstore, adminInfo)
 }
 
+// newBadgerDBNoIndexWorker opens an in-memory DB whose index build worker is constructed but not
+// started, so a test can drive draining via db.indexBuildWorker.drainSync without the background
+// loop racing its hand-seeded records.
+func newBadgerDBNoIndexWorker(t *testing.T, ctx context.Context) *DB {
+	t.Helper()
+	suppressIndexWorkerRun = true
+	defer func() { suppressIndexWorkerRun = false }()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	return db
+}
+
 func TestNewDB(t *testing.T) {
 	ctx := context.Background()
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))

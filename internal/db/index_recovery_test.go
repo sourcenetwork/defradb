@@ -33,7 +33,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -49,7 +49,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	assert.Equal(t, len(names), countIndexEntries(t, ctx, db, shortID, desc.ID))
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
@@ -68,7 +68,7 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -83,7 +83,7 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
 	assert.Equal(t, 0, after, "expected 0 index entries after recovery")
@@ -102,7 +102,7 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 		docs[i] = addUserDoc(t, ctx, col, "name"+string(rune('0'+i)))
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -128,7 +128,7 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	assert.Equal(t, docsAfterWatermark, countIndexEntries(t, ctx, db, shortID, desc.ID),
 		"only docs after the watermark should be re-indexed")
@@ -150,9 +150,9 @@ func TestRecoverIndexStates_OrphanedBuildingRecord_Skipped(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
-	_, err = newNameIndex(t, ctx, col)
+	_, err = newNameIndex(t, ctx, db, col)
 	require.NoError(t, err, "system must remain usable after skipping orphan record")
 }
 
@@ -166,7 +166,7 @@ func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T)
 	addUserDoc(t, ctx, col, "Alice")
 	addUserDoc(t, ctx, col, "Bob")
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -185,7 +185,7 @@ func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T)
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	// The dropping record was still processed despite the orphan erroring.
 	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
@@ -199,7 +199,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -209,7 +209,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	state := readIndexState(t, ctx, db, collectionID, desc.ID)
 	assert.True(t, state.isFailed())
@@ -217,7 +217,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 
 	// A db with no records: recovery is a no-op.
 	db2, _ := setupUserCollection(t, ctx)
-	require.NoError(t, db2.recoverIndexStates(context.Background()))
+	db2.indexBuildWorker.drainSync(context.Background())
 }
 
 // TestRecoverStaleEpochs_SweepsBelowBuildingEpoch checks the stale-epoch sweep collects a
@@ -225,7 +225,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 // migration invalidates the old epoch's values and a building index is excluded from query planning
 // (queries full-scan), so the old epoch is neither valid nor read and is safe to collect early. The
 // delete range is bounded strictly below the live epoch, so the in-progress build's epoch is left
-// intact. recoverStaleEpochs is called directly here (not via recoverIndexStates, which would also
+// intact. recoverStaleEpochs is called directly here (not via the worker drain, which would also
 // resume the build) to isolate the sweep.
 func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
 	ctx := context.Background()
@@ -237,7 +237,7 @@ func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1))
 

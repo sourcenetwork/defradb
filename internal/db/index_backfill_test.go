@@ -29,18 +29,26 @@ import (
 )
 
 // setupUserCollection opens a DB with a `User { name: String }` collection, closed on cleanup.
+//
+// The build worker is suppressed: these tests drive builds and drops via drainSync (through
+// newNameIndex / deleteIndexSync) rather than the async worker, which is covered by
+// index_worker_test.go and the integration tests. A running worker would also race these tests'
+// direct use of a shared *collection, which is not safe for concurrent use.
 func setupUserCollection(t *testing.T, ctx context.Context) (*DB, client.Collection) {
 	t.Helper()
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := newBadgerDBNoIndexWorker(t, ctx)
+	return db, addUserCollection(t, ctx, db)
+}
 
-	_, err = db.AddCollection(ctx, `type User { name: String }`)
+// addUserCollection adds a `User { name: String }` collection and returns it.
+func addUserCollection(t *testing.T, ctx context.Context, db *DB) client.Collection {
+	t.Helper()
+	_, err := db.AddCollection(ctx, `type User { name: String }`)
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
-	return db, col
+	return col
 }
 
 // addUserDoc saves a User document with the given name.
@@ -104,12 +112,28 @@ func queryUserByName(t *testing.T, db *DB, ctx context.Context, name string) []m
 	return slice
 }
 
-// newNameIndex creates an index on "name", returning the error for the caller to assert.
-func newNameIndex(t *testing.T, ctx context.Context, col client.Collection) (client.IndexDescription, error) {
+// newNameIndex creates an index on "name" and drains the build, so the index is built (or failed)
+// when it returns. NewIndex is async, so the drain reproduces the old blocking behaviour for tests
+// that need a built index. The build outcome is read from the state record, not a return error.
+func newNameIndex(t *testing.T, ctx context.Context, db *DB, col client.Collection) (client.IndexDescription, error) {
 	t.Helper()
-	return col.NewIndex(ctx, client.NewIndexRequest{
+	desc, err := col.NewIndex(ctx, client.NewIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: "name"}},
 	})
+	if err != nil {
+		return desc, err
+	}
+	db.indexBuildWorker.drainSync(ctx)
+	return desc, nil
+}
+
+// deleteIndexSync deletes the named index and drains the GC, so the entries are gone when it
+// returns. DeleteIndex is async, so the drain reproduces the old blocking behaviour for tests that
+// assert the entries are removed.
+func deleteIndexSync(t *testing.T, ctx context.Context, db *DB, col client.Collection, indexName string) {
+	t.Helper()
+	require.NoError(t, col.DeleteIndex(ctx, indexName))
+	db.indexBuildWorker.drainSync(ctx)
 }
 
 // TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState builds an index over 10 docs in
@@ -128,7 +152,7 @@ func TestBackfillIndex_MultiBatch_IndexesAllDocsAndClearsState(t *testing.T) {
 		addUserDoc(t, ctx, col, names[i])
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	requireNoIndexState(t, ctx, db, col.Version().CollectionID, desc.ID)
@@ -146,7 +170,7 @@ func TestBackfillIndex_EmptyCollection_ClearsState(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	requireNoIndexState(t, ctx, db, col.Version().CollectionID, desc.ID)
@@ -206,14 +230,13 @@ func TestWithTxnRetries_NonRetryableError_NoRetry(t *testing.T) {
 }
 
 // TestBackfillIndex_NonRetryableError_MarksFailed checks that a unique-violation backfill
-// (non-retryable) leaves the definition listed with a failed state, not rolled back.
+// (non-retryable) leaves the definition listed with a failed state, not rolled back. The failure
+// surfaces as a failed state record, not a return error from NewIndex.
 func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	ctx := context.Background()
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := newBadgerDBNoIndexWorker(t, ctx)
 
-	_, err = db.AddCollection(ctx, "type User { name: String\n age: Int }")
+	_, err := db.AddCollection(ctx, "type User { name: String\n age: Int }")
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -228,13 +251,14 @@ func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc2))
 
+	// NewIndex only stages the building record; the backfill fails in the drain below.
 	_, err = col.NewIndex(ctx, client.NewIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: "age"}},
 		Unique: true,
 	})
+	require.NoError(t, err)
 
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "can not index a doc's field(s) that violates unique index")
+	db.indexBuildWorker.drainSync(ctx)
 
 	indexes, listErr := col.ListIndexes(ctx)
 	require.NoError(t, listErr)
@@ -243,6 +267,7 @@ func TestBackfillIndex_NonRetryableError_MarksFailed(t *testing.T) {
 	state := readIndexState(t, ctx, db, col.Version().CollectionID, indexes[0].Description.ID)
 	assert.True(t, state.isFailed())
 	assert.NotEmpty(t, state.Reason)
+	assert.Contains(t, state.Reason, "can not index a doc's field(s) that violates unique index")
 }
 
 // TestBackfillIndex_DocUpdatedAfterIndexing_NoStaleEntry checks the write path replaces an
@@ -255,7 +280,7 @@ func TestBackfillIndex_DocUpdatedAfterIndexing_NoStaleEntry(t *testing.T) {
 
 	doc := addUserDoc(t, ctx, col, "old")
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -277,11 +302,9 @@ func TestBackfillIndex_DocUpdatedAfterIndexing_NoStaleEntry(t *testing.T) {
 // a live write got there first) skips it without error and adds no duplicate.
 func TestBackfillIndex_UniqueIndex_ToleratesSameDocEntry(t *testing.T) {
 	ctx := context.Background()
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := newBadgerDBNoIndexWorker(t, ctx)
 
-	_, err = db.AddCollection(ctx, "type User { name: String\n age: Int }")
+	_, err := db.AddCollection(ctx, "type User { name: String\n age: Int }")
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -294,6 +317,7 @@ func TestBackfillIndex_UniqueIndex_ToleratesSameDocEntry(t *testing.T) {
 		Unique: true,
 	})
 	require.NoError(t, err)
+	db.indexBuildWorker.drainSync(ctx)
 
 	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
 	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))

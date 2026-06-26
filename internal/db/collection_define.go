@@ -354,11 +354,9 @@ existingVersionLoop:
 					return nil, err
 				}
 				for _, indexReq := range indexReqs {
-					_, backfill, err := colObj.newIndex(ctx, indexReq)
-					if err != nil {
+					if _, err := colObj.newIndex(ctx, indexReq); err != nil {
 						return nil, err
 					}
-					backfills = append(backfills, backfill)
 				}
 				col = colObj.Version()
 			}

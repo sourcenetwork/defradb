@@ -59,7 +59,7 @@ func TestBackfillIndex_Completion_PublishesNoDropEvent(t *testing.T) {
 	require.NoError(t, err)
 	defer db.events.Unsubscribe(sub)
 
-	_, err = newNameIndex(t, ctx, col)
+	_, err = newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	for _, exec := range drainActionEvents(t, sub) {
@@ -87,7 +87,7 @@ func TestBackfillIndex_MultiBatch_PublishesSingleBuildingEvent(t *testing.T) {
 	require.NoError(t, err)
 	defer db.events.Unsubscribe(sub)
 
-	_, err = newNameIndex(t, ctx, col)
+	_, err = newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	building := 0
@@ -128,11 +128,9 @@ func TestScanIndexStates_IgnoresCollectionWideActions(t *testing.T) {
 // record; only failed/in-flight records remain.)
 func TestListActions_AfterFailedBuild_ReportsErroredRecordWithSubject(t *testing.T) {
 	ctx := context.Background()
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := newBadgerDBNoIndexWorker(t, ctx)
 
-	_, err = db.AddCollection(ctx, "type User { name: String\n age: Int }")
+	_, err := db.AddCollection(ctx, "type User { name: String\n age: Int }")
 	require.NoError(t, err)
 
 	col, err := db.GetCollectionByName(ctx, "User")
@@ -146,13 +144,15 @@ func TestListActions_AfterFailedBuild_ReportsErroredRecordWithSubject(t *testing
 	require.NoError(t, err)
 	require.NoError(t, col.AddDocument(ctx, doc2))
 
-	// The implicit-txn path returns a zero desc on backfill failure, so the index ID is read
-	// back from the listing (the definition persists with a failed status).
+	// NewIndex only stages the build. The backfill fails in the drain below, leaving the
+	// definition with a failed status, so the index ID is read back from the listing.
 	_, err = col.NewIndex(ctx, client.NewIndexRequest{
 		Fields: []client.IndexedFieldDescription{{Name: "age"}},
 		Unique: true,
 	})
-	require.Error(t, err)
+	require.NoError(t, err)
+
+	db.indexBuildWorker.drainSync(ctx)
 
 	indexes, err := col.ListIndexes(ctx)
 	require.NoError(t, err)

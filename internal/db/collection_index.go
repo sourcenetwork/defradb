@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"slices"
@@ -167,14 +166,17 @@ func (c *collection) deleteIndexedDocWithID(
 //
 // The index description will be stored in the system store.
 //
-// Existing documents are backfilled in batched transactions after the definition
-// commits, so no single transaction exceeds the storage engine's size limit.
-// With an explicit (caller-provided) transaction the backfill runs inside the
-// caller's Commit() and its error cannot be returned — a failure is recorded
-// on the index state as status "failed" with a reason.
+// NewIndex returns once the definition and a "building" state record are committed; it does not
+// wait for the backfill. A background worker indexes existing documents in batched transactions and
+// flips the index to "ready" (or "failed"). While building, the index is excluded from query
+// planning, so queries full-scan and still return correct results.
 //
-// If the backfill fails, the index definition remains in place with a failed status.
-// It is not maintained by subsequent writes. Use DeleteIndex to remove it before recreating.
+// A build failure is not returned here, since the build runs after this call returns. It surfaces
+// as a "failed" status and reason via ListIndexes; callers that need the outcome poll for it. A
+// failed index is not maintained by writes; use DeleteIndex to remove it before recreating.
+//
+// Live writes maintain the building index, so the backfill and concurrent writes converge on the
+// same final entries.
 func (c *collection) NewIndex(
 	ctx context.Context,
 	desc client.NewIndexRequest,
@@ -198,30 +200,19 @@ func (c *collection) NewIndex(
 
 	defer txn.Discard()
 
-	indexDesc, backfill, err := c.newIndex(ctx, desc)
+	indexDesc, err := c.newIndex(ctx, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
 
+	// With an explicit transaction the caller's Commit() commits the build record and publishes
+	// the event that wakes the worker. With an implicit one we commit here. Either way the worker
+	// runs the backfill.
 	if txn.explicit {
-		collectionID := c.def.CollectionID
-		indexID := indexDesc.ID
-		txn.OnSuccess(func() {
-			if err := backfill(ctx); err != nil {
-				log.ErrorE("deferred index backfill failed", err,
-					corelog.String("collectionID", collectionID),
-					corelog.Any("indexID", indexID),
-				)
-			}
-		})
 		return indexDesc, nil
 	}
 
 	if err := txn.Commit(); err != nil {
-		return client.IndexDescription{}, err
-	}
-
-	if err := backfill(ctx); err != nil {
 		return client.IndexDescription{}, err
 	}
 	return indexDesc, nil
@@ -288,18 +279,18 @@ func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32
 	return uint32(next), nil
 }
 
-// newIndex stages the index definition in the current transaction and returns a
-// backfill function the caller must run after the transaction commits.
+// newIndex stages the definition and a "building" state record in the current transaction. The
+// commit publishes a build event that wakes the worker, which backfills existing documents.
 //
-// c.def.Indexes and c.indexes are updated so writes on this collection instance
-// maintain the new index immediately; both are rolled back if staging fails.
+// c.def.Indexes and c.indexes are updated so writes on this instance maintain the new index at
+// once; both are rolled back if staging fails.
 func (c *collection) newIndex(
 	ctx context.Context,
 	newReq client.NewIndexRequest,
-) (client.IndexDescription, func(context.Context) error, error) {
+) (client.IndexDescription, error) {
 	desc, err := processNewIndexRequest(ctx, c.Version(), newReq)
 	if err != nil {
-		return client.IndexDescription{}, nil, err
+		return client.IndexDescription{}, err
 	}
 
 	c.def.Indexes = append(c.def.Indexes, desc)
@@ -307,7 +298,7 @@ func (c *collection) newIndex(
 	err = description.SaveCollection(ctx, c.db.collectionRepository, c.def)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
-		return client.IndexDescription{}, nil, err
+		return client.IndexDescription{}, err
 	}
 
 	// This registers the build without an "already in progress" guard, which is safe because
@@ -316,15 +307,15 @@ func (c *collection) newIndex(
 	err = c.db.startIndexBuild(ctx, c.def.CollectionID, desc.ID)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
-		return client.IndexDescription{}, nil, err
+		return client.IndexDescription{}, err
 	}
 
-	// building=true: this instance maintains the index through the backfill that runs
-	// after commit, so writes in that window must use the build-tolerant save/delete.
+	// building=true: this instance maintains the index through the background backfill, so
+	// writes in that window must use the build-tolerant save/delete.
 	colIndex, err := NewCollectionIndex(ctx, c, desc, true)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
-		return client.IndexDescription{}, nil, err
+		return client.IndexDescription{}, err
 	}
 	c.indexes = append(c.indexes, colIndex)
 
@@ -333,15 +324,7 @@ func (c *collection) newIndex(
 	}
 	c.indexBuildStates[desc.ID] = indexState{Action: client.BackfillIndexAction, Status: client.InProgressActionStatus}
 
-	// Backfill builds a fresh collection from this snapshot per batch,
-	// so each retry re-reads documents.
-	defSnapshot := c.def
-
-	backfill := func(bfCtx context.Context) error {
-		return c.db.backfillIndex(bfCtx, defSnapshot, desc, immutable.None[string]())
-	}
-
-	return desc, backfill, nil
+	return desc, nil
 }
 
 func (c *collection) appendNewIndexAndIndexExistingDocs(
@@ -588,19 +571,23 @@ func (c *collection) DeleteIndex(
 
 	defer txn.Discard()
 
-	gc, err := c.deleteIndex(ctx, indexName)
-	if err != nil {
+	if err := c.deleteIndex(ctx, indexName); err != nil {
 		return err
 	}
 
-	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{gc})
+	// With an explicit transaction the caller's Commit() commits the drop record; with an implicit
+	// one we commit here. Either way the commit wakes the worker, which runs the batched entry GC.
+	if txn.explicit {
+		return nil
+	}
+	return txn.Commit()
 }
 
-// deleteIndex stages the index deletion in the current transaction and returns a
-// deferred closure that performs the batched GC of index entries. The definition
-// is removed and a dropping state record is written in the caller's transaction;
-// the returned closure must be run after that transaction commits.
-func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(context.Context) error, error) {
+// deleteIndex stages the deletion in the current transaction: it removes the definition and writes
+// a "dropping" state record. The commit publishes a drop event that wakes the worker, which runs
+// the batched entry GC and clears the record. The record also lets startup recovery resume the GC
+// if the process exits first.
+func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 	// Locate the description by name in the version definition (source of truth).
 	// Failed indexes are excluded from c.indexes but still live in c.Version().Indexes.
 	var desc *client.IndexDescription
@@ -612,7 +599,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 		}
 	}
 	if desc == nil {
-		return nil, NewErrIndexWithNameDoesNotExists(indexName)
+		return NewErrIndexWithNameDoesNotExists(indexName)
 	}
 
 	// Remove the definition so the planner and writers immediately stop seeing it.
@@ -627,22 +614,13 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 
 	if err := description.SaveCollection(ctx, c.db.collectionRepository, c.def); err != nil {
 		c.def.Indexes = oldIndexes
-		return nil, err
+		return err
 	}
 
-	// Record a dropping state so startup recovery can resume if the process exits
-	// before GC completes.
+	// Record a dropping state so the background worker (and startup recovery) runs the GC.
 	if err := c.db.startIndexDrop(ctx, c.def.CollectionID, desc.ID); err != nil {
 		c.def.Indexes = oldIndexes
-		return nil, err
-	}
-
-	// Resolve the short collection ID now, while the staging transaction is live,
-	// so the deferred GC needs no transaction of its own to look it up.
-	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
-	if err != nil {
-		c.def.Indexes = oldIndexes
-		return nil, err
+		return err
 	}
 
 	for i := range c.indexes {
@@ -653,13 +631,7 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) (func(co
 	}
 	delete(c.indexBuildStates, desc.ID)
 
-	collectionID := c.def.CollectionID
-	indexID := desc.ID
-	gc := func(gcCtx context.Context) error {
-		return c.db.gcIndex(gcCtx, collectionID, shortID, indexID, indexName)
-	}
-
-	return gc, nil
+	return nil
 }
 
 // ListIndexes returns all indexes for the collection with their current status.
