@@ -401,14 +401,16 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
+		clientTxn.Discard()
 		return nil, err
 	}
-	return &Transaction{w, serverTxn}, nil
+	return &Transaction{Wrapper: w, clientTxn: clientTxn, txn: serverTxn}, nil
 }
 
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()
+	w.handler.Close()
 	_ = w.node.Close(context.Background())
 }
 

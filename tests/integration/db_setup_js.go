@@ -38,6 +38,9 @@ func setupNode(
 	opts.DB().
 		SetEnableSigning(testCase.EnableSigning).
 		SetLensRuntime(options.NodeJSLensRuntime)
+	if testCase.HTTP.HasValue() {
+		applyHTTPOptions(opts, testCase.HTTP.Value())
+	}
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:
