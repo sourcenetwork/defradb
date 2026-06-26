@@ -100,7 +100,7 @@ func (db *DB) addView(
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)), false, false)
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)), true, true)
 			if err != nil {
 				return nil, err
 			}

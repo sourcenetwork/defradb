@@ -178,9 +178,6 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 			CollectionShortID: collectionShortID,
 			InstanceType:      instanceType,
 		}
-		if err := ds.Delete(ctx, instancePrefix); err != nil && !errors.Is(err, corekv.ErrNotFound) {
-			return NewErrTruncateDatastoreKey(err, instancePrefix.ToString())
-		}
 
 		// If there are more keys than we wish to load into memory at once, this will be set to
 		// true, and we'll continue the delete in another pass.
