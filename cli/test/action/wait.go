@@ -10,30 +10,20 @@
 
 package action
 
-import "github.com/stretchr/testify/require"
+import (
+	"time"
+)
 
 // CreateTx executes the `client tx new` command and appends the returned transaction id
 // to state.Txns.
-type CreateTx struct {
+type Wait struct {
 	stateful
 
-	TTL string
+	Duration time.Duration
 }
 
-var _ Action = (*CreateTx)(nil)
+var _ Action = (*Wait)(nil)
 
-func (a *CreateTx) Execute() {
-	cmdArgs := []string{"client", "tx", "new"}
-
-	if a.TTL != "" {
-		cmdArgs = append(cmdArgs, "--ttl", a.TTL)
-	}
-
-	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections(cmdArgs))
-	require.NoError(a.s.T, err)
-
-	txId, ok := result["id"].(float64)
-	require.True(a.s.T, ok)
-
-	a.s.Txns = append(a.s.Txns, uint64(txId))
+func (a *Wait) Execute() {
+	time.Sleep(a.Duration)
 }

@@ -129,6 +129,12 @@ type NodeHTTPOptions struct {
 	WriteTimeout time.Duration
 	// IdleTimeout is the idle timeout for connections.
 	IdleTimeout time.Duration
+	// TxnTTL is the idle timeout for explicit HTTP transactions.
+	TxnTTL time.Duration
+	// TxnTTLTick is the timer resolution used by the HTTP transaction TTL cache.
+	TxnTTLTick time.Duration
+	// TxnTTLBuckets is the number of buckets in the HTTP transaction TTL cache.
+	TxnTTLBuckets int
 }
 
 // NodeStoreOptions contains store configuration values.
@@ -603,6 +609,24 @@ func (sb *NodeHTTPOptionsBuilder) SetWriteTimeout(timeout time.Duration) *NodeHT
 // SetIdleTimeout sets the server idle timeout.
 func (sb *NodeHTTPOptionsBuilder) SetIdleTimeout(timeout time.Duration) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { opts.IdleTimeout = timeout })
+	return sb
+}
+
+// SetTxnTTL sets the idle timeout for explicit HTTP transactions.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTL(ttl time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTL = ttl })
+	return sb
+}
+
+// SetTxnTTLTick sets the timer resolution used by the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLTick(tick time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLTick = tick })
+	return sb
+}
+
+// SetTxnTTLBuckets sets the number of buckets in the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLBuckets(buckets int) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLBuckets = buckets })
 	return sb
 }
 
