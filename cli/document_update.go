@@ -50,7 +50,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 
 				updateWithFilterOpt := options.WithIdentity(
 					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
-				// The flag is optional; false only means "disable" when explicitly provided.
+				// Bool flags are tri-state here: unset means use node config, false means disable.
 				if cmd.Flags().Changed("enable-signing") {
 					updateWithFilterOpt.SetEnableSigning(enableSigning)
 				}
@@ -80,7 +80,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
-				// The flag is optional; false only means "disable" when explicitly provided.
+				// Bool flags are tri-state here: unset means use node config, false means disable.
 				if cmd.Flags().Changed("enable-signing") {
 					updateOpt.SetEnableSigning(enableSigning)
 				}

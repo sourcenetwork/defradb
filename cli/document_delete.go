@@ -49,7 +49,7 @@ or the showDeleted parameter on GraphQL queries.`,
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
-				// The flag is optional; false only means "disable" when explicitly provided.
+				// Bool flags are tri-state here: unset means use node config, false means disable.
 				if cmd.Flags().Changed("enable-signing") {
 					deleteOpt.SetEnableSigning(enableSigning)
 				}
@@ -64,7 +64,7 @@ or the showDeleted parameter on GraphQL queries.`,
 
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
-				// The flag is optional; false only means "disable" when explicitly provided.
+				// Bool flags are tri-state here: unset means use node config, false means disable.
 				if cmd.Flags().Changed("enable-signing") {
 					deleteWithFilterOpt.SetEnableSigning(enableSigning)
 				}

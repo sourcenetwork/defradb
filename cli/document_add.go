@@ -83,7 +83,7 @@ Options:
 					SetEncryptedFields(encryptedFields),
 				identity.FromContext(ctx),
 			)
-			// The flag is optional; false only means "disable" when explicitly provided.
+			// Bool flags are tri-state here: unset means use node config, false means disable.
 			if cmd.Flags().Changed("enable-signing") {
 				addOpt.SetEnableSigning(enableSigning)
 			}
@@ -138,7 +138,7 @@ Options:
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
 	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
-	// tests/clients/cli needs saved IDs, normal CLI output should stay quiet.
+	// Used by the CLI test adapter; normal document-add output stays empty.
 	cmd.Flags().Lookup("return-ids").Hidden = true
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)

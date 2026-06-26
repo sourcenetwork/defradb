@@ -512,6 +512,7 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 		generatedDocID, _ := docMap[request.DocIDFieldName].(string)
 		replaceGeneratedDocIDs(docMap, generatedDocIDs)
 		if state.ActiveMutationType == state.GQLRequestMutationType {
+			// GQL create mutations cannot accept _docID; other clients use it to wire generated relations.
 			delete(docMap, request.DocIDFieldName)
 		}
 
@@ -798,6 +799,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
 	if !signingWasEnabled && hasActiveMultiplier(activeMultipliers, defraMultiplier.SignedDocs) {
+		// The multiplier enables node signing, but explicit test cases still expect unsigned adds.
 		disableSigningForAddActions(testCase.Actions)
 	}
 }
