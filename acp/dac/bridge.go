@@ -111,6 +111,7 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
+		// RegisterObject is effectively idempotent if the object already has the requested owner.
 		owner, ownerErr := a.clientACP.ObjectOwner(ctx, policyID, resourceName, docID)
 		if ownerErr == nil && owner.HasValue() && owner.Value() == identity.DID() {
 			return nil

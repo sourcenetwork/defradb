@@ -83,6 +83,7 @@ Options:
 					SetEncryptedFields(encryptedFields),
 				identity.FromContext(ctx),
 			)
+			// The flag is optional; false only means "disable" when explicitly provided.
 			if cmd.Flags().Changed("enable-signing") {
 				addOpt.SetEnableSigning(enableSigning)
 			}
@@ -136,10 +137,10 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	// Used by the CLI client adapter to copy save-assigned IDs back onto caller docs.
 	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
 	cmd.Flags().Lookup("return-ids").Hidden = true
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
-	cmd.Flags().Lookup("enable-signing").Hidden = true
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

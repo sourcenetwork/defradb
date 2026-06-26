@@ -33,6 +33,7 @@ update private docID, with identity:
       --collection-id string     Collection ID
       --collection-name string   Collection name
       --docID string             Document ID
+      --enable-signing           Override signing for this operation
       --filter string            Document filter
       --get-inactive             Get inactive collections as well as active
   -h, --help                     help for update

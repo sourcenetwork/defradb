@@ -65,8 +65,8 @@ func DeleteDocument(nodePtr C.uintptr_t,
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		deleteOpt := options.WithIdentity(options.DeleteDocument(), ident)
-		if opts.enableSigningSet != 0 {
-			deleteOpt.SetEnableSigning(opts.enableSigning != 0)
+		if opts.enableSigning != 0 {
+			deleteOpt.SetEnableSigning(opts.enableSigning > 0)
 		}
 		_, err = col.DeleteDocument(ctx, ID, deleteOpt)
 		if err != nil {
@@ -81,8 +81,8 @@ func DeleteDocument(nodePtr C.uintptr_t,
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), ident)
-		if opts.enableSigningSet != 0 {
-			deleteOpt.SetEnableSigning(opts.enableSigning != 0)
+		if opts.enableSigning != 0 {
+			deleteOpt.SetEnableSigning(opts.enableSigning > 0)
 		}
 		res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteOpt)
 		if err != nil {

@@ -76,8 +76,8 @@ func UpdateDocument(
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		updateOpt := options.WithIdentity(options.UpdateDocument(), ident)
-		if opts.enableSigningSet != 0 {
-			updateOpt.SetEnableSigning(opts.enableSigning != 0)
+		if opts.enableSigning != 0 {
+			updateOpt.SetEnableSigning(opts.enableSigning > 0)
 		}
 		err = col.UpdateDocument(ctx, doc, updateOpt)
 		if err != nil {
@@ -92,8 +92,8 @@ func UpdateDocument(
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		updateOpt := options.WithIdentity(options.UpdateDocumentsWithFilter(), ident)
-		if opts.enableSigningSet != 0 {
-			updateOpt.SetEnableSigning(opts.enableSigning != 0)
+		if opts.enableSigning != 0 {
+			updateOpt.SetEnableSigning(opts.enableSigning > 0)
 		}
 		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateOpt)
 		if err != nil {

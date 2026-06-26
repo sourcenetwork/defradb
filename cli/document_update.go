@@ -50,6 +50,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 
 				updateWithFilterOpt := options.WithIdentity(
 					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+				// The flag is optional; false only means "disable" when explicitly provided.
 				if cmd.Flags().Changed("enable-signing") {
 					updateWithFilterOpt.SetEnableSigning(enableSigning)
 				}
@@ -79,6 +80,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+				// The flag is optional; false only means "disable" when explicitly provided.
 				if cmd.Flags().Changed("enable-signing") {
 					updateOpt.SetEnableSigning(enableSigning)
 				}
@@ -107,7 +109,6 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
-	cmd.Flags().Lookup("enable-signing").Hidden = true
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

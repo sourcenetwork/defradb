@@ -70,8 +70,8 @@ func AddDocument(
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
 	addOpt := options.WithIdentity(options.AddDocument(), acpIdentity.FromContext(ctx))
-	if opts.enableSigningSet != 0 {
-		addOpt.SetEnableSigning(opts.enableSigning != 0)
+	if opts.enableSigning != 0 {
+		addOpt.SetEnableSigning(opts.enableSigning > 0)
 	}
 
 	// Determine if JSON is array or object by looking for the first character being [

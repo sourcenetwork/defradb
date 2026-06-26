@@ -49,6 +49,7 @@ or the showDeleted parameter on GraphQL queries.`,
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+				// The flag is optional; false only means "disable" when explicitly provided.
 				if cmd.Flags().Changed("enable-signing") {
 					deleteOpt.SetEnableSigning(enableSigning)
 				}
@@ -63,6 +64,7 @@ or the showDeleted parameter on GraphQL queries.`,
 
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+				// The flag is optional; false only means "disable" when explicitly provided.
 				if cmd.Flags().Changed("enable-signing") {
 					deleteWithFilterOpt.SetEnableSigning(enableSigning)
 				}
@@ -91,7 +93,6 @@ or the showDeleted parameter on GraphQL queries.`,
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
-	cmd.Flags().Lookup("enable-signing").Hidden = true
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

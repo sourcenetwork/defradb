@@ -51,6 +51,7 @@ Add from stdin:
 ```
       --collection-id string     Collection ID
       --collection-name string   Collection name
+      --enable-signing           Override signing for this operation
   -e, --encrypt                  Flag to enable encryption of the document
       --encrypt-fields strings   Comma-separated list of fields to encrypt
   -f, --file string              File containing document(s)

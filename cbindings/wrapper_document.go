@@ -196,9 +196,10 @@ func setCCollectionSigningOption(copts *C.CollectionOptions, enableSigning immut
 	if !enableSigning.HasValue() {
 		return
 	}
-	copts.enableSigningSet = 1
 	if enableSigning.Value() {
 		copts.enableSigning = 1
+	} else {
+		copts.enableSigning = -1
 	}
 }
 
