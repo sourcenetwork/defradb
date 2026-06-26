@@ -14,6 +14,8 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/cli/config"
 )
 
 func MakeClientCommand(ctx context.Context) *cobra.Command {
@@ -43,5 +45,25 @@ Execute queries, add collections, obtain node info, etc.`,
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
+	setClientConnectionFlags(cmd)
 	return cmd
+}
+
+func setClientConnectionFlags(cmd *cobra.Command) {
+	cfg := config.DefaultConfig()
+	cmd.PersistentFlags().String(
+		"url",
+		cfg.GetString(config.ConfigFlags["url"]),
+		"URL of HTTP endpoint to listen on or connect to",
+	)
+	cmd.PersistentFlags().String(
+		"audience",
+		cfg.GetString(config.ConfigFlags["audience"]),
+		"Audience to set on minted auth tokens. Defaults to the host of --url",
+	)
+	cmd.PersistentFlags().String(
+		"source-hub-address",
+		cfg.GetString(config.ConfigFlags["source-hub-address"]),
+		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
+	)
 }
