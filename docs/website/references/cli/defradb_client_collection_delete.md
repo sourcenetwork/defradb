@@ -19,27 +19,28 @@ The named collections must not contain any documents. Delete all documents first
 before deleting the collection.
 
 ```
-defradb client collection delete <collectionNames> [flags]
+defradb client collection delete --collection-name <collectionNames> [flags]
 ```
 
 ### Examples
 
 ```
 delete every version of a single collection:  
-  defradb client collection delete Users
+  defradb client collection delete --collection-name Users
 
 delete every version of multiple collections in one call (this can be used to delete collections that reference each other via relations):  
-  defradb client collection delete Users,Books
+  defradb client collection delete --collection-name Users,Books
 
 delete only the active head version, keeping earlier versions:  
-  defradb client collection delete --active-only Users
+  defradb client collection delete --active-only --collection-name Users
 ```
 
 ### Options
 
 ```
-      --active-only   Delete only the active head version of each named collection (default deletes every version)
-  -h, --help          help for delete
+      --active-only               Delete only the active head version of each named collection (default deletes every version)
+      --collection-name strings   Collection name
+  -h, --help                      help for delete
 ```
 
 ### Options inherited from parent commands
