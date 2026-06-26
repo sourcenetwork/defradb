@@ -77,7 +77,7 @@ func NewCache[K comparable, V any](
 // Store stores val at key with an idle expiration of ttl, replacing any
 // existing value and discarding its lease state.
 func (c *Cache[K, V]) Store(key K, val V, ttl time.Duration) error {
-	if err := c.wheel.validTTL(ttl); err != nil {
+	if err := c.wheel.ValidateTTL(ttl); err != nil {
 		return err
 	}
 
@@ -166,30 +166,53 @@ func (c *Cache[K, V]) Delete(key K) {
 	}
 	c.mu.Unlock()
 
-	if ok {
-		c.wheel.Delete(cacheWheelKey[K]{key: key, seq: item.seq})
-	}
+	c.wheel.Delete(cacheWheelKey[K]{key: key, seq: item.seq})
 }
 
-// UpdateTTL resets the expiration time for key if key is still cached.
+// UpdateTTL updates the idle TTL for key if key is still cached. If key is
+// idle, it also resets the current expiration timer. If key is leased, the new
+// TTL is used when the final lease is released.
 // It returns false if key was no longer cached.
 func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) (bool, error) {
-	if err := c.wheel.validTTL(ttl); err != nil {
+	if err := c.wheel.ValidateTTL(ttl); err != nil {
 		return false, err
 	}
 
 	c.mu.Lock()
 	item, ok := c.items[key]
-	c.mu.Unlock()
 	if !ok {
+		c.mu.Unlock()
 		return false, nil
 	}
-	return c.wheel.UpdateTTL(cacheWheelKey[K]{key: key, seq: item.seq}, ttl)
+	item.ttl = ttl
+	if item.active > 0 {
+		c.mu.Unlock()
+		return true, nil
+	}
+
+	updated, err := c.wheel.UpdateTTL(cacheWheelKey[K]{key: key, seq: item.seq}, ttl)
+	if err != nil {
+		c.mu.Unlock()
+		return false, err
+	}
+	if updated {
+		c.mu.Unlock()
+		return true, nil
+	}
+
+	c.nextSeq++
+	item.seq = c.nextSeq
+	err = c.wheel.Add(cacheWheelKey[K]{key: key, seq: item.seq}, ttl)
+	c.mu.Unlock()
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // ValidateTTL returns an error if ttl cannot be used by this cache.
 func (c *Cache[K, V]) ValidateTTL(ttl time.Duration) error {
-	return c.wheel.validTTL(ttl)
+	return c.wheel.ValidateTTL(ttl)
 }
 
 // Stop stops the cache expiration wheel.
@@ -226,6 +249,10 @@ func (c *Cache[K, V]) release(key K) {
 	// The final lease was released; restart the idle timer from the full TTL.
 	c.nextSeq++
 	item.seq = c.nextSeq
+
+	// Add only fails for a TTL the wheel cannot hold, which Store already
+	// validated, so this is unreachable in practice. Expire the value if it
+	// ever happens so the resource is not leaked while untracked.
 	err := c.wheel.Add(cacheWheelKey[K]{key: key, seq: item.seq}, item.ttl)
 	if err != nil {
 		delete(c.items, key)
@@ -233,9 +260,6 @@ func (c *Cache[K, V]) release(key K) {
 	value := item.value
 	c.mu.Unlock()
 
-	// Add only fails for a TTL the wheel cannot hold, which Store already
-	// validated, so this is unreachable in practice. Expire the value if it
-	// ever happens so the resource is not leaked while untracked.
 	if err != nil && c.onExpire != nil {
 		c.onExpire(key, value)
 	}

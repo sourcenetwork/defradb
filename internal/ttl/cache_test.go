@@ -274,6 +274,77 @@ func TestCacheLoadDoesNotLeaseValue(t *testing.T) {
 	}, time.Second, 5*time.Millisecond)
 }
 
+func TestCacheUpdateTTLRefreshesExpiration(t *testing.T) {
+	expired := make(chan struct{}, 1)
+	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {
+		expired <- struct{}{}
+	})
+	require.NoError(t, err)
+	defer cache.Stop()
+
+	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
+	time.Sleep(15 * time.Millisecond)
+
+	refreshed, err := cache.UpdateTTL("key", 80*time.Millisecond)
+	require.NoError(t, err)
+	require.True(t, refreshed)
+
+	require.Never(t, func() bool {
+		select {
+		case <-expired:
+			return true
+		default:
+			return false
+		}
+	}, 40*time.Millisecond, 5*time.Millisecond)
+
+	require.Eventually(t, func() bool {
+		select {
+		case <-expired:
+			return true
+		default:
+			return false
+		}
+	}, 150*time.Millisecond, 5*time.Millisecond)
+}
+
+func TestCacheUpdateTTLWhileLeasedAppliesAfterRelease(t *testing.T) {
+	expired := make(chan struct{}, 1)
+	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {
+		expired <- struct{}{}
+	})
+	require.NoError(t, err)
+	defer cache.Stop()
+
+	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
+	lease, ok := cache.Acquire("key")
+	require.True(t, ok)
+
+	refreshed, err := cache.UpdateTTL("key", 80*time.Millisecond)
+	require.NoError(t, err)
+	require.True(t, refreshed)
+
+	lease.Release()
+
+	require.Never(t, func() bool {
+		select {
+		case <-expired:
+			return true
+		default:
+			return false
+		}
+	}, 40*time.Millisecond, 5*time.Millisecond)
+
+	require.Eventually(t, func() bool {
+		select {
+		case <-expired:
+			return true
+		default:
+			return false
+		}
+	}, 150*time.Millisecond, 5*time.Millisecond)
+}
+
 func TestCacheUpdateTTLReturnsFalseForMissingKey(t *testing.T) {
 	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {})
 	require.NoError(t, err)

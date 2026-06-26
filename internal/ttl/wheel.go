@@ -70,7 +70,7 @@ func NewWheel[K comparable](
 
 // Add tracks key until ttl has elapsed.
 func (w *Wheel[K]) Add(key K, ttl time.Duration) error {
-	if err := w.validTTL(ttl); err != nil {
+	if err := w.ValidateTTL(ttl); err != nil {
 		return err
 	}
 
@@ -106,7 +106,7 @@ func (w *Wheel[K]) Delete(key K) {
 // UpdateTTL moves an existing key to a new expiration time.
 // It returns false if key was no longer tracked.
 func (w *Wheel[K]) UpdateTTL(key K, ttl time.Duration) (bool, error) {
-	if err := w.validTTL(ttl); err != nil {
+	if err := w.ValidateTTL(ttl); err != nil {
 		return false, err
 	}
 
@@ -142,7 +142,7 @@ func (w *Wheel[K]) slotForTTL(ttl time.Duration) int64 {
 	return (w.cur + ticks - 1) % w.slotCount
 }
 
-func (w *Wheel[K]) validTTL(ttl time.Duration) error {
+func (w *Wheel[K]) ValidateTTL(ttl time.Duration) error {
 	if ttl < 0 {
 		return ErrNegativeTTL
 	}
