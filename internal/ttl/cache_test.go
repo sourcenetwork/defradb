@@ -24,7 +24,7 @@ func TestCacheExpiresUnleasedValue(t *testing.T) {
 		expired <- value
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -47,7 +47,7 @@ func TestCacheActiveLeasePreventsExpiration(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -84,7 +84,7 @@ func TestCacheConcurrentLeasesExpireAfterFinalRelease(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -123,7 +123,7 @@ func TestCacheReleaseIsIdempotent(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -164,7 +164,7 @@ func TestCacheLoadAndDeletePreventsExpiration(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -197,7 +197,7 @@ func TestCacheDeletePreventsExpiration(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 10*time.Millisecond))
 	cache.Delete("key")
@@ -215,7 +215,7 @@ func TestCacheDeletePreventsExpiration(t *testing.T) {
 func TestCacheInvalidTTLDoesNotStoreValue(t *testing.T) {
 	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.ErrorIs(t, cache.Store("key", 1, -time.Millisecond), ErrNegativeTTL)
 
@@ -229,7 +229,7 @@ func TestCacheOverwriteDoesNotExpireNewValue(t *testing.T) {
 		expired <- value
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 20*time.Millisecond))
 	time.Sleep(5 * time.Millisecond)
@@ -255,7 +255,7 @@ func TestCacheLoadDoesNotLeaseValue(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 
@@ -280,7 +280,7 @@ func TestCacheUpdateTTLRefreshesExpiration(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 	time.Sleep(15 * time.Millisecond)
@@ -314,7 +314,7 @@ func TestCacheUpdateTTLWhileLeasedAppliesAfterRelease(t *testing.T) {
 		expired <- struct{}{}
 	})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	require.NoError(t, cache.Store("key", 1, 30*time.Millisecond))
 	lease, ok := cache.Acquire("key")
@@ -348,7 +348,7 @@ func TestCacheUpdateTTLWhileLeasedAppliesAfterRelease(t *testing.T) {
 func TestCacheUpdateTTLReturnsFalseForMissingKey(t *testing.T) {
 	cache, err := NewCache(context.Background(), 10*time.Millisecond, 20, func(_ string, _ int) {})
 	require.NoError(t, err)
-	defer cache.Stop()
+	defer cache.Close()
 
 	refreshed, err := cache.UpdateTTL("key", 80*time.Millisecond)
 

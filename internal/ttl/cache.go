@@ -215,9 +215,9 @@ func (c *Cache[K, V]) ValidateTTL(ttl time.Duration) error {
 	return c.wheel.ValidateTTL(ttl)
 }
 
-// Stop stops the cache expiration wheel.
-func (c *Cache[K, V]) Stop() {
-	c.wheel.Stop()
+// Close stops the cache expiration wheel.
+func (c *Cache[K, V]) Close() {
+	c.wheel.Close()
 }
 
 // Value returns the leased value.

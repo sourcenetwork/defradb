@@ -122,3 +122,24 @@ func TestWheelDelete(t *testing.T) {
 	default:
 	}
 }
+
+func TestWheelClosePreventsStart(t *testing.T) {
+	expired := make(chan string, 1)
+	wheel, err := NewWheel(context.Background(), time.Millisecond, 1, func(key string) {
+		expired <- key
+	})
+	require.NoError(t, err)
+
+	wheel.Close()
+	wheel.Start()
+	require.NoError(t, wheel.Add("key", time.Millisecond))
+
+	require.Never(t, func() bool {
+		select {
+		case <-expired:
+			return true
+		default:
+			return false
+		}
+	}, 20*time.Millisecond, time.Millisecond)
+}

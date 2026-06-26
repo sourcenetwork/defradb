@@ -59,7 +59,7 @@ func newTxnCache(ctx context.Context, opts *options.NodeHTTPOptions) (*txnCache,
 		return nil, err
 	}
 	if err := cache.ValidateTTL(cfg.defaultTTL); err != nil {
-		cache.Stop()
+		cache.Close()
 		return nil, errors.Join(ErrInvalidTTL, err)
 	}
 	return &txnCache{
@@ -132,5 +132,5 @@ func (c *txnCache) LoadAndDelete(id uint64) (client.Txn, time.Duration, bool) {
 }
 
 func (c *txnCache) Close() {
-	c.cache.Stop()
+	c.cache.Close()
 }

@@ -25,8 +25,9 @@ type Wheel[K comparable] struct {
 	index      map[K]*entry[K]
 	maxTTL     int64
 	mu         sync.Mutex
-	running    bool
-	stop       chan struct{}
+	startOnce  sync.Once
+	closeOnce  sync.Once
+	done       chan struct{}
 	ctx        context.Context
 	expireFunc func(K)
 }
@@ -62,7 +63,7 @@ func NewWheel[K comparable](
 		maxTTL:     int64(tick) * slotCount,
 		slots:      make([][]*entry[K], slotCount),
 		index:      make(map[K]*entry[K]),
-		stop:       make(chan struct{}),
+		done:       make(chan struct{}),
 		ctx:        ctx,
 		expireFunc: onExpire,
 	}, nil
@@ -162,58 +163,40 @@ func (w *Wheel[K]) unsafeDeleteFromSlot(e *entry[K]) {
 	w.slots[e.slot] = bucket[:lastIdx]
 }
 
-// Start starts the wheel if it is not already running.
+// Start starts the wheel if it has not already started or closed.
 func (w *Wheel[K]) Start() {
-	w.mu.Lock()
-	if w.running {
-		w.mu.Unlock()
+	select {
+	case <-w.done:
 		return
+	case <-w.ctx.Done():
+		return
+	default:
 	}
-	w.running = true
-	stop := make(chan struct{})
-	w.stop = stop
-	tickDur := w.tick
-	w.mu.Unlock()
 
-	ticker := time.NewTicker(tickDur)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				w.tickOnce()
-			case <-w.ctx.Done():
-				w.setStopped(stop)
-				return
-			case <-stop:
-				w.setStopped(stop)
-				return
+	w.startOnce.Do(func() {
+		ticker := time.NewTicker(w.tick)
+		go func() {
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ticker.C:
+					w.tickOnce()
+				case <-w.ctx.Done():
+					w.Close()
+					return
+				case <-w.done:
+					return
+				}
 			}
-		}
-	}()
+		}()
+	})
 }
 
-// Stop stops the wheel if it is running.
-func (w *Wheel[K]) Stop() {
-	w.mu.Lock()
-	if !w.running {
-		w.mu.Unlock()
-		return
-	}
-	stop := w.stop
-	w.stop = nil
-	w.running = false
-	close(stop)
-	w.mu.Unlock()
-}
-
-func (w *Wheel[K]) setStopped(stop chan struct{}) {
-	w.mu.Lock()
-	if w.stop == stop {
-		w.stop = nil
-		w.running = false
-	}
-	w.mu.Unlock()
+// Close stops the wheel. A closed wheel cannot be restarted.
+func (w *Wheel[K]) Close() {
+	w.closeOnce.Do(func() {
+		close(w.done)
+	})
 }
 
 func (w *Wheel[K]) tickOnce() {
