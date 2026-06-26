@@ -678,11 +678,6 @@ func (c *collection) DeleteDocument(
 		return false, err
 	}
 
-	err = c.deleteIndexedDocWithID(ctx, docID)
-	if err != nil {
-		return false, err
-	}
-
 	err = c.applyDelete(ctx, primaryKey)
 	if err != nil {
 		return false, err
