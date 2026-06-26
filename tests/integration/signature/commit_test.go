@@ -17,7 +17,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -25,6 +24,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {

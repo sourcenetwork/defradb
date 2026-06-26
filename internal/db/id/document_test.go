@@ -156,17 +156,23 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = SetBlockDocIDMapping(ctx, fieldCID, docID2)
 	require.NoError(t, err)
 
+	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
+
 	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.True(t, found)
-	require.Equal(t, docID2, docID)
+	require.Contains(t, []string{docID1, docID2}, docID)
 
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
+	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, docID1)
 	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, docID2, docID)
 
-	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID)
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.Equal(t, []string{docID2}, docIDs)
+
+	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, docID2)
 	require.NoError(t, err)
 
 	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)

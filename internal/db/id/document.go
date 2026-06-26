@@ -11,6 +11,7 @@
 package id
 
 import (
+	"bytes"
 	"context"
 	stderrors "errors"
 
@@ -137,9 +138,48 @@ func SetBlockDocIDMapping(
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewBlockCIDToDocIDKey(blockCID.String()).Bytes(),
-		[]byte(docID),
+		keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes(),
+		[]byte{},
 	)
+}
+
+func GetDocIDsForBlockFromStore(
+	ctx context.Context,
+	store corekv.Reader,
+	blockCID cid.Cid,
+) ([]string, error) {
+	if !blockCID.Defined() {
+		return nil, nil
+	}
+
+	prefix := keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes()
+	prefix = append(prefix, '/')
+	iter, err := store.Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix,
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var docIDs []string
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		docID := bytes.TrimPrefix(iter.Key(), prefix)
+		if len(docID) != 0 {
+			docIDs = append(docIDs, string(docID))
+		}
+	}
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+	return docIDs, nil
 }
 
 func GetDocIDForBlockFromStore(
@@ -147,28 +187,26 @@ func GetDocIDForBlockFromStore(
 	store corekv.Reader,
 	blockCID cid.Cid,
 ) (string, bool, error) {
-	if !blockCID.Defined() {
-		return "", false, nil
-	}
-	value, err := store.Get(ctx, keys.NewBlockCIDToDocIDKey(blockCID.String()).Bytes())
-	if errors.Is(err, corekv.ErrNotFound) {
-		return "", false, nil
-	}
+	docIDs, err := GetDocIDsForBlockFromStore(ctx, store, blockCID)
 	if err != nil {
 		return "", false, err
 	}
-	return string(value), true, nil
+	if len(docIDs) == 0 {
+		return "", false, nil
+	}
+	return docIDs[0], true, nil
 }
 
 func DeleteBlockDocIDMapping(
 	ctx context.Context,
 	store corekv.ReaderWriter,
 	blockCID cid.Cid,
+	docID string,
 ) error {
-	if !blockCID.Defined() {
+	if !blockCID.Defined() || docID == "" {
 		return nil
 	}
-	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocIDKey(blockCID.String()).Bytes())
+	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())
 }
 
 func DeleteDocIDMappings(

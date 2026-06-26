@@ -18,6 +18,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
+	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -51,11 +52,16 @@ func (db *DB) VerifySignature(
 	}
 
 	// If we have a transaction, we will use it to set the blockstore. Otherwise, we will use the db.
-	var blockStore *bsadapter.Adapter
+	var (
+		blockStore  *bsadapter.Adapter
+		systemstore corekv.Reader
+	)
 	if hadTxn {
 		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(txn.Rootstore(), db.blockStoreChunkSize)}
+		systemstore = txn.Systemstore()
 	} else {
 		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+		systemstore = datastore.SystemstoreFrom(db.rootstore)
 	}
 
 	linkSys := cidlink.DefaultLinkSystem()
@@ -90,25 +96,31 @@ func (db *DB) VerifySignature(
 		}
 		collection := collections[0]
 
-		docID, err := db.publicDocIDForSignatureBlock(ctx, parsedCid, block, collection)
+		docIDs, err := db.publicDocIDsForSignatureBlock(ctx, systemstore, parsedCid, block)
 		if err != nil {
 			return err
 		}
 
-		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			ctx,
-			opt.Identity,
-			db.nodeACP,
-			db.documentACP.Value(),
-			collection,
-			acpTypes.DocumentReadPerm,
-			docID,
-		)
-		if err != nil {
-			return err
+		hasAnyPerm := false
+		for _, docID := range docIDs {
+			hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+				ctx,
+				opt.Identity,
+				db.nodeACP,
+				db.documentACP.Value(),
+				collection,
+				acpTypes.DocumentReadPerm,
+				docID,
+			)
+			if err != nil {
+				return err
+			}
+			if hasPerm {
+				hasAnyPerm = true
+				break
+			}
 		}
-
-		if !hasPerm {
+		if !hasAnyPerm {
 			return ErrMissingPermission
 		}
 	}
@@ -117,29 +129,29 @@ func (db *DB) VerifySignature(
 	return err
 }
 
-// publicDocIDForSignatureBlock resolves the public DocID that ACP may check for a signed block.
-func (db *DB) publicDocIDForSignatureBlock(
+// publicDocIDsForSignatureBlock resolves the DocIDs that ACP may check for a signed block.
+func (db *DB) publicDocIDsForSignatureBlock(
 	ctx context.Context,
+	systemstore corekv.Reader,
 	blockCID cid.Cid,
 	block *coreblock.Block,
-	collection client.Collection,
-) (string, error) {
+) ([]string, error) {
 	if block.Delta.IsCollection() {
-		return "", nil
+		return []string{""}, nil
 	}
-	docID, found, err := id.GetDocIDForBlockFromStore(
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		ctx,
-		datastore.SystemstoreFrom(db.rootstore),
+		systemstore,
 		blockCID,
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if found {
-		return docID, nil
+	if len(docIDs) > 0 {
+		return docIDs, nil
 	}
 	if block.Delta.IsComposite() && len(block.Heads) == 0 {
-		return client.NewDocIDV0(blockCID).String(), nil
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
 	}
-	return "", nil
+	return nil, nil
 }

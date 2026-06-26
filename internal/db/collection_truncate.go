@@ -229,7 +229,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, systemstore, colShortID, key.DocShortID)
+						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID)
 						if err != nil {
 							return err
 						}
@@ -331,10 +331,13 @@ func (c *collection) hardDeleteDatastorePrefix(
 func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
-	collectionShortID uint32,
 	docShortID uint64,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
+	docID, _, err := id.GetDocIDFromStore(ctx, systemstore, docShortID)
+	if err != nil {
+		return err
+	}
 
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
@@ -379,7 +382,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, collectionShortID, key.Cid)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -450,7 +453,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, nil, 0, key.Cid)
+			err = c.deleteBlocks(ctx, nil, "", key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -479,23 +482,34 @@ func (c *collection) hardDeleteCollectionBlocks(
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
-	collectionShortID uint32,
+	docID string,
 	currentCid cid.Cid,
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
-	deleteBlockMapping := func(blockCID cid.Cid) error {
-		if systemstore == nil || collectionShortID == 0 {
-			return nil
+	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
+		if systemstore == nil || docID == "" {
+			return true, nil
 		}
-		return id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID)
+		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
+			return false, err
+		}
+		docIDs, err := id.GetDocIDsForBlockFromStore(ctx, systemstore, blockCID)
+		if err != nil {
+			return false, err
+		}
+		return len(docIDs) == 0, nil
 	}
 
 	deleteBlock := func(blockCID cid.Cid) error {
+		canDelete, err := deleteBlockMapping(blockCID)
+		if err != nil || !canDelete {
+			return err
+		}
 		if err := blockstore.DeleteBlock(ctx, blockCID); err != nil {
 			return err
 		}
-		return deleteBlockMapping(blockCID)
+		return nil
 	}
 
 	type block struct {
@@ -508,7 +522,8 @@ func (c *collection) deleteBlocks(
 		return err
 	}
 	if !isFound {
-		return deleteBlockMapping(currentCid)
+		_, err := deleteBlockMapping(currentCid)
+		return err
 	}
 
 	toDelete := []*block{
@@ -553,7 +568,7 @@ func (c *collection) deleteBlocks(
 				return err
 			}
 			if !isFound {
-				if err := deleteBlockMapping(currentBlock.id); err != nil {
+				if _, err := deleteBlockMapping(currentBlock.id); err != nil {
 					return err
 				}
 				continue

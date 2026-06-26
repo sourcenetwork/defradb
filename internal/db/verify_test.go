@@ -40,18 +40,19 @@ func TestPublicDocIDForSignatureBlockResolvesGenesisCompositeAndField(t *testing
 	require.NoError(t, err)
 
 	compositeBlock := loadTestBlock(t, ctx, db, doc.Head())
-	docID, err := db.publicDocIDForSignatureBlock(ctx, doc.Head(), compositeBlock, col)
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	docIDs, err := db.publicDocIDsForSignatureBlock(ctx, systemstore, doc.Head(), compositeBlock)
 	require.NoError(t, err)
-	require.Equal(t, doc.ID().String(), docID)
+	require.Equal(t, []string{doc.ID().String()}, docIDs)
 	require.NotEmpty(t, compositeBlock.Links)
 
 	fieldCID := compositeBlock.Links[0].Cid
 	fieldBlock := loadTestBlock(t, ctx, db, fieldCID)
 	require.True(t, fieldBlock.Delta.IsField())
 
-	docID, err = db.publicDocIDForSignatureBlock(ctx, fieldCID, fieldBlock, col)
+	docIDs, err = db.publicDocIDsForSignatureBlock(ctx, systemstore, fieldCID, fieldBlock)
 	require.NoError(t, err)
-	require.Equal(t, doc.ID().String(), docID)
+	require.Equal(t, []string{doc.ID().String()}, docIDs)
 }
 
 func TestPublicDocIDForSignatureBlockMapsStoredBlockCID(t *testing.T) {
@@ -77,9 +78,9 @@ func TestPublicDocIDForSignatureBlockMapsStoredBlockCID(t *testing.T) {
 		}),
 	}
 
-	docID, err := db.publicDocIDForSignatureBlock(ctx, doc.Head(), block, col)
+	docIDs, err := db.publicDocIDsForSignatureBlock(ctx, datastore.SystemstoreFrom(db.rootstore), doc.Head(), block)
 	require.NoError(t, err)
-	require.Equal(t, doc.ID().String(), docID)
+	require.Equal(t, []string{doc.ID().String()}, docIDs)
 }
 
 func loadTestBlock(t *testing.T, ctx context.Context, db *DB, blockCID cid.Cid) *coreblock.Block {
