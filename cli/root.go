@@ -76,44 +76,5 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 		cfg.GetBool(config.ConfigFlags["no-log-color"]),
 		"Disable colored log output",
 	)
-	cmd.PersistentFlags().String(
-		"url",
-		cfg.GetString(config.ConfigFlags["url"]),
-		"URL of HTTP endpoint to listen on or connect to",
-	)
-	cmd.PersistentFlags().String(
-		"audience",
-		cfg.GetString(config.ConfigFlags["audience"]),
-		"Audience to set on minted auth tokens. Defaults to the host of --url",
-	)
-	cmd.PersistentFlags().String(
-		"keyring-namespace",
-		cfg.GetString(config.ConfigFlags["keyring-namespace"]),
-		"Service name to use when using the system backend",
-	)
-	cmd.PersistentFlags().String(
-		"keyring-backend",
-		cfg.GetString(config.ConfigFlags["keyring-backend"]),
-		"Keyring backend to use. Options are file or system",
-	)
-	cmd.PersistentFlags().String(
-		"keyring-path",
-		cfg.GetString(config.ConfigFlags["keyring-path"]),
-		"Path (relative to DefraDB root directory) to store encrypted keys when using the file backend",
-	)
-	cmd.PersistentFlags().Bool(
-		"no-keyring",
-		cfg.GetBool(config.ConfigFlags["no-keyring"]),
-		"Disable the keyring and generate ephemeral keys",
-	)
-	cmd.PersistentFlags().String(
-		"source-hub-address",
-		cfg.GetString(config.ConfigFlags["source-hub-address"]),
-		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
-	)
-	cmd.PersistentFlags().String(
-		"secret-file",
-		cfg.GetString(config.ConfigFlags["secret-file"]),
-		"Path to the file containing secrets")
 	return cmd
 }

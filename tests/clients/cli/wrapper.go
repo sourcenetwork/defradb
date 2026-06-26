@@ -471,7 +471,7 @@ func (w *Wrapper) DeleteCollection(
 	if opt.ActiveOnly {
 		args = append(args, "--active-only")
 	}
-	args = append(args, strings.Join(names, ","))
+	args = append(args, "--collection-name", strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
