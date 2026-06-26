@@ -6,6 +6,9 @@ Delete a collection's secondary index
 
 Delete a collection's secondary index.
 
+The index stops being used for queries immediately. Its entries are removed in the background, so
+this command returns before all of them are gone.
+
 ```
 defradb client index delete [flags]
 ```

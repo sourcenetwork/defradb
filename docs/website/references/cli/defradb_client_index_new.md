@@ -10,6 +10,10 @@ The --name flag is optional. If not provided, a name will be generated automatic
 The --unique flag is optional. If provided, the index will be unique.
 If no order is specified for the field, the default value will be "ASC"
 
+The index is built in the background. This command returns once the index is recorded, before
+existing documents are indexed. The index starts "building" and becomes "ready" once complete, or
+"failed" if it cannot be built. Use 'index list' to check its status.
+
 ```
 defradb client index new [flags]
 ```

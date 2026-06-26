@@ -166,17 +166,10 @@ func (c *collection) deleteIndexedDocWithID(
 //
 // The index description will be stored in the system store.
 //
-// NewIndex returns once the definition and a "building" state record are committed; it does not
-// wait for the backfill. A background worker indexes existing documents in batched transactions and
-// flips the index to "ready" (or "failed"). While building, the index is excluded from query
-// planning, so queries full-scan and still return correct results.
-//
-// A build failure is not returned here, since the build runs after this call returns. It surfaces
-// as a "failed" status and reason via ListIndexes; callers that need the outcome poll for it. A
-// failed index is not maintained by writes; use DeleteIndex to remove it before recreating.
-//
-// Live writes maintain the building index, so the backfill and concurrent writes converge on the
-// same final entries.
+// See the client.Collection interface for the async build contract. Mechanically: this commits the
+// definition and a "building" state record, which wakes the background worker to run the backfill;
+// it does not wait. Writes on this instance maintain the building index, so they and the backfill
+// converge on the same final entries.
 func (c *collection) NewIndex(
 	ctx context.Context,
 	desc client.NewIndexRequest,
