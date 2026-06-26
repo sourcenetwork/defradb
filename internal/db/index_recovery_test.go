@@ -14,6 +14,7 @@ import (
 	"context"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -270,4 +271,40 @@ func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
 		"stale epoch below the building epoch must be collected")
 	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2),
 		"the epoch being built must be left intact")
+}
+
+// TestRecoverBuilding_OrphanRecordNoDefinition_Resolves is the regression for the spin-loop bug: a
+// building record whose index definition is gone (a crash can commit the record but leave the
+// definition unwritten, or a rebuild can orphan it) made the running worker re-dispatch forever.
+// findIndexDefinition returned "does not exist", which dispatch logged without recording a terminal
+// state, and the post-build notify re-drained the still-building record into the same failure. The
+// worker must instead resolve the orphan (clear its record) so the drain converges.
+func TestRecoverBuilding_OrphanRecordNoDefinition_Resolves(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	collectionID := col.Version().CollectionID
+
+	// Stage a building record for an index ID that has no definition, then commit so the running
+	// worker is woken by the published event.
+	const orphanIndexID = uint32(997)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.startIndexBuild(c, collectionID, orphanIndexID)
+	}))
+
+	// The worker must clear the orphan record rather than spin on it. With the bug this never
+	// happens and the record stays InProgress, re-dispatched on a hot loop.
+	require.Eventually(t, func() bool {
+		rawTxn, err := db.NewTxn(true)
+		require.NoError(t, err)
+		defer rawTxn.Discard()
+		_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, orphanIndexID)
+		return err != nil // a missing record means the orphan was resolved
+	}, 10*time.Second, 10*time.Millisecond, "orphan building record was never resolved")
 }

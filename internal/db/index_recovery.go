@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -51,6 +52,14 @@ func (db *DB) listAllIndexStates(ctx context.Context) ([]indexStateRecord, error
 func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state indexState) error {
 	def, desc, err := db.findIndexDefinition(ctx, key)
 	if err != nil {
+		// The record outlived its definition: a crash can leave a building record whose definition
+		// was never committed, or a rebuild can orphan one. It can never build, so clear the record
+		// rather than return an error the drain would re-dispatch forever.
+		if errors.Is(err, ErrIndexWithIDDoesNotExist) {
+			return db.withTxnRetries(ctx, func(c context.Context) error {
+				return db.clearIndexBuildRecord(c, key.CollectionID, key.IndexID)
+			})
+		}
 		return err
 	}
 
