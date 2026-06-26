@@ -94,12 +94,17 @@ func (c *collection) purgeOneDoc(
 	docID client.DocID,
 	pruneHistory bool,
 ) error {
-	prefix := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docID.String(),
-	}
-	if err := c.hardDeleteDatastorePrefix(ctx, prefix); err != nil {
-		return err
+	// InstanceType sits between CollectionShortID and DocID in the encoded key, so we
+	// must include it in the prefix; a key without InstanceType matches nothing.
+	for _, itype := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
+		prefix := keys.DataStoreKey{
+			CollectionShortID: shortID,
+			InstanceType:      itype,
+			DocID:             docID.String(),
+		}
+		if err := c.hardDeleteDatastorePrefix(ctx, prefix); err != nil {
+			return err
+		}
 	}
 
 	if pruneHistory {

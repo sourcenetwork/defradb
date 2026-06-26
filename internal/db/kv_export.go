@@ -90,12 +90,17 @@ func exportOneDoc(
 	total := 0
 
 	// -- Data store --
-	dsPrefix := keys.DataStoreKey{CollectionShortID: collectionShortID, DocID: docID}.Bytes()
-	n, err := exportByPrefixRaw(ctx, datastore.NewUnsafeDatastore(txn.Rootstore()), dsPrefix, kvNsDatastore, w)
-	if err != nil {
-		return total, err
+	// InstanceType sits between CollectionShortID and DocID in the encoded key, so we
+	// must include it in the prefix; a key without InstanceType matches nothing.
+	ds := datastore.NewUnsafeDatastore(txn.Rootstore())
+	for _, itype := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
+		dsPrefix := keys.DataStoreKey{CollectionShortID: collectionShortID, InstanceType: itype, DocID: docID}.Bytes()
+		n, err := exportByPrefixRaw(ctx, ds, dsPrefix, kvNsDatastore, w)
+		if err != nil {
+			return total, err
+		}
+		total += n
 	}
-	total += n
 
 	if datastoreOnly {
 		return total, nil
@@ -103,7 +108,7 @@ func exportOneDoc(
 
 	// -- Head store --
 	headPrefix := keys.HeadstoreDocKey{DocID: docID}.Bytes()
-	n, err = exportByPrefixRaw(ctx, txn.Headstore(), headPrefix, kvNsHeadstore, w)
+	n, err := exportByPrefixRaw(ctx, txn.Headstore(), headPrefix, kvNsHeadstore, w)
 	if err != nil {
 		return total, err
 	}
