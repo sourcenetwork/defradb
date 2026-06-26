@@ -103,7 +103,6 @@ func makeDocAddArgs(
 ) []string {
 	args := []string{"client", "document", "add"}
 	args = append(args, "--collection-name", c.Version().Name)
-	args = append(args, "--return-ids")
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

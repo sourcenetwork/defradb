@@ -26,7 +26,6 @@ func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var file string
 	var shouldEncryptDoc bool
 	var encryptedFields []string
-	var returnIDs bool
 	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "add [<document>]",
@@ -96,10 +95,7 @@ Options:
 				if err := col.AddManyDocuments(ctx, docs, addOpt); err != nil {
 					return err
 				}
-				if returnIDs {
-					return writeJSON(cmd, client.DocumentIDs(docs))
-				}
-				return nil
+				return writeJSON(cmd, client.DocumentIDs(docs))
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
@@ -109,10 +105,7 @@ Options:
 			if err := col.AddDocument(cmd.Context(), doc, addOpt); err != nil {
 				return err
 			}
-			if returnIDs {
-				return writeJSON(cmd, client.DocumentIDs([]*client.Document{doc}))
-			}
-			return nil
+			return writeJSON(cmd, client.DocumentIDs([]*client.Document{doc}))
 		},
 	}
 
@@ -137,9 +130,6 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
-	cmd.Flags().BoolVar(&returnIDs, "return-ids", false, "Return generated document IDs")
-	// Used by the CLI test adapter; normal document-add output stays empty.
-	cmd.Flags().Lookup("return-ids").Hidden = true
 	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
