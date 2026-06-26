@@ -166,6 +166,13 @@ func (db *DB) completeIndexDrop(ctx context.Context, collectionID string, indexI
 	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID))
 }
 
+// clearIndexBuildRecord deletes any backfill action record (status, reason, payload) for the index
+// without publishing an event. Used when dropping an index to discard a leftover building or failed
+// record, which would otherwise be orphaned once the index definition is gone.
+func (db *DB) clearIndexBuildRecord(ctx context.Context, collectionID string, indexID uint32) error {
+	return action.ClearTxn(ctx, collectionID, client.BackfillIndexAction, indexSubject(indexID))
+}
+
 // indexStateRecord is one index action record: its index identity plus the decoded state. An
 // index can have more than one (a concurrent build and drop), so records are returned as a slice
 // rather than a map keyed by index.

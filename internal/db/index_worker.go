@@ -13,10 +13,13 @@ package db
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -24,6 +27,10 @@ import (
 // indexBuildConcurrency bounds concurrent builds and drops across distinct indexes. A var so tests
 // can adjust it.
 var indexBuildConcurrency = 4
+
+// indexBuildRetryDelay is the backoff before re-draining a build or drop interrupted by a
+// transaction conflict, giving the racing writer time to commit first. A var so tests can shrink it.
+var indexBuildRetryDelay = 100 * time.Millisecond
 
 // indexBuildWorker drains pending index build and drop state records in the background, reusing the
 // batched backfill and GC. It is shared by startup recovery and on-demand async NewIndex/DeleteIndex:
@@ -215,12 +222,36 @@ func (w *indexBuildWorker) dispatch(
 		if ctx.Err() != nil {
 			return
 		}
-		if err := work(ctx); err != nil {
-			log.ErrorE("Index build worker task failed", err,
-				corelog.String("collectionID", key.CollectionID),
-				corelog.Any("indexID", key.IndexID),
-				corelog.Any("action", action),
-			)
+		err := work(ctx)
+		if err == nil {
+			return
+		}
+		log.ErrorE("Index build worker task failed", err,
+			corelog.String("collectionID", key.CollectionID),
+			corelog.Any("indexID", key.IndexID),
+			corelog.Any("action", action),
+		)
+		// A transaction conflict is transient: the record is still in place and resumable from its
+		// watermark, but nothing else re-drives it, so re-drain after a backoff. Without this the
+		// index would stay building/dropping forever. A terminal error already recorded the failed
+		// state and needs no retry.
+		if errors.Is(err, corekv.ErrTxnConflict) {
+			w.scheduleRetry(ctx)
+		}
+	})
+}
+
+// scheduleRetry wakes the worker after indexBuildRetryDelay so an index left building/dropping by a
+// transaction conflict is re-drained and resumed. It is tracked under builds so shutdown waits for
+// it, and returns early on ctx cancellation.
+func (w *indexBuildWorker) scheduleRetry(ctx context.Context) {
+	w.builds.Go(func() {
+		timer := time.NewTimer(indexBuildRetryDelay)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+			w.notify()
+		case <-ctx.Done():
 		}
 	})
 }

@@ -623,6 +623,13 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 		return err
 	}
 
+	// Clear any leftover backfill record (building or failed); the drop record alone does not, so it
+	// would otherwise orphan once the definition is gone.
+	if err := c.db.clearIndexBuildRecord(ctx, c.def.CollectionID, desc.ID); err != nil {
+		c.def.Indexes = oldIndexes
+		return err
+	}
+
 	for i := range c.indexes {
 		if c.indexes[i].Name() == indexName {
 			c.indexes = slices.Delete(c.indexes, i, i+1)

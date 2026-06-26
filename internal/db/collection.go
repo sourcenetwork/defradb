@@ -57,12 +57,7 @@ func (db *DB) newCollection(
 	desc client.CollectionVersion,
 	txn immutable.Option[datastore.Txn],
 ) (*collection, error) {
-	col := &collection{
-		db:               db,
-		def:              desc,
-		txn:              txn,
-		indexBuildStates: make(map[uint32]indexState),
-	}
+	col := db.newBareCollection(desc, txn)
 
 	if len(desc.Indexes) > 0 {
 		// Build a read context that has a txn set so getIndexBuildStates can call CtxMustGetTxn.
@@ -97,6 +92,26 @@ func (db *DB) newCollection(
 	}
 
 	return col, nil
+}
+
+// newBareCollection builds a collection without loading index build-states or the per-index write
+// instances. For callers that maintain one index explicitly (the backfill batch) and use neither
+// c.indexes nor c.indexBuildStates.
+//
+// This avoids a concurrency hazard: getIndexBuildStates scans the whole collection's action-state
+// prefix, pulling every sibling index's status/reason/watermark records into the caller's read-set.
+// Two backfills on the same collection would then conflict, since each batch writes its own
+// watermark (one of those records). A backfill needs only its own index.
+func (db *DB) newBareCollection(
+	desc client.CollectionVersion,
+	txn immutable.Option[datastore.Txn],
+) *collection {
+	return &collection{
+		db:               db,
+		def:              desc,
+		txn:              txn,
+		indexBuildStates: make(map[uint32]indexState),
+	}
 }
 
 // QueryableIndexes returns the indexes that are safe for query planning. An index is excluded

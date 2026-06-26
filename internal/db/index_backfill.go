@@ -146,10 +146,9 @@ func (db *DB) fillIndexBatches(
 		)
 
 		batchErr := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
-			col, err := db.newCollection(batchCtx, def, datastore.CtxTryGetTxnOption(batchCtx))
-			if err != nil {
-				return err
-			}
+			// Bare collection so this batch does not read sibling indexes' state into its read-set
+			// (see newBareCollection); the backfill maintains only its own index, built below.
+			col := db.newBareCollection(def, datastore.CtxTryGetTxnOption(batchCtx))
 
 			// building=true so Save tolerates entries a concurrent live write
 			// already stored for the same document.
