@@ -61,10 +61,9 @@ func TestCollectionRetrieverResolvesDocReferences(t *testing.T) {
 
 	retriever := NewCollectionRetriever(db)
 
-	resolvedDocID, found, err := retriever.ResolveBlockDocID(ctx, blockCID)
+	resolvedDocIDs, err := retriever.ResolveBlockDocIDs(ctx, blockCID)
 	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, docID, resolvedDocID)
+	require.Equal(t, []string{docID}, resolvedDocIDs)
 
 	retrievedCol, err := retriever.RetrieveCollectionFromDocID(
 		ctx,

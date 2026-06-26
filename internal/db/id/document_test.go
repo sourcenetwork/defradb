@@ -53,10 +53,9 @@ func TestDocIDMappingMissingReturnsNotFound(t *testing.T) {
 	require.False(t, found)
 
 	undefinedCID := blocks.NewBlock(nil).Cid()
-	mappedDocID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), undefinedCID)
+	mappedDocIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), undefinedCID)
 	require.NoError(t, err)
-	require.False(t, found)
-	require.Empty(t, mappedDocID)
+	require.Empty(t, mappedDocIDs)
 }
 
 func TestDocIDMappingRoundTrip(t *testing.T) {
@@ -161,14 +160,10 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = SetBlockDocIDMapping(ctx, fieldCID, docID2)
 	require.NoError(t, err)
 
+	// A block CID can be owned by more than one document.
 	docIDs, err := GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{docID1, docID2}, docIDs)
-
-	docID, found, err := GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, []string{docID1, docID2}, docID)
 
 	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, docID1)
 	require.NoError(t, err)
@@ -180,17 +175,15 @@ func TestBlockDocIDMappings(t *testing.T) {
 	err = DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, docID2)
 	require.NoError(t, err)
 
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
-	require.False(t, found)
-	require.Empty(t, docID)
+	require.Empty(t, docIDs)
 
 	err = SetBlockDocIDMapping(ctx, fieldCID, "")
 	require.NoError(t, err)
-	docID, found, err = GetDocIDForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
+	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
-	require.False(t, found)
-	require.Empty(t, docID)
+	require.Empty(t, docIDs)
 }
 
 func TestDeleteDocRefMappings(t *testing.T) {

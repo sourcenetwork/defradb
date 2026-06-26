@@ -37,14 +37,17 @@ func NewCollectionRetriever(db *DB) collectionRetriever {
 	}
 }
 
-func (r collectionRetriever) ResolveBlockDocID(ctx context.Context, blockCID cid.Cid) (string, bool, error) {
+// ResolveBlockDocIDs returns every DocID that owns the given block CID. A block can be
+// co-owned by several documents (identical genesis field deltas produce one shared CID), so
+// callers must handle more than one owner.
+func (r collectionRetriever) ResolveBlockDocIDs(ctx context.Context, blockCID cid.Cid) ([]string, error) {
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
 	defer txn.Discard()
 
-	return id.GetDocIDForBlockFromStore(ctx, txn.Systemstore(), blockCID)
+	return id.GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), blockCID)
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.

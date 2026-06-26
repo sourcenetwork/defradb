@@ -45,9 +45,9 @@ func TestSystemstoreDocIDKeys(t *testing.T) {
 			want: "/d/r/" + docShortIDSegment + "/" + docID,
 		},
 		{
-			name: "block to doc short id",
-			key:  NewBlockCIDToDocShortIDKey(fieldCID, docShortID),
-			want: "/d/b/" + fieldCID + "/" + docShortIDSegment,
+			name: "block to doc id",
+			key:  NewBlockCIDToDocIDKey(fieldCID, docID),
+			want: "/d/b/" + fieldCID + "/" + docID,
 		},
 	}
 

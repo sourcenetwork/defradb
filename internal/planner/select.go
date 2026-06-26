@@ -296,23 +296,51 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
 		// query, which means we need to propagate the values to the underlying VersionedFetcher
 		if n.selectReq.Cids.HasValue() {
-			prefixes := make([]keys.Walkable, len(n.selectReq.Cids.Value()))
-
-			for i, sCid := range n.selectReq.Cids.Value() {
-				c, err := cid.Decode(sCid)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				prefixes[i] = keys.HeadstoreDocKey{
-					Cid: c,
-				}
+			collectionShortID, err := id.GetCollectionShortID(
+				n.planner.ctx,
+				sourcePlan.collection.Version().CollectionID,
+			)
+			if err != nil {
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
 			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
 			// as a prefix. And with this design limitation this is
 			// currently the least bad way of passing the cid in to the fetcher.
+			var prefixes []keys.Walkable
+			for _, sCid := range n.selectReq.Cids.Value() {
+				c, err := cid.Decode(sCid)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				// A block CID can be owned by more than one document (a field block shared
+				// across documents with identical genesis deltas). Time-travel to each owning
+				// document's state at that version; the versioned fetcher applies the document
+				// ACP read check, so owners the caller cannot read are dropped.
+				owners, err := id.GetDocIDsForBlock(n.planner.ctx, c)
+				if err != nil {
+					return nil, nil, err
+				}
+				if len(owners) == 0 {
+					// Not recorded in the owner index; let the versioned fetcher derive the
+					// document from the block itself.
+					prefixes = append(prefixes, keys.HeadstoreDocKey{Cid: c})
+					continue
+				}
+				for _, owner := range owners {
+					docShortID, found, err := id.GetDocShortID(n.planner.ctx, collectionShortID, owner)
+					if err != nil {
+						return nil, nil, err
+					}
+					if !found {
+						continue
+					}
+					prefixes = append(prefixes, keys.HeadstoreDocKey{Cid: c, DocShortID: docShortID})
+				}
+			}
+
 			origScan.Prefixes(prefixes)
 		} else if n.selectReq.DocIDs.HasValue() && len(n.selectReq.DocIDs.Value()) > 0 {
 			collectionShortID, err := id.GetCollectionShortID(

@@ -493,7 +493,7 @@ func (vf *VersionedFetcher) docShortIDForBlock(
 		return 0, nil
 	}
 
-	docID, found, err := id.GetDocIDForBlockFromStore(
+	owners, err := id.GetDocIDsForBlockFromStore(
 		vf.ctx,
 		vf.txn.Systemstore(),
 		blockCID,
@@ -501,16 +501,21 @@ func (vf *VersionedFetcher) docShortIDForBlock(
 	if err != nil {
 		return 0, err
 	}
-	if !found {
-		if block.Delta.IsComposite() {
-			if len(block.Heads) == 0 {
-				docID = client.NewDocIDV0(blockCID).String()
-			} else {
-				return vf.docShortIDForCompositeHead(collectionShortID, block.Heads)
-			}
-		} else {
-			return 0, client.ErrMalformedDocID
-		}
+
+	var docID string
+	switch {
+	case len(owners) == 1:
+		// A single-owner block (composite, or an unshared field block) belongs to that
+		// document. A composite block's CID is always document-unique.
+		docID = owners[0]
+	case block.Delta.IsComposite() && len(block.Heads) == 0:
+		docID = client.NewDocIDV0(blockCID).String()
+	case block.Delta.IsComposite():
+		return vf.docShortIDForCompositeHead(collectionShortID, block.Heads)
+	default:
+		// A field block with no single owner (shared across documents) cannot be attributed
+		// to one document without a composite context; time-travel enters via composite CIDs.
+		return 0, client.ErrMalformedDocID
 	}
 
 	docShortID, found, err := id.GetDocShortID(vf.ctx, collectionShortID, docID)

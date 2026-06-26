@@ -489,14 +489,14 @@ func (mp *mergeProcessor) initCRDTForType(
 		), resolvedDocRef{}, nil
 
 	default:
-		docRef, err := mp.resolveFieldBlockDocRef(
-			ctx,
-			collectionShortID,
-			blockLink.Cid,
-		)
-		if err != nil {
-			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
+		// A field block is always processed as a child of its composite block, which records
+		// the owning document in currentCompositeDocRef. A field block's delta must be merged
+		// into that document - never one resolved from the block-CID owner index, since a field
+		// block can be shared across documents.
+		if mp.currentCompositeDocRef == nil {
+			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(client.ErrMalformedDocID, blockLink.Cid.String())
 		}
+		docRef := *mp.currentCompositeDocRef
 		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
 			return nil, resolvedDocRef{}, err
@@ -546,14 +546,20 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 		return resolved, nil
 	}
 
-	if docID, found, err := id.GetDocIDForBlockFromStore(
+	// A composite block is owned by exactly one document. Use the recorded owner as a fast
+	// path only when it is unambiguous; otherwise determine the DocID from the block itself:
+	// a genesis composite's CID is the DocID, an update inherits it from the genesis reached
+	// through its heads.
+	owners, err := id.GetDocIDsForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,
-	); err != nil {
+	)
+	if err != nil {
 		return resolvedDocRef{}, err
-	} else if found {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
+	}
+	if len(owners) == 1 {
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
 	}
 
 	if len(block.Heads) == 0 {
@@ -574,33 +580,6 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 	return resolvedDocRef{}, client.ErrMalformedDocID
 }
 
-func (mp *mergeProcessor) resolveFieldBlockDocRef(
-	ctx context.Context,
-	collectionShortID uint32,
-	blockCID cid.Cid,
-) (resolvedDocRef, error) {
-	if mp.currentCompositeDocRef != nil {
-		return *mp.currentCompositeDocRef, nil
-	}
-
-	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
-		return resolved, nil
-	}
-
-	docID, found, err := id.GetDocIDForBlockFromStore(
-		ctx,
-		datastore.CtxMustGetTxn(ctx).Systemstore(),
-		blockCID,
-	)
-	if err != nil {
-		return resolvedDocRef{}, err
-	} else if found {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
-	}
-
-	return resolvedDocRef{}, client.ErrMalformedDocID
-}
-
 func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	ctx context.Context,
 	collectionShortID uint32,
@@ -610,7 +589,10 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 		return resolved, nil
 	}
 
-	docID, found, err := id.GetDocIDForBlockFromStore(
+	// A composite block is owned by exactly one document. Use the recorded owner as a fast
+	// path only when it is unambiguous; otherwise load the block and determine the DocID from
+	// the composite itself.
+	owners, err := id.GetDocIDsForBlockFromStore(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,
@@ -618,8 +600,8 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	if err != nil {
 		return resolvedDocRef{}, err
 	}
-	if found {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, docID)
+	if len(owners) == 1 {
+		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
 	}
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCID}, coreblock.BlockSchemaPrototype)

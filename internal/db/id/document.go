@@ -135,25 +135,22 @@ func SetBlockDocIDMapping(
 		return nil
 	}
 
-	docRef, found, err := GetDocRef(ctx, docID)
-	if err != nil {
-		return err
-	}
-	if !found {
-		return corekv.ErrNotFound
-	}
-
 	txn := datastore.CtxMustGetTxn(ctx)
 	return txn.Systemstore().Set(
 		ctx,
-		keys.NewBlockCIDToDocShortIDKey(blockCID.String(), docRef.DocShortID).Bytes(),
+		keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes(),
 		[]byte{},
 	)
 }
 
 // GetDocIDsForBlockFromStore returns every DocID that owns blockCID.
 // Field blocks can be byte-identical across documents, so ownership is a set.
-// The index stores doc short IDs to avoid repeating DocIDs in every block key.
+// The index stores DocIDs directly so block ownership survives doc-ref cleanup.
+func GetDocIDsForBlock(ctx context.Context, blockCID cid.Cid) ([]string, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	return GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), blockCID)
+}
+
 func GetDocIDsForBlockFromStore(
 	ctx context.Context,
 	store corekv.Reader,
@@ -163,7 +160,7 @@ func GetDocIDsForBlockFromStore(
 		return nil, nil
 	}
 
-	prefix := keys.NewBlockCIDToDocShortIDKey(blockCID.String(), 0).Bytes()
+	prefix := keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes()
 	prefix = append(prefix, '/')
 	iter, err := store.Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix,
@@ -182,41 +179,15 @@ func GetDocIDsForBlockFromStore(
 		if !hasNext {
 			break
 		}
-		docShortIDBytes := bytes.TrimPrefix(iter.Key(), prefix)
-		if len(docShortIDBytes) == 0 {
-			continue
-		}
-		docShortID, err := keys.DecodeDocShortID(docShortIDBytes)
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		docID, found, err := GetDocIDFromStore(ctx, store, docShortID)
-		if err != nil {
-			return nil, stderrors.Join(err, iter.Close())
-		}
-		if found {
-			docIDs = append(docIDs, docID)
+		docID := bytes.TrimPrefix(iter.Key(), prefix)
+		if len(docID) != 0 {
+			docIDs = append(docIDs, string(docID))
 		}
 	}
 	if err := iter.Close(); err != nil {
 		return nil, err
 	}
 	return docIDs, nil
-}
-
-func GetDocIDForBlockFromStore(
-	ctx context.Context,
-	store corekv.Reader,
-	blockCID cid.Cid,
-) (string, bool, error) {
-	docIDs, err := GetDocIDsForBlockFromStore(ctx, store, blockCID)
-	if err != nil {
-		return "", false, err
-	}
-	if len(docIDs) == 0 {
-		return "", false, nil
-	}
-	return docIDs[0], true, nil
 }
 
 func DeleteBlockDocIDMapping(
@@ -228,11 +199,7 @@ func DeleteBlockDocIDMapping(
 	if !blockCID.Defined() || docID == "" {
 		return nil
 	}
-	docRef, found, err := GetDocRefFromStore(ctx, store, docID)
-	if err != nil || !found {
-		return err
-	}
-	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocShortIDKey(blockCID.String(), docRef.DocShortID).Bytes())
+	return deleteKeyIfExists(ctx, store, keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())
 }
 
 func DeleteDocIDMappings(

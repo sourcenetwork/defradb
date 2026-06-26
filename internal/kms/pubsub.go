@@ -70,7 +70,7 @@ type CollectionRetriever interface {
 		string,
 		immutable.Option[identity.Identity],
 	) (client.Collection, error)
-	ResolveBlockDocID(context.Context, cid.Cid) (string, bool, error)
+	ResolveBlockDocIDs(context.Context, cid.Cid) ([]string, error)
 }
 
 type pubSubService struct {
@@ -522,19 +522,24 @@ func (s *pubSubService) getEncryptionKeysLocally(
 		if err != nil {
 			return nil, nil, err
 		}
-		docID, found, err := s.colRetriever.ResolveBlockDocID(ctx, encBlockCID)
+		docIDs, err := s.colRetriever.ResolveBlockDocIDs(ctx, encBlockCID)
 		if err != nil {
 			return nil, nil, err
 		}
-		if found {
-			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+		// An encryption block may be co-owned by several documents; share the key if the
+		// requester may read any one of them.
+		hasPerm := false
+		for _, docID := range docIDs {
+			ok, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
 				return nil, nil, err
 			}
-			if !hasPerm {
-				continue
+			if ok {
+				hasPerm = true
+				break
 			}
-		} else {
+		}
+		if !hasPerm {
 			continue
 		}
 

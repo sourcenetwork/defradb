@@ -220,9 +220,12 @@ func (testCollectionRetriever) RetrieveCollectionFromDocID(
 	return nil, nil
 }
 
-func (r testCollectionRetriever) ResolveBlockDocID(_ context.Context, blockCID cid.Cid) (string, bool, error) {
+func (r testCollectionRetriever) ResolveBlockDocIDs(_ context.Context, blockCID cid.Cid) ([]string, error) {
 	docID, ok := r.docIDsByBlockCID[blockCID.String()]
-	return docID, ok, nil
+	if !ok {
+		return nil, nil
+	}
+	return []string{docID}, nil
 }
 
 func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.T) {

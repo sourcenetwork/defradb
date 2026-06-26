@@ -74,36 +74,51 @@ func (k DatastoreSE) ToDS() ds.Key {
 
 // NewDatastoreSEFromString creates a DatastoreSE from a key string
 func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
-	parts := strings.Split(key, "/")
-	// Expected format: /se/<collectionID>/<indexID>/<searchTag>/<docID>
-	if len(parts) < 2 || parts[1] != "se" {
+	if key != SE_PREFIX && !strings.HasPrefix(key, SE_PREFIX+"/") {
 		return DatastoreSE{}, errors.New("invalid SE key format")
 	}
 
 	k := DatastoreSE{}
+	data := []byte(key[len(SE_PREFIX):])
+	if len(data) == 0 {
+		return k, nil
+	}
+	if data[0] != '/' {
+		return DatastoreSE{}, errors.New("invalid SE key format")
+	}
+	data = data[1:]
 
-	if len(parts) > 2 && len(parts[2]) != 0 {
-		_, collectionShortID, err := encoding.DecodeUvarintAscending([]byte(parts[2]))
+	if len(data) > 0 && data[0] != '/' {
+		rest, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
 		if err != nil {
 			return DatastoreSE{}, err
 		}
-		k.CollectionShortID = uint32(collectionShortID)
+		k.CollectionShortID = collectionShortID
+		data = rest
 	}
 
-	if len(parts) > 3 {
-		k.IndexID = parts[3]
+	if len(data) == 0 {
+		return k, nil
+	}
+	if data[0] != '/' {
+		return DatastoreSE{}, errors.New("invalid SE key format")
 	}
 
-	if len(parts) > 4 {
-		searchTag, err := hex.DecodeString(parts[4])
+	parts := strings.Split(string(data[1:]), "/")
+	if len(parts) > 0 {
+		k.IndexID = parts[0]
+	}
+
+	if len(parts) > 1 {
+		searchTag, err := hex.DecodeString(parts[1])
 		if err != nil {
 			return DatastoreSE{}, errors.Wrap("failed to decode search tag", err)
 		}
 		k.SearchTag = searchTag
 	}
 
-	if len(parts) > 5 {
-		k.DocID = parts[5]
+	if len(parts) > 2 {
+		k.DocID = parts[2]
 	}
 
 	return k, nil

@@ -158,10 +158,9 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T)
 	require.True(t, found)
 	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
 
-	blockDocID, found, err := id.GetDocIDForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
+	blockDocIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
 	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, sourceDoc.ID().String(), blockDocID)
+	require.Equal(t, []string{sourceDoc.ID().String()}, blockDocIDs)
 }
 
 func TestMergeResolveBlockDocID(t *testing.T) {
@@ -205,27 +204,6 @@ func TestMergeResolveBlockDocID(t *testing.T) {
 	require.Equal(t, genesisDocID, resolved.docID)
 	require.NotEmpty(t, resolved.docShortID)
 	require.NotZero(t, resolved.docShortID)
-
-	mp.currentCompositeDocRef = &resolved
-	fieldResolved, err := mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, cid.Undef)
-	require.NoError(t, err)
-	require.Equal(t, genesisDocID, fieldResolved.docID)
-	require.Equal(t, resolved.docShortID, fieldResolved.docShortID)
-
-	const existingDocShortID uint64 = 42
-	existingDocID := client.NewDocIDV0(blocks.NewBlock([]byte("existing document")).Cid()).String()
-	require.NoError(t, id.SetDocIDMapping(txnCtx, collectionShortID, existingDocShortID, existingDocID))
-	mappedFieldCID := blocks.NewBlock([]byte("mapped field")).Cid()
-	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, mappedFieldCID, existingDocID))
-
-	mp.currentCompositeDocRef = nil
-	fieldResolved, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, mappedFieldCID)
-	require.NoError(t, err)
-	require.Equal(t, existingDocID, fieldResolved.docID)
-	require.Equal(t, existingDocShortID, fieldResolved.docShortID)
-
-	_, err = mp.resolveFieldBlockDocRef(txnCtx, collectionShortID, blocks.NewBlock([]byte("unknown field")).Cid())
-	require.ErrorIs(t, err, client.ErrMalformedDocID)
 }
 
 func TestMerge_DualBranch_NoError(t *testing.T) {
