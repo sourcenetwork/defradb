@@ -15,7 +15,7 @@ defradb client tx new [flags]
 ```
   -h, --help         help for new
       --read-only    Transaction is read only
-      --ttl string   Transaction idle TTL as a Go duration string, or seconds if no unit is provided
+      --ttl string   Transaction idle TTL as a duration string, or seconds if no unit is provided
 ```
 
 ### Options inherited from parent commands
