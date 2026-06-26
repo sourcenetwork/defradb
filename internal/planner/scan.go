@@ -294,17 +294,14 @@ func publicDocIDForFilterValue(ctx context.Context, docID string) (string, bool,
 		return docID, false, nil
 	}
 
-	publicDocID, found, err := id.GetDocID(ctx, docRef.DocShortID)
+	currentDocID, _, err := id.GetDocID(ctx, docRef.DocShortID)
 	if err != nil {
 		return "", false, err
 	}
-	if !found {
-		return "", false, client.ErrDocumentNotFoundOrNotAuthorized
-	}
-	if publicDocID == docID {
+	if currentDocID == docID {
 		return docID, false, nil
 	}
-	return publicDocID, true, nil
+	return currentDocID, true, nil
 }
 
 func (n *scanNode) initCollection(col client.Collection) error {

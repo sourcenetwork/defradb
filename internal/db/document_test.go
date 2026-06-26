@@ -15,6 +15,7 @@ import (
 	"encoding/binary"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -174,4 +175,48 @@ func TestNextShortDocIDUsesNodeSequence(t *testing.T) {
 	require.Equal(t, uint64(13), nextShortID)
 
 	require.NoError(t, txn.Commit())
+}
+
+func TestBlockDocIDMappingSharedFieldBlockHasAllOwners(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docA, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Shared","age":1}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docA))
+
+	docB, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Shared","age":2}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docB))
+	require.NotEqual(t, docA.ID().String(), docB.ID().String())
+
+	nameCIDA := nameFieldBlockCID(t, ctx, db, docA.Head())
+	nameCIDB := nameFieldBlockCID(t, ctx, db, docB.Head())
+	require.Equal(t, nameCIDA, nameCIDB)
+
+	txn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	docIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), nameCIDA)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{docA.ID().String(), docB.ID().String()}, docIDs)
+}
+
+func nameFieldBlockCID(t *testing.T, ctx context.Context, db *DB, head cid.Cid) cid.Cid {
+	t.Helper()
+	composite := loadTestBlock(t, ctx, db, head)
+	nameLink, found := composite.GetLinkByName("name")
+	require.True(t, found)
+	return nameLink.Cid
 }
