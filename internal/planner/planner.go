@@ -756,6 +756,8 @@ func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
 		node.replaceRoot(replace)
 	case *typeJoinMany:
 		node.replaceRoot(replace)
+	case *multiScanNode:
+		node.planNode = replace
 	case *pipeNode:
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
