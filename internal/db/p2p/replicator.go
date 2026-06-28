@@ -231,7 +231,11 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			return err
 		}
 		if !found {
-			return client.ErrDocumentNotFoundOrNotAuthorized
+			// A document key without a short-id mapping points to an inconsistent store. Skip it
+			// so a single bad entry does not block replicating the rest of the collection.
+			log.ErrorContext(ctx, "Skipping document with no DocID mapping during replicator push",
+				corelog.Uint64("DocShortID", primaryKey.DocShortID))
+			continue
 		}
 
 		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, docID, col.CollectionID(), peerID)

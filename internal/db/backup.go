@@ -241,6 +241,19 @@ func (db *DB) setImportedDocIDAlias(
 	if !found {
 		return NewErrDocIDNotFound(doc.ID().String())
 	}
+
+	// Aliasing the imported (foreign) DocID to this document must not repoint an existing local
+	// document that already owns that DocID. That would happen when the imported content resolves
+	// to a different local DocID (e.g. signed documents) yet its source DocID collides with one
+	// already in the store, silently hijacking the existing document's resolution.
+	existingRef, found, err := id.GetDocRef(ctx, importedDocID)
+	if err != nil {
+		return err
+	}
+	if found && (existingRef.CollectionShortID != collectionShortID || existingRef.DocShortID != docShortID) {
+		return NewErrDocumentAlreadyExists(importedDocID)
+	}
+
 	if err := id.SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, importedDocID); err != nil {
 		return err
 	}
@@ -333,38 +346,36 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				return err
 			}
 
-			isSelfReference := false
-			refFieldName := ""
-			// Clear references to missing documents and hold self-references until after add.
+			// Clear references to documents that no longer exist. Self-references are exported with
+			// the source DocID and remapped to the new DocID at import time (see rewriteImportRelations).
 			for _, field := range col.Version().Fields {
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					fieldID := request.ToFieldID(field.Name)
-					if foreignKey, err := doc.Get(fieldID); err == nil {
-						foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
-						if err != nil {
-							return err
-						}
+				if !field.Kind.IsObject() || field.Kind.IsArray() {
+					continue
+				}
+				fieldID := request.ToFieldID(field.Name)
+				foreignKey, err := doc.Get(fieldID)
+				if err != nil {
+					continue
+				}
 
-						txnOpt := datastore.CtxTryGetTxnOption(ctx)
-						foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
-						if err != nil {
-							return err
-						}
+				foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
+				if err != nil {
+					return err
+				}
 
-						foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
-						if err != nil {
-							return err
-						}
-						foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
-						if err != nil {
-							err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
-							if err != nil {
-								return err
-							}
-						} else if foreignDoc.ID().String() == doc.ID().String() {
-							isSelfReference = true
-							refFieldName = fieldID
-						}
+				txnOpt := datastore.CtxTryGetTxnOption(ctx)
+				foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
+				if err != nil {
+					return err
+				}
+
+				foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
+				if err != nil {
+					return err
+				}
+				if _, err := foreignCol.GetDocument(ctx, foreignDocID); err != nil {
+					if err := doc.Set(ctx, fieldID, nil); err != nil {
+						return err
 					}
 				}
 			}
@@ -375,16 +386,8 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			}
 
 			delete(docM, request.DocIDFieldName)
-			if isSelfReference {
-				delete(docM, refFieldName)
-			}
-
 			docM[request.NewDocIDFieldName] = doc.ID().String()
 			docM[request.DocIDFieldName] = doc.ID().String()
-
-			if isSelfReference {
-				docM[refFieldName] = doc.ID().String()
-			}
 
 			var b []byte
 			if config.Pretty {

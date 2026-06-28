@@ -113,9 +113,12 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 		if isDocumentRowKey(kv.Key) {
 			f.currentKV = kv
 			f.execInfo.DocsFetched++
-			docID, _, err := id.GetDocID(f.ctx, kv.Key.DocShortID)
+			docID, found, err := id.GetDocID(f.ctx, kv.Key.DocShortID)
 			if err != nil {
 				return immutable.None[string](), err
+			}
+			if !found {
+				return immutable.None[string](), NewErrMissingDocIDForShortID(kv.Key.DocShortID)
 			}
 			return immutable.Some(docID), nil
 		}
@@ -159,9 +162,12 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 
 	f.execInfo.DocsFetched++
 
-	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
+	docID, found, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[string](), err
+	}
+	if !found {
+		return immutable.None[string](), NewErrMissingDocIDForShortID(f.currentKV.Key.DocShortID)
 	}
 	return immutable.Some(docID), nil
 }
@@ -172,9 +178,12 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	}
 
 	doc := encodedDocument{}
-	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
+	docID, found, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
+	}
+	if !found {
+		return immutable.None[EncodedDocument](), NewErrMissingDocIDForShortID(f.currentKV.Key.DocShortID)
 	}
 	doc.id = []byte(docID)
 	doc.status = f.status

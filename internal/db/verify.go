@@ -130,6 +130,15 @@ func (db *DB) VerifySignature(
 }
 
 // docIDsForSignatureBlock resolves the DocIDs that ACP may check for a signed block.
+//
+// Resolution order:
+//   - collection-level blocks are not document-scoped, so a single empty DocID is returned;
+//   - otherwise every document that owns the block (recorded on create and merge) is returned;
+//   - a genesis composite with no recorded owner falls back to the DocID derived from its own CID.
+//
+// When none of these apply the block cannot be tied to a document. No DocIDs are returned and the
+// caller denies access (fail closed): under document ACP a signed block whose ownership cannot be
+// established must not be readable.
 func (db *DB) docIDsForSignatureBlock(
 	ctx context.Context,
 	systemstore corekv.Reader,

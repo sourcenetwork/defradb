@@ -81,14 +81,17 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 	defer txn.Discard()
 
-	key, err := getDocHeadstoreKey(ctx, col, dagMerge.DocID)
+	key, exists, err := getDocHeadstoreKey(ctx, col, dagMerge.DocID)
 	if err != nil {
 		return err
 	}
 
-	mt, err := getHeadsAsMergeTarget(ctx, key)
-	if err != nil {
-		return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
+	mt := newMergeTarget()
+	if exists {
+		mt, err = getHeadsAsMergeTarget(ctx, key)
+		if err != nil {
+			return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
+		}
 	}
 
 	mp, err := db.newMergeProcessor(ctx, col, len(mt.heads) == 0)
@@ -212,23 +215,30 @@ func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 	return docShortID, nil
 }
 
-func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (keys.HeadstoreKey, error) {
-	if docID != "" {
-		primaryKey, err := col.getPrimaryKeyFromDocIDString(ctx, docID)
-		if err != nil {
-			return nil, err
-		}
-		return keys.HeadstoreDocKey{
-			DocShortID: primaryKey.DocShortID,
-			FieldID:    core.COMPOSITE_NAMESPACE,
-		}, nil
-	}
-
+// getDocHeadstoreKey returns the headstore key under which the given document's composite heads are
+// stored. The returned exists is false when the document does not yet exist locally (the merge is
+// creating it), in which case it has no heads and the caller must treat the merge target as empty.
+func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (keys.HeadstoreKey, bool, error) {
 	collectionShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return keys.NewHeadstoreColKey(collectionShortID), nil
+
+	if docID != "" {
+		docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
+		if err != nil {
+			return nil, false, err
+		}
+		if !found {
+			return nil, false, nil
+		}
+		return keys.HeadstoreDocKey{
+			DocShortID: docShortID,
+			FieldID:    core.COMPOSITE_NAMESPACE,
+		}, true, nil
+	}
+
+	return keys.NewHeadstoreColKey(collectionShortID), true, nil
 }
 
 func (db *DB) newMergeProcessor(
@@ -559,11 +569,11 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 		return resolvedDocRef{}, err
 	}
 	if len(owners) == 1 {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
 	}
 
 	if len(block.Heads) == 0 {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, client.NewDocIDV0(blockCID).String())
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, client.NewDocIDV0(blockCID).String())
 	}
 
 	for _, head := range block.Heads {
@@ -601,7 +611,7 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 		return resolvedDocRef{}, err
 	}
 	if len(owners) == 1 {
-		return mp.resolveOrCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
 	}
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCID}, coreblock.BlockSchemaPrototype)
@@ -618,7 +628,7 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	return mp.resolveCompositeBlockDocRef(ctx, collectionShortID, block, blockCID)
 }
 
-func (mp *mergeProcessor) resolveOrCacheBlockDocRef(
+func (mp *mergeProcessor) resolveAndCacheBlockDocRef(
 	ctx context.Context,
 	collectionShortID uint32,
 	blockCID cid.Cid,

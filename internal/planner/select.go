@@ -342,6 +342,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			}
 
 			origScan.Prefixes(prefixes)
+			// None of the given CIDs resolved to a document in this collection (e.g. a CID that
+			// only belongs to documents in another collection). Mark the scan as empty so it does
+			// not fall back to a full prefix scan, which the versioned fetcher cannot serve.
+			if len(prefixes) == 0 {
+				origScan.noResults = true
+			}
 		} else if n.selectReq.DocIDs.HasValue() && len(n.selectReq.DocIDs.Value()) > 0 {
 			collectionShortID, err := id.GetCollectionShortID(
 				n.planner.ctx,

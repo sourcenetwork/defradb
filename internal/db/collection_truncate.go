@@ -450,6 +450,11 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
+			// A nil systemstore and empty docID make deleteBlocks delete every reached block
+			// unconditionally, without touching block->docID owner edges. This is safe only because
+			// the document blocks and their owner edges are deleted earlier in truncate (see the
+			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
+			// re-encounters already-deleted document composites.
 			err = c.deleteBlocks(ctx, nil, "", key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())

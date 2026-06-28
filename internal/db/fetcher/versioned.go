@@ -207,9 +207,14 @@ func (vf *VersionedFetcher) Init(
 
 // Start serializes the correct state according to the Key and CID.
 func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
-	// VersionedFetcher only ever recieves a headstore key
-	//nolint:forcetypeassert
-	prefix := prefixes[0].(keys.HeadstoreDocKey)
+	if len(prefixes) == 0 {
+		return ErrMissingVersionedPrefix
+	}
+	// The versioned fetcher is only ever given a headstore key by the planner.
+	prefix, ok := prefixes[0].(keys.HeadstoreDocKey)
+	if !ok {
+		return client.NewErrUnexpectedType[keys.HeadstoreDocKey]("prefix", prefixes[0])
+	}
 
 	vf.ctx = ctx
 
