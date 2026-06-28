@@ -300,6 +300,12 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchema(addDocumentBodySchema))
 
+	docIDArraySchema := openapi3.NewArraySchema()
+	docIDArraySchema.Items = openapi3.NewSchemaRef("", openapi3.NewStringSchema())
+	addDocumentResponse := openapi3.NewResponse().
+		WithDescription("The IDs of the added documents").
+		WithJSONSchemaRef(openapi3.NewSchemaRef("", docIDArraySchema))
+
 	addDocument := openapi3.NewOperation()
 	addDocument.OperationID = "add_document"
 	addDocument.Description = "Add document(s) to a collection"
@@ -309,7 +315,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		Value: addDocumentRequest,
 	}
 	addDocument.Responses = openapi3.NewResponses()
-	addDocument.Responses.Set("200", successResponse)
+	addDocument.Responses.Set("200", &openapi3.ResponseRef{Value: addDocumentResponse})
 	addDocument.Responses.Set("400", errorResponse)
 	addDocument.Responses.Set("409", errorResponse)
 

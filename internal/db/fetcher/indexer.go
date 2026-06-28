@@ -186,10 +186,10 @@ func (f *indexFetcher) docIDFromDocShortID(docShortID uint64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !found {
-		return "", NewErrMissingDocIDForShortID(docShortID)
+	if found {
+		return docID, nil
 	}
-	return docID, nil
+	return "", nil
 }
 
 func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {

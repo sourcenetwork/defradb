@@ -92,6 +92,29 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+// An imported document whose source DocID matches an existing local document, but whose content
+// resolves to a different local DocID, must not silently hijack the existing document's resolution.
+func TestBackupImport_WithAliasCollidingExistingDoc_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		// hardcoded DocIDs would change under encryption or signing
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John", "age": 30}`,
+			},
+			testUtils.ImportBackup{
+				// The imported document carries the existing John document's DocID as its alias, but
+				// its own content (Bob) resolves to a different DocID.
+				ImportContent: `{"User":[{"_docID":"bae-e7a5b940-c466-5e40-af26-87b6b35ed08a","_docIDNew":"bae-e7a5b940-c466-5e40-af26-87b6b35ed08a","age":40,"name":"Bob"}]}`,
+				ExpectedError: "a document with the given ID already exists",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

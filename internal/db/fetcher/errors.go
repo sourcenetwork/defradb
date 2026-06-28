@@ -55,7 +55,6 @@ const (
 	errEncryptionKeyMissing       string = "encryption key not available locally for block"
 	errIndexEpochNotFound         string = "index epoch sequence not found"
 	errMissingVersionedPrefix     string = "versioned fetcher started without a prefix"
-	errMissingDocIDForShortID     string = "no DocID mapping for document short ID"
 )
 
 var (
@@ -75,7 +74,6 @@ var (
 	ErrEncryptionKeyMissing       = errors.New(errEncryptionKeyMissing)
 	ErrIndexEpochNotFound         = errors.New(errIndexEpochNotFound)
 	ErrMissingVersionedPrefix     = errors.New(errMissingVersionedPrefix)
-	ErrMissingDocIDForShortID     = errors.New(errMissingDocIDForShortID)
 )
 
 // NewErrDecryptVersionedBlock returns an error indicating that the given block could not
@@ -101,12 +99,6 @@ func NewErrIndexEpochNotFound(inner error, collectionID string, indexID uint32) 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
 func NewErrFieldIdNotFound(fieldId uint32) error {
 	return errors.New(errFieldIdNotFound, errors.NewKV("FieldId", fieldId))
-}
-
-// NewErrMissingDocIDForShortID returns an error indicating that the given document short ID has
-// no public DocID mapping in the systemstore, which points to an inconsistent store.
-func NewErrMissingDocIDForShortID(docShortID uint64) error {
-	return errors.New(errMissingDocIDForShortID, errors.NewKV("DocShortID", docShortID))
 }
 
 // NewErrFailedToSeek returns an error indicating that the given target could not be seeked to.

@@ -158,6 +158,51 @@ func TestBlockDeltaPriority(t *testing.T) {
 	require.Equal(t, uint64(2), block.Delta.GetPriority())
 }
 
+func TestBlockMarshal_DeltasDoNotEncodeDocID(t *testing.T) {
+	// The marshaled block bytes are dagcbor, so a "docID" map key would appear verbatim if any
+	// delta still encoded one. This guards against a DocID field being reintroduced to a delta,
+	// which would break cross-node genesis-CID determinism.
+	blocks := map[string]Block{
+		"composite": {
+			Delta: crdt.CRDT{
+				DocCompositeDelta: &crdt.DocCompositeDelta{
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Status:              1,
+				},
+			},
+		},
+		"lww": {
+			Delta: crdt.CRDT{
+				LWWDelta: &crdt.LWWDelta{
+					FieldName:           "name",
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Data:                []byte("John"),
+				},
+			},
+		},
+		"counter": {
+			Delta: crdt.CRDT{
+				CounterDelta: &crdt.CounterDelta{
+					FieldName:           "points",
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Data:                []byte{1},
+				},
+			},
+		},
+	}
+
+	for name, block := range blocks {
+		t.Run(name, func(t *testing.T) {
+			encoded, err := block.Marshal()
+			require.NoError(t, err)
+			require.NotContains(t, string(encoded), "docID")
+		})
+	}
+}
+
 func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	store := memstore.Store{}

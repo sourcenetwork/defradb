@@ -12,12 +12,14 @@ package keys
 
 import (
 	"bytes"
+	"math"
 	"testing"
 
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 const slashEncodedShortID = 303
@@ -83,4 +85,55 @@ func TestDecodeDocShortIDPrefix(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(slashEncodedShortID), docShortID)
 	require.True(t, bytes.Equal([]byte{'/', '2'}, rest))
+}
+
+func TestDocShortID_RoundTrip(t *testing.T) {
+	for _, docShortID := range []uint64{1, 109, 110, slashEncodedShortID, 16384, math.MaxUint32, math.MaxUint64} {
+		decoded, err := DecodeDocShortID(EncodeDocShortID(docShortID))
+		require.NoError(t, err)
+		require.Equal(t, docShortID, decoded)
+	}
+}
+
+func TestDocShortID_ZeroIsReserved(t *testing.T) {
+	require.Nil(t, EncodeDocShortID(0))
+
+	_, err := DecodeDocShortID(nil)
+	require.ErrorIs(t, err, ErrInvalidKey)
+
+	_, err = DecodeDocShortID(encoding.EncodeUvarintAscending(nil, 0))
+	require.ErrorIs(t, err, ErrInvalidKey)
+}
+
+func TestDocShortID_RejectsTrailingBytes(t *testing.T) {
+	data := append(EncodeDocShortID(42), 'x')
+	_, err := DecodeDocShortID(data)
+	require.ErrorIs(t, err, ErrInvalidKey)
+}
+
+func TestDocRef_RoundTrip(t *testing.T) {
+	ref := DocRef{CollectionShortID: slashEncodedShortID, DocShortID: math.MaxUint64}
+	decoded, err := DecodeDocRef(EncodeDocRef(ref.CollectionShortID, ref.DocShortID))
+	require.NoError(t, err)
+	require.Equal(t, ref, decoded)
+}
+
+func TestDocRef_ZeroComponentsEncodeToNil(t *testing.T) {
+	require.Nil(t, EncodeDocRef(0, 7))
+	require.Nil(t, EncodeDocRef(7, 0))
+}
+
+func TestDocRef_DecodeRejectsInvalid(t *testing.T) {
+	zeroCollection := append(encoding.EncodeUvarintAscending(nil, 0), EncodeDocShortID(7)...)
+	_, err := DecodeDocRef(zeroCollection)
+	require.ErrorIs(t, err, ErrInvalidKey)
+
+	overflowCollection := append(encoding.EncodeUvarintAscending(nil, math.MaxUint32+1), EncodeDocShortID(7)...)
+	_, err = DecodeDocRef(overflowCollection)
+	require.ErrorIs(t, err, ErrInvalidKey)
+}
+
+func TestDecodeCollectionShortIDPrefix_RejectsOverflow(t *testing.T) {
+	_, _, err := DecodeCollectionShortIDPrefix(encoding.EncodeUvarintAscending(nil, math.MaxUint32+1))
+	require.ErrorIs(t, err, ErrInvalidKey)
 }

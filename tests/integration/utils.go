@@ -509,6 +509,10 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
+		// The generator assigns each doc a placeholder DocID, used only to wire up relations
+		// between generated docs (see replaceGeneratedDocIDs below). The real DocID is derived
+		// from the genesis CID when the doc is saved, so the placeholder is recorded for relation
+		// lookup and then dropped from the map to avoid persisting a stale DocID.
 		generatedDocID := doc.GeneratedID
 		replaceGeneratedDocIDs(docMap, generatedDocIDs)
 		delete(docMap, request.DocIDFieldName)

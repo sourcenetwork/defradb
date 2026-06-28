@@ -107,6 +107,45 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithCidFromAnotherCollection_ReturnsEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Pets {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			&action.Request{
+				// The CID belongs to a Users document, so it resolves to no Pets document.
+				// This must yield an empty result rather than panicking in the versioned fetcher.
+				Request: `query {
+					Pets (
+							cid: "{{.CID0_0_0}}"
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Pets": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
