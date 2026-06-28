@@ -4,6 +4,9 @@ schema {
     subscription: Subscription
 }
 
+"The `Any` scalar type represents any GQL value."
+scalar Any
+
 type Author {
     """
     
@@ -3263,15 +3266,7 @@ directive @crdt(
 		Setting a default value on a field within a view has no effect.
 """
 directive @default(
-    blob: Blob
-    bool: Boolean
-    dateTime: DateTime
-    float: Float
-    float32: Float32
-    float64: Float64
-    int: Int
-    json: JSON
-    string: String
+    value: Any
 ) on FIELD_DEFINITION
 
 """

@@ -66,3 +66,27 @@ func TestDisconnect_WithMultiplePeers_ShouldSucceed(t *testing.T) {
 
 	test.Execute(t)
 }
+
+func TestDisconnect_WithCommaSeparatedPeers_ShouldSucceed(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.DisconnectP2P{
+				Addresses: []string{addresses[0] + "," + addresses[1]},
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
+func TestDisconnect_WithCommaSeparatedPeersAndSpaces_ShouldSucceed(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.DisconnectP2P{
+				Addresses: []string{addresses[0] + ", " + addresses[1]},
+			},
+		},
+	}
+
+	test.Execute(t)
+}

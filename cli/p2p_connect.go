@@ -27,7 +27,7 @@ func MakeP2PConnectCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.Connect(), identity.FromContext(cmd.Context()))
-			return cliClient.Connect(cmd.Context(), args, opt)
+			return cliClient.Connect(cmd.Context(), parseAddresses(args), opt)
 		},
 	}
 

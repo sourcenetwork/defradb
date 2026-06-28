@@ -59,6 +59,9 @@ func setupNode(
 		opts = defaultNodeOpts()
 	}
 	opts.DB().SetEnableSigning(testCase.EnableSigning)
+	if testCase.HTTP.HasValue() {
+		applyHTTPOptions(opts, testCase.HTTP.Value())
+	}
 
 	if s.EnableSearchableEncryption {
 		seKey, err := crypto.GenerateAES256()
