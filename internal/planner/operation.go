@@ -25,7 +25,11 @@ type operationNode struct {
 	documentIterator
 	docMapper
 
-	children map[int]planNode
+	// children is indexed by the selection's position in the operation's
+	// selection set, so iteration follows the order operations appear in the
+	// request. This is required for spec-compliant serial mutation execution
+	// (and deterministic default query result order).
+	children []planNode
 	isDone   bool
 }
 
@@ -78,9 +82,7 @@ func (n *operationNode) Source() planNode {
 
 func (n *operationNode) Children() []planNode {
 	children := make([]planNode, 0, len(n.children))
-	for _, child := range n.children {
-		children = append(children, child)
-	}
+	children = append(children, n.children...)
 	return children
 }
 
@@ -124,7 +126,10 @@ func (n *operationNode) Next() (bool, error) {
 
 // Operation creates a new operationNode using the given Selects.
 func (p *Planner) Operation(operation *mapper.Operation) (*operationNode, error) {
-	children := make(map[int]planNode)
+	// Selection indices are contiguous (0..n-1, assigned by mapper.ToOperation),
+	// so a slice sized to the total selection count can be addressed directly by
+	// index, preserving request order.
+	children := make([]planNode, len(operation.Selects)+len(operation.Mutations)+len(operation.CommitSelects))
 	for _, s := range operation.Selects {
 		if _, isAgg := request.Aggregates[s.Name]; isAgg {
 			// If this Select is an aggregate, then it must be a top-level
