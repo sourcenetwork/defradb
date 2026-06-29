@@ -12,6 +12,7 @@ package parser
 
 import (
 	"fmt"
+	"sort"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -47,6 +48,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		RuntimeType:  operationType,
 		SelectionSet: exe.Operation.GetSelectionSet(),
 	})
+	orderedFields := orderCollectedFields(collectedFields)
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -57,7 +59,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	astOpDef := exe.Operation.(*ast.OperationDefinition)
 	switch exe.Operation.GetOperation() {
 	case ast.OperationTypeQuery:
-		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
 		if errs != nil {
 			return nil, errs
 		}
@@ -70,7 +72,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Queries = append(r.Queries, parsedQueryOpDef)
 
 	case ast.OperationTypeMutation:
-		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, collectedFields)
+		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, orderedFields)
 		if err != nil {
 			return nil, []error{err}
 		}
@@ -84,7 +86,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
 	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
 		if errs != nil {
 			return nil, errs
 		}
@@ -102,6 +104,50 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	}
 
 	return r, nil
+}
+
+// orderCollectedFields converts the grouped-field-set map produced by
+// [gql.CollectFields] into a slice ordered by source position, restoring the
+// document order that map iteration would otherwise randomize.
+//
+// This mirrors graphql-go's own (unexported) orderedFields used by its serial
+// executor: each response-key group is keyed by the lowest source location of
+// the fields within it, then groups are sorted ascending. This matches the
+// GraphQL spec's grouped-field-set ordering (order by first occurrence of each
+// response key) and, for mutations, is required for spec-compliant serial
+// execution order.
+func orderCollectedFields(collectedFields map[string][]*ast.Field) [][]*ast.Field {
+	type group struct {
+		startLoc int
+		fields   []*ast.Field
+	}
+
+	groups := make([]group, 0, len(collectedFields))
+	for _, fields := range collectedFields {
+		lowest := -1
+		for _, field := range fields {
+			loc := 0
+			// Locations are populated on this parse path, but guard defensively
+			// so a missing location sorts as position zero rather than panicking.
+			if l := field.GetLoc(); l != nil {
+				loc = l.Start
+			}
+			if lowest == -1 || loc < lowest {
+				lowest = loc
+			}
+		}
+		groups = append(groups, group{startLoc: lowest, fields: fields})
+	}
+
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i].startLoc < groups[j].startLoc
+	})
+
+	orderedFields := make([][]*ast.Field, len(groups))
+	for i, g := range groups {
+		orderedFields[i] = g.fields
+	}
+	return orderedFields
 }
 
 // parseDirectives returns all directives that were found if parsing and validation succeeds,
