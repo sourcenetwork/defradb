@@ -2664,6 +2664,14 @@
                             "default": false,
                             "type": "boolean"
                         }
+                    },
+                    {
+                        "description": "Transaction idle TTL as a Go duration string, or seconds if no unit is provided",
+                        "in": "query",
+                        "name": "ttl",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {

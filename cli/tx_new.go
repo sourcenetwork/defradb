@@ -12,20 +12,51 @@ package cli
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
+
+type txnTTLClient interface {
+	NewTxnWithTTL(bool, time.Duration) (client.Txn, error)
+}
 
 func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 	var readOnly bool
+	var txnTTL string
 	var cmd = &cobra.Command{
 		Use:   "new",
 		Short: "Create a new DefraDB transaction.",
 		Long:  `Create a new DefraDB transaction.`,
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			tx, err := cliClient.NewTxn(readOnly)
+			var tx client.Txn
+			var err error
+			var ttl time.Duration
+			if txnTTL != "" {
+				ttl, err = parseTxnTTLFlag(txnTTL)
+				if err != nil {
+					return err
+				}
+
+				// `NewTxnWithTTL` is a helper that is specific to the HTTP client
+				// and not part of the default client interface, so we need to
+				// type cast to get to the underlying http client implementation.
+				// While the CLI client is hardcoded to use the HTTP client, the
+				// type system doesn't enforce this, so we need to gate the
+				// accidental unhappy path
+				ttlClient, ok := cliClient.(txnTTLClient)
+				if !ok {
+					return ErrMissingTTLTxn
+				}
+				tx, err = ttlClient.NewTxnWithTTL(readOnly, ttl)
+			} else {
+				tx, err = cliClient.NewTxn(readOnly)
+			}
 			if err != nil {
 				return err
 			}
@@ -33,5 +64,19 @@ func MakeTxNewCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&readOnly, "read-only", false, "Transaction is read only")
+	cmd.Flags().StringVar(&txnTTL, "ttl", "",
+		"Transaction idle TTL as a duration string, or seconds if no unit is provided")
 	return cmd
+}
+
+func parseTxnTTLFlag(raw string) (time.Duration, error) {
+	txnTTL, err := time.ParseDuration(raw)
+	if err == nil {
+		return txnTTL, nil
+	}
+	seconds, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return time.Duration(seconds) * time.Second, nil
 }

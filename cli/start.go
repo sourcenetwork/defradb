@@ -92,7 +92,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnableDevelopment(cfg.GetBool("development")).
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
-				SetPath(cfg.GetString("datastore.badger.path")).
+				SetPath(cfg.GetString("datastore.path")).
 				SetBadgerInMemory(inMem).
 				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().

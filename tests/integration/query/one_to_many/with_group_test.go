@@ -282,6 +282,138 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQueryOneToManyWithParentGroupByOnRelationAndDuplicateRelationSelection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name": "Painted House",
+						"rating": 4.9,
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					}`,
+			},
+			&action.Request{
+				// The relation `author` is both the group-by field and selected
+				// twice at the parent level. The duplicated relation builds a
+				// shared multiScanNode, which group expansion must not crash on.
+				Request: `query {
+					Book(groupBy: [author]) {
+						author {
+							name
+						}
+						author {
+							name
+						}
+						GROUP {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"GROUP": []map[string]any{
+								{
+									"name": "Painted House",
+								},
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryOneToManyWithDuplicateRelationSelectionEachWithInnerGroupByOnRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.ExplainRequest{
+				Request: `query @explain(type: debug) {
+					Author {
+						published(groupBy: [author]) {
+							author {
+								name
+							}
+							GROUP {
+								name
+							}
+						}
+						published(groupBy: [author]) {
+							author {
+								name
+							}
+							GROUP {
+								name
+							}
+						}
+					}
+				}`,
+				ExpectedFullGraph: map[string]any{
+					"explain": map[string]any{
+						"operationNode": []map[string]any{
+							{
+								"selectTopNode": map[string]any{
+									"selectNode": map[string]any{
+										"typeIndexJoin": map[string]any{
+											"typeJoinMany": map[string]any{
+												"root": map[string]any{
+													"scanNode": map[string]any{},
+												},
+												"subType": map[string]any{
+													"selectTopNode": map[string]any{
+														"groupNode": map[string]any{
+															"selectNode": map[string]any{
+																"pipeNode": map[string]any{
+																	"typeIndexJoin": map[string]any{
+																		"typeJoinOne": map[string]any{
+																			"root": map[string]any{
+																				"scanNode": map[string]any{},
+																			},
+																			"subType": map[string]any{
+																				"selectTopNode": map[string]any{
+																					"selectNode": map[string]any{
+																						"scanNode": map[string]any{},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
