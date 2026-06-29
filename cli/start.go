@@ -92,7 +92,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnableDevelopment(cfg.GetBool("development")).
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
-				SetPath(cfg.GetString("datastore.badger.path")).
+				SetPath(cfg.GetString("datastore.path")).
 				SetBadgerInMemory(inMem).
 				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
@@ -380,6 +380,13 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. "+
 			"Example: 10,20,40,80,160,320",
 	)
+	cmd.PersistentFlags().Bool(
+		"no-keyring",
+		cfg.GetBool(config.ConfigFlags["no-keyring"]),
+		"Disable the keyring and generate ephemeral keys",
+	)
+	setClientConnectionFlags(cmd)
+	setKeyringFlags(cmd)
 	return cmd
 }
 

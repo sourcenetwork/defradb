@@ -471,7 +471,7 @@ func (w *Wrapper) DeleteCollection(
 	if opt.ActiveOnly {
 		args = append(args, "--active-only")
 	}
-	args = append(args, strings.Join(names, ","))
+	args = append(args, "--collection-name", strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -816,6 +816,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()
+	w.handler.Close()
 	_ = w.node.Close(context.Background())
 }
 

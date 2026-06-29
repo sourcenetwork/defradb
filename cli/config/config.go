@@ -45,7 +45,7 @@ const (
 
 // ConfigPaths are config keys that will be made relative to the rootdir
 var ConfigPaths = []string{
-	"datastore.badger.path",
+	"datastore.path",
 	"api.pubkeypath",
 	"api.privkeypath",
 	"keyring.path",
@@ -94,7 +94,7 @@ var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
 	"api.audience":                      "",
 	"api.allowed-origins":               []string{},
-	"datastore.badger.path":             "data",
+	"datastore.path":                    "data",
 	"datastore.maxtxnretries":           5,
 	"datastore.store":                   "badger",
 	"datastore.badger.valuelogfilesize": 1 << 30,

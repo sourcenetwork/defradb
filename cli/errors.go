@@ -46,6 +46,7 @@ var (
 	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
 		"really want to purge all data")
+	ErrMissingTTLTxn = errors.New("transaction ttl is not supported by this client")
 )
 
 func NewErrParsingArgument(argName string, inner error) error {
