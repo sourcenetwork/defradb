@@ -793,6 +793,18 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
 
 	activeMultipliers := multiplier.Get()
+
+	// The signed-docs multiplier is incompatible with tests that create the same document
+	// independently on more than one node: each node signs with its own key, so the genesis
+	// composite block's CID — and therefore the document's DocID — differs per node. That
+	// per-signer DocID is intended behaviour, but the cross-node assertions in these tests assume a
+	// single shared DocID, so we skip them under signing rather than weaken those assertions.
+	if strings.Contains(activeMultipliers, string(defraMultiplier.SignedDocs)) &&
+		createsDocsOnMultipleNodes(testCase) {
+		t.Skipf("test creates documents on multiple nodes; incompatible with the %q multiplier",
+			defraMultiplier.SignedDocs)
+	}
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -816,6 +828,27 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 //
 // activeNames is passed in rather than read from testo's package-level state
 // so this function is directly unit-testable.
+// createsDocsOnMultipleNodes reports whether the test independently creates the same document on
+// more than one node — an [action.AddDoc] with no explicit NodeID in a multi-node test. Such a
+// document is signed (and so gets its DocID) independently on each node. See [applyMultipliers].
+func createsDocsOnMultipleNodes(testCase *TestCase) bool {
+	nodeCount := 0
+	for _, a := range testCase.Actions {
+		if _, ok := a.(ConfigureNode); ok {
+			nodeCount++
+		}
+	}
+	if nodeCount <= 1 {
+		return false
+	}
+	for _, a := range testCase.Actions {
+		if addDoc, ok := a.(*action.AddDoc); ok && !addDoc.NodeID.HasValue() {
+			return true
+		}
+	}
+	return false
+}
+
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
 	for _, name := range strings.Split(activeNames, ",") {
 		switch strings.TrimSpace(name) {
