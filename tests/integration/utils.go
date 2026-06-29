@@ -799,7 +799,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	// composite block's CID — and therefore the document's DocID — differs per node. That
 	// per-signer DocID is intended behaviour, but the cross-node assertions in these tests assume a
 	// single shared DocID, so we skip them under signing rather than weaken those assertions.
-	if strings.Contains(activeMultipliers, string(defraMultiplier.SignedDocs)) &&
+	if strings.Contains(activeMultipliers, defraMultiplier.SignedDocs) &&
 		createsDocsOnMultipleNodes(testCase) {
 		t.Skipf("test creates documents on multiple nodes; incompatible with the %q multiplier",
 			defraMultiplier.SignedDocs)
