@@ -190,7 +190,7 @@ func (c *collection) applyDelete(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, _, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,6 @@ func (c *collection) applyDelete(
 		DocID:        primaryKey.DocID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
-		Block:        b,
 	}
 	txn.OnSuccess(func() {
 		c.db.sendUpdate(updateEvent)
@@ -217,7 +216,7 @@ func (c *collection) applyDelete(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := coreblock.AddDelta(
+		link, _, err := coreblock.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
@@ -230,7 +229,6 @@ func (c *collection) applyDelete(
 		updateEvent := event.Update{
 			Cid:          link.Cid,
 			CollectionID: c.Version().CollectionID,
-			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {

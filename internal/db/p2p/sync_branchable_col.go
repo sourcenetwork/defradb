@@ -16,8 +16,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime/linking"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -213,14 +211,16 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 	return reply.Sender, nil
 }
 
-// syncCollectionAndMerge synchronizes a branchable collection from a remote peer and publishes a merge event.
+// syncCollectionAndMerge pulls a branchable collection's blocks from a remote peer and publishes a
+// merge event.
 func (p *P2P) syncCollectionAndMerge(
 	ctx context.Context,
 	senderID string,
 	collectionID string,
 	head cid.Cid,
 ) error {
-	err := p.syncCollectionDAG(ctx, head)
+	// Collection-level commits have no docID, so we pull the whole reachable tree.
+	err := p.pullAndIngest(ctx, senderID, "", collectionID, head)
 	if err != nil {
 		return err
 	}
@@ -233,23 +233,6 @@ func (p *P2P) syncCollectionAndMerge(
 	}
 
 	return p.db.Merge(ctx, evt)
-}
-
-// syncCollectionDAG synchronizes the DAG for a specific branchable collection CID.
-func (p *P2P) syncCollectionDAG(ctx context.Context, colCid cid.Cid) error {
-	linkSys := makeLinkSystem(p.host.IPLDStore())
-
-	nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: colCid}, coreblock.BlockSchemaPrototype)
-	if err != nil {
-		return err
-	}
-
-	linkBlock, err := coreblock.GetFromNode(nd)
-	if err != nil {
-		return err
-	}
-
-	return p.syncDAG(ctx, linkBlock)
 }
 
 // syncBranchableCollectionMessageHandler handles incoming branchable collection sync requests from the pubsub network.

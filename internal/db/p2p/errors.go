@@ -15,7 +15,6 @@ import (
 )
 
 const (
-	errStoreBlockDAGSync       string = "failed to store block in DAG sync"
 	errGenerateBlockLink       string = "failed to generate block link"
 	errCheckBlockMerged        string = "failed to check if block is merged"
 	errVerifyBlockSig          string = "failed to verify block signature"
@@ -39,7 +38,6 @@ const (
 	errIterateReplicatorDocs   string = "failed to iterate replicator documents"
 	errPushDocHeads            string = "failed to push document heads"
 	errGetDocHeads             string = "failed to get document heads for replication"
-	errMarshalBlock            string = "failed to marshal block for replication"
 	errUpdateReplicatorStatus  string = "failed to update replicator status"
 	errCreateReplicatorRetry   string = "failed to create replicator retry"
 	errStoreRetryDoc           string = "failed to store retry doc for replicator"
@@ -58,6 +56,9 @@ const (
 	errGetAllP2PCollections    string = "failed to get all P2P collection IDs"
 	errListP2PDocuments        string = "failed to list P2P documents"
 	errLoadP2PDocuments        string = "failed to load P2P documents"
+	errWriteCAR                string = "failed to write CAR"
+	errReadCAR                 string = "failed to read CAR"
+	errIngestCARBlock          string = "failed to store block from CAR"
 )
 
 var (
@@ -151,11 +152,6 @@ func NewErrGetDocHeads(inner error, docID string) error {
 	return errors.Wrap(errGetDocHeads, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrMarshalBlock(inner error, docID string, cid string) error {
-	return errors.Wrap(errMarshalBlock, inner, errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
-}
-
-func NewErrStoreBlockDAGSync(inner error) error  { return errors.Wrap(errStoreBlockDAGSync, inner) }
 func NewErrGenerateBlockLink(inner error) error  { return errors.Wrap(errGenerateBlockLink, inner) }
 func NewErrCheckBlockMerged(inner error) error   { return errors.Wrap(errCheckBlockMerged, inner) }
 func NewErrVerifyBlockSig(inner error) error     { return errors.Wrap(errVerifyBlockSig, inner) }
@@ -251,4 +247,16 @@ func NewErrListP2PDocuments(inner error) error {
 
 func NewErrLoadP2PDocuments(inner error) error {
 	return errors.Wrap(errLoadP2PDocuments, inner)
+}
+
+func NewErrWriteCAR(inner error) error {
+	return errors.Wrap(errWriteCAR, inner)
+}
+
+func NewErrReadCAR(inner error) error {
+	return errors.Wrap(errReadCAR, inner)
+}
+
+func NewErrIngestCARBlock(inner error, cid string) error {
+	return errors.Wrap(errIngestCARBlock, inner, errors.NewKV("CID", cid))
 }

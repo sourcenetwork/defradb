@@ -14,14 +14,16 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
-// PushLogRequest is the struct used to send a resource update to a peer node
+// PushLogRequest is the struct used to notify a peer node of a resource update.
+//
+// It carries only the identifiers of the update (not the block bytes); the receiving node pulls
+// the blocks it needs via the block sync protocol.
 type PushLogRequest struct {
 	message.MetaData
 	DocID        string
 	CID          []byte
 	CollectionID string
 	Creator      string
-	Block        []byte
 }
 
 // PushLogReply is the expected response struct that should be received after

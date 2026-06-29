@@ -581,7 +581,7 @@ func (c *collection) save(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, _, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
 	if err != nil {
 		return err
 	}
@@ -591,7 +591,6 @@ func (c *collection) save(
 		DocID:        doc.ID().String(),
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
-		Block:        headNode,
 	}
 	txn.OnSuccess(func() {
 		c.db.sendUpdate(updateEvent)
@@ -611,7 +610,7 @@ func (c *collection) save(
 			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := coreblock.AddDelta(
+		link, _, err := coreblock.AddDelta(
 			ctx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
@@ -624,7 +623,6 @@ func (c *collection) save(
 		updateEvent := event.Update{
 			Cid:          link.Cid,
 			CollectionID: c.Version().CollectionID,
-			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {

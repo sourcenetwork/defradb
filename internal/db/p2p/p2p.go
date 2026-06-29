@@ -94,6 +94,9 @@ type DB interface {
 	Rootstore() corekv.TxnStore
 	// Multistore returns the multistore
 	Multistore() *datastore.Multistore
+	// BlockStoreChunkSize returns the chunk size used by the block store, if any. Ingested blocks
+	// must use the same chunk size so reads and the to-merge index line up.
+	BlockStoreChunkSize() immutable.Option[int]
 	// P2PBlockSyncTimeout is the timeout duration for syncing block links.
 	P2PBlockSyncTimeout() time.Duration
 	// SearchableEncryptionKey returns the searchable encryption key if configured.
@@ -105,6 +108,7 @@ type DB interface {
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
+	blockSyncProtocol  *protocol.BlockSyncProtocol
 
 	ctx                  context.Context
 	db                   DB
@@ -193,6 +197,7 @@ func New(
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
+	p.blockSyncProtocol = protocol.NewBlockSyncProtocol(host, p.handleBlockSyncRequest)
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
@@ -408,43 +413,9 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	}
 	p.repMu.Unlock()
 
-	identFunc := func() immutable.Option[identity.Identity] {
-		p.piMu.RLock()
-		ident, ok := p.peerIdentities[pid]
-		p.piMu.RUnlock()
-		if !ok {
-			ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-			defer cancel()
-			resp, err := p.identityProtocol.GetIdentity(ctx, pid)
-			if err != nil {
-				log.ErrorE("Failed to get identity", err)
-				return immutable.None[identity.Identity]()
-			}
-			ident, err = identity.FromToken(resp.IdentityToken)
-			if err != nil {
-				log.ErrorE("Failed to parse identity token", err)
-				return immutable.None[identity.Identity]()
-			}
-			tokenIdent, ok := ident.(identity.TokenIdentity)
-			if !ok {
-				log.ErrorE("Identity is not of type TokenIdentity", nil, corelog.String("Actual", fmt.Sprintf("%T", ident)))
-				return immutable.None[identity.Identity]()
-			}
-			err = identity.VerifyAuthToken(tokenIdent, p.host.ID())
-			if err != nil {
-				log.ErrorE("Failed to verify auth token", err)
-				return immutable.None[identity.Identity]()
-			}
-			p.piMu.Lock()
-			p.peerIdentities[pid] = ident
-			p.piMu.Unlock()
-		}
-		return immutable.Some(ident)
-	}
-
 	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
-		identFunc,
+		p.peerIdentityFunc(ctx, pid),
 		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
@@ -459,12 +430,12 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	return peerHasAccess
 }
 
-// trySelfHasAccess checks if the local node has access to the given block.
+// trySelfHasAccess checks if the local node has access to the given document.
 //
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
+func (p *P2P) trySelfHasAccess(ctx context.Context, docID, collectionID string) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
@@ -500,7 +471,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
+		docID,
 	)
 	if err != nil {
 		return false, err
@@ -545,25 +516,19 @@ func (p *P2P) processPushlogRequest(
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	block, err := coreblock.GetFromBytes(req.Block)
-	if err != nil {
-		return err
-	}
 
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return err
 	}
 
-	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
-	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
-	// if this initial sync call had a negative response for a given link, the subsequent calls will
-	// assume a negative response for that same link without retrying.
+	// Calls to pullAndIngest should not overlap for a given CID, so that concurrent
+	// notifications for the same head do not trigger redundant pulls and merges.
 	p.processQueue.add(headCID)
 	done := p.processQueue.doneOnce(headCID)
 	defer done()
 
-	// Check if we've already merged this block. If so, skip the sink process.
+	// Check if we've already merged this block. If so, skip the sync process.
 	isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 	if err != nil {
 		return err
@@ -575,7 +540,7 @@ func (p *P2P) processPushlogRequest(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, req.DocID, req.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -585,7 +550,9 @@ func (p *P2P) processPushlogRequest(
 		}
 	}
 
-	err = p.syncDAG(ctx, block)
+	// Pull the blocks we need from the notifying peer and ingest them locally so that the merge
+	// can proceed. This replaces the previous bitswap-based DAG fetch.
+	err = p.pullAndIngest(ctx, req.SenderID, req.DocID, req.CollectionID, headCID)
 	if err != nil {
 		return err
 	}
@@ -607,7 +574,6 @@ func (p *P2P) processPushlogRequest(
 		DocID:        req.DocID,
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
-		Block:        req.Block,
 		IsRelay:      true,
 	}
 	p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
@@ -631,7 +597,6 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			CID:          evt.Cid.Bytes(),
 			CollectionID: evt.CollectionID,
 			Creator:      p.host.ID(),
-			Block:        evt.Block,
 		}
 
 		b, err := cbor.Marshal(req)

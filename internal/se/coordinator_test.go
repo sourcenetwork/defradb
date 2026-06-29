@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
@@ -30,6 +32,8 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	protocolmocks "github.com/sourcenetwork/defradb/internal/db/p2p/protocol/mocks"
 	"github.com/sourcenetwork/defradb/internal/se/mocks"
 )
@@ -66,6 +70,8 @@ func newTestSetup(t *testing.T) *testSetup {
 	mockDB := mocks.NewDB(t)
 	mockDB.EXPECT().MaxTxnRetries().Return(3).Maybe()
 	mockDB.EXPECT().Events().Return(mockEventBus).Maybe()
+	mockDB.EXPECT().Multistore().
+		Return(datastore.NewMultistore(rootstore, lock.NewLockSet(), immutable.None[int]())).Maybe()
 	// NewTxn is not stubbed globally - individual tests that need it will set it up
 
 	mockP2PImpl := mocks.NewP2P(t)
@@ -242,9 +248,19 @@ func (s *testSetup) makeUpdateEvent() event.Update {
 	updateEvent := event.Update{
 		DocID:        s.docID,
 		CollectionID: s.collectionID,
-		Block:        s.createValidCompositeBlock(),
+		Cid:          s.storeBlock(s.createValidCompositeBlock()),
 	}
 	return updateEvent
+}
+
+// storeBlock writes the given raw block bytes into the (shared) block store and returns the CID
+// under which they are stored. The update event now carries only the CID, so consumers that need
+// the block read it back from the store.
+func (s *testSetup) storeBlock(blockBytes []byte) cid.Cid {
+	b := blocks.NewBlock(blockBytes)
+	ms := datastore.NewMultistore(s.rootstore, lock.NewLockSet(), immutable.None[int]())
+	require.NoError(s.t, ms.Blockstore().Put(context.Background(), b))
+	return b.Cid()
 }
 
 // createValidCompositeBlock creates a proper CBOR-encoded composite block using the pattern from block_test.go
