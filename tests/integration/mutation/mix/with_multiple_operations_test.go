@@ -77,3 +77,54 @@ func TestMutationMultipleOperationsExecuteInRequestOrder(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestMutationMultipleOperationsViaFragmentSpreadExecuteInRequestOrder ensures the
+// execution order follows where a fragment spread appears in the operation, not
+// where the fragment is defined in the document. Here `...AddFirst` is spread
+// before the inline `second` mutation, even though the fragment definition (and
+// thus the `first` field's source location) comes later in the document, so
+// `first` must execute before `second`.
+//
+// Regression test for ordering derived from field source position rather than
+// first-encounter traversal order (https://github.com/sourcenetwork/defradb/pull/5013).
+func TestMutationMultipleOperationsViaFragmentSpreadExecuteInRequestOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `mutation {
+					...AddFirst
+					second: add_User(input: {name: "Second"}) { name }
+				}
+				fragment AddFirst on Mutation {
+					first: add_User(input: {name: "First"}) { name }
+				}`,
+				Results: map[string]any{
+					"first":  []map[string]any{{"name": "First"}},
+					"second": []map[string]any{{"name": "Second"}},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "First"},
+						{"name": "Second"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -12,7 +12,6 @@ package parser
 
 import (
 	"fmt"
-	"sort"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -48,7 +47,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		RuntimeType:  operationType,
 		SelectionSet: exe.Operation.GetSelectionSet(),
 	})
-	orderedFields := orderCollectedFields(collectedFields)
+	orderedFields := orderCollectedFields(exe, collectedFields)
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -106,48 +105,84 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	return r, nil
 }
 
-// orderCollectedFields converts the grouped-field-set map produced by
-// [gql.CollectFields] into a slice ordered by source position, restoring the
-// document order that map iteration would otherwise randomize.
+// orderCollectedFields projects the grouped-field-set map produced by
+// [gql.CollectFields] onto the order in which response keys are first
+// encountered while traversing the operation's selection set.
 //
-// This mirrors graphql-go's own (unexported) orderedFields used by its serial
-// executor: each response-key group is keyed by the lowest source location of
-// the fields within it, then groups are sorted ascending. This matches the
-// GraphQL spec's grouped-field-set ordering (order by first occurrence of each
-// response key) and, for mutations, is required for spec-compliant serial
-// execution order.
-func orderCollectedFields(collectedFields map[string][]*ast.Field) [][]*ast.Field {
-	type group struct {
-		startLoc int
-		fields   []*ast.Field
-	}
+// There is an important edge case with order for correctly handling Fragments.
+// Specifically, the location of Fragments is reported at their definition not
+// their use. We need to walk and expand the selection set and fragments before
+// determining final order
+func orderCollectedFields(
+	exe *gql.ExecutionContext,
+	collectedFields map[string][]*ast.Field,
+) [][]*ast.Field {
+	responseKeyOrder := collectResponseKeyOrder(
+		exe,
+		exe.Operation.GetSelectionSet(),
+		make(map[string]bool),
+		make(map[string]bool),
+	)
 
-	groups := make([]group, 0, len(collectedFields))
-	for _, fields := range collectedFields {
-		lowest := -1
-		for _, field := range fields {
-			loc := 0
-			// Locations are populated on this parse path, but guard defensively
-			// so a missing location sorts as position zero rather than panicking.
-			if l := field.GetLoc(); l != nil {
-				loc = l.Start
-			}
-			if lowest == -1 || loc < lowest {
-				lowest = loc
-			}
+	orderedFields := make([][]*ast.Field, 0, len(collectedFields))
+	for _, responseKey := range responseKeyOrder {
+		// Response keys excluded by @skip / @include or a non-matching fragment
+		// type condition are absent from collectedFields and are skipped here.
+		// The traversal visits a superset of the keys CollectFields collects, so
+		// every collected group is emitted exactly once.
+		if fields, ok := collectedFields[responseKey]; ok {
+			orderedFields = append(orderedFields, fields)
 		}
-		groups = append(groups, group{startLoc: lowest, fields: fields})
-	}
-
-	sort.Slice(groups, func(i, j int) bool {
-		return groups[i].startLoc < groups[j].startLoc
-	})
-
-	orderedFields := make([][]*ast.Field, len(groups))
-	for i, g := range groups {
-		orderedFields[i] = g.fields
 	}
 	return orderedFields
+}
+
+// collectResponseKeyOrder walks a selection set in document order, expanding
+// fragment spreads and inline fragments in place, and returns the response keys
+// (alias, else field name) in the order they are first encountered.
+//
+// seenKeys and visitedFragments are shared across the whole traversal so each
+// response key is recorded once at its first occurrence and each fragment is
+// expanded at most once (the latter also guards against cyclic spreads, though
+// validation rejects those before this point).
+func collectResponseKeyOrder(
+	exe *gql.ExecutionContext,
+	selectionSet *ast.SelectionSet,
+	seenKeys map[string]bool,
+	visitedFragments map[string]bool,
+) []string {
+	if selectionSet == nil {
+		return nil
+	}
+
+	var order []string
+	for _, selection := range selectionSet.Selections {
+		switch node := selection.(type) {
+		case *ast.Field:
+			responseKey := node.Name.Value
+			if node.Alias != nil && node.Alias.Value != "" {
+				responseKey = node.Alias.Value
+			}
+			if !seenKeys[responseKey] {
+				seenKeys[responseKey] = true
+				order = append(order, responseKey)
+			}
+
+		case *ast.InlineFragment:
+			order = append(order, collectResponseKeyOrder(exe, node.GetSelectionSet(), seenKeys, visitedFragments)...)
+
+		case *ast.FragmentSpread:
+			name := node.Name.Value
+			if visitedFragments[name] {
+				continue
+			}
+			visitedFragments[name] = true
+			if fragment, ok := exe.Fragments[name]; ok {
+				order = append(order, collectResponseKeyOrder(exe, fragment.GetSelectionSet(), seenKeys, visitedFragments)...)
+			}
+		}
+	}
+	return order
 }
 
 // parseDirectives returns all directives that were found if parsing and validation succeeds,
