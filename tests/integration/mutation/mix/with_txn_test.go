@@ -155,6 +155,8 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 
 func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test asserts on hardcoded DocIDs, which change under signing.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -212,6 +214,8 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 
 func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test asserts on hardcoded DocIDs, which change under signing.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
@@ -280,6 +284,8 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 
 func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test asserts on hardcoded DocIDs, which change under signing.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		// LevelDB does not support concurrent transactions
 		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{

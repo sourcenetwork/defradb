@@ -83,18 +83,27 @@ func (db *DB) VerifySignature(
 	}
 
 	if db.documentACP.HasValue() {
-		getCollectionsOpt := options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID())
+		// Verifying a signature requires read access to the block's document. See
+		// [acpDB.CheckDocReadAccess] for the canonical rules (an explicit grant on the document
+		// suffices, otherwise a branchable collection also gates on the collection object). A block
+		// may be owned by several documents (shared field blocks); read access to any one suffices.
+		// [docIDsForSignatureBlock] returns a single empty docID for collection-level blocks, which
+		// CheckDocReadAccess gates on the collection object for a branchable collection.
+		versionID := block.Delta.GetCollectionVersionID()
+		// Pass the requester's identity so the collection lookup is authorised as them (rather than
+		// anonymously) when node acp gates the get-collection operation.
+		getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(versionID)
 		if opt.Identity.HasValue() {
-			getCollectionsOpt = getCollectionsOpt.SetIdentity(opt.Identity.Value())
+			getColOpts = getColOpts.SetIdentity(opt.Identity.Value())
 		}
-		collections, err := db.GetCollections(ctx, getCollectionsOpt)
+		cols, err := db.GetCollections(ctx, getColOpts)
 		if err != nil {
 			return err
 		}
-		if len(collections) == 0 {
-			return ErrMissingPermission
+		if len(cols) == 0 {
+			return client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
-		collection := collections[0]
+		collection := cols[0]
 
 		docIDs, err := db.docIDsForSignatureBlock(ctx, systemstore, parsedCid, block)
 		if err != nil {
@@ -103,13 +112,12 @@ func (db *DB) VerifySignature(
 
 		hasAnyPerm := false
 		for _, docID := range docIDs {
-			hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+			hasPerm, err := acpDB.CheckDocReadAccess(
 				ctx,
 				opt.Identity,
 				db.nodeACP,
 				db.documentACP.Value(),
 				collection,
-				acpTypes.DocumentReadPerm,
 				docID,
 			)
 			if err != nil {
