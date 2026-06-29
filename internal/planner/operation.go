@@ -82,9 +82,7 @@ func (n *operationNode) Source() planNode {
 
 func (n *operationNode) Children() []planNode {
 	children := make([]planNode, 0, len(n.children))
-	for _, child := range n.children {
-		children = append(children, child)
-	}
+	children = append(children, n.children...)
 	return children
 }
 
