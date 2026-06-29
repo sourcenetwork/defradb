@@ -29,6 +29,10 @@ type Selection any
 type Directives struct {
 	// ExplainType is an optional directive (`@explain`) and it's type information.
 	ExplainType immutable.Option[ExplainType]
+
+	// Exhaustive signals that complete/exhaustive results are desired even at performance cost.
+	// When true with relation ordering, orphan parents (parents without children) are included.
+	Exhaustive bool
 }
 
 type OperationDefinition struct {

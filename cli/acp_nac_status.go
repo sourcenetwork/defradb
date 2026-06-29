@@ -21,7 +21,7 @@ import (
 
 func MakeNodeACPStatusCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "status [-i --identity]",
+		Use:   "status",
 		Short: "Check the node access control status",
 		Long: `Check the node access control status
 
@@ -30,7 +30,9 @@ Note:
 - If Node ACP is temporarily disabled, then [IsConfigured] == true and [IsEnabled] == false.
 - If Node ACP is enabled then [IsEnabled] == true.
 
-Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+Learn more about the
+[Node Access Control](https://docs.source.network/defradb/security/node-access-control/)
+system.
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {

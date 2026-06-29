@@ -64,7 +64,7 @@ func (n *upsertNode) Next() (bool, error) {
 			}
 			for k, v := range n.updateInput {
 				if err := doc.Set(n.p.ctx, k, v); err != nil {
-					return false, err
+					return false, NewErrSetDocField(err, k)
 				}
 			}
 			updateOpts := options.WithIdentity(options.UpdateDocument(), n.p.identity)
@@ -108,6 +108,11 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			// The original scanNode is now orphaned (replaced by valuesNode in the plan tree).
+			// Close it to release its fetcher's iterator, otherwise it leaks.
+			if err := n.origScanNode.Close(); err != nil {
+				return false, err
+			}
 		}
 
 		err = n.source.Init()
@@ -128,16 +133,23 @@ func (n *upsertNode) Next() (bool, error) {
 }
 
 func (n *upsertNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
-	shortID, err := id.GetShortCollectionID(n.p.ctx, desc.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, desc.CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	prefixes := make([]keys.Walkable, len(ids))
-	for i, id := range ids {
+	for i, docID := range ids {
+		docShortID, found, err := id.GetDocShortID(n.p.ctx, collectionShortID, docID)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			return nil, client.ErrDocumentNotFoundOrNotAuthorized
+		}
 		prefixes[i] = keys.DataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             id,
+			CollectionShortID: collectionShortID,
+			DocShortID:        docShortID,
 		}
 	}
 	return prefixes, nil

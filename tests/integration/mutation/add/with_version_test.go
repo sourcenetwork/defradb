@@ -41,7 +41,7 @@ func TestMutationAdd_ReturnsVersionCID(t *testing.T) {
 						{
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},

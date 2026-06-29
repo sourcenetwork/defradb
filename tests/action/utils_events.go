@@ -18,9 +18,11 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // eventTimeout is the amount of time to wait
@@ -50,7 +52,8 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -78,7 +81,22 @@ func waitForUpdateEvents(
 					if node.Composites == nil {
 						node.Composites = make(map[string][]cid.Cid)
 					}
-					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					updateKey := getUpdateEventKey(evt)
+					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+					if node.FieldCIDs == nil {
+						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+					}
+					if node.FieldCIDs[updateKey] == nil {
+						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+					}
+					block, err := coreblock.GetFromBytes(evt.Block)
+					require.NoError(s.T, err)
+					for _, link := range block.Links {
+						node.FieldCIDs[updateKey][link.Name] = append(
+							node.FieldCIDs[updateKey][link.Name],
+							link.Link.Cid,
+						)
+					}
 					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
@@ -114,6 +132,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 			collectionID = i
 		}
 	}
+
 	docIndex := -1
 	if collectionID != -1 {
 		s.DocIDsLock.RLock()
@@ -134,15 +153,21 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {
 		// replicator target nodes push updates to source nodes
-		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+		s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: nodeID},
+		)
 	}
 
-	updateConnectedNodes(s, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
+	updateConnectedNodes(s, nodeID, nodeID, map[int]struct{}{}, ident, collectionID, docIndex, evt)
 }
 
-// updateConnectedNodes updates the expected document heads of connected nodes
+// updateConnectedNodes updates the expected document heads of connected nodes.
+// originNodeID is the node that authored the update and stays constant through recursion.
+// nodeID is the current node being visited in the connection graph traversal.
 func updateConnectedNodes(
 	s *state.State,
+	originNodeID int,
 	nodeID int,
 	nodesCovered map[int]struct{},
 	ident immutable.Option[state.Identity],
@@ -167,14 +192,20 @@ func updateConnectedNodes(
 		}
 		// peer collection subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerCollections[collectionID]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 		// peer document subscribers receive updates from any other subscriber node
 		if _, ok := s.Nodes[id].P2P.PeerDocuments[state.NewColDocIndex(collectionID, docIndex)]; ok {
-			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = evt.Cid
+			s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)] = append(
+				s.Nodes[id].P2P.ExpectedDAGHeads[getUpdateEventKey(evt)],
+				state.ExpectedHead{CID: evt.Cid, SourceNodeID: originNodeID},
+			)
 		}
 
-		updateConnectedNodes(s, id, nodesCovered, ident, collectionID, docIndex, evt)
+		updateConnectedNodes(s, originNodeID, id, nodesCovered, ident, collectionID, docIndex, evt)
 	}
 }
 

@@ -50,7 +50,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"about": "He loves fajitas."
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Doc with both embedding fields
 				DocID: 0,
 				Doc: `{
@@ -63,7 +63,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"name": "Johnny"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Doc with only one embedding field
 				DocID: 1,
 				Doc: `{
@@ -128,7 +128,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					"about": "He loves fajitas."
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"name_v": [1, 2, 3]
@@ -185,7 +185,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 					"name_v": [1, 2, 3]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"age": 30

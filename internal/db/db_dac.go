@@ -47,6 +47,7 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "DAC state purged")
 	return nil
 }
 

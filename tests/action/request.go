@@ -14,12 +14,12 @@ package action
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -100,8 +100,14 @@ func (a *Request) Execute() {
 nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := a.getTransaction(node)
-		ctx := db.InitContext(a.s.Ctx, txn)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		hadTxn := a.TransactionID.HasValue()
+		var txn client.Txn
+		var err error
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+		}
 
 		reqOption := options.ExecRequest()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
@@ -123,7 +129,13 @@ nodeLoop:
 		}
 
 		request := replace(a.s, nodeID, a.Request)
-		result := node.ExecRequest(ctx, request, reqOption)
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var result *client.RequestResult
+		if hadTxn {
+			result = txn.ExecRequest(a.s.Ctx, request, reqOption)
+		} else {
+			result = node.ExecRequest(a.s.Ctx, request, reqOption)
+		}
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,
@@ -154,30 +166,4 @@ func resolveVariables(s *state.State, vars map[string]any) map[string]any {
 		}
 	}
 	return resolved
-}
-
-// getTransaction returns the transaction for this request, creating one if needed.
-func (a *Request) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	if a.s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
-		}
-
-		a.s.Txns[transactionID] = txn
-	}
-
-	return a.s.Txns[transactionID]
 }

@@ -31,23 +31,24 @@ func TestQueryCommitsWithDocIDWithTypeName(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 							__typename
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
+
 						{
-							"cid":        "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid":        testUtils.ValidCID(),
 							"__typename": "Commit",
 						},
 						{
-							"cid":        "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":        testUtils.ValidCID(),
 							"__typename": "Commit",
 						},
 						{
-							"cid":        "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid":        testUtils.ValidCID(),
 							"__typename": "Commit",
 						},
 					},

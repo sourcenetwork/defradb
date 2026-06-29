@@ -46,20 +46,20 @@ func storeArtifacts(
 	ds := ms.Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 
 	for _, artifact := range artifacts {
-		colID, err := id.GetUncachedShortCollectionID(ctx, artifact.CollectionID, ss)
+		collectionShortID, err := id.GetUncachedCollectionShortID(ctx, artifact.CollectionID, ss)
 		if err != nil {
-			return err
+			return NewErrGetCollectionIDForSE(err, artifact.CollectionID)
 		}
 
 		key := keys.DatastoreSE{
-			CollectionShortID: colID,
+			CollectionShortID: collectionShortID,
 			IndexID:           artifact.IndexID,
 			SearchTag:         artifact.SearchTag,
 			DocID:             artifact.DocID,
 		}
 
 		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
-			return err
+			return NewErrStoreSEArtifact(err, artifact.DocID, artifact.CollectionID)
 		}
 	}
 
@@ -79,15 +79,15 @@ func fetchDocIDs(
 
 	docIDSet := make(map[string]struct{})
 
-	colID, err := id.GetUncachedShortCollectionID(ctx, collectionID, ss)
+	collectionShortID, err := id.GetUncachedCollectionShortID(ctx, collectionID, ss)
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetCollectionIDForSE(err, collectionID)
 	}
 
 	isFirstPass := true
 	for _, query := range queries {
 		key := keys.DatastoreSE{
-			CollectionShortID: colID,
+			CollectionShortID: collectionShortID,
 			IndexID:           query.IndexID,
 			SearchTag:         query.SearchTag,
 		}
@@ -95,7 +95,7 @@ func fetchDocIDs(
 			Prefix: key.Bytes(),
 		})
 		if err != nil {
-			return nil, err
+			return nil, NewErrCreateSEQueryIterator(err)
 		}
 
 		querySet := make(map[string]struct{})

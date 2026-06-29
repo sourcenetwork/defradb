@@ -36,7 +36,7 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
 		viewQuery := col.Version().Query.Value().Query
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &viewQuery)
+		m, err := mapper.ToSelect(p.ctx, p.db, p.collectionRepository, mapper.ObjectSelection, &viewQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -195,16 +195,16 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.def.CollectionID)
 	if err != nil {
 		return err
 	}
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
 	iter, err := txn.Datastore().Iterator(n.p.ctx, datastore.IterOptions{
-		Prefix: keys.NewViewCacheColPrefix(shortID),
+		Prefix: keys.NewViewCacheColPrefix(collectionShortID),
 	})
 	if err != nil {
-		return err
+		return NewErrRefreshView(err)
 	}
 
 	n.queryResults = iter

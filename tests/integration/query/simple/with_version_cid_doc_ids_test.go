@@ -16,10 +16,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -40,7 +43,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq", docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536"]) {
+					Users(cid: "{{.CID0_1_0}}", docID: ["{{.DocID0_1}}"]) {
 						Name
 						_version {
 							fieldName
@@ -68,6 +71,8 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 
 func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -89,8 +94,8 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(
-						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",
-						docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536", "bae-fda35cb5-cd39-5d52-80b8-b324f2d7a8b0"]
+						cid: "{{.CID0_1_0}}",
+						docID: ["{{.DocID0_1}}", "bae-fda35cb5-cd39-5d52-80b8-b324f2d7a8b0"]
 					) {
 						Name
 						_version {
@@ -119,6 +124,8 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 
 func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -140,7 +147,7 @@ func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(
-						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",
+						cid: "{{.CID0_1_0}}",
 						docID: ["bae-fda35cb5-cd39-5d52-80b8-b324f2d7a8b0"]
 					) {
 						Name

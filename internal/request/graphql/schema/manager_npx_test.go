@@ -11,110 +11,43 @@
 //go:build npx
 // +build npx
 
-package schema
+package schema_test
 
 import (
-	"bytes"
+	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/testfixtures"
 )
 
-func TestWriteSDL_Simple_Succeeds(t *testing.T) {
-	sdl := `
-	type User {
-		name: String
-		age: Int
-		verified: Boolean
-		points: Int @crdt(type: pncounter)
-	}`
+// TestWriteSDL verifies that each committed SDL fixture matches the current generator
+// output. Regenerate the fixtures with `make sdl-fixtures` when the generator changes.
+func TestWriteSDL(t *testing.T) {
+	for _, fixture := range testfixtures.Fixtures {
+		t.Run(fixture.Name, func(t *testing.T) {
+			sdlResult, err := testfixtures.GenerateSDL(t.Context(), fixture.SDL)
+			require.NoError(t, err)
 
-	runWriteSDLTest(t, sdl, "schema.simple.gen.graphql")
-}
+			// graphql-inspector's diff expects schema pointers (file paths/URLs), so write the
+			// generated SDL to a temp file (cleaned up via t.TempDir) rather than passing raw text.
+			generatedPath := filepath.Join(t.TempDir(), fixture.Name)
+			require.NoError(t, os.WriteFile(generatedPath, sdlResult, 0o644))
 
-func TestWriteSDL_RelatedOne_Succeeds(t *testing.T) {
-	sdl := `
-	type Book {
-		name: String
-		rating: Float
-		author: Author @primary
+			cmd := exec.Command("npx", "-y", "@graphql-inspector/cli@6.0.7",
+				"diff",
+				generatedPath,
+				testfixtures.Path(fixture.Name))
+
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Log(string(output))
+			}
+			require.NoError(t, err)
+			require.Contains(t, string(output), "No changes detected")
+		})
 	}
-
-	type Author {
-		name: String
-		age: Int
-		verified: Boolean
-		published: Book
-	}`
-
-	runWriteSDLTest(t, sdl, "schema.relatedone.gen.graphql")
-}
-
-func TestWriteSDL_RelatedMany_Succeeds(t *testing.T) {
-	sdl := `
-	type Book {
-		name: String
-		rating: Float
-		author: Author
-	}
-
-	type Author {
-		name: String
-		age: Int
-		verified: Boolean
-		published: [Book]
-	}`
-
-	runWriteSDLTest(t, sdl, "schema.relatedmany.gen.graphql")
-}
-
-func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
-	ctx := t.Context()
-	manager, err := NewSchemaManager(false)
-	require.NoError(t, err)
-
-	cols, err := manager.ParseSDL(sdl)
-	require.NoError(t, err)
-
-	collections := make([]client.CollectionVersion, len(cols))
-	for i, c := range cols {
-		collections[i] = c.Definition
-	}
-
-	cache := description.NewCollectionCache()
-	cache.AddAll(collections)
-	ctx = description.ContextWithCollectionCache(ctx, cache)
-
-	_, err = manager.Generator.Generate(ctx, collections)
-	require.NoError(t, err)
-
-	outBuf := bytes.NewBuffer(nil)
-	err = manager.WriteSDL(outBuf)
-	require.NoError(t, err)
-	sdlResult := outBuf.Bytes()
-
-	testFixturePath := getFullFixturePath(fixtureName)
-
-	cmd := exec.Command("npx", "-y", "@graphql-inspector/cli",
-		"diff",
-		string(sdlResult),
-		testFixturePath)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Log(string(output))
-	}
-	require.NoError(t, err)
-	require.Contains(t, string(output), "No changes detected")
-}
-
-func getFullFixturePath(name string) string {
-	_, thisFile, _, _ := runtime.Caller(0)
-	baseDir := filepath.Dir(thisFile)
-	return filepath.Join(baseDir, "testfixtures", name)
 }

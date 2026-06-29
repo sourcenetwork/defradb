@@ -26,7 +26,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -34,7 +34,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -42,7 +42,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -50,7 +50,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+						"_authorID": "{{.DocID1_1}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -58,7 +58,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+						"_authorID": "{{.DocID1_1}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -66,7 +66,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+						"_authorID": "{{.DocID1_2}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -303,7 +303,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -311,7 +311,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -319,7 +319,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+						"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -327,7 +327,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+						"_authorID": "{{.DocID1_1}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -335,7 +335,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+						"_authorID": "{{.DocID1_1}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -343,7 +343,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+						"_authorID": "{{.DocID1_2}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -405,6 +405,101 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 						},
 					},
 				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// TestQueryOneToManyWithGroupByAndFilterOnParentRelation tests that a filter on the parent
+// selector referencing a relation field is respected when groupBy is used.
+// This is a regression test for https://github.com/sourcenetwork/defradb/issues/4880
+func TestQueryOneToManyWithGroupByAndFilterOnParentRelation(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name": "Painted House",
+						"rating": 4.9,
+						"_authorID": "{{.DocID1_0}}"
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name": "A Time for Mercy",
+						"rating": 4.5,
+						"_authorID": "{{.DocID1_0}}"
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name": "Candide",
+						"rating": 4.95,
+						"_authorID": "{{.DocID1_1}}"
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name": "Zadig",
+						"rating": 4.91,
+						"_authorID": "{{.DocID1_1}}"
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+						"name": "John Grisham",
+						"age": 65,
+						"verified": true
+					}`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				Doc: `{
+						"name": "Voltaire",
+						"age": 327,
+						"verified": true
+					}`,
+			},
+			&action.Request{
+				Request: `query {
+						Book (filter: {author: {name: {_like: "John%"}}}, groupBy: [rating]) {
+							rating
+							GROUP {
+								name
+								author { name }
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"rating": 4.5,
+							"GROUP": []map[string]any{
+								{
+									"name":   "A Time for Mercy",
+									"author": map[string]any{"name": "John Grisham"},
+								},
+							},
+						},
+						{
+							"rating": 4.9,
+							"GROUP": []map[string]any{
+								{
+									"name":   "Painted House",
+									"author": map[string]any{"name": "John Grisham"},
+								},
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

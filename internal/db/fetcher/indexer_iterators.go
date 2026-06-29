@@ -76,7 +76,9 @@ type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.CollectionFieldDescription
-	execInfo      *ExecInfo
+	// epoch is the namespace this iterator scans, used to decode its keys back into their epoch.
+	epoch    uint32
+	execInfo *ExecInfo
 
 	// Iterator state
 	resultIter corekv.Iterator
@@ -121,7 +123,7 @@ func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.Keyeds
 
 	resultIter, err := store.Iterator(ctx, iterOpts)
 	if err != nil {
-		return err
+		return NewErrCreateIndexIterator(err, iter.indexDesc.Name)
 	}
 	iter.resultIter = resultIter
 	return nil
@@ -146,22 +148,26 @@ func (iter *indexMatchIterator) Next() (indexIterResult, error) {
 // nextRawResult fetches the next raw result from the iterator without any filtering.
 func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 	hasValue, err := iter.resultIter.Next()
-	if err != nil || !hasValue {
-		return indexIterResult{}, err
+	if err != nil {
+		return indexIterResult{}, NewErrIterateIndex(err, iter.indexDesc.Name)
+	}
+	if !hasValue {
+		return indexIterResult{}, nil
 	}
 
 	key, err := keys.DecodeIndexDataStoreKey(
 		iter.resultIter.Key(),
 		&iter.indexDesc,
 		iter.indexedFields,
+		iter.epoch,
 	)
 	if err != nil {
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
 	}
 
 	value, err := iter.resultIter.Value()
 	if err != nil {
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrGetIndexValue(err, iter.indexDesc.Name)
 	}
 
 	iter.execInfo.IndexesFetched++
@@ -183,6 +189,7 @@ func (f *indexFetcher) newPrefixBaseMatchIterator(
 	return &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      execInfo,
 		prefixKey:     &indexKey,
 		matchers:      matchers,
@@ -219,7 +226,7 @@ func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return indexIterResult{key: iter.indexKey}, nil
 		}
-		return indexIterResult{}, err
+		return indexIterResult{}, NewErrGetIndexEntry(err, iter.indexKey.ToString())
 	}
 	iter.store = nil
 	iter.execInfo.IndexesFetched++
@@ -386,7 +393,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 type memorizingIndexIterator struct {
 	inner indexIterator
 
-	fetchedDocs map[string]struct{}
+	fetchedDocs map[uint64]struct{}
 
 	ctx   context.Context
 	store datastore.Keyedstore
@@ -397,7 +404,7 @@ var _ indexIterator = (*memorizingIndexIterator)(nil)
 func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
-	iter.fetchedDocs = make(map[string]struct{})
+	iter.fetchedDocs = make(map[uint64]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
@@ -410,21 +417,22 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		if !res.foundKey {
 			return res, nil
 		}
-		var docID string
+		var docShortID uint64
 		if len(res.value) > 0 {
-			docID = string(res.value)
-		} else {
-			lastField := &res.key.Fields[len(res.key.Fields)-1]
-			var ok bool
-			docID, ok = lastField.Value.String()
-			if !ok {
-				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
+			docShortID, err = keys.DecodeDocShortID(res.value)
+			if err != nil {
+				return indexIterResult{}, err
 			}
+		} else {
+			docShortID = res.key.DocShortID
 		}
-		if _, ok := iter.fetchedDocs[docID]; ok {
+		if docShortID == 0 {
+			return indexIterResult{}, NewErrUnexpectedTypeValue[uint64](docShortID)
+		}
+		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue
 		}
-		iter.fetchedDocs[docID] = struct{}{}
+		iter.fetchedDocs[docShortID] = struct{}{}
 		return res, nil
 	}
 }
@@ -515,12 +523,12 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
+	return keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
@@ -530,12 +538,12 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
+	return keys.NewIndexDataStoreKey(collectionShortID, f.indexDesc.ID, f.epoch, fields), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.
@@ -654,6 +662,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	iter := &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      f.execInfo,
 		reverse:       false,
 		startKey:      startKey,
@@ -759,7 +768,8 @@ func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
 	hasArray := false
 	hasJSON := false
 	for i := range conditions {
-		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		isJSON := conditions[i].kind == client.FieldKind_NILLABLE_JSON || conditions[i].kind == client.FieldKind_JSON
+		hasJSON = hasJSON || isJSON
 		hasArray = hasArray || conditions[i].kind.IsArray()
 	}
 	return hasArray || hasJSON
@@ -902,7 +912,7 @@ func getNestedOperatorConditionIfJSON(
 	indexedField client.CollectionFieldDescription,
 	condMap map[connor.FilterKey]any,
 ) (map[connor.FilterKey]any, client.JSONPath) {
-	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON && indexedField.Kind != client.FieldKind_JSON {
 		return condMap, client.JSONPath{}
 	}
 	var jsonPath client.JSONPath
@@ -961,7 +971,7 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
 //     leaf values (scalars), not entire objects or arrays.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
-	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON
+	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 
 	if filterVal == nil {
 		if op == opGe {
@@ -990,7 +1000,43 @@ func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath
 		return true
 	}
 
+	// JSON ordering operators (_gt, _lt, _ge, _le) only work with numeric values.
+	// Non-numeric values (bool, string, object, array) should produce errors via the
+	// regular evaluation path, so fall back to full scan.
+	if isJSON && isOrderingOp(op) && !isNumericFilterValue(filterVal) {
+		return true
+	}
+
+	// JSON _like/_nlike on root level: the index only stores leaf values, so non-string
+	// docs (bool, number, object, array) would be missed. Fall back to full scan.
+	if isJSON && (op == opLike || op == opNlike) && len(jsonPath) == 0 {
+		return true
+	}
+
+	// Array indexes store individual element values, not entire arrays.
+	// When _eq/_neq is applied to an array field with a literal array value
+	// (e.g., {likedIndexes: {_eq: [true, false]}}), the index can't compare
+	// whole arrays — fall back to full scan.
+	if fieldKind.IsArray() && (op == opEq || op == opNe) {
+		if _, isArray := filterVal.([]any); isArray {
+			return true
+		}
+	}
+
 	return false
+}
+
+func isOrderingOp(op string) bool {
+	return op == opGt || op == opGe || op == opLt || op == opLe
+}
+
+func isNumericFilterValue(filterVal any) bool {
+	switch filterVal.(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return true
+	default:
+		return false
+	}
 }
 
 // isJSONFilterCondition returns true if the field is JSON and has a path or filter value.
@@ -998,7 +1044,8 @@ func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath
 // If the filter value is nil and path is empty, it means we are filtering for null values
 // on the entire JSON field, which can be handled as a scalar nil value.
 func isJSONFilterCondition(kind client.FieldKind, jsonPath client.JSONPath, filterVal any) bool {
-	return kind == client.FieldKind_NILLABLE_JSON && (len(jsonPath) > 0 || filterVal != nil)
+	isJSON := kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON
+	return isJSON && (len(jsonPath) > 0 || filterVal != nil)
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that

@@ -18,12 +18,14 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -236,6 +238,64 @@ func (matcher *docIDAt) String() string {
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
+func ValidDocID() *validDocID {
+	return &validDocID{}
+}
+
+type validDocID struct{}
+
+func (m *validDocID) Match(actual any) (bool, error) {
+	s, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	if _, err := client.NewDocIDFromString(s); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (m *validDocID) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be a valid document ID string", actual)
+}
+
+func (m *validDocID) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a valid document ID string", actual)
+}
+
+// ValidCID returns a matcher that passes if the actual value is a string
+// that parses as a valid CID.
+//
+// Use this instead of hard-coding a specific CID string in test results
+// when the test's intent is "a CID is returned", not "this exact CID is
+// returned". Hard-coded CIDs over-specify the test and break whenever
+// something changes block bytes (e.g. enabling signing via the
+// [multiplier.SignedDocs] test multiplier).
+func ValidCID() *validCID {
+	return &validCID{}
+}
+
+type validCID struct{}
+
+func (m *validCID) Match(actual any) (bool, error) {
+	s, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a CID string, got %T", actual)
+	}
+	if _, err := cid.Decode(s); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (m *validCID) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be a valid CID string", actual)
+}
+
+func (m *validCID) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a valid CID string", actual)
+}
+
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
@@ -312,6 +372,8 @@ func areResultsEqual(expected any, actual any) bool {
 		return areResultOptionsEqual(expectedVal, actual)
 	case immutable.Option[string]:
 		return areResultOptionsEqual(expectedVal, actual)
+	case immutable.Option[time.Time]:
+		return areResultOptionsEqual(expectedVal, actual)
 	case []uint8:
 		return areResultsEqual(base64.StdEncoding.EncodeToString(expectedVal), actual)
 	case []int64:
@@ -341,6 +403,10 @@ func areResultsEqual(expected any, actual any) bool {
 	case []immutable.Option[bool]:
 		return areResultArraysEqual(expectedVal, actual)
 	case []immutable.Option[string]:
+		return areResultArraysEqual(expectedVal, actual)
+	case []time.Time:
+		return areResultArraysEqual(expectedVal, actual)
+	case []immutable.Option[time.Time]:
 		return areResultArraysEqual(expectedVal, actual)
 	case time.Time:
 		return areResultsEqual(expectedVal.Format(time.RFC3339Nano), actual)
@@ -440,4 +506,96 @@ func (matcher *CurrentTimestampMatcher) FailureMessage(actual any) string {
 
 func (matcher *CurrentTimestampMatcher) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected timestamp %v not to be within 120 seconds of now", actual)
+}
+
+// ArrayMatcher is a matcher that checks if the actual array of value is a
+// match for all the matchers in the ArrayMatcher's matchers field.
+//
+// The actual value must be an array of the same length as the matchers field,
+// and each element of the actual array must match the corresponding matcher in
+// the matchers field.
+type ArrayMatcher struct {
+	matchers []TestStateMatcher
+	testStateMatcher
+}
+
+var _ TestStateMatcher = (*ArrayMatcher)(nil)
+
+func NewArrayMatcher(matchers ...TestStateMatcher) *ArrayMatcher {
+	return &ArrayMatcher{matchers: matchers}
+}
+
+func (matcher *ArrayMatcher) Match(actual any) (bool, error) {
+	switch v := actual.(type) {
+	case []any:
+		return matchActual(matcher, v)
+
+	case []map[string]any:
+		return matchActual(matcher, v)
+
+	case []string:
+		return matchActual(matcher, v)
+
+	case []int64:
+		return matchActual(matcher, v)
+
+	case []uint64:
+		return matchActual(matcher, v)
+
+	case []float32:
+		return matchActual(matcher, v)
+
+	case []float64:
+		return matchActual(matcher, v)
+
+	case []bool:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[string]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[int64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[uint64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[float32]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[float64]:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[bool]:
+		return matchActual(matcher, v)
+
+	case []time.Time:
+		return matchActual(matcher, v)
+
+	case []immutable.Option[time.Time]:
+		return matchActual(matcher, v)
+
+	default:
+		return false, fmt.Errorf("expected an array, got %T", actual)
+	}
+}
+
+func matchActual[T any](matcher *ArrayMatcher, actual []T) (bool, error) {
+	if len(actual) != len(matcher.matchers) {
+		return false, fmt.Errorf("expected array of length %d, got %d", len(matcher.matchers), len(actual))
+	}
+	for i, matcher := range matcher.matchers {
+		if ok, err := matcher.Match(actual[i]); err != nil || !ok {
+			return false, fmt.Errorf("element %d: %w", i, err)
+		}
+	}
+	return true, nil
+}
+
+func (matcher *ArrayMatcher) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected array %v to match all elements", actual)
+}
+
+func (matcher *ArrayMatcher) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected array %v not to match all elements", actual)
 }

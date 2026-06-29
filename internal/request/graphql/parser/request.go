@@ -47,6 +47,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		RuntimeType:  operationType,
 		SelectionSet: exe.Operation.GetSelectionSet(),
 	})
+	orderedFields := orderCollectedFields(exe, collectedFields)
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -57,7 +58,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	astOpDef := exe.Operation.(*ast.OperationDefinition)
 	switch exe.Operation.GetOperation() {
 	case ast.OperationTypeQuery:
-		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
 		if errs != nil {
 			return nil, errs
 		}
@@ -70,7 +71,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Queries = append(r.Queries, parsedQueryOpDef)
 
 	case ast.OperationTypeMutation:
-		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, collectedFields)
+		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, orderedFields)
 		if err != nil {
 			return nil, []error{err}
 		}
@@ -84,7 +85,7 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
 	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
 		if errs != nil {
 			return nil, errs
 		}
@@ -104,11 +105,92 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	return r, nil
 }
 
+// orderCollectedFields projects the grouped-field-set map produced by
+// [gql.CollectFields] onto the order in which response keys are first
+// encountered while traversing the operation's selection set.
+//
+// There is an important edge case with order for correctly handling Fragments.
+// Specifically, the location of Fragments is reported at their definition not
+// their use. We need to walk and expand the selection set and fragments before
+// determining final order
+func orderCollectedFields(
+	exe *gql.ExecutionContext,
+	collectedFields map[string][]*ast.Field,
+) [][]*ast.Field {
+	responseKeyOrder := collectResponseKeyOrder(
+		exe,
+		exe.Operation.GetSelectionSet(),
+		make(map[string]bool),
+		make(map[string]bool),
+	)
+
+	orderedFields := make([][]*ast.Field, 0, len(collectedFields))
+	for _, responseKey := range responseKeyOrder {
+		// Response keys excluded by @skip / @include or a non-matching fragment
+		// type condition are absent from collectedFields and are skipped here.
+		// The traversal visits a superset of the keys CollectFields collects, so
+		// every collected group is emitted exactly once.
+		if fields, ok := collectedFields[responseKey]; ok {
+			orderedFields = append(orderedFields, fields)
+		}
+	}
+	return orderedFields
+}
+
+// collectResponseKeyOrder walks a selection set in document order, expanding
+// fragment spreads and inline fragments in place, and returns the response keys
+// (alias, else field name) in the order they are first encountered.
+//
+// seenKeys and visitedFragments are shared across the whole traversal so each
+// response key is recorded once at its first occurrence and each fragment is
+// expanded at most once (the latter also guards against cyclic spreads, though
+// validation rejects those before this point).
+func collectResponseKeyOrder(
+	exe *gql.ExecutionContext,
+	selectionSet *ast.SelectionSet,
+	seenKeys map[string]bool,
+	visitedFragments map[string]bool,
+) []string {
+	if selectionSet == nil {
+		return nil
+	}
+
+	var order []string
+	for _, selection := range selectionSet.Selections {
+		switch node := selection.(type) {
+		case *ast.Field:
+			responseKey := node.Name.Value
+			if node.Alias != nil && node.Alias.Value != "" {
+				responseKey = node.Alias.Value
+			}
+			if !seenKeys[responseKey] {
+				seenKeys[responseKey] = true
+				order = append(order, responseKey)
+			}
+
+		case *ast.InlineFragment:
+			order = append(order, collectResponseKeyOrder(exe, node.GetSelectionSet(), seenKeys, visitedFragments)...)
+
+		case *ast.FragmentSpread:
+			name := node.Name.Value
+			if visitedFragments[name] {
+				continue
+			}
+			visitedFragments[name] = true
+			if fragment, ok := exe.Fragments[name]; ok {
+				order = append(order, collectResponseKeyOrder(exe, fragment.GetSelectionSet(), seenKeys, visitedFragments)...)
+			}
+		}
+	}
+	return order
+}
+
 // parseDirectives returns all directives that were found if parsing and validation succeeds,
 // otherwise returns the first error that is encountered.
 func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error) {
 	// Set the default states of the directives if they aren't found and no error(s) occur.
 	explainDirective := immutable.None[request.ExplainType]()
+	exhaustive := false
 
 	// Iterate through all directives and ensure that the directive we find are validated.
 	// - Note: the location we don't need to worry about as the schema takes care of it, as when
@@ -128,10 +210,15 @@ func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error)
 			}
 			explainDirective = parsedExplainDirective
 		}
+
+		if astDirective.Name.Value == request.ExhaustiveLabel {
+			exhaustive = true
+		}
 	}
 
 	return request.Directives{
 		ExplainType: explainDirective,
+		Exhaustive:  exhaustive,
 	}, nil
 }
 

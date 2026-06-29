@@ -20,8 +20,81 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
+	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
+
+func backupTestDocID(
+	t *testing.T,
+	ctx context.Context,
+	doc map[string]any,
+	collection client.CollectionVersion,
+) string {
+	testDoc, err := client.NewDocFromMap(ctx, doc, collection)
+	require.NoError(t, err)
+	bytes, err := testDoc.Bytes()
+	require.NoError(t, err)
+	bytes = append(bytes, []byte(collection.CollectionID)...)
+	cid, err := ccid.NewSHA256CidV1(bytes)
+	require.NoError(t, err)
+	return client.NewDocIDV0(cid).String()
+}
+
+func TestImportDocIDAliasesUsesNewDocIDAsImportID(t *testing.T) {
+	docMap := map[string]any{
+		request.DocIDFieldName:    "bae-old-doc",
+		request.NewDocIDFieldName: "bae-new-doc",
+		"name":                    "John",
+	}
+
+	aliases := importDocIDAliases(docMap)
+
+	require.Equal(t, "bae-new-doc", docMap[request.DocIDFieldName])
+	require.NotContains(t, docMap, request.NewDocIDFieldName)
+	require.Contains(t, aliases, "bae-old-doc")
+	require.Contains(t, aliases, "bae-new-doc")
+}
+
+func TestRewriteImportRelationsRewritesKnownAndDefersUnknownDocIDs(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, `
+		type Author {
+			name: String
+			book: Book @relation(name: "author_book")
+			reviewed: Book @relation(name: "reviewedBy_reviewed")
+		}
+		type Book {
+			name: String
+			author: Author @primary @relation(name: "author_book")
+			reviewedBy: Author @primary @relation(name: "reviewedBy_reviewed")
+		}
+	`)
+	require.NoError(t, err)
+	bookCol, err := db.GetCollectionByName(ctx, "Book")
+	require.NoError(t, err)
+
+	docMap := map[string]any{
+		"name":          "John and the sourcerers' stone",
+		"_authorID":     "bae-imported-author",
+		"reviewedBy":    "bae-imported-reviewer",
+		"ignoredScalar": "ignored",
+	}
+
+	deferred := rewriteImportRelations(bookCol, docMap, map[string]string{
+		"bae-imported-author": "bae-actual-author",
+	})
+
+	require.Equal(t, "bae-actual-author", docMap["_authorID"])
+	require.NotContains(t, docMap, "reviewedBy")
+	require.Len(t, deferred, 1)
+	require.Equal(t, "reviewedBy", deferred[0].fieldName)
+	require.Equal(t, "bae-imported-reviewer", deferred[0].importedDocID)
+}
 
 func TestBasicExport_WithNormalFormatting_NoError(t *testing.T) {
 	ctx := context.Background()
@@ -481,24 +554,16 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 	}`)
 	require.NoError(t, err)
 
-	// First, add documents to get their actual docIDs
 	col1, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc1, err := client.NewDocFromJSON(ctx, []byte(`{"name": "Bob", "age": 40}`), col1.Version())
-	require.NoError(t, err)
-	bobID := doc1.ID().String()
-
-	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "John", "age": 30}`), col1.Version())
-	require.NoError(t, err)
-	johnID := doc2.ID().String()
+	bobID := backupTestDocID(t, ctx, map[string]any{"name": "Bob", "age": 40}, col1.Version())
+	johnID := backupTestDocID(t, ctx, map[string]any{"name": "John", "age": 30}, col1.Version())
 
 	col2, err := db.GetCollectionByName(ctx, "Address")
 	require.NoError(t, err)
 
-	doc3, err := client.NewDocFromJSON(ctx, []byte(`{"street": "101 Maple St", "city": "Toronto"}`), col2.Version())
-	require.NoError(t, err)
-	addressID := doc3.ID().String()
+	addressID := backupTestDocID(t, ctx, map[string]any{"street": "101 Maple St", "city": "Toronto"}, col2.Version())
 
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)

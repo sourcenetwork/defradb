@@ -16,9 +16,10 @@ import (
 	"sync"
 	"syscall/js"
 
+	"github.com/sourcenetwork/goji"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/goji"
 )
 
 type Client struct {
@@ -41,17 +42,22 @@ func (c *Client) JSValue() js.Value {
 	return js.ValueOf(map[string]any{
 		"addCollection":              goji.Async(c.addCollection),
 		"patchCollection":            goji.Async(c.patchCollection),
+		"deleteCollection":           goji.Async(c.deleteCollection),
 		"setActiveCollectionVersion": goji.Async(c.setActiveCollectionVersion),
 		"addView":                    goji.Async(c.addView),
 		"refreshViews":               goji.Async(c.refreshViews),
 		"setMigration":               goji.Async(c.setMigration),
 		"addLens":                    goji.Async(c.addLens),
 		"listLenses":                 goji.Async(c.listLenses),
+		"listActions":                goji.Async(c.listActions),
 		"getCollectionByName":        goji.Async(c.getCollectionByName),
 		"getCollections":             goji.Async(c.getCollections),
 		"listIndexes":                goji.Async(c.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(c.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(c.execRequest),
+		"printDump":                  goji.Async(c.printDump),
+		"basicImport":                goji.Async(c.basicImport),
+		"basicExport":                goji.Async(c.basicExport),
 		"addDACPolicy":               goji.Async(c.addDACPolicy),
 		"verifyDACAccess":            goji.Async(c.verifyDACAccess),
 		"addDACActorRelationship":    goji.Async(c.addDACActorRelationship),
@@ -63,8 +69,23 @@ func (c *Client) JSValue() js.Value {
 		"deleteNACActorRelationship": goji.Async(c.deleteNACActorRelationship),
 		"getNodeIdentity":            goji.Async(c.getNodeIdentity),
 		"newTxn":                     goji.Async(c.newTxn),
-		"newConcurrentTxn":           goji.Async(c.newConcurrentTxn),
 		"verifySignature":            goji.Async(c.verifySignature),
+		"peerInfo":                   goji.Async(c.peerInfo),
+		"activePeers":                goji.Async(c.activePeers),
+		"connect":                    goji.Async(c.connect),
+		"disconnect":                 goji.Async(c.disconnect),
+		"addReplicator":              goji.Async(c.addReplicator),
+		"deleteReplicator":           goji.Async(c.deleteReplicator),
+		"listReplicators":            goji.Async(c.listReplicators),
+		"addP2PCollections":          goji.Async(c.addP2PCollections),
+		"deleteP2PCollections":       goji.Async(c.deleteP2PCollections),
+		"listP2PCollections":         goji.Async(c.listP2PCollections),
+		"addP2PDocuments":            goji.Async(c.addP2PDocuments),
+		"deleteP2PDocuments":         goji.Async(c.deleteP2PDocuments),
+		"listP2PDocuments":           goji.Async(c.listP2PDocuments),
+		"syncDocuments":              goji.Async(c.syncDocuments),
+		"syncCollectionVersions":     goji.Async(c.syncCollectionVersions),
+		"syncBranchableCollection":   goji.Async(c.syncBranchableCollection),
 		"close":                      goji.Async(c.close),
 	})
 }

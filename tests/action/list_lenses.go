@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -45,12 +46,17 @@ type ListLenses struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*ListLenses)(nil)
 var _ Stateful = (*ListLenses)(nil)
 
 func (a *ListLenses) Execute() {
+	var err error
+
 	if a.ExpectedError != "" && a.ExpectedLenses != nil {
 		a.s.T.Fatalf("ExpectedError and ExpectedLenses cannot both be set")
 	}
@@ -65,7 +71,16 @@ func (a *ListLenses) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		lenses, err := node.ListLenses(a.s.Ctx, opts)
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var lenses map[string]model.Lens
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			lenses, err = txn.ListLenses(a.s.Ctx, opts)
+		} else {
+			lenses, err = node.ListLenses(a.s.Ctx, opts)
+		}
 
 		if a.ExpectedError != "" {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

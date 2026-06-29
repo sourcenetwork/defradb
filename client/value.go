@@ -75,6 +75,8 @@ func (val FieldValue) Bytes() ([]byte, error) {
 		value = convertImmutable(v)
 	} else if v, ok := val.value.NillableBoolArray(); ok {
 		value = convertImmutable(v)
+	} else if v, ok := val.value.NillableTimeArray(); ok {
+		value = convertImmutable(v)
 	} else {
 		value = val.value.Unwrap()
 	}

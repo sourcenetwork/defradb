@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -20,6 +22,8 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -43,6 +47,7 @@ func (db *DB) ExecRequest(
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
+
 	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
@@ -83,6 +88,7 @@ func (db *DB) GetCollectionByName(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
@@ -93,6 +99,8 @@ func (db *DB) GetCollections(
 	ctx context.Context,
 	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
+	_, hadTxn := datastore.CtxTryGetTxn(ctx)
+
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -102,20 +110,22 @@ func (db *DB) GetCollections(
 		return nil, err
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	var err error
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.getCollections(ctx, opt)
+	return db.getCollections(ctx, opt, !hadTxn)
 }
 
 // ListIndexes gets all the indexes in the database.
 func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -129,6 +139,7 @@ func (db *DB) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listIndexDescriptions(ctx)
@@ -152,6 +163,7 @@ func (db *DB) ListAllEncryptedIndexes(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	return db.listAllEncryptedIndexDescriptions(ctx)
@@ -176,10 +188,15 @@ func (db *DB) AddCollection(
 		return nil, err
 	}
 
+	// Propagate the identity so that collection-level acp registration (for branchable
+	// permissioned collections) can record the creating identity as the object owner.
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
 	cols, err := db.addCollection(ctx, sdl)
@@ -204,7 +221,6 @@ func (db *DB) AddCollection(
 // The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-
 func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
@@ -224,14 +240,118 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
-	err = db.patchCollection(ctx, patchString, migration)
+	backfills, err := db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitAndRunDeferred(ctx, txn, backfills)
+}
+
+// commitAndRunDeferred commits the transaction and then runs each deferred function
+// sequentially. If the transaction is explicit (caller-provided), the functions are
+// instead registered as OnSuccess callbacks so they run when the caller commits.
+//
+// On the explicit-transaction path the deferred functions run after the caller's commit, so an
+// error cannot be returned and is only logged. A failed index backfill/rebuild still records a
+// failed index state, so the failure shows up in the index status; callers should check it there.
+func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
+	if txn.explicit {
+		for _, fn := range deferred {
+			fn := fn
+			txn.OnSuccess(func() {
+				if err := fn(ctx); err != nil {
+					log.ErrorE("deferred operation after commit failed; check index status", err)
+				}
+			})
+		}
+		return nil
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+
+	for _, fn := range deferred {
+		if err := fn(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (db *DB) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePatchCollectionPerm); err != nil {
+		return err
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+
+	defer txn.Discard()
+
+	backfills, err := db.deleteCollection(ctx, names, opt.ActiveOnly)
+	if err != nil {
+		return err
+	}
+
+	return commitAndRunDeferred(ctx, txn, backfills)
+}
+
+func (db *DB) deleteCollection(
+	ctx context.Context,
+	names []string,
+	activeOnly bool,
+) ([]func(context.Context) error, error) {
+	if len(names) == 0 {
+		return nil, client.ErrCollectionNameRequired
+	}
+
+	seen := make(map[string]struct{}, len(names))
+	ops := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		col, err := db.getCollectionByName(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+
+		if activeOnly {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, col.Version().VersionID))
+			continue
+		}
+
+		allVersions, err := description.GetCollectionsByCollectionID(
+			ctx, db.collectionRepository, col.Version().CollectionID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		for _, v := range allVersions {
+			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
+		}
+	}
+
+	patch := "[" + strings.Join(ops, ",") + "]"
+	return db.patchCollection(ctx, patch, immutable.None[model.Lens]())
 }
 
 func (db *DB) SetActiveCollectionVersion(
@@ -252,14 +372,19 @@ func (db *DB) SetActiveCollectionVersion(
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
+	runRebuild, err := db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild})
 }
 
 func (db *DB) SetMigration(
@@ -283,13 +408,16 @@ func (db *DB) SetMigration(
 	}
 	defer txn.Discard()
 
-	lensID, err := db.setMigration(ctx, cfg)
+	lensID, runRebuild, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
+	// The rebuild drives its own batched transactions, so it must run after the transaction that
+	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
+	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
+	// explicit one so it never runs before the caller's commit.
+	if err := commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild}); err != nil {
 		return "", err
 	}
 
@@ -315,6 +443,7 @@ func (db *DB) AddLens(
 	if err != nil {
 		return "", err
 	}
+
 	defer txn.Discard()
 
 	lensID, err := db.addLens(ctx, lens)
@@ -348,9 +477,15 @@ func (db *DB) ListLenses(
 	if err != nil {
 		return nil, err
 	}
+
 	defer txn.Discard()
 
-	return db.listLenses(ctx)
+	lenses, err := db.listLenses(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return lenses, nil
 }
 
 func (db *DB) AddView(
@@ -405,6 +540,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[optio
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opt)

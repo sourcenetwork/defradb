@@ -29,7 +29,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -70,7 +70,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -92,10 +92,11 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(2),
 							"GROUP": []map[string]any{
 								{
-									"cid": "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
@@ -103,18 +104,20 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(1),
 							"GROUP": []map[string]any{
 								{
-									"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -146,7 +149,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -154,7 +158,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -162,7 +167,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -171,6 +177,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -196,14 +203,14 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 						"age":	25
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        1,
 				Doc: `{
@@ -219,10 +226,10 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "bae-2487fd12-227f-582b-a7ed-3dd5d4b61fce",
+							"docID": "{{.DocID0_1}}",
 						},
 					},
 				},
@@ -244,7 +251,7 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -288,7 +295,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{

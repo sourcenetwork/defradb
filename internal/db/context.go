@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
@@ -32,12 +31,11 @@ func InitContext(ctx context.Context, txn client.Txn) context.Context {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	ctx = id.InitCollectionShortIDCache(ctx)
 	ctx = id.InitFieldShortIDCache(ctx)
-	ctx = description.InitCollectionCache(ctx)
 	// corekv expects transactions to be set on the context.
 	// This allows us to pass transactions between libraries.
 	// For example: db.SetMigration -> lens.Transform -> corekv.Set
 	if v, ok := txn.(*Txn); ok {
-		ctx = corekv.SetCtxTxn(ctx, v.BasicTxn.Txn())
+		ctx = corekv.SetCtxTxn(ctx, v.Txn())
 	}
 	if txn != nil {
 		ctx = clock.WithTime(ctx, txn.StartTS())

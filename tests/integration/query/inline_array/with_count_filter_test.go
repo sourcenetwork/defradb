@@ -235,6 +235,130 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuery_InlineFloat32Array_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteFloat32s": [3.1425, 0.00000000001, 10]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(favouriteFloat32s: {filter: {_lt: 9}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_InlineNillableFloat32Array_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings32": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(pageRatings32: {filter: {_lt: 9}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_InlineFloat64Array_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteFloat64s": [3.1425, 0.00000000001, 10]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(favouriteFloat64s: {filter: {_lt: 9}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_InlineNillableFloat64Array_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings64": [3.1425, 0.00000000001, 10, null]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(pageRatings64: {filter: {_lt: 9}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -280,6 +404,68 @@ func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 					Users {
 						name
 						COUNT(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_InlineDateTimeArray_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"preferredDateTimes": ["2024-01-15T09:00:00Z", "2024-01-16T09:00:00Z", "2024-01-17T09:00:00Z"]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(preferredDateTimes: {filter: {_lt: "2024-01-17T00:00:00Z"}})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":  "Shahzad",
+							"COUNT": 2,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_InlineNillableDateTimeArray_WithCountWithFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"loginTimes": ["2024-01-15T09:00:00Z", "2024-01-16T09:00:00Z", "2024-01-17T09:00:00Z", null]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						COUNT(loginTimes: {filter: {_lt: "2024-01-17T00:00:00Z"}})
 					}
 				}`,
 				Results: map[string]any{

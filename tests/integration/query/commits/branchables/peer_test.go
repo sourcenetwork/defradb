@@ -12,15 +12,22 @@
 package branchables
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
+
+type commitGraphNode struct {
+	Links []string
+	Heads []string
+}
 
 func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
@@ -70,6 +77,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 							}
 						}
 					}`,
+				NonOrderedResults: true,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
@@ -113,16 +121,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 }
 
 func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
-	collectionDoc2CreateCid := testUtils.NewSameValue()
-	collectionDoc1CreateCid := testUtils.NewSameValue()
-	doc2CreateCid := testUtils.NewSameValue()
-	doc1CreateCid := testUtils.NewSameValue()
-	doc1NameCid := testUtils.NewSameValue()
-	doc1AgeCid := testUtils.NewSameValue()
-	doc2NameCid := testUtils.NewSameValue()
-	doc2AgeCid := testUtils.NewSameValue()
+	var expectedGraph map[string]commitGraphNode
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -171,79 +170,99 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 							}
 						}
 					}`,
-				Results: map[string]any{
-					"_commits": []map[string]any{
-						{
-							"cid": gomega.And(collectionDoc2CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc2CreateCid,
-								},
-							},
-							"heads": []map[string]any{
-								{
-									"cid": collectionDoc1CreateCid,
-								},
-							},
-						},
-						{
-							"cid": gomega.And(collectionDoc1CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc1CreateCid,
-								},
-							},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc2NameCid, uniqueCid),
-							"links": []map[string]any{},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc2AgeCid, uniqueCid),
-							"links": []map[string]any{},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid": gomega.And(doc2CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc2NameCid,
-								},
-								{
-									"cid": doc2AgeCid,
-								},
-							},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc1NameCid, uniqueCid),
-							"links": []map[string]any{},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid":   gomega.And(doc1AgeCid, uniqueCid),
-							"links": []map[string]any{},
-							"heads": []map[string]any{},
-						},
-						{
-							"cid": gomega.And(doc1CreateCid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": doc1NameCid,
-								},
-								{
-									"cid": doc1AgeCid,
-								},
-							},
-							"heads": []map[string]any{},
-						},
-					},
-				},
+				Asserter: action.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
+					graph := normalizeCommitGraph(t, result)
+					assertTwoDocBranchableCreateGraph(t, graph)
+					if expectedGraph == nil {
+						expectedGraph = graph
+						return true, ""
+					}
+					require.Equal(t, expectedGraph, graph)
+					return true, ""
+				}),
 			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
+}
+
+func normalizeCommitGraph(t testing.TB, result map[string]any) map[string]commitGraphNode {
+	commits := action.ConvertToArrayOfMaps(t, result["_commits"])
+	graph := make(map[string]commitGraphNode, len(commits))
+	for _, commit := range commits {
+		cid, ok := commit["cid"].(string)
+		require.True(t, ok)
+		require.NotContains(t, graph, cid)
+
+		graph[cid] = commitGraphNode{
+			Links: commitGraphCIDs(t, commit["links"]),
+			Heads: commitGraphCIDs(t, commit["heads"]),
+		}
+	}
+	return graph
+}
+
+func commitGraphCIDs(t testing.TB, value any) []string {
+	links := action.ConvertToArrayOfMaps(t, value)
+	cids := make([]string, len(links))
+	for i, link := range links {
+		cid, ok := link["cid"].(string)
+		require.True(t, ok)
+		cids[i] = cid
+	}
+	slices.Sort(cids)
+	return cids
+}
+
+func assertTwoDocBranchableCreateGraph(t testing.TB, graph map[string]commitGraphNode) {
+	require.Len(t, graph, 8)
+
+	leafCIDs := make(map[string]struct{})
+	for cid, node := range graph {
+		if len(node.Links) == 0 && len(node.Heads) == 0 {
+			leafCIDs[cid] = struct{}{}
+		}
+	}
+	require.Len(t, leafCIDs, 4)
+
+	compositeCIDs := make(map[string]struct{})
+	for cid, node := range graph {
+		if len(node.Links) != 2 || len(node.Heads) != 0 {
+			continue
+		}
+		_, hasFirstLeaf := leafCIDs[node.Links[0]]
+		_, hasSecondLeaf := leafCIDs[node.Links[1]]
+		if hasFirstLeaf && hasSecondLeaf {
+			compositeCIDs[cid] = struct{}{}
+		}
+	}
+	require.Len(t, compositeCIDs, 2)
+
+	var collectionRootCID string
+	collectionHeadCount := 0
+	collectionLinkedComposites := make(map[string]struct{})
+	for cid, node := range graph {
+		if len(node.Links) != 1 {
+			continue
+		}
+		if _, ok := compositeCIDs[node.Links[0]]; !ok {
+			continue
+		}
+		collectionLinkedComposites[node.Links[0]] = struct{}{}
+
+		switch len(node.Heads) {
+		case 0:
+			require.Empty(t, collectionRootCID)
+			collectionRootCID = cid
+		case 1:
+			collectionHeadCount++
+		default:
+			require.Failf(t, "unexpected collection heads", "cid %s has heads %v", cid, node.Heads)
+		}
+	}
+
+	require.Len(t, collectionLinkedComposites, 2)
+	require.NotEmpty(t, collectionRootCID)
+	require.Equal(t, 1, collectionHeadCount)
 }

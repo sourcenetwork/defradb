@@ -91,9 +91,15 @@ func (a *GetCollections) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn, err := a.s.GetTransaction(node, a.TransactionID)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			return
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			if assertError(a.s.T, err, a.ExpectedError) {
+				return
+			}
 		}
 		ctx := db.InitContext(a.s.Ctx, txn)
 
@@ -105,7 +111,15 @@ func (a *GetCollections) Execute() {
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		results, err := node.GetCollections(ctx, opts)
+
+		// If we have a transaction, we will use it here. Otherwise we use the node.
+		var results []client.Collection
+		if hadTxn {
+			results, err = txn.GetCollections(ctx, opts)
+		} else {
+			results, err = node.GetCollections(ctx, opts)
+		}
+
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
 			resultDescriptions[i] = col.Version()

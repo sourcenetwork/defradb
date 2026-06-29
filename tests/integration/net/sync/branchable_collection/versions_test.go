@@ -18,10 +18,17 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		// KMS authorization needs a collection version that is still in
+		// flight during the DAG sync that delivers it. Remove the encrypted-docs exclude
+		// when https://github.com/sourcenetwork/defradb/issues/4789 lands.
+		// signed-docs is excluded because the same documents are created on both nodes, which gives
+		// them a different (per-signer) DocID on each node.
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -59,7 +66,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"email": "andy@gmail.com",
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  1,
 				Doc: `{
@@ -93,7 +100,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"score": 100,
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				DocID:  1,
 				Doc: `{
@@ -114,7 +121,8 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				NodeID: immutable.Some(0),
+				NodeID:            immutable.Some(0),
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name
@@ -147,7 +155,8 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 				},
 			},
 			&action.Request{
-				NodeID: immutable.Some(1),
+				NodeID:            immutable.Some(1),
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name

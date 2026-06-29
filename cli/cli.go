@@ -29,6 +29,7 @@ type CLI interface {
 	client.TxnStore
 	client.P2P
 	Purge(ctx context.Context) error
+	GetNodeOptions(ctx context.Context) (map[string]any, error)
 }
 
 // NewDefraCommand returns the root command instanciated with its tree of subcommands.
@@ -65,6 +66,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeP2PInfoCommand(ctx),
 		MakeP2PActivePeersCommand(ctx),
 		MakeP2PConnectCommand(ctx),
+		MakeP2PDisconnectCommand(ctx),
 	)
 
 	lens := MakeLensCommand(ctx)
@@ -147,6 +149,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 	collection := MakeCollectionCommand(ctx)
 	collection.AddCommand(
 		MakeCollectionAddCommand(ctx),
+		MakeCollectionDeleteCommand(ctx),
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
@@ -166,12 +169,18 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeBlockVerifySignatureCommand(ctx),
 	)
 
+	action := MakeActionCommand(ctx)
+	action.AddCommand(
+		MakeActionListCommand(ctx),
+	)
+
 	client := MakeClientCommand(ctx)
 	client.AddCommand(
 		MakePurgeCommand(ctx),
 		MakeDumpCommand(ctx),
 		MakeRequestCommand(ctx),
 		MakeNodeIdentityCommand(ctx),
+		MakeNodeOptionsCommand(ctx),
 		acp,
 		view,
 		index,
@@ -183,6 +192,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		document,
 		lens,
 		block,
+		action,
 	)
 
 	keyring := MakeKeyringCommand(ctx)

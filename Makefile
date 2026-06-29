@@ -39,10 +39,12 @@ else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
 VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
+ifeq ($(VERSION_GITRELEASE),)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
+endif
 endif
 
 $(info ----------------------------------------);
@@ -67,7 +69,7 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
-JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
+JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
@@ -175,9 +177,9 @@ deps\:modules:
 deps\:mocks:
 	go install github.com/vektra/mockery/v3@v3.5.2
 
-.PHONY: deps\:playground
-deps\:playground:
-	go generate -tags playground ./playground/...
+.PHONY: deps\:explorer
+deps\:explorer:
+	go generate -tags explorer ./explorer/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -197,13 +199,20 @@ deps:
 	$(MAKE) deps:lint && \
 	$(MAKE) deps:vulncheck && \
 	$(MAKE) deps:test && \
-	$(MAKE) deps:mocks
+	$(MAKE) deps:mocks && \
+	$(MAKE) deps:explorer
 
 .PHONY: mocks
 mocks:
 	@$(MAKE) deps:mocks && \
 	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
+
+# Regenerates the committed SDL test fixtures from the current generator output.
+# This is a standalone step and does not require node/npx.
+.PHONY: sdl-fixtures
+sdl-fixtures:
+	go run ./internal/request/graphql/schema/testfixtures/gen
 
 .PHONY: ollama
 ollama:
@@ -459,12 +468,21 @@ fix:
 	@$(MAKE) lint\:fix
 	@$(MAKE) tidy
 	@$(MAKE) mocks
+	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
 
-.PHONY build-c-shared-linux:
-build-c-shared-linux:
-	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+.PHONY: build-c-static-windows
+build-c-static-windows:
+	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
+	
+.PHONY: build-c-shared-linux build-c-shared-linux-deb
 
+build-c-shared-linux:
+	@MAKE_DEB=0 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+build-c-shared-linux\:deb:
+	@MAKE_DEB=1 tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+	
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/
 # The minimum supported API level is 21, which is the default.

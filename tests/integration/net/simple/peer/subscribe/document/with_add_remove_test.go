@@ -54,7 +54,7 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred"
@@ -124,7 +124,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				DocID:        0,
@@ -132,7 +132,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 					"name": "Bob"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				DocID:        1,
@@ -217,7 +217,7 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 				},
 				ExpectedError: "malformed document ID, missing either version or cid",
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				DocID:        0,
@@ -280,7 +280,7 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				DocID:        0,

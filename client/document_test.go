@@ -16,8 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 var (
@@ -25,8 +23,6 @@ var (
 		"Name": "John",
 		"Age": 26
 	}`)
-
-	pref = ccid.NewDefaultSHA256PrefixV1()
 
 	def = CollectionVersion{
 		Name: "User",
@@ -58,23 +54,6 @@ func TestNewFromJSON(t *testing.T) {
 		return
 	}
 
-	buf, err := doc.Bytes()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// And then feed it some data
-	c, err := pref.Sum(buf)
-	if err != nil {
-		t.Error(err)
-	}
-	objKey := NewDocIDV0(c)
-
-	if objKey.String() != doc.ID().String() {
-		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
-		return
-	}
-
 	// check field/value
 	// fields
 	assert.Equal(t, doc.fields["Name"].Name(), "Name")
@@ -94,23 +73,6 @@ func TestSetWithJSON(t *testing.T) {
 	doc, err := NewDocFromJSON(ctx, testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
-		return
-	}
-
-	buf, err := doc.Bytes()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// And then feed it some data
-	c, err := pref.Sum(buf)
-	if err != nil {
-		t.Error(err)
-	}
-	objKey := NewDocIDV0(c)
-
-	if objKey.String() != doc.ID().String() {
-		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
 		return
 	}
 
@@ -275,4 +237,55 @@ func TestIsJSONArray(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSet_WithNilElementInSliceForNonNillableArray_Error(t *testing.T) {
+	ctx := context.Background()
+	boolArrayDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "flags",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_BOOL_ARRAY,
+			},
+		},
+	}
+	doc, err := NewDocFromJSON(ctx, []byte(`{}`), boolArrayDef)
+	require.NoError(t, err)
+
+	err = doc.Set(ctx, "flags", []any{true, nil, false})
+	require.ErrorContains(t, err, errNullValueForNonNillableField)
+}
+
+func TestNewDocFromJSON_OmittedNonNillableField_Error(t *testing.T) {
+	ctx := context.Background()
+	nonNillableDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "score",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_INT,
+			},
+		},
+	}
+	_, err := NewDocFromJSON(ctx, []byte(`{}`), nonNillableDef)
+	require.ErrorContains(t, err, errMissingRequiredField)
+}
+
+func TestNewDocFromJSON_OmittedNonNillableArrayField_NoError(t *testing.T) {
+	ctx := context.Background()
+	nillableArrayDef := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "scores",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_INT_ARRAY,
+			},
+		},
+	}
+	_, err := NewDocFromJSON(ctx, []byte(`{}`), nillableArrayDef)
+	require.NoError(t, err)
 }

@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -82,17 +83,34 @@ type AddDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
+
+	// EnableSigning overrides node-level signing for this add.
+	EnableSigning immutable.Option[bool]
 }
 
 var _ Action = (*AddDoc)(nil)
 var _ Stateful = (*AddDoc)(nil)
 
 func (a *AddDoc) Execute() {
+	hadTxn := a.TransactionID.HasValue()
+
 	if a.DocMap != nil {
 		substituteRelations(a.s, a)
 	}
 
-	var mutation func(*AddDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
+	var mutation func(
+		*AddDoc,
+		client.TxnStore,
+		int,
+		client.Collection,
+		immutable.Option[client.Txn],
+	) ([]client.DocID, error)
 	switch state.ActiveMutationType {
 	case state.CollectionSaveMutationType:
 		mutation = addDocViaColSave
@@ -108,23 +126,69 @@ func (a *AddDoc) Execute() {
 	var docIDs []client.DocID
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+
+	// Check if a transaction is attached to this action. If so, we will be using it.
+	var txn client.Txn
+	txnOption := immutable.None[client.Txn]()
+	if hadTxn {
+		var err error
+		a.DoNotWaitForEvent = true
+		txn, err = a.s.GetTransaction(a.s.Nodes[a.NodeID.Value()], a.TransactionID)
+		require.NoError(a.s.T, err)
+		txnOption = immutable.Some(txn)
+	}
+
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
-		err := withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					a,
-					node,
-					nodeID,
-					collection,
-				)
-				return err
-			},
-		)
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		collections, err := getCanonicallyOrderedCollectionsWithIdentity(a.s, node, txnOption, a.Identity)
+		if err != nil {
+			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
+				continue
+			}
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			if expectedErrorRaised {
+				continue
+			}
+			require.NoError(a.s.T, err)
+		}
+
+		// getCanonicallyOrderedCollections returns a nil slot for any collection
+		// name that is no longer present in the database (documented on
+		// RefreshCollections). A concurrent PatchCollection removal therefore
+		// leaves the target slot nil, which is the expected "collection absent"
+		// signal rather than a hidden failure. Surface the same not-found error
+		// the production lookup-by-name path returns so the mutation is not
+		// handed a nil collection to dereference.
+		if a.CollectionID >= len(collections) || collections[a.CollectionID] == nil {
+			if a.CollectionID < len(a.s.CollectionNames) {
+				err = client.NewErrCollectionNotFoundForName(a.s.CollectionNames[a.CollectionID])
+			} else {
+				err = client.ErrCollectionNotFound
+			}
+		} else {
+			collection := collections[a.CollectionID]
+
+			err = withRetryOnNode(
+				node,
+				func() error {
+					var err error
+					docIDs, err = mutation(
+						a,
+						node,
+						nodeID,
+						collection,
+						txnOption,
+					)
+					if err == nil && txnOption.HasValue() {
+						err = recordTxnAddCIDs(a.s, nodeID, txnOption.Value(), docIDs)
+					}
+					return err
+				},
+			)
+		}
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
@@ -142,7 +206,8 @@ func (a *AddDoc) Execute() {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
+	// If there was an explicit transaction, then we will not be waiting for update events.
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent && !hadTxn {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -152,26 +217,31 @@ func addDocViaColSave(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
+
+	action := *a
+	action.Doc = replace(a.s, nodeIndex, a.Doc)
+
+	docs, err := parseAddDocs(ctx, &action, collection)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := db.InitContext(a.s.Ctx, txn)
-
-	docs, err := parseAddDocs(ctx, a, collection)
-	if err != nil {
-		return nil, err
-	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
 		err := collection.SaveDocument(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
+
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -180,15 +250,17 @@ func addDocViaColAdd(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
 	}
 
-	ctx := db.InitContext(a.s.Ctx, txn)
+	action := *a
+	action.Doc = replace(a.s, nodeIndex, a.Doc)
 
-	docs, err := parseAddDocs(ctx, a, collection)
+	docs, err := parseAddDocs(ctx, &action, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -211,6 +283,7 @@ func addDocViaColAdd(
 	for i, doc := range docs {
 		docIDs[i] = doc.ID()
 	}
+
 	return docIDs, nil
 }
 
@@ -219,7 +292,13 @@ func addDocViaGQL(
 	node client.TxnStore,
 	nodeIndex int,
 	collection client.Collection,
+	txn immutable.Option[client.Txn],
 ) ([]client.DocID, error) {
+	ctx := a.s.Ctx
+	if txn.HasValue() {
+		ctx = db.InitContext(a.s.Ctx, txn.Value())
+	}
+
 	var input string
 
 	paramName := request.Input
@@ -229,11 +308,11 @@ func addDocViaGQL(
 		input, err = valueToGQL(a.DocMap)
 	} else if client.IsJSONArray([]byte(a.Doc)) {
 		var docMaps []map[string]any
-		err = json.Unmarshal([]byte(a.Doc), &docMaps)
+		err = json.Unmarshal([]byte(replace(a.s, nodeIndex, a.Doc)), &docMaps)
 		require.NoError(a.s.T, err)
 		input, err = arrayToGQL(docMaps)
 	} else {
-		input, err = jsonToGQL(a.Doc)
+		input, err = jsonToGQL(replace(a.s, nodeIndex, a.Doc))
 	}
 	require.NoError(a.s.T, err)
 
@@ -248,14 +327,7 @@ func addDocViaGQL(
 	}
 
 	key := fmt.Sprintf("add_%s", collection.Name())
-	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
-
-	txn, err := a.s.GetTransaction(node, immutable.None[int]())
-	if err != nil {
-		return nil, err
-	}
-
-	ctx := db.InitContext(a.s.Ctx, txn)
+	req := fmt.Sprintf(`mutation { %s(%s) { %s } }`, key, params, request.DocIDFieldName)
 
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
@@ -263,7 +335,12 @@ func addDocViaGQL(
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := node.ExecRequest(ctx, req, reqOption)
+	var result *client.RequestResult
+	if txn.HasValue() {
+		result = txn.Value().ExecRequest(ctx, req, reqOption)
+	} else {
+		result = node.ExecRequest(ctx, req, reqOption)
+	}
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -280,6 +357,60 @@ func addDocViaGQL(
 	}
 
 	return docIDs, nil
+}
+
+func recordTxnAddCIDs(s *state.State, nodeIndex int, txn client.Txn, docIDs []client.DocID) error {
+	for _, docID := range docIDs {
+		result := txn.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
+			_commits(docID: $docID, order: {height: ASC}) {
+				cid
+				fieldName
+			}
+		}`, options.ExecRequest().SetVariables(map[string]any{
+			"docID": []string{docID.String()},
+		}))
+		if len(result.GQL.Errors) > 0 {
+			return result.GQL.Errors[0]
+		}
+
+		data, _ := result.GQL.Data.(map[string]any)
+		commits := ConvertToArrayOfMaps(s.T, data[request.CommitsName])
+		recordCommitCIDs(s, nodeIndex, docID.String(), commits)
+	}
+	return nil
+}
+
+func recordCommitCIDs(s *state.State, nodeIndex int, docID string, commits []map[string]any) {
+	node := s.Nodes[nodeIndex]
+
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[docID] == nil {
+		node.FieldCIDs[docID] = make(map[string][]cid.Cid)
+	}
+
+	for _, commit := range commits {
+		cidStr, ok := commit[request.CidFieldName].(string)
+		if !ok || cidStr == "" {
+			continue
+		}
+		c, err := cid.Parse(cidStr)
+		require.NoError(s.T, err)
+
+		fieldName, _ := commit[request.FieldNameName].(string)
+		if fieldName == request.CompositeFieldName {
+			node.Composites[docID] = append(node.Composites[docID], c)
+			continue
+		}
+		node.FieldCIDs[docID][fieldName] = append(node.FieldCIDs[docID][fieldName], c)
+	}
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -337,6 +468,9 @@ func makeDocSaveOptions(
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
+	}
 	return []options.Enumerable[options.SaveDocumentOptions]{opts}
 }
 
@@ -351,6 +485,9 @@ func makeDocAddOptions(
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		opts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return []options.Enumerable[options.AddDocumentOptions]{opts}
 }

@@ -261,6 +261,8 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
+	objectID = sourceHubObjectID(objectID)
+
 	_, err := callJSFunction("acp_RegisterObject", policyID, resourceName, objectID)
 	return err
 }
@@ -271,6 +273,8 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
+	objectID = sourceHubObjectID(objectID)
+
 	results, err := callJSFunction("acp_ObjectOwner", policyID, resourceName, objectID)
 	if err != nil {
 		return immutable.None[string](), err
@@ -289,6 +293,8 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	results, err := callJSFunction(
 		"acp_VerifyAccessRequest",
 		permission.String(),
@@ -347,6 +353,8 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	results, err := callJSFunction(
 		"acp_AddActorRelationship",
 		policyID,
@@ -403,6 +411,8 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	results, err := callJSFunction(
 		"acp_DeleteActorRelationship",
 		policyID,

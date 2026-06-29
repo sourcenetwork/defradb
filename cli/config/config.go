@@ -32,11 +32,20 @@ const (
 	ConfigLogLevelDebug = "debug"
 	ConfigLogLevelError = "error"
 	ConfigLogLevelFatal = "fatal"
+
+	// defaultTLSCertDir is the directory, relative to the rootdir, that is
+	// searched for the default TLS certificate and key files.
+	defaultTLSCertDir = "certs"
+	// defaultTLSCertFile and defaultTLSKeyFile are the certificate and private
+	// key file names looked up under <rootdir>/certs to automatically enable
+	// TLS for the HTTP API.
+	defaultTLSCertFile = "server.crt"
+	defaultTLSKeyFile  = "server.key"
 )
 
 // ConfigPaths are config keys that will be made relative to the rootdir
 var ConfigPaths = []string{
-	"datastore.badger.path",
+	"datastore.path",
 	"api.pubkeypath",
 	"api.privkeypath",
 	"keyring.path",
@@ -52,6 +61,7 @@ var ConfigFlags = map[string]string{
 	"log-overrides":              "log.overrides",
 	"no-log-color":               "log.colordisabled",
 	"url":                        "api.address",
+	"audience":                   "api.audience",
 	"max-txn-retries":            "datastore.maxtxnretries",
 	"store":                      "datastore.store",
 	"no-encryption":              "datastore.noencryption",
@@ -62,6 +72,8 @@ var ConfigFlags = map[string]string{
 	"peers":                      "net.peers",
 	"p2paddr":                    "net.p2paddresses",
 	"no-p2p":                     "net.p2pdisabled",
+	"pubsub":                     "net.pubsubenabled",
+	"relay":                      "net.relay",
 	"allowed-origins":            "api.allowed-origins",
 	"pubkeypath":                 "api.pubkeypath",
 	"privkeypath":                "api.privkeypath",
@@ -80,8 +92,9 @@ var ConfigFlags = map[string]string{
 // ConfigDefaults contains default values for config entries.
 var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
+	"api.audience":                      "",
 	"api.allowed-origins":               []string{},
-	"datastore.badger.path":             "data",
+	"datastore.path":                    "data",
 	"datastore.maxtxnretries":           5,
 	"datastore.store":                   "badger",
 	"datastore.badger.valuelogfilesize": 1 << 30,
@@ -107,7 +120,7 @@ var ConfigDefaults = map[string]any{
 	"datastore.nosigning":               false,
 	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.document.type":                 "none",
+	"acp.document.type":                 "local",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 
@@ -195,7 +208,43 @@ func LoadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	// set logging config overrides
 	corelog.SetConfigOverrides(cfg.GetString("log.overrides"))
 
+	// Automatically enable TLS when the default certificate files are present
+	// and the user has not configured certificate paths explicitly. Done after
+	// the logging config is applied so any warning is formatted as configured.
+	autoDetectTLSCertPaths(cfg, rootdir)
+
 	return cfg, nil
+}
+
+// autoDetectTLSCertPaths sets the TLS certificate and key paths from the
+// default certs directory (<rootdir>/certs) when the user has not configured
+// them explicitly. It sets whichever of server.crt (pubkeypath) and server.key
+// (privkeypath) are present: when both exist TLS is enabled, and when only one
+// exists the resulting incomplete pair is rejected by the start command, so a
+// half-populated certs directory is a clear error rather than a silently
+// ignored certificate.
+func autoDetectTLSCertPaths(cfg *viper.Viper, rootdir string) {
+	// Respect explicitly-configured paths (flag, config file, or env var); if
+	// either is set the user is in control of TLS and we must not override it.
+	if cfg.GetString("api.pubkeypath") != "" || cfg.GetString("api.privkeypath") != "" {
+		return
+	}
+
+	certPath := filepath.Join(rootdir, defaultTLSCertDir, defaultTLSCertFile)
+	keyPath := filepath.Join(rootdir, defaultTLSCertDir, defaultTLSKeyFile)
+	if isRegularFile(certPath) {
+		cfg.Set("api.pubkeypath", certPath)
+	}
+	if isRegularFile(keyPath) {
+		cfg.Set("api.privkeypath", keyPath)
+	}
+}
+
+// isRegularFile reports whether the path exists and is a regular file
+// (symlinks are followed). Directories and other irregular files return false.
+func isRegularFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 
 // bindConfigFlags binds the set of cli flags to config values.

@@ -2,21 +2,22 @@
 set -euo pipefail
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 <ANDROID_NDK_PATH> [BUILD_FLAGS] [API LEVEL]"
+  echo "Usage: $0 <ANDROID_NDK_PATH> [API_LEVEL]"
   exit 1
 fi
 
-API_LEVEL=21
-BUILD_FLAGS=""
+ANDROID_NDK="$1"
+shift
 
-# Parse remaining arguments
+API_LEVEL=21
+
 for arg in "$@"; do
   if [[ "$arg" =~ ^[0-9]+$ ]] && [ "$API_LEVEL" = 21 ]; then
     API_LEVEL="$arg"
-  else
-    BUILD_FLAGS="$BUILD_FLAGS $arg"
   fi
 done
+
+BUILD_TAGS="${BUILD_TAGS:-}"
 
 echo "Building c-shared library for Android (arm64) using NDK at: $ANDROID_NDK (API level $API_LEVEL)"
 
@@ -64,7 +65,7 @@ CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=arm64 \
 CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/aarch64-linux-android${API_LEVEL}-clang" \
-go build -tags "cshared android" -buildmode=c-shared \
+go build -tags "cshared android ${BUILD_TAGS}" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/arm64-v8a/libdefradb.so" ./cbindings
 
@@ -74,7 +75,7 @@ CGO_ENABLED=1 \
 GOOS=android \
 GOARCH=amd64 \
 CC="$ANDROID_NDK/toolchains/llvm/prebuilt/$HOST_TAG/bin/x86_64-linux-android${API_LEVEL}-clang" \
-go build -tags "cshared android" -buildmode=c-shared \
+go build -tags "cshared android ${BUILD_TAGS}" -buildmode=c-shared \
     -ldflags='-extldflags "-Wl,-soname,libdefradb.so"' \
     -o "$BUILD_DIR/x86_64/libdefradb.so" ./cbindings
 
@@ -82,10 +83,7 @@ echo "Build finished. Files in:"
 echo "  $BUILD_DIR/arm64-v8a/libdefradb.so"
 echo "  $BUILD_DIR/x86_64/libdefradb.so"
 
-
 # Copy and clean up headers
 cp "$BUILD_DIR/arm64-v8a/libdefradb.h" "$BUILD_DIR/"
 cp ./cbindings/defra_structs.h "$BUILD_DIR/"
 rm -f "$BUILD_DIR"/arm64-v8a/libdefradb.h "$BUILD_DIR"/x86_64/libdefradb.h
-
-echo "Build complete: build/libdefradb.so"

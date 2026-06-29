@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -96,14 +97,20 @@ type P2P interface {
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	identity    immutable.Option[acpIdentity.Identity]
-	nodeACP     acpDB.NACInfo
-	documentACP immutable.Option[dac.DocumentACP]
-	db          client.TxnStore
+	identity             immutable.Option[acpIdentity.Identity]
+	nodeACP              acpDB.NACInfo
+	documentACP          immutable.Option[dac.DocumentACP]
+	db                   client.TxnStore
+	collectionRepository *description.CollectionRepository
 
 	p2p       P2P
 	ctx       context.Context
 	lensStore lensStore.Store
+
+	// joinExpand holds transient state used only during plan expansion for
+	// join optimization and orphan wiring. These fields are set at the start of
+	// plan expansion and consumed during the recursive expandPlan walk.
+	joinExpand joinExpandState
 }
 
 func New(
@@ -114,15 +121,17 @@ func New(
 	db client.TxnStore,
 	p2p P2P,
 	lensStore lensStore.Store,
+	collectionRepository *description.CollectionRepository,
 ) *Planner {
 	return &Planner{
-		identity:    identity,
-		nodeACP:     nodeACP,
-		documentACP: documentACP,
-		db:          db,
-		p2p:         p2p,
-		lensStore:   lensStore,
-		ctx:         ctx,
+		identity:             identity,
+		nodeACP:              nodeACP,
+		documentACP:          documentACP,
+		db:                   db,
+		p2p:                  p2p,
+		lensStore:            lensStore,
+		ctx:                  ctx,
+		collectionRepository: collectionRepository,
 	}
 }
 
@@ -250,6 +259,16 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		p.expandLimitPlan(plan, parentPlan)
 	}
 
+	// Process deferred orphan wirings now that the full plan chain is built.
+	for _, req := range p.joinExpand.pendingOrphanWirings {
+		if req.usePointLookup {
+			wireSubQueryOrphanPointLookupPipeline(plan, req.join, req.direction)
+		} else {
+			wireSubQueryOrphanPipeline(plan, req.join, req.direction)
+		}
+	}
+	p.joinExpand.pendingOrphanWirings = nil
+
 	return nil
 }
 
@@ -286,13 +305,96 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 
 // expandTypeIndexJoinPlan does a plan graph expansion and other optimizations on typeIndexJoin.
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
+	// expandJoin expands the join and wraps it with orphanNode if @exhaustive is set
+	// and ordering by relation field is active.
+	// For top-level joins, orphanNode wraps the joinPlan directly.
+	// For nested joins with FK IS NULL path, orphanNode is wired into the primary side's
+	// selectTopNode so limitNode enforces limits naturally via the pipeline.
+	expandJoin := func(node planNode, join *invertibleTypeJoin) error {
+		plan.join = join
+		plan.joinKind = node.Kind()
+		orderDir, err := p.expandTypeJoin(join, parentPlan)
+		if err != nil {
+			return err
+		}
+		if orderDir.HasValue() && join.exhaustive {
+			if !p.joinExpand.inNestedJoin {
+				orphan := newOrphanNode(join)
+				if join.parentSide.isPrimary() {
+					// Primary parent: orphans self-identify via FK IS NULL.
+					// Use sequenceNode for clean pipeline composition.
+					if orderDir.Value() == mapper.ASC {
+						plan.joinPlan = newSequenceNode(orphan, node)
+					} else {
+						plan.joinPlan = newSequenceNode(node, orphan)
+					}
+				} else {
+					// Secondary parent: orphans identified via point lookups on child's FK index.
+					// Wrap join with orphanNode that handles ordering internally.
+					plan.joinPlan = newOrphanPointLookupNode(join, node, orderDir.Value())
+				}
+			} else if parentPlan != nil {
+				p.joinExpand.pendingOrphanWirings = append(p.joinExpand.pendingOrphanWirings, &orphanWiringRequest{
+					join:           join,
+					direction:      orderDir.Value(),
+					usePointLookup: !join.parentSide.isPrimary(),
+				})
+			}
+		}
+		return nil
+	}
+
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
+		return expandJoin(node, &node.invertibleTypeJoin)
 	case *typeJoinMany:
-		return p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
+		return expandJoin(node, &node.invertibleTypeJoin)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
+}
+
+// wireSubQueryOrphanPipeline inserts a sequenceNode with an orphanNode into the
+// selectTopNode for nested join orphan handling via FK IS NULL.
+// Called after the full plan chain (order, limit) is built.
+func wireSubQueryOrphanPipeline(plan *selectTopNode, join *invertibleTypeJoin, direction mapper.SortDirection) {
+	orphan := newOrphanNode(join)
+
+	var seq *sequenceNode
+	if direction == mapper.ASC {
+		if plan.limit != nil {
+			seq = newSequenceNode(orphan, plan.limit.plan)
+			plan.limit.plan = seq
+		} else {
+			seq = newSequenceNode(orphan, plan.planNode)
+			plan.planNode = seq
+		}
+	} else {
+		if plan.limit != nil {
+			seq = newSequenceNode(plan.limit.plan, orphan)
+			plan.limit.plan = seq
+		} else {
+			seq = newSequenceNode(plan.planNode, orphan)
+			plan.planNode = seq
+		}
+	}
+}
+
+// wireSubQueryOrphanPointLookupPipeline inserts an orphanWrapperNode
+// into the selectTopNode for nested join orphan handling via point lookups.
+// It iterates parents and checks each via point lookup on the child's FK index.
+// Called after the full plan chain (order, limit) is built.
+func wireSubQueryOrphanPointLookupPipeline(
+	plan *selectTopNode,
+	join *invertibleTypeJoin,
+	direction mapper.SortDirection,
+) {
+	if plan.limit != nil {
+		orphan := newOrphanPointLookupNode(join, plan.limit.plan, direction)
+		plan.limit.plan = orphan
+	} else {
+		orphan := newOrphanPointLookupNode(join, plan.planNode, direction)
+		plan.planNode = orphan
+	}
 }
 
 func findFilteredByRelationFields(
@@ -321,15 +423,14 @@ func findFilteredByRelationFields(
 // isOrderedByIndex checks if the plan is ordered by an index.
 func isOrderedByIndex(plan planNode) bool {
 	var scan *scanNode
+	if getNode[*pipeNode](plan) != nil {
+		return false
+	}
 	// the typeIndexJoin has 2 scan nodes for every side of the join
 	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
 	typeJoin := getNode[*typeIndexJoin](plan)
 	if typeJoin != nil {
-		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		} else if j, ok := typeJoin.joinPlan.(*typeJoinMany); ok {
-			scan = getNode[*scanNode](j.getFirstSide().plan)
-		}
+		scan = getNode[*scanNode](typeJoin.join.getFirstSide().plan)
 	} else {
 		scan = getNode[*scanNode](plan)
 	}
@@ -342,20 +443,36 @@ func isOrderedByIndex(plan planNode) bool {
 }
 
 // tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.
-func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
+// Returns the order direction if the join involves a relation ordering, otherwise returns None.
+func (p *Planner) tryOptimizeJoinDirection(
+	node *invertibleTypeJoin,
+	parentPlan *selectTopNode,
+) (immutable.Option[mapper.SortDirection], error) {
 	if !node.childSide.relFieldDef.HasValue() {
 		// If the relation is one sided we cannot invert the join, so return early
-		return nil
+		return immutable.None[mapper.SortDirection](), nil
 	}
 	optimized, err := p.tryOptimizeJoinDirectionByFilter(node, parentPlan)
 	if err != nil {
-		return err
+		return immutable.None[mapper.SortDirection](), err
 	}
 	if !optimized {
-		_, err = p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
+		return p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
 	}
 
-	return err
+	// Filter optimization already inverted the join. Check if there's also
+	// a relation ordering to get the direction for orphan node wiring.
+	if parentPlan.order != nil && len(parentPlan.order.ordering) > 0 {
+		name, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
+		if err != nil {
+			return immutable.None[mapper.SortDirection](), err
+		}
+		if name != "" {
+			return immutable.Some(parentPlan.order.ordering[0].Direction), nil
+		}
+	}
+
+	return immutable.None[mapper.SortDirection](), nil
 }
 
 // tryOptimizeJoinDirectionByFilter tries to optimize the join direction by using a filter on the child side.
@@ -372,10 +489,9 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 	)
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
 
 	for subFieldName, subFieldInd := range filteredSubFields {
-		indexes := desc.GetIndexesOnField(subFieldName)
+		indexes := queryableIndexesOnField(slct.collection, subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
 			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
@@ -385,10 +501,7 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 			fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			err := node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
-			if err != nil {
-				return false, err
-			}
+			node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
 			// If there's a sub-filter on the child side, remove the related field condition from
 			// the parent filter. This prevents re-evaluation at the parent level which would fail
 			// when the sub-filter modifies the child docs (e.g., filtering by model="Galaxy" when
@@ -427,30 +540,32 @@ func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, rel
 
 // tryOptimizeJoinDirectionByOrder tries to optimize the join direction by using an order on the child side.
 // If the child side has an index on a field that is ordered on, we can invert the join direction.
-// Returns true if the join direction was optimized, false otherwise.
-func (p *Planner) tryOptimizeJoinDirectionByOrder(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+// Returns the order direction if optimized, otherwise returns None.
+func (p *Planner) tryOptimizeJoinDirectionByOrder(
+	node *invertibleTypeJoin,
+	parentPlan *selectTopNode,
+) (immutable.Option[mapper.SortDirection], error) {
 	if parentPlan.order == nil || len(parentPlan.order.ordering) == 0 {
-		return false, nil
+		return immutable.None[mapper.SortDirection](), nil
 	}
 
 	childFieldName, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
 	if err != nil {
-		return false, err
+		return immutable.None[mapper.SortDirection](), err
 	}
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
-	indexes := desc.GetIndexesOnField(childFieldName)
+	indexes := queryableIndexesOnField(slct.collection, childFieldName)
 
 	if len(indexes) == 0 {
-		return false, nil
+		return immutable.None[mapper.SortDirection](), nil
 	}
 
 	ordering := parentPlan.order.ordering[0]
 	ordering.FieldIndexes = ordering.FieldIndexes[1:]
 
-	err = node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
-	return err == nil, err
+	node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
+	return immutable.Some(ordering.Direction), nil
 }
 
 // findOrderedByRelationFields finds the field that is ordered on in the order condition.
@@ -476,15 +591,27 @@ func findOrderedByRelationFields(
 }
 
 // expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
-func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	err := p.tryOptimizeJoinDirection(node, parentPlan)
+// Returns the order direction if the join was inverted for ordering, otherwise returns None.
+func (p *Planner) expandTypeJoin(
+	node *invertibleTypeJoin,
+	parentPlan *selectTopNode,
+) (immutable.Option[mapper.SortDirection], error) {
+	orderDir, err := p.tryOptimizeJoinDirection(node, parentPlan)
 	if err != nil {
-		return err
+		return immutable.None[mapper.SortDirection](), err
 	}
 
 	ensureOrderNodeForRelationIndex(node)
 
-	return p.expandPlan(node.childSide.plan, parentPlan)
+	// Mark that we're now in a nested join context.
+	// Any joins inside the child plan should not add orphanNode because they
+	// will be iterated via retrievePrimaryDocs which handles orphans correctly.
+	oldInNestedJoin := p.joinExpand.inNestedJoin
+	p.joinExpand.inNestedJoin = true
+	err = p.expandPlan(node.childSide.plan, parentPlan)
+	p.joinExpand.inNestedJoin = oldInNestedJoin
+
+	return orderDir, err
 }
 
 // ensureOrderNodeForRelationIndex clears the child's index if a relation ID index exists,
@@ -540,6 +667,20 @@ func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
 		newPipeNode := newPipeNode(sourceNode.DocumentMap())
 		pipe = &newPipeNode
 		pipe.source = sourceNode
+	}
+
+	// Move parent filter into pipe source so both parent and child sources see
+	// filtered data. Without this, only parentSource filters while childSource
+	// creates groups from all docs.
+	if topNodeSelect.selectNode.filter != nil {
+		filterSelect := &selectNode{
+			planner:   p,
+			source:    pipe.source,
+			filter:    topNodeSelect.selectNode.filter,
+			docMapper: docMapper{pipe.source.DocumentMap()},
+		}
+		pipe.source = filterSelect
+		topNodeSelect.selectNode.filter = nil
 	}
 
 	if len(topNodeSelect.group.childSelects) == 0 {
@@ -618,6 +759,8 @@ func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
 		node.replaceRoot(replace)
 	case *typeJoinMany:
 		node.replaceRoot(replace)
+	case *multiScanNode:
+		node.planNode = replace
 	case *pipeNode:
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here
@@ -739,7 +882,7 @@ func (p *Planner) RunRequest(
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
 func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error) {
-	s, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, selection)
+	s, err := mapper.ToSelect(p.ctx, p.db, p.collectionRepository, mapper.ObjectSelection, selection)
 	if err != nil {
 		return nil, err
 	}
@@ -771,10 +914,11 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 	} else {
 		return nil, ErrMissingQueryOrMutation
 	}
-	m, err := mapper.ToOperation(p.ctx, p.db, operation)
+	m, err := mapper.ToOperation(p.ctx, p.db, p.collectionRepository, operation)
 	if err != nil {
 		return nil, err
 	}
+	p.joinExpand.exhaustive = m.Exhaustive
 	planNode, err := p.Operation(m)
 	if err != nil {
 		return nil, err

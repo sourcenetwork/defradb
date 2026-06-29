@@ -14,6 +14,8 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/cli/config"
 )
 
 func MakeKeyringCommand(ctx context.Context) *cobra.Command {
@@ -24,18 +26,41 @@ func MakeKeyringCommand(ctx context.Context) *cobra.Command {
 Generate, add, get, and list private keys.
 
 The following keys are loaded from the keyring on start:
-	peer-key: Ed25519 private key (required)
-	encryption-key: AES-128, AES-192, or AES-256 key (optional)
 
-To randomly generate the required keys, run the following command:
-	defradb keyring new
-
-To import externally generated keys, run the following command:
-	defradb keyring add <name> <private-key-hex>
-
-To learn more about the available options:
-	defradb keyring --help
+- peer-key: Ed25519 key (required)
+- encryption-key: AES-128, AES-192, or AES-256 key (optional)
 `,
 	}
+
+	EmbedCLIExample(ctx, cmd, "Randomly generate the required keys",
+		"defradb keyring new")
+	EmbedCLIExample(ctx, cmd, "Import externally generated keys",
+		"defradb keyring add <name> <private-key-hex>")
+
+	setKeyringFlags(cmd)
+
 	return cmd
+}
+
+func setKeyringFlags(cmd *cobra.Command) {
+	cfg := config.DefaultConfig()
+	cmd.PersistentFlags().String(
+		"keyring-namespace",
+		cfg.GetString(config.ConfigFlags["keyring-namespace"]),
+		"Service name to use when using the system backend",
+	)
+	cmd.PersistentFlags().String(
+		"keyring-backend",
+		cfg.GetString(config.ConfigFlags["keyring-backend"]),
+		"Keyring backend to use. Options are file or system",
+	)
+	cmd.PersistentFlags().String(
+		"keyring-path",
+		cfg.GetString(config.ConfigFlags["keyring-path"]),
+		"Path (relative to DefraDB root directory) to store encrypted keys when using the file backend",
+	)
+	cmd.PersistentFlags().String(
+		"secret-file",
+		cfg.GetString(config.ConfigFlags["secret-file"]),
+		"Path to the file containing secrets")
 }

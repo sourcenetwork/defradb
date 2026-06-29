@@ -25,7 +25,7 @@ func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 				SDL: `
 					type Users {
 						name: String 
-						score: Int @default(int: 100)
+						score: Int @default(value: 100)
 					}
 				`,
 			},
@@ -35,7 +35,7 @@ func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 					"score": 0
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,

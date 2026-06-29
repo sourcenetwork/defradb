@@ -44,6 +44,7 @@ const (
 	typeJoinManyProp  = "typeJoinMany"
 	typeJoinOneProp   = "typeJoinOne"
 	orphanNodeProp    = "orphanNode"
+	sequenceNodeProp  = "sequenceNode"
 	rootProp          = "root"
 	subTypeProp       = "subType"
 )
@@ -79,7 +80,11 @@ type ExplainAsserter struct {
 //	testUtils.NewExplainAsserter("subType").WithIndexFetches(4)
 //	testUtils.NewExplainAsserter("subType", "subType").WithIndexFetches(2) // nested
 //
-// Path elements: "root" for parent side, "subType" for child side.
+// For orphan node metrics (@exhaustive queries):
+//
+//	testUtils.NewExplainAsserter("orphanNode").WithDocFetches(5).WithIndexFetches(1)
+//
+// Path elements: "root" for parent side, "subType" for child side, "orphanNode" for orphan metrics.
 func NewExplainAsserter(path ...string) *ExplainAsserter {
 	return &ExplainAsserter{path: path}
 }
@@ -169,9 +174,9 @@ func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
 			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
 	}
 
-	scanNode := a.findScanNode(t, selectNode)
+	metricsNode := a.findMetricsNode(t, selectNode)
 	a.assertMetrics(t, func(prop string) uint64 {
-		return getMetric(scanNode, prop)
+		return getMetric(metricsNode, prop)
 	}, a.path)
 
 	if a.nextLevel != nil {
@@ -180,9 +185,9 @@ func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
 }
 
 func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
-	scanNode := a.findScanNode(t, selectNode)
+	metricsNode := a.findMetricsNode(t, selectNode)
 	a.assertMetrics(t, func(prop string) uint64 {
-		return getMetric(scanNode, prop)
+		return getMetric(metricsNode, prop)
 	}, a.path)
 
 	if a.nextLevel != nil {
@@ -190,7 +195,7 @@ func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
 	}
 }
 
-func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap {
+func (a *ExplainAsserter) findMetricsNode(t testing.TB, selectNode dataMap) dataMap {
 	if scanNode, has := selectNode[scanNodeProp].(dataMap); has {
 		if len(a.path) > 0 {
 			require.Fail(t, "Path specified but no typeIndexJoin found")
@@ -209,6 +214,17 @@ func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap
 		return nil
 	}
 
+	if a.path[0] == orphanNodeProp {
+		orphanNode := findOrphanNodeInJoin(indexJoin)
+		require.NotNil(t, orphanNode, "Expected orphanNode in typeIndexJoin")
+		return orphanNode
+	}
+
+	// sequenceNode wraps [joinNode, orphanNode] or [orphanNode, joinNode] for @exhaustive.
+	// Find the join child (non-orphan) in the array.
+	indexJoin = unwrapSequenceNode(indexJoin)
+
+	// orphanNode (wrapper mode) wraps the join for secondary parent @exhaustive queries.
 	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
 		indexJoin = orphan
 	}
@@ -328,6 +344,56 @@ func getJoinNode(node dataMap) dataMap {
 	}
 	if jo, has := node[typeJoinOneProp].(dataMap); has {
 		return jo
+	}
+	return node
+}
+
+// findOrphanNodeInJoin locates the orphanNode metrics in the typeIndexJoin.
+// Handles both wrapper mode (orphanNode directly in the join) and sequenceNode mode
+// (orphanNode as a child element in the sequenceNode array).
+func findOrphanNodeInJoin(indexJoin dataMap) dataMap {
+	if orphan, has := indexJoin[orphanNodeProp].(dataMap); has {
+		return orphan
+	}
+	if seqArr, ok := indexJoin[sequenceNodeProp].([]map[string]any); ok {
+		for _, child := range seqArr {
+			if orphan, has := child[orphanNodeProp].(dataMap); has {
+				return orphan
+			}
+		}
+	}
+	if seqArr, ok := indexJoin[sequenceNodeProp].([]any); ok {
+		for _, child := range seqArr {
+			if childMap, ok := child.(dataMap); ok {
+				if orphan, has := childMap[orphanNodeProp].(dataMap); has {
+					return orphan
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// unwrapSequenceNode finds the join child (non-orphan) inside a sequenceNode array.
+// Returns the original node if no sequenceNode is present.
+func unwrapSequenceNode(node dataMap) dataMap {
+	// Go client: []map[string]any
+	if seqArr, ok := node[sequenceNodeProp].([]map[string]any); ok {
+		for _, child := range seqArr {
+			if _, isOrphan := child[orphanNodeProp]; !isOrphan {
+				return child
+			}
+		}
+	}
+	// HTTP/CLI/JS clients: []any (JSON deserialization)
+	if seqArr, ok := node[sequenceNodeProp].([]any); ok {
+		for _, child := range seqArr {
+			if childMap, ok := child.(dataMap); ok {
+				if _, isOrphan := childMap[orphanNodeProp]; !isOrphan {
+					return childMap
+				}
+			}
+		}
 	}
 	return node
 }

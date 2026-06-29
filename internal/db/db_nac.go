@@ -56,6 +56,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "NAC state purged")
 	return nil
 }
 
@@ -90,6 +91,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[option
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACEnabled
+	log.InfoContext(ctx, "Re-enabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 
@@ -122,6 +124,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Enumerable[options
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACDisabledTemporarily
+	log.InfoContext(ctx, "Disabling NAC")
 	return db.saveNodeACPDesc(ctx)
 }
 
@@ -322,7 +325,7 @@ func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 	isNACEnabledInStartCmd := db.nodeACP.EnabledInConfig
 	wasSetupBefore, err := txn.Systemstore().Has(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrCheckNACState(err)
 	}
 
 	iden := iIdentity.FromContext(ctx)
@@ -399,6 +402,7 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	err = db.nodeACP.NodeACP.ResetState(ctx)
@@ -408,12 +412,12 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 
 	err = txn.Systemstore().Delete(ctx, keys.NewNodeACPKey().Bytes())
 	if err != nil {
-		return err
+		return NewErrDeleteNACState(err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	// Update state, only when commit is successful.
@@ -426,21 +430,22 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	defer txn.Discard()
 
 	nodeDescBytes, err := json.Marshal(db.nodeACP.NodeACPDesc)
 	if err != nil {
-		return err
+		return NewErrMarshalNACState(err)
 	}
 
 	err = txn.Systemstore().Set(ctx, keys.NewNodeACPKey().Bytes(), nodeDescBytes)
 	if err != nil {
-		return err
+		return NewErrStoreNACState(err)
 	}
 
 	err = txn.Commit()
 	if err != nil {
-		return err
+		return NewErrCommitNACTransaction(err)
 	}
 
 	return nil

@@ -21,7 +21,7 @@ import (
 
 func MakeCollectionSetActiveCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "set-active [versionID]",
+		Use:   "set-active <versionID>",
 		Short: "Set the active collection version",
 		Long: `Activates all collection versions with the given version id, and deactivates all
 other versions of that collection.`,

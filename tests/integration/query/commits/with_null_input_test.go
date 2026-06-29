@@ -38,16 +38,18 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -75,16 +77,18 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -139,16 +143,18 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -176,16 +182,18 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -213,16 +221,18 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -250,16 +260,18 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -287,16 +299,18 @@ func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -13,23 +13,27 @@ package http
 import (
 	"context"
 	"net/http"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-// IsDevMode is a global variable for the development mode flag
-// This is checked by the http/handler_extras.go/Purge function to determine which response to send
-var IsDevMode bool = false
+const (
+	// VersionV0 is the identifier for the v0 API version.
+	//
+	// This is left in for backwards compatibility as we
+	// transition to v1 and should be removed in v2.
+	VersionV0 string = "v0"
+	// Version is the identifier for the v1 API version.
+	Version string = "v1"
+)
 
-// Version is the identifier for the current API version.
-var Version string = "v0"
-
-// playgroundHandler is set when building with the playground build tag
-var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
+// explorerHandler is set when building with the explorer build tag
+var explorerHandler http.Handler = http.HandlerFunc(http.NotFound)
 
 func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
@@ -76,23 +80,49 @@ type DB interface {
 }
 
 type Handler struct {
-	mux *chi.Mux
-	txs *sync.Map
+	mux       *chi.Mux
+	txs       *txnCache
+	ctxCancel context.CancelFunc
 }
 
-func NewHandler(db DB) (*Handler, error) {
+func NewHandler(db DB, nodeOpts *options.NodeOptions) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
 	}
-	txs := &sync.Map{}
+	var httpOpts *options.NodeHTTPOptions
+	if nodeOpts != nil {
+		httpOpts = &nodeOpts.HTTP
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	txs, err := newTxnCache(ctx, httpOpts)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
 	mux := chi.NewMux()
-	mux.Route("/api/"+Version, func(r chi.Router) {
+	// Normalize trailing slashes so that, for example, `/collections` and
+	// `/collections/` resolve to the same route instead of the latter missing
+	// chi's router and returning a bare 404. StripSlashes rewrites the routing
+	// path in place (no redirect), preserving the request method and body.
+	// It is registered before any routes so every HTTP route on this handler
+	// is normalized consistently.
+	mux.Use(middleware.StripSlashes)
+	var allowedOrigins []string
+	if nodeOpts != nil {
+		allowedOrigins = nodeOpts.HTTP.AllowedOrigins
+	}
+	mux.Route("/api", func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs),
+			ApiMiddleware(db, txs, nodeOpts),
 			TransactionMiddleware,
-			AuthMiddleware,
+			AuthMiddleware(allowedOrigins),
 		)
+		// This is left in for backwards compatibility as we
+		// transition to v1 and should be removed in v2.
+		r.Mount("/"+VersionV0, router)
+		r.Mount("/"+Version, router)
 		r.Handle("/*", router)
 	})
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
@@ -101,20 +131,27 @@ func NewHandler(db DB) (*Handler, error) {
 	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, "Healthy")
 	})
-	mux.Handle("/*", playgroundHandler)
+	mux.Handle("/*", explorerHandler)
 	return &Handler{
-		mux: mux,
-		txs: txs,
+		mux:       mux,
+		txs:       txs,
+		ctxCancel: cancel,
 	}, nil
 }
 
 func (h *Handler) Transaction(id uint64) (client.Txn, error) {
-	tx, ok := h.txs.Load(id)
+	tx, ok := h.txs.Get(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}
 
-	return mustGetDataStoreTxn(tx), nil
+	return tx, nil
+}
+
+// Close stops background handler resources.
+func (h *Handler) Close() {
+	h.ctxCancel()
+	h.txs.Close()
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

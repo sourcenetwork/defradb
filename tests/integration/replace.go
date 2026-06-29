@@ -12,10 +12,15 @@
 package tests
 
 import (
+	"bytes"
 	"maps"
 	"strconv"
 	"strings"
+	"text/template"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -51,6 +56,67 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 		}
 		return res
 	},
+	"DocID": func(s *state.State, _ int) map[string]string {
+		res := map[string]string{}
+		s.DocIDsLock.RLock()
+		defer s.DocIDsLock.RUnlock()
+		for colIndex, docIndexes := range s.DocIDs {
+			for docIndex, docID := range docIndexes {
+				res["DocID"+strconv.Itoa(colIndex)+"_"+strconv.Itoa(docIndex)] = docID.String()
+			}
+		}
+		return res
+	},
+	"FieldCID": func(s *state.State, nodeID int) map[string]string {
+		res := map[string]string{}
+		if nodeID >= len(s.Nodes) {
+			return res
+		}
+
+		node := s.Nodes[nodeID]
+		node.CompositesLock.RLock()
+		defer node.CompositesLock.RUnlock()
+
+		s.DocIDsLock.RLock()
+		defer s.DocIDsLock.RUnlock()
+		for colIndex, docIndexes := range s.DocIDs {
+			for docIndex, docID := range docIndexes {
+				fieldCIDsByName := node.FieldCIDs[docID.String()]
+				for fieldName, fieldCIDs := range fieldCIDsByName {
+					for cidIndex, cid := range fieldCIDs {
+						res["FieldCID"+strconv.Itoa(colIndex)+"_"+
+							strconv.Itoa(docIndex)+"_"+fieldName+"_"+
+							strconv.Itoa(cidIndex)] = cid.String()
+					}
+				}
+			}
+		}
+		return res
+	},
+	"CollectionCID": func(s *state.State, nodeID int) map[string]string {
+		res := map[string]string{}
+		if nodeID >= len(s.Nodes) {
+			return res
+		}
+
+		node := s.Nodes[nodeID]
+		node.CompositesLock.RLock()
+		defer node.CompositesLock.RUnlock()
+
+		for colIndex, collection := range node.Collections {
+			if collection == nil {
+				continue
+			}
+			cids := node.Composites[collection.CollectionID()]
+			for cidIndex, cid := range cids {
+				res["CollectionCID"+strconv.Itoa(colIndex)+"_"+strconv.Itoa(cidIndex)] = cid.String()
+			}
+			if len(cids) > 0 {
+				res["CollectionCID"+strconv.Itoa(colIndex)] = cids[len(cids)-1].String()
+			}
+		}
+		return res
+	},
 	"LensID": func(s *state.State, _ int) map[string]string {
 		res := map[string]string{}
 		for i, lensID := range s.LensIDs {
@@ -68,6 +134,27 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	},
 }
 
+// replace resolves template placeholders like {{.CollectionVersionID0}} in the input string.
+func replace(s *state.State, nodeId int, input string) string {
+	if !strings.Contains(input, "{{") {
+		return input
+	}
+
+	templateData := map[string]string{}
+	for _, datasetGenerator := range templateDataGenerators {
+		maps.Copy(templateData, datasetGenerator(s, nodeId))
+	}
+
+	tmpl := template.Must(template.New("").Parse(input))
+	var buf bytes.Buffer
+	err := tmpl.Execute(&buf, templateData)
+	if err != nil {
+		require.Fail(s.T, errors.WithStack(err).Error())
+	}
+
+	return buf.String()
+}
+
 func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string {
 	templateData := map[string]string{}
 	for _, datasetGenerator := range templateDataGenerators {
@@ -78,7 +165,7 @@ func replaceMap(s *state.State, nodeId int, inputSet []string) map[string]string
 
 	result := make(map[string]string, len(inputSet))
 	for _, input := range inputSet {
-		// WARNING - This does not respect the full Go-replace syntax, at the momement it is a
+		// WARNING - This does not respect the full Go-replace syntax, at the moment it is a
 		// very simple/lightweight key-lookup.  We may want to change this in the future.
 
 		inputID := strings.TrimPrefix(input, "{{.")

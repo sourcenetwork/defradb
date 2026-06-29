@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -27,6 +28,8 @@ import (
 //
 // It does not filter the data in any way.
 type documentFetcher struct {
+	ctx context.Context
+
 	// The set of fields to fetch, mapped by field ID.
 	fieldsByID map[uint32]client.CollectionFieldDescription
 	// The status to assign fetched documents.
@@ -78,10 +81,11 @@ func newDocumentFetcher(
 
 	iter, err := txn.Datastore().Iterator(ctx, iterOptions)
 	if err != nil {
-		return nil, err
+		return nil, NewErrCreateDocIterator(err)
 	}
 
 	return &documentFetcher{
+		ctx:        ctx,
 		fieldsByID: fieldsByID,
 		iter:       iter,
 		status:     status,
@@ -96,33 +100,49 @@ type keyValue struct {
 	Value []byte
 }
 
+// DecodeDataStoreKey also accepts partial prefix keys; they are not document rows.
+func isDocumentRowKey(key keys.DataStoreKey) bool {
+	return key.CollectionShortID != 0 && key.DocShortID != 0
+}
+
 func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	if f.nextKV.HasValue() {
-		docID := f.nextKV.Value().Key.DocID
-		f.currentKV = f.nextKV.Value()
-
+		kv := f.nextKV.Value()
 		f.nextKV = immutable.None[keyValue]()
-		f.execInfo.DocsFetched++
 
-		return immutable.Some(docID), nil
+		if isDocumentRowKey(kv.Key) {
+			f.currentKV = kv
+			f.execInfo.DocsFetched++
+			docID, _, err := id.GetDocID(f.ctx, kv.Key.DocShortID)
+			if err != nil {
+				return immutable.None[string](), err
+			}
+			return immutable.Some(docID), nil
+		}
 	}
 
 	for {
 		hasValue, err := f.iter.Next()
-		if err != nil || !hasValue {
-			return immutable.None[string](), err
+		if err != nil {
+			return immutable.None[string](), NewErrIterateDocuments(err)
+		}
+		if !hasValue {
+			return immutable.None[string](), nil
 		}
 
 		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
 		if err != nil {
-			return immutable.None[string](), err
+			return immutable.None[string](), NewErrParseDocumentKey(err)
+		}
+		if !isDocumentRowKey(dsKey) {
+			continue
 		}
 
 		var value []byte
 		if !f.keysOnly {
 			value, err = f.iter.Value()
 			if err != nil {
-				return immutable.None[string](), err
+				return immutable.None[string](), NewErrGetDocumentValue(err)
 			}
 		}
 
@@ -132,23 +152,35 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 			Value: value,
 		}
 
-		if dsKey.DocID != previousKV.Key.DocID {
+		if dsKey.DocShortID != previousKV.Key.DocShortID {
 			break
 		}
 	}
 
 	f.execInfo.DocsFetched++
 
-	return immutable.Some(f.currentKV.Key.DocID), nil
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
+	if err != nil {
+		return immutable.None[string](), err
+	}
+	return immutable.Some(docID), nil
 }
 
 func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
+	if !isDocumentRowKey(f.currentKV.Key) {
+		return immutable.None[EncodedDocument](), nil
+	}
+
 	doc := encodedDocument{}
-	doc.id = []byte(f.currentKV.Key.DocID)
+	docID, _, err := id.GetDocID(f.ctx, f.currentKV.Key.DocShortID)
+	if err != nil {
+		return immutable.None[EncodedDocument](), err
+	}
+	doc.id = []byte(docID)
 	doc.status = f.status
 	doc.properties = map[client.CollectionFieldDescription]*encProperty{}
 
-	err := f.appendKV(&doc, f.currentKV)
+	err = f.appendKV(&doc, f.currentKV)
 	if err != nil {
 		return immutable.None[EncodedDocument](), err
 	}
@@ -156,7 +188,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 	for {
 		hasValue, err := f.iter.Next()
 		if err != nil {
-			return immutable.None[EncodedDocument](), err
+			return immutable.None[EncodedDocument](), NewErrIterateDocFields(err)
 		}
 		if !hasValue {
 			break
@@ -164,14 +196,17 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 
 		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
 		if err != nil {
-			return immutable.None[EncodedDocument](), err
+			return immutable.None[EncodedDocument](), NewErrParseFieldKey(err)
+		}
+		if !isDocumentRowKey(dsKey) {
+			continue
 		}
 
 		var value []byte
 		if !f.keysOnly {
 			value, err = f.iter.Value()
 			if err != nil {
-				return immutable.None[EncodedDocument](), err
+				return immutable.None[EncodedDocument](), NewErrGetFieldValue(err)
 			}
 		}
 
@@ -180,7 +215,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 			Value: value,
 		}
 
-		if dsKey.DocID != f.currentKV.Key.DocID {
+		if dsKey.DocShortID != f.currentKV.Key.DocShortID {
 			f.nextKV = immutable.Some(kv)
 			break
 		}
@@ -200,8 +235,8 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 		return nil
 	}
 
-	// we have to skip the object marker
-	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) {
+	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) ||
+		bytes.Equal(kv.Value, []byte{base.DeletedObjectMarker}) {
 		return nil
 	}
 

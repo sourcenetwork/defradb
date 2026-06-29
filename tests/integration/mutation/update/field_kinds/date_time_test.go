@@ -35,7 +35,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"created_at": "2021-07-23T02:22:22-05:00"
 				}`,
@@ -127,7 +127,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"created_at": null
 				}`,

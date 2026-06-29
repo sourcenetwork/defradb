@@ -12,11 +12,9 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -24,7 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -45,12 +43,15 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.TxnStore, txs *sync.Map) func(http.Handler) http.Handler {
+func ApiMiddleware(db client.TxnStore, txs *txnCache, nodeOpts *options.NodeOptions) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
 			ctx = context.WithValue(ctx, txsContextKey, txs)
+			if nodeOpts != nil {
+				ctx = context.WithValue(ctx, nodeOptsContextKey, nodeOpts)
+			}
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}
@@ -59,7 +60,7 @@ func ApiMiddleware(db client.TxnStore, txs *sync.Map) func(http.Handler) http.Ha
 // TransactionMiddleware sets the transaction context for the current request.
 func TransactionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		txs := mustGetContextSyncMap(req)
+		txs := mustGetContextTxnCache(req)
 
 		txValue := req.Header.Get(txHeaderName)
 		if txValue == "" {
@@ -68,18 +69,23 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		id, err := strconv.ParseUint(txValue, 10, 64)
 		if err != nil {
-			next.ServeHTTP(rw, req)
+			responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 			return
 		}
-		tx, ok := txs.Load(id)
+		lease, ok := txs.Acquire(id)
 		if !ok {
-			next.ServeHTTP(rw, req)
+			err := client.ErrTransactionNotFound
+			if strings.Contains(req.URL.Path, "/graphql") {
+				responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{err})
+			} else {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			}
 			return
 		}
+		defer lease.Release()
+
 		ctx := req.Context()
-		if val, ok := tx.(client.Txn); ok {
-			ctx = db.InitContext(ctx, val)
-		}
+		ctx = db.InitContext(ctx, lease.Value().txn)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
@@ -87,18 +93,18 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 // CollectionMiddleware sets the collection context for the current request.
 func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		db := mustGetContextClientDB(req)
+		var store client.Store
+		txn, ok := datastore.CtxTryGetClientTxn(req.Context())
+		if ok {
+			store = txn
+		} else {
+			store = mustGetContextClientDB(req)
+		}
 
 		opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(req.Context()))
-		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
+		col, err := store.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
-			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-				rw.WriteHeader(http.StatusUnauthorized)
-				_, _ = fmt.Fprintln(rw, err.Error())
-				return
-			}
-			rw.WriteHeader(http.StatusNotFound)
-			_, _ = fmt.Fprintln(rw, err.Error())
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
 

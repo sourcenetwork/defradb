@@ -93,7 +93,7 @@ func TestMutationAdd(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"age":    int64(27),
 						},
@@ -161,7 +161,7 @@ func TestMutationAdd_GivenEmptyInput(t *testing.T) {
 				Results: map[string]any{
 					"add_Users": []map[string]any{
 						{
-							"_docID": "bae-d97a4927-9fad-53a0-bda2-8e9d8dd33551",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},

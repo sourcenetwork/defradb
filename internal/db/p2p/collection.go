@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -36,12 +37,15 @@ func (p *P2P) AddP2PCollections(
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
+	// Use SetGetInactive(true) so that collections synced from peers but not yet activated
+	// can also be subscribed to.
+	seen := map[string]struct{}{}
 	storeCollections := []client.Collection{}
 	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col).SetGetInactive(true),
 		)
 		if err != nil {
 			return err
@@ -49,7 +53,13 @@ func (p *P2P) AddP2PCollections(
 		if len(storeCol) == 0 {
 			return client.NewErrCollectionNotFoundForName(col)
 		}
-		storeCollections = append(storeCollections, storeCol...)
+		// De-duplicate collections by collection ID
+		for _, c := range storeCol {
+			if _, ok := seen[c.CollectionID()]; !ok {
+				seen[c.CollectionID()] = struct{}{}
+				storeCollections = append(storeCollections, c)
+			}
+		}
 	}
 
 	// Ensure we can add all the collections to the store on the transaction
@@ -58,7 +68,7 @@ func (p *P2P) AddP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
-			return err
+			return NewErrStoreP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -85,12 +95,15 @@ func (p *P2P) DeleteP2PCollections(
 	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// first let's make sure the collections actually exists
+	// Use SetGetInactive(true) so that collections synced from peers but not yet activated
+	// can also be unsubscribed from.
+	seen := map[string]struct{}{}
 	storeCollections := []client.Collection{}
 	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col).SetGetInactive(true),
 		)
 		if err != nil {
 			return err
@@ -98,7 +111,13 @@ func (p *P2P) DeleteP2PCollections(
 		if len(storeCol) == 0 {
 			return client.NewErrCollectionNotFoundForName(col)
 		}
-		storeCollections = append(storeCollections, storeCol...)
+		// De-duplicate collections by collection ID
+		for _, c := range storeCol {
+			if _, ok := seen[c.CollectionID()]; !ok {
+				seen[c.CollectionID()] = struct{}{}
+				storeCollections = append(storeCollections, c)
+			}
+		}
 	}
 
 	// Ensure we can remove all the collections to the store on the transaction
@@ -107,7 +126,7 @@ func (p *P2P) DeleteP2PCollections(
 		key := keys.NewP2PCollectionKey(col.CollectionID())
 		err := txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
-			return err
+			return NewErrDeleteP2PCollection(err, col.CollectionID())
 		}
 	}
 
@@ -137,7 +156,7 @@ func (p *P2P) ListP2PCollections(
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrListP2PCollections(err)
 	}
 
 	collectionNames := []string{}
@@ -158,7 +177,7 @@ func (p *P2P) ListP2PCollections(
 
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.WithIdentity(options.GetCollections(), ident).SetCollectionID(key.CollectionID),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionID(key.CollectionID).SetGetInactive(true),
 		)
 		if err != nil {
 			return nil, err
@@ -181,7 +200,7 @@ func (p *P2P) getAllP2PCollectionIDs(ctx context.Context) ([]string, error) {
 		KeysOnly: true,
 	})
 	if err != nil {
-		return nil, err
+		return nil, NewErrGetAllP2PCollections(err)
 	}
 
 	collectionIDs := []string{}
@@ -216,5 +235,6 @@ func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
 		}
 	}
 
+	log.InfoContext(ctx, "Loaded P2P collections", corelog.Int("Count", len(collectionIDs)))
 	return nil
 }

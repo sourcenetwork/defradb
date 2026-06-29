@@ -23,7 +23,7 @@ import (
 )
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
+	bookID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -46,7 +46,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -64,7 +64,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 }
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_CollectionApi(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -91,7 +91,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -109,7 +109,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 }
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -135,7 +135,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -171,7 +171,7 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(

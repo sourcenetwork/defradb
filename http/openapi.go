@@ -11,6 +11,8 @@
 package http
 
 import (
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 
@@ -27,6 +29,7 @@ var openApiSchemas = map[string]any{
 	"get_peer_info":                            &client.PeerInfo{},
 	"request_graphql":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
+	"action_execution":                         &client.ActionExecution{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},
 	"new_index":                                &client.NewIndexRequest{},
@@ -100,9 +103,24 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 	}
 
 	// add authentication schemes
+	bearerScheme := openapi3.NewJWTSecurityScheme()
+	bearerScheme.Description = "A JWT signed client-side with an identity's private key " +
+		"(`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\n" +
+		"Required payload claims:\n" +
+		"- `sub`: the identity's public key, in hex format.\n" +
+		"- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n" +
+		"- `exp`: token expiration UNIX timestamp.\n" +
+		"- `nbf`: not-before UNIX timestamp.\n" +
+		"- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\n" +
+		"For SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and " +
+		"`authorized_account` (the SourceHub address).\n\n" +
+		"Generate an identity with `defradb identity new`. Authentication is optional unless " +
+		"Document Access Control or Node Access Control is enabled, in which case requests on " +
+		"restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\n" +
+		"See https://docs.source.network/defradb/security/authentication for details."
 	securitySchemes := openapi3.SecuritySchemes{
 		"bearerToken": &openapi3.SecuritySchemeRef{
-			Value: openapi3.NewJWTSecurityScheme(),
+			Value: bearerScheme,
 		},
 	}
 
@@ -110,13 +128,21 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
 			Title:   "DefraDB API",
-			Version: "0",
+			Version: strings.TrimPrefix(Version, "v"),
 		},
 		Paths: openapi3.NewPaths(),
 		Servers: openapi3.Servers{
 			&openapi3.Server{
-				Description: "Local DefraDB instance",
-				URL:         "/api/v0",
+				Description: "DefraDB latest version",
+				URL:         "/api",
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 0",
+				URL:         "/api/" + VersionV0,
+			},
+			&openapi3.Server{
+				Description: "DefraDB version 1",
+				URL:         "/api/" + Version,
 			},
 		},
 		ExternalDocs: &openapi3.ExternalDocs{
@@ -128,6 +154,10 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			Responses:       responses,
 			Parameters:      parameters,
 			SecuritySchemes: securitySchemes,
+		},
+		Security: openapi3.SecurityRequirements{
+			openapi3.NewSecurityRequirement(),
+			openapi3.NewSecurityRequirement().Authenticate("bearerToken"),
 		},
 		Tags: openapi3.Tags{
 			&openapi3.Tag{

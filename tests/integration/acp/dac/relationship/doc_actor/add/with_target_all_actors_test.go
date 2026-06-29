@@ -125,7 +125,7 @@ resources:
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.UpdateDoc{ // Since it can't read, it can't update either.
+			&action.UpdateDoc{ // Since it can't read, it can't update either.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -171,7 +171,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -195,7 +195,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -203,7 +203,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // But doesn't mean they can update.
+			&action.UpdateDoc{ // But doesn't mean they can update.
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -338,7 +338,7 @@ resources:
 				ExpectedError: "document not found or not authorized to access",
 			},
 
-			testUtils.UpdateDoc{ // Since can't read without identity, can't update either.
+			&action.UpdateDoc{ // Since can't read without identity, can't update either.
 				CollectionID: 0,
 
 				Identity: testUtils.NoIdentity(),
@@ -384,7 +384,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -392,7 +392,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{ // But doesn't mean they can update.
+			&action.UpdateDoc{ // But doesn't mean they can update.
 				CollectionID: 0,
 
 				Identity: testUtils.NoIdentity(),

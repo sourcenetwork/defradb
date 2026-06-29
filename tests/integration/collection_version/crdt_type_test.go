@@ -136,6 +136,9 @@ func TestCollectionAdd_ContainsPNCounterWithInvalidType_Error(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -170,6 +173,9 @@ func TestCollectionAdd_ContainsPCounterTypeWithIntKind_NoError(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -204,6 +210,9 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloatKind_NoError(t *testing.T) {
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -238,6 +247,9 @@ func TestCollectionAdd_ContainsPCounterTypeWithFloat64Kind_NoError(t *testing.T)
 
 func TestCollectionAdd_ContainsPCounterTypeWithFloat32Kind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `

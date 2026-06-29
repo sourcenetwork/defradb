@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
@@ -91,15 +90,17 @@ func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// The @exhaustive directive is needed because the primary order is on a relation field
+// (publisher.yearOpened). When the secondary-index multiplier adds an index on yearOpened,
+// the planner inverts the join and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestMultipleOrderByWithDepthGreaterThanOneOrderSwitched(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			addDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Book (order: [{publisher: {yearOpened: DESC}}, {rating: ASC}]) {
 						name
 						rating

@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -50,6 +50,8 @@ var (
 	_ explainablePlanNode = (*maxNode)(nil)
 	_ explainablePlanNode = (*minNode)(nil)
 	_ explainablePlanNode = (*orderNode)(nil)
+	_ explainablePlanNode = (*orphanNode)(nil)
+	_ explainablePlanNode = (*orphanPointLookupNode)(nil)
 	_ explainablePlanNode = (*scanNode)(nil)
 	_ explainablePlanNode = (*selectNode)(nil)
 	_ explainablePlanNode = (*selectTopNode)(nil)

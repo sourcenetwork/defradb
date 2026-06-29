@@ -26,6 +26,7 @@ const (
 	errTypeNotFound                     string = "no type found for given name"
 	errRelationNotFound                 string = "no relation found"
 	errNonNullForTypeNotSupported       string = "NonNull variants for type are not supported"
+	errNestedListTypeNotSupported       string = "nested list types are not supported"
 	errIndexMissingFields               string = "index missing fields"
 	errIndexUnknownArgument             string = "index with unknown argument"
 	errIndexInvalidArgument             string = "index with invalid argument"
@@ -33,7 +34,6 @@ const (
 	errPolicyUnknownArgument            string = "policy with unknown argument"
 	errPolicyInvalidIDProp              string = "policy directive with invalid id property"
 	errPolicyInvalidResourceProp        string = "policy directive with invalid resource property"
-	errDefaultValueType                 string = "default value type must match field type"
 	errDefaultValueNotAllowed           string = "default value is not allowed for this field type"
 	errDefaultValueInvalid              string = "default value is invalid"
 	errDefaultValueOneArg               string = "default value must specify one argument"
@@ -61,9 +61,8 @@ var (
 	ErrRelationMissingTypes          = errors.New("relation is missing its defined types and fields")
 	ErrRelationInvalidType           = errors.New("relation has an invalid type to be finalize")
 	ErrMultipleRelationPrimaries     = errors.New("relation can only have a single field set as primary")
-	// NonNull is the literal name of the GQL type, so we have to disable the linter
-	//nolint:revive
-	ErrNonNullNotSupported       = errors.New("NonNull fields are not currently supported")
+	// NonNull is the literal name of the GQL type, so we have to disable the linter.
+	ErrNonNullNotSupported       = errors.New("NonNull fields are not currently supported") //nolint:revive
 	ErrIndexMissingFields        = errors.New(errIndexMissingFields)
 	ErrIndexWithUnknownArg       = errors.New(errIndexUnknownArgument)
 	ErrIndexWithInvalidArg       = errors.New(errIndexInvalidArgument)
@@ -142,10 +141,27 @@ func NewErrTypeNotFound(typeName string) error {
 	)
 }
 
+func NewErrTypeNotFoundOnField(typeName, referencedBy, fieldName string) error {
+	return errors.New(
+		errTypeNotFound,
+		errors.NewKV("Type", typeName),
+		errors.NewKV("ReferencedBy", referencedBy),
+		errors.NewKV("Field", fieldName),
+	)
+}
+
 func NewErrNonNullForTypeNotSupported(typeName string) error {
 	return errors.New(
 		errNonNullForTypeNotSupported,
 		errors.NewKV("Type", typeName),
+	)
+}
+
+func NewErrNestedListTypeNotSupported(objectName, fieldName string) error {
+	return errors.New(
+		errNestedListTypeNotSupported,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
 	)
 }
 
@@ -163,20 +179,13 @@ func NewErrDefaultValueOneArg(field string) error {
 	)
 }
 
-func NewErrDefaultValueInvalid(field string, arg string) error {
+func NewErrDefaultValueInvalid(fieldName string, expectedType string, actualType string, value any) error {
 	return errors.New(
 		errDefaultValueInvalid,
-		errors.NewKV("Field", field),
-		errors.NewKV("Arg", arg),
-	)
-}
-
-func NewErrDefaultValueType(name string, expected string, actual string) error {
-	return errors.New(
-		errDefaultValueType,
-		errors.NewKV("Name", name),
-		errors.NewKV("Expected", expected),
-		errors.NewKV("Actual", actual),
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Expected", expectedType),
+		errors.NewKV("Actual", actualType),
+		errors.NewKV("Value", value),
 	)
 }
 

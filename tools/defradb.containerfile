@@ -12,9 +12,10 @@ WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
-RUN make deps:playground
-ENV BUILD_TAGS=playground,telemetry
-RUN make build
+RUN make deps:explorer
+ARG VERSION
+ENV BUILD_TAGS=explorer,telemetry
+RUN VERSION_GITRELEASE="$VERSION" make build
 
 # Stage: RUN
 FROM debian:bookworm-slim

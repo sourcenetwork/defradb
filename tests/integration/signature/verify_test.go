@@ -18,12 +18,15 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -40,21 +43,21 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
+				Cid:            "{{.CID0_0_0}}",
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"age": 23
 				}`,
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreichuvsbsr3oo4xeqfi55mrh4us77z2bg2foemuzhn5idomya6epl4",
+				Cid:            "{{.CID0_0_1}}",
 			},
 			testUtils.DeleteDoc{},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreigq4hkl7kgcj6qssol4ms3spagjjlaume2xatogdxqxc3h45td6q4",
+				Cid:            "{{.CID0_0_2}}",
 			},
 		},
 	}
@@ -64,7 +67,9 @@ func TestSignatureVerify_WithValidData_ShouldVerify(t *testing.T) {
 
 func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
@@ -84,7 +89,7 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibxlg2hmbbhbia4zywlif4xhozrf47js6r46ag5bcw72uc5m53csi",
+				Cid:            "{{.CID0_0_0}}",
 			},
 		},
 	}
@@ -94,7 +99,9 @@ func TestSignatureVerify_WithDifferentKeyType_ShouldVerify(t *testing.T) {
 
 func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -111,7 +118,7 @@ func TestSignatureVerify_WithWrongIdentity_ShouldError(t *testing.T) {
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(1).Value(),
-				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
+				Cid:            "{{.CID0_0_0}}",
 				ExpectedError:  coreblock.ErrSignaturePubKeyMismatch.Error(),
 			},
 		},

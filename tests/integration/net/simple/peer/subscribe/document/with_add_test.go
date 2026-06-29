@@ -55,7 +55,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				DocID:        0,
@@ -131,7 +131,7 @@ func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 				DocIDs:        []state.ColDocIndex{state.NewColDocIndex(0, testUtils.NonExistentDocID)},
 				ExpectedError: "malformed document ID, missing either version or cid",
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Andy"

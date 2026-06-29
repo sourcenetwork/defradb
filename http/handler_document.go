@@ -49,6 +49,10 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 			SetEncryptedFields(encConf.EncryptedFields),
 		identity.FromContext(ctx),
 	)
+	if err := setAddSigningOption(req, addOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	switch {
 	case client.IsJSONArray(data):
@@ -59,10 +63,10 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 		}
 
 		if err := col.AddManyDocuments(ctx, docList, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
-		rw.WriteHeader(http.StatusOK)
+		responseJSON(rw, http.StatusOK, client.DocumentIDs(docList))
 	default:
 		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
 		if err != nil {
@@ -70,10 +74,10 @@ func (h *collectionHandler) AddDocument(rw http.ResponseWriter, req *http.Reques
 			return
 		}
 		if err := col.AddDocument(ctx, doc, addOpt); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 			return
 		}
-		rw.WriteHeader(http.StatusOK)
+		responseJSON(rw, http.StatusOK, client.DocumentIDs([]*client.Document{doc}))
 	}
 }
 
@@ -94,12 +98,12 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 
 	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
@@ -114,10 +118,14 @@ func (h *collectionHandler) UpdateDocument(rw http.ResponseWriter, req *http.Req
 	}
 
 	updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+	if err := setUpdateSigningOption(req, updateOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	err = col.UpdateDocument(ctx, doc, updateOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -134,13 +142,44 @@ func (h *collectionHandler) DeleteDocument(rw http.ResponseWriter, req *http.Req
 	}
 
 	deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
-
-	_, err = col.DeleteDocument(ctx, docID, deleteOpt)
-	if err != nil {
+	if err := setDeleteSigningOption(req, deleteOpt); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
+	_, err = col.DeleteDocument(ctx, docID, deleteOpt)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
 	rw.WriteHeader(http.StatusOK)
+}
+
+func setAddSigningOption(req *http.Request, opt *options.AddDocumentOptionsBuilder) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
+}
+
+func setUpdateSigningOption(req *http.Request, opt *options.UpdateDocumentOptionsBuilder) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
+}
+
+func setDeleteSigningOption(req *http.Request, opt *options.DeleteDocumentOptionsBuilder) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
 }
 
 func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Request) {
@@ -161,12 +200,12 @@ func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Reques
 
 	doc, err := col.GetDocument(ctx, docID, getOpt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 

@@ -24,7 +24,7 @@ import (
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(
 	exe *gql.ExecutionContext,
-	collectedFields map[string][]*ast.Field,
+	collectedFields [][]*ast.Field,
 ) (*request.OperationDefinition, error) {
 	var selections []request.Selection
 	for _, fields := range collectedFields {

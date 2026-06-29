@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 const (
@@ -59,7 +58,6 @@ func getEmbeddingFunc(provider, model, url string) chromem.EmbeddingFunc {
 // setEmbedding sets the embedding fields on the document if the related fields are dirty.
 // However, if the vector field itself has been set, it will not be overwritten by a new embedding generation.
 func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isAdd bool) error {
-	embeddingGenerated := false
 	for _, embedding := range c.Version().VectorEmbeddings {
 		vecValue, err := doc.GetValue(embedding.FieldName)
 		if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
@@ -97,9 +95,13 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isA
 		// If we are updating the document and we don't have all the fields used for vector embedding
 		// generation, we get the document to see if the fields have previously been set.
 		if !isAdd && len(missingFieldsForGeneration) > 0 {
+			primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+			if err != nil {
+				return NewErrGetDocForEmbedding(err)
+			}
 			oldDoc, err := c.get(
 				ctx,
-				keys.DataStoreKeyFromDocID(doc.ID()).ToPrimaryDataStoreKey(),
+				primaryKey,
 				missingFieldsForGeneration,
 				false,
 			)
@@ -122,7 +124,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isA
 		var text strings.Builder
 		for _, fieldName := range embedding.Fields {
 			if val, ok := fieldsVal[fieldName]; ok {
-				_, err := text.WriteString(fmt.Sprintf("%v\n", val.Unwrap()))
+				_, err := fmt.Fprintf(&text, "%v\n", val.Unwrap())
 				if err != nil {
 					return err
 				}
@@ -134,16 +136,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isA
 		}
 		err = doc.Set(ctx, embedding.FieldName, embeddingVec)
 		if err != nil {
-			return err
-		}
-		embeddingGenerated = true
-	}
-
-	// If an embedding was generated on add, we need to update the document ID.
-	if isAdd && embeddingGenerated {
-		err := doc.GenerateAndSetDocID()
-		if err != nil {
-			return err
+			return NewErrSetEmbeddingField(err, embedding.FieldName)
 		}
 	}
 

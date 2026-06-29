@@ -22,7 +22,7 @@ import (
 
 func MakeP2PCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "delete [collectionNames]",
+		Use:   "delete <collectionNames>",
 		Short: "Delete P2P collections",
 		Long: `Delete P2P collections from the followed pubsub topics.
 The removed collections will no longer be synchronized between nodes.`,

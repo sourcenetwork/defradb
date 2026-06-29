@@ -27,6 +27,30 @@
             }
         },
         "schemas": {
+            "action_execution": {
+                "properties": {
+                    "Action": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "CollectionID": {
+                        "type": "string"
+                    },
+                    "Reason": {
+                        "type": "string"
+                    },
+                    "Status": {
+                        "maximum": 65535,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "Subject": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "add_acp_document_relationship_request": {
                 "properties": {
                     "CollectionName": {
@@ -631,6 +655,7 @@
         "securitySchemes": {
             "bearerToken": {
                 "bearerFormat": "JWT",
+                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the SourceHub address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
                 "scheme": "bearer",
                 "type": "http"
             }
@@ -642,14 +667,14 @@
     },
     "info": {
         "title": "DefraDB API",
-        "version": "0"
+        "version": "1"
     },
     "openapi": "3.0.3",
     "paths": {
         "/acp/document/policy": {
             "post": {
                 "description": "Add a policy using document acp system",
-                "operationId": "add dac policy",
+                "operationId": "dac policy add",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -673,20 +698,17 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_document_policy"
+                    "document access control"
                 ]
             }
         },
         "/acp/document/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using document acp system",
-                "operationId": "delete dac relationship",
+                "operationId": "dac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -710,18 +732,15 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using document acp system",
-                "operationId": "add dac relationship",
+                "operationId": "dac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -745,60 +764,51 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             }
         },
         "/acp/node/disable": {
             "post": {
                 "description": "Disable nac",
-                "operationId": "disable nac",
+                "operationId": "nac disable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_node_disable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/re-enable": {
             "post": {
                 "description": "Re-enable nac",
-                "operationId": "re-enable nac",
+                "operationId": "nac re-enable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_node_re-enable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using node acp system",
-                "operationId": "delete nac relationship",
+                "operationId": "nac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -822,18 +832,15 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using node acp system",
-                "operationId": "add nac relationship",
+                "operationId": "nac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -857,20 +864,17 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/status": {
             "get": {
                 "description": "Check status of node acp system",
-                "operationId": "Check status of nac",
+                "operationId": "nac status",
                 "responses": {
                     "200": {
                         "content": {
@@ -884,13 +888,44 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
-                    "acp_node_status"
+                    "node access control"
+                ]
+            }
+        },
+        "/actions": {
+            "get": {
+                "description": "List information pertaining to long running actions",
+                "operationId": "list_actions",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/action_execution"
+                                        },
+                                        {
+                                            "items": {
+                                                "$ref": "#/components/schemas/action_execution"
+                                            },
+                                            "type": "array"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "description": "Information on incomplete action executions"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "action"
                 ]
             }
         },
@@ -914,9 +949,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -944,9 +976,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -992,9 +1021,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1029,8 +1055,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1076,8 +1102,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "500": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1086,6 +1112,38 @@
             }
         },
         "/collections": {
+            "delete": {
+                "description": "Delete one or more collections. The 'name' query parameter accepts a comma-separated (CSV) list of collection names. By default every version of each named collection is deleted; set 'active-only=true' to delete only the active head version and keep earlier versions intact.",
+                "operationId": "delete_collection",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "active-only",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            },
             "get": {
                 "description": "Introspect collection(s) by name, collection id, or version id.",
                 "operationId": "describe_collection",
@@ -1146,9 +1204,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1173,9 +1228,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1210,9 +1262,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1239,9 +1288,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1272,9 +1318,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1309,9 +1352,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1357,9 +1397,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1403,9 +1440,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1448,13 +1482,23 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "The IDs of the added documents"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1492,8 +1536,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1536,8 +1580,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1573,8 +1617,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1613,9 +1657,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1660,8 +1701,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1700,8 +1741,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1740,9 +1781,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1787,8 +1825,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1826,8 +1864,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -1856,9 +1894,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1876,9 +1911,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1909,9 +1941,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -1961,10 +1990,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2012,10 +2062,31 @@
                         "description": "GraphQL response"
                     },
                     "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "additionalProperties": true,
+                                            "type": "object"
+                                        },
+                                        "errors": {
+                                            "items": {
+                                                "properties": {
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "GraphQL error"
                     }
                 },
                 "tags": [
@@ -2045,9 +2116,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2080,9 +2148,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2107,14 +2172,31 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
                     "node",
                     "identity"
+                ]
+            }
+        },
+        "/node/options": {
+            "get": {
+                "description": "Get node configuration options",
+                "operationId": "get_node_options",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "node"
                 ]
             }
         },
@@ -2137,9 +2219,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2170,9 +2249,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2198,9 +2274,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2229,9 +2302,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2270,9 +2340,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2314,9 +2381,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2333,9 +2397,22 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/disconnect": {
+            "post": {
+                "operationId": "disconnect",
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
                     },
-                    "default": {
-                        "description": ""
+                    "400": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2366,9 +2443,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2394,9 +2468,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2425,9 +2496,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2472,9 +2540,6 @@
                     },
                     "500": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2498,9 +2563,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2528,9 +2590,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2556,9 +2615,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2584,9 +2640,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2602,11 +2655,8 @@
                     "200": {
                         "$ref": "#/components/responses/success"
                     },
-                    "400": {
+                    "403": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 }
             }
@@ -2624,43 +2674,13 @@
                             "default": false,
                             "type": "boolean"
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/create_tx"
-                                }
-                            }
-                        },
-                        "description": "Transaction info"
                     },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "transaction"
-                ]
-            }
-        },
-        "/tx/concurrent": {
-            "post": {
-                "description": "Create a new concurrent transaction",
-                "operationId": "new_concurrent_transaction",
-                "parameters": [
                     {
-                        "description": "Read only transaction",
+                        "description": "Transaction idle TTL as a Go duration string, or seconds if no unit is provided",
                         "in": "query",
-                        "name": "read_only",
+                        "name": "ttl",
                         "schema": {
-                            "default": false,
-                            "type": "boolean"
+                            "type": "string"
                         }
                     }
                 ],
@@ -2677,9 +2697,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2709,8 +2726,8 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2738,8 +2755,11 @@
                     "400": {
                         "$ref": "#/components/responses/error"
                     },
-                    "default": {
-                        "description": ""
+                    "404": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/error"
                     }
                 },
                 "tags": [
@@ -2784,9 +2804,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2838,9 +2855,6 @@
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
                     }
                 },
                 "tags": [
@@ -2849,10 +2863,24 @@
             }
         }
     },
+    "security": [
+        {},
+        {
+            "bearerToken": []
+        }
+    ],
     "servers": [
         {
-            "description": "Local DefraDB instance",
+            "description": "DefraDB latest version",
+            "url": "/api"
+        },
+        {
+            "description": "DefraDB version 0",
             "url": "/api/v0"
+        },
+        {
+            "description": "DefraDB version 1",
+            "url": "/api/v1"
         }
     ],
     "tags": [

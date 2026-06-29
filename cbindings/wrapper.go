@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -30,6 +30,7 @@ extern Result VerifyBlockSignature(uintptr_t nodePtr, char* keyType, char* publi
 uintptr_t identity);
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result PatchCollection(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
+extern Result DeleteCollection(uintptr_t nodePtr, char* name, int activeOnly, uintptr_t identityPtr);
 extern Result NewIdentity(char* keyType);
 extern void FreeIdentity(uintptr_t identityPtr);
 extern Result GetNodeIdentity(uintptr_t nodePtr);
@@ -51,6 +52,7 @@ extern Result AddP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t i
 extern Result DeleteP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PCollections(uintptr_t nodePtr, uintptr_t identity);
 extern Result ConnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
+extern Result DisconnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
 extern Result AddP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result DeleteP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PDocuments(uintptr_t nodePtr, uintptr_t identity);
@@ -63,10 +65,11 @@ extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
 extern Result AddCollection(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
+extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isReadOnly);
 extern Result GetVersion(int flagFull, int flagJSON);
 extern Result AddView(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
 extern Result RefreshView(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result ListActions(uintptr_t nodePtr, uintptr_t identityPtr);
 */
 import "C"
 
@@ -77,12 +80,12 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -93,8 +96,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
-
-var txnHandleMap = sync.Map{} // map[client.Txn]cgo.Handle
 
 var _ client.TxnStore = (*CWrapper)(nil)
 var _ client.P2P = (*CWrapper)(nil)
@@ -429,6 +430,21 @@ func (w *CWrapper) AddCollection(
 	sdl string,
 	opts ...options.Enumerable[options.AddCollectionOptions],
 ) ([]client.CollectionVersion, error) {
+	// Attach transaction to context if one was passed in
+	var txn datastore.Txn
+	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
+	if hadTxn {
+		txn = gotTxn
+	} else {
+		clientTxn, _ := w.NewTxn(false)
+		var ok bool
+		txn, ok = clientTxn.(datastore.Txn)
+		if !ok {
+			return nil, errors.New("failed to cast clientTxn to datastore.Txn")
+		}
+	}
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
 	cSDL := C.CString(sdl)
@@ -445,6 +461,12 @@ func (w *CWrapper) AddCollection(
 	if err != nil {
 		return nil, err
 	}
+
+	if !hadTxn {
+		defer txn.Discard()
+		_ = txn.Commit()
+	}
+
 	return collectionVersions, nil
 }
 
@@ -669,6 +691,33 @@ func (w *CWrapper) PatchCollection(
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
+
+	return nil
+}
+
+func (w *CWrapper) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	cNames := C.CString(strings.Join(names, ","))
+	defer C.free(unsafe.Pointer(cNames))
+	defer C.FreeIdentity(cIdentity)
+
+	cActiveOnly := C.int(0)
+	if opt.ActiveOnly {
+		cActiveOnly = 1
+	}
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.DeleteCollection(callHandle, cNames, cActiveOnly, cIdentity))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+
 	return nil
 }
 
@@ -751,6 +800,28 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[
 		return errors.New(res.Error)
 	}
 	return nil
+}
+
+func (w *CWrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.FreeIdentity(cIdentity)
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ListActions(callHandle, cIdentity))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	info, err := unmarshalResult[[]client.ActionExecution](res.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }
 
 func (w *CWrapper) SetMigration(
@@ -895,9 +966,11 @@ func (w *CWrapper) GetCollections(
 		return nil, err
 	}
 
+	txnOpt := datastore.CtxTryGetTxnOption(ctx)
+
 	cols := make([]client.Collection, len(defs))
 	for i, def := range defs {
-		cols[i] = &Collection{def: def, w: w}
+		cols[i] = &Collection{def: def, w: w, txn: txnOpt}
 	}
 	return cols, nil
 }
@@ -905,7 +978,7 @@ func (w *CWrapper) GetCollections(
 func (w *CWrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -928,7 +1001,7 @@ func (w *CWrapper) ListIndexes(
 		return nil, errors.New(res.Error)
 	}
 
-	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
+	resValue, err := unmarshalResult[map[client.CollectionName][]client.ListIndexesResult](res.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,17 +1077,17 @@ func (w *CWrapper) ExecRequest(
 	if err := json.Unmarshal([]byte(res.Value), &retval.GQL); err != nil {
 		retval.GQL.Errors = append(retval.GQL.Errors, err)
 	}
+
 	return retval
 }
 
 func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	var concurrent C.int = 0
 	var cReadOnly C.int = 0
 	if readOnly {
 		cReadOnly = 1
 	}
 
-	res := C.CreateTransaction(C.uintptr_t(w.handle), concurrent, cReadOnly)
+	res := C.CreateTransaction(C.uintptr_t(w.handle), cReadOnly)
 	errText := C.GoString(res.error)
 	defer C.free(unsafe.Pointer(res.error))
 
@@ -1023,33 +1096,8 @@ func (w *CWrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 
 	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
-
-	return retTxn, nil
-}
-
-func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
-	var concurrent C.int = 1
-	var cReadOnly C.int = 0
-	if readOnly {
-		cReadOnly = 1
-	}
-
-	res := C.CreateTransaction(C.uintptr_t(w.handle), concurrent, cReadOnly)
-	errText := C.GoString(res.error)
-	defer C.free(unsafe.Pointer(res.error))
-
-	if res.status != 0 {
-		return nil, errors.New(errText)
-	}
-
-	handle := cgo.Handle(res.txnPtr)
-	clientTxn := handle.Value().(client.Txn) //nolint:forcetypeassert
-	retTxn := &Transaction{w, clientTxn, handle}
-	txnHandleMap.Store(retTxn, handle)
-
+	dsTxn := handle.Value().(datastore.Txn) //nolint:forcetypeassert
+	retTxn := &Transaction{w, dsTxn, handle}
 	return retTxn, nil
 }
 
@@ -1080,6 +1128,23 @@ func (w *CWrapper) Connect(
 	defer C.FreeIdentity(cIdentity)
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ConnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cPeerAddresses := C.CString(strings.Join(addresses, ","))
+	defer C.free(unsafe.Pointer(cPeerAddresses))
+	defer C.FreeIdentity(cIdentity)
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.DisconnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
@@ -1122,7 +1187,8 @@ func (w *CWrapper) VerifySignature(
 	defer C.free(unsafe.Pointer(cBlockCid))
 	defer C.FreeIdentity(cIdentity)
 
-	res := ConvertAndFreeCResult(C.VerifyBlockSignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, cIdentity))
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.VerifyBlockSignature(callHandle, cKeyType, cPubKey, cBlockCid, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

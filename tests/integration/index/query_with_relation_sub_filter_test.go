@@ -612,7 +612,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 2 indexFetches: 1 for parent filter (Walkman) + 1 for sub-filter (same Walkman)
+				// 2 indexFetches: 1 for parent filter (users with Walkman) + 1 for sub-filter Walkman devices
 				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
 			},
 		},
@@ -710,7 +710,8 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// root (User) has no index
-				// subType (Device): 4 indexFetches - 3 for parent filter (3 Walkman devices) + 1 for sub-filter (Sony)
+				// subType (Device): 3 indexFetches for parent filter (3 Walkman devices).
+				// Sub-filter (Sony) is applied in-memory after index fetch.
 				// Note: For existence checks, we only need 1 match per user, but currently the index fetcher
 				// doesn't know about parent relationships. https://github.com/sourcenetwork/defradb/issues/4347
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).

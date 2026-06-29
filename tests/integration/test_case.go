@@ -12,8 +12,6 @@
 package tests
 
 import (
-	"time"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -68,6 +66,9 @@ type TestCase struct {
 	// differences between database types, or we need to temporarily document a bug.
 	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
+	// HTTP configures the test node HTTP API behavior.
+	HTTP immutable.Option[options.NodeHTTPOptions]
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
@@ -97,6 +98,11 @@ type TestCase struct {
 	// A value of N means the test will be attempted up to N+1 times total
 	// (1 initial + N retries).
 	FlakeRetries uint
+
+	// SkipChangeDetector will skip this test when the change detector is active.
+	// Use this for tests whose results are inherently non-deterministic across the
+	// two change detector phases, such as tests that rely on the current time.
+	SkipChangeDetector bool
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -124,6 +130,40 @@ type SetupComplete struct{}
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
 type ConfigureNode func() options.NodeP2POptions
+
+func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
+	httpBuilder := opts.HTTP()
+	if httpOpts.Address != "" {
+		httpBuilder.SetAddress(httpOpts.Address)
+	}
+	if len(httpOpts.AllowedOrigins) > 0 {
+		httpBuilder.SetAllowedOrigins(httpOpts.AllowedOrigins...)
+	}
+	if httpOpts.TLSCertPath != "" {
+		httpBuilder.SetCertPath(httpOpts.TLSCertPath)
+	}
+	if httpOpts.TLSKeyPath != "" {
+		httpBuilder.SetKeyPath(httpOpts.TLSKeyPath)
+	}
+	if httpOpts.ReadTimeout != 0 {
+		httpBuilder.SetReadTimeout(httpOpts.ReadTimeout)
+	}
+	if httpOpts.WriteTimeout != 0 {
+		httpBuilder.SetWriteTimeout(httpOpts.WriteTimeout)
+	}
+	if httpOpts.IdleTimeout != 0 {
+		httpBuilder.SetIdleTimeout(httpOpts.IdleTimeout)
+	}
+	if httpOpts.TxnTTL != 0 {
+		httpBuilder.SetTxnTTL(httpOpts.TxnTTL)
+	}
+	if httpOpts.TxnTTLTick != 0 {
+		httpBuilder.SetTxnTTLTick(httpOpts.TxnTTLTick)
+	}
+	if httpOpts.TxnTTLBuckets != 0 {
+		httpBuilder.SetTxnTTLBuckets(httpOpts.TxnTTLBuckets)
+	}
+}
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -192,6 +232,9 @@ type SetActiveCollectionVersion struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // DocIndex represents a relation field value, it allows relation fields to be set without worrying
@@ -248,21 +291,24 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
-// UpdateDoc will attempt to update the given document using the set [state.MutationType].
-type UpdateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
+// DeleteWithFilter will delete the set of documents that match the given filter.
+type DeleteWithFilter struct {
+	// NodeID may hold the ID (index) of a node to apply this delete to.
 	//
-	// If a value is not provided the update will be applied to all nodes.
+	// If a value is not provided the delete will be applied to all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
 	//
-	// If an Identity is not provided then can only update public document(s).
+	// If an Identity is not provided then can only delete public document(s).
 	//
 	// If an Identity is provided and the collection has a policy, then
-	// can also update private document(s) that are owned by this Identity.
+	// can also delete private document(s) that are owned by this Identity.
 	//
 	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
@@ -270,17 +316,11 @@ type UpdateDoc struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
-	// The collection in which this document exists.
+	// The collection in which the documents should be deleted.
 	CollectionID int
 
-	// The index-identifier of the document within the collection.  This is based on
-	// the order in which it was created, not the ordering of the document within the
-	// database.
-	DocID int
-
-	// The document update, in JSON string format. Will only update the properties
-	// provided.
-	Doc string
+	// The filter to match documents against.
+	Filter any
 
 	// Any error expected from the action. Optional.
 	//
@@ -293,6 +333,9 @@ type UpdateDoc struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // UpdateWithFilter will update the set of documents that match the given filter.
@@ -335,6 +378,9 @@ type UpdateWithFilter struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // NewEncryptedIndex will attempt to make a new encrypted index on the given collection
@@ -364,6 +410,9 @@ type NewEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListEncryptedIndexes will attempt to list encrypted index from the given collection
@@ -390,6 +439,9 @@ type ListEncryptedIndexes struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
@@ -438,6 +490,9 @@ type DeleteEncryptedIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
@@ -506,18 +561,6 @@ type AddPredefinedDocs struct {
 
 	// The list of documents to replicate.
 	Docs predefined.DocsList
-}
-
-// CommitTransaction represents a commit request for a transaction of the given id.
-type CommitTransaction struct {
-	// Used to identify the transaction to commit.
-	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 type IntrospectionRequest struct {
@@ -622,12 +665,6 @@ type GetNodeIdentity struct {
 	ExpectedIdentity immutable.Option[state.Identity]
 }
 
-// Wait is an action that will wait for the given duration.
-type Wait struct {
-	// Duration is the duration to wait.
-	Duration time.Duration
-}
-
 // VerifyBlockSignature is an action that will verify the signature of the given block.
 type VerifyBlockSignature struct {
 	// The cid of the block to verify the signature of.
@@ -649,6 +686,9 @@ type VerifyBlockSignature struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 // SyncDocs will synchronize documents from the network via P2P.

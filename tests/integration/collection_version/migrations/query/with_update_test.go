@@ -125,7 +125,7 @@ func TestCollectionMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T
 					]
 				`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Update the document **before** registering the migration
 				Doc: `{
 					"name":	"Johnnnn"

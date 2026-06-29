@@ -13,6 +13,21 @@ The bench directory contains benchmark tests that are used to measure and monito
 
 The integration directory contains integration tests that ensure different components of the system work together correctly.
 
+### Data Format Change Detection
+
+Any test using the `ExecuteRequestTestCase` function in `tests/integration/utils.go` can also be used to assert that no undocumented breaking changes have been made in the active branch when compared to a target branch (default `develop`).
+
+If the environment variable `DEFRA_CHANGE_DETECTOR_ENABLE` has been set, the test suite will run in this data format change detection mode instead of the standard test execution mode.  There is a CI build step that performs executes the tests in this mode for open pull requests.
+
+When running a test in this mode, the following will happen:
+
+1. Checkout and pull the latest version of the target branch into a temporary directory if it does not already exist.
+2. Check for any new `.md` files in the `docs/data_format_changes` directory, if a new file is found - all tests will pass.
+3. Create a new child process and execute the setup steps only (schema creation, database population, etc.) using the target branch code.
+4. Execute the queries specified in the test using the current-branch/main-process against the database set up in step (3) and assert the results.
+
+This should help reduce the risk of developers introducing undocumented changes to persisted data - something that could cause significant annoyance for users of defra, and loss of data.
+
 ### Unit Tests
 
 Unit tests are spread throughout the source code and are located in the same directories as the code they are testing. 
