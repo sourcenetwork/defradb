@@ -54,32 +54,20 @@ func (c *collection) registerDoc(
 // collection-level commit DAG). The registration is a no-op unless document acp is available, the
 // collection has a policy, and the request carries an identity (see [acpDB.RegisterObject]).
 //
-// It is also a no-op if the collection object is already registered: unlike a document (created on a
-// single node), the same collection is added on every node, so on a shared acp instance (e.g.
-// SourceHub) a second node would otherwise fail re-registering an object the first node registered.
+// Unlike a document (created on a single node), the same collection is added on every node, so on a
+// shared acp instance (e.g. SourceHub) a second node re-registers the same collection object. The
+// underlying registration is idempotent for a same-owner re-register (and still errors on a
+// different owner), so no special handling is needed here (see [dac.bridgeDocumentACP.RegisterDocObject]).
 func (c *collection) registerCollection(
 	ctx context.Context,
 ) error {
 	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	documentACP := c.db.documentACP.Value()
-	ident := identity.FromContext(ctx)
-
-	if policyID, resourceName, hasPolicy := acpDB.IsPermissioned(c); hasPolicy && ident.HasValue() {
-		isRegistered, err := documentACP.IsDocRegistered(ctx, policyID, resourceName, c.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-		if isRegistered {
-			return nil
-		}
-	}
-
 	return acpDB.RegisterObject(
 		ctx,
-		ident,
-		documentACP,
+		identity.FromContext(ctx),
+		c.db.documentACP.Value(),
 		c,
 		c.Version().CollectionID,
 	)
