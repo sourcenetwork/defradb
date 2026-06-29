@@ -213,7 +213,13 @@ func toSelect(
 
 	// Resolve groupBy mappings i.e. alias remapping and handle missed inner group.
 	if selectRequest.GroupBy.HasValue() {
-		groupByFields := selectRequest.GroupBy.Value().Fields
+		// Copy the groupBy fields before remapping rather than rewriting them in
+		// place. The original slice is shared with the caller's request select (and
+		// any copy taken of it, e.g. for duplicate detection in getRequestables), so
+		// mutating it here would retroactively change those values.
+		originalFields := selectRequest.GroupBy.Value().Fields
+		groupByFields := make([]string, len(originalFields))
+		copy(groupByFields, originalFields)
 		// Remap all alias field names to use their internal field name mappings.
 		for index, groupByField := range groupByFields {
 			fieldDesc, ok := definition.GetFieldByName(groupByField)
@@ -889,6 +895,11 @@ func getRequestables(
 	collectionName string,
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	// Tracks relation selects already mapped in this selection set so that an
+	// identical relation field is collapsed onto the first occurrence, mirroring
+	// how duplicate scalar fields collapse onto their first index. Without this a
+	// duplicate relation manufactures a redundant join over the same root scan.
+	seenSelects := []request.Select{}
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
 		case *request.Field:
@@ -907,6 +918,19 @@ func getRequestables(
 				Key:   getRenderKey(f),
 			})
 		case *request.Select:
+			// Collapse identical duplicate relation selects onto the first one.
+			isDuplicate := false
+			for _, seen := range seenSelects {
+				if reflect.DeepEqual(seen, *f) {
+					isDuplicate = true
+					break
+				}
+			}
+			if isDuplicate {
+				continue
+			}
+			seenSelects = append(seenSelects, *f)
+
 			index := mapping.GetNextIndex()
 
 			innerSelect, err := toSelect(ctx, store, collectionRepository, rootSelectType, index, f, collectionName)
