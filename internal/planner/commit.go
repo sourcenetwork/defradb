@@ -484,10 +484,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block, docID string) (c
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
-	)
+	// Pass the requester's identity so the collection lookup is authorised as them (rather than
+	// anonymously) when node acp gates the get-collection operation.
+	getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId)
+	if n.planner.identity.HasValue() {
+		getColOpts = getColOpts.SetIdentity(n.planner.identity.Value())
+	}
+	cols, err := n.planner.db.GetCollections(n.planner.ctx, getColOpts)
 	if err != nil {
 		return core.Doc{}, err
 	}
