@@ -213,6 +213,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: makeExplainQuery(req2),
@@ -286,6 +287,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: makeExplainQuery(req2),
@@ -525,6 +527,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

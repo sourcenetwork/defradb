@@ -25,8 +25,9 @@ import (
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	kvIters   []corekv.Iterator
-	iterIndex int
+	kvIters    []corekv.Iterator
+	iterIndex  int
+	currentKey immutable.Option[keys.HeadstoreKey]
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside
@@ -54,6 +55,7 @@ func (hf *HeadFetcher) Start(
 
 	hf.kvIters = nil
 	hf.iterIndex = 0
+	hf.currentKey = immutable.None[keys.HeadstoreKey]()
 
 	if prefix.HasValue() {
 		iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
@@ -103,12 +105,19 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 		if err != nil {
 			return nil, NewErrParseHeadKey(err)
 		}
+		hf.currentKey = immutable.Some(headStoreKey)
 
 		cid := headStoreKey.GetCid()
 		return &cid, nil
 	}
 
+	hf.currentKey = immutable.None[keys.HeadstoreKey]()
 	return nil, nil
+}
+
+// CurrentKey returns the headstore key that yielded the most recent CID.
+func (hf *HeadFetcher) CurrentKey() immutable.Option[keys.HeadstoreKey] {
+	return hf.currentKey
 }
 
 func (hf *HeadFetcher) Close() error {

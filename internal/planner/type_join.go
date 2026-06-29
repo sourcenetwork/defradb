@@ -459,14 +459,21 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(scan.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
+	docShortID, found, err := id.GetDocShortID(scan.p.ctx, collectionShortID, docID)
+	if err != nil {
+		return immutable.None[core.Doc](), err
+	}
+	if !found {
+		return immutable.None[core.Doc](), nil
+	}
 
 	dsKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docID,
+		CollectionShortID: collectionShortID,
+		DocShortID:        docShortID,
 	}
 
 	prefixes := []keys.Walkable{dsKey}
@@ -692,8 +699,11 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	docFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-		r.targetSecondaryDoc.GetID())
+	targetDocID, _, err := docIDForFilterValue(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
+	if err != nil {
+		return nil, err
+	}
+	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), []any{targetDocID})
 
 	// When the join is inverted, the parent becomes the primary (second) side.
 	// Its scan may still hold non-relation filter conditions (scalar, JSON, or inline-array
@@ -929,7 +939,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		}
 		return join.Next()
 	}
-
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.

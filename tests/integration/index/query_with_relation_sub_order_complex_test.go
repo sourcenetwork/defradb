@@ -79,19 +79,19 @@ func TestQueryWithOrderByRelationField_ExhaustiveASCWithLimit_ManyOrphansEarlyTe
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{"title": "Orphan-A"},
-						{"title": "Orphan-F"},
 						{"title": "Orphan-B"},
+						{"title": "Orphan-C"},
 					},
 				},
 			},
-			// orphanNode scans only 4 of 10 Books to find 3 orphans (early termination).
-			// Each parent gets a Has() call on the child FK index (4 indexFetches).
+			// orphanNode scans only 6 of 10 Books to find 3 orphans (early termination).
+			// Each parent gets a Has() call on the child FK index (6 indexFetches).
 			// Source phase (ordered join) never entered — root/subType scanNodes show 0 fetches.
 			&action.Request{
 				Request: makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter("orphanNode").
-					WithDocFetches(4).
-					WithIndexFetches(4).
+					WithDocFetches(6).
+					WithIndexFetches(6).
 					WithLevel("root").
 					WithDocFetches(0).
 					WithIndexFetches(0).

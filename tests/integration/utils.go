@@ -502,16 +502,54 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
 	}
+	generatedDocIDs := make(map[string]string)
 	for _, doc := range docs {
-		docJSON, err := doc.Doc.String()
+		collectionID := nameToInd[doc.Col.Name]
+		docMap, err := doc.Doc.ToMap()
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
+		// The generator assigns each doc a placeholder DocID, used only to wire up relations
+		// between generated docs (see replaceGeneratedDocIDs below). The real DocID is derived
+		// from the genesis CID when the doc is saved, so the placeholder is recorded for relation
+		// lookup and then dropped from the map to avoid persisting a stale DocID.
+		generatedDocID := doc.GeneratedID
+		replaceGeneratedDocIDs(docMap, generatedDocIDs)
+		delete(docMap, request.DocIDFieldName)
 
-		a := &action.AddDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a := &action.AddDoc{CollectionID: collectionID, DocMap: docMap, NodeID: nodeID}
 		a.SetState(s)
 		a.Execute()
+
+		if generatedDocID != "" {
+			s.DocIDsLock.RLock()
+			docIDs := s.DocIDs[collectionID]
+			generatedDocIDs[generatedDocID] = docIDs[len(docIDs)-1].String()
+			s.DocIDsLock.RUnlock()
+		}
 	}
+}
+
+func replaceGeneratedDocIDs(docMap map[string]any, generatedDocIDs map[string]string) {
+	for key, value := range docMap {
+		docMap[key] = replaceGeneratedDocID(value, generatedDocIDs)
+	}
+}
+
+func replaceGeneratedDocID(value any, generatedDocIDs map[string]string) any {
+	switch value := value.(type) {
+	case string:
+		if docID, ok := generatedDocIDs[value]; ok {
+			return docID
+		}
+	case []any:
+		for i, item := range value {
+			value[i] = replaceGeneratedDocID(item, generatedDocIDs)
+		}
+	case map[string]any:
+		replaceGeneratedDocIDs(value, generatedDocIDs)
+	}
+	return value
 }
 
 func generateDocs(s *state.State, action GenerateDocs) {
@@ -752,13 +790,14 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
 
+	activeMultipliers := multiplier.Get()
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
 		testCase.Actions[idx] = modified[i]
 	}
 
-	applyTestCaseLevelMultipliers(testCase, multiplier.Get())
+	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
 }
 
 // applyTestCaseLevelMultipliers mutates TestCase fields based on the given
@@ -1735,8 +1774,8 @@ func exportBackup(
 
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
 		opt := options.BasicExport().
 			SetFormat(action.Config.Format).
 			SetPretty(action.Config.Pretty).
@@ -1749,7 +1788,7 @@ func exportBackup(
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 
 		if !expectedErrorRaised {
-			assertBackupContent(s.T, action.ExpectedContent, action.Config.Filepath)
+			assertBackupContent(s.T, replace(s, nodeIDs[i], action.ExpectedContent), action.Config.Filepath)
 		}
 	}
 
@@ -1765,14 +1804,14 @@ func importBackup(
 		action.Filepath = s.T.TempDir() + testJSONFile
 	}
 
-	// we can avoid checking the error here as this would mean the filepath is invalid
-	// and we want to make sure that `BasicImport` fails in this case.
-	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
-
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
+		// we can avoid checking the error here as this would mean the filepath is invalid
+		// and we want to make sure that `BasicImport` fails in this case.
+		_ = os.WriteFile(action.Filepath, []byte(replace(s, nodeIDs[i], action.ImportContent)), 0664)
+
 		err := withRetryOnNode(
 			node,
 			func() error { return node.BasicImport(s.Ctx, action.Filepath) },
@@ -2278,11 +2317,12 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
+		cid := replace(s, i, action.Cid)
 
 		if hadTxn {
-			err = txn.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+			err = txn.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
 		} else {
-			err = node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+			err = node.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
 		}
 
 		if action.ExpectedError != "" {

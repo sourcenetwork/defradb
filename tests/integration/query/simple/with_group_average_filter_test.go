@@ -103,10 +103,10 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithFilter(
 							"AVG":  float64(33),
 							"GROUP": []map[string]any{
 								{
-									"Age": int64(32),
+									"Age": int64(34),
 								},
 								{
-									"Age": int64(34),
+									"Age": int64(32),
 								},
 							},
 						},

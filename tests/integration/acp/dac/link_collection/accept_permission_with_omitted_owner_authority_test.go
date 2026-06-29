@@ -67,7 +67,7 @@ resources:
  								type {
  								name
  								kind
- 								ofType { name kind }
+								ofType { name kind }
  								}
  							}
  						}
@@ -236,7 +236,7 @@ resources:
  								type {
  								name
  								kind
- 								ofType { name kind }
+								ofType { name kind }
  								}
  							}
  						}

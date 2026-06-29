@@ -54,6 +54,7 @@ const (
 	errDecryptVersionedBlock      string = "failed to decrypt block during version replay"
 	errEncryptionKeyMissing       string = "encryption key not available locally for block"
 	errIndexEpochNotFound         string = "index epoch sequence not found"
+	errMissingVersionedPrefix     string = "versioned fetcher started without a prefix"
 )
 
 var (
@@ -72,6 +73,7 @@ var (
 	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)
 	ErrEncryptionKeyMissing       = errors.New(errEncryptionKeyMissing)
 	ErrIndexEpochNotFound         = errors.New(errIndexEpochNotFound)
+	ErrMissingVersionedPrefix     = errors.New(errMissingVersionedPrefix)
 )
 
 // NewErrDecryptVersionedBlock returns an error indicating that the given block could not

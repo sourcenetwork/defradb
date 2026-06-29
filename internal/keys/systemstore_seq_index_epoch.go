@@ -22,7 +22,7 @@ import (
 // building epoch, so a building epoch never reuses the active epoch or one left behind by
 // an interrupted rebuild whose entries have not yet been collected.
 //
-// CollectionShortID is the short collection ID, which is keyed by the stable collection ID and so
+// CollectionShortID is keyed by the stable collection ID and so
 // is itself stable across version switches; the sequence therefore survives them. It is used in
 // place of the full collection ID to keep the key small.
 type IndexEpochSequenceKey struct {

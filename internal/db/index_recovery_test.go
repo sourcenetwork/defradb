@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 // TestRecoverIndexStates_BuildingResumesAndCompletes checks recovery rebuilds an interrupted
@@ -108,15 +109,26 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	// docIDs sort lexicographically, matching storage order.
-	docIDs := make([]string, len(docs))
-	for i, d := range docs {
-		docIDs[i] = d.ID().String()
-	}
-	sort.Strings(docIDs)
+	// Doc short IDs sort in storage order.
+	docShortIDs := make([]uint64, len(docs))
+	func() {
+		rawTxn, err := db.NewTxn(true)
+		require.NoError(t, err)
+		defer rawTxn.Discard()
+		txnCtx := InitContext(ctx, rawTxn)
+		for i, d := range docs {
+			docShortID, found, err := id.GetDocShortID(txnCtx, shortID, d.ID().String())
+			require.NoError(t, err)
+			require.True(t, found)
+			docShortIDs[i] = docShortID
+		}
+	}()
+	sort.Slice(docShortIDs, func(i, j int) bool {
+		return docShortIDs[i] < docShortIDs[j]
+	})
 
 	// Watermark at the midpoint: docs 0-2 count as done, 3-5 must be re-indexed.
-	watermark := docIDs[2]
+	watermark := docShortIDs[2]
 	docsAfterWatermark := 3
 
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {

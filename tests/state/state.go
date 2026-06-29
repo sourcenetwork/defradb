@@ -239,6 +239,8 @@ type NodeState struct {
 	// Map of docIDs to their composite CIDs.
 	Composites     map[string][]cid.Cid
 	CompositesLock sync.RWMutex
+	// Map of docIDs to their field-level CIDs by field name.
+	FieldCIDs map[string]map[string][]cid.Cid
 }
 
 // State contains all testing State.

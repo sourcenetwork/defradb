@@ -53,7 +53,7 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParent(t *testing.T) {
 											"scanNode": dataMap{
 												"iterations":   uint64(2),
 												"docFetches":   uint64(2),
-												"fieldFetches": uint64(7),
+												"fieldFetches": uint64(8),
 												"indexFetches": uint64(0),
 											},
 										},
@@ -124,8 +124,8 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 																	"filterMatches": uint64(2),
 																	"scanNode": dataMap{
 																		"iterations":   uint64(2),
-																		"docFetches":   uint64(4),
-																		"fieldFetches": uint64(12),
+																		"docFetches":   uint64(3),
+																		"fieldFetches": uint64(9),
 																		"indexFetches": uint64(0),
 																	},
 																},

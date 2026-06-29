@@ -129,15 +129,15 @@ func (c *collection) getWithACP(
 		return nil, err
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// construct target DS key from DocID.
+	// construct target datastore key from the resolved document short ID.
 	targetKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             primaryKey.DocID,
+		CollectionShortID: collectionShortID,
+		DocShortID:        primaryKey.DocShortID,
 	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)

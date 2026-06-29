@@ -522,9 +522,9 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "pixel"},
 						{"model": "walkman"},
 						{"model": "iPhone"},
+						{"model": "pixel"},
 					},
 				},
 			},

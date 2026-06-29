@@ -76,9 +76,9 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_bossID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
-		`"_docID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
-		`"_docIDNew":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_bossID":"{{.DocID0_0}}",` +
+		`"_docID":"{{.DocID0_0}}",` +
+		`"_docIDNew":"{{.DocID0_0}}",` +
 		`"age":31,` +
 		`"name":"Bob"` +
 		`}` +
@@ -103,7 +103,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
+					"_bossID": "{{.DocID0_0}}"
 				}`,
 			},
 			testUtils.ExportBackup{
@@ -163,6 +163,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 				ImportContent: `{
 					"Author":[
 						{
+							"_docID":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"_docIDNew":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
 							"name":"John"
 						}
 					],
@@ -236,6 +238,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					],
 					"Author":[
 						{
+							"_docID":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"_docIDNew":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
 							"name":"John"
 						}
 					]
@@ -274,8 +278,6 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// This test documents undesirable behaviour, as the documents are not linked.
-// https://github.com/sourcenetwork/defradb/issues/1704
 func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"Author":[` +
@@ -369,8 +371,13 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "John and the sourcerers' stone",
-							"author": nil,
+							"name": "John and the sourcerers' stone",
+							"author": map[string]any{
+								"name": "John",
+								"reviewed": map[string]any{
+									"name": "John and the sourcerers' stone",
+								},
+							},
 						},
 					},
 				},

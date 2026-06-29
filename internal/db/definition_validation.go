@@ -1350,13 +1350,13 @@ func validateDematerializedViewHasNoData(
 
 		txn := datastore.CtxMustGetTxn(ctx)
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
 
 		iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-			Prefix:   keys.NewViewCacheColPrefix(shortID),
+			Prefix:   keys.NewViewCacheColPrefix(collectionShortID),
 			KeysOnly: true,
 		})
 		if err != nil {

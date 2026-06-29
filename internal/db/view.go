@@ -110,7 +110,10 @@ func (db *DB) addView(
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
+func (db *DB) refreshViews(
+	ctx context.Context,
+	opts *options.GetCollectionsOptions,
+) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -125,11 +128,11 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			continue
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
-		db.lockSet.CollectionLock(txn, shortID)
+		db.lockSet.CollectionLock(txn, collectionShortID)
 
 		colObject, err := db.newCollection(ctx, col, immutable.Some(txn))
 		if err != nil {
@@ -279,12 +282,12 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 			return err
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(shortID, itemID)
+		itemKey := keys.NewViewCacheKey(collectionShortID, itemID)
 		err = ds.Set(ctx, itemKey, serializedItem)
 		if err != nil {
 			return NewErrStoreViewCacheItem(err)

@@ -423,6 +423,9 @@ func findFilteredByRelationFields(
 // isOrderedByIndex checks if the plan is ordered by an index.
 func isOrderedByIndex(plan planNode) bool {
 	var scan *scanNode
+	if getNode[*pipeNode](plan) != nil {
+		return false
+	}
 	// the typeIndexJoin has 2 scan nodes for every side of the join
 	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
 	typeJoin := getNode[*typeIndexJoin](plan)
