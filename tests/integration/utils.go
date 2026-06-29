@@ -320,7 +320,9 @@ func executeTestCase(
 	// `change_detector` package for details.
 	if changeDetector.Enabled && changeDetector.SetupOnly {
 		err := changeDetector.WriteTestState(s.T, changeDetector.TestState{
-			CollectionVersions: s.CollectionVersions,
+			CollectionVersions:   s.CollectionVersions,
+			DocIDs:               docIDsToStrings(s),
+			CollectionComposites: collectionCompositesToStrings(s),
 		})
 		require.NoError(s.T, err)
 	}
@@ -1268,6 +1270,25 @@ func refreshDocuments(
 	}
 	s.DocIDsLock.Unlock()
 
+	// Post-#4838 a document's public DocID is derived from its genesis CID and is
+	// only known once the document has been saved, so it cannot be reconstructed by
+	// re-parsing the source-phase AddDoc actions. When the change-detector source
+	// phase persisted the authoritative DocIDs, load those and rebuild the commit
+	// caches against them. Otherwise fall back to the legacy parse-based
+	// reconstruction, which remains correct for source branches that pre-date the
+	// genesis-CID DocID model.
+	if loadDocIDsFromState(s) {
+		s.DocIDsLock.RLock()
+		docIDsByCollection := s.DocIDs
+		s.DocIDsLock.RUnlock()
+		for _, docIDs := range docIDsByCollection {
+			for _, docID := range docIDs {
+				rebuildDocCommitCIDs(s, 0, docID)
+			}
+		}
+		return
+	}
+
 	for i := 0; i < startActionIndex; i++ {
 		// We need to add the existing documents in the order in which the test case lists them
 		// otherwise they cannot be referenced correctly by other actions.
@@ -1289,45 +1310,178 @@ func refreshDocuments(
 				continue
 			}
 
-			s.Nodes[firstNodesID].CompositesLock.Lock()
-			if s.Nodes[firstNodesID].Composites == nil {
-				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
-			}
-			s.Nodes[firstNodesID].CompositesLock.Unlock()
-
 			for _, doc := range docs {
 				s.DocIDsLock.Lock()
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
 				s.DocIDsLock.Unlock()
 
-				// We fetch the list of composite commits for the document so that
-				// they can be referenced later in the test if required.
-				result := s.Nodes[firstNodesID].ExecRequest(s.Ctx, `query ($docID: [ID!]) {
-					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
-						cid
-					}
-				}`, options.ExecRequest().SetVariables(map[string]any{
-					"docID": []string{doc.ID().String()},
-				}))
-				if data, ok := result.GQL.Data.(map[string]any); ok {
-					if commits, ok := data["_commits"].([]map[string]any); ok {
-						for _, commit := range commits {
-							cid := cid.MustParse(commit[request.CidFieldName].(string))
-
-							s.Nodes[firstNodesID].CompositesLock.Lock()
-							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
-								s.Nodes[firstNodesID].Composites[doc.ID().String()],
-								cid,
-							)
-							s.Nodes[firstNodesID].CompositesLock.Unlock()
-						}
-					}
-				}
-				if len(result.GQL.Errors) > 0 {
-					s.T.Fatalf("Failed to get existing commits for doc %s: %v", doc.ID(), result.GQL.Errors)
-				}
+				rebuildDocCommitCIDs(s, firstNodesID, doc.ID())
 			}
 		}
+	}
+}
+
+// docIDsToStrings flattens s.DocIDs into a serializable [][]string for the
+// change-detector sidecar, preserving the [collection][index] ordering.
+func docIDsToStrings(s *state.State) [][]string {
+	s.DocIDsLock.RLock()
+	defer s.DocIDsLock.RUnlock()
+
+	out := make([][]string, len(s.DocIDs))
+	for col, ids := range s.DocIDs {
+		out[col] = make([]string, len(ids))
+		for i, id := range ids {
+			out[col][i] = id.String()
+		}
+	}
+	return out
+}
+
+// collectionCompositesToStrings extracts the collection-level composite commit
+// CIDs (keyed by CollectionID) recorded on the first node, for the
+// change-detector sidecar. Only branchable collections accumulate these.
+func collectionCompositesToStrings(s *state.State) map[string][]string {
+	if len(s.Nodes) == 0 {
+		return nil
+	}
+	node := s.Nodes[0]
+
+	node.CompositesLock.RLock()
+	defer node.CompositesLock.RUnlock()
+
+	out := map[string][]string{}
+	for _, collection := range node.Collections {
+		if collection == nil {
+			continue
+		}
+		cids := node.Composites[collection.CollectionID()]
+		if len(cids) == 0 {
+			continue
+		}
+		strs := make([]string, len(cids))
+		for i, c := range cids {
+			strs[i] = c.String()
+		}
+		out[collection.CollectionID()] = strs
+	}
+	return out
+}
+
+// loadDocIDsFromState populates s.DocIDs from the DocIDs the change-detector
+// source phase persisted, returning true on success. It returns false (leaving
+// s.DocIDs untouched) outside the assert phase or when the source branch did not
+// persist DocIDs, so the caller can fall back to legacy reconstruction.
+func loadDocIDsFromState(s *state.State) bool {
+	if !changeDetector.Enabled || changeDetector.SetupOnly {
+		return false
+	}
+
+	cdState, err := changeDetector.ReadTestState(s.T)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			require.NoError(s.T, err)
+		}
+		return false
+	}
+	if cdState.DocIDs == nil {
+		// Source branch pre-dates DocID persistence; fall back to reconstruction.
+		return false
+	}
+
+	docIDs := make([][]client.DocID, len(cdState.DocIDs))
+	for col, ids := range cdState.DocIDs {
+		docIDs[col] = make([]client.DocID, len(ids))
+		for i, idStr := range ids {
+			docID, err := client.NewDocIDFromString(idStr)
+			require.NoError(s.T, err)
+			docIDs[col][i] = docID
+		}
+	}
+
+	s.DocIDsLock.Lock()
+	s.DocIDs = docIDs
+	s.DocIDsLock.Unlock()
+
+	restoreCollectionComposites(s, cdState.CollectionComposites)
+	return true
+}
+
+// restoreCollectionComposites repopulates the collection-level composite commit
+// cache from the change-detector sidecar so {{.CollectionCIDN}} templates resolve
+// in the assert phase. Unlike document composites, these cannot be rebuilt from
+// the persisted data as they are only observed via update events at creation time.
+func restoreCollectionComposites(s *state.State, collectionComposites map[string][]string) {
+	if len(collectionComposites) == 0 {
+		return
+	}
+
+	for _, node := range s.Nodes {
+		node.CompositesLock.Lock()
+		if node.Composites == nil {
+			node.Composites = make(map[string][]cid.Cid)
+		}
+		for collectionID, cidStrs := range collectionComposites {
+			cids := make([]cid.Cid, len(cidStrs))
+			for i, cidStr := range cidStrs {
+				cids[i] = cid.MustParse(cidStr)
+			}
+			node.Composites[collectionID] = cids
+		}
+		node.CompositesLock.Unlock()
+	}
+}
+
+// rebuildDocCommitCIDs repopulates the composite- and field-level commit caches
+// for a single document so that {{.CID...}} and {{.FieldCID...}} references in
+// later actions resolve to the CIDs the source phase produced.
+func rebuildDocCommitCIDs(s *state.State, nodeIndex int, docID client.DocID) {
+	node := s.Nodes[nodeIndex]
+
+	node.CompositesLock.Lock()
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[docID.String()] == nil {
+		node.FieldCIDs[docID.String()] = make(map[string][]cid.Cid)
+	}
+	node.CompositesLock.Unlock()
+
+	// We fetch all commits (composite and field level) for the document in height
+	// order so that they can be referenced later in the test if required.
+	result := node.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
+		_commits(docID: $docID, order: {height: ASC}) {
+			cid
+			fieldName
+		}
+	}`, options.ExecRequest().SetVariables(map[string]any{
+		"docID": []string{docID.String()},
+	}))
+	if len(result.GQL.Errors) > 0 {
+		s.T.Fatalf("Failed to get existing commits for doc %s: %v", docID, result.GQL.Errors)
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return
+	}
+	commits, ok := data["_commits"].([]map[string]any)
+	if !ok {
+		return
+	}
+
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+	for _, commit := range commits {
+		c := cid.MustParse(commit[request.CidFieldName].(string))
+		fieldName, _ := commit[request.FieldNameName].(string)
+		if fieldName == request.CompositeFieldName {
+			node.Composites[docID.String()] = append(node.Composites[docID.String()], c)
+			continue
+		}
+		node.FieldCIDs[docID.String()][fieldName] = append(node.FieldCIDs[docID.String()][fieldName], c)
 	}
 }
 
