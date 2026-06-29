@@ -123,13 +123,13 @@ func TestNewIndexesToSDL_WithOtherDirectives_AddsIndexBeforeDirective(t *testing
 	sdl := `type User {
 	name: String @crdt(type: lww)
 	points: Float @crdt(type: pcounter)
-	active: Boolean @default(bool: true)
+	active: Boolean @default(value: true)
 }`
 	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String @index @crdt(type: lww)")
 	assert.Contains(t, result, "points: Float @index @crdt(type: pcounter)")
-	assert.Contains(t, result, "active: Boolean @index @default(bool: true)")
+	assert.Contains(t, result, "active: Boolean @index @default(value: true)")
 }
 
 func TestNewIndexesToSDL_WithNonNullFields_AddsIndex(t *testing.T) {
@@ -148,12 +148,12 @@ func TestNewIndexesToSDL_WithNonNullFields_AddsIndex(t *testing.T) {
 func TestNewIndexesToSDL_WithNonNullAndDirectives_AddsIndex(t *testing.T) {
 	sdl := `type User {
 	name: String! @crdt(type: lww)
-	age: Int! @default(int: 0)
+	age: Int! @default(value: 0)
 }`
 	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "name: String! @index @crdt(type: lww)")
-	assert.Contains(t, result, "age: Int! @index @default(int: 0)")
+	assert.Contains(t, result, "age: Int! @index @default(value: 0)")
 }
 
 func TestNewIndexesToSDL_WithArrayFields_AddsIndex(t *testing.T) {
@@ -174,12 +174,12 @@ func TestNewIndexesToSDL_WithArrayFields_AddsIndex(t *testing.T) {
 func TestNewIndexesToSDL_WithArrayAndDirectives_AddsIndex(t *testing.T) {
 	sdl := `type User {
 	tags: [String] @crdt(type: lww)
-	numbers: [Int!] @default(int: [])
+	numbers: [Int!] @default(value: [])
 }`
 	result := addIndexesToSDL(sdl)
 
 	assert.Contains(t, result, "tags: [String] @index @crdt(type: lww)")
-	assert.Contains(t, result, "numbers: [Int!] @index @default(int: [])")
+	assert.Contains(t, result, "numbers: [Int!] @index @default(value: [])")
 }
 
 func TestNewIndexesToSDL_WithOneToManyRelation_IndexesManySide(t *testing.T) {

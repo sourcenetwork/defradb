@@ -39,15 +39,13 @@ var (
 type DocID struct {
 	version uint16
 	uuid    uuid.UUID
-	cid     cid.Cid
 }
 
-// NewDocIDV0 creates a new DocID identified by the root data CID, peerID, and namespaced by the versionNS.
+// NewDocIDV0 creates a new DocID identified by the root data CID and namespaced by the versionNS.
 func NewDocIDV0(dataCID cid.Cid) DocID {
 	return DocID{
 		version: DocIDV0,
 		uuid:    uuid.NewV5(SDNNamespaceV0, dataCID.String()),
-		cid:     dataCID,
 	}
 }
 
@@ -85,6 +83,11 @@ func NewDocIDFromString(docID string) (DocID, error) {
 // UUID returns the underlying document identifier in UUID form.
 func (docID DocID) UUID() uuid.UUID {
 	return docID.uuid
+}
+
+// IsValid returns true if this DocID uses a supported version.
+func (docID DocID) IsValid() bool {
+	return ValidDocIDVersions[docID.version]
 }
 
 // String returns the underlying document identifier in string form.

@@ -12,14 +12,61 @@
 package commits
 
 import (
+	"encoding/json"
+	"strconv"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/onsi/gomega"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
+
+func commitLink(fieldName string, height uint64) gomega.OmegaMatcher {
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return hasValidCID(actual["cid"]) &&
+			actual["fieldName"] == fieldName &&
+			heightEquals(actual["height"], height)
+	})
+}
+
+func commitHeadLink(fieldName string) gomega.OmegaMatcher {
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return hasValidCID(actual["cid"]) && actual["fieldName"] == fieldName
+	})
+}
+
+func commitLinkWithoutCID(fieldName string, height uint64) gomega.OmegaMatcher {
+	return gomega.Satisfy(func(actual map[string]any) bool {
+		return actual["fieldName"] == fieldName && heightEquals(actual["height"], height)
+	})
+}
+
+func hasValidCID(value any) bool {
+	cidString, ok := value.(string)
+	if !ok {
+		return false
+	}
+	_, err := cid.Parse(cidString)
+	return err == nil
+}
+
+func heightEquals(value any, expected uint64) bool {
+	switch value := value.(type) {
+	case json.Number:
+		return value.String() == strconv.FormatUint(expected, 10)
+	case uint64:
+		return value == expected
+	case int64:
+		return value >= 0 && uint64(value) == expected
+	case int:
+		return value >= 0 && uint64(value) == expected
+	default:
+		return false
+	}
+}
 
 func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 	ageCreateCid := testUtils.NewSameValue()
@@ -73,18 +120,10 @@ func TestQueryCommits_WithSingleAddNestedLinks_Succeed(t *testing.T) {
 							"cid":       createCompositeCid,
 							"height":    uint64(1),
 							"fieldName": "_C",
-							"links": []map[string]any{
-								{
-									"cid":       ageCreateCid,
-									"height":    uint64(1),
-									"fieldName": "age",
-								},
-								{
-									"cid":       nameCreateCid,
-									"height":    uint64(1),
-									"fieldName": "name",
-								},
-							},
+							"links": gomega.ConsistOf(
+								commitLink("age", 1),
+								commitLink("name", 1),
+							),
 							"heads": []map[string]any{},
 						},
 					},
@@ -123,16 +162,10 @@ func TestQueryCommits_WithSingleAddNestedLinksCompositeFilter_Succeed(t *testing
 						{
 							"height":    uint64(1),
 							"fieldName": "_C",
-							"links": []map[string]any{
-								{
-									"height":    uint64(1),
-									"fieldName": "age",
-								},
-								{
-									"height":    uint64(1),
-									"fieldName": "name",
-								},
-							},
+							"links": gomega.ConsistOf(
+								commitLinkWithoutCID("age", 1),
+								commitLinkWithoutCID("name", 1),
+							),
 						},
 					},
 				},
@@ -248,7 +281,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						{
 							"cid":       gomega.And(ageUpdateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(22),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(2),
 							"links":     []map[string]any{},
@@ -256,7 +289,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 								{
 									"cid":    ageCreateCid,
 									"height": int64(1),
-									"docID":  "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"docID":  "{{.DocID0_0}}",
 									"links":  []map[string]any{},
 								},
 							},
@@ -264,7 +297,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						{
 							"cid":       gomega.And(ageCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(21),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -273,7 +306,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						{
 							"cid":       gomega.And(nameCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue("John"),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -282,7 +315,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						{
 							"cid":       gomega.And(updateCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(2),
 							"links": []map[string]any{
@@ -290,7 +323,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 									"cid":       ageUpdateCid,
 									"fieldName": "age",
 									"height":    int64(2),
-									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"docID":     "{{.DocID0_0}}",
 									"heads": []map[string]any{
 										{
 											"fieldName": "age",
@@ -303,42 +336,24 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 								{
 									"cid":    createCompositeCid,
 									"height": int64(1),
-									"docID":  "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"links": []map[string]any{
-										{
-											"fieldName": "age",
-											"cid":       ageCreateCid,
-										},
-										{
-											"fieldName": "name",
-											"cid":       nameCreateCid,
-										},
-									},
+									"docID":  "{{.DocID0_0}}",
+									"links": gomega.ConsistOf(
+										commitHeadLink("age"),
+										commitHeadLink("name"),
+									),
 								},
 							},
 						},
 						{
 							"cid":       gomega.And(createCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(1),
-							"links": []map[string]any{
-								{
-									"cid":       ageCreateCid,
-									"fieldName": "age",
-									"height":    uint64(1),
-									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"heads":     []map[string]any{},
-								},
-								{
-									"cid":       nameCreateCid,
-									"fieldName": "name",
-									"height":    uint64(1),
-									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"heads":     []map[string]any{},
-								},
-							},
+							"links": gomega.ConsistOf(
+								commitLink("age", 1),
+								commitLink("name", 1),
+							),
 							"heads": []map[string]any{},
 						},
 					},

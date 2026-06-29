@@ -38,14 +38,14 @@ func TestMutationDeletion_WithIDAndTxn(t *testing.T) {
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9"]) {
+					delete_User(docID: ["{{.DocID0_0}}"]) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-390b4419-fe1c-506b-98bd-20847cdab2d9",
+							"_docID": "{{.DocID0_0}}",
 						},
 					},
 				},

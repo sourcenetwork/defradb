@@ -69,7 +69,7 @@ func TestSignatureACP_WithBranchableCollection_IfHasNoCollectionAccess_ShouldErr
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiadvz64bxscu2orvhbnfutagpfx5ggvfpv6ojutpaeuxhln7fajh4",
+				Cid:            "bafyreia7dgbk4gjeo3hvdqcbizzl4f25onmy7oetwhvxe6sq3lup5n7xju",
 				ExpectedError:  db.ErrMissingPermission.Error(),
 			},
 		},
@@ -110,7 +110,7 @@ func TestSignatureACP_WithBranchableCollection_IfHasCollectionAccess_ValidateSig
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreiadvz64bxscu2orvhbnfutagpfx5ggvfpv6ojutpaeuxhln7fajh4",
+				Cid:            "bafyreia7dgbk4gjeo3hvdqcbizzl4f25onmy7oetwhvxe6sq3lup5n7xju",
 			},
 		},
 	}

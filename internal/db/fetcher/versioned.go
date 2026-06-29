@@ -207,13 +207,18 @@ func (vf *VersionedFetcher) Init(
 
 // Start serializes the correct state according to the Key and CID.
 func (vf *VersionedFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) error {
-	// VersionedFetcher only ever recieves a headstore key
-	//nolint:forcetypeassert
-	prefix := prefixes[0].(keys.HeadstoreDocKey)
+	if len(prefixes) == 0 {
+		return ErrMissingVersionedPrefix
+	}
+	// The versioned fetcher is only ever given a headstore key by the planner.
+	prefix, ok := prefixes[0].(keys.HeadstoreDocKey)
+	if !ok {
+		return client.NewErrUnexpectedType[keys.HeadstoreDocKey]("prefix", prefixes[0])
+	}
 
 	vf.ctx = ctx
 
-	if err := vf.seekTo(prefix.Cid); err != nil {
+	if err := vf.seekTo(prefix.Cid, prefix.DocShortID); err != nil {
 		return NewErrFailedToSeek(prefix.Cid, err)
 	}
 
@@ -234,21 +239,11 @@ err := VersionFetcher.Start(txn, prefixes) {
 }
 */
 
-// SeekTo exposes the private seekTo.
-func (vf *VersionedFetcher) SeekTo(ctx context.Context, c cid.Cid) error {
-	err := vf.seekTo(c)
-	if err != nil {
-		return err
-	}
-
-	return vf.Fetcher.Start(ctx)
-}
-
 // seekTo seeks to the given CID version by stepping through the CRDT state graph from the beginning
 // to the target state, creating the serialized state at the given version. It starts by seeking
 // to the closest existing state snapshot in the transient Versioned stores, which on the first
 // run is 0. It seeks by iteratively jumping through the state graph via the `_head` link.
-func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
+func (vf *VersionedFetcher) seekTo(c cid.Cid, docShortID uint64) error {
 	// reinit the queued cids list
 	vf.queuedCids = list.New()
 
@@ -271,12 +266,33 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	/// // as a cache, we need to swap out states to the parent of the current
 	/// // CID.
 	// }
-	for ccv := vf.queuedCids.Front(); ccv != nil; ccv = ccv.Next() {
+	firstQueued := vf.queuedCids.Front()
+	if docShortID == 0 && firstQueued != nil {
+		cc, ok := firstQueued.Value.(cid.Cid)
+		if !ok {
+			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", firstQueued.Value)
+		}
+		block, err := vf.getDAGBlock(cc)
+		if err != nil {
+			return err
+		}
+		if block.Delta.IsComposite() && len(block.Heads) == 0 {
+			collectionShortID, err := id.GetCollectionShortID(vf.ctx, vf.col.Version().CollectionID)
+			if err != nil {
+				return err
+			}
+			docShortID, err = vf.docShortIDForBlock(collectionShortID, block, cc)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for ccv := firstQueued; ccv != nil; ccv = ccv.Next() {
 		cc, ok := ccv.Value.(cid.Cid)
 		if !ok {
 			return client.NewErrUnexpectedType[cid.Cid]("queueudCids", ccv.Value)
 		}
-		err := vf.merge(cc)
+		err := vf.merge(cc, docShortID)
 		if err != nil {
 			return NewErrFailedToMergeState(err)
 		}
@@ -362,101 +378,179 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 // gets the existing MerkleClock instance, or creates one.
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
-func (vf *VersionedFetcher) merge(c cid.Cid) error {
-	// get node
-	block, err := vf.getDAGBlock(c)
+func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
+	collectionShortID, err := id.GetCollectionShortID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
-	// If the block is encrypted, decrypt it before replaying its delta into the
-	// transient store. The live merge processor (internal/db.mergeProcessor) does
-	// the equivalent step before its own ProcessBlock call; without it the
-	// transient store ends up with ciphertext bytes and downstream CBOR decoding
-	// of field values fails.
-	block, canRead, err := coreblock.ProcessEncryptedBlock(vf.ctx, vf.getEncBlockLS(), block)
-	if err != nil {
-		return NewErrDecryptVersionedBlock(err, c.String())
-	}
-	if !canRead {
-		return NewErrEncryptionKeyMissing(c.String())
+	type mergeItem struct {
+		cid cid.Cid
 	}
 
-	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
-	if err != nil {
-		return err
-	}
+	stack := make([]mergeItem, 0, 64)
+	stack = append(stack, mergeItem{cid: c})
 
-	var mcrdt crdt.ReplicatedData
-	switch {
-	case block.Delta.IsCollection():
-		mcrdt = crdt.NewCollection(
-			vf.col.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		)
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
 
-	case block.Delta.IsComposite():
-		mcrdt = crdt.NewDocComposite(
-			vf.store.Datastore(),
-			block.Delta.GetCollectionVersionID(),
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
+		block, err := vf.getDAGBlock(current.cid)
+		if err != nil {
+			return err
+		}
+
+		block, canRead, err := coreblock.ProcessEncryptedBlock(vf.ctx, vf.getEncBlockLS(), block)
+		if err != nil {
+			return NewErrDecryptVersionedBlock(err, current.cid.String())
+		}
+		if !canRead {
+			return NewErrEncryptionKeyMissing(current.cid.String())
+		}
+
+		var blockDocShortID uint64
+		if !block.Delta.IsCollection() {
+			blockDocShortID = docShortID
+			if blockDocShortID == 0 {
+				var err error
+				blockDocShortID, err = vf.docShortIDForBlock(collectionShortID, block, current.cid)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		var mcrdt crdt.ReplicatedData
+		switch {
+		case block.Delta.IsCollection():
+			mcrdt = crdt.NewCollection(
+				vf.col.Version().VersionID,
+				keys.NewHeadstoreColKey(collectionShortID),
+			)
+
+		case block.Delta.IsComposite():
+			mcrdt = crdt.NewDocComposite(
+				vf.store.Datastore(),
+				block.Delta.GetCollectionVersionID(),
+				keys.DataStoreKey{
+					CollectionShortID: collectionShortID,
+					DocShortID:        blockDocShortID,
+					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				},
+			)
+
+		default:
+			field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
+			if !ok {
+				return client.NewErrFieldNotExist(block.Delta.GetFieldName())
+			}
+
+			fieldShortID, err := id.GetShortFieldID(vf.ctx, collectionShortID, field.FieldID)
+			if err != nil {
+				return err
+			}
+
+			mcrdt, err = crdt.FieldLevelCRDTWithStore(
+				vf.store.Datastore(),
+				block.Delta.GetCollectionVersionID(),
+				field.Typ,
+				field.Kind,
+				keys.DataStoreKey{
+					CollectionShortID: collectionShortID,
+					DocShortID:        blockDocShortID,
+					FieldID:           fmt.Sprint(fieldShortID),
+				},
+				field.Name,
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = coreblock.ProcessBlock(
+			vf.ctx,
+			mcrdt,
+			block,
+			cidlink.Link{
+				Cid: current.cid,
 			},
 		)
-
-	default:
-		field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
-		if !ok {
-			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
-		}
-
-		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
 		if err != nil {
 			return err
 		}
 
-		mcrdt, err = crdt.FieldLevelCRDTWithStore(
-			vf.store.Datastore(),
-			block.Delta.GetCollectionVersionID(),
-			field.Typ,
-			field.Kind,
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(fieldShortID),
-			},
-			field.Name,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = coreblock.ProcessBlock(
-		vf.ctx,
-		mcrdt,
-		block,
-		cidlink.Link{
-			Cid: c,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	// Handle subgraphs. We range over `Links` only (not `Heads``) because the trunk is already accounted for
-	// by the initial caller or `merge`. Including `Heads` would result in unnecessary recursion and possible
-	// wrong final value for the fields.
-	for _, l := range block.Links {
-		err = vf.merge(l.Cid)
-		if err != nil {
-			return err
+		for i := len(block.Links) - 1; i >= 0; i-- {
+			stack = append(stack, mergeItem{
+				cid: block.Links[i].Cid,
+			})
 		}
 	}
 
 	return nil
+}
+
+func (vf *VersionedFetcher) docShortIDForBlock(
+	collectionShortID uint32,
+	block *coreblock.Block,
+	blockCID cid.Cid,
+) (uint64, error) {
+	if block.Delta.IsCollection() {
+		return 0, nil
+	}
+
+	owners, err := id.GetDocIDsForBlockFromStore(
+		vf.ctx,
+		vf.txn.Systemstore(),
+		blockCID,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	var docID string
+	switch {
+	case len(owners) == 1:
+		// A single-owner block (composite, or an unshared field block) belongs to that
+		// document. A composite block's CID is always document-unique.
+		docID = owners[0]
+	case block.Delta.IsComposite() && len(block.Heads) == 0:
+		docID = client.NewDocIDV0(blockCID).String()
+	case block.Delta.IsComposite():
+		return vf.docShortIDForCompositeHead(collectionShortID, block.Heads)
+	default:
+		// A field block with no single owner (shared across documents) cannot be attributed
+		// to one document without a composite context; time-travel enters via composite CIDs.
+		return 0, client.ErrMalformedDocID
+	}
+
+	docShortID, found, err := id.GetDocShortID(vf.ctx, collectionShortID, docID)
+	if err != nil {
+		return 0, err
+	}
+	if !found {
+		return 0, client.ErrMalformedDocID
+	}
+	return docShortID, nil
+}
+
+func (vf *VersionedFetcher) docShortIDForCompositeHead(
+	collectionShortID uint32,
+	heads []cidlink.Link,
+) (uint64, error) {
+	for _, head := range heads {
+		headBlock, err := vf.getDAGBlock(head.Cid)
+		if err != nil {
+			return 0, err
+		}
+		docShortID, err := vf.docShortIDForBlock(collectionShortID, headBlock, head.Cid)
+		if err != nil {
+			return 0, err
+		}
+		if docShortID != 0 {
+			return docShortID, nil
+		}
+	}
+	return 0, client.ErrMalformedDocID
 }
 
 func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {

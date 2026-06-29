@@ -13,7 +13,6 @@ package p2p
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -128,8 +127,8 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 			if err != nil {
 				return NewErrUnmarshalReplicator(err, id)
 			}
-			for _, colID := range storedRep.CollectionIDs {
-				storedRepCollectionIDs[id][colID] = struct{}{}
+			for _, collectionID := range storedRep.CollectionIDs {
+				storedRepCollectionIDs[id][collectionID] = struct{}{}
 			}
 		} else {
 			storedRep.ID = id
@@ -191,11 +190,15 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	type unsafeDatastore interface {
 		Unsafe() corekv.ReaderWriter
 	}
-	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
+	collectionShortID, err := id.GetUncachedCollectionShortID(
+		ctx,
+		col.Version().CollectionID,
+		p.db.Multistore().Systemstore(),
+	)
 	if err != nil {
 		return err
 	}
-	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: collectionShortID}
 	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
@@ -215,9 +218,23 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if !hasNext {
 			return nil
 		}
-		splitString := strings.Split(string(iter.Key()), "/")
-		docID := splitString[len(splitString)-1]
-		err = p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
+		primaryKey, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return err
+		}
+		docID, found, err := id.GetDocIDFromStore(
+			ctx,
+			p.db.Multistore().Systemstore(),
+			primaryKey.DocShortID,
+		)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return client.ErrDocumentNotFoundOrNotAuthorized
+		}
+
+		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return NewErrPushDocHeads(err, docID)
 		}
@@ -226,8 +243,14 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 
 // pushHeadsForDoc gets the all the head blocks for a given docID and pushes them
 // to the given peer.
-func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, peerID string) error {
-	heads, err := p.getHeads(ctx, docID)
+func (p *P2P) pushHeadsForDoc(
+	ctx context.Context,
+	docShortID uint64,
+	docID string,
+	collectionID string,
+	peerID string,
+) error {
+	heads, err := p.getHeadsForDocShortID(ctx, docShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -768,12 +791,28 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
+	docRef, found, err := id.GetDocRefFromStore(ctx, p.db.Multistore().Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
+	}
+
+	return p.getHeadsForDocShortID(ctx, docRef.DocShortID, docID)
+}
+
+func (p *P2P) getHeadsForDocShortID(
+	ctx context.Context,
+	docShortID uint64,
+	docID string,
+) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
 	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
+		DocShortID: docShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	iter, err := headstore.Iterator(ctx, corekv.IterOptions{

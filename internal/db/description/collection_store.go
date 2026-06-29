@@ -52,7 +52,7 @@ func newCollectionStore(lockSet *lock.LockSet, txnFreeDatastore corekv.Reader) *
 func (i *collectionStore) Write(ctx context.Context, value client.CollectionVersion) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	err := id.SetShortCollectionID(ctx, value.CollectionID)
+	err := id.SetCollectionShortID(ctx, value.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -279,7 +279,7 @@ func (i *collectionStore) Delete(ctx context.Context, key CollectionIndex) error
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, version.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func (i *collectionStore) Delete(ctx context.Context, key CollectionIndex) error
 	if len(versions) == 1 {
 		// It is impossible to recreate the collection short ID once it is deleted, so we must lock the collection
 		// whilst we finalize this operation, otherwise other threads/operations may try and make use of it.
-		i.lockSet.CollectionLock(txn, shortID)
+		i.lockSet.CollectionLock(txn, collectionShortID)
 
 		hasDocs, err := i.collectionHasDocuments(ctx, version)
 		if err != nil {
@@ -340,7 +340,7 @@ func (i *collectionStore) Delete(ctx context.Context, key CollectionIndex) error
 		}
 
 		// Only delete the collection short ID if this was the last local version
-		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
+		err = id.DeleteCollectionShortID(ctx, version.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -480,17 +480,17 @@ func collectionHasDocumentsReader(
 		return false, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, version.CollectionID)
 	if err != nil {
 		return false, err
 	}
 
 	var prefixKey keys.Key
 	if version.Query.HasValue() {
-		prefixKey = keys.NewViewCacheColPrefix(shortID)
+		prefixKey = keys.NewViewCacheColPrefix(collectionShortID)
 	} else {
 		prefixKey = keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 		}
 	}
 

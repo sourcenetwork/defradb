@@ -39,6 +39,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -441,35 +442,34 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := p.checkBlockAccess(ctx, identFunc, cols[0], block)
+	// A block may be owned by several documents (shared field blocks); read access to any one is
+	// enough. docIDsForBlockCID returns a single empty docID for collection-level blocks, which
+	// CheckDocReadAccessWithIdentityFunc gates on the collection object for a branchable collection.
+	docIDs, err := p.docIDsForBlockCID(ctx, c, block)
 	if err != nil {
-		log.ErrorE("Failed to check access", err)
+		log.ErrorE("Failed to resolve block doc ID", err)
 		return false
 	}
 
-	return peerHasAccess
-}
+	for _, docID := range docIDs {
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
+			ctx,
+			identFunc,
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			docID,
+		)
+		if err != nil {
+			log.ErrorE("Failed to check access", err)
+			return false
+		}
+		if peerHasAccess {
+			return true
+		}
+	}
 
-// checkBlockAccess reports whether the actor resolved by identityFunc may read block.
-//
-// A block is gated by the read access of the document it belongs to: an explicit grant on the
-// document is sufficient on its own, otherwise — for a branchable collection — the actor
-// additionally needs access to the collection object, so a private branchable collection gates its
-// entire commit DAG. See [acpDB.CheckDocReadAccessWithIdentityFunc] for the canonical rules.
-func (p *P2P) checkBlockAccess(
-	ctx context.Context,
-	identityFunc func() immutable.Option[identity.Identity],
-	col client.Collection,
-	block *coreblock.Block,
-) (bool, error) {
-	return acpDB.CheckDocReadAccessWithIdentityFunc(
-		ctx,
-		identityFunc,
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		col,
-		string(block.Delta.GetDocID()),
-	)
+	return false
 }
 
 // trySelfHasAccess checks if the local node has access to the given block.
@@ -482,7 +482,13 @@ func (p *P2P) checkBlockAccess(
 // block's collection version id, because the local node may legitimately hold a different version
 // of the collection than the one the block was authored against (e.g. replication to an older
 // collection version).
-func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
+func (p *P2P) trySelfHasAccess(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	collectionID string,
+	docID string,
+) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
@@ -509,14 +515,60 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	return p.checkBlockAccess(
+	docIDs := []string{docID}
+	if docID == "" {
+		docIDs, err = p.docIDsForBlockCID(ctx, blockCID, block)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	for _, docID := range docIDs {
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
+			ctx,
+			func() immutable.Option[identity.Identity] {
+				return immutable.Some(identity.FromDID(ident.Value().DID))
+			},
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			docID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if peerHasAccess {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (p *P2P) docIDsForBlockCID(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+) ([]string, error) {
+	if block.Delta.IsCollection() {
+		return []string{""}, nil
+	}
+
+	docIDs, err := id.GetDocIDsForBlockFromStore(
 		ctx,
-		func() immutable.Option[identity.Identity] {
-			return immutable.Some(identity.FromDID(ident.Value().DID))
-		},
-		cols[0],
-		block,
+		p.db.Multistore().Systemstore(),
+		blockCID,
 	)
+	if err != nil {
+		return nil, err
+	}
+	if len(docIDs) > 0 {
+		return docIDs, nil
+	}
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
+	}
+	return nil, nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -566,8 +618,7 @@ func (p *P2P) processPushlogRequest(
 	}
 
 	// Verify the advertised CID actually matches the block contents, so a peer cannot push
-	// arbitrary content under a CID of its choosing. Everything below is then derived from the
-	// verified, content-addressed block rather than from the (spoofable) request fields.
+	// arbitrary content under a CID of its choosing.
 	blockLink, err := block.GenerateLink()
 	if err != nil {
 		return err
@@ -593,15 +644,10 @@ func (p *P2P) processPushlogRequest(
 		return nil
 	}
 
-	// Derive the docID from the verified block rather than trusting req.DocID. (The collection is
-	// still routed by req.CollectionID — the stable root id — because the local node may hold a
-	// different collection version than the block was authored against; see [trySelfHasAccess].)
-	docID := string(block.Delta.GetDocID())
-
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 		if err != nil {
 			return err
 		}
@@ -617,7 +663,7 @@ func (p *P2P) processPushlogRequest(
 	}
 
 	mergeEvt := event.Merge{
-		DocID:        docID,
+		DocID:        req.DocID,
 		ByPeer:       req.SenderID,
 		FromPeer:     req.Creator,
 		Cid:          headCID,
@@ -630,7 +676,7 @@ func (p *P2P) processPushlogRequest(
 
 	// Notify bus subscribers and the network of peers that we have a new document available.
 	updateEvt := event.Update{
-		DocID:        docID,
+		DocID:        req.DocID,
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
 		Block:        req.Block,

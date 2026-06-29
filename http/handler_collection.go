@@ -13,6 +13,7 @@ package http
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
@@ -24,6 +25,7 @@ import (
 
 const docEncryptParam = "encrypt"
 const docEncryptFieldsParam = "encryptFields"
+const docEnableSigningParam = "enableSigning"
 
 type collectionHandler struct{}
 
@@ -47,6 +49,10 @@ func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, re
 	}
 
 	deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+	if err := setDeleteWithFilterSigningOption(req, deleteOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	result, err := col.DeleteDocumentsWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
@@ -67,6 +73,10 @@ func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, re
 	}
 
 	updateOpt := options.WithIdentity(options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+	if err := setUpdateWithFilterSigningOption(req, updateOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	result, err := col.UpdateDocumentsWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {
@@ -74,6 +84,42 @@ func (h *collectionHandler) UpdateDocumentsWithFilter(rw http.ResponseWriter, re
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
+}
+
+func enableSigningFromRequest(req *http.Request) (bool, bool, error) {
+	values, ok := req.URL.Query()[docEnableSigningParam]
+	if !ok {
+		return false, false, nil
+	}
+	enableSigning, err := strconv.ParseBool(values[0])
+	if err != nil {
+		return false, false, err
+	}
+	return enableSigning, true, nil
+}
+
+func setUpdateWithFilterSigningOption(
+	req *http.Request,
+	opt *options.UpdateDocumentsWithFilterOptionsBuilder,
+) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
+}
+
+func setDeleteWithFilterSigningOption(
+	req *http.Request,
+	opt *options.DeleteDocumentsWithFilterOptionsBuilder,
+) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
 }
 
 func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) {
@@ -254,6 +300,12 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchema(addDocumentBodySchema))
 
+	docIDArraySchema := openapi3.NewArraySchema()
+	docIDArraySchema.Items = openapi3.NewSchemaRef("", openapi3.NewStringSchema())
+	addDocumentResponse := openapi3.NewResponse().
+		WithDescription("The IDs of the added documents").
+		WithJSONSchemaRef(openapi3.NewSchemaRef("", docIDArraySchema))
+
 	addDocument := openapi3.NewOperation()
 	addDocument.OperationID = "add_document"
 	addDocument.Description = "Add document(s) to a collection"
@@ -263,7 +315,7 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		Value: addDocumentRequest,
 	}
 	addDocument.Responses = openapi3.NewResponses()
-	addDocument.Responses.Set("200", successResponse)
+	addDocument.Responses.Set("200", &openapi3.ResponseRef{Value: addDocumentResponse})
 	addDocument.Responses.Set("400", errorResponse)
 	addDocument.Responses.Set("409", errorResponse)
 

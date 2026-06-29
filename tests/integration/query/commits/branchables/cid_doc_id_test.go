@@ -41,7 +41,7 @@ func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 				// https://github.com/sourcenetwork/defradb/issues/3213
 				Request: `query {
 						_commits(
-							docID: "bae-f895da58-3326-510a-87f3-d043ff5424ea",
+							docID: "{{.DocID0_0}}",
 							cid: "bafyreigvb5smrzfjpunohvfsoi3czzjy4dl3cyhzkutth4lx27wnasnqxa"
 						) {
 							cid

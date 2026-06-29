@@ -43,7 +43,7 @@ func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq") {
+					Users(cid: "{{.CID0_1_0}}") {
 						Name
 						_version {
 							fieldName

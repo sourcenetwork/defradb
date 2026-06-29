@@ -30,7 +30,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 
 			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
-					delete_ContactAddress(docID: ["bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"]) {
+					delete_ContactAddress(docID: ["{{.DocID4_1}}"]) {
 						city
 					}
 				}`,

@@ -325,6 +325,7 @@ func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

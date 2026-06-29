@@ -35,14 +35,14 @@ func TestMutationDeletion_WithIDAndAlias(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9"]) {
+					delete_User(docID: ["{{.DocID0_0}}"]) {
 						fancyKey: _docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"fancyKey": "bae-390b4419-fe1c-506b-98bd-20847cdab2d9",
+							"fancyKey": "{{.DocID0_0}}",
 						},
 					},
 				},

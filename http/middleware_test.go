@@ -17,10 +17,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestTransactionMiddleware_WithInvalidTxID_ReturnsBadRequest(t *testing.T) {
@@ -45,7 +45,7 @@ func TestTransactionMiddleware_WithInvalidTxID_ReturnsBadRequest(t *testing.T) {
 	assert.Contains(t, errRes["error"], ErrInvalidTransactionId.Error())
 }
 
-func TestTransactionMiddleware_WithNonExistentTxID_ReturnsNotFound(t *testing.T) {
+func TestTransactionMiddleware_WithNonExistentTxID_ReturnsBadRequest(t *testing.T) {
 	cdb := setupDatabase(t)
 
 	handler, err := NewHandler(cdb, nil)
@@ -60,7 +60,7 @@ func TestTransactionMiddleware_WithNonExistentTxID_ReturnsNotFound(t *testing.T)
 	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 
-	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 
 	var errRes map[string]any
 	require.NoError(t, json.Unmarshal(body, &errRes))

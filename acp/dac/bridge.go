@@ -111,6 +111,12 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
+		// RegisterObject is effectively idempotent if the object already has the requested owner.
+		// This lets the same collection be registered on multiple nodes that share an acp instance.
+		owner, ownerErr := a.clientACP.ObjectOwner(ctx, policyID, resourceName, docID)
+		if ownerErr == nil && owner.HasValue() && owner.Value() == identity.DID() {
+			return nil
+		}
 		return acp.NewErrFailedToRegisterDoc(err, "Local", policyID, identity.DID(), resourceName, docID)
 	}
 

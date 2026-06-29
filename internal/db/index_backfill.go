@@ -79,13 +79,13 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 // deleting the build record to mark it ready. It is used both for a fresh index and for a rebuild
 // filling a new epoch; in both cases the epoch is resolved from the index's sequence.
 //
-// startAfter resumes after the given docID from a persisted watermark; pass None to build the
+// startAfter resumes after the given document short ID from a persisted watermark; pass None to build the
 // whole collection. A non-retryable error marks the index failed; a conflict leaves it resumable.
 func (db *DB) backfillIndex(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
-	startAfter immutable.Option[string],
+	startAfter immutable.Option[uint64],
 ) error {
 	if err := db.fillIndexBatches(ctx, def, desc, startAfter); err != nil {
 		return err
@@ -119,7 +119,7 @@ func (db *DB) fillIndexBatches(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
-	startAfter immutable.Option[string],
+	startAfter immutable.Option[uint64],
 ) error {
 	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
 	for _, f := range desc.Fields {
@@ -132,8 +132,8 @@ func (db *DB) fillIndexBatches(
 
 	for {
 		var (
-			lastDocID string
-			n         int
+			lastDocShortID uint64
+			n              int
 		)
 
 		batchErr := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
@@ -149,7 +149,7 @@ func (db *DB) fillIndexBatches(
 				return err
 			}
 
-			lastDocID, n, err = col.iterateDocsBatch(
+			lastDocShortID, n, err = col.iterateDocsBatch(
 				batchCtx, fields, watermark, indexBackfillBatchSize,
 				func(doc *client.Document) error {
 					return colIndex.Save(batchCtx, doc)
@@ -161,7 +161,7 @@ func (db *DB) fillIndexBatches(
 
 			// The watermark is only meaningful if the batch processed any documents.
 			if n > 0 {
-				return db.advanceIndexWatermark(batchCtx, def.CollectionID, desc.ID, lastDocID)
+				return db.advanceIndexWatermark(batchCtx, def.CollectionID, desc.ID, lastDocShortID)
 			}
 			return nil
 		})
@@ -189,7 +189,7 @@ func (db *DB) fillIndexBatches(
 			break
 		}
 
-		watermark = immutable.Some(lastDocID)
+		watermark = immutable.Some(lastDocShortID)
 	}
 
 	return nil
