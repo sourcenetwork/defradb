@@ -674,7 +674,7 @@
         "/acp/document/policy": {
             "post": {
                 "description": "Add a policy using document acp system",
-                "operationId": "add dac policy",
+                "operationId": "dac policy add",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -701,14 +701,14 @@
                     }
                 },
                 "tags": [
-                    "acp_document_policy"
+                    "document access control"
                 ]
             }
         },
         "/acp/document/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using document acp system",
-                "operationId": "delete dac relationship",
+                "operationId": "dac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -735,12 +735,12 @@
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using document acp system",
-                "operationId": "add dac relationship",
+                "operationId": "dac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -767,14 +767,14 @@
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             }
         },
         "/acp/node/disable": {
             "post": {
                 "description": "Disable nac",
-                "operationId": "disable nac",
+                "operationId": "nac disable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -784,14 +784,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_disable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/re-enable": {
             "post": {
                 "description": "Re-enable nac",
-                "operationId": "re-enable nac",
+                "operationId": "nac re-enable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -801,14 +801,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_re-enable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using node acp system",
-                "operationId": "delete nac relationship",
+                "operationId": "nac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -835,12 +835,12 @@
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using node acp system",
-                "operationId": "add nac relationship",
+                "operationId": "nac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -867,14 +867,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/status": {
             "get": {
                 "description": "Check status of node acp system",
-                "operationId": "Check status of nac",
+                "operationId": "nac status",
                 "responses": {
                     "200": {
                         "content": {
@@ -891,7 +891,7 @@
                     }
                 },
                 "tags": [
-                    "acp_node_status"
+                    "node access control"
                 ]
             }
         },
