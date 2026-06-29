@@ -60,8 +60,6 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -94,10 +92,11 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(2),
 							"GROUP": []map[string]any{
 								{
-									"cid": uniqueCid,
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
@@ -105,13 +104,14 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(1),
 							"GROUP": []map[string]any{
 								{
-									"cid": uniqueCid,
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
@@ -127,8 +127,6 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -151,7 +149,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -159,7 +158,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -167,7 +167,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -225,10 +226,10 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "bae-2487fd12-227f-582b-a7ed-3dd5d4b61fce",
+							"docID": "{{.DocID0_1}}",
 						},
 					},
 				},

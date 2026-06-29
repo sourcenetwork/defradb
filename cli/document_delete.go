@@ -24,6 +24,7 @@ import (
 func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
@@ -48,6 +49,10 @@ or the showDeleted parameter on GraphQL queries.`,
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteOpt.SetEnableSigning(enableSigning)
+				}
 
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
@@ -59,6 +64,10 @@ or the showDeleted parameter on GraphQL queries.`,
 
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteWithFilterOpt.SetEnableSigning(enableSigning)
+				}
 
 				res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteWithFilterOpt)
 				if err != nil {
@@ -83,6 +92,7 @@ or the showDeleted parameter on GraphQL queries.`,
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

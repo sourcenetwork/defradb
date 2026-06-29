@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -39,11 +40,11 @@ func NewHeadBlocksIterator(
 	ctx context.Context,
 	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
-	docID string,
+	docShortID uint64,
 ) (*DocHeadBlocksIterator, error) {
 	headStoreKey := keys.HeadstoreDocKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
+		DocShortID: docShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 	headset := coreblock.NewHeadSet(headstore, headStoreKey)
 	cids, _, err := headset.List(ctx)
@@ -63,11 +64,21 @@ func NewHeadBlocksIteratorFromTxn(
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
+	docRef, found, err := id.GetDocRefFromStore(ctx, txn.Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return &DocHeadBlocksIterator{
+			ctx:        ctx,
+			blockstore: txn.Blockstore(),
+		}, nil
+	}
 	return NewHeadBlocksIterator(
 		ctx,
 		txn.Headstore(),
 		txn.Blockstore(),
-		docID,
+		docRef.DocShortID,
 	)
 }
 

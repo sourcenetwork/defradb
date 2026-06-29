@@ -94,13 +94,13 @@ func clearIndexEntries(t *testing.T, ctx context.Context, shortID uint32, indexI
 	return nil
 }
 
-// getCollectionShortID resolves the short collection ID for tests.
+// getCollectionShortID resolves the collection short ID for tests.
 func getCollectionShortID(t *testing.T, ctx context.Context, db *DB, collectionID string) uint32 {
 	t.Helper()
 	var shortID uint32
 	err := db.withTxnRetries(ctx, func(txnCtx context.Context) error {
 		var resolveErr error
-		shortID, resolveErr = id.GetShortCollectionID(txnCtx, collectionID)
+		shortID, resolveErr = id.GetCollectionShortID(txnCtx, collectionID)
 		return resolveErr
 	})
 	require.NoError(t, err)

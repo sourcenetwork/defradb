@@ -18,12 +18,15 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
+	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -49,11 +52,16 @@ func (db *DB) VerifySignature(
 	}
 
 	// If we have a transaction, we will use it to set the blockstore. Otherwise, we will use the db.
-	var blockStore *bsadapter.Adapter
+	var (
+		blockStore  *bsadapter.Adapter
+		systemstore corekv.Reader
+	)
 	if hadTxn {
 		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(txn.Rootstore(), db.blockStoreChunkSize)}
+		systemstore = txn.Systemstore()
 	} else {
 		blockStore = &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
+		systemstore = datastore.SystemstoreFrom(db.rootstore)
 	}
 
 	linkSys := cidlink.DefaultLinkSystem()
@@ -75,31 +83,84 @@ func (db *DB) VerifySignature(
 	}
 
 	if db.documentACP.HasValue() {
-		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID, opt.Identity)
+		getCollectionsOpt := options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID())
+		if opt.Identity.HasValue() {
+			getCollectionsOpt = getCollectionsOpt.SetIdentity(opt.Identity.Value())
+		}
+		collections, err := db.GetCollections(ctx, getCollectionsOpt)
+		if err != nil {
+			return err
+		}
+		if len(collections) == 0 {
+			return ErrMissingPermission
+		}
+		collection := collections[0]
+
+		docIDs, err := db.docIDsForSignatureBlock(ctx, systemstore, parsedCid, block)
 		if err != nil {
 			return err
 		}
 
-		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			ctx,
-			opt.Identity,
-			db.nodeACP,
-			db.documentACP.Value(),
-			collection,
-			acpTypes.DocumentReadPerm,
-			docID,
-		)
-
-		if err != nil {
-			return err
+		hasAnyPerm := false
+		for _, docID := range docIDs {
+			hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+				ctx,
+				opt.Identity,
+				db.nodeACP,
+				db.documentACP.Value(),
+				collection,
+				acpTypes.DocumentReadPerm,
+				docID,
+			)
+			if err != nil {
+				return err
+			}
+			if hasPerm {
+				hasAnyPerm = true
+				break
+			}
 		}
-
-		if !hasPerm {
+		if !hasAnyPerm {
 			return ErrMissingPermission
 		}
 	}
 
 	_, err = coreblock.VerifyBlockSignatureWithKey(block, &linkSys, pubKey)
 	return err
+}
+
+// docIDsForSignatureBlock resolves the DocIDs that ACP may check for a signed block.
+//
+// Resolution order:
+//   - collection-level blocks are not document-scoped, so a single empty DocID is returned;
+//   - otherwise every document that owns the block (recorded on create and merge) is returned;
+//   - a genesis composite with no recorded owner falls back to the DocID derived from its own CID.
+//
+// When none of these apply the block cannot be tied to a document. No DocIDs are returned and the
+// caller denies access (fail closed): under document ACP a signed block whose ownership cannot be
+// established must not be readable.
+func (db *DB) docIDsForSignatureBlock(
+	ctx context.Context,
+	systemstore corekv.Reader,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+) ([]string, error) {
+	if block.Delta.IsCollection() {
+		return []string{""}, nil
+	}
+	docIDs, err := id.GetDocIDsForBlockFromStore(
+		ctx,
+		systemstore,
+		blockCID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(docIDs) > 0 {
+		return docIDs, nil
+	}
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
+	}
+	return nil, nil
 }

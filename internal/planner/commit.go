@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -42,13 +43,22 @@ type dagScanNode struct {
 	queuedCids            []*cid.Cid
 	currentSelectCidIndex int
 
+	// queuedCommits holds commits produced from the current block that have not yet been
+	// yielded. A field block shared by several documents (identical genesis field deltas)
+	// produces one commit per owning document when queried by CID without a docID.
+	queuedCommits []core.Doc
+
 	fetcher        fetcher.HeadFetcher
 	fetcherStarted bool
+	noResults      bool
 	prefix         immutable.Option[keys.HeadstoreKey]
 	commitSelect   *mapper.CommitSelect
 
 	linksScanNodes []*dagScanNode
 	headsScanNodes []*dagScanNode
+
+	activeDocID      immutable.Option[string]
+	activeDocShortID immutable.Option[uint64]
 
 	execInfo dagScanExecInfo
 }
@@ -99,14 +109,23 @@ func (n *dagScanNode) Kind() string {
 }
 
 func (n *dagScanNode) Init() error {
-	if !n.prefix.HasValue() {
+	if !n.prefix.HasValue() && !n.commitSelect.Cids.HasValue() {
 		if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
-			// todo - for now we just take the first docID and ignore the rest, an error
-			// should be thrown in the parser anyway if the user provides more than one.
-			// https://github.com/sourcenetwork/defradb/issues/4302
-			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocIDs.Value()[0])
+			docRef, found, err := n.getHeadstoreDocRef(n.commitSelect.DocIDs.Value()[0])
+			if err != nil {
+				return err
+			}
+			if !found {
+				n.noResults = true
+				return nil
+			}
+			key := keys.HeadstoreDocKey{}.WithDocShortID(docRef.DocShortID)
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
 		}
+	}
+
+	if n.noResults {
+		return nil
 	}
 
 	// only need the head fetcher for non cid specific queries
@@ -132,18 +151,26 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 		return
 	}
 
-	for _, prefix := range prefixes {
-		var start keys.HeadstoreDocKey
-		switch s := prefix.(type) {
-		case keys.DataStoreKey:
-			start = s.ToHeadStoreKey()
-		case keys.HeadstoreDocKey:
-			start = s
-		}
-
-		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
-		return
+	var start keys.HeadstoreDocKey
+	switch s := prefixes[0].(type) {
+	case keys.DataStoreKey:
+		start = s.ToHeadStoreKey()
+	case keys.HeadstoreDocKey:
+		start = s
 	}
+
+	n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
+}
+
+func (n *dagScanNode) getHeadstoreDocRef(docID string) (keys.DocRef, bool, error) {
+	if docID == "" {
+		return keys.DocRef{}, false, nil
+	}
+	docRef, found, err := id.GetDocRef(n.planner.ctx, docID)
+	if err != nil {
+		return keys.DocRef{}, false, err
+	}
+	return docRef, found, nil
 }
 
 func (n *dagScanNode) Close() error {
@@ -199,6 +226,18 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	n.execInfo.iterations++
 
+	if n.noResults {
+		return false, nil
+	}
+
+	// Yield any commits already produced from the current block (a shared field block
+	// fanned out across its owning documents) before advancing to the next block.
+	if len(n.queuedCommits) > 0 {
+		n.currentValue = n.queuedCommits[0]
+		n.queuedCommits = n.queuedCommits[1:]
+		return true, nil
+	}
+
 	var currentCid *cid.Cid
 
 	if len(n.queuedCids) > 0 {
@@ -219,6 +258,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		currentCid = cid
+		n.setActiveDocIDFromCurrentHead()
 		// Reset the depthVisited for each head yielded by headset
 		n.depthVisited = 0
 	} else {
@@ -246,6 +286,13 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
+	// Resolve the documents this block's commit should be reported under. A field block
+	// shared across documents yields several owners; a docID-scoped traversal yields one.
+	docIDs, err := n.commitDocIDs(dagBlock, *currentCid)
+	if err != nil {
+		return false, err
+	}
+
 	// We want to enforce DAC, so we skip commits the caller has no read access to.
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
 	// doc-mapping cost. We only check when document acp is configured,
@@ -254,8 +301,7 @@ func (n *dagScanNode) Next() (bool, error) {
 	// the collection has no policy or the doc is public.
 	// - Collection-level deltas (e.g. schema changes) carry no docID and
 	// are not DAC-gated, only doc-level deltas need an access check.
-	docIDBytes := dagBlock.Delta.GetDocID()
-	if n.planner.documentACP.HasValue() && len(docIDBytes) > 0 {
+	if n.planner.documentACP.HasValue() && !dagBlock.Delta.IsCollection() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
 		cols, err := n.planner.db.GetCollections(
@@ -268,37 +314,62 @@ func (n *dagScanNode) Next() (bool, error) {
 		if len(cols) == 0 {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
-
-		hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
-			n.planner.ctx,
-			n.planner.identity,
-			n.planner.nodeACP,
-			n.planner.documentACP.Value(),
-			cols[0],
-			acpTypes.DocumentReadPerm,
-			string(docIDBytes),
-		)
-		if err != nil {
-			return false, err
+		if len(docIDs) == 0 {
+			return false, client.ErrMalformedDocID
 		}
-		if !hasPermission {
+
+		// A shared field block has several owners; keep only those the caller may read.
+		permitted := make([]string, 0, len(docIDs))
+		for _, docID := range docIDs {
+			hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+				n.planner.ctx,
+				n.planner.identity,
+				n.planner.nodeACP,
+				n.planner.documentACP.Value(),
+				cols[0],
+				acpTypes.DocumentReadPerm,
+				docID,
+			)
+			if err != nil {
+				return false, err
+			}
+			if hasPermission {
+				permitted = append(permitted, docID)
+			}
+		}
+		if len(permitted) == 0 {
 			// Mark visited so the same denied cid is not re-checked if it
 			// reappears via a links/heads queue elsewhere in the traversal.
 			n.visitedNodes[currentCid.String()] = true
 			return n.Next()
 		}
+		docIDs = permitted
 	}
 
-	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
-	if err != nil {
-		return false, err
+	// Build one commit per resolved document. A block with no associated document (e.g. a
+	// collection-level delta) still yields a single commit with no docID.
+	commits := make([]core.Doc, 0, max(len(docIDs), 1))
+	if len(docIDs) == 0 {
+		commit, err := n.dagBlockToNodeDoc(dagBlock, "")
+		if err != nil {
+			return false, err
+		}
+		commits = append(commits, commit)
+	} else {
+		for _, docID := range docIDs {
+			commit, err := n.dagBlockToNodeDoc(dagBlock, docID)
+			if err != nil {
+				return false, err
+			}
+			commits = append(commits, commit)
+		}
 	}
 
 	// if this is a time travel query or a _commits
 	// (cid + undefined depth + docId) then we need to make sure the
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid
-	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(currentValue, request.DocIDArgName)
+	currentDocID := n.commitSelect.DocumentMapping.FirstOfName(commits[0], request.DocIDArgName)
 	if n.commitSelect.Cids.HasValue() &&
 		len(n.visitedNodes) == 0 &&
 		n.commitSelect.DocIDs.HasValue() &&
@@ -336,7 +407,8 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 	}
 
-	n.currentValue = currentValue
+	n.currentValue = commits[0]
+	n.queuedCommits = commits[1:]
 	return true, nil
 }
 
@@ -377,7 +449,7 @@ which returns the current dag commit for the stored CRDT value.
 All the dagScanNode endpoints use similar structures
 */
 
-func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error) {
+func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block, docID string) (core.Doc, error) {
 	commit := n.commitSelect.DocumentMapping.NewDoc()
 	link, err := block.GenerateLink()
 	if err != nil {
@@ -429,12 +501,11 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.HeightFieldName, int64(prio))
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.FieldNameName, fieldName)
 
-	docID := block.Delta.GetDocID()
-	if docID != nil {
+	if docID != "" {
 		n.commitSelect.DocumentMapping.SetFirstOfName(
 			&commit,
 			request.DocIDArgName,
-			string(docID),
+			docID,
 		)
 	}
 
@@ -478,6 +549,9 @@ func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, co
 		// reset linkScanNode
 		dagScanNodes[i].reset()
 		dagScanNodes[i].queuedCids = links
+		if parentDocID, ok := n.commitSelect.FirstOfName(*commit, request.DocIDArgName).(string); ok && parentDocID != "" {
+			dagScanNodes[i].activeDocID = immutable.Some(parentDocID)
+		}
 		links := make([]core.Doc, 0)
 		for {
 			next, err := dagScanNodes[i].Next()
@@ -539,6 +613,104 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 func (n *dagScanNode) reset() {
 	n.visitedNodes = make(map[string]bool)
 	n.queuedCids = make([]*cid.Cid, 0)
+	n.queuedCommits = nil
 	n.depthVisited = 0
 	n.currentValue = core.Doc{}
+	n.noResults = false
+	n.activeDocID = immutable.None[string]()
+	n.activeDocShortID = immutable.None[uint64]()
+}
+
+func (n *dagScanNode) setActiveDocIDFromCurrentHead() {
+	n.activeDocID = immutable.None[string]()
+	n.activeDocShortID = immutable.None[uint64]()
+
+	currentKey := n.fetcher.CurrentKey()
+	if !currentKey.HasValue() {
+		return
+	}
+
+	docKey, ok := currentKey.Value().(keys.HeadstoreDocKey)
+	if !ok {
+		return
+	}
+	n.activeDocShortID = immutable.Some(docKey.DocShortID)
+}
+
+// commitDocIDs returns the documents a block's commit should be reported under.
+//
+// Most blocks resolve to a single document: the document established by the traversal (the
+// docID inherited from a composite parent, or the active head's short ID), or a composite
+// genesis block whose CID is, by construction, the public DocID. A field block can be shared
+// by several documents (identical genesis field deltas produce one CID); for a CID-rooted
+// query where no document is known, the block-CID owner index is consulted:
+//   - a query that names a docID is narrowed to that document when it owns the block;
+//   - a block with a single owner resolves to that owner;
+//   - a `commits(cid:)` query (no docID) against a block with several owners fans the commit
+//     out across every owner.
+//
+// The owner index must NOT be consulted before the traversal context: a shared field block
+// would otherwise resolve to an arbitrary owner, mis-attributing the commit and dropping it
+// from every other owner's history.
+//
+// An empty result means the block has no associated document (e.g. a collection-level delta)
+// and yields a single commit with no docID.
+func (n *dagScanNode) commitDocIDs(
+	block *coreblock.Block,
+	blockCID cid.Cid,
+) ([]string, error) {
+	if block.Delta.IsCollection() {
+		return nil, nil
+	}
+
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		docID := client.NewDocIDV0(blockCID).String()
+		n.activeDocID = immutable.Some(docID)
+		return []string{docID}, nil
+	}
+
+	if n.activeDocID.HasValue() {
+		return []string{n.activeDocID.Value()}, nil
+	}
+	if n.activeDocShortID.HasValue() {
+		docID, _, err := id.GetDocID(n.planner.ctx, n.activeDocShortID.Value())
+		if err != nil {
+			return nil, err
+		}
+		if docID != "" {
+			n.activeDocID = immutable.Some(docID)
+			return []string{docID}, nil
+		}
+	}
+
+	owners, err := id.GetDocIDsForBlockFromStore(
+		n.planner.ctx,
+		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
+		blockCID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(owners) == 0 {
+		return nil, nil
+	}
+
+	// A named docID narrows a shared block to that document.
+	if n.commitSelect.DocIDs.HasValue() && len(n.commitSelect.DocIDs.Value()) > 0 {
+		requested := n.commitSelect.DocIDs.Value()[0]
+		for _, owner := range owners {
+			if owner == requested {
+				n.activeDocID = immutable.Some(owner)
+				return []string{owner}, nil
+			}
+		}
+		// The requested document does not own this block; let the caller treat it as a
+		// cid/docID mismatch.
+		return nil, nil
+	}
+
+	if len(owners) == 1 {
+		n.activeDocID = immutable.Some(owners[0])
+	}
+	return owners, nil
 }

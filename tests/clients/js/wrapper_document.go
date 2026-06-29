@@ -15,6 +15,7 @@ package js
 
 import (
 	"context"
+	"syscall/js"
 
 	"github.com/sourcenetwork/goji"
 
@@ -27,10 +28,32 @@ func (c *Collection) AddDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	if _, err := execute(ctx, c.client, "addDocument", goji.MustMarshalJS(doc), jsOpts(opts)); err != nil {
+	res, err := execute(ctx, c.client, "addDocument", goji.MustMarshalJS(doc), jsOpts(opts))
+	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS([]*client.Document{doc}, res[0]); err != nil {
 		return err
 	}
 	doc.Clean()
+	return nil
+}
+
+func setDocumentIDsFromJS(docs []*client.Document, value js.Value) error {
+	var docIDs []string
+	if err := goji.UnmarshalJS(value, &docIDs); err != nil {
+		return err
+	}
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.ApplySavedDocumentID(docs[i], docID)
+	}
 	return nil
 }
 
@@ -39,7 +62,11 @@ func (c *Collection) AddManyDocuments(
 	docs []*client.Document,
 	opts ...options.Enumerable[options.AddDocumentOptions],
 ) error {
-	if _, err := execute(ctx, c.client, "addManyDocuments", goji.MustMarshalJS(docs), jsOpts(opts)); err != nil {
+	res, err := execute(ctx, c.client, "addManyDocuments", goji.MustMarshalJS(docs), jsOpts(opts))
+	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS(docs, res[0]); err != nil {
 		return err
 	}
 	for _, doc := range docs {
@@ -69,11 +96,19 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
-	if _, err := execute(ctx, c.client, "saveDocument", doc.ID().String(), string(patch), jsOpts(opts)); err != nil {
+	res, err := execute(ctx, c.client, "saveDocument", doc.ID().String(), string(patch), jsOpts(opts))
+	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJS([]*client.Document{doc}, res[0]); err != nil {
 		return err
 	}
 	doc.Clean()

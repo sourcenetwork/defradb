@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -181,7 +182,22 @@ func waitForUpdateEvents(
 					if node.Composites == nil {
 						node.Composites = make(map[string][]cid.Cid)
 					}
-					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					updateKey := getUpdateEventKey(evt)
+					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+					if node.FieldCIDs == nil {
+						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+					}
+					if node.FieldCIDs[updateKey] == nil {
+						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+					}
+					block, err := coreblock.GetFromBytes(evt.Block)
+					require.NoError(s.T, err)
+					for _, link := range block.Links {
+						node.FieldCIDs[updateKey][link.Name] = append(
+							node.FieldCIDs[updateKey][link.Name],
+							link.Link.Cid,
+						)
+					}
 					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
