@@ -38,10 +38,10 @@ func ValidateResourceInterface(
 	maybePolicy, err := acpClient.Policy(ctx, policyID)
 
 	if err != nil {
-		return NewErrPolicyValidationFailedWithACP(err, policyID)
+		return NewErrPolicyValidationFailed(err, policyID)
 	}
 	if !maybePolicy.HasValue() {
-		return NewErrPolicyDoesNotExistWithACP(err, policyID)
+		return NewErrPolicyDoesNotExist(err, policyID)
 	}
 
 	policy := maybePolicy.Value()

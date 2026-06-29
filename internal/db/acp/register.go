@@ -20,21 +20,21 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// RegisterDocOnCollectionWithDocumentACP handles the registration of the document with document acp system.
+// RegisterObject registers an object with the document acp system so that read access to it can be
+// gated. The object is either a document (id = its docID) or a branchable collection's
+// collection-level commit DAG (id = the collection id).
 //
-// Since document acp will always exist when this is called we have these components to worry about:
-// (1) the request is permissioned (has an identity signature),
-// (2) the collection is permissioned (has a policy),
+// The object is only registered if both of the following are true:
+// (1) the collection is permissioned (has a policy),
+// (2) the request is permissioned (has an identity, which becomes the object owner).
 //
-// The document is only registered if all (1) (2) are true.
-//
-// Otherwise, nothing is registered with document acp.
-func RegisterDocOnCollectionWithDocumentACP(
+// Otherwise, nothing is registered with document acp and the object remains public.
+func RegisterObject(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	documentACP dac.DocumentACP,
 	collection client.Collection,
-	docID string,
+	id string,
 ) error {
 	// An identity exists and the collection has a policy.
 	if policyID, resourceName, hasPolicy := IsPermissioned(collection); hasPolicy && identity.HasValue() {
@@ -43,7 +43,7 @@ func RegisterDocOnCollectionWithDocumentACP(
 			identity.Value(),
 			policyID,
 			resourceName,
-			docID,
+			id,
 		)
 	}
 

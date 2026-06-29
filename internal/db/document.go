@@ -124,7 +124,7 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 
-			canRead, err := c.checkAccessOfDocWithACP(
+			canRead, err := c.checkAccessOfDoc(
 				ctx,
 				acpTypes.DocumentReadPerm,
 				docIDString,
@@ -245,7 +245,7 @@ func (c *collection) add(
 		return err
 	}
 
-	return c.registerDocWithACP(ctx, doc.ID().String())
+	return c.registerDoc(ctx, doc.ID().String())
 }
 
 func setContextDocEncryption(
@@ -334,7 +334,7 @@ func (c *collection) update(
 	doc *client.Document,
 ) error {
 	// Stop the update if the correct permissions aren't there.
-	canUpdate, err := c.checkAccessOfDocWithACP(
+	canUpdate, err := c.checkAccessOfDoc(
 		ctx,
 		acpTypes.DocumentUpdatePerm,
 		doc.ID().String(),
@@ -800,7 +800,7 @@ func (c *collection) exists(
 		return false, false, err
 	}
 
-	canRead, err := c.checkAccessOfDocWithACP(
+	canRead, err := c.checkAccessOfDoc(
 		ctx,
 		acpTypes.DocumentReadPerm,
 		docID,

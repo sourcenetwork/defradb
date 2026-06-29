@@ -27,7 +27,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -571,13 +570,16 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return acpDB.CheckAccessOfDocOnCollectionWithACP(
+	// Read access to the document gates access to its encryption key. See [acpDB.CheckDocReadAccess]
+	// for the canonical rules (an explicit grant on the document suffices; otherwise a branchable
+	// collection also gates on the collection object, so a private branchable collection gates its
+	// whole DAG).
+	return acpDB.CheckDocReadAccess(
 		ctx,
 		actorIdentity,
 		s.nodeACP(),
 		s.documentACP.Value(),
 		collection,
-		acpTypes.DocumentReadPerm,
 		docID,
 	)
 }
