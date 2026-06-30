@@ -31,7 +31,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -443,6 +442,9 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
+	// A block may be owned by several documents (shared field blocks); read access to any one is
+	// enough. docIDsForBlockCID returns a single empty docID for collection-level blocks, which
+	// CheckDocReadAccessWithIdentityFunc gates on the collection object for a branchable collection.
 	docIDs, err := p.docIDsForBlockCID(ctx, c, block)
 	if err != nil {
 		log.ErrorE("Failed to resolve block doc ID", err)
@@ -450,13 +452,12 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	}
 
 	for _, docID := range docIDs {
-		peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
 			ctx,
 			identFunc,
 			p.db.NodeACP(),
 			p.db.DocumentACP().Value(),
 			cols[0], // For now we assume there is only one collection.
-			acpTypes.DocumentReadPerm,
 			docID,
 		)
 		if err != nil {
@@ -476,6 +477,11 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
+//
+// The collection is resolved from collectionID (the stable root collection id) rather than the
+// block's collection version id, because the local node may legitimately hold a different version
+// of the collection than the one the block was authored against (e.g. replication to an older
+// collection version).
 func (p *P2P) trySelfHasAccess(
 	ctx context.Context,
 	blockCID cid.Cid,
@@ -518,7 +524,7 @@ func (p *P2P) trySelfHasAccess(
 	}
 
 	for _, docID := range docIDs {
-		peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
 			ctx,
 			func() immutable.Option[identity.Identity] {
 				return immutable.Some(identity.FromDID(ident.Value().DID))
@@ -526,7 +532,6 @@ func (p *P2P) trySelfHasAccess(
 			p.db.NodeACP(),
 			p.db.DocumentACP().Value(),
 			cols[0], // For now we assume there is only one collection.
-			acpTypes.DocumentReadPerm,
 			docID,
 		)
 		if err != nil {
@@ -610,6 +615,16 @@ func (p *P2P) processPushlogRequest(
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return err
+	}
+
+	// Verify the advertised CID actually matches the block contents, so a peer cannot push
+	// arbitrary content under a CID of its choosing.
+	blockLink, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+	if blockLink.Cid != headCID {
+		return ErrBlockCIDMismatch
 	}
 
 	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same

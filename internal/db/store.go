@@ -188,6 +188,10 @@ func (db *DB) AddCollection(
 		return nil, err
 	}
 
+	// Propagate the identity so that collection-level acp registration (for branchable
+	// permissioned collections) can record the creating identity as the object owner.
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -295,55 +294,80 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	// We want to enforce DAC, so we skip commits the caller has no read access to.
 	// We do this before [dagBlockToNodeDoc], so denied commits do not pay the
-	// doc-mapping cost. We only check when document acp is configured,
-	// Note:
-	// - [CheckAccessOfDocOnCollectionWithACP] itself further short-circuits when
-	// the collection has no policy or the doc is public.
-	// - Collection-level deltas (e.g. schema changes) carry no docID and
-	// are not DAC-gated, only doc-level deltas need an access check.
-	if n.planner.documentACP.HasValue() && !dagBlock.Delta.IsCollection() {
+	// doc-mapping cost. We only check when document acp is configured.
+	//
+	// A commit is gated by the read access of the document(s) it belongs to: an explicit grant on a
+	// document is sufficient on its own, otherwise — for a branchable collection — the caller also
+	// needs access to the collection object, so a private branchable collection gates its entire
+	// commit DAG. A shared field block has several owners; the commit is kept for those the caller
+	// may read. A collection-level commit carries no docID and is gated on the collection object for
+	// a branchable collection (and is not gated otherwise, e.g. schema-definition changes).
+	if n.planner.documentACP.HasValue() {
 		versionID := dagBlock.Delta.GetCollectionVersionID()
 
-		cols, err := n.planner.db.GetCollections(
-			n.planner.ctx,
-			options.GetCollections().SetGetInactive(true).SetVersionID(versionID),
-		)
+		// Pass the requester's identity so the collection lookup is authorised as them (rather than
+		// anonymously) when node acp gates the get-collection operation.
+		getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(versionID)
+		if n.planner.identity.HasValue() {
+			getColOpts = getColOpts.SetIdentity(n.planner.identity.Value())
+		}
+		cols, err := n.planner.db.GetCollections(n.planner.ctx, getColOpts)
 		if err != nil {
 			return false, err
 		}
 		if len(cols) == 0 {
 			return false, client.NewErrCollectionNotFoundForCollectionVersion(versionID)
 		}
-		if len(docIDs) == 0 {
-			return false, client.ErrMalformedDocID
-		}
 
-		// A shared field block has several owners; keep only those the caller may read.
-		permitted := make([]string, 0, len(docIDs))
-		for _, docID := range docIDs {
-			hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+		if dagBlock.Delta.IsCollection() {
+			// Collection-level commit: no docID. CheckDocReadAccess gates it on the collection
+			// object for a branchable collection, and is a no-op otherwise.
+			hasPermission, err := acpDB.CheckDocReadAccess(
 				n.planner.ctx,
 				n.planner.identity,
 				n.planner.nodeACP,
 				n.planner.documentACP.Value(),
 				cols[0],
-				acpTypes.DocumentReadPerm,
-				docID,
+				"",
 			)
 			if err != nil {
 				return false, err
 			}
-			if hasPermission {
-				permitted = append(permitted, docID)
+			if !hasPermission {
+				n.visitedNodes[currentCid.String()] = true
+				return n.Next()
 			}
+		} else {
+			if len(docIDs) == 0 {
+				return false, client.ErrMalformedDocID
+			}
+
+			// A shared field block has several owners; keep only those the caller may read.
+			permitted := make([]string, 0, len(docIDs))
+			for _, docID := range docIDs {
+				hasPermission, err := acpDB.CheckDocReadAccess(
+					n.planner.ctx,
+					n.planner.identity,
+					n.planner.nodeACP,
+					n.planner.documentACP.Value(),
+					cols[0],
+					docID,
+				)
+				if err != nil {
+					return false, err
+				}
+				if hasPermission {
+					permitted = append(permitted, docID)
+				}
+			}
+			if len(permitted) == 0 {
+				// Mark visited so the same denied cid is not re-checked if it
+				// reappears via a links/heads queue elsewhere in the traversal.
+				n.visitedNodes[currentCid.String()] = true
+				return n.Next()
+			}
+			docIDs = permitted
 		}
-		if len(permitted) == 0 {
-			// Mark visited so the same denied cid is not re-checked if it
-			// reappears via a links/heads queue elsewhere in the traversal.
-			n.visitedNodes[currentCid.String()] = true
-			return n.Next()
-		}
-		docIDs = permitted
 	}
 
 	// Build one commit per resolved document. A block with no associated document (e.g. a
@@ -460,10 +484,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block, docID string) (c
 	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
-	cols, err := n.planner.db.GetCollections(
-		n.planner.ctx,
-		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
-	)
+	// Pass the requester's identity so the collection lookup is authorised as them (rather than
+	// anonymously) when node acp gates the get-collection operation.
+	getColOpts := options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId)
+	if n.planner.identity.HasValue() {
+		getColOpts = getColOpts.SetIdentity(n.planner.identity.Value())
+	}
+	cols, err := n.planner.db.GetCollections(n.planner.ctx, getColOpts)
 	if err != nil {
 		return core.Doc{}, err
 	}
