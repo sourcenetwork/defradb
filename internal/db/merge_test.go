@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -29,6 +30,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const userSchema = `
@@ -63,9 +65,10 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
@@ -90,6 +93,119 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {
+	ctx := context.Background()
+
+	sourceDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer sourceDB.Close()
+	targetDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer targetDB.Close()
+
+	_, err = sourceDB.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	_, err = targetDB.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	sourceCol, err := sourceDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	targetCol, err := targetDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	setDocIDSequence(t, ctx, sourceDB, 100)
+	setDocIDSequence(t, ctx, targetDB, 200)
+
+	sourceDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"John","age":30}`), sourceCol.Version())
+	require.NoError(t, err)
+	err = sourceCol.AddDocument(ctx, sourceDoc)
+	require.NoError(t, err)
+
+	copyDAGBlocks(t, ctx, sourceDB, targetDB, sourceDoc.Head())
+
+	err = targetDB.executeMerge(ctx, targetCol.(*collection), event.Merge{
+		DocID:        sourceDoc.ID().String(),
+		Cid:          sourceDoc.Head(),
+		CollectionID: targetCol.CollectionID(),
+	})
+	require.NoError(t, err)
+
+	mergedDoc, err := targetCol.GetDocument(ctx, sourceDoc.ID())
+	require.NoError(t, err)
+	docMap, err := mergedDoc.ToMap()
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"_docID": sourceDoc.ID().String(),
+		"name":   "John",
+		"age":    int64(30),
+	}, docMap)
+
+	compositeBlock := loadTestBlock(t, ctx, sourceDB, sourceDoc.Head())
+	require.NotEmpty(t, compositeBlock.Links)
+	fieldCID := compositeBlock.Links[0].Cid
+
+	txn, err := targetDB.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, targetCol.CollectionID())
+	require.NoError(t, err)
+
+	docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, sourceDoc.ID().String())
+	require.NoError(t, err)
+	require.True(t, found)
+	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
+
+	blockDocIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.Equal(t, []string{sourceDoc.ID().String()}, blockDocIDs)
+}
+
+func TestMergeResolveBlockDocID(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	c, ok := col.(*collection)
+	require.True(t, ok)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	mp, err := db.newMergeProcessor(txnCtx, c, true)
+	require.NoError(t, err)
+
+	genesisCID := blocks.NewBlock([]byte("genesis composite")).Cid()
+	genesisDocID := client.NewDocIDV0(genesisCID).String()
+	genesisBlock := &coreblock.Block{
+		Delta: crdt.NewCRDT(&crdt.DocCompositeDelta{
+			CollectionVersionID: col.Version().VersionID,
+			Status:              client.Active,
+		}),
+	}
+	resolved, err := mp.resolveCompositeBlockDocRef(txnCtx, collectionShortID, genesisBlock, genesisCID)
+	require.NoError(t, err)
+	require.Equal(t, genesisDocID, resolved.docID)
+	require.NotEmpty(t, resolved.docShortID)
+	require.NotZero(t, resolved.docShortID)
+}
+
 func TestMerge_DualBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
@@ -108,9 +224,10 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
@@ -146,6 +263,35 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+func copyDAGBlocks(t *testing.T, ctx context.Context, sourceDB *DB, targetDB *DB, root cid.Cid) {
+	t.Helper()
+
+	sourceStore := datastore.BlockstoreFrom(sourceDB.rootstore, sourceDB.blockStoreChunkSize)
+	targetStore := datastore.BlockstoreFrom(targetDB.rootstore, targetDB.blockStoreChunkSize)
+	seen := make(map[cid.Cid]struct{})
+
+	var copyBlock func(cid.Cid)
+	copyBlock = func(blockCID cid.Cid) {
+		if _, ok := seen[blockCID]; ok {
+			return
+		}
+		seen[blockCID] = struct{}{}
+
+		rawBlock, err := sourceStore.Get(ctx, blockCID)
+		require.NoError(t, err)
+		err = targetStore.Put(ctx, rawBlock)
+		require.NoError(t, err)
+
+		block, err := coreblock.GetFromBytes(rawBlock.RawData())
+		require.NoError(t, err)
+		for _, link := range block.AllLinks() {
+			copyBlock(link.Cid)
+		}
+	}
+
+	copyBlock(root)
+}
+
 // This test is not something we can reproduce in with integration tests.
 // Until we introduce partial dag syncs to integration tests, this should not be removed.
 func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
@@ -166,9 +312,10 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
@@ -196,7 +343,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 		Cid:          compInfo3.link.Cid,
 		CollectionID: col.CollectionID(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreihs5kx5u6k6mc3m6st3ytam4e3mmk3sd6p4jn3hh5o63wpf4holoq")
+	require.ErrorContains(t, err, "could not find "+someUnknownLink.Cid.String())
 
 	// Verify the document was added with the expected values
 	doc, err := col.GetDocument(ctx, docID)
@@ -214,7 +361,6 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 
 type dagBuilder struct {
 	fieldsHeight map[string]uint64
-	docID        []byte
 	col          client.Collection
 }
 
@@ -229,7 +375,6 @@ func newDagBuilder(ctx context.Context, col client.Collection, initalDocState ma
 	}
 	return &dagBuilder{
 		fieldsHeight: make(map[string]uint64),
-		docID:        []byte(doc.ID().String()),
 		col:          col,
 	}, doc.ID()
 }
@@ -253,7 +398,6 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
 				LWWDelta: &crdt.LWWDelta{
-					DocID:               d.docID,
 					FieldName:           field,
 					Priority:            d.fieldsHeight[field],
 					CollectionVersionID: d.col.Version().VersionID,
@@ -273,7 +417,6 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               d.docID,
 			Priority:            newPriority,
 			CollectionVersionID: d.col.Version().VersionID,
 			Status:              1,
@@ -318,7 +461,6 @@ func (d *dagBuilder) generateCompositeUpdateFromHeads(
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
 				LWWDelta: &crdt.LWWDelta{
-					DocID:               d.docID,
 					FieldName:           field,
 					Priority:            d.fieldsHeight[field],
 					CollectionVersionID: d.col.Version().VersionID,
@@ -338,7 +480,6 @@ func (d *dagBuilder) generateCompositeUpdateFromHeads(
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               d.docID,
 			Priority:            newPriority,
 			CollectionVersionID: d.col.Version().VersionID,
 			Status:              client.Active,
@@ -368,7 +509,6 @@ func (d *dagBuilder) generateCompositeDelete(lsys *linking.LinkSystem, from comp
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               d.docID,
 			Priority:            newPriority,
 			CollectionVersionID: d.col.Version().VersionID,
 			Status:              client.Deleted,
@@ -407,7 +547,6 @@ func (d *dagBuilder) generateCounterCompositeUpdate(
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
 				CounterDelta: &crdt.CounterDelta{
-					DocID:               d.docID,
 					FieldName:           field,
 					Priority:            d.fieldsHeight[field],
 					CollectionVersionID: d.col.Version().VersionID,
@@ -427,7 +566,6 @@ func (d *dagBuilder) generateCounterCompositeUpdate(
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               d.docID,
 			Priority:            newPriority,
 			CollectionVersionID: d.col.Version().VersionID,
 			Status:              client.Active,
@@ -509,9 +647,10 @@ func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	builder, docID := newDagBuilder(ctx, col, initialDocState)
+	builder, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := builder.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
 	// Branch B: update name
 	compInfoB, err := builder.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -592,9 +731,10 @@ func TestMerge_DiamondMerge_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
 	// Branch B: update name
 	compInfoB, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -661,9 +801,10 @@ func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
 	// Deep branch: A → B → C → D
 	compInfoB, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "B"}, compInfo)
@@ -735,9 +876,10 @@ func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
 	// Branch B: update name
 	compInfoB, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Jane"}, compInfo)
@@ -795,9 +937,10 @@ func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
 	// Branch B: delete first
 	compInfoB, err := d.generateCompositeDelete(&lsys, compInfo)
@@ -855,7 +998,7 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 		"name":   "John",
 		"points": 0,
 	}
-	d, docID := newDagBuilder(ctx, col, initialDocState)
+	d, _ := newDagBuilder(ctx, col, initialDocState)
 
 	// Initial block: use LWW for name, counter for points
 	// We need to create the initial block with mixed field types.
@@ -863,10 +1006,11 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 	// and counter for points.
 	compInfo, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "John"}, compositeInfo{})
 	require.NoError(t, err)
+	docID := client.NewDocIDV0(compInfo.link.Cid)
 
-	// Also create initial counter block at same parent
+	// Add the initial counter field as a follow-up composite on the same DAG.
 	d.fieldsHeight["points"] = 0
-	compInfoInit, err := d.generateCounterCompositeUpdate(&lsys, map[string]any{"points": int64(0)}, compositeInfo{})
+	compInfoInit, err := d.generateCounterCompositeUpdate(&lsys, map[string]any{"points": int64(0)}, compInfo)
 	require.NoError(t, err)
 
 	// Merge both initial blocks

@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestOrderQueryWithIndex_WithAscendingOrder_ShouldUseIndex(t *testing.T) {
@@ -465,6 +466,9 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 		}
 	}`
 	test := testUtils.TestCase{
+		// The asserted result order comes from sorting on _ownerID (a DocID); signing changes the
+		// DocIDs and therefore the order.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -522,9 +526,9 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "pixel"},
 						{"model": "walkman"},
 						{"model": "iPhone"},
+						{"model": "pixel"},
 					},
 				},
 			},

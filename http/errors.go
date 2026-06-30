@@ -50,7 +50,7 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
-	ErrTransactionNotFound          = errors.New("transaction not found")
+	ErrInvalidTTL                   = errors.New("invalid ttl value")
 )
 
 type errorResponse struct {
@@ -148,13 +148,14 @@ func httpStatusFromError(err error) int {
 	// 404 Not Found
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
 		errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, client.ErrTransactionNotFound) ||
 		errors.Is(err, db.ErrDocIDNotFound) ||
 		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
 		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||
 		errors.Is(err, db.ErrCollectionRootNotFound) ||
 		errors.Is(err, db.ErrLensCIDNotFound) ||
 		errors.Is(err, p2p.ErrReplicatorNotFound) ||
-		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExist) ||
 		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
 		return http.StatusNotFound
 	}

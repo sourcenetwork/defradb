@@ -14,6 +14,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -36,8 +37,11 @@ func (c *Collection) AddDocument(
 	args = append(args, document)
 	args = appendTxnArg(args, c.txn)
 
-	_, err = c.cmd.execute(ctx, args)
+	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJSON([]*client.Document{doc}, data); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -62,12 +66,33 @@ func (c *Collection) AddManyDocuments(
 	args = append(args, "["+strings.Join(docStrings, ",")+"]")
 	args = appendTxnArg(args, c.txn)
 
-	_, err := c.cmd.execute(ctx, args)
+	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
+		return err
+	}
+	if err := setDocumentIDsFromJSON(docs, data); err != nil {
 		return err
 	}
 	for _, doc := range docs {
 		doc.Clean()
+	}
+	return nil
+}
+
+func setDocumentIDsFromJSON(docs []*client.Document, data []byte) error {
+	var docIDs []string
+	if err := json.Unmarshal(data, &docIDs); err != nil {
+		return err
+	}
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.ApplySavedDocumentID(docs[i], docID)
 	}
 	return nil
 }
@@ -86,6 +111,9 @@ func makeDocAddArgs(
 	}
 	if len(opt.EncryptedFields) > 0 {
 		args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
+	}
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
 	}
 
 	return args
@@ -108,6 +136,9 @@ func (c *Collection) UpdateDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	_, err = c.cmd.execute(ctx, args)
@@ -123,6 +154,10 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	getOpts := options.GetDocument()
 	opt := utils.NewOptions(opts...)
 	if opt.Identity.HasValue() {
@@ -135,17 +170,13 @@ func (c *Collection) SaveDocument(
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
+		if opt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		opt := utils.NewOptions(opts...)
-		addOpt := options.AddDocument().
-			SetEncryptDoc(opt.EncryptDoc).
-			SetEncryptedFields(opt.EncryptedFields)
-		if opt.GetIdentity().HasValue() {
-			addOpt.SetIdentity(opt.GetIdentity().Value())
-		}
-		return c.AddDocument(ctx, doc, addOpt)
+		return c.AddDocument(ctx, doc, opts...)
 	}
 	return err
 }
@@ -161,6 +192,9 @@ func (c *Collection) DeleteDocument(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	_, err := c.cmd.execute(ctx, args)
@@ -206,6 +240,9 @@ func (c *Collection) UpdateDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)
@@ -236,6 +273,9 @@ func (c *Collection) DeleteDocumentsWithFilter(
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
 	args = appendTxnArg(args, c.txn)
 
 	data, err := c.cmd.execute(ctx, args)

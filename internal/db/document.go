@@ -16,8 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sourcenetwork/corekv"
+	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
@@ -35,6 +36,7 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 // docIDResult wraps the result of an attempt at a DocID retrieval operation.
@@ -46,13 +48,12 @@ type docIDResult struct {
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan docIDResult, error) {
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
+	systemstore := c.db.Multistore().Systemstore()
+	collectionShortID, err := id.GetUncachedCollectionShortID(ctx, c.Version().CollectionID, systemstore)
 	if err != nil {
 		return nil, err
 	}
-	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
-		CollectionShortID: shortID,
-	}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: collectionShortID}
 	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
@@ -94,10 +95,7 @@ func (c *collection) getAllDocIDsChan(
 				break
 			}
 
-			splitString := strings.Split(string(iter.Key()), "/")
-			rawDocID := splitString[len(splitString)-1]
-
-			docID, err := client.NewDocIDFromString(rawDocID)
+			key, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
 			if err != nil {
 				closeIterator()
 				resCh <- docIDResult{
@@ -106,10 +104,30 @@ func (c *collection) getAllDocIDsChan(
 				return
 			}
 
-			canRead, err := c.checkAccessOfDocWithACP(
+			docIDString, found, err := id.GetDocIDFromStore(ctx, systemstore, key.DocShortID)
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
+			}
+			if !found {
+				continue
+			}
+			docID, err := client.NewDocIDFromString(docIDString)
+			if err != nil {
+				closeIterator()
+				resCh <- docIDResult{
+					Err: err,
+				}
+				return
+			}
+
+			canRead, err := c.checkAccessOfDoc(
 				ctx,
 				acpTypes.DocumentReadPerm,
-				docID.String(),
+				docIDString,
 			)
 
 			if err != nil {
@@ -150,6 +168,7 @@ func (c *collection) AddDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -185,6 +204,7 @@ func (c *collection) AddManyDocuments(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -203,27 +223,6 @@ func (c *collection) AddManyDocuments(
 	return txn.Commit()
 }
 
-func (c *collection) getDocIDAndPrimaryKeyFromDoc(
-	ctx context.Context,
-	doc *client.Document,
-) (client.DocID, keys.PrimaryDataStoreKey, error) {
-	docID, err := doc.GenerateDocID()
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return client.DocID{}, keys.PrimaryDataStoreKey{}, err
-	}
-
-	if primaryKey.DocID != doc.ID().String() {
-		return client.DocID{}, keys.PrimaryDataStoreKey{},
-			NewErrDocVerification(doc.ID().String(), primaryKey.DocID)
-	}
-	return docID, primaryKey, nil
-}
-
 func (c *collection) add(
 	ctx context.Context,
 	doc *client.Document,
@@ -232,46 +231,6 @@ func (c *collection) add(
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
 		return err
-	}
-
-	docID, primaryKey, err := c.getDocIDAndPrimaryKeyFromDoc(ctx, doc)
-	if err != nil {
-		return err
-	}
-
-	// check if doc already exists
-	exists, isDeleted, err := c.exists(ctx, primaryKey)
-	if err != nil {
-		return err
-	}
-	// isDeleted is checked before exists because a tombstoned doc
-	// still satisfies exists, and the deleted error is more informative.
-	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
-	}
-	if exists {
-		return NewErrDocumentAlreadyExists(primaryKey.DocID)
-	}
-
-	// write value object marker if we have an empty doc
-	if len(doc.Values()) == 0 {
-		txn := datastore.CtxMustGetTxn(ctx)
-
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-
-		valueKey := keys.DataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             docID.String(),
-			InstanceType:      keys.ValueKey,
-		}
-
-		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
-		if err != nil {
-			return NewErrStoreDocMarker(err, docID.String())
-		}
 	}
 
 	ctx = setContextDocEncryption(ctx, opt)
@@ -286,7 +245,7 @@ func (c *collection) add(
 		return err
 	}
 
-	return c.registerDocWithACP(ctx, doc.ID().String())
+	return c.registerDoc(ctx, doc.ID().String())
 }
 
 func setContextDocEncryption(
@@ -298,6 +257,18 @@ func setContextDocEncryption(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, opt.EncryptDoc, opt.EncryptedFields)
 	return ctx
+}
+
+func setContextSigning(
+	ctx context.Context,
+	signingDisabled bool,
+	enableSigning immutable.Option[bool],
+) context.Context {
+	enabled := !signingDisabled
+	if enableSigning.HasValue() {
+		enabled = enableSigning.Value()
+	}
+	return coreblock.ContextWithSigning(ctx, enabled)
 }
 
 // UpdateDocument updates an existing document with the new values.
@@ -320,6 +291,7 @@ func (c *collection) UpdateDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -341,7 +313,7 @@ func (c *collection) UpdateDocument(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
+		return NewErrDocumentDeleted(doc.ID().String())
 	}
 
 	err = c.update(ctx, doc)
@@ -362,7 +334,7 @@ func (c *collection) update(
 	doc *client.Document,
 ) error {
 	// Stop the update if the correct permissions aren't there.
-	canUpdate, err := c.checkAccessOfDocWithACP(
+	canUpdate, err := c.checkAccessOfDoc(
 		ctx,
 		acpTypes.DocumentUpdatePerm,
 		doc.ID().String(),
@@ -405,6 +377,7 @@ func (c *collection) SaveDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -448,6 +421,19 @@ func hasPrivateKey(ident identity.Identity) bool {
 	return false
 }
 
+func (c *collection) contextForSigning(ctx context.Context) context.Context {
+	signingCtx := ctx
+	ident := iIdentity.FromContext(signingCtx)
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
+		signingCtx = iIdentity.WithContext(signingCtx, c.db.nodeIdentity)
+	}
+
+	if enabled, ok := coreblock.SigningConfigFromContext(signingCtx); ok && enabled {
+		signingCtx = coreblock.ContextWithEnabledSigning(signingCtx)
+	}
+	return signingCtx
+}
+
 func (c *collection) validateEncryptedFields(ctx context.Context) error {
 	encConf := encryption.GetContextConfig(ctx)
 	if !encConf.HasValue() {
@@ -489,14 +475,7 @@ func (c *collection) save(
 	}
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	ident := iIdentity.FromContext(ctx)
-	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = iIdentity.WithContext(ctx, c.db.nodeIdentity)
-	}
-
-	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
-	}
+	signingCtx := c.contextForSigning(ctx)
 
 	// NOTE: We delay the final Clean() call until we know
 	// the commit on the transaction is successful. If we didn't
@@ -507,22 +486,32 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
-	// New batch transaction/store (optional/todo)
-	// Ensute/Set doc object marker
-	// Loop through doc values
-	//	=> 		instantiate MerkleCRDT objects
-	//	=> 		Set/Publish new CRDT values
-	primaryKey := keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             doc.ID().String(),
+	var primaryKey keys.PrimaryDataStoreKey
+	if isAdd {
+		docShortID, err := id.NextDocShortID(ctx)
+		if err != nil {
+			return err
+		}
+		primaryKey = keys.PrimaryDataStoreKey{
+			CollectionShortID: collectionShortID,
+			DocShortID:        docShortID,
+		}
+	} else {
+		primaryKey, err = c.getPrimaryKeyFromDocID(ctx, doc.ID())
+		if err != nil {
+			return err
+		}
 	}
 
+	encryptionDocID := keys.EncodeDocRef(collectionShortID, primaryKey.DocShortID)
+
 	links := make([]coreblock.DAGLink, 0)
+	encryptionCIDs := make([]cid.Cid, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -535,13 +524,13 @@ func (c *collection) save(
 				return client.NewErrFieldNotExist(k)
 			}
 
-			fieldID, err := id.GetShortFieldID(ctx, shortID, fieldDescription.FieldID)
+			fieldID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDescription.FieldID)
 			if err != nil {
 				return err
 			}
 			fieldKey := keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             primaryKey.DocID,
+				CollectionShortID: collectionShortID,
+				DocShortID:        primaryKey.DocShortID,
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
 
@@ -560,18 +549,26 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(primaryKey.DocID, k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val))
 			if err != nil {
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
+			link, rawBlock, err := coreblock.AddDeltaWithOptions(
+				signingCtx,
+				merkleCRDT,
+				delta,
+				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+			)
 			if err != nil {
 				return err
 			}
 
 			links = append(links, coreblock.NewDAGLink(k, link))
+			encryptionCIDs, err = appendEncryptionCID(encryptionCIDs, rawBlock)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -580,15 +577,67 @@ func (c *collection) save(
 		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
-
-	link, headNode, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.Delta(), links...)
+	link, headNode, err := coreblock.AddDeltaWithOptions(
+		signingCtx,
+		merkleCRDT,
+		merkleCRDT.Delta(),
+		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+		links...,
+	)
+	if err != nil {
+		return err
+	}
+	encryptionCIDs, err = appendEncryptionCID(encryptionCIDs, headNode)
 	if err != nil {
 		return err
 	}
 
+	updateDocID := doc.ID().String()
+	if isAdd {
+		docID := client.NewDocIDV0(link.Cid)
+		docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID.String())
+		if err != nil {
+			return err
+		}
+		if found {
+			existingKey := keys.PrimaryDataStoreKey{
+				CollectionShortID: collectionShortID,
+				DocShortID:        docShortID,
+			}
+			exists, isDeleted, err := c.exists(ctx, existingKey)
+			if err != nil {
+				return err
+			}
+			if isDeleted {
+				return NewErrDocumentDeleted(docID.String())
+			}
+			if exists || docShortID != primaryKey.DocShortID {
+				return NewErrDocumentAlreadyExists(docID.String())
+			}
+		}
+		if err := id.SetDocIDMapping(ctx, collectionShortID, primaryKey.DocShortID, docID.String()); err != nil {
+			return err
+		}
+		client.ApplySavedDocumentID(doc, docID)
+		updateDocID = docID.String()
+	}
+	if err := id.SetBlockDocIDMapping(ctx, link.Cid, updateDocID); err != nil {
+		return err
+	}
+	for _, link := range links {
+		if err := id.SetBlockDocIDMapping(ctx, link.Cid, updateDocID); err != nil {
+			return err
+		}
+	}
+	for _, encCID := range encryptionCIDs {
+		if err := id.SetBlockDocIDMapping(ctx, encCID, updateDocID); err != nil {
+			return err
+		}
+	}
+
 	// publish an update event when the txn succeeds
 	updateEvent := event.Update{
-		DocID:        doc.ID().String(),
+		DocID:        updateDocID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
@@ -602,17 +651,17 @@ func (c *collection) save(
 	})
 
 	if c.def.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
+			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(
-			ctx,
+			signingCtx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,
@@ -646,6 +695,17 @@ func (c *collection) save(
 	return nil
 }
 
+func appendEncryptionCID(cids []cid.Cid, rawBlock []byte) ([]cid.Cid, error) {
+	block, err := coreblock.GetFromBytes(rawBlock)
+	if err != nil {
+		return nil, err
+	}
+	if block.Encryption == nil {
+		return cids, nil
+	}
+	return append(cids, block.Encryption.Cid), nil
+}
+
 // DeleteDocument will attempt to delete a document by docID and return true if a deletion is successful,
 // otherwise will return false, along with an error, if it cannot.
 // If the document doesn't exist, then it will return false, and a ErrDocumentNotFound error.
@@ -667,6 +727,7 @@ func (c *collection) DeleteDocument(
 	}
 
 	ctx = iIdentity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -676,11 +737,6 @@ func (c *collection) DeleteDocument(
 	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
-	if err != nil {
-		return false, err
-	}
-
-	err = c.deleteIndexedDocWithID(ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -735,10 +791,19 @@ func (c *collection) exists(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) (exists bool, isDeleted bool, err error) {
-	canRead, err := c.checkAccessOfDocWithACP(
+	if primaryKey.DocShortID == 0 {
+		return false, false, nil
+	}
+
+	docID, err := c.getDocIDFromPrimaryKey(ctx, primaryKey)
+	if err != nil {
+		return false, false, err
+	}
+
+	canRead, err := c.checkAccessOfDoc(
 		ctx,
 		acpTypes.DocumentReadPerm,
-		primaryKey.DocID,
+		docID,
 	)
 	if err != nil {
 		return false, false, err
@@ -751,7 +816,7 @@ func (c *collection) exists(
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {
-		return false, false, NewErrGetDocStatus(err, primaryKey.DocID)
+		return false, false, NewErrGetDocStatus(err, docID)
 	}
 	if bytes.Equal(val, []byte{base.DeletedObjectMarker}) {
 		return true, true, nil
@@ -764,13 +829,44 @@ func (c *collection) getPrimaryKeyFromDocID(
 	ctx context.Context,
 	docID client.DocID,
 ) (keys.PrimaryDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	return c.getPrimaryKeyFromDocIDString(ctx, docID.String())
+}
+
+func (c *collection) getPrimaryKeyFromDocIDString(
+	ctx context.Context,
+	docID string,
+) (keys.PrimaryDataStoreKey, error) {
+	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if err != nil {
-		return keys.PrimaryDataStoreKey{}, NewErrGetShortIDForDoc(err, c.Version().CollectionID)
+		return keys.PrimaryDataStoreKey{}, NewErrGetCollectionShortIDForDoc(err, c.Version().CollectionID)
+	}
+
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
+	if err != nil {
+		return keys.PrimaryDataStoreKey{}, err
+	}
+	if found {
+		return keys.PrimaryDataStoreKey{
+			CollectionShortID: collectionShortID,
+			DocShortID:        docShortID,
+		}, nil
 	}
 
 	return keys.PrimaryDataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docID.String(),
+		CollectionShortID: collectionShortID,
 	}, nil
+}
+
+func (c *collection) getDocIDFromPrimaryKey(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+) (string, error) {
+	docID, found, err := id.GetDocID(ctx, primaryKey.DocShortID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return docID, nil
+	}
+	return "", nil
 }

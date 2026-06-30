@@ -36,7 +36,9 @@ will become the node owner identity.
 
 For quick help: 'defradb client acp node --help'
 
-Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+Learn more about the
+[Node Access Control](https://docs.source.network/defradb/security/node-access-control/)
+system.
 
 		`,
 	}

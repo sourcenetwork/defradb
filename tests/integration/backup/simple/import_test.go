@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestBackupImport_Simple_NoError(t *testing.T) {
@@ -26,8 +27,8 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 			},
 			&action.Request{
 				Request: `
-					query  {
-						User {
+						query  {
+							User {
 							name
 							age
 						}
@@ -75,6 +76,7 @@ func TestBackupImport_WithInvalidCollection_ReturnError(t *testing.T) {
 
 func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -82,6 +84,29 @@ func TestBackupImport_WithDocAlreadyExists_ReturnError(t *testing.T) {
 			},
 			testUtils.ImportBackup{
 				ImportContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
+				ExpectedError: "a document with the given ID already exists",
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// An imported document whose source DocID matches an existing local document, but whose content
+// resolves to a different local DocID, must not silently hijack the existing document's resolution.
+func TestBackupImport_WithAliasCollidingExistingDoc_ReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		// hardcoded DocIDs would change under encryption or signing
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John", "age": 30}`,
+			},
+			testUtils.ImportBackup{
+				// The imported document carries the existing John document's DocID as its alias, but
+				// its own content (Bob) resolves to a different DocID.
+				ImportContent: `{"User":[{"_docID":"bae-e7a5b940-c466-5e40-af26-87b6b35ed08a","_docIDNew":"bae-e7a5b940-c466-5e40-af26-87b6b35ed08a","age":40,"name":"Bob"}]}`,
 				ExpectedError: "a document with the given ID already exists",
 			},
 		},
@@ -130,6 +155,7 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 				]}`,
 			},
 			&action.Request{
+				NonOrderedResults: true,
 				Request: `
 					query  {
 						User {

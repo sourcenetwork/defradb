@@ -45,7 +45,7 @@ func TestQuerySimpleWithInvalidCid(t *testing.T) {
 func TestQuerySimpleWithCid(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -62,7 +62,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "{{.CID0_0_0}}"
 						) {
 						name
 					}
@@ -94,12 +94,51 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist"
 						) {
 						name
 					}
 				}`,
-				ExpectedError: "seek failed: (version fetcher) failed to get block in blockstore: ipld: could not find",
+				ExpectedError: "failed to get block in blockstore: ipld: could not find",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithCidFromAnotherCollection_ReturnsEmpty(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+					type Pets {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			&action.Request{
+				// The CID belongs to a Users document, so it resolves to no Pets document.
+				// This must yield an empty result rather than panicking in the versioned fetcher.
+				Request: `query {
+					Pets (
+							cid: "{{.CID0_0_0}}"
+						) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Pets": []map[string]any{},
+				},
 			},
 		},
 	}
@@ -110,7 +149,7 @@ func TestQuerySimple_UnknownCid(t *testing.T) {
 func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -132,7 +171,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
+							cid: "{{.CID0_0_0}}"
 						) {
 						name
 					}
@@ -155,7 +194,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -198,7 +237,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -218,7 +257,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"
+						cid: "{{.CID0_0_1}}"
 						showDeleted: true
 					){
 						name
@@ -239,11 +278,10 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
 func TestQuerySimple_ListOfOneCID(t *testing.T) {
 	test := testUtils.TestCase{
-		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		// hardcoded CIDs would change under encryption or signing
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -260,7 +298,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+							cid: ["{{.CID0_0_0}}"]
 						) {
 						name
 					}
@@ -282,7 +320,7 @@ func TestQuerySimple_ListOfOneCID(t *testing.T) {
 func TestQuerySimple_MultipleCIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -309,7 +347,7 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreihufziq5m2i6sgw2ls45uratin7eudhjplfg23qtj2lv6g6knevha"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_1_0}}"]
 						) {
 						name
 					}
@@ -334,7 +372,7 @@ func TestQuerySimple_MultipleCIDs(t *testing.T) {
 func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -357,7 +395,7 @@ func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 				// Query with duplicated cids for the same doc
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_0_0}}"]
 						) {
 						name
 					}
@@ -381,7 +419,7 @@ func TestQuerySimple_DuplicateCIDsForSameDoc(t *testing.T) {
 func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		// hardcoded CIDs would change under encryption
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -409,7 +447,7 @@ func TestQuerySimple_MultipleCIDsForSameDoc(t *testing.T) {
 				// Query with the cid for the initial version of `John`, and the updated version.
 				Request: `query {
 					Users (
-							cid: ["bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey", "bafyreiecis4aqmvr4effzlb74cwflphkykfnibpdnnftdyp6o2cneqy57q"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_0_1}}"]
 						) {
 						name
 					}

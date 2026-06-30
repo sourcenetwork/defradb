@@ -39,8 +39,10 @@ type ListActions struct {
 	TransactionID immutable.Option[int]
 }
 
-var _ Action = (*ListActions)(nil)
-var _ Stateful = (*ListActions)(nil)
+var (
+	_ Action   = (*ListActions)(nil)
+	_ Stateful = (*ListActions)(nil)
+)
 
 func (a *ListActions) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
@@ -77,6 +79,8 @@ func (a *ListActions) Execute() {
 				"collectionID mismatch for action index %v", i)
 			require.Equal(a.s.T, expectedAction.Action, actualAction.Action,
 				"action mismatch for action index %v", i)
+			require.Equal(a.s.T, expectedAction.Subject, actualAction.Subject,
+				"subject mismatch for action index %v", i)
 			require.Equal(a.s.T, expectedAction.Status, actualAction.Status,
 				"status mismatch for action index %v", i)
 		}

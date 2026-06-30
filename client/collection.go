@@ -133,7 +133,7 @@ type Collection interface {
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-	) ([]IndexDescription, error)
+	) ([]ListIndexesResult, error)
 
 	// NewEncryptedIndex makes a new encrypted index on the collection.
 	NewEncryptedIndex(
@@ -168,6 +168,9 @@ type Collection interface {
 	//
 	// If an error is returned, the truncate may have been partially applied - because of this it is strongly
 	// suggested to call `Truncate` until it succeeds.
+	//
+	// User-managed transactions are not supported by this function if the backing store does not support
+	// concurrent open transactions, such as LevelDB.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
 }
 

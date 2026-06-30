@@ -42,10 +42,10 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "نمی دانم",
-					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
-				}`,
+				DocMap: map[string]any{
+					"name":         "نمی دانم",
+					"_publishedID": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			&action.Request{
 				Request: `
@@ -67,7 +67,7 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 							"name": "فارسی دوم دبستان",
 							"_version": []map[string]any{
 								{
-									"docID": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3",
+									"docID": "{{.DocID0_0}}",
 								},
 							},
 							"author": map[string]any{
@@ -107,10 +107,10 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				Doc: `{
-					"name": "نمی دانم",
-					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
-				}`,
+				DocMap: map[string]any{
+					"name":         "نمی دانم",
+					"_publishedID": testUtils.NewDocIndex(0, 0),
+				},
 			},
 			&action.Request{
 				Request: `
@@ -132,7 +132,7 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 							"name": "فارسی دوم دبستان",
 							"_version": []map[string]any{
 								{
-									"docID": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3",
+									"docID": "{{.DocID0_0}}",
 								},
 							},
 							"author": map[string]any{

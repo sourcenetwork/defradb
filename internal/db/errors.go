@@ -55,7 +55,6 @@ const (
 	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
-	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
 	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
@@ -134,33 +133,38 @@ const (
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 
-	errCreateMergeTxn         string = "failed to create merge transaction"
-	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
-	errGetMergeTargetHeads    string = "failed to get merge target heads"
-	errLoadComposites         string = "failed to load composites for merge"
-	errMergeComposites        string = "failed to merge composites"
-	errSyncIndexedDoc         string = "failed to sync indexed document after merge"
-	errLoadBlockForMerge      string = "failed to load block for merge"
-	errDecodeBlockForMerge    string = "failed to decode block for merge"
-	errLoadParentComposite    string = "failed to load parent composite for merge"
-	errLoadMergeTargetBlock   string = "failed to load merge target block"
-	errDecodeMergeTargetBlock string = "failed to decode merge target block"
-	errGenerateMergeLink      string = "failed to generate link for merge composite"
-	errProcessBlockMerge      string = "failed to process block during merge"
-	errProcessEncryptedBlock  string = "failed to process encrypted block"
-	errInitCRDTForMerge       string = "failed to init CRDT for merge"
-	errProcessCRDTBlock       string = "failed to process CRDT block"
-	errLoadChildBlock         string = "failed to load child block for merge"
-	errDecodeChildBlock       string = "failed to decode child block for merge"
-	errProcessChildBlock      string = "failed to process child block for merge"
-	errGetHeadsForMerge       string = "failed to get heads for merge target"
-	errLoadBlockFromStore     string = "failed to get block from blockstore"
-	errDecodeBlockFromStore   string = "failed to decode block from bytes"
-	errParseDocIDMerge        string = "failed to parse doc ID during merge"
-	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
-	errGetDocStatus           string = "failed to get document status"
-	errGetShortIDForDoc       string = "failed to get short collection ID for document"
+	errCreateMergeTxn               string = "failed to create merge transaction"
+	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
+	errGetMergeTargetHeads          string = "failed to get merge target heads"
+	errLoadComposites               string = "failed to load composites for merge"
+	errMergeComposites              string = "failed to merge composites"
+	errSyncIndexedDoc               string = "failed to sync indexed document after merge"
+	errLoadBlockForMerge            string = "failed to load block for merge"
+	errDecodeBlockForMerge          string = "failed to decode block for merge"
+	errLoadParentComposite          string = "failed to load parent composite for merge"
+	errLoadMergeTargetBlock         string = "failed to load merge target block"
+	errDecodeMergeTargetBlock       string = "failed to decode merge target block"
+	errGenerateMergeLink            string = "failed to generate link for merge composite"
+	errProcessBlockMerge            string = "failed to process block during merge"
+	errProcessEncryptedBlock        string = "failed to process encrypted block"
+	errInitCRDTForMerge             string = "failed to init CRDT for merge"
+	errProcessCRDTBlock             string = "failed to process CRDT block"
+	errLoadChildBlock               string = "failed to load child block for merge"
+	errDecodeChildBlock             string = "failed to decode child block for merge"
+	errProcessChildBlock            string = "failed to process child block for merge"
+	errGetHeadsForMerge             string = "failed to get heads for merge target"
+	errLoadBlockFromStore           string = "failed to get block from blockstore"
+	errDecodeBlockFromStore         string = "failed to decode block from bytes"
+	errParseDocIDMerge              string = "failed to parse doc ID during merge"
+	errGetShortFieldIDMerge         string = "failed to get short field ID during merge"
+	errGetDocStatus                 string = "failed to get document status"
+	errGetCollectionShortIDForDoc   string = "failed to get collection short ID for document"
 
 	errDeleteNACState             string = "failed to delete NAC state"
 	errCommitNACTransaction       string = "failed to commit NAC transaction"
@@ -190,7 +194,6 @@ const (
 	errGetAllDocIDs               string = "failed to get all document IDs"
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
-	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
 	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
 		" first truncate it and then try again."
 )
@@ -205,6 +208,7 @@ var (
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
+	ErrUnexpectedTxnType                         = errors.New("unexpected transaction type")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
@@ -265,7 +269,6 @@ var (
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
-	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
 	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
@@ -309,11 +312,6 @@ func NewErrFailedToStoreIndexedField(key string, inner error) error {
 // description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
-}
-
-// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
-func NewCanNotDeleteIndexedField(inner error) error {
-	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was
@@ -974,8 +972,8 @@ func NewErrCreateMergeTxn(inner error, docID string, cid string) error {
 		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
-func NewErrGetShortIDForMerge(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForMerge(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrGetMergeTargetHeads(inner error, docID string, key string) error {
@@ -1072,8 +1070,8 @@ func NewErrGetDocStatus(inner error, docID string) error {
 	return errors.Wrap(errGetDocStatus, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrGetShortIDForDoc(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForDoc(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrStoreViewCacheItem(inner error) error {
@@ -1170,5 +1168,37 @@ func NewErrDematerializePopulatedView(name string, version string) error {
 		errDematerializePopulatedView,
 		errors.NewKV("Name", name),
 		errors.NewKV("VersionID", version),
+	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrCorruptIndexPayload returns a new error indicating that an index action's payload
+// could not be decoded.
+func NewErrCorruptIndexPayload(value []byte) error {
+	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
 	)
 }

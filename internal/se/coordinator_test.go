@@ -214,7 +214,6 @@ func (s *testSetup) createNonCompositeBlock() []byte {
 	fieldBlock := coreblock.Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte(s.docID),
 				FieldName:           s.fieldName,
 				Priority:            1,
 				CollectionVersionID: s.collectionID,
@@ -257,7 +256,6 @@ func createValidCompositeBlock(t *testing.T, docID, collectionID, fieldName stri
 	fieldBlock := coreblock.Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte(docID),
 				FieldName:           fieldName,
 				Priority:            1,
 				CollectionVersionID: collectionID,
@@ -274,7 +272,6 @@ func createValidCompositeBlock(t *testing.T, docID, collectionID, fieldName stri
 	compositeBlock := coreblock.Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
-				DocID:               []byte(docID),
 				Priority:            1,
 				CollectionVersionID: collectionID,
 				Status:              1,

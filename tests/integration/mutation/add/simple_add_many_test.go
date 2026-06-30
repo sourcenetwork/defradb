@@ -54,12 +54,12 @@ func TestMutationAddMany(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-32e84498-d467-5f01-b93e-fc2dca59be76",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"age":    int64(27),
 						},
 						{
-							"_docID": "bae-974c991f-74fb-5841-99a7-7c85a4942fbc",
+							"_docID": "{{.DocID0_1}}",
 							"name":   "Islam",
 							"age":    int64(33),
 						},

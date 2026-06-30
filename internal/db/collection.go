@@ -30,11 +30,16 @@ var _ client.Collection = (*collection)(nil)
 // collection stores data records at Documents, which are gathered
 // together under a collection name. This is analogous to SQL Tables.
 type collection struct {
-	db             *DB
-	def            client.CollectionVersion
-	indexes        []CollectionIndex
-	fetcherFactory func() fetcher.Fetcher
-	txn            immutable.Option[datastore.Txn]
+	db      *DB
+	def     client.CollectionVersion
+	indexes []client.CollectionIndex
+	// indexBuildStates holds the build (backfill) state of the collection's indexes that have one,
+	// keyed by index ID: an index is present while it is building or failed, and absent once ready.
+	// Presence therefore means "not yet queryable". Populated at construction time from the index
+	// state store; a rebuild's concurrent drop is not a build record and never appears here.
+	indexBuildStates map[uint32]indexState
+	fetcherFactory   func() fetcher.Fetcher
+	txn              immutable.Option[datastore.Txn]
 }
 
 // @todo: Move the base Descriptions to an internal API within the db/ package.
@@ -43,21 +48,70 @@ type collection struct {
 // to be auto generated based on a more controllable and user friendly
 // CollectionOptions object.
 
-// newCollection returns a pointer to a newly instantiated DB Collection
-func (db *DB) newCollection(desc client.CollectionVersion, txn immutable.Option[datastore.Txn]) (*collection, error) {
+// newCollection returns a pointer to a newly instantiated DB Collection.
+//
+// Index instances are only constructed for indexes whose status is building or ready;
+// failed and dropping indexes are excluded from the write path.
+func (db *DB) newCollection(
+	ctx context.Context,
+	desc client.CollectionVersion,
+	txn immutable.Option[datastore.Txn],
+) (*collection, error) {
 	col := &collection{
-		db:  db,
-		def: desc,
-		txn: txn,
+		db:               db,
+		def:              desc,
+		txn:              txn,
+		indexBuildStates: make(map[uint32]indexState),
 	}
-	for _, index := range desc.Indexes {
-		colIndex, err := NewCollectionIndex(col, index)
+
+	if len(desc.Indexes) > 0 {
+		// Build a read context that has a txn set so getIndexBuildStates can call CtxMustGetTxn.
+		stateCtx := ctx
+		if txn.HasValue() {
+			stateCtx = datastore.CtxSetTxn(ctx, txn.Value())
+		}
+
+		states, err := getIndexBuildStates(stateCtx, desc.CollectionID)
 		if err != nil {
 			return nil, err
 		}
-		col.indexes = append(col.indexes, colIndex)
+		col.indexBuildStates = states
+
+		for _, index := range desc.Indexes {
+			state := states[index.ID]
+
+			// A failed index is abandoned: it is not maintained by writes, so it is left out of
+			// c.indexes. A building index is kept, so its new epoch keeps receiving concurrent
+			// writes while the backfill runs.
+			if state.isFailed() {
+				continue
+			}
+
+			colIndex, err := NewCollectionIndex(stateCtx, col, index, state.isBuilding())
+			if err != nil {
+				return nil, err
+			}
+
+			col.indexes = append(col.indexes, colIndex)
+		}
 	}
+
 	return col, nil
+}
+
+// QueryableIndexes returns the indexes that are safe for query planning. An index is excluded
+// while it has a build record (building or failed), since its entries may be incomplete.
+// c.indexBuildStates holds only build records, so an index collecting a superseded epoch after a
+// rebuild is absent here and stays queryable — it is already complete on its new epoch.
+func (c *collection) QueryableIndexes() []client.IndexDescription {
+	all := c.Version().Indexes
+	result := make([]client.IndexDescription, 0, len(all))
+	for _, idx := range all {
+		if _, ok := c.indexBuildStates[idx.ID]; !ok {
+			result = append(result, idx)
+		}
+	}
+	return result
 }
 
 // newFetcher returns a new fetcher instance for this collection.
@@ -203,7 +257,7 @@ func (db *DB) getCollections(
 		} else {
 			txnOpt = datastore.CtxTryGetTxnOption(ctx)
 		}
-		collection, err := db.newCollection(col, txnOpt)
+		collection, err := db.newCollection(ctx, col, txnOpt)
 		if err != nil {
 			return nil, err
 		}

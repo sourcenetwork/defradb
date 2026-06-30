@@ -56,7 +56,7 @@ func (col *txnCollection) AddDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.AddDocument(ctx, doc, opts...)
@@ -71,7 +71,7 @@ func (col *txnCollection) AddManyDocuments(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.AddManyDocuments(ctx, docs, opts...)
@@ -86,7 +86,7 @@ func (col *txnCollection) UpdateDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.UpdateDocument(ctx, doc, opts...)
@@ -101,7 +101,7 @@ func (col *txnCollection) SaveDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.SaveDocument(ctx, doc, opts...)
@@ -116,7 +116,7 @@ func (col *txnCollection) DeleteDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return false, ErrTxnDiscarded
+		return false, client.ErrTransactionNotFound
 	}
 
 	return col.inner.DeleteDocument(ctx, docID, opts...)
@@ -131,7 +131,7 @@ func (col *txnCollection) ExistsDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return false, ErrTxnDiscarded
+		return false, client.ErrTransactionNotFound
 	}
 
 	return col.inner.ExistsDocument(ctx, docID, opts...)
@@ -147,7 +147,7 @@ func (col *txnCollection) UpdateDocumentsWithFilter(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return col.inner.UpdateDocumentsWithFilter(ctx, filter, updater, opts...)
@@ -162,7 +162,7 @@ func (col *txnCollection) DeleteDocumentsWithFilter(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return col.inner.DeleteDocumentsWithFilter(ctx, filter, opts...)
@@ -177,7 +177,7 @@ func (col *txnCollection) GetDocument(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return col.inner.GetDocument(ctx, docID, opts...)
@@ -192,7 +192,7 @@ func (col *txnCollection) NewIndex(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return client.IndexDescription{}, ErrTxnDiscarded
+		return client.IndexDescription{}, client.ErrTransactionNotFound
 	}
 
 	return col.inner.NewIndex(ctx, req, opts...)
@@ -207,7 +207,7 @@ func (col *txnCollection) DeleteIndex(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.DeleteIndex(ctx, indexName, opts...)
@@ -216,12 +216,12 @@ func (col *txnCollection) DeleteIndex(
 func (col *txnCollection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.ListIndexesResult, error) {
 	ctx, unlock := lockForTxn(ctx, col.txn)
 	defer unlock()
 
 	if col.txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return col.inner.ListIndexes(ctx, opts...)
@@ -236,7 +236,7 @@ func (col *txnCollection) NewEncryptedIndex(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return client.EncryptedIndexDescription{}, ErrTxnDiscarded
+		return client.EncryptedIndexDescription{}, client.ErrTransactionNotFound
 	}
 
 	return col.inner.NewEncryptedIndex(ctx, desc, opts...)
@@ -251,7 +251,7 @@ func (col *txnCollection) DeleteEncryptedIndex(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.DeleteEncryptedIndex(ctx, fieldName, opts...)
@@ -265,7 +265,7 @@ func (col *txnCollection) ListEncryptedIndexes(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return col.inner.ListEncryptedIndexes(ctx, opts...)
@@ -279,8 +279,20 @@ func (col *txnCollection) Truncate(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.Truncate(ctx, opts...)
+}
+
+// QueryableIndexes forwards to the inner collection's QueryableIndexes if it implements
+// the queryableIndexesProvider interface. Falls back to all indexes from the version
+// definition when the inner collection does not track index lifecycle status.
+func (col *txnCollection) QueryableIndexes() []client.IndexDescription {
+	if p, ok := col.inner.(interface {
+		QueryableIndexes() []client.IndexDescription
+	}); ok {
+		return p.QueryableIndexes()
+	}
+	return col.inner.Version().Indexes
 }

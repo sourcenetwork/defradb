@@ -92,7 +92,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnableDevelopment(cfg.GetBool("development")).
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
-				SetPath(cfg.GetString("datastore.badger.path")).
+				SetPath(cfg.GetString("datastore.path")).
 				SetBadgerInMemory(inMem).
 				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
@@ -104,11 +104,24 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
 				SetEnableRelay(cfg.GetBool("net.relay")).
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
+			// TLS is enabled when both the certificate (pubkeypath) and key
+			// (privkeypath) paths are set, either explicitly (flag/config/env) or
+			// by config.LoadConfig auto-detecting the default certificate files.
+			// Both are required, so reject an incomplete pair here with a clear
+			// error rather than letting the node fail to start later when it
+			// cannot load the certificate. This covers both an explicitly-set
+			// single path and a half-populated default certs directory (which
+			// config.autoDetectTLSCertPaths surfaces as a single set path).
+			tlsCertPath := cfg.GetString("api.pubkeypath")
+			tlsKeyPath := cfg.GetString("api.privkeypath")
+			if (tlsCertPath == "") != (tlsKeyPath == "") {
+				return ErrIncompleteTLSKeyPair
+			}
 			opts.HTTP().
 				SetAddress(cfg.GetString("api.address")).
 				SetAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...).
-				SetCertPath(cfg.GetString("api.pubKeyPath")).
-				SetKeyPath(cfg.GetString("api.privKeyPath"))
+				SetCertPath(tlsCertPath).
+				SetKeyPath(tlsKeyPath)
 			opts.DocumentACP().
 				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
 				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
@@ -367,6 +380,13 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. "+
 			"Example: 10,20,40,80,160,320",
 	)
+	cmd.PersistentFlags().Bool(
+		"no-keyring",
+		cfg.GetBool(config.ConfigFlags["no-keyring"]),
+		"Disable the keyring and generate ephemeral keys",
+	)
+	setClientConnectionFlags(cmd)
+	setKeyringFlags(cmd)
 	return cmd
 }
 

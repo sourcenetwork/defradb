@@ -423,6 +423,9 @@ func findFilteredByRelationFields(
 // isOrderedByIndex checks if the plan is ordered by an index.
 func isOrderedByIndex(plan planNode) bool {
 	var scan *scanNode
+	if getNode[*pipeNode](plan) != nil {
+		return false
+	}
 	// the typeIndexJoin has 2 scan nodes for every side of the join
 	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
 	typeJoin := getNode[*typeIndexJoin](plan)
@@ -486,10 +489,9 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 	)
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
 
 	for subFieldName, subFieldInd := range filteredSubFields {
-		indexes := desc.GetIndexesOnField(subFieldName)
+		indexes := queryableIndexesOnField(slct.collection, subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
 			subInd := node.documentMapping.FirstIndexOfName(node.parentSide.relFieldDef.Value().Name)
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
@@ -553,8 +555,7 @@ func (p *Planner) tryOptimizeJoinDirectionByOrder(
 	}
 
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Version()
-	indexes := desc.GetIndexesOnField(childFieldName)
+	indexes := queryableIndexesOnField(slct.collection, childFieldName)
 
 	if len(indexes) == 0 {
 		return immutable.None[mapper.SortDirection](), nil
@@ -758,6 +759,8 @@ func (p *Planner) walkAndReplacePlan(planNode, target, replace planNode) error {
 		node.replaceRoot(replace)
 	case *typeJoinMany:
 		node.replaceRoot(replace)
+	case *multiScanNode:
+		node.planNode = replace
 	case *pipeNode:
 		/* Do nothing - pipe nodes should not be replaced */
 	// @todo: add more nodes that apply here

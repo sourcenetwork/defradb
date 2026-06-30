@@ -24,7 +24,7 @@ func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -36,14 +36,14 @@ func TestCommitSubscription_WithAddMutations_ReturnCommits(t *testing.T) {
 					{
 						"_commits": []map[string]any{
 							{
-								"cid": "bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m",
+								"cid": "{{.CID0_0_0}}",
 							},
 						},
 					},
 					{
 						"_commits": []map[string]any{
 							{
-								"cid": "bafyreib5dvg3wkm722kietpvx5gmfueilyvywyiz2tl44q6xnhv4bedcpq",
+								"cid": "{{.CID0_1_0}}",
 							},
 						},
 					},
@@ -80,6 +80,10 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 	create2Heads := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// Result CIDs are hardcoded because template placeholders are not
+		// resolved inside Request.Results.
+		// See https://github.com/sourcenetwork/defradb/issues/4745.
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -98,7 +102,7 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m",
+								"cid":   testUtils.ValidCID(),
 								"links": create1Links,
 								"heads": create1Heads,
 							},
@@ -107,7 +111,7 @@ func TestCommitSubscription_WithCommitLinksAddMutations_ValidLinks(t *testing.T)
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreib5dvg3wkm722kietpvx5gmfueilyvywyiz2tl44q6xnhv4bedcpq",
+								"cid":   testUtils.ValidCID(),
 								"links": create2Links,
 								"heads": create2Heads,
 							},
@@ -204,7 +208,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			// subscription filtered on addo doc
 			&action.SubscriptionRequest{
 				Request: `subscription {
-					_commits(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504") {
+					_commits(docID: "{{.DocID0_1}}") {
 						cid
 						docID
 					}
@@ -223,14 +227,14 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			// this mutation will be ignored in the subscription (john doc)
 			&action.Request{
 				Request: `mutation {
-					update_User(docID: "bae-77e2140d-fee0-5f32-b63a-854c9d4311f9", input: {verified: true}) {
+					update_User(docID: "{{.DocID0_0}}", input: {verified: true}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": "bae-77e2140d-fee0-5f32-b63a-854c9d4311f9",
+							"_docID": "{{.DocID0_0}}",
 						},
 					},
 				},
@@ -238,7 +242,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			// this mutation will be included in the subscription (addo doc)
 			&action.Request{
 				Request: `mutation {
-					update_User(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504", input: {verified: false}) {
+					update_User(docID: "{{.DocID0_1}}", input: {verified: false}) {
 						_docID
 						_version {
 							cid

@@ -1823,8 +1823,8 @@ func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnO
 				Request: req,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{"title": "Orphan Book 2"},
 						{"title": "Orphan Book 1"},
+						{"title": "Orphan Book 2"},
 						{"title": "Book With Publisher"},
 					},
 				},

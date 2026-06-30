@@ -131,9 +131,11 @@ resources:
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can read.
 
+				NonOrderedResults: true,
+
 				Request: `
-					query {
-						Users {
+						query {
+							Users {
 							name
 							age
 						}

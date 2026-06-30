@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
@@ -311,7 +313,7 @@ func TestListCollectionIndexes_ShouldReturnIndexes(t *testing.T) {
 	assert.NoError(t, err)
 
 	require.Equal(t, 1, len(indexes))
-	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
+	assert.Equal(t, testUsersColIndexName, indexes[0].Description.Name)
 }
 
 func TestListCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
@@ -326,9 +328,9 @@ func TestListCollectionIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) 
 	require.Len(t, indexes, 2)
 	require.ElementsMatch(t,
 		[]string{testUsersColIndexName, testUsersColIndexAge},
-		[]string{indexes[0].Name, indexes[1].Name},
+		[]string{indexes[0].Description.Name, indexes[1].Description.Name},
 	)
-	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
+	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].Description.ID, indexes[1].Description.ID})
 }
 
 func TestListCollectionIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
@@ -366,7 +368,7 @@ func TestListCollectionIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T
 	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
-	assert.Equal(t, indexes[0].Name, testUsersColIndexAge)
+	assert.Equal(t, indexes[0].Description.Name, testUsersColIndexAge)
 
 	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	assert.NoError(t, err)
@@ -433,7 +435,7 @@ func TestListCollectionIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) 
 	require.Len(t, indexes, num)
 
 	for i := 1; i <= num; i++ {
-		assert.Equal(t, indexNamePrefix+toSuffix(i), indexes[i-1].Name, "i = %d", i)
+		assert.Equal(t, indexNamePrefix+toSuffix(i), indexes[i-1].Description.Name, "i = %d", i)
 	}
 }
 
@@ -480,7 +482,7 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}
-	_, err := NewCollectionIndex(f.users, descWithID)
+	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
 }
 
@@ -495,6 +497,29 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 		Fields: desc.Fields,
 		Unique: desc.Unique,
 	}
-	_, err := NewCollectionIndex(f.users, descWithID)
+	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
+}
+
+// TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError checks that constructing an index whose
+// epoch sequence was never seeded surfaces the lookup error rather than silently defaulting to a
+// wrong epoch. A real index always seeds its sequence at creation (processNewIndexRequest), so the
+// missing-sequence state is an inconsistency the read path must not paper over: defaulting to epoch
+// 0 would scan a different namespace and return wrong results. The same lookup backs the query
+// fetcher (ReadIndexEpoch), so this also pins that path's no-silent-fallback contract.
+func TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError(t *testing.T) {
+	f := newIndexTestFixture(t)
+	defer f.db.Close()
+
+	// Valid field so construction passes field validation and reaches the epoch lookup; an ID that
+	// no NewIndex ever allocated, so its epoch sequence does not exist.
+	descWithID := client.IndexDescription{
+		Name:   testUsersColIndexName,
+		ID:     12345,
+		Fields: []client.IndexedFieldDescription{{Name: usersNameFieldName}},
+	}
+
+	ctx := InitContext(f.ctx, f.txn)
+	_, err := NewCollectionIndex(ctx, f.users, descWithID, false)
+	require.ErrorIs(t, err, corekv.ErrNotFound)
 }

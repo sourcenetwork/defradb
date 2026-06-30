@@ -37,10 +37,16 @@
                     "CollectionID": {
                         "type": "string"
                     },
+                    "Reason": {
+                        "type": "string"
+                    },
                     "Status": {
                         "maximum": 65535,
                         "minimum": 0,
                         "type": "integer"
+                    },
+                    "Subject": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -649,6 +655,7 @@
         "securitySchemes": {
             "bearerToken": {
                 "bearerFormat": "JWT",
+                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the SourceHub address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
                 "scheme": "bearer",
                 "type": "http"
             }
@@ -667,7 +674,7 @@
         "/acp/document/policy": {
             "post": {
                 "description": "Add a policy using document acp system",
-                "operationId": "add dac policy",
+                "operationId": "dac policy add",
                 "requestBody": {
                     "content": {
                         "text/plain": {
@@ -694,14 +701,14 @@
                     }
                 },
                 "tags": [
-                    "acp_document_policy"
+                    "document access control"
                 ]
             }
         },
         "/acp/document/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using document acp system",
-                "operationId": "delete dac relationship",
+                "operationId": "dac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -728,12 +735,12 @@
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using document acp system",
-                "operationId": "add dac relationship",
+                "operationId": "dac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -760,14 +767,14 @@
                     }
                 },
                 "tags": [
-                    "acp_document_relationship"
+                    "document access control"
                 ]
             }
         },
         "/acp/node/disable": {
             "post": {
                 "description": "Disable nac",
-                "operationId": "disable nac",
+                "operationId": "nac disable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -777,14 +784,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_disable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/re-enable": {
             "post": {
                 "description": "Re-enable nac",
-                "operationId": "re-enable nac",
+                "operationId": "nac re-enable",
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -794,14 +801,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_re-enable"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/relationship": {
             "delete": {
                 "description": "Delete an actor relationship using node acp system",
-                "operationId": "delete nac relationship",
+                "operationId": "nac relationship delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -828,12 +835,12 @@
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             },
             "post": {
                 "description": "Add an actor relationship using node acp system",
-                "operationId": "add nac relationship",
+                "operationId": "nac relationship add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -860,14 +867,14 @@
                     }
                 },
                 "tags": [
-                    "acp_node_relationship"
+                    "node access control"
                 ]
             }
         },
         "/acp/node/status": {
             "get": {
                 "description": "Check status of node acp system",
-                "operationId": "Check status of nac",
+                "operationId": "nac status",
                 "responses": {
                     "200": {
                         "content": {
@@ -884,7 +891,7 @@
                     }
                 },
                 "tags": [
-                    "acp_node_status"
+                    "node access control"
                 ]
             }
         },
@@ -1475,7 +1482,17 @@
                 },
                 "responses": {
                     "200": {
-                        "$ref": "#/components/responses/success"
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "The IDs of the added documents"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
@@ -2657,6 +2674,14 @@
                             "default": false,
                             "type": "boolean"
                         }
+                    },
+                    {
+                        "description": "Transaction idle TTL as a Go duration string, or seconds if no unit is provided",
+                        "in": "query",
+                        "name": "ttl",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -2838,6 +2863,12 @@
             }
         }
     },
+    "security": [
+        {},
+        {
+            "bearerToken": []
+        }
+    ],
     "servers": [
         {
             "description": "DefraDB latest version",

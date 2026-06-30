@@ -39,10 +39,12 @@ else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
 VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
+ifeq ($(VERSION_GITRELEASE),)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
+endif
 endif
 
 $(info ----------------------------------------);
@@ -67,7 +69,7 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
-JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/... 
+JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
@@ -205,6 +207,12 @@ mocks:
 	@$(MAKE) deps:mocks && \
 	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
+
+# Regenerates the committed SDL test fixtures from the current generator output.
+# This is a standalone step and does not require node/npx.
+.PHONY: sdl-fixtures
+sdl-fixtures:
+	go run ./internal/request/graphql/schema/testfixtures/gen
 
 .PHONY: ollama
 ollama:
@@ -460,6 +468,7 @@ fix:
 	@$(MAKE) lint\:fix
 	@$(MAKE) tidy
 	@$(MAKE) mocks
+	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
 
 .PHONY: build-c-static-windows
