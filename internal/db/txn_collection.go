@@ -86,7 +86,7 @@ func (col *txnCollection) SaveManyDocuments(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.SaveManyDocuments(ctx, docs, opts...)
@@ -310,7 +310,7 @@ func (col *txnCollection) PurgeByDocIDs(
 	defer unlock()
 
 	if col.txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return col.inner.PurgeByDocIDs(ctx, docIDs, pruneHistory, opts...)

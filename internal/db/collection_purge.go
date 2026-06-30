@@ -57,7 +57,7 @@ func (c *collection) PurgeByDocIDs(
 	}
 	defer txn.Discard()
 
-	shortID, err := id.GetShortCollectionID(ctx, c.def.CollectionID)
+	shortID, err := id.GetCollectionShortID(ctx, c.def.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -94,33 +94,49 @@ func (c *collection) purgeOneDoc(
 	docID client.DocID,
 	pruneHistory bool,
 ) error {
-	// InstanceType sits between CollectionShortID and DocID in the encoded key, so we
+	docShortID, found, err := id.GetDocShortID(ctx, shortID, docID.String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+
+	// InstanceType sits between CollectionShortID and DocShortID in the encoded key, so we
 	// must include it in the prefix; a key without InstanceType matches nothing.
 	for _, itype := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
 		prefix := keys.DataStoreKey{
 			CollectionShortID: shortID,
 			InstanceType:      itype,
-			DocID:             docID.String(),
+			DocShortID:        docShortID,
 		}
 		if err := c.hardDeleteDatastorePrefix(ctx, prefix); err != nil {
 			return err
 		}
 	}
 
+	systemstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Systemstore()
 	if pruneHistory {
-		return c.hardDeleteDocumentBlocks(ctx, docID.String())
+		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, docShortID); err != nil {
+			return err
+		}
+	} else {
+		if err := c.hardDeleteHeadstoreForDoc(ctx, docShortID); err != nil {
+			return err
+		}
 	}
-	return c.hardDeleteHeadstoreForDoc(ctx, docID.String())
+
+	return id.DeleteDocIDMappings(ctx, systemstore, docShortID)
 }
 
-// hardDeleteHeadstoreForDoc deletes all headstore entries for the given docID
+// hardDeleteHeadstoreForDoc deletes all headstore entries for the given document
 // without deleting the referenced blocks.
-func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docID string) error {
+func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID uint64) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
 	hasMore := true
 	for hasMore {
-		prefix := keys.HeadstoreDocKey{DocID: docID}
+		prefix := keys.HeadstoreDocKey{DocShortID: docShortID}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
 			Prefix:   prefix.Bytes(),

@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -200,17 +201,29 @@ func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error
 }
 
 // CollectDocumentCIDs returns the head block CIDs for the given document IDs by
-// scanning the headstore.  Pass txn.Headstore() as headstore.
+// scanning the headstore.  Pass txn.Headstore() as headstore and txn.Systemstore()
+// as systemstore; the latter is used to resolve each DocID to the short ID used in
+// headstore keys.  DocIDs with no short ID mapping (e.g. unknown documents) are skipped.
 func CollectDocumentCIDs(
 	ctx context.Context,
+	systemstore corekv.Reader,
 	headstore corekv.ReaderWriter,
+	collectionShortID uint32,
 	docIDs []string,
 ) ([]cid.Cid, error) {
 	seen := make(map[cid.Cid]struct{})
 	var out []cid.Cid
 
 	for _, docID := range docIDs {
-		prefix := keys.HeadstoreDocKey{DocID: docID}
+		docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, collectionShortID, docID)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			continue
+		}
+
+		prefix := keys.HeadstoreDocKey{DocShortID: docShortID}
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
 			Prefix: prefix.Bytes(),
 		})

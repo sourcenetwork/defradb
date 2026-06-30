@@ -61,7 +61,7 @@ func (db *DB) ExportDocKVs(
 		return 0, err
 	}
 
-	shortID, err := id.GetUncachedShortCollectionID(ctx, col.CollectionID(), db.Multistore().Systemstore())
+	shortID, err := id.GetUncachedCollectionShortID(ctx, col.CollectionID(), db.Multistore().Systemstore())
 	if err != nil {
 		return 0, err
 	}
@@ -87,14 +87,26 @@ func exportOneDoc(
 	w io.Writer,
 	datastoreOnly bool,
 ) (int, error) {
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
+	if err != nil {
+		return 0, err
+	}
+	if !found {
+		return 0, nil
+	}
+
 	total := 0
 
 	// -- Data store --
-	// InstanceType sits between CollectionShortID and DocID in the encoded key, so we
+	// InstanceType sits between CollectionShortID and DocShortID in the encoded key, so we
 	// must include it in the prefix; a key without InstanceType matches nothing.
 	ds := datastore.NewUnsafeDatastore(txn.Rootstore())
 	for _, itype := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
-		dsPrefix := keys.DataStoreKey{CollectionShortID: collectionShortID, InstanceType: itype, DocID: docID}.Bytes()
+		dsPrefix := keys.DataStoreKey{
+			CollectionShortID: collectionShortID,
+			InstanceType:      itype,
+			DocShortID:        docShortID,
+		}.Bytes()
 		n, err := exportByPrefixRaw(ctx, ds, dsPrefix, kvNsDatastore, w)
 		if err != nil {
 			return total, err
@@ -107,7 +119,7 @@ func exportOneDoc(
 	}
 
 	// -- Head store --
-	headPrefix := keys.HeadstoreDocKey{DocID: docID}.Bytes()
+	headPrefix := keys.HeadstoreDocKey{DocShortID: docShortID}.Bytes()
 	n, err := exportByPrefixRaw(ctx, txn.Headstore(), headPrefix, kvNsHeadstore, w)
 	if err != nil {
 		return total, err
@@ -115,7 +127,7 @@ func exportOneDoc(
 	total += n
 
 	// -- Block store --
-	n, err = exportBlocksForDoc(ctx, txn, docID, w)
+	n, err = exportBlocksForDoc(ctx, txn, docShortID, w)
 	if err != nil {
 		return total, err
 	}
@@ -165,9 +177,9 @@ func exportByPrefixRaw(
 
 // exportBlocksForDoc collects all block CIDs for the document by scanning its headstore
 // entries, then exports each block recursively following DAG links.
-func exportBlocksForDoc(ctx context.Context, txn *Txn, docID string, w io.Writer) (int, error) {
+func exportBlocksForDoc(ctx context.Context, txn *Txn, docShortID uint64, w io.Writer) (int, error) {
 	// Collect head CIDs from headstore.
-	headPrefix := keys.HeadstoreDocKey{DocID: docID}.Bytes()
+	headPrefix := keys.HeadstoreDocKey{DocShortID: docShortID}.Bytes()
 	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{Prefix: headPrefix})
 	if err != nil {
 		return 0, err
