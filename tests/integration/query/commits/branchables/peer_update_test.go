@@ -43,10 +43,8 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		// Signed counter deltas are double-applied across peers.
-		// https://github.com/sourcenetwork/defradb/issues/4742
-		// Under encryption the same multi-peer convergence shape diverges
-		// (heads count at the create-commit differs).
+		// Signing/encryption make each node's genesis block signer/key-specific, so creating the doc on
+		// every node yields distinct genesis commits and the commit-count assertions no longer hold.
 		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
