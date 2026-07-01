@@ -138,7 +138,7 @@ func TestNAC_ReEnableWithNoIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			testUtils.ReEnableNAC{ // NAC is already enabled before.
+			testUtils.ReEnableNAC{ // NAC is already enabled before, but not authorized to re-enable, so that gate hits first.
 				ExpectedError: "not authorized to perform operation. Permission: re-enable-nac",
 			},
 
@@ -161,7 +161,7 @@ func TestNAC_ReEnableWithWrongIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			testUtils.ReEnableNAC{ // NAC is already enabled before.
+			testUtils.ReEnableNAC{ // NAC is already enabled before, but not authorized to re-enable, so that gate hits first.
 				Identity:      testUtils.ClientIdentity(2),
 				ExpectedError: "not authorized to perform operation. Permission: re-enable-nac",
 			},
@@ -185,7 +185,7 @@ func TestNAC_ReEnableWithValidIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			testUtils.ReEnableNAC{ // NAC is already enabled before.
+			testUtils.ReEnableNAC{ /
 				Identity:      testUtils.ClientIdentity(1),
 				ExpectedError: "node acp is already enabled",
 			},
