@@ -185,7 +185,7 @@ func TestNAC_ReEnableWithValidIdentityWhenAlreadyEnabled_Error(t *testing.T) {
 				EnableNAC: true,
 			},
 
-			testUtils.ReEnableNAC{ /
+			testUtils.ReEnableNAC{ // NAC is already enabled before, and identity is authorized, so the "already enabled" gate hits.
 				Identity:      testUtils.ClientIdentity(1),
 				ExpectedError: "node acp is already enabled",
 			},
