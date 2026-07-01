@@ -713,7 +713,14 @@ type SyncDocs struct {
 	// This is used by testing framework to determine from which nodes the expected doc heads can
 	// be looked up for WaitForSync action.
 	// There must an item for each document in DocIDs.
+	//
+	// Not required when Concurrency > 1 (concurrent syncs skip head tracking).
 	SourceNodes []int
+
+	// Concurrency, when greater than 1, fires that many SyncDocuments calls in parallel for the
+	// same DocIDs instead of a single sequential call. ExpectedError is asserted against every
+	// call, and SourceNodes head tracking is skipped. Zero or 1 means a single sequential sync.
+	Concurrency int
 
 	// Any error expected from the action.
 	ExpectedError string
