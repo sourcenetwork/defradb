@@ -263,13 +263,16 @@ func syncDocs(s *state.State, action SyncDocs) {
 
 	collectionName := node.Collections[action.CollectionID].Name()
 
-	syncOpts := options.SyncDocuments()
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID)
-	if identOption.HasValue() {
-		syncOpts.SetIdentity(identOption.Value())
-	}
 
+	// The options builder is a stateful, single-use enumerable, so a fresh one is built per call
+	// rather than shared. Sharing it across the concurrent goroutines below would race on (and
+	// exhaust) its internal cursor.
 	syncOnce := func() error {
+		syncOpts := options.SyncDocuments()
+		if identOption.HasValue() {
+			syncOpts.SetIdentity(identOption.Value())
+		}
 		return node.SyncDocuments(s.Ctx, collectionName, docIDStrings, syncOpts)
 	}
 
