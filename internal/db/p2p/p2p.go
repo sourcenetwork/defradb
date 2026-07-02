@@ -148,6 +148,9 @@ type P2P struct {
 	// Updated by peerEventHandler; consulted by SendUpdate to emit P2PNoPeers events.
 	topicPeerCounts map[string]int
 	topicPeerMu     sync.RWMutex
+
+	// batcher accumulates per-collection pubsub updates into a single batched message.
+	batcher *pubsubBatcher
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -202,9 +205,12 @@ func New(
 		processQueue:         newProcessQueue(),
 		replicationFilter:    replicationFilter,
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
-		topicPeerCounts:      make(map[string]int),
+		topicPeerCounts: make(map[string]int),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
+	p.batcher = newPubsubBatcher(host.ID(), func(topic string, data []byte) error {
+		return host.PublishToTopicAsync(ctx, topic, data)
+	})
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
@@ -631,6 +637,27 @@ func (p *P2P) processPushlogRequest(
 		return ctx.Err()
 	}
 
+	// Handle batched multi-document push.
+	if len(req.Documents) > 0 {
+		for _, doc := range req.Documents {
+			if err := p.processPushlogRequest(ctx, &protocol.PushLogRequest{
+				MetaData:     req.MetaData,
+				DocID:        doc.DocID,
+				CID:          doc.CID,
+				CollectionID: req.CollectionID,
+				Creator:      req.Creator,
+				Block:        doc.Block,
+				CAR:          doc.CAR,
+			}, isReplicator); err != nil {
+				log.ErrorE("Failed to process batched document", err,
+					slog.String("DocID", doc.DocID),
+					slog.String("CollectionID", req.CollectionID),
+				)
+			}
+		}
+		return nil
+	}
+
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		return err
@@ -764,9 +791,13 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			}
 		}
 
-		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
-			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
-		}
+		// Route collection-topic publishes through the batcher so multiple doc updates
+		// within the flush window are coalesced into a single pubsub message.
+		p.batcher.Add(evt.CollectionID, protocol.DocumentInfo{
+			DocID: evt.DocID,
+			CID:   evt.Cid.Bytes(),
+			Block: evt.Block,
+		})
 		p.topicPeerMu.RLock()
 		noPeers := p.topicPeerCounts[evt.CollectionID] == 0
 		p.topicPeerMu.RUnlock()
@@ -872,9 +903,11 @@ func (pq *processQueue) close() {
 	pq.wg.Wait()
 }
 
-// Close drains in-flight sync requests and waits for all worker goroutines to exit.
+// Close flushes any pending batched pubsub messages, drains in-flight sync requests,
+// and waits for all worker goroutines to exit.
 // It should be called once when the P2P subsystem is shutting down.
 func (p *P2P) Close() {
+	p.batcher.FlushAll()
 	p.processQueue.close()
 }
 

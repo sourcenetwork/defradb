@@ -14,7 +14,17 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
-// PushLogRequest is the struct used to send a resource update to a peer node
+// DocumentInfo carries the per-document payload within a batched PushLogRequest.
+type DocumentInfo struct {
+	DocID string
+	CID   []byte
+	Block []byte
+	CAR   []byte `cbor:"car,omitempty"`
+}
+
+// PushLogRequest is the struct used to send a resource update to a peer node.
+// It may carry either a single document (DocID/CID/Block/CAR) or a batch of
+// documents (Documents).  The receiver handles whichever is present.
 type PushLogRequest struct {
 	message.MetaData
 	DocID        string
@@ -25,6 +35,9 @@ type PushLogRequest struct {
 	// CAR contains a Content Addressable aRchive of the full DAG rooted at CID.
 	// When present, the receiver imports it directly without a round-trip DAG sync.
 	CAR []byte `cbor:"car,omitempty"`
+	// Documents, when non-empty, carries a batch of per-document payloads.
+	// DocID/CID/Block/CAR fields are unused when this is set.
+	Documents []DocumentInfo `cbor:"documents,omitempty"`
 }
 
 // PushLogReply is the expected response struct that should be received after
