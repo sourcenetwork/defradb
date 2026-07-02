@@ -677,7 +677,15 @@ func (c *Client) ExportDocKVs(_ context.Context, _ string, _ []string, _ io.Writ
 	return 0, ErrNotSupportedViaHTTP
 }
 
+func (c *Client) ExportFieldMapping(_ context.Context, _ string) ([]byte, error) {
+	return nil, ErrNotSupportedViaHTTP
+}
+
 func (c *Client) ImportRawKVs(_ context.Context, _ io.Reader) (int, error) {
+	return 0, ErrNotSupportedViaHTTP
+}
+
+func (c *Client) ImportRawKVsWithMapping(_ context.Context, _ io.Reader, _ []byte) (int, error) {
 	return 0, ErrNotSupportedViaHTTP
 }
 

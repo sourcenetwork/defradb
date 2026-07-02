@@ -13,10 +13,21 @@ package db
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"io"
+	"strconv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// kvRemapTable holds the short-ID translations built from a kvFieldMappingFile.
+type kvRemapTable struct {
+	srcCollectionShortID uint32
+	dstCollectionShortID uint32
+	fieldShortIDs        map[uint32]uint32 // src local field short ID → dst local field short ID
+}
 
 const kvImportBatchSize = 1_000
 
@@ -74,6 +85,134 @@ func (db *DB) ImportRawKVs(ctx context.Context, r io.Reader) (int, error) {
 		}
 
 		batch[string(key)] = val
+		total++
+
+		if len(batch) >= kvImportBatchSize {
+			if err := flush(); err != nil {
+				return total, err
+			}
+		}
+	}
+
+	if len(batch) > 0 {
+		if err := flush(); err != nil {
+			return total, err
+		}
+	}
+
+	return total, nil
+}
+
+// ImportRawKVsWithMapping reads length-prefixed KV pairs from r (as written by ExportDocKVs)
+// and writes them to the rootstore, remapping datastore collection and field short IDs
+// according to mappingJSON (as produced by ExportFieldMapping on the source node).
+func (db *DB) ImportRawKVsWithMapping(ctx context.Context, r io.Reader, mappingJSON []byte) (int, error) {
+	var mapping kvFieldMappingFile
+	if err := json.Unmarshal(mappingJSON, &mapping); err != nil {
+		return 0, err
+	}
+
+	// Resolve destination short IDs via a single read txn.
+	txCtx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return 0, err
+	}
+
+	col, err := db.getCollectionByName(txCtx, mapping.CollectionName)
+	if err != nil {
+		txn.Discard()
+		return 0, err
+	}
+	dstColShortID, err := id.GetUncachedCollectionShortID(txCtx, col.CollectionID(), db.Multistore().Systemstore())
+	if err != nil {
+		txn.Discard()
+		return 0, err
+	}
+
+	fieldRemap := make(map[uint32]uint32, len(mapping.Fields))
+	for _, f := range mapping.Fields {
+		dstShortID, err := id.GetShortFieldID(txCtx, dstColShortID, f.FieldID)
+		if err != nil {
+			txn.Discard()
+			return 0, err
+		}
+		if dstShortID != 0 {
+			fieldRemap[f.ShortID] = dstShortID
+		}
+	}
+	txn.Discard()
+
+	remap := kvRemapTable{
+		srcCollectionShortID: mapping.CollectionShortID,
+		dstCollectionShortID: dstColShortID,
+		fieldShortIDs:        fieldRemap,
+	}
+	return db.importRawKVsWithRemap(ctx, r, remap)
+}
+
+func (db *DB) importRawKVsWithRemap(ctx context.Context, r io.Reader, remap kvRemapTable) (int, error) {
+	total := 0
+	batch := make(map[string][]byte, kvImportBatchSize)
+
+	flush := func() error {
+		ctx, txn, err := ensureContextTxn(ctx, db, false)
+		if err != nil {
+			return err
+		}
+		defer txn.Discard()
+		for k, v := range batch {
+			if err := txn.Rootstore().Set(ctx, []byte(k), v); err != nil {
+				return err
+			}
+		}
+		if err := txn.Commit(); err != nil {
+			return err
+		}
+		clear(batch)
+		return nil
+	}
+
+	for {
+		var keyLen uint32
+		if err := binary.Read(r, binary.BigEndian, &keyLen); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return total, err
+		}
+		if keyLen == 0 {
+			break
+		}
+
+		rawKey := make([]byte, keyLen)
+		if _, err := io.ReadFull(r, rawKey); err != nil {
+			return total, err
+		}
+
+		var valLen uint32
+		if err := binary.Read(r, binary.BigEndian, &valLen); err != nil {
+			return total, err
+		}
+		val := make([]byte, valLen)
+		if _, err := io.ReadFull(r, val); err != nil {
+			return total, err
+		}
+
+		// Remap datastore keys that belong to the source collection.
+		if len(rawKey) > 0 && rawKey[0] == kvNsDatastore {
+			if dsKey, err := keys.DecodeDataStoreKey(rawKey[1:]); err == nil &&
+				dsKey.CollectionShortID == remap.srcCollectionShortID {
+				dsKey.CollectionShortID = remap.dstCollectionShortID
+				if srcFieldID, ferr := dsKey.FieldIDAsUint(); ferr == nil {
+					if dstFieldID, ok := remap.fieldShortIDs[srcFieldID]; ok {
+						dsKey = dsKey.WithFieldID(strconv.Itoa(int(dstFieldID)))
+					}
+				}
+				rawKey = append([]byte{kvNsDatastore}, dsKey.Bytes()...)
+			}
+		}
+
+		batch[string(rawKey)] = val
 		total++
 
 		if len(batch) >= kvImportBatchSize {

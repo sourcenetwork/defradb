@@ -51,8 +51,12 @@ type DB interface {
 	Close()
 	// ExportDocKVs writes raw KV pairs for the given documents to w.
 	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	// ExportFieldMapping returns a JSON mapping of collection and field short IDs for the named collection.
+	ExportFieldMapping(ctx context.Context, collectionName string) ([]byte, error)
 	// ImportRawKVs reads raw KV pairs from r and writes them to the rootstore.
 	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	// ImportRawKVsWithMapping reads raw KV pairs from r, remapping short IDs per mappingJSON.
+	ImportRawKVsWithMapping(ctx context.Context, r io.Reader, mappingJSON []byte) (int, error)
 	// RebuildCollectionIndexes rebuilds secondary indexes for the named collection.
 	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 }

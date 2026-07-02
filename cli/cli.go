@@ -32,7 +32,9 @@ type CLI interface {
 	Purge(ctx context.Context) error
 	GetNodeOptions(ctx context.Context) (map[string]any, error)
 	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	ExportFieldMapping(ctx context.Context, collectionName string) ([]byte, error)
 	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	ImportRawKVsWithMapping(ctx context.Context, r io.Reader, mappingJSON []byte) (int, error)
 	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 }
 

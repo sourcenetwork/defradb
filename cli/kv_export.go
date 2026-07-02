@@ -20,6 +20,7 @@ import (
 func MakeKVExportCommand(ctx context.Context) *cobra.Command {
 	var docIDs []string
 	var datastoreOnly bool
+	var withFieldMapping bool
 
 	var cmd = &cobra.Command{
 		Use:   "export <collection> <output_path>",
@@ -31,6 +32,8 @@ followed by the raw key and value. A zero-length sentinel marks the end of the s
 
 Use --doc-ids to restrict the export to specific document IDs.
 Use --datastore-only to skip headstore and blockstore entries.
+Use --with-field-mapping to also write <output_path>.mapping.json, which can be passed to
+'kv import --field-mapping' on a destination node with different collection/field short IDs.
 
 NOTE: This command requires direct node access and is not available via the HTTP client.
 Use it against a local node instance (not a remote HTTP endpoint).`,
@@ -51,12 +54,27 @@ Use it against a local node instance (not a remote HTTP endpoint).`,
 				return err
 			}
 			cmd.Printf("Exported %d KV entries to %s\n", n, outputPath)
+
+			if withFieldMapping {
+				mappingJSON, err := cliClient.ExportFieldMapping(cmd.Context(), collectionName)
+				if err != nil {
+					return err
+				}
+				mappingPath := outputPath + ".mapping.json"
+				if err := os.WriteFile(mappingPath, mappingJSON, 0o600); err != nil {
+					return err
+				}
+				cmd.Printf("Wrote field mapping to %s\n", mappingPath)
+			}
+
 			return nil
 		},
 	}
 
 	cmd.Flags().StringSliceVar(&docIDs, "doc-ids", nil, "Document IDs to export (exports all if omitted)")
 	cmd.Flags().BoolVar(&datastoreOnly, "datastore-only", false, "Skip headstore and blockstore entries")
+	cmd.Flags().BoolVar(&withFieldMapping, "with-field-mapping", false,
+		"Also write <output_path>.mapping.json for use with 'kv import --field-mapping'")
 
 	return cmd
 }

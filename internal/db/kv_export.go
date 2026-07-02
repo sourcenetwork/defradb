@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -23,6 +24,21 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+// kvFieldMappingFile is the JSON format for the field-mapping export file.
+// Pass the output of ExportFieldMapping to ImportRawKVsWithMapping on the
+// destination node so it can translate local short IDs before writing.
+type kvFieldMappingFile struct {
+	CollectionName    string         `json:"collectionName"`
+	CollectionShortID uint32         `json:"collectionShortID"`
+	Fields            []kvFieldEntry `json:"fields"`
+}
+
+type kvFieldEntry struct {
+	Name    string `json:"name"`
+	FieldID string `json:"fieldID"` // global field ID (e.g. bafyrei…)
+	ShortID uint32 `json:"shortID"` // this node's local short ID
+}
 
 // Namespace bytes that are prepended to keys in the KV wire format.
 const (
@@ -77,6 +93,50 @@ func (db *DB) ExportDocKVs(
 
 	// EOF sentinel: key_len == 0
 	return total, binary.Write(w, binary.BigEndian, uint32(0))
+}
+
+// ExportFieldMapping returns a JSON document that records the local collection
+// and field short IDs for the named collection on this node.  Feed the result
+// to ImportRawKVsWithMapping on a destination node that may have different
+// short IDs for the same logical schema.
+func (db *DB) ExportFieldMapping(ctx context.Context, collectionName string) ([]byte, error) {
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	col, err := db.getCollectionByName(ctx, collectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	colShortID, err := id.GetUncachedCollectionShortID(ctx, col.CollectionID(), db.Multistore().Systemstore())
+	if err != nil {
+		return nil, err
+	}
+
+	m := kvFieldMappingFile{
+		CollectionName:    collectionName,
+		CollectionShortID: colShortID,
+	}
+
+	for _, field := range col.Version().Fields {
+		if field.FieldID == "" {
+			continue // virtual fields (secondary relation side) have no local short ID
+		}
+		shortID, err := id.GetShortFieldID(ctx, colShortID, field.FieldID)
+		if err != nil {
+			return nil, err
+		}
+		m.Fields = append(m.Fields, kvFieldEntry{
+			Name:    field.Name,
+			FieldID: field.FieldID,
+			ShortID: shortID,
+		})
+	}
+
+	return json.Marshal(m)
 }
 
 func exportOneDoc(

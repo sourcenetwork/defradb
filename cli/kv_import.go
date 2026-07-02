@@ -19,6 +19,7 @@ import (
 
 func MakeKVImportCommand(ctx context.Context) *cobra.Command {
 	var rebuildIndexes string
+	var fieldMappingPath string
 
 	var cmd = &cobra.Command{
 		Use:   "import <input_path>",
@@ -28,6 +29,8 @@ func MakeKVImportCommand(ctx context.Context) *cobra.Command {
 The input file must use the DefraDB KV wire format produced by 'kv export'.
 
 Use --rebuild-indexes to rebuild secondary indexes for a collection after import.
+Use --field-mapping <file> to supply a mapping JSON (from 'kv export --with-field-mapping')
+that translates collection and field short IDs from the source node to this node.
 
 NOTE: This command requires direct node access and is not available via the HTTP client.
 Use it against a local node instance (not a remote HTTP endpoint).`,
@@ -42,9 +45,22 @@ Use it against a local node instance (not a remote HTTP endpoint).`,
 			defer f.Close()
 
 			cliClient := mustGetContextCLIClient(cmd)
-			n, err := cliClient.ImportRawKVs(cmd.Context(), f)
-			if err != nil {
-				return err
+
+			var n int
+			if fieldMappingPath != "" {
+				mappingJSON, err := os.ReadFile(fieldMappingPath)
+				if err != nil {
+					return err
+				}
+				n, err = cliClient.ImportRawKVsWithMapping(cmd.Context(), f, mappingJSON)
+				if err != nil {
+					return err
+				}
+			} else {
+				n, err = cliClient.ImportRawKVs(cmd.Context(), f)
+				if err != nil {
+					return err
+				}
 			}
 			cmd.Printf("Imported %d KV entries from %s\n", n, inputPath)
 
@@ -61,6 +77,8 @@ Use it against a local node instance (not a remote HTTP endpoint).`,
 
 	cmd.Flags().StringVar(&rebuildIndexes, "rebuild-indexes", "",
 		"Collection name whose indexes should be rebuilt after import")
+	cmd.Flags().StringVar(&fieldMappingPath, "field-mapping", "",
+		"Path to a field-mapping JSON file produced by 'kv export --with-field-mapping'")
 
 	return cmd
 }
