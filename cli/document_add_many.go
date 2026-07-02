@@ -29,7 +29,10 @@ func MakeDocumentAddManyCommand(ctx context.Context) *cobra.Command {
 		Long: `Save multiple documents to a collection in a single transaction.
 
 Input must be a JSON array of document objects. Documents that already exist are
-updated; new documents are created. Pass '-' to read from stdin.`,
+updated; new documents are created. Pass '-' to read from stdin.
+
+NOTE: This command requires direct node access. Shared-transaction atomicity and
+batch signing cannot be preserved over HTTP; use it against a local node instance.`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
