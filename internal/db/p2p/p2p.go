@@ -143,6 +143,11 @@ type P2P struct {
 	// replicationFilter, when non-nil, is called for each incoming replicated document.
 	// Returning false from the filter drops the document silently.
 	replicationFilter client.ReplicationFilter
+
+	// topicPeerCounts tracks the number of known peers per pubsub topic.
+	// Updated by peerEventHandler; consulted by SendUpdate to emit P2PNoPeers events.
+	topicPeerCounts map[string]int
+	topicPeerMu     sync.RWMutex
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -197,6 +202,7 @@ func New(
 		processQueue:         newProcessQueue(),
 		replicationFilter:    replicationFilter,
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
+		topicPeerCounts:      make(map[string]int),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
@@ -602,6 +608,17 @@ func (p *P2P) peerEventHandler(peerID string, topic string, eventType string) {
 		Topic:     topic,
 		EventType: eventType,
 	}))
+
+	p.topicPeerMu.Lock()
+	switch eventType {
+	case "JOINED":
+		p.topicPeerCounts[topic]++
+	case "LEFT":
+		if p.topicPeerCounts[topic] > 0 {
+			p.topicPeerCounts[topic]--
+		}
+	}
+	p.topicPeerMu.Unlock()
 }
 
 // processPushlogRequest processes a push log request
@@ -735,10 +752,30 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
 				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 			}
+			p.topicPeerMu.RLock()
+			noPeers := p.topicPeerCounts[evt.DocID] == 0
+			p.topicPeerMu.RUnlock()
+			if noPeers {
+				p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
+					DocID:        evt.DocID,
+					CollectionID: evt.CollectionID,
+					Topic:        evt.DocID,
+				}))
+			}
 		}
 
 		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
 			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
+		}
+		p.topicPeerMu.RLock()
+		noPeers := p.topicPeerCounts[evt.CollectionID] == 0
+		p.topicPeerMu.RUnlock()
+		if noPeers {
+			p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
+				DocID:        evt.DocID,
+				CollectionID: evt.CollectionID,
+				Topic:        evt.CollectionID,
+			}))
 		}
 	}
 
@@ -833,6 +870,12 @@ func (pq *processQueue) tryEnqueue(key string, handler func() error) {
 func (pq *processQueue) close() {
 	close(pq.queue)
 	pq.wg.Wait()
+}
+
+// Close drains in-flight sync requests and waits for all worker goroutines to exit.
+// It should be called once when the P2P subsystem is shutting down.
+func (p *P2P) Close() {
+	p.processQueue.close()
 }
 
 // QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
