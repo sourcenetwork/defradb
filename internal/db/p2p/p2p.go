@@ -58,7 +58,23 @@ type (
 	peerAddresses = map[peerID]addresses
 )
 
-const networkRequestTimeout = 10 * time.Second
+const (
+	networkRequestTimeout = 10 * time.Second
+
+	// dagSyncWorkers is the number of concurrent pubsub message workers.
+	// A bounded pool prevents the OOM caused by spawning an unbounded number of
+	// goroutines when the network delivers messages faster than they are processed.
+	dagSyncWorkers = 32
+
+	// msgQueueSize is the capacity of the incoming pubsub message queue.
+	// Messages that arrive when the queue is full are dropped with a warning.
+	msgQueueSize = 50_000
+
+	// collectionCacheTTL is how long to cache collection existence checks.
+	// GetCollections hits the KV store on every call; the TTL amortises that
+	// cost across the large number of incoming pubsub messages per second.
+	collectionCacheTTL = 30 * time.Second
+)
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
 // Implementations can perform additional actions like generating SE artifacts.
@@ -153,6 +169,20 @@ type P2P struct {
 
 	// batcher accumulates per-collection pubsub updates into a single batched message.
 	batcher *pubsubBatcher
+
+	// msgQueue receives incoming pubsub messages for async processing by a fixed worker pool.
+	msgQueue   chan *protocol.PushLogRequest
+	msgWorkers sync.WaitGroup
+
+	// collectionCache caches collection existence checks to reduce KV reads per message.
+	collectionCache   map[string]*cachedCollection
+	collectionCacheMu sync.RWMutex
+}
+
+// cachedCollection stores a cached collection-existence lookup result with expiry.
+type cachedCollection struct {
+	exists  bool
+	expires time.Time
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -207,8 +237,16 @@ func New(
 		processQueue:         newProcessQueue(),
 		replicationFilter:    replicationFilter,
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
-		topicPeerCounts: make(map[string]int),
+		topicPeerCounts:      make(map[string]int),
+		msgQueue:             make(chan *protocol.PushLogRequest, msgQueueSize),
+		collectionCache:      make(map[string]*cachedCollection),
 	}
+
+	for i := 0; i < dagSyncWorkers; i++ {
+		p.msgWorkers.Add(1)
+		go p.processMessageWorker()
+	}
+
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 	p.batcher = newPubsubBatcher(host.ID(), func(topic string, data []byte) error {
 		return host.PublishToTopicAsync(ctx, topic, data)
@@ -591,7 +629,9 @@ func (p *P2P) docIDsForBlockCID(
 	return nil, nil
 }
 
-// pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
+// pubSubMessageHandler decodes the incoming wire message and enqueues it for
+// processing by the bounded worker pool. It never blocks the libp2p pubsub
+// dispatcher: if the queue is full the message is dropped with a warning.
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
 	req := &protocol.PushLogRequest{}
 	if err := cbor.Unmarshal(msg, req); err != nil {
@@ -599,15 +639,29 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	}
 	req.SenderID = from
 
-	if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
-			return nil, nil
-		}
-		return nil, errors.Wrap(fmt.Sprintf("Failed to process pushlog request %s", topic), err)
+	select {
+	case p.msgQueue <- req:
+	case <-p.ctx.Done():
+	default:
+		log.Info("pubsub message queue full, dropping message", corelog.Any("topic", topic))
 	}
-
 	return nil, nil
+}
+
+// processMessageWorker is a long-lived goroutine that drains p.msgQueue and
+// calls processPushlogRequest for each message. dagSyncWorkers of these run
+// concurrently, bounding the goroutine count regardless of inbound message rate.
+func (p *P2P) processMessageWorker() {
+	defer p.msgWorkers.Done()
+	for req := range p.msgQueue {
+		if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
+				continue
+			}
+			log.Info("Failed to process pushlog request", corelog.Any("Error", err))
+		}
+	}
 }
 
 func (p *P2P) peerEventHandler(peerID string, topic string, eventType string) {
@@ -1022,7 +1076,18 @@ func (pq *processQueue) close() {
 // and waits for all worker goroutines to exit.
 // It should be called once when the P2P subsystem is shutting down.
 func (p *P2P) Close() {
-	p.batcher.FlushAll()
+	close(p.msgQueue)
+	done := make(chan struct{})
+	go func() {
+		p.msgWorkers.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		log.Info("timed out waiting for pubsub workers to drain")
+	}
+	p.batcher.Close()
 	p.processQueue.close()
 }
 
