@@ -56,72 +56,75 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
 }
 
-// loadBlockLinks loads the links of a block recursively.
-//
-// The function returns immediately on the first error encountered.
+// loadBlockLinks traverses the DAG rooted at block and syncs all linked blocks.
+// Uses an explicit stack to avoid goroutine stack overflow on deep DAGs (#2722).
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
-	link, err := block.GenerateLink()
-	if err != nil {
-		return NewErrGenerateBlockLink(err)
-	}
 	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
-	merged, err := bstore.IsMerged(ctx, link.Cid)
-	if err != nil {
-		return NewErrCheckBlockMerged(err)
-	}
-	if merged {
-		return nil
-	}
+	stack := []*coreblock.Block{block}
 
-	// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
-	// https://github.com/sourcenetwork/defradb/issues/3525
-	if block.Signature != nil {
-		// we deliberately ignore the first returned value, which indicates whether the signature
-		// the block was actually verified or not, because we don't handle it any different here.
-		// But we want to keep the API of VerifyBlockSignature explicit about the results.
-		_, err := coreblock.VerifyBlockSignature(block, linkSys)
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		link, err := current.GenerateLink()
 		if err != nil {
-			return NewErrVerifyBlockSig(err)
+			return NewErrGenerateBlockLink(err)
 		}
-	}
-
-	var encResults *encryption.Results
-	if block.IsEncrypted() {
-		results, err := p.kms.GetKeys(ctx, *block.Encryption)
+		merged, err := bstore.IsMerged(ctx, link.Cid)
 		if err != nil {
-			return NewErrGetEncKeysForBlock(err)
+			return NewErrCheckBlockMerged(err)
 		}
-		encResults = results
-	}
-
-	for _, lnk := range block.AllLinks() {
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if merged {
+			continue
 		}
 
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
-		nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
-		cancel()
-
-		if err != nil {
-			return NewErrLoadLinkedBlock(err)
+		// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
+		// https://github.com/sourcenetwork/defradb/issues/3525
+		if current.Signature != nil {
+			// we deliberately ignore the first returned value, which indicates whether the signature
+			// the block was actually verified or not, because we don't handle it any different here.
+			// But we want to keep the API of VerifyBlockSignature explicit about the results.
+			_, err := coreblock.VerifyBlockSignature(current, linkSys)
+			if err != nil {
+				return NewErrVerifyBlockSig(err)
+			}
 		}
 
-		linkBlock, err := coreblock.GetFromNode(nd)
-		if err != nil {
-			return NewErrDecodeLinkedBlock(err)
+		var encResults *encryption.Results
+		if current.IsEncrypted() {
+			results, err := p.kms.GetKeys(ctx, *current.Encryption)
+			if err != nil {
+				return NewErrGetEncKeysForBlock(err)
+			}
+			encResults = results
 		}
 
-		err = p.loadBlockLinks(ctx, linkSys, linkBlock)
-		if err != nil {
-			return NewErrProcessLinkedBlock(err)
-		}
-	}
+		for _, lnk := range current.AllLinks() {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 
-	if encResults != nil {
-		for res := range encResults.Get() {
-			if res.Error != nil {
-				return NewErrRetrieveEncKey(res.Error)
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
+			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
+			cancel()
+
+			if err != nil {
+				return NewErrLoadLinkedBlock(err)
+			}
+
+			linkBlock, err := coreblock.GetFromNode(nd)
+			if err != nil {
+				return NewErrDecodeLinkedBlock(err)
+			}
+
+			stack = append(stack, linkBlock)
+		}
+
+		if encResults != nil {
+			for res := range encResults.Get() {
+				if res.Error != nil {
+					return NewErrRetrieveEncKey(res.Error)
+				}
 			}
 		}
 	}
