@@ -82,6 +82,8 @@ type DB interface {
 	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
+	// MergeBatchWithTxn merges multiple events in a single shared transaction.
+	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
 	// Events returns the event bus for the database.
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
@@ -637,21 +639,35 @@ func (p *P2P) processPushlogRequest(
 		return ctx.Err()
 	}
 
-	// Handle batched multi-document push.
+	// Handle batched multi-document push using a single shared transaction.
 	if len(req.Documents) > 0 {
-		for _, doc := range req.Documents {
-			if err := p.processPushlogRequest(ctx, &protocol.PushLogRequest{
-				MetaData:     req.MetaData,
-				DocID:        doc.DocID,
-				CID:          doc.CID,
-				CollectionID: req.CollectionID,
-				Creator:      req.Creator,
-				Block:        doc.Block,
-				CAR:          doc.CAR,
-			}, isReplicator); err != nil {
-				log.ErrorE("Failed to process batched document", err,
-					slog.String("DocID", doc.DocID),
-					slog.String("CollectionID", req.CollectionID),
+		results, err := p.processBatchedDocuments(ctx, req, isReplicator)
+		if err != nil {
+			return err
+		}
+		if len(results) == 0 {
+			return nil
+		}
+		merges := make([]event.Merge, len(results))
+		for i, r := range results {
+			merges[i] = r.merge
+		}
+		if err := p.db.MergeBatchWithTxn(ctx, merges); err != nil {
+			return err
+		}
+		for _, r := range results {
+			updateEvt := event.Update{
+				DocID:        r.merge.DocID,
+				Cid:          r.merge.Cid,
+				CollectionID: r.merge.CollectionID,
+				Block:        r.block,
+				IsRelay:      true,
+			}
+			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+			if err := p.SendUpdate(updateEvt); err != nil {
+				log.ErrorE("Failed to send update after batch sync", err,
+					slog.String("DocID", r.merge.DocID),
+					slog.Any("PeerID", p.host.ID()),
 				)
 			}
 		}
@@ -754,6 +770,105 @@ func (p *P2P) processPushlogRequest(
 
 		return nil
 	})
+}
+
+// batchedDoc pairs a merge event with its raw block bytes for relay after batch commit.
+type batchedDoc struct {
+	merge event.Merge
+	block []byte // raw composite block bytes; empty when doc was received via CAR
+}
+
+// processBatchedDocuments runs the per-document pre-storage checks (CID verification,
+// access control, replication filter) and block sync for every document in a batched
+// PushLogRequest.  It returns the subset that passed all checks and are ready to be
+// committed via MergeBatchWithTxn, paired with their raw block bytes for relay.
+func (p *P2P) processBatchedDocuments(
+	ctx context.Context,
+	req *protocol.PushLogRequest,
+	isReplicator bool,
+) ([]batchedDoc, error) {
+	results := make([]batchedDoc, 0, len(req.Documents))
+
+	for _, doc := range req.Documents {
+		headCID, err := cid.Cast(doc.CID)
+		if err != nil {
+			log.ErrorE("Batch: invalid CID", err,
+				slog.String("DocID", doc.DocID),
+				slog.String("CollectionID", req.CollectionID),
+			)
+			continue
+		}
+
+		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
+		if err != nil {
+			log.ErrorE("Batch: IsMerged check failed", err, slog.String("DocID", doc.DocID))
+			continue
+		}
+		if isMerged {
+			continue
+		}
+
+		var block *coreblock.Block
+		if len(doc.CAR) > 0 {
+			block, err = peekCARRootBlock(doc.CAR)
+		} else {
+			block, err = coreblock.GetFromBytes(doc.Block)
+		}
+		if err != nil {
+			log.ErrorE("Batch: block decode failed", err, slog.String("DocID", doc.DocID))
+			continue
+		}
+
+		blockLink, err := block.GenerateLink()
+		if err != nil {
+			log.ErrorE("Batch: GenerateLink failed", err, slog.String("DocID", doc.DocID))
+			continue
+		}
+		if blockLink.Cid != headCID {
+			log.Error("Batch: CID mismatch", slog.String("DocID", doc.DocID))
+			continue
+		}
+
+		if !isReplicator {
+			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, doc.DocID)
+			if err != nil {
+				log.ErrorE("Batch: access check failed", err, slog.String("DocID", doc.DocID))
+				continue
+			}
+			if !mightHaveAccess {
+				continue
+			}
+		}
+
+		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
+			continue
+		}
+
+		if len(doc.CAR) > 0 {
+			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
+				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
+				continue
+			}
+		} else {
+			if err = p.syncDAG(ctx, block); err != nil {
+				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
+				continue
+			}
+		}
+
+		results = append(results, batchedDoc{
+			merge: event.Merge{
+				DocID:        doc.DocID,
+				ByPeer:       req.SenderID,
+				FromPeer:     req.Creator,
+				Cid:          headCID,
+				CollectionID: req.CollectionID,
+			},
+			block: doc.Block, // empty when CAR was used; relay falls back to DAG sync
+		})
+	}
+
+	return results, nil
 }
 
 func (p *P2P) SendUpdate(evt event.Update) error {

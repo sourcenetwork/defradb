@@ -14,6 +14,7 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -73,14 +74,141 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	return nil
 }
 
+// MergeBatchWithTxn merges multiple events in a single shared transaction.
+// All per-key locks are acquired upfront and held for the lifetime of the call.
+// On transaction conflict the entire batch is retried, so callers should ensure
+// all merges in a batch are independent (different docIDs and collectionIDs).
+func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error {
+	if len(merges) == 0 {
+		return nil
+	}
+
+	type mergeEntry struct {
+		evt event.Merge
+		col *collection
+	}
+
+	entries := make([]mergeEntry, 0, len(merges))
+	for _, evt := range merges {
+		col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
+		if err != nil {
+			return err
+		}
+		entries = append(entries, mergeEntry{evt: evt, col: col})
+	}
+
+	// Collect the unique lock keys and their queues, sorted for deadlock-safe ordering.
+	type lockKey struct {
+		key   string
+		queue *mergeQueue
+	}
+	seen := make(map[string]struct{}, len(entries))
+	locks := make([]lockKey, 0, len(entries))
+	docLocked := false
+	colLocked := false
+	for _, e := range entries {
+		var k string
+		var seenKey string
+		var q *mergeQueue
+		if e.col.Version().IsBranchable {
+			k = e.evt.CollectionID
+			seenKey = "c:" + k // namespace prefix avoids collision with docID keys
+			q = db.colMergeQueue
+			colLocked = true
+		} else {
+			k = e.evt.DocID
+			seenKey = "d:" + k
+			q = db.docMergeQueue
+			docLocked = true
+		}
+		if _, ok := seen[seenKey]; !ok {
+			seen[seenKey] = struct{}{}
+			locks = append(locks, lockKey{key: k, queue: q})
+		}
+	}
+	sort.Slice(locks, func(i, j int) bool { return locks[i].key < locks[j].key })
+
+	// Acquire one semaphore slot per queue used to count the batch as one merge.
+	if docLocked {
+		<-db.docMergeQueue.sem
+		defer func() { db.docMergeQueue.sem <- struct{}{} }()
+	}
+	if colLocked {
+		<-db.colMergeQueue.sem
+		defer func() { db.colMergeQueue.sem <- struct{}{} }()
+	}
+
+	// Acquire per-key locks without consuming additional semaphore slots.
+	for _, lk := range locks {
+		lk.queue.addNoSem(lk.key)
+	}
+	defer func() {
+		for _, lk := range locks {
+			lk.queue.doneNoSem(lk.key)
+		}
+	}()
+
+	for i := 0; i < db.MaxTxnRetries(); i++ {
+		txn, err := db.NewTxn(false)
+		if err != nil {
+			return err
+		}
+		txnCtx := InitContext(ctx, txn)
+
+		var mergeErr error
+		for _, e := range entries {
+			if mergeErr = db.mergeInTxn(txnCtx, e.col, e.evt); mergeErr != nil {
+				break
+			}
+		}
+
+		if mergeErr != nil {
+			txn.Discard()
+			if errors.Is(mergeErr, corekv.ErrTxnConflict) {
+				continue
+			}
+			return mergeErr
+		}
+
+		if err := txn.Commit(); err != nil {
+			txn.Discard()
+			if errors.Is(err, corekv.ErrTxnConflict) {
+				continue
+			}
+			return err
+		}
+
+		for _, e := range entries {
+			db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: e.evt}))
+		}
+		return nil
+	}
+	return nil
+}
+
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return NewErrCreateMergeTxn(err, dagMerge.DocID, dagMerge.Cid.String())
 	}
-
 	defer txn.Discard()
 
+	if err := db.mergeInTxn(ctx, col, dagMerge); err != nil {
+		return err
+	}
+
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+
+	// send a complete event so we can track merges in the integration tests
+	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: dagMerge}))
+	return nil
+}
+
+// mergeInTxn executes the merge logic for a single event using the transaction already
+// present on ctx.  It does not commit; the caller is responsible for committing.
+func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	key, exists, err := getDocHeadstoreKey(ctx, col, dagMerge.DocID)
 	if err != nil {
 		return err
@@ -99,45 +227,43 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
-	if err != nil {
+	if err = mp.loadComposites(ctx, dagMerge.Cid, mt); err != nil {
 		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
-	err = mp.mergeComposites(ctx)
-	if err != nil {
+	if err = mp.mergeComposites(ctx); err != nil {
 		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
-		if err != nil {
+		if err = syncIndexedDoc(ctx, docID, mp.col, oldDoc); err != nil {
 			return NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return err
-	}
-
-	// send a complete event so we can track merges in the integration tests
-	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{
-		Merge: dagMerge,
-	}))
 	return nil
 }
+
+const maxConcurrentMerges = 32
 
 // mergeQueue is synchronization source to ensure that concurrent
 // document merges do not cause transaction conflicts.
 type mergeQueue struct {
 	keys  map[string]chan struct{}
 	mutex sync.Mutex
+	// sem limits the total number of merges running concurrently across all keys,
+	// providing backpressure when many documents are being merged simultaneously.
+	sem chan struct{}
 }
 
 func newMergeQueue() *mergeQueue {
+	sem := make(chan struct{}, maxConcurrentMerges)
+	for range maxConcurrentMerges {
+		sem <- struct{}{}
+	}
 	return &mergeQueue{
 		keys: make(map[string]chan struct{}),
+		sem:  sem,
 	}
 }
 
@@ -145,7 +271,36 @@ func newMergeQueue() *mergeQueue {
 // wait for the key to be removed from the queue. For every add call, done must
 // be called to remove the key from the queue. Otherwise, subsequent add calls will
 // block forever.
+// add also acquires a slot from the global semaphore to bound concurrency.
 func (m *mergeQueue) add(key string) {
+	<-m.sem // acquire global slot before waiting for per-key turn
+	m.mutex.Lock()
+	done, ok := m.keys[key]
+	if !ok {
+		m.keys[key] = make(chan struct{})
+	}
+	m.mutex.Unlock()
+	if ok {
+		m.sem <- struct{}{} // release slot while waiting for per-key turn
+		<-done
+		m.add(key)
+	}
+}
+
+func (m *mergeQueue) done(key string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.keys[key]
+	if ok {
+		delete(m.keys, key)
+		close(done)
+	}
+	m.sem <- struct{}{} // release global slot
+}
+
+// addNoSem acquires the per-key slot without consuming a semaphore slot.
+// Use when the caller already holds a batch-level concurrency limit.
+func (m *mergeQueue) addNoSem(key string) {
 	m.mutex.Lock()
 	done, ok := m.keys[key]
 	if !ok {
@@ -154,11 +309,13 @@ func (m *mergeQueue) add(key string) {
 	m.mutex.Unlock()
 	if ok {
 		<-done
-		m.add(key)
+		m.addNoSem(key)
 	}
 }
 
-func (m *mergeQueue) done(key string) {
+// doneNoSem releases the per-key slot without touching the semaphore.
+// The caller is responsible for releasing any semaphore slot it holds.
+func (m *mergeQueue) doneNoSem(key string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	done, ok := m.keys[key]
