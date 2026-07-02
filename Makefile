@@ -433,31 +433,6 @@ lint\:list:
 chglog:
 	git-chglog -c "tools/configs/chglog/config.yml" --next-tag v0.x.0 -o CHANGELOG.md
 
-.PHONY: docs
-docs:
-	@$(MAKE) docs\:cli
-	@$(MAKE) docs\:manpages
-	@$(MAKE) docs\:http
-	@$(MAKE) toc
-
-.PHONY: docs\:cli
-docs\:cli:
-	rm -f docs/website/references/cli/*.md
-	go run cmd/genclidocs/main.go -o docs/website/references/cli
-
-.PHONY: docs\:http
-docs\:http:
-	go run cmd/genopenapi/main.go | python -m json.tool > docs/website/references/http/openapi.json
-
-.PHONY: docs\:manpages
-docs\:manpages:
-	go run cmd/genmanpages/main.go -o build/man/
-
-.PHONY: docs\:godoc
-docs\:godoc:
-	godoc -http=:6060
-	# open http://localhost:6060/pkg/github.com/sourcenetwork/defradb/
-
 .PHONY: toc
 toc:
 	bash tools/scripts/md-toc/gh-md-toc --insert --no-backup --hide-footer --skip-header README.md
