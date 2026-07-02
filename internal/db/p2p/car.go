@@ -167,7 +167,7 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 		return nil, ErrEmptyCARRoots
 	}
 
-	bstore := datastore.P2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	bstore := datastore.BlindWriteP2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
 	var rootBlock *coreblock.Block
 
