@@ -26,6 +26,8 @@ type Blockstore interface {
 	ipfsBlockstore.Blockstore
 	// Mark the block as merged by removing the to-merge index.
 	MarkAsMerged(ctx context.Context, k cid.Cid) error
+	// BatchMarkAsMerged marks multiple blocks as merged in a single pass.
+	BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error
 	// Check if the block has been merged. It will return false if either the CID is not found
 	// or the CID is found AND the to-merge index is also found.
 	IsMerged(ctx context.Context, k cid.Cid) (bool, error)
@@ -78,6 +80,15 @@ func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
 	err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
 	if err != nil {
 		return NewErrMarkBlockAsMerged(err)
+	}
+	return nil
+}
+
+func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
+	for _, c := range cids {
+		if err := bs.store.Delete(ctx, newToMergeKey(c.Bytes())); err != nil {
+			return NewErrMarkBlockAsMerged(err)
+		}
 	}
 	return nil
 }

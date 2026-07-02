@@ -594,3 +594,57 @@ func (_c *Blockstore_PutMany_Call) RunAndReturn(run func(context1 context.Contex
 	_c.Call.Return(run)
 	return _c
 }
+
+// BatchMarkAsMerged provides a mock function for the type Blockstore
+func (_mock *Blockstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
+	ret := _mock.Called(ctx, cids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BatchMarkAsMerged")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []cid.Cid) error); ok {
+		r0 = returnFunc(ctx, cids)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Blockstore_BatchMarkAsMerged_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BatchMarkAsMerged'
+type Blockstore_BatchMarkAsMerged_Call struct {
+	*mock.Call
+}
+
+// BatchMarkAsMerged is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cids []cid.Cid
+func (_e *Blockstore_Expecter) BatchMarkAsMerged(ctx interface{}, cids interface{}) *Blockstore_BatchMarkAsMerged_Call {
+	return &Blockstore_BatchMarkAsMerged_Call{Call: _e.mock.On("BatchMarkAsMerged", ctx, cids)}
+}
+
+func (_c *Blockstore_BatchMarkAsMerged_Call) Run(run func(ctx context.Context, cids []cid.Cid)) *Blockstore_BatchMarkAsMerged_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []cid.Cid
+		if args[1] != nil {
+			arg1 = args[1].([]cid.Cid)
+		}
+		run(arg0, arg1)
+	})
+	return _c
+}
+
+func (_c *Blockstore_BatchMarkAsMerged_Call) Return(err error) *Blockstore_BatchMarkAsMerged_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Blockstore_BatchMarkAsMerged_Call) RunAndReturn(run func(context.Context, []cid.Cid) error) *Blockstore_BatchMarkAsMerged_Call {
+	_c.Call.Return(run)
+	return _c
+}
