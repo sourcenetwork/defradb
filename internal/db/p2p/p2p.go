@@ -629,22 +629,17 @@ func (p *P2P) processPushlogRequest(
 			return nil
 		}
 
+		// Decode the root block without writing to the blockstore so that CID verification,
+		// access control, and the replication filter all run before any storage occurs.
+		// Filtered-out documents will not consume blockstore space.
 		var block *coreblock.Block
 		if len(req.CAR) > 0 {
-			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
-			block, err = p.importCAR(ctx, req.CAR)
-			if err != nil {
-				return err
-			}
+			block, err = peekCARRootBlock(req.CAR)
 		} else {
 			block, err = coreblock.GetFromBytes(req.Block)
-			if err != nil {
-				return err
-			}
-			err = p.syncDAG(ctx, block)
-			if err != nil {
-				return err
-			}
+		}
+		if err != nil {
+			return err
 		}
 
 		// Verify the advertised CID actually matches the block contents, so a peer cannot push
@@ -670,9 +665,21 @@ func (p *P2P) processPushlogRequest(
 			}
 		}
 
-		// Run the replication filter (if configured). A false return drops the document.
+		// Run the replication filter before writing any blocks to storage.
 		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
 			return nil
+		}
+
+		// All pre-storage checks passed — now write blocks to the blockstore.
+		if len(req.CAR) > 0 {
+			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
+			if _, err = p.importCAR(ctx, req.CAR); err != nil {
+				return err
+			}
+		} else {
+			if err = p.syncDAG(ctx, block); err != nil {
+				return err
+			}
 		}
 
 		mergeEvt := event.Merge{

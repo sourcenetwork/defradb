@@ -16,6 +16,7 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/corekv"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
@@ -54,4 +55,16 @@ func ComputeMerkleRoot(cids []cid.Cid) []byte {
 // VerifyBatchSignature verifies a batch signature against a set of CIDs.
 func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error) {
 	return coreblock.VerifyBatchSignature(batchSig, cids)
+}
+
+// CollectDocumentCIDs returns the head block CIDs for the given document IDs by
+// scanning the headstore. systemstore is used to resolve each DocID to its short ID.
+func CollectDocumentCIDs(
+	ctx context.Context,
+	systemstore corekv.Reader,
+	headstore corekv.ReaderWriter,
+	collectionShortID uint32,
+	docIDs []string,
+) ([]cid.Cid, error) {
+	return coreblock.CollectDocumentCIDs(ctx, systemstore, headstore, collectionShortID, docIDs)
 }

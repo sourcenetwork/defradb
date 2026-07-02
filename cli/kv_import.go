@@ -27,7 +27,10 @@ func MakeKVImportCommand(ctx context.Context) *cobra.Command {
 
 The input file must use the DefraDB KV wire format produced by 'kv export'.
 
-Use --rebuild-indexes to rebuild secondary indexes for a collection after import.`,
+Use --rebuild-indexes to rebuild secondary indexes for a collection after import.
+
+NOTE: This command requires direct node access and is not available via the HTTP client.
+Use it against a local node instance (not a remote HTTP endpoint).`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inputPath := args[0]

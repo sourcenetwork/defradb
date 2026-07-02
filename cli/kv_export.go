@@ -30,7 +30,10 @@ The output file uses the DefraDB KV wire format: for each entry, a uint32 namesp
 followed by the raw key and value. A zero-length sentinel marks the end of the stream.
 
 Use --doc-ids to restrict the export to specific document IDs.
-Use --datastore-only to skip headstore and blockstore entries.`,
+Use --datastore-only to skip headstore and blockstore entries.
+
+NOTE: This command requires direct node access and is not available via the HTTP client.
+Use it against a local node instance (not a remote HTTP endpoint).`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			collectionName := args[0]

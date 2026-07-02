@@ -127,6 +127,33 @@ func (p *P2P) collectDAGBlocks(
 	return nil
 }
 
+// peekCARRootBlock reads only the root block from a CAR byte slice and decodes it
+// without writing anything to the blockstore. Used to run pre-storage checks
+// (CID mismatch, access, replication filter) before committing any blocks.
+func peekCARRootBlock(carData []byte) (*coreblock.Block, error) {
+	reader, err := car.NewBlockReader(bytes.NewReader(carData))
+	if err != nil {
+		return nil, err
+	}
+	if len(reader.Roots) == 0 {
+		return nil, ErrEmptyCARRoots
+	}
+	rootCID := reader.Roots[0]
+	for {
+		carBlock, err := reader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if carBlock.Cid().Equals(rootCID) {
+			return coreblock.GetFromBytes(carBlock.RawData())
+		}
+	}
+	return nil, ErrCARRootBlockNotFound
+}
+
 // importCAR extracts all blocks from a CAR byte slice and stores them in the blockstore.
 // Returns the root block for further processing.
 func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, error) {
