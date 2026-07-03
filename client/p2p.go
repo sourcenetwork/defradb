@@ -35,6 +35,11 @@ type P2P interface {
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error
 
+	// Disconnect closes the connection to the peer(s) identified by the given addresses.
+	//
+	// Addresses are in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
+	Disconnect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error
+
 	// AddReplicator adds a replicator to the persisted list or adds
 	// collections if the replicator already exists.
 	AddReplicator(

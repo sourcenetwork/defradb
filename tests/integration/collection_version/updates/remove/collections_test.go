@@ -18,9 +18,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -340,8 +341,6 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 
 func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -650,6 +649,335 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 								Typ:  client.LWW_REGISTER,
 							},
 						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Removing a single collection via patch fails when another collection holds a relation
+// reference to it. The schema rebuild cannot resolve the dangling reference and aborts
+// the transaction, leaving both collections intact.
+func TestColVersionUpdateRemoveCollection_ReferencedByRelation_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Users" }
+					]
+				`,
+				ExpectedError: "cannot remove a collection while another field references it",
+			},
+			// Transaction rolled back: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Same as above but removing the other side of the bidirectional relation.
+func TestColVersionUpdateRemoveCollection_ReferencedByRelation_OtherSide_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Books" }
+					]
+				`,
+				ExpectedError: "cannot remove a collection while another field references it",
+			},
+			// Transaction rolled back: both collections still exist.
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Books",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// A single patch with both remove ops succeeds because the net result has no dangling
+// references. This is the escape hatch for deleting circularly-related collections.
+func TestColVersionUpdateRemoveBothRelatedCollections_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						books: [Books]
+					}
+					type Books {
+						title: String
+						author: Users
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "remove", "path": "/Users" },
+						{ "op": "remove", "path": "/Books" }
+					]
+				`,
+			},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// The other client types return different errors when occasionally executing the `CreateDoc`
+			// action.
+			state.GoClientType,
+		}),
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB is not supported for this test as the test opens multiple transactions at
+			// the same time.
+			testUtils.BadgerIMType,
+			testUtils.BadgerFileType,
+			testUtils.DefraIMType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.Async{
+				// todo - we also need to test this with explicit transactions both async and sync
+				// https://github.com/sourcenetwork/defradb/issues/4476
+				Child: &action.PatchCollection{
+					// If the create call completes before the patch starts this will error - skip the test
+					// when this happens as it is unrecoverable and rare.  The production code in such a
+					// scenario is behaving correctly.
+					SkipTestOnError: description.ErrCannotDeleteCollectionWithDocs,
+					Patch: `
+						[
+							{
+								"op": "remove",
+								"path": "/Users"
+							}
+						]
+					`,
+				},
+			},
+			&action.AddDoc{
+				DoNotWaitForEvent: true,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+				// This error can occur if the create-doc call starts after the patch collection call (mostly)
+				// completes, it is uncommon for this to happen, but it does sometimes, especially on slower
+				// machines.  It is correct behaviour, but is not the scenario that this test is asserting.
+				IgnoreError: "collection not found",
+			},
+			&action.Await{},
+			&action.GetCollections{
+				ExpectedResults: []client.CollectionVersion{},
+			},
+			&action.Request{
+				Request: `query {
+					_commits {
+						cid
+					}
+				}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Adding a document to a collection that was removed by an earlier PatchCollection
+// must surface "collection not found" rather than dereferencing a nil collection.
+// This is the deterministic version of the ConcurrentWrite race: the canonically
+// ordered collections slice carries a nil slot for the removed name, and the
+// collection-save path must not be handed that nil.
+func TestColVersionUpdateRemoveCollections_AddDocToRemovedCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "remove",
+							"path": "/Users"
+						}
+					]
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+				ExpectedError: "collection not found",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Removing a collection via PatchCollection and re-adding the same name with a
+// different shape must produce a fresh collection. This mirrors the equivalent
+// DeleteCollection test and verifies the patch-driven removal path also clears
+// the collection-definition and field-definition heads on its way out.
+func TestColVersionUpdateRemoveCollection_ThenAddSameName_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						email: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				ExpectedError: `Cannot query field "name" on type "Users".`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Re-add with the EXACT same shape after a patch-driven removal. The CIDs of
+// the collection-definition and field-definition blocks are derived
+// deterministically from the definition itself, so the new blocks land at the
+// exact same CIDs as the deleted ones. Without head cleanup this would error
+func TestColVersionUpdateRemoveCollection_ThenAddSameShape_IsFreshCollection(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{ "op": "remove", "path": "/Users" }]`,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Alice",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Alice"},
 					},
 				},
 			},

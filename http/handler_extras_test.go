@@ -15,6 +15,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/stretchr/testify/require"
@@ -23,9 +24,7 @@ import (
 func TestPurgeDevModeTrue(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	IsDevMode = true
-
-	url := "http://localhost:9181/api/v0/purge"
+	url := "http://localhost:9181/api/purge"
 
 	req := httptest.NewRequest(http.MethodPost, url, nil)
 	rec := httptest.NewRecorder()
@@ -33,7 +32,7 @@ func TestPurgeDevModeTrue(t *testing.T) {
 	purgeSub, err := cdb.Events().Subscribe(event.PurgeName)
 	require.NoError(t, err)
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, &options.NodeOptions{EnableDevelopment: true})
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
@@ -47,17 +46,15 @@ func TestPurgeDevModeTrue(t *testing.T) {
 func TestPurgeDevModeFalse(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	IsDevMode = false
-
-	url := "http://localhost:9181/api/v0/purge"
+	url := "http://localhost:9181/api/purge"
 
 	req := httptest.NewRequest(http.MethodPost, url, nil)
 	rec := httptest.NewRecorder()
 
-	handler, err := NewHandler(cdb)
+	handler, err := NewHandler(cdb, nil)
 	require.NoError(t, err)
 	handler.ServeHTTP(rec, req)
 
 	res := rec.Result()
-	require.Equal(t, 400, res.StatusCode)
+	require.Equal(t, 403, res.StatusCode)
 }

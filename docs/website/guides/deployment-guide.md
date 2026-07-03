@@ -26,16 +26,16 @@ Follow these steps to build from source:
 1. Run git clone to download the [DefraDB repository](https://github.com/sourcenetwork/defradb#install) to your local machine.
 2. Navigate to the repository using `cd`.
 3. Execute the Make command to build a local DefraDB setup with default configurations.
-4. Set the compiler and build tags for the playground: `GOFLAGS="-tags=playground"` 
+4. Set the compiler and build tags for the explorer: `GOFLAGS="-tags=explorer"`
 
-#### Build Playground
+#### Build Explorer
 
-Refer to the Playground Basics Guide for detailed instructions.
+Refer to the Explorer Basics Guide for detailed instructions.
 
-1. Compile the playground separately using the command: `make deps:playground`
+1. Compile the explorer separately using the command: `make deps:explorer`
 2. This produces a bundle file in a folder called dist.
 3. Set the environment variable using the [NodeJS language toolchain](https://nodejs.org/en/download/current) and npm to build locally on your machine. The JavaScript and Typescript code create an output bundle for the frontend code to work.
-4. Build a specific playground version of DefraDB. Use the go flags environment variable, instructing the compiler to include the playground directly embedded in all files. Execute the [go binary embed](https://pkg.go.dev/embed) command, producing a binary of approximately 4MB.
+4. Build a specific explorer version of DefraDB. Use the go flags environment variable, instructing the compiler to include the explorer directly embedded in all files. Execute the [go binary embed](https://pkg.go.dev/embed) command, producing a binary of approximately 4MB.
 
 
 

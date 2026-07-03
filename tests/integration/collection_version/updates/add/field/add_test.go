@@ -52,7 +52,7 @@ func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"email":  nil,
 						},
@@ -117,6 +117,51 @@ func TestCollectionVersionUpdatesAddFieldWithAddAfterCollectionUpdate(t *testing
 					},
 				},
 				NonOrderedResults: true,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// This test covers a bug that was found as part of https://github.com/sourcenetwork/defradb/issues/4707
+// it only occurred when adding a field to a collection that already has a secondary relationship.
+// The bug has been fixed, but the test remains as coverage of this case is important.
+func TestCollectionVersionUpdatesAddField_WithExistingSecondaryOneToOneRelationship(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Book {
+						publisher: Publisher @primary
+					}
+
+					type Publisher {
+						book: Book
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `[{"op":"add","path":"/Publisher/Fields/-","value":{"Name":"name","Kind":"String"}}]`,
+			},
+			&action.AddDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Publisher {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{
+							"name": "Penguin Books",
+						},
+					},
+				},
 			},
 		},
 	}

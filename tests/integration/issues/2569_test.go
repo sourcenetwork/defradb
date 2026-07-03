@@ -53,7 +53,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Overflow the points field, this results in a value of `math.Inf(1)`
 				Doc: fmt.Sprintf(`{
 					"points": %g
@@ -101,7 +101,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, -math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Overflow the points field, this results in a value of `math.Inf(-1)`
 				Doc: fmt.Sprintf(`{
 					"points": %g
@@ -158,13 +158,13 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 					"points": %g
 				}`, math.MaxFloat64),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Overflow the points field, this results in a value of `math.Inf(1)`
 				Doc: fmt.Sprintf(`{
 					"points": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				// Try and update the document again, the value used does not matter.
 				Doc: `{
 					"points": 1

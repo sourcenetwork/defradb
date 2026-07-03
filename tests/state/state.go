@@ -175,6 +175,9 @@ type EventState struct {
 
 	// TopicPeerEvent is the `event.TopicPeerEventName` subscription for peer join/leave events
 	TopicPeerEvent event.Subscription
+
+	// Action is the `event.ActionExecutionName` subscription
+	Action event.Subscription
 }
 
 // NewEventState returns an eventState with all required subscriptions.
@@ -199,12 +202,17 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	action, err := bus.Subscribe(event.ActionExecutionName)
+	if err != nil {
+		return nil, err
+	}
 	return &EventState{
 		Merge:          merge,
 		Update:         update,
 		Replicator:     replicator,
 		SESync:         seSync,
 		TopicPeerEvent: topicPeerEvent,
+		Action:         action,
 	}, nil
 }
 
@@ -231,6 +239,8 @@ type NodeState struct {
 	// Map of docIDs to their composite CIDs.
 	Composites     map[string][]cid.Cid
 	CompositesLock sync.RWMutex
+	// Map of docIDs to their field-level CIDs by field name.
+	FieldCIDs map[string]map[string][]cid.Cid
 }
 
 // State contains all testing State.
@@ -343,6 +353,16 @@ type State struct {
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
+
+	// AsyncWG tracks the progress of in-flight `action.Async`s.  Calling `Wait` on it will wait for
+	// all started `action.Async`s to finish executing.
+	AsyncWG sync.WaitGroup
+
+	// SkipTest signals to the main Go test routine that it should skip the test.
+	//
+	// Calling `T.SkipNow()` from a child routine does not skip the test - so test actions looking to
+	// skip the current test should instead set this, and allow it to be acted upon by the parent routine.
+	SkipTest string
 }
 
 func (s *State) GetClientType() ClientType {

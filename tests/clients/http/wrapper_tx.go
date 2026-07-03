@@ -31,11 +31,12 @@ var _ client.Txn = (*Transaction)(nil)
 // a single struct that implements the client.Txn interface.
 type Transaction struct {
 	*Wrapper
-	txn client.Txn
+	clientTxn client.Txn
+	txn       client.Txn
 }
 
 func (txn *Transaction) ID() uint64 {
-	return txn.txn.ID()
+	return txn.clientTxn.ID()
 }
 
 func (txn *Transaction) StartTS() time.Time {
@@ -43,11 +44,11 @@ func (txn *Transaction) StartTS() time.Time {
 }
 
 func (txn *Transaction) Commit() error {
-	return txn.txn.Commit()
+	return txn.clientTxn.Commit()
 }
 
 func (txn *Transaction) Discard() {
-	txn.txn.Discard()
+	txn.clientTxn.Discard()
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -122,6 +123,15 @@ func (txn *Transaction) PatchCollection(
 	return txn.Wrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
+func (txn *Transaction) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteCollection(ctx, names, opts...)
+}
+
 func (txn *Transaction) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
@@ -192,7 +202,7 @@ func (txn *Transaction) GetCollections(
 func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ListIndexes(ctx, opts...)
 }

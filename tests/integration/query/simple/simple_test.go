@@ -38,7 +38,7 @@ func TestQuerySimple(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b",
+							"_docID": testUtils.NewDocIndex(0, 0),
 							"Name":   "John",
 							"Age":    int64(21),
 						},

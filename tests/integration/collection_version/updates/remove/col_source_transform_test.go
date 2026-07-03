@@ -25,7 +25,9 @@ import (
 
 func TestColVersionUpdateRemoveCollectionSourceTransform(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		// The secondary-index multiplier adds @index on all fields. Adding a field via
+		// PatchCollection when existing fields have dependent indexes is not supported.
+		// https://github.com/sourcenetwork/defradb/issues/4722
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{

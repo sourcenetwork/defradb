@@ -74,29 +74,6 @@ type DeleteReplicator struct {
 	ExpectedError string
 }
 
-// ListReplicators gets the configured replicators for the given node and compares them against the
-// expected results.
-// TODO: Test ListReplicators with and without NAC.
-// https://github.com/sourcenetwork/defradb/issues/4109
-type ListReplicators struct {
-	// NodeID is the node ID (index) of the node in which to get the replicators for.
-	NodeID int
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
-	ExpectedTargetNodeIDs []int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 // addReplicator configures a replicator relationship between two existing, started, nodes.
 // It returns a channel that will receive an empty struct upon sync completion of all expected
 // replicator-sync events.

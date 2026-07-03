@@ -114,7 +114,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
@@ -256,7 +256,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can not update yet.
@@ -286,7 +286,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can now update.
@@ -316,7 +316,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad Lone", // Note: updated name
 							"age":    int64(28),
 						},
@@ -411,7 +411,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2), // This identity can now update.
@@ -441,7 +441,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad Lone", // Note: updated name
 							"age":    int64(28),
 						},
@@ -449,7 +449,7 @@ resources:
 				},
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1), // Owner can still also update (ownership not transferred)
@@ -479,7 +479,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Lone", // Note: updated name
 							"age":    int64(28),
 						},

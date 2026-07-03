@@ -17,10 +17,11 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/immutable"
+
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/immutable"
 )
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
@@ -49,7 +50,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 	// Store the block in the DAG store
 	_, err := linkSystem.Store(linking.LinkContext{Ctx: sessionCtx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
-		return err
+		return NewErrStoreBlockDAGSync(err)
 	}
 
 	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
@@ -61,12 +62,12 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
 	link, err := block.GenerateLink()
 	if err != nil {
-		return err
+		return NewErrGenerateBlockLink(err)
 	}
 	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
 	merged, err := bstore.IsMerged(ctx, link.Cid)
 	if err != nil {
-		return err
+		return NewErrCheckBlockMerged(err)
 	}
 	if merged {
 		return nil
@@ -80,7 +81,7 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		// But we want to keep the API of VerifyBlockSignature explicit about the results.
 		_, err := coreblock.VerifyBlockSignature(block, linkSys)
 		if err != nil {
-			return err
+			return NewErrVerifyBlockSig(err)
 		}
 	}
 
@@ -88,7 +89,7 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 	if block.IsEncrypted() {
 		results, err := p.kms.GetKeys(ctx, *block.Encryption)
 		if err != nil {
-			return err
+			return NewErrGetEncKeysForBlock(err)
 		}
 		encResults = results
 	}
@@ -103,24 +104,24 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		cancel()
 
 		if err != nil {
-			return err
+			return NewErrLoadLinkedBlock(err)
 		}
 
 		linkBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return NewErrDecodeLinkedBlock(err)
 		}
 
 		err = p.loadBlockLinks(ctx, linkSys, linkBlock)
 		if err != nil {
-			return err
+			return NewErrProcessLinkedBlock(err)
 		}
 	}
 
 	if encResults != nil {
 		for res := range encResults.Get() {
 			if res.Error != nil {
-				return res.Error
+				return NewErrRetrieveEncKey(res.Error)
 			}
 		}
 	}

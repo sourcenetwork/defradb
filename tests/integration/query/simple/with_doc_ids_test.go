@@ -55,7 +55,38 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+						Users(docID: ["{{.DocID0_0}}"]) {
+							Name
+							Age
+						}
+					}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryWithDocIDsFilter_DuplicateDocIDs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+						"Name": "John",
+						"Age": 21
+					}`,
+			},
+			&action.Request{
+				Request: `query {
+						Users(docID: ["{{.DocID0_0}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}
@@ -92,7 +123,7 @@ func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+						Users(docID: ["{{.DocID0_0}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}
@@ -135,7 +166,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-0000ef46-9bf6-5a83-9bbf-da288687c830"]) {
+						Users(docID: ["{{.DocID0_1}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}

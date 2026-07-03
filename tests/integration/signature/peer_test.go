@@ -202,6 +202,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: `query {
@@ -228,6 +229,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -274,14 +276,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"verified": true
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"age": 23

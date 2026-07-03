@@ -20,7 +20,7 @@ import (
 )
 
 func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
-	user1ID := "bae-1d57efc8-a1f3-5b0e-9d08-51e03359285e"
+	user1ID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -43,7 +43,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 1,
 				Doc: fmt.Sprintf(
 					`{

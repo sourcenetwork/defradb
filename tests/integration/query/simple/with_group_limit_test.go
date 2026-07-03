@@ -203,6 +203,69 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 	executeTestCase(t, test)
 }
 
+func TestQuerySimpleWithGroupByNumberWithGroupLimitAndRootOrder(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 32
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"Name": "Charlie",
+					"Age": 32
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 19
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(groupBy: [Age], order: {Age: ASC}) {
+						Age
+						GROUP(limit: 1) {
+							Name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(19),
+							"GROUP": []map[string]any{
+								{
+									"Name": "Alice",
+								},
+							},
+						},
+						{
+							"Age": int64(32),
+							"GROUP": []map[string]any{
+								{
+									"Name": "John",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -242,18 +305,18 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(42),
-							"GROUP": []map[string]any{
-								{
-									"Name": "Alice",
-								},
-							},
-						},
-						{
 							"Age": int64(32),
 							"GROUP": []map[string]any{
 								{
 									"Name": "John",
+								},
+							},
+						},
+						{
+							"Age": int64(19),
+							"GROUP": []map[string]any{
+								{
+									"Name": "Alice",
 								},
 							},
 						},

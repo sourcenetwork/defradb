@@ -17,12 +17,6 @@ import (
 
 // Encryption contains the encryption information for the block's delta.
 type Encryption struct {
-	// DocID is the ID of the document that is encrypted with the associated encryption key.
-	DocID []byte
-	// FieldName is the name of the field that is encrypted with the associated encryption key.
-	// It is set if encryption is applied to a field instead of the whole doc.
-	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
-	FieldName *string
 	// Encryption key.
 	Key []byte
 }
@@ -33,8 +27,6 @@ type Encryption struct {
 func (enc *Encryption) IPLDSchemaBytes() []byte {
 	return []byte(`
 		type Encryption struct {
-			docID     Bytes
-			fieldName optional String
 			key       Bytes
 		}
 	`)

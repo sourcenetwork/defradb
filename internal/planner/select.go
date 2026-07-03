@@ -12,8 +12,6 @@ package planner
 
 import (
 	"math"
-	"slices"
-	"strings"
 
 	cid "github.com/ipfs/go-cid"
 
@@ -147,6 +145,11 @@ func (n *selectNode) Kind() string {
 }
 
 func (n *selectNode) Init() error {
+	filter, err := filterWithDocIDAliases(n.planner.ctx, n.collection, n.documentMapping, n.filter)
+	if err != nil {
+		return err
+	}
+	n.filter = filter
 	return n.source.Init()
 }
 
@@ -204,7 +207,12 @@ func (n *selectNode) Close() error {
 // checkForMigrations checks if there are any migrations registered for the given collection.
 // This is used to determine if the filter should be kept in selectNode for post-lens application.
 func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
-	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+	return description.HasMigrations(
+		n.planner.ctx,
+		n.planner.collectionRepository,
+		col.Version().CollectionID,
+		col.Version().VersionID,
+	)
 }
 
 func (n *selectNode) simpleExplain() (map[string]any, error) {
@@ -288,26 +296,60 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
 		// query, which means we need to propagate the values to the underlying VersionedFetcher
 		if n.selectReq.Cids.HasValue() {
-			prefixes := make([]keys.Walkable, len(n.selectReq.Cids.Value()))
-
-			for i, sCid := range n.selectReq.Cids.Value() {
-				c, err := cid.Decode(sCid)
-				if err != nil {
-					return nil, nil, err
-				}
-
-				prefixes[i] = keys.HeadstoreDocKey{
-					Cid: c,
-				}
+			collectionShortID, err := id.GetCollectionShortID(
+				n.planner.ctx,
+				sourcePlan.collection.Version().CollectionID,
+			)
+			if err != nil {
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
 			// fetcher type (that will be the only one consuming this []Prefixes) does not use it
 			// as a prefix. And with this design limitation this is
 			// currently the least bad way of passing the cid in to the fetcher.
+			var prefixes []keys.Walkable
+			for _, sCid := range n.selectReq.Cids.Value() {
+				c, err := cid.Decode(sCid)
+				if err != nil {
+					return nil, nil, err
+				}
+
+				// A block CID can be owned by more than one document (a field block shared
+				// across documents with identical genesis deltas). Time-travel to each owning
+				// document's state at that version; the versioned fetcher applies the document
+				// ACP read check, so owners the caller cannot read are dropped.
+				owners, err := id.GetDocIDsForBlock(n.planner.ctx, c)
+				if err != nil {
+					return nil, nil, err
+				}
+				if len(owners) == 0 {
+					// Not recorded in the owner index; let the versioned fetcher derive the
+					// document from the block itself.
+					prefixes = append(prefixes, keys.HeadstoreDocKey{Cid: c})
+					continue
+				}
+				for _, owner := range owners {
+					docShortID, found, err := id.GetDocShortID(n.planner.ctx, collectionShortID, owner)
+					if err != nil {
+						return nil, nil, err
+					}
+					if !found {
+						continue
+					}
+					prefixes = append(prefixes, keys.HeadstoreDocKey{Cid: c, DocShortID: docShortID})
+				}
+			}
+
 			origScan.Prefixes(prefixes)
-		} else if n.selectReq.DocIDs.HasValue() {
-			shortID, err := id.GetShortCollectionID(
+			// None of the given CIDs resolved to a document in this collection (e.g. a CID that
+			// only belongs to documents in another collection). Mark the scan as empty so it does
+			// not fall back to a full prefix scan, which the versioned fetcher cannot serve.
+			if len(prefixes) == 0 {
+				origScan.noResults = true
+			}
+		} else if n.selectReq.DocIDs.HasValue() && len(n.selectReq.DocIDs.Value()) > 0 {
+			collectionShortID, err := id.GetCollectionShortID(
 				n.planner.ctx,
 				sourcePlan.collection.Version().CollectionID,
 			)
@@ -321,15 +363,25 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			// @todo: When running the optimizer, check if the filter object
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
-			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+			prefixes := make([]keys.Walkable, 0, len(n.selectReq.DocIDs.Value()))
 
-			for i, docID := range n.selectReq.DocIDs.Value() {
-				prefixes[i] = keys.DataStoreKey{
-					CollectionShortID: shortID,
-					DocID:             docID,
+			for _, docID := range n.selectReq.DocIDs.Value() {
+				docShortID, found, err := id.GetDocShortID(n.planner.ctx, collectionShortID, docID)
+				if err != nil {
+					return nil, nil, err
 				}
+				if !found {
+					continue
+				}
+				prefixes = append(prefixes, keys.DataStoreKey{
+					CollectionShortID: collectionShortID,
+					DocShortID:        docShortID,
+				})
 			}
 			origScan.Prefixes(prefixes)
+			if len(prefixes) == 0 {
+				origScan.noResults = true
+			}
 		}
 	}
 
@@ -339,91 +391,22 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
-		origScan.index = findIndexByFilteringField(origScan)
-		if !origScan.index.HasValue() {
-			// if we can not use index for filtering, try to use index for ordering
-			origScan.index = findIndexByOrderingField(origScan)
+		// The VersionedFetcher (used when CIDs are present) operates on a temporary
+		// in-memory store that doesn't contain index data, so secondary index
+		// selection must be skipped for CID-based queries.
+		if !n.selectReq.Cids.HasValue() {
+			result := selectIndex(selectIndexOptions{
+				collection: origScan.col,
+				filter:     origScan.filter,
+				ordering:   origScan.ordering,
+				docMapping: origScan.documentMapping,
+			})
+			origScan.index = result.index
 		}
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 
 	return aggregates, similarity, nil
-}
-
-func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	var indexCandidates []client.IndexDescription
-
-	if scanNode.filter != nil {
-		col := scanNode.col.Version()
-		conditions := scanNode.filter.ExternalConditions
-		filter.TraverseFields(conditions, func(path []string, val any) bool {
-			for _, field := range scanNode.col.Version().Fields {
-				if field.Name != path[0] {
-					continue
-				}
-				indexes := col.GetIndexesOnField(field.Name)
-				if len(indexes) > 0 {
-					indexCandidates = append(indexCandidates, indexes...)
-					return true
-				}
-			}
-			return true
-		})
-	}
-
-	if len(indexCandidates) == 0 {
-		return immutable.None[client.IndexDescription]()
-	}
-
-	slices.SortFunc(indexCandidates, func(a, b client.IndexDescription) int {
-		return strings.Compare(a.Name, b.Name)
-	})
-	// we return the first found index. We will optimize it later.
-	// https://github.com/sourcenetwork/defradb/issues/2680
-	return immutable.Some(indexCandidates[0])
-}
-
-func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if len(scanNode.ordering) > 0 {
-		col := scanNode.col.Version()
-
-		fieldNames := []string{}
-		mapping := scanNode.documentMapping
-		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
-			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
-			if !found {
-				return immutable.None[client.IndexDescription]()
-			}
-
-			fieldNames = append(fieldNames, fieldName)
-			if fieldIndex < len(mapping.ChildMappings) {
-				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
-					mapping = childMapping
-				}
-			}
-		}
-
-		indexes := col.GetIndexesOnField(fieldNames[0])
-		if len(indexes) > 0 {
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
-}
-
-func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
-	for _, field := range col.Version().Fields {
-		if field.Name != fieldName {
-			continue
-		}
-		indexes := col.Version().GetIndexesOnField(field.Name)
-		if len(indexes) > 0 {
-			// At the moment we just take the first index, but later we want to run some kind of analysis to
-			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			return immutable.Some(indexes[0])
-		}
-	}
-	return immutable.None[client.IndexDescription]()
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
@@ -485,7 +468,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
+			} else if n.collection == nil || !n.collection.Version().Query.HasValue() {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)

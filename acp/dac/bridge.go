@@ -12,7 +12,6 @@ package dac
 
 import (
 	"context"
-	"strconv"
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 
@@ -58,11 +57,10 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	)
 
 	if err != nil {
-		return "", acp.NewErrFailedToAddPolicyWithACP(err, "Local", creator.DID())
+		return "", acp.NewErrFailedToAddPolicy(err, "Local", creator.DID())
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
-
 	return policyID, nil
 }
 
@@ -113,7 +111,13 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 	)
 
 	if err != nil {
-		return acp.NewErrFailedToRegisterDocWithACP(err, "Local", policyID, identity.DID(), resourceName, docID)
+		// RegisterObject is effectively idempotent if the object already has the requested owner.
+		// This lets the same collection be registered on multiple nodes that share an acp instance.
+		owner, ownerErr := a.clientACP.ObjectOwner(ctx, policyID, resourceName, docID)
+		if ownerErr == nil && owner.HasValue() && owner.Value() == identity.DID() {
+			return nil
+		}
+		return acp.NewErrFailedToRegisterDoc(err, "Local", policyID, identity.DID(), resourceName, docID)
 	}
 
 	return nil
@@ -132,7 +136,7 @@ func (a *bridgeDocumentACP) IsDocRegistered(
 		docID,
 	)
 	if err != nil {
-		return false, acp.NewErrFailedToCheckIfDocIsRegisteredWithACP(err, "Local", policyID, resourceName, docID)
+		return false, acp.NewErrFailedToCheckIfDocIsRegistered(err, "Local", policyID, resourceName, docID)
 	}
 
 	return maybeActor.HasValue(), nil
@@ -150,7 +154,6 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 	// as long as they have any of the permissions that imply read access.
 	if permission == acpTypes.DocumentReadPerm {
 		var canRead bool = false
-		var withPermission string
 		var err error
 
 		for _, permissionThatImpliesRead := range acpTypes.ImplyDocumentReadPerm {
@@ -164,7 +167,7 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			)
 
 			if err != nil {
-				return false, acp.NewErrFailedToVerifyDocAccessWithACP(
+				return false, acp.NewErrFailedToVerifyDocAccess(
 					err,
 					"Local",
 					permissionThatImpliesRead.String(),
@@ -176,20 +179,9 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			}
 
 			if canRead {
-				withPermission = permissionThatImpliesRead.String()
 				break
 			}
 		}
-
-		log.InfoContext(
-			ctx,
-			"Document readable="+strconv.FormatBool(canRead),
-			corelog.Any("Permission", withPermission),
-			corelog.Any("PolicyID", policyID),
-			corelog.Any("Resource", resourceName),
-			corelog.Any("ActorID", actorID),
-			corelog.Any("DocID", docID),
-		)
 
 		return canRead, nil
 	}
@@ -204,7 +196,7 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 	)
 
 	if err != nil {
-		return false, acp.NewErrFailedToVerifyDocAccessWithACP(
+		return false, acp.NewErrFailedToVerifyDocAccess(
 			err,
 			"Local",
 			permission.String(),
@@ -214,16 +206,6 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			docID,
 		)
 	}
-
-	log.InfoContext(
-		ctx,
-		"Document accessible="+strconv.FormatBool(hasAccess),
-		corelog.Any("Permission", permission),
-		corelog.Any("PolicyID", policyID),
-		corelog.Any("Resource", resourceName),
-		corelog.Any("ActorID", actorID),
-		corelog.Any("DocID", docID),
-	)
 
 	return hasAccess, nil
 }
@@ -269,7 +251,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 	)
 
 	if err != nil {
-		return false, acp.NewErrFailedToAddDocActorRelationshipWithACP(
+		return false, acp.NewErrFailedToAddDocActorRelationship(
 			err,
 			"Local",
 			policyID,
@@ -337,7 +319,7 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 	)
 
 	if err != nil {
-		return false, acp.NewErrFailedToDeleteDocActorRelationshipWithACP(
+		return false, acp.NewErrFailedToDeleteDocActorRelationship(
 			err,
 			"Local",
 			policyID,

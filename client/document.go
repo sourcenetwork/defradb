@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/errors"
-	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 func init() {
@@ -150,12 +149,8 @@ func NewDocFromMap(ctx context.Context, data map[string]any, collection Collecti
 		return nil, err
 	}
 
-	// if no DocID was specified, then we assume it doesn't exist and we generate, and set it.
-	if !hasDocID {
-		err = doc.generateAndSetDocID()
-		if err != nil {
-			return nil, err
-		}
+	if err = doc.validateRequiredFields(); err != nil {
+		return nil, err
 	}
 
 	return doc, nil
@@ -178,8 +173,7 @@ func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersio
 	if err != nil {
 		return nil, err
 	}
-	err = doc.generateAndSetDocID()
-	if err != nil {
+	if err = doc.validateRequiredFields(); err != nil {
 		return nil, err
 	}
 	return doc, nil
@@ -211,8 +205,7 @@ func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersi
 		if err != nil {
 			return nil, err
 		}
-		err = doc.generateAndSetDocID()
-		if err != nil {
+		if err = doc.validateRequiredFields(); err != nil {
 			return nil, err
 		}
 		docs[i] = doc
@@ -232,6 +225,13 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
 			return NewNormalNil(field.Kind)
+		}
+	} else {
+		if val == nil {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
+		}
+		if v, ok := val.(*fastjson.Value); ok && v.Type() == fastjson.TypeNull {
+			return nil, NewErrNullValueForNonNillableField(field.Name)
 		}
 	}
 
@@ -269,7 +269,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 
 		return NewNormalString(v), nil
 
-	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB:
+	case FieldKind_NILLABLE_STRING, FieldKind_NILLABLE_BLOB, FieldKind_STRING, FieldKind_BLOB:
 		v, err := getString(val)
 		if err != nil {
 			return nil, err
@@ -290,7 +290,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableStringArray(v), nil
 
-	case FieldKind_NILLABLE_BOOL:
+	case FieldKind_NILLABLE_BOOL, FieldKind_BOOL:
 		v, err := getBool(val)
 		if err != nil {
 			return nil, err
@@ -311,7 +311,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableBoolArray(v), nil
 
-	case FieldKind_NILLABLE_FLOAT64:
+	case FieldKind_NILLABLE_FLOAT64, FieldKind_FLOAT64:
 		v, err := getFloat64(val)
 		if err != nil {
 			return nil, err
@@ -332,7 +332,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat64Array(v), nil
 
-	case FieldKind_NILLABLE_FLOAT32:
+	case FieldKind_NILLABLE_FLOAT32, FieldKind_FLOAT32:
 		v, err := getFloat32(val)
 		if err != nil {
 			return nil, err
@@ -353,14 +353,28 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableFloat32Array(v), nil
 
-	case FieldKind_NILLABLE_DATETIME:
+	case FieldKind_NILLABLE_DATETIME, FieldKind_DATETIME:
 		v, err := getDateTime(ctx, val)
 		if err != nil {
 			return nil, err
 		}
 		return NewNormalTime(v), nil
 
-	case FieldKind_NILLABLE_INT:
+	case FieldKind_DATETIME_ARRAY:
+		v, err := getDateTimeArray(ctx, val, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalTimeArray(v), nil
+
+	case FieldKind_NILLABLE_DATETIME_ARRAY:
+		v, err := getNillableDateTimeArray(ctx, val, field.Size)
+		if err != nil {
+			return nil, err
+		}
+		return NewNormalNillableTimeArray(v), nil
+
+	case FieldKind_NILLABLE_INT, FieldKind_INT:
 		v, err := getInt64(val)
 		if err != nil {
 			return nil, err
@@ -381,7 +395,7 @@ func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDesc
 		}
 		return NewNormalNillableIntArray(v), nil
 
-	case FieldKind_NILLABLE_JSON:
+	case FieldKind_NILLABLE_JSON, FieldKind_JSON:
 		v, err := NewJSON(val)
 		if err != nil {
 			return nil, err
@@ -470,6 +484,8 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
+const UTCNOW = "UTC_NOW"
+
 func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
@@ -479,11 +495,15 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 			return time.Time{}, err
 		}
 		s = string(b)
+		if s == UTCNOW {
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
+		}
 	case time.Time:
 		return val, nil
 	default:
 		s = val.(string)
-		if s == "UTC_NOW" {
+		if s == UTCNOW {
 			t := clock.TimeFromContext(ctx)
 			return t.UTC(), nil
 		}
@@ -511,7 +531,7 @@ func getArray[T any](
 		arr := make([]T, len(valArray))
 		for i, arrItem := range valArray {
 			if arrItem.Type() == fastjson.TypeNull {
-				continue
+				return nil, ErrNullValueForNonNillableField
 			}
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {
@@ -522,6 +542,9 @@ func getArray[T any](
 	case []any:
 		arr := make([]T, len(val))
 		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
 			var err error
 			arr[i], err = typeGetter(arrItem)
 			if err != nil {
@@ -586,6 +609,105 @@ func getNillableArray[T any](
 
 		array = arr
 	case []immutable.Option[T]:
+		array = val
+	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
+}
+
+func getDateTimeArray(ctx context.Context, v any, size int) ([]time.Time, error) {
+	array := []time.Time{}
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]time.Time, len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				return nil, ErrNullValueForNonNillableField
+			}
+			arr[i], err = getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+		array = arr
+	case []any:
+		arr := make([]time.Time, len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
+				return nil, ErrNullValueForNonNillableField
+			}
+			var err error
+			arr[i], err = getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+		}
+		array = arr
+	case []time.Time:
+		array = val
+	}
+	if size != 0 && len(array) != size {
+		return nil, NewErrArraySizeMismatch(array, size)
+	}
+	return array, nil
+}
+
+func getNillableDateTimeArray(
+	ctx context.Context,
+	v any,
+	size int,
+) ([]immutable.Option[time.Time], error) {
+	array := []immutable.Option[time.Time]{}
+	switch val := v.(type) {
+	case *fastjson.Value:
+		if val.Type() == fastjson.TypeNull {
+			return nil, nil
+		}
+
+		valArray, err := val.Array()
+		if err != nil {
+			return nil, err
+		}
+
+		arr := make([]immutable.Option[time.Time], len(valArray))
+		for i, arrItem := range valArray {
+			if arrItem.Type() == fastjson.TypeNull {
+				arr[i] = immutable.None[time.Time]()
+				continue
+			}
+			t, err := getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(t)
+		}
+		array = arr
+	case []any:
+		arr := make([]immutable.Option[time.Time], len(val))
+		for i, arrItem := range val {
+			if arrItem == nil {
+				arr[i] = immutable.None[time.Time]()
+				continue
+			}
+			t, err := getDateTime(ctx, arrItem)
+			if err != nil {
+				return nil, err
+			}
+			arr[i] = immutable.Some(t)
+		}
+		array = arr
+	case []immutable.Option[time.Time]:
 		array = val
 	}
 	if size != 0 && len(array) != size {
@@ -678,11 +800,11 @@ func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 func (doc *Document) SetWithJSON(ctx context.Context, obj []byte) error {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
-		return err
+		return NewErrDocumentJSONParseFailed(err)
 	}
 	o, err := v.Object()
 	if err != nil {
-		return err
+		return NewErrDocumentJSONParseFailed(err)
 	}
 
 	return doc.setWithFastJSONObject(ctx, o)
@@ -759,7 +881,7 @@ func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string
 	for k, v := range value {
 		err := doc.Set(ctx, k, v)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, k)
 		}
 	}
 	return nil
@@ -772,7 +894,18 @@ func (doc *Document) setDefaultValues(ctx context.Context) error {
 		}
 		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
-			return err
+			return NewErrSetDocFieldValue(err, field.Name)
+		}
+	}
+	return nil
+}
+
+func (doc *Document) validateRequiredFields() error {
+	for _, field := range doc.collection.Fields {
+		if !field.Kind.IsNillable() {
+			if _, exists := doc.fields[field.Name]; !exists {
+				return NewErrMissingRequiredField(field.Name)
+			}
 		}
 	}
 	return nil
@@ -915,6 +1048,8 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			innerValue = convertImmutable(v)
 		} else if v, ok := normValue.NillableBoolArray(); ok {
 			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableTimeArray(); ok {
+			innerValue = convertImmutable(v)
 		} else {
 			innerValue = normValue.Unwrap()
 		}
@@ -950,26 +1085,6 @@ func (doc *Document) toMapWithKey() (map[string]any, error) {
 	return docMap, nil
 }
 
-// GenerateDocID generates the DocID corresponding to the document.
-func (doc *Document) GenerateDocID() (DocID, error) {
-	bytes, err := doc.Bytes()
-	if err != nil {
-		return DocID{}, err
-	}
-
-	// The DocID must take into consideration the collection root, this ensures that
-	// otherwise identical documents created using different collections will have different
-	// document IDs - we do not want cross-collection docID collisions.
-	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
-
-	cid, err := ccid.NewSHA256CidV1(bytes)
-	if err != nil {
-		return DocID{}, err
-	}
-
-	return NewDocIDV0(cid), nil
-}
-
 // setDocID sets the `doc.id` (should NOT be public).
 func (doc *Document) setDocID(docID DocID) {
 	doc.mu.Lock()
@@ -978,19 +1093,19 @@ func (doc *Document) setDocID(docID DocID) {
 	doc.id = docID
 }
 
-// GenerateAndSetDocID generates the DocID and then (re)sets `doc.id`.
-func (doc *Document) GenerateAndSetDocID() error {
-	return doc.generateAndSetDocID()
+// DocumentIDs returns IDs for docs in input order.
+func DocumentIDs(docs []*Document) []string {
+	docIDs := make([]string, len(docs))
+	for i, doc := range docs {
+		docIDs[i] = doc.ID().String()
+	}
+	return docIDs
 }
 
-func (doc *Document) generateAndSetDocID() error {
-	docID, err := doc.GenerateDocID()
-	if err != nil {
-		return err
-	}
-
+// ApplySavedDocumentID applies an ID returned by a DefraDB save operation.
+// Exported only for client adapters, user code should not call it.
+func ApplySavedDocumentID(doc *Document, docID DocID) {
 	doc.setDocID(docID)
-	return nil
 }
 
 // DocumentStatus represent the state of the document in the DAG store.

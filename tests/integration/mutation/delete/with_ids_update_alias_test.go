@@ -47,7 +47,7 @@ func TestMutationDeletion_WithUpdateAndIDsAndSelectAlias(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				DocID: 0,
 				Doc: `{
 					"age":  27,
@@ -57,17 +57,17 @@ func TestMutationDeletion_WithUpdateAndIDsAndSelectAlias(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-3b39742b-cfff-5158-b6d5-d69cf79066b4", "bae-49057a46-bf84-5e83-b043-e6fa6ed5b70c"]) {
+					delete_User(docID: ["{{.DocID0_0}}", "{{.DocID0_1}}"]) {
 						AliasID: _docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"AliasID": "bae-3b39742b-cfff-5158-b6d5-d69cf79066b4",
+							"AliasID": "{{.DocID0_0}}",
 						},
 						{
-							"AliasID": "bae-49057a46-bf84-5e83-b043-e6fa6ed5b70c",
+							"AliasID": "{{.DocID0_1}}",
 						},
 					},
 				},

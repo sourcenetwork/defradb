@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommits(t *testing.T) {
@@ -89,26 +90,28 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
+
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreibeindczotofvlnhqgoeedqrphxxayp4ugsrcutr4kgda3uq3fy2y",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigbqcwozrscjscuclr3hxehca4skh5n7eqvtfsmbzcql7uz2pyk7e",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreihaypay6hfz3czcdjzasyqthwf6kw3hhpucmsmrdx4et6wwokjw64",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -137,19 +140,21 @@ func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":                 "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":                 "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid":                 testUtils.ValidCID(),
 							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -205,7 +210,7 @@ func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"age":	22
 				}`,
@@ -254,6 +259,8 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// signing adds a non-nil signature; encryption changes the delta bytes
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -262,7 +269,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 						"age":	22
 					}`,
@@ -282,7 +289,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							}
 							heads {
 								cid
-							}	
+							}
 							signature {
 								type
 							}
@@ -294,7 +301,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageUpdateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(22),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(2),
 							"links":     []map[string]any{},
@@ -308,7 +315,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(ageCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue(21),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -318,7 +325,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(nameCreateCid, uniqueCid),
 							"delta":     testUtils.CBORValue("John"),
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -328,7 +335,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(updateCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(2),
 							"links": []map[string]any{
@@ -347,7 +354,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 						{
 							"cid":       gomega.And(createCompositeCid, uniqueCid),
 							"delta":     nil,
-							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID":     "{{.DocID0_0}}",
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
@@ -391,17 +398,19 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"history": []map[string]any{
+
 						{
-							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

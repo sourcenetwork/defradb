@@ -25,7 +25,7 @@ import (
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
 	exe *gql.ExecutionContext,
-	collectedFields map[string][]*ast.Field,
+	collectedFields [][]*ast.Field,
 ) (*request.OperationDefinition, []error) {
 	var selections []request.Selection
 	for _, fields := range collectedFields {
@@ -130,12 +130,6 @@ func parseSelect(
 			v, ok := value.([]any)
 			if !ok {
 				continue // value is nil
-			}
-
-			if len(v) > 1 {
-				// todo - This limitiation is temporary and should be removed in
-				// https://github.com/sourcenetwork/defradb/issues/4304
-				return nil, ErrMultipleCidsNotSupported
 			}
 
 			cids := make([]string, len(v))
@@ -276,6 +270,7 @@ func parseAggregateTarget(
 	var limit immutable.Option[uint64]
 	var offset immutable.Option[uint64]
 	var order immutable.Option[request.OrderBy]
+	var groupBy immutable.Option[request.GroupBy]
 
 	for name, value := range arguments {
 		switch name {
@@ -322,6 +317,17 @@ func parseAggregateTarget(
 					Conditions: conditions,
 				})
 			}
+
+		case request.GroupByClause:
+			if raw, ok := value.([]any); ok {
+				fields := make([]string, len(raw))
+				for i, f := range raw {
+					if s, ok := f.(string); ok {
+						fields[i] = s
+					}
+				}
+				groupBy = immutable.Some(request.GroupBy{Fields: fields})
+			}
 		}
 	}
 
@@ -339,6 +345,9 @@ func parseAggregateTarget(
 		},
 		Orderable: request.Orderable{
 			OrderBy: order,
+		},
+		Groupable: request.Groupable{
+			GroupBy: groupBy,
 		},
 	}, nil
 }

@@ -12,11 +12,12 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // NewIndex will attempt to make a new secondary index for the given collection
@@ -56,6 +57,9 @@ type NewIndex struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*NewIndex)(nil)
@@ -64,7 +68,25 @@ var _ Stateful = (*NewIndex)(nil)
 func (a *NewIndex) Execute() {
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
-		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
+		node := a.s.Nodes[nodeID]
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var err error
+		var txn client.Txn
+		var collections []client.Collection
+		if a.TransactionID.HasValue() {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
+		} else {
+			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+		}
+
+		if err != nil {
+			return
+		}
+
+		collection := collections[a.CollectionID]
 
 		indexDesc := client.NewIndexRequest{
 			Name: a.IndexName,
@@ -93,7 +115,7 @@ func (a *NewIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		_, err := collection.NewIndex(a.s.Ctx, indexDesc, opts)
+		_, err = collection.NewIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

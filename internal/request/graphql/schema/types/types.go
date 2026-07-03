@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	ExplainLabel  string = "explain"
-	PrimaryLabel  string = "primary"
-	RelationLabel string = "relation"
+	ExplainLabel    string = "explain"
+	ExhaustiveLabel string = "exhaustive"
+	PrimaryLabel    string = "primary"
+	RelationLabel   string = "relation"
 
 	ExplainArgNameType string = "type"
 	ExplainArgSimple   string = "simple"
@@ -55,16 +56,8 @@ const (
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
-	DefaultDirectiveLabel        = "default"
-	DefaultDirectivePropString   = "string"
-	DefaultDirectivePropBool     = "bool"
-	DefaultDirectivePropInt      = "int"
-	DefaultDirectivePropFloat    = "float"
-	DefaultDirectivePropFloat32  = "float32"
-	DefaultDirectivePropFloat64  = "float64"
-	DefaultDirectivePropDateTime = "dateTime"
-	DefaultDirectivePropJSON     = "json"
-	DefaultDirectivePropBlob     = "blob"
+	DefaultDirectiveLabel     = "default"
+	DefaultDirectivePropValue = "value"
 
 	MaterializedDirectiveLabel  = "materialized"
 	MaterializedDirectivePropIf = "if"
@@ -125,32 +118,8 @@ func DefaultDirective() *gql.Directive {
 		
 		Setting a default value on a field within a view has no effect.`,
 		Args: gql.FieldConfigArgument{
-			DefaultDirectivePropString: &gql.ArgumentConfig{
-				Type: gql.String,
-			},
-			DefaultDirectivePropBool: &gql.ArgumentConfig{
-				Type: gql.Boolean,
-			},
-			DefaultDirectivePropInt: &gql.ArgumentConfig{
-				Type: gql.Int,
-			},
-			DefaultDirectivePropFloat: &gql.ArgumentConfig{
-				Type: gql.Float,
-			},
-			DefaultDirectivePropFloat32: &gql.ArgumentConfig{
-				Type: Float32,
-			},
-			DefaultDirectivePropFloat64: &gql.ArgumentConfig{
-				Type: Float64,
-			},
-			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
-				Type: gql.DateTime,
-			},
-			DefaultDirectivePropJSON: &gql.ArgumentConfig{
-				Type: JSON,
-			},
-			DefaultDirectivePropBlob: &gql.ArgumentConfig{
-				Type: Blob,
+			DefaultDirectivePropValue: &gql.ArgumentConfig{
+				Type: Any,
 			},
 		},
 		Locations: []string{
@@ -174,6 +143,20 @@ func ExplainDirective(explainEnum *gql.Enum) *gql.Directive {
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
+		},
+	})
+}
+
+// ExhaustiveDirective @exhaustive signals that complete/exhaustive results are desired
+// even at performance cost. When ordering by a relation field that has an index, orphan
+// parents (parents without children) will be included in results.
+func ExhaustiveDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        ExhaustiveLabel,
+		Description: "@exhaustive signals that complete/exhaustive results are desired even at performance cost.",
+
+		Locations: []string{
+			gql.DirectiveLocationQuery,
 		},
 	})
 }

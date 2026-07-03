@@ -32,6 +32,29 @@ const (
 	errInvalidFilterOperator      string = "invalid filter operator is provided"
 	errNotSupportedKindByIndex    string = "kind is not supported by index"
 	errUnexpectedTypeValue        string = "unexpected type value"
+	errCreateDocIterator          string = "failed to create document iterator"
+	errIterateDocuments           string = "failed to iterate documents"
+	errParseDocumentKey           string = "failed to parse document key"
+	errGetDocumentValue           string = "failed to get document value"
+	errIterateDocFields           string = "failed to iterate document fields"
+	errParseFieldKey              string = "failed to parse field key"
+	errGetFieldValue              string = "failed to get field value"
+	errCreateIndexIterator        string = "failed to create index iterator"
+	errIterateIndex               string = "failed to iterate index"
+	errDecodeIndexKey             string = "failed to decode index key"
+	errGetIndexValue              string = "failed to get index value"
+	errGetIndexEntry              string = "failed to get index entry"
+	errGetNextIndexEntry          string = "failed to get next index entry"
+	errCreateHeadIterator         string = "failed to create headstore iterator"
+	errIterateHeads               string = "failed to iterate heads"
+	errParseHeadKey               string = "failed to parse headstore key"
+	errDecodeDocField             string = "failed to decode document field"
+	errCopyVersionedData          string = "failed to copy versioned data"
+	errCreateVersionIterator      string = "failed to create version data iterator"
+	errDecryptVersionedBlock      string = "failed to decrypt block during version replay"
+	errEncryptionKeyMissing       string = "encryption key not available locally for block"
+	errIndexEpochNotFound         string = "index epoch sequence not found"
+	errMissingVersionedPrefix     string = "versioned fetcher started without a prefix"
 )
 
 var (
@@ -48,7 +71,30 @@ var (
 	ErrInvalidInOperatorValue     = errors.New(errInvalidInOperatorValue)
 	ErrInvalidFilterOperator      = errors.New(errInvalidFilterOperator)
 	ErrUnexpectedTypeValue        = errors.New(errUnexpectedTypeValue)
+	ErrEncryptionKeyMissing       = errors.New(errEncryptionKeyMissing)
+	ErrIndexEpochNotFound         = errors.New(errIndexEpochNotFound)
+	ErrMissingVersionedPrefix     = errors.New(errMissingVersionedPrefix)
 )
+
+// NewErrDecryptVersionedBlock returns an error indicating that the given block could not
+// be decrypted during version replay.
+func NewErrDecryptVersionedBlock(inner error, cid string) error {
+	return errors.Wrap(errDecryptVersionedBlock, inner, errors.NewKV("Cid", cid))
+}
+
+// NewErrEncryptionKeyMissing returns an error indicating that the per-doc encryption key
+// is not available locally for the given block, so the version replay cannot decrypt it.
+func NewErrEncryptionKeyMissing(cid string) error {
+	return errors.New(errEncryptionKeyMissing, errors.NewKV("Cid", cid))
+}
+
+// NewErrIndexEpochNotFound returns an error indicating that the given index has no epoch sequence,
+// so its entry namespace cannot be resolved. It wraps the raw storage error and matches
+// ErrIndexEpochNotFound, letting callers (e.g. collection open) react to this case specifically.
+func NewErrIndexEpochNotFound(inner error, collectionID string, indexID uint32) error {
+	return errors.Wrap(errIndexEpochNotFound, inner,
+		errors.NewKV("CollectionID", collectionID), errors.NewKV("IndexID", indexID))
+}
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.
 func NewErrFieldIdNotFound(fieldId uint32) error {
@@ -115,4 +161,80 @@ func NewErrNotSupportedKindByIndex(kind client.FieldKind) error {
 func NewErrUnexpectedTypeValue[T any](value any) error {
 	var t T
 	return errors.New(errUnexpectedTypeValue, errors.NewKV("Value", value), errors.NewKV("Type", fmt.Sprintf("%T", t)))
+}
+
+func NewErrCreateDocIterator(inner error) error {
+	return errors.Wrap(errCreateDocIterator, inner)
+}
+
+func NewErrIterateDocuments(inner error) error {
+	return errors.Wrap(errIterateDocuments, inner)
+}
+
+func NewErrParseDocumentKey(inner error) error {
+	return errors.Wrap(errParseDocumentKey, inner)
+}
+
+func NewErrGetDocumentValue(inner error) error {
+	return errors.Wrap(errGetDocumentValue, inner)
+}
+
+func NewErrIterateDocFields(inner error) error {
+	return errors.Wrap(errIterateDocFields, inner)
+}
+
+func NewErrParseFieldKey(inner error) error {
+	return errors.Wrap(errParseFieldKey, inner)
+}
+
+func NewErrGetFieldValue(inner error) error {
+	return errors.Wrap(errGetFieldValue, inner)
+}
+
+func NewErrCreateIndexIterator(inner error, indexName string) error {
+	return errors.Wrap(errCreateIndexIterator, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrIterateIndex(inner error, indexName string) error {
+	return errors.Wrap(errIterateIndex, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrDecodeIndexKey(inner error, indexName string) error {
+	return errors.Wrap(errDecodeIndexKey, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrGetIndexValue(inner error, indexName string) error {
+	return errors.Wrap(errGetIndexValue, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrGetIndexEntry(inner error, indexKey string) error {
+	return errors.Wrap(errGetIndexEntry, inner, errors.NewKV("IndexKey", indexKey))
+}
+
+func NewErrGetNextIndexEntry(inner error, indexName string) error {
+	return errors.Wrap(errGetNextIndexEntry, inner, errors.NewKV("IndexName", indexName))
+}
+
+func NewErrCreateHeadIterator(inner error) error {
+	return errors.Wrap(errCreateHeadIterator, inner)
+}
+
+func NewErrIterateHeads(inner error) error {
+	return errors.Wrap(errIterateHeads, inner)
+}
+
+func NewErrParseHeadKey(inner error) error {
+	return errors.Wrap(errParseHeadKey, inner)
+}
+
+func NewErrDecodeDocField(inner error, field string) error {
+	return errors.Wrap(errDecodeDocField, inner, errors.NewKV("Field", field))
+}
+
+func NewErrCopyVersionedData(inner error) error {
+	return errors.Wrap(errCopyVersionedData, inner)
+}
+
+func NewErrCreateVersionIterator(inner error) error {
+	return errors.Wrap(errCreateVersionIterator, inner)
 }

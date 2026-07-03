@@ -22,7 +22,7 @@ import (
 
 func MakeNodeACPReEnableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "re-enable [-i --identity]",
+		Use:   "re-enable",
 		Short: "Re-enable the node access control",
 		Long: `Re-enable the node access control
 Note:
@@ -30,7 +30,9 @@ Note:
 - If node acp is already enabled, then it will return an error.
 - If node acp is in a clean/non-configured state, then it will return an error.
 
-Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+Learn more about the
+[Node Access Control](https://docs.source.network/defradb/security/node-access-control/)
+system.
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {

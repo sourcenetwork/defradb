@@ -78,7 +78,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -104,7 +104,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad Lone",
 							"age":    int64(28),
 						},
@@ -174,7 +174,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -201,7 +201,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad Lone",
 							"age":    int64(28),
 						},
@@ -269,7 +269,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -298,7 +298,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad Lone",
 							"age":    int64(28),
 						},
@@ -372,7 +372,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -401,7 +401,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -475,7 +475,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -506,7 +506,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -581,7 +581,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				DocID: 0,
@@ -610,7 +610,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -685,7 +685,7 @@ resources:
 				`,
 			},
 
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(2),
@@ -716,7 +716,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},

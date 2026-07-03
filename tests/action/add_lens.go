@@ -12,11 +12,13 @@
 package action
 
 import (
-	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 // AddLens is an action that adds a lens to the lens store and stores its CID.
@@ -39,6 +41,9 @@ type AddLens struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// Used to identify the transaction for this to be executed in. Optional.
+	TransactionID immutable.Option[int]
 }
 
 var _ Action = (*AddLens)(nil)
@@ -57,8 +62,17 @@ func (a *AddLens) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
 		var err error
-		lensID, err = node.AddLens(a.s.Ctx, a.Lens, opts)
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			require.NoError(a.s.T, err)
+			lensID, err = txn.AddLens(a.s.Ctx, a.Lens, opts)
+		} else {
+			lensID, err = node.AddLens(a.s.Ctx, a.Lens, opts)
+		}
 
 		if a.ExpectedError != "" {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

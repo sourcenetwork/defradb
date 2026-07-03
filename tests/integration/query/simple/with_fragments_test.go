@@ -51,14 +51,14 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"firstUser": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(21),
+							"Name": "Alice",
+							"Age":  int64(40),
 						},
 					},
 					"lastUser": []map[string]any{
 						{
-							"Name": "Alice",
-							"Age":  int64(40),
+							"Name": "Bob",
+							"Age":  int64(21),
 						},
 					},
 				},

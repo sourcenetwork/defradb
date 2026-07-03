@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -102,14 +103,14 @@ func (n *topLevelNode) Close() error {
 		n.isInRecurse = false
 	}()
 
+	var errs []error
 	for _, child := range n.children {
-		err := child.Close()
-		if err != nil {
-			return err
+		if err := child.Close(); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (n *topLevelNode) Source() planNode {

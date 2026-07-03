@@ -34,7 +34,6 @@ func TestCollectionMigrationQueryByDocID(t *testing.T) {
 				`,
 			},
 			&action.AddDoc{
-				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
@@ -70,7 +69,7 @@ func TestCollectionMigrationQueryByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99") {
+					Users (docID: "{{.DocID0_0}}") {
 						name
 						verified
 					}
@@ -116,37 +115,31 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			// and we want to make sure that lenses are being correctly returned
 			// to the pool for reuse after.
 			&action.AddDoc{
-				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
 			&action.AddDoc{
-				// bae-235c64e3-abf7-549c-9aff-971c8afdfa3f
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
 			&action.AddDoc{
-				// bae-eadc6f5f-a52b-57de-ad6c-e76315fff6bd
 				Doc: `{
 					"name": "Chris"
 				}`,
 			},
 			&action.AddDoc{
-				// bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			&action.AddDoc{
-				// bae-aa68c022-519a-50cf-8a91-2ff6d4349c90
 				Doc: `{
 					"name": "Islam"
 				}`,
 			},
 			&action.AddDoc{
-				// bae-81418211-7e0c-5e0c-8505-6288318c7248
 				Doc: `{
 					"name": "Dave"
 				}`,
@@ -177,7 +170,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99") {
+					Users (docID: "{{.DocID0_0}}") {
 						name
 						verified
 					}
@@ -193,7 +186,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-235c64e3-abf7-549c-9aff-971c8afdfa3f") {
+					Users (docID: "{{.DocID0_1}}") {
 						name
 						verified
 					}
@@ -209,7 +202,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-eadc6f5f-a52b-57de-ad6c-e76315fff6bd") {
+					Users (docID: "{{.DocID0_2}}") {
 						name
 						verified
 					}
@@ -225,7 +218,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11") {
+					Users (docID: "{{.DocID0_3}}") {
 						name
 						verified
 					}
@@ -241,7 +234,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-aa68c022-519a-50cf-8a91-2ff6d4349c90") {
+					Users (docID: "{{.DocID0_4}}") {
 						name
 						verified
 					}
@@ -257,7 +250,7 @@ func TestCollectionMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users (docID: "bae-81418211-7e0c-5e0c-8505-6288318c7248") {
+					Users (docID: "{{.DocID0_5}}") {
 						name
 						verified
 					}

@@ -11,6 +11,8 @@
 package options
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -44,11 +46,7 @@ const (
 type NodeDocumentACPType string
 
 const (
-	// NodeNoDocumentACPType disables the document ACP subsystem.
-	NodeNoDocumentACPType NodeDocumentACPType = "none"
-	// NodeDefaultDocumentACPType uses the default ACP implementation for this build.
-	NodeDefaultDocumentACPType NodeDocumentACPType = ""
-	// NodeLocalDocumentACPType uses the local ACP implementation.
+	// NodeLocalDocumentACPType uses the local document ACP implementation.
 	NodeLocalDocumentACPType NodeDocumentACPType = "local"
 	// NodeSourceHubDocumentACPType uses the SourceHub ACP implementation.
 	NodeSourceHubDocumentACPType NodeDocumentACPType = "source-hub"
@@ -131,6 +129,12 @@ type NodeHTTPOptions struct {
 	WriteTimeout time.Duration
 	// IdleTimeout is the idle timeout for connections.
 	IdleTimeout time.Duration
+	// TxnTTL is the idle timeout for explicit HTTP transactions.
+	TxnTTL time.Duration
+	// TxnTTLTick is the timer resolution used by the HTTP transaction TTL cache.
+	TxnTTLTick time.Duration
+	// TxnTTLBuckets is the number of buckets in the HTTP transaction TTL cache.
+	TxnTTLBuckets int
 }
 
 // NodeStoreOptions contains store configuration values.
@@ -191,6 +195,47 @@ type NodeDBOptions struct {
 	LensPoolSize int
 	// ChunkSize is the chunk size for the blockstore.
 	ChunkSize immutable.Option[int]
+}
+
+// SanitizedMap returns the options as a generic map with sensitive fields replaced
+// by "<redacted>" to indicate their presence without exposing their values.
+func (opts *NodeOptions) SanitizedMap() (map[string]any, error) {
+	data, err := json.Marshal(opts)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "Identity", opts.DB.Identity.HasValue()); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue()); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func censorField(m map[string]any, parent, field string, present bool) error {
+	if !present {
+		return nil
+	}
+	sub, ok := m[parent].(map[string]any)
+	if !ok {
+		return fmt.Errorf("cannot redact %s.%s: parent key missing or wrong type", parent, field)
+	}
+	sub[field] = "<redacted>"
+	return nil
 }
 
 // nodeSubBuilder provides parent linkage, forwarding, and Node() navigation
@@ -564,6 +609,24 @@ func (sb *NodeHTTPOptionsBuilder) SetWriteTimeout(timeout time.Duration) *NodeHT
 // SetIdleTimeout sets the server idle timeout.
 func (sb *NodeHTTPOptionsBuilder) SetIdleTimeout(timeout time.Duration) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { opts.IdleTimeout = timeout })
+	return sb
+}
+
+// SetTxnTTL sets the idle timeout for explicit HTTP transactions.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTL(ttl time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTL = ttl })
+	return sb
+}
+
+// SetTxnTTLTick sets the timer resolution used by the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLTick(tick time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLTick = tick })
+	return sb
+}
+
+// SetTxnTTLBuckets sets the number of buckets in the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLBuckets(buckets int) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLBuckets = buckets })
 	return sb
 }
 

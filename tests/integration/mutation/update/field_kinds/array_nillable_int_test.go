@@ -37,7 +37,7 @@ func TestMutationUpdate_WithArrayOfNillableInts(t *testing.T) {
 					"favouriteIntegers": [1, null, 3]
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"favouriteIntegers": [null, 2, 3, null, 8]
 				}`,

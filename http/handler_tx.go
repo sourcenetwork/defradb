@@ -13,9 +13,12 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type txHandler struct{}
@@ -26,74 +29,91 @@ type CreateTxResponse struct {
 
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
+	txnTTL, hasTxnTTL, err := parseTxnTTL(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
 
 	tx, err := db.NewTxn(readOnly)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
-}
-
-func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
-	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
-
-	tx, err := db.NewConcurrentTxn(readOnly)
+	if hasTxnTTL {
+		err = txs.StoreFor(tx, txnTTL)
+	} else {
+		err = txs.Store(tx)
+	}
 	if err != nil {
+		tx.Discard()
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 
 	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.Load(txID)
+	tx, txnTTL, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit()
+	err = tx.Commit()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		if storeErr := txs.StoreFor(tx, txnTTL); storeErr != nil {
+			log.ErrorE("failed to restore transaction after commit error", storeErr)
+			tx.Discard()
+		}
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
-	txs.Delete(txID)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	txs := mustGetContextTxnCache(req)
 
 	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.LoadAndDelete(txID)
+	tx, _, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrTransactionNotFound})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	dsTxn.Discard()
+	tx.Discard()
 
 	rw.WriteHeader(http.StatusOK)
+}
+
+func parseTxnTTL(req *http.Request) (time.Duration, bool, error) {
+	raw := req.URL.Query().Get("ttl")
+	if raw == "" {
+		return 0, false, nil
+	}
+	txnTTL, err := time.ParseDuration(raw)
+	if err == nil {
+		return txnTTL, true, nil
+	}
+	seconds, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, false, err
+	}
+	return time.Duration(seconds) * time.Second, true, nil
 }
 
 func (h *txHandler) bindRoutes(router *Router) {
@@ -110,6 +130,9 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnReadOnlyQueryParam := openapi3.NewQueryParameter("read_only").
 		WithDescription("Read only transaction").
 		WithSchema(openapi3.NewBoolSchema().WithDefault(false))
+	txnTTLQueryParam := openapi3.NewQueryParameter("ttl").
+		WithDescription("Transaction idle TTL as a Go duration string, or seconds if no unit is provided").
+		WithSchema(openapi3.NewStringSchema())
 
 	txnCreateResponse := openapi3.NewResponse().
 		WithDescription("Transaction info").
@@ -120,6 +143,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCreate.Description = "Create a new transaction"
 	txnCreate.Tags = []string{"transaction"}
 	txnCreate.AddParameter(txnReadOnlyQueryParam)
+	txnCreate.AddParameter(txnTTLQueryParam)
 	txnCreate.AddResponse(200, txnCreateResponse)
 	txnCreate.Responses.Set("400", errorResponse)
 
@@ -143,6 +167,8 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnCommit.Responses = openapi3.NewResponses()
 	txnCommit.Responses.Set("200", successResponse)
 	txnCommit.Responses.Set("400", errorResponse)
+	txnCommit.Responses.Set("404", errorResponse)
+	txnCommit.Responses.Set("409", errorResponse)
 
 	txnDiscard := openapi3.NewOperation()
 	txnDiscard.OperationID = "discard_transaction"
@@ -152,9 +178,9 @@ func (h *txHandler) bindRoutes(router *Router) {
 	txnDiscard.Responses = openapi3.NewResponses()
 	txnDiscard.Responses.Set("200", successResponse)
 	txnDiscard.Responses.Set("400", errorResponse)
+	txnDiscard.Responses.Set("404", errorResponse)
 
 	router.AddRoute("/tx", http.MethodPost, txnCreate, h.NewTxn)
-	router.AddRoute("/tx/concurrent", http.MethodPost, txnConcurrent, h.NewConcurrentTxn)
 	router.AddRoute("/tx/{id}", http.MethodPost, txnCommit, h.Commit)
 	router.AddRoute("/tx/{id}", http.MethodDelete, txnDiscard, h.Discard)
 }

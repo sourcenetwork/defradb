@@ -38,7 +38,7 @@ func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -142,7 +142,7 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 		opt,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(req.Context()))
 	err := db.ReEnableNAC(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -168,7 +168,7 @@ func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.DisableNAC(), identity.FromContext(req.Context()))
 	err := db.DisableNAC(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 	opt := options.WithIdentity(options.GetNACStatus(), identity.FromContext(req.Context()))
 	statusNACResult, err := db.GetNACStatus(req.Context(), opt)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
 
@@ -230,9 +230,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Add document acp policy result").
 		WithJSONSchemaRef(addPolicyResultSchema)
 	addPolicyDAC := openapi3.NewOperation()
-	addPolicyDAC.OperationID = "add dac policy"
+	addPolicyDAC.OperationID = "dac policy add"
 	addPolicyDAC.Description = "Add a policy using document acp system"
-	addPolicyDAC.Tags = []string{"acp_document_policy"}
+	addPolicyDAC.Tags = []string{"document access control"}
 	addPolicyDAC.Responses = openapi3.NewResponses()
 	addPolicyDAC.AddResponse(200, addPolicyDACResult)
 	addPolicyDAC.Responses.Set("400", errorResponse)
@@ -247,9 +247,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Add document acp relationship result").
 		WithJSONSchemaRef(addRelationshipResultSchema)
 	addActorRelationshipDAC := openapi3.NewOperation()
-	addActorRelationshipDAC.OperationID = "add dac relationship"
+	addActorRelationshipDAC.OperationID = "dac relationship add"
 	addActorRelationshipDAC.Description = "Add an actor relationship using document acp system"
-	addActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
+	addActorRelationshipDAC.Tags = []string{"document access control"}
 	addActorRelationshipDAC.Responses = openapi3.NewResponses()
 	addActorRelationshipDAC.AddResponse(200, addActorRelationshipDACResult)
 	addActorRelationshipDAC.Responses.Set("400", errorResponse)
@@ -264,9 +264,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Delete document acp relationship result").
 		WithJSONSchemaRef(deleteRelationshipResultSchema)
 	deleteActorRelationshipDAC := openapi3.NewOperation()
-	deleteActorRelationshipDAC.OperationID = "delete dac relationship"
+	deleteActorRelationshipDAC.OperationID = "dac relationship delete"
 	deleteActorRelationshipDAC.Description = "Delete an actor relationship using document acp system"
-	deleteActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
+	deleteActorRelationshipDAC.Tags = []string{"document access control"}
 	deleteActorRelationshipDAC.Responses = openapi3.NewResponses()
 	deleteActorRelationshipDAC.AddResponse(200, deleteActorRelationshipDACResult)
 	deleteActorRelationshipDAC.Responses.Set("400", errorResponse)
@@ -281,9 +281,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Add node acp relationship result").
 		WithJSONSchemaRef(addRelationshipResultSchema)
 	addActorRelationshipNAC := openapi3.NewOperation()
-	addActorRelationshipNAC.OperationID = "add nac relationship"
+	addActorRelationshipNAC.OperationID = "nac relationship add"
 	addActorRelationshipNAC.Description = "Add an actor relationship using node acp system"
-	addActorRelationshipNAC.Tags = []string{"acp_node_relationship"}
+	addActorRelationshipNAC.Tags = []string{"node access control"}
 	addActorRelationshipNAC.Responses = openapi3.NewResponses()
 	addActorRelationshipNAC.AddResponse(200, addActorRelationshipNACResult)
 	addActorRelationshipNAC.Responses.Set("400", errorResponse)
@@ -298,9 +298,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Delete node acp relationship result").
 		WithJSONSchemaRef(deleteRelationshipResultSchema)
 	deleteActorRelationshipNAC := openapi3.NewOperation()
-	deleteActorRelationshipNAC.OperationID = "delete nac relationship"
+	deleteActorRelationshipNAC.OperationID = "nac relationship delete"
 	deleteActorRelationshipNAC.Description = "Delete an actor relationship using node acp system"
-	deleteActorRelationshipNAC.Tags = []string{"acp_node_relationship"}
+	deleteActorRelationshipNAC.Tags = []string{"node access control"}
 	deleteActorRelationshipNAC.Responses = openapi3.NewResponses()
 	deleteActorRelationshipNAC.AddResponse(200, deleteActorRelationshipNACResult)
 	deleteActorRelationshipNAC.Responses.Set("400", errorResponse)
@@ -309,17 +309,17 @@ func (h *acpHandler) bindRoutes(router *Router) {
 	}
 
 	reEnableNAC := openapi3.NewOperation()
-	reEnableNAC.OperationID = "re-enable nac"
+	reEnableNAC.OperationID = "nac re-enable"
 	reEnableNAC.Description = "Re-enable nac"
-	reEnableNAC.Tags = []string{"acp_node_re-enable"}
+	reEnableNAC.Tags = []string{"node access control"}
 	reEnableNAC.Responses = openapi3.NewResponses()
 	reEnableNAC.Responses.Set("200", successResponse)
 	reEnableNAC.Responses.Set("400", errorResponse)
 
 	disableNAC := openapi3.NewOperation()
-	disableNAC.OperationID = "disable nac"
+	disableNAC.OperationID = "nac disable"
 	disableNAC.Description = "Disable nac"
-	disableNAC.Tags = []string{"acp_node_disable"}
+	disableNAC.Tags = []string{"node access control"}
 	disableNAC.Responses = openapi3.NewResponses()
 	disableNAC.Responses.Set("200", successResponse)
 	disableNAC.Responses.Set("400", errorResponse)
@@ -328,9 +328,9 @@ func (h *acpHandler) bindRoutes(router *Router) {
 		WithDescription("Node acp status result").
 		WithJSONSchemaRef(statusNACResultSchema)
 	statusNAC := openapi3.NewOperation()
-	statusNAC.OperationID = "Check status of nac"
+	statusNAC.OperationID = "nac status"
 	statusNAC.Description = "Check status of node acp system"
-	statusNAC.Tags = []string{"acp_node_status"}
+	statusNAC.Tags = []string{"node access control"}
 	statusNAC.Responses = openapi3.NewResponses()
 	statusNAC.AddResponse(200, statusNACResult)
 	statusNAC.Responses.Set("400", errorResponse)

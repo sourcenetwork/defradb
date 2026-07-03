@@ -29,14 +29,14 @@ func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
 					"age":	22
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: `{
@@ -45,17 +45,18 @@ func TestQueryCommitsWithDocIDAndLimit(t *testing.T) {
 			},
 			&action.Request{
 				Request: ` {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", limit: 2) {
+						_commits(docID: "{{.DocID0_0}}", limit: 2) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
+
 						{
-							"cid": "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},

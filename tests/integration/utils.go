@@ -14,6 +14,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"reflect"
@@ -45,7 +46,7 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
-	_ "github.com/sourcenetwork/defradb/tests/multiplier"
+	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -151,7 +152,7 @@ func ExecuteTestCase(
 	flattenActions(&testCase)
 	applyMultipliers(t, &testCase)
 	collectionNames := getCollectionNames(testCase)
-	changeDetector.PreTestChecks(t, collectionNames)
+	changeDetector.PreTestChecks(t, collectionNames, testCase.SkipChangeDetector)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
@@ -269,6 +270,8 @@ func executeTestCase(
 		corelog.String("changeDetector.Repository", changeDetector.Repository),
 	}
 
+	skipIfUnsupportedLevelDBAction(t, dbt, testCase.Actions)
+
 	if kms != NoneKMSType {
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
@@ -303,10 +306,25 @@ func executeTestCase(
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	loadCollectionVersions(s)
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, testCase, i, testCase.Actions[i])
+	}
+
+	// In the source phase of the change detector, persist the in-memory test
+	// state slices that templates depend on so the assert phase can resolve
+	// {{.CollectionVersionID<N>}} to the bytes the source side produced. See
+	// https://github.com/sourcenetwork/defradb/issues/4752 and the
+	// `change_detector` package for details.
+	if changeDetector.Enabled && changeDetector.SetupOnly {
+		err := changeDetector.WriteTestState(s.T, changeDetector.TestState{
+			CollectionVersions:   s.CollectionVersions,
+			DocIDs:               docIDsToStrings(s),
+			CollectionComposites: collectionCompositesToStrings(s),
+		})
+		require.NoError(s.T, err)
 	}
 
 	// Notify any active subscriptions that all requests have been sent.
@@ -358,6 +376,9 @@ func performAction(
 
 	case ConnectPeers:
 		connectPeers(s, action)
+
+	case DisconnectPeers:
+		disconnectPeers(s, action)
 
 	case AddReplicator:
 		addReplicator(s, action)
@@ -416,8 +437,8 @@ func performAction(
 	case DeleteDoc:
 		deleteDoc(s, action)
 
-	case UpdateDoc:
-		updateDoc(s, action)
+	case DeleteWithFilter:
+		deleteWithFilter(s, action)
 
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
@@ -440,9 +461,6 @@ func performAction(
 	case ImportBackup:
 		importBackup(s, action)
 
-	case CommitTransaction:
-		commitTransaction(s, action)
-
 	case IntrospectionRequest:
 		assertIntrospectionResults(s, action)
 
@@ -457,9 +475,6 @@ func performAction(
 
 	case SyncDocs:
 		syncDocs(s, action)
-
-	case Wait:
-		<-time.After(action.Duration)
 
 	case Benchmark:
 		benchmarkAction(s, testCase, actionIndex, action)
@@ -489,16 +504,54 @@ func addGeneratedDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutable.
 	for i, name := range s.CollectionNames {
 		nameToInd[name] = i
 	}
+	generatedDocIDs := make(map[string]string)
 	for _, doc := range docs {
-		docJSON, err := doc.Doc.String()
+		collectionID := nameToInd[doc.Col.Name]
+		docMap, err := doc.Doc.ToMap()
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
+		// The generator assigns each doc a placeholder DocID, used only to wire up relations
+		// between generated docs (see replaceGeneratedDocIDs below). The real DocID is derived
+		// from the genesis CID when the doc is saved, so the placeholder is recorded for relation
+		// lookup and then dropped from the map to avoid persisting a stale DocID.
+		generatedDocID := doc.GeneratedID
+		replaceGeneratedDocIDs(docMap, generatedDocIDs)
+		delete(docMap, request.DocIDFieldName)
 
-		a := &action.AddDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a := &action.AddDoc{CollectionID: collectionID, DocMap: docMap, NodeID: nodeID}
 		a.SetState(s)
 		a.Execute()
+
+		if generatedDocID != "" {
+			s.DocIDsLock.RLock()
+			docIDs := s.DocIDs[collectionID]
+			generatedDocIDs[generatedDocID] = docIDs[len(docIDs)-1].String()
+			s.DocIDsLock.RUnlock()
+		}
 	}
+}
+
+func replaceGeneratedDocIDs(docMap map[string]any, generatedDocIDs map[string]string) {
+	for key, value := range docMap {
+		docMap[key] = replaceGeneratedDocID(value, generatedDocIDs)
+	}
+}
+
+func replaceGeneratedDocID(value any, generatedDocIDs map[string]string) any {
+	switch value := value.(type) {
+	case string:
+		if docID, ok := generatedDocIDs[value]; ok {
+			return docID
+		}
+	case []any:
+		for i, item := range value {
+			value[i] = replaceGeneratedDocID(item, generatedDocIDs)
+		}
+	case map[string]any:
+		replaceGeneratedDocIDs(value, generatedDocIDs)
+	}
+	return value
 }
 
 func generateDocs(s *state.State, action GenerateDocs) {
@@ -739,10 +792,69 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 
 	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
 
+	activeMultipliers := multiplier.Get()
+
+	// The signed-docs multiplier is incompatible with tests that create the same document
+	// independently on more than one node: each node signs with its own key, so the genesis
+	// composite block's CID — and therefore the document's DocID — differs per node. That
+	// per-signer DocID is intended behaviour, but the cross-node assertions in these tests assume a
+	// single shared DocID, so we skip them under signing rather than weaken those assertions.
+	if strings.Contains(activeMultipliers, defraMultiplier.SignedDocs) &&
+		createsDocsOnMultipleNodes(testCase) {
+		t.Skipf("test creates documents on multiple nodes; incompatible with the %q multiplier",
+			defraMultiplier.SignedDocs)
+	}
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
 		testCase.Actions[idx] = modified[i]
+	}
+
+	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
+}
+
+// applyTestCaseLevelMultipliers mutates TestCase fields based on the given
+// comma-separated list of active multiplier names.
+//
+// Multipliers registered with testo can only modify actions via the
+// [multiplier.Multiplier] interface. Some multipliers need to flip
+// TestCase-level configuration instead (e.g. [SignedDocs] sets
+// [TestCase.EnableSigning]). Each case below is a documented exception that
+// cannot be expressed via action rewriting.
+//
+// The hook only upgrades values; it never downgrades. Tests that already
+// configure the flag explicitly are unaffected.
+//
+// activeNames is passed in rather than read from testo's package-level state
+// so this function is directly unit-testable.
+// createsDocsOnMultipleNodes reports whether the test independently creates the same document on
+// more than one node — an [action.AddDoc] with no explicit NodeID in a multi-node test. Such a
+// document is signed (and so gets its DocID) independently on each node. See [applyMultipliers].
+func createsDocsOnMultipleNodes(testCase *TestCase) bool {
+	nodeCount := 0
+	for _, a := range testCase.Actions {
+		if _, ok := a.(ConfigureNode); ok {
+			nodeCount++
+		}
+	}
+	if nodeCount <= 1 {
+		return false
+	}
+	for _, a := range testCase.Actions {
+		if addDoc, ok := a.(*action.AddDoc); ok && !addDoc.NodeID.HasValue() {
+			return true
+		}
+	}
+	return false
+}
+
+func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
+	for _, name := range strings.Split(activeNames, ",") {
+		switch strings.TrimSpace(name) {
+		case defraMultiplier.SignedDocs:
+			testCase.EnableSigning = true
+		}
 	}
 }
 
@@ -772,7 +884,8 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddCollection, *action.AddDoc, UpdateDoc, Restart:
+		// Setup-phase actions, anything else ends the setup phase.
+		case *action.AddCollection, *action.AddDoc, *action.UpdateDoc, Restart, *action.CommitTransaction:
 			continue
 
 		default:
@@ -781,29 +894,101 @@ ActionLoop:
 		}
 	}
 
+	// setupEnd is the index of the last setup-phase action; the assert phase runs the rest.
+	setupEnd := endIndex
+	if setupCompleteIndex > -1 {
+		setupEnd = setupCompleteIndex
+	} else if firstNonSetupIndex > -1 {
+		// -1: this index starts the assert phase
+		setupEnd = firstNonSetupIndex - 1
+	}
+
+	// The phases run as separate processes sharing only committed data, so a
+	// transaction that is never committed or spans the split would leave them with
+	// different data. Skip such tests (any action can open a transaction).
+	if hasUnsplittableTransaction(testCase.Actions, setupEnd) {
+		t.Skipf("skipping test with transaction(s) not committed within a single change-detector phase")
+	}
+
 	if changeDetector.SetupOnly {
-		if setupCompleteIndex > -1 {
-			endIndex = setupCompleteIndex
-		} else if firstNonSetupIndex > -1 {
-			// -1 to exclude this index
-			endIndex = firstNonSetupIndex - 1
-		}
+		endIndex = setupEnd
+	} else if setupCompleteIndex > -1 || firstNonSetupIndex > -1 {
+		startIndex = setupEnd + 1
 	} else {
-		if setupCompleteIndex > -1 {
-			// +1 to exclude the SetupComplete action
-			startIndex = setupCompleteIndex + 1
-		} else if firstNonSetupIndex > -1 {
-			// We must not set this to -1 :)
-			startIndex = firstNonSetupIndex
-		} else {
-			// if we don't have any non-mutation actions and the change detector is enabled
-			// skip this test as we will not gain anything from running (change detector would
-			// run an identical profile to a normal test run)
-			t.Skipf("no actions to execute")
-		}
+		// if we don't have any non-mutation actions and the change detector is enabled
+		// skip this test as we will not gain anything from running (change detector would
+		// run an identical profile to a normal test run)
+		t.Skipf("no actions to execute")
 	}
 
 	return startIndex, endIndex
+}
+
+// hasUnsplittableTransaction reports whether any transaction cannot be contained in
+// a single change-detector phase: one never committed, or touched on both sides of
+// setupEnd (the index of the last setup-phase action).
+func hasUnsplittableTransaction(actions []any, setupEnd int) bool {
+	type txnUsage struct {
+		inSetup   bool
+		inAssert  bool
+		committed bool
+	}
+	usage := make(map[int]*txnUsage)
+
+	touch := func(id, actionIndex int) *txnUsage {
+		u, ok := usage[id]
+		if !ok {
+			u = &txnUsage{}
+			usage[id] = u
+		}
+		if actionIndex <= setupEnd {
+			u.inSetup = true
+		} else {
+			u.inAssert = true
+		}
+		return u
+	}
+
+	for i, a := range actions {
+		// CommitTransaction has a plain int ID, so it is matched directly here.
+		if commit, ok := a.(*action.CommitTransaction); ok {
+			touch(commit.TransactionID, i).committed = true
+			continue
+		}
+		if id, ok := actionTransactionID(a); ok {
+			touch(id, i)
+		}
+	}
+
+	for _, u := range usage {
+		if !u.committed || (u.inSetup && u.inAssert) {
+			return true
+		}
+	}
+	return false
+}
+
+// actionTransactionID reads an action's optional TransactionID field by reflection,
+// so every action that can run in a transaction is covered.
+func actionTransactionID(a any) (int, bool) {
+	v := reflect.ValueOf(a)
+	for v.Kind() == reflect.Pointer {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return 0, false
+	}
+
+	field := v.FieldByName("TransactionID")
+	if !field.IsValid() {
+		return 0, false
+	}
+
+	txnID, ok := field.Interface().(immutable.Option[int])
+	if !ok || !txnID.HasValue() {
+		return 0, false
+	}
+	return txnID.Value(), true
 }
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
@@ -832,6 +1017,7 @@ func setStartingNodes(
 			testCase,
 			nodeBuilder,
 		)
+
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
 	}
@@ -858,6 +1044,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			testCase,
 			opts,
 		)
+
 		databaseDir = originalPath
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -918,6 +1105,92 @@ func refreshTokens(
 			s.Identities[identKey] = identHolder
 		}
 	}
+}
+
+// loadCollectionVersions populates s.CollectionVersions so that
+// {{.CollectionVersionID<N>}} templates can be resolved against the same
+// strings the source side produced under the change detector.
+//
+// Falls back to seedCollectionVersionsFromState when the sidecar file is
+// missing, which happens with source branches that pre-date this mechanism
+// or tests without a setup phase.
+func loadCollectionVersions(s *state.State) {
+	if changeDetector.Enabled && !changeDetector.SetupOnly {
+		state, err := changeDetector.ReadTestState(s.T)
+		if err == nil {
+			s.CollectionVersions = state.CollectionVersions
+			return
+		}
+		if !errors.Is(err, fs.ErrNotExist) {
+			require.NoError(s.T, err)
+		}
+	}
+	seedCollectionVersionsFromState(s)
+}
+
+// seedCollectionVersionsFromState populates s.CollectionVersions by walking
+// the collection version history present in the on-disk database. It is the
+// fallback used by loadCollectionVersions when no source-phase sidecar file
+// is available — for example when the change detector source branch
+// pre-dates the sidecar mechanism, or the test has no setup phase.
+//
+// Versions are walked from oldest to newest via the PreviousVersion chain so
+// the indexing matches the order in which they were created.
+func seedCollectionVersionsFromState(s *state.State) {
+	if len(s.Nodes) == 0 {
+		return
+	}
+
+	node := s.Nodes[0]
+
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(0), 0)
+	getOpts := options.GetCollections().SetGetInactive(true)
+	if identOption.HasValue() {
+		getOpts.SetIdentity(identOption.Value())
+	}
+	allCols, err := node.GetCollections(s.Ctx, getOpts)
+	require.NoError(s.T, err)
+
+	colsByVersionID := make(map[string]client.Collection, len(allCols))
+	for _, col := range allCols {
+		colsByVersionID[col.Version().VersionID] = col
+	}
+
+	// For each active collection (canonical order in node.Collections), walk back
+	// the PreviousVersion chain to root, then append from root forward.
+	for _, active := range node.Collections {
+		if active == nil {
+			continue
+		}
+
+		var chain []string
+		current := active.Version()
+		for {
+			chain = append(chain, current.VersionID)
+			if !current.PreviousVersion.HasValue() {
+				break
+			}
+			prevID := current.PreviousVersion.Value().SourceCollectionID
+			prev, ok := colsByVersionID[prevID]
+			if !ok {
+				break
+			}
+			current = prev.Version()
+		}
+
+		for i := len(chain) - 1; i >= 0; i-- {
+			appendCollectionVersionID(s, chain[i])
+		}
+	}
+}
+
+// appendCollectionVersionID appends a collection version ID to s.CollectionVersions
+// if it is not already present.
+func appendCollectionVersionID(s *state.State, versionID string) {
+	if slices.Contains(s.CollectionVersions, versionID) {
+		return
+	}
+	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
 // refreshCollections refreshes all the collections of the given names, preserving order.
@@ -1030,6 +1303,25 @@ func refreshDocuments(
 	}
 	s.DocIDsLock.Unlock()
 
+	// Post-#4838 a document's public DocID is derived from its genesis CID and is
+	// only known once the document has been saved, so it cannot be reconstructed by
+	// re-parsing the source-phase AddDoc actions. When the change-detector source
+	// phase persisted the authoritative DocIDs, load those and rebuild the commit
+	// caches against them. Otherwise fall back to the legacy parse-based
+	// reconstruction, which remains correct for source branches that pre-date the
+	// genesis-CID DocID model.
+	if loadDocIDsFromState(s) {
+		s.DocIDsLock.RLock()
+		docIDsByCollection := s.DocIDs
+		s.DocIDsLock.RUnlock()
+		for _, docIDs := range docIDsByCollection {
+			for _, docID := range docIDs {
+				rebuildDocCommitCIDs(s, 0, docID)
+			}
+		}
+		return
+	}
+
 	for i := 0; i < startActionIndex; i++ {
 		// We need to add the existing documents in the order in which the test case lists them
 		// otherwise they cannot be referenced correctly by other actions.
@@ -1051,45 +1343,178 @@ func refreshDocuments(
 				continue
 			}
 
-			s.Nodes[firstNodesID].CompositesLock.Lock()
-			if s.Nodes[firstNodesID].Composites == nil {
-				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
-			}
-			s.Nodes[firstNodesID].CompositesLock.Unlock()
-
 			for _, doc := range docs {
 				s.DocIDsLock.Lock()
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
 				s.DocIDsLock.Unlock()
 
-				// We fetch the list of composite commits for the document so that
-				// they can be referenced later in the test if required.
-				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
-					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
-						cid
-					}
-				}`, options.ExecRequest().SetVariables(map[string]any{
-					"docID": []string{doc.ID().String()},
-				}))
-				if data, ok := result.GQL.Data.(map[string]any); ok {
-					if commits, ok := data["_commits"].([]map[string]any); ok {
-						for _, commit := range commits {
-							cid := cid.MustParse(commit[request.CidFieldName].(string))
-
-							s.Nodes[firstNodesID].CompositesLock.Lock()
-							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
-								s.Nodes[firstNodesID].Composites[doc.ID().String()],
-								cid,
-							)
-							s.Nodes[firstNodesID].CompositesLock.Unlock()
-						}
-					}
-				}
-				if len(result.GQL.Errors) > 0 {
-					s.T.Fatalf("Failed to get existing commits for doc %s: %v", doc.ID(), result.GQL.Errors)
-				}
+				rebuildDocCommitCIDs(s, firstNodesID, doc.ID())
 			}
 		}
+	}
+}
+
+// docIDsToStrings flattens s.DocIDs into a serializable [][]string for the
+// change-detector sidecar, preserving the [collection][index] ordering.
+func docIDsToStrings(s *state.State) [][]string {
+	s.DocIDsLock.RLock()
+	defer s.DocIDsLock.RUnlock()
+
+	out := make([][]string, len(s.DocIDs))
+	for col, ids := range s.DocIDs {
+		out[col] = make([]string, len(ids))
+		for i, id := range ids {
+			out[col][i] = id.String()
+		}
+	}
+	return out
+}
+
+// collectionCompositesToStrings extracts the collection-level composite commit
+// CIDs (keyed by CollectionID) recorded on the first node, for the
+// change-detector sidecar. Only branchable collections accumulate these.
+func collectionCompositesToStrings(s *state.State) map[string][]string {
+	if len(s.Nodes) == 0 {
+		return nil
+	}
+	node := s.Nodes[0]
+
+	node.CompositesLock.RLock()
+	defer node.CompositesLock.RUnlock()
+
+	out := map[string][]string{}
+	for _, collection := range node.Collections {
+		if collection == nil {
+			continue
+		}
+		cids := node.Composites[collection.CollectionID()]
+		if len(cids) == 0 {
+			continue
+		}
+		strs := make([]string, len(cids))
+		for i, c := range cids {
+			strs[i] = c.String()
+		}
+		out[collection.CollectionID()] = strs
+	}
+	return out
+}
+
+// loadDocIDsFromState populates s.DocIDs from the DocIDs the change-detector
+// source phase persisted, returning true on success. It returns false (leaving
+// s.DocIDs untouched) outside the assert phase or when the source branch did not
+// persist DocIDs, so the caller can fall back to legacy reconstruction.
+func loadDocIDsFromState(s *state.State) bool {
+	if !changeDetector.Enabled || changeDetector.SetupOnly {
+		return false
+	}
+
+	cdState, err := changeDetector.ReadTestState(s.T)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			require.NoError(s.T, err)
+		}
+		return false
+	}
+	if cdState.DocIDs == nil {
+		// Source branch pre-dates DocID persistence; fall back to reconstruction.
+		return false
+	}
+
+	docIDs := make([][]client.DocID, len(cdState.DocIDs))
+	for col, ids := range cdState.DocIDs {
+		docIDs[col] = make([]client.DocID, len(ids))
+		for i, idStr := range ids {
+			docID, err := client.NewDocIDFromString(idStr)
+			require.NoError(s.T, err)
+			docIDs[col][i] = docID
+		}
+	}
+
+	s.DocIDsLock.Lock()
+	s.DocIDs = docIDs
+	s.DocIDsLock.Unlock()
+
+	restoreCollectionComposites(s, cdState.CollectionComposites)
+	return true
+}
+
+// restoreCollectionComposites repopulates the collection-level composite commit
+// cache from the change-detector sidecar so {{.CollectionCIDN}} templates resolve
+// in the assert phase. Unlike document composites, these cannot be rebuilt from
+// the persisted data as they are only observed via update events at creation time.
+func restoreCollectionComposites(s *state.State, collectionComposites map[string][]string) {
+	if len(collectionComposites) == 0 {
+		return
+	}
+
+	for _, node := range s.Nodes {
+		node.CompositesLock.Lock()
+		if node.Composites == nil {
+			node.Composites = make(map[string][]cid.Cid)
+		}
+		for collectionID, cidStrs := range collectionComposites {
+			cids := make([]cid.Cid, len(cidStrs))
+			for i, cidStr := range cidStrs {
+				cids[i] = cid.MustParse(cidStr)
+			}
+			node.Composites[collectionID] = cids
+		}
+		node.CompositesLock.Unlock()
+	}
+}
+
+// rebuildDocCommitCIDs repopulates the composite- and field-level commit caches
+// for a single document so that {{.CID...}} and {{.FieldCID...}} references in
+// later actions resolve to the CIDs the source phase produced.
+func rebuildDocCommitCIDs(s *state.State, nodeIndex int, docID client.DocID) {
+	node := s.Nodes[nodeIndex]
+
+	node.CompositesLock.Lock()
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[docID.String()] == nil {
+		node.FieldCIDs[docID.String()] = make(map[string][]cid.Cid)
+	}
+	node.CompositesLock.Unlock()
+
+	// We fetch all commits (composite and field level) for the document in height
+	// order so that they can be referenced later in the test if required.
+	result := node.ExecRequest(s.Ctx, `query ($docID: [ID!]) {
+		_commits(docID: $docID, order: {height: ASC}) {
+			cid
+			fieldName
+		}
+	}`, options.ExecRequest().SetVariables(map[string]any{
+		"docID": []string{docID.String()},
+	}))
+	if len(result.GQL.Errors) > 0 {
+		s.T.Fatalf("Failed to get existing commits for doc %s: %v", docID, result.GQL.Errors)
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return
+	}
+	commits, ok := data["_commits"].([]map[string]any)
+	if !ok {
+		return
+	}
+
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+	for _, commit := range commits {
+		c := cid.MustParse(commit[request.CidFieldName].(string))
+		fieldName, _ := commit[request.FieldNameName].(string)
+		if fieldName == request.CompositeFieldName {
+			node.Composites[docID.String()] = append(node.Composites[docID.String()], c)
+			continue
+		}
+		node.FieldCIDs[docID.String()][fieldName] = append(node.FieldCIDs[docID.String()][fieldName], c)
 	}
 }
 
@@ -1109,13 +1534,27 @@ func setActiveCollectionVersion(
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
+			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+		} else {
+			err = node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
+		}
+
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	if !action.TransactionID.HasValue() {
+		refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+	}
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -1144,232 +1583,169 @@ func substituteRelations(
 // given documents slice.
 func deleteDoc(
 	s *state.State,
-	action DeleteDoc,
+	a DeleteDoc,
 ) {
 	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
+	docID := s.DocIDs[a.CollectionID][a.DocID]
 	s.DocIDsLock.RUnlock()
 
+	doNotWaitForUpdate := false
 	var expectedErrorRaised bool
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	var collections []client.Collection
+
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
+
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocument()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				_, err := collection.DeleteDocument(s.Ctx, docID, opts)
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" {
+	if a.ExpectedError == "" && !doNotWaitForUpdate {
 		expect := map[string]struct{}{
 			docID.String(): {},
 		}
 
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, expect, immutable.None[state.Identity]())
+		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
 	}
 }
 
-// updateDoc updates a document using the chosen [state.ActiveMutationType].
-func updateDoc(
-	s *state.State,
-	action UpdateDoc,
-) {
-	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection) error
-	switch state.ActiveMutationType {
-	case state.CollectionSaveMutationType:
-		mutation = updateDocViaColSave
-	case state.CollectionNamedMutationType:
-		mutation = updateDocViaColUpdate
-	case state.GQLRequestMutationType:
-		mutation = updateDocViaGQL
-	default:
-		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
-	}
-
+// deleteWithFilter deletes the set of matched documents.
+func deleteWithFilter(s *state.State, a DeleteWithFilter) {
+	var res *client.DeleteResult
 	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	var collections []client.Collection
+
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+
 	for index, node := range nodes {
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		err := withRetryOnNode(
-			node,
-			func() error {
-				return mutation(
-					s,
-					action,
-					node,
-					nodeID,
-					collection,
-				)
-			},
-		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-	}
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
-		waitForUpdateEvents(
-			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateDoc(s, action),
-			immutable.None[state.Identity](),
-		)
-	}
-}
-
-func updateDocViaColSave(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) error {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	saveOpts := options.SaveDocument()
-	if identOption.HasValue() {
-		saveOpts.SetIdentity(identOption.Value())
-	}
-	return collection.SaveDocument(s.Ctx, doc, saveOpts)
-}
-
-func updateDocViaColUpdate(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) error {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	getOpts := options.GetDocument()
-	if identOption.HasValue() {
-		getOpts.SetIdentity(identOption.Value())
-	}
-	doc, err := collection.GetDocument(s.Ctx, docID, getOpts.SetShowDeleted(true))
-	if err != nil {
-		return err
-	}
-	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
-	if err != nil {
-		return err
-	}
-
-	updateOpts := options.UpdateDocument()
-	if identOption.HasValue() {
-		updateOpts.SetIdentity(identOption.Value())
-	}
-	return collection.UpdateDocument(s.Ctx, doc, updateOpts)
-}
-
-func updateDocViaGQL(
-	s *state.State,
-	action UpdateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) error {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	input, err := jsonToGQL(action.Doc)
-	require.NoError(s.T, err)
-
-	request := fmt.Sprintf(
-		`mutation {
-			update_%s(docID: "%s", input: %s) {
-				_docID
-			}
-		}`,
-		collection.Name(),
-		docID.String(),
-		input,
-	)
-
-	reqOption := options.ExecRequest()
-	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
-	if identOption.HasValue() {
-		reqOption.SetIdentity(identOption.Value())
-	}
-
-	result := node.ExecRequest(s.Ctx, request, reqOption)
-	if len(result.GQL.Errors) > 0 {
-		return result.GQL.Errors[0]
-	}
-	return nil
-}
-
-// updateWithFilter updates the set of matched documents.
-func updateWithFilter(s *state.State, action UpdateWithFilter) {
-	var res *client.UpdateResult
-	var expectedErrorRaised bool
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-
-		opts := options.UpdateDocumentsWithFilter()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		opts := options.DeleteDocumentsWithFilter()
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, action.Filter, action.Updater, opts)
+				res, err = collection.DeleteDocumentsWithFilter(s.Ctx, a.Filter, opts)
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
+
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
-	if action.ExpectedError == "" && !action.SkipLocalUpdateEvent {
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
+		expect := make(map[string]struct{}, len(res.DocIDs))
+		for _, docID := range res.DocIDs {
+			expect[docID] = struct{}{}
+		}
+		waitForUpdateEvents(s, a.NodeID, a.CollectionID, expect, immutable.None[state.Identity]())
+	}
+}
+
+// updateWithFilter updates the set of matched documents.
+func updateWithFilter(s *state.State, a UpdateWithFilter) {
+	var res *client.UpdateResult
+	var expectedErrorRaised bool
+	doNotWaitForUpdate := false
+
+	var collections []client.Collection
+
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+
+	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		hadTxn := a.TransactionID.HasValue()
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			doNotWaitForUpdate = true
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		nodeID := nodeIDs[index]
+		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		opts := options.UpdateDocumentsWithFilter()
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err = withRetryOnNode(
+			node,
+			func() error {
+				var err error
+				res, err = collection.UpdateDocumentsWithFilter(s.Ctx, a.Filter, a.Updater, opts)
+				return err
+			},
+		)
+
+		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+	}
+
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
+
+	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
 			s,
-			action.NodeID,
-			action.CollectionID,
-			getEventsForUpdateWithFilter(s, action, res),
+			a.NodeID,
+			a.CollectionID,
+			getEventsForUpdateWithFilter(s, a, res),
 			immutable.None[state.Identity](),
 		)
 	}
@@ -1377,45 +1753,58 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 
 func newEncryptedIndex(
 	s *state.State,
-	action NewEncryptedIndex,
+	a NewEncryptedIndex,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := a.TransactionID.HasValue()
+		txnOption := immutable.None[client.Txn]()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		if action.FieldName == "" {
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		if a.FieldName == "" {
 			s.T.Fatalf("fieldName is required for encrypted index")
 		}
 
 		indexDesc := client.EncryptedIndexDescription{
-			FieldName: action.FieldName,
-			Type:      client.EncryptedIndexType(action.Type),
+			FieldName: a.FieldName,
+			Type:      client.EncryptedIndexType(a.Type),
 		}
 
 		opts := options.NewEncryptedIndex()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
 				_, err := collection.NewEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)
-		if AssertError(s.T, err, action.ExpectedError) {
+		if AssertError(s.T, err, a.ExpectedError) {
 			return
 		}
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 func listEncryptedIndexes(
 	s *state.State,
-	action ListEncryptedIndexes,
+	a ListEncryptedIndexes,
 ) {
 	if len(s.Nodes) == 0 {
 		return
@@ -1423,40 +1812,54 @@ func listEncryptedIndexes(
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collections := s.Nodes[nodeID].Collections
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 
 		opts := options.ListCollectionEncryptedIndexes()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
+		var collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		err = withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
+				actualIndexes, err := collection.ListEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}
 
-				require.ElementsMatch(s.T, action.ExpectedIndexes, actualIndexes,
+				require.ElementsMatch(s.T, a.ExpectedIndexes, actualIndexes,
 					"Unexpected encrypted indexes")
 
 				return nil
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, action.ExpectedError)
+			AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func listAllEncryptedIndexes(
 	s *state.State,
-	action ListAllEncryptedIndexes,
+	a ListAllEncryptedIndexes,
 ) {
 	if len(s.Nodes) == 0 {
 		return
@@ -1464,10 +1867,10 @@ func listAllEncryptedIndexes(
 
 	var expectedErrorRaised bool
 
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, _ := getNodesWithIDs(a.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
 		opts := options.ListAllEncryptedIndexes()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1480,7 +1883,7 @@ func listAllEncryptedIndexes(
 					return err
 				}
 
-				for collectionName, expectedIndexes := range action.ExpectedIndexes {
+				for collectionName, expectedIndexes := range a.ExpectedIndexes {
 					actualIndexes, exists := allActualIndexes[collectionName]
 					require.True(s.T, exists, "Collection %s should exist in actual indexes", collectionName)
 					require.ElementsMatch(s.T, expectedIndexes, actualIndexes,
@@ -1496,42 +1899,55 @@ func listAllEncryptedIndexes(
 			},
 		)
 		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, action.ExpectedError)
+			AssertError(s.T, err, a.ExpectedError)
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func deleteEncryptedIndex(
 	s *state.State,
-	action DeleteEncryptedIndex,
+	a DeleteEncryptedIndex,
 ) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		txnOption := immutable.None[client.Txn]()
+		hadTxn := a.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, a.TransactionID)
+			require.NoError(s.T, err)
+			txnOption = immutable.Some(txn)
+		}
+
 		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		if action.FieldName == "" {
+		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collection := collections[a.CollectionID]
+
+		if a.FieldName == "" {
 			s.T.Fatalf("fieldName is required for deleting encrypted index")
 		}
 
 		opts := options.DeleteEncryptedIndex()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := withRetryOnNode(
+		err = withRetryOnNode(
 			node,
 			func() error {
-				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName, opts)
+				return collection.DeleteEncryptedIndex(s.Ctx, a.FieldName, opts)
 			},
 		)
-		if AssertError(s.T, err, action.ExpectedError) {
+		if AssertError(s.T, err, a.ExpectedError) {
 			return
 		}
 	}
 
-	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
+	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 // exportBackup generates a backup using the db api.
@@ -1545,8 +1961,8 @@ func exportBackup(
 
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
 		opt := options.BasicExport().
 			SetFormat(action.Config.Format).
 			SetPretty(action.Config.Pretty).
@@ -1559,7 +1975,7 @@ func exportBackup(
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 
 		if !expectedErrorRaised {
-			assertBackupContent(s.T, action.ExpectedContent, action.Config.Filepath)
+			assertBackupContent(s.T, replace(s, nodeIDs[i], action.ExpectedContent), action.Config.Filepath)
 		}
 	}
 
@@ -1575,14 +1991,14 @@ func importBackup(
 		action.Filepath = s.T.TempDir() + testJSONFile
 	}
 
-	// we can avoid checking the error here as this would mean the filepath is invalid
-	// and we want to make sure that `BasicImport` fails in this case.
-	_ = os.WriteFile(action.Filepath, []byte(action.ImportContent), 0664)
-
 	var expectedErrorRaised bool
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
+		// we can avoid checking the error here as this would mean the filepath is invalid
+		// and we want to make sure that `BasicImport` fails in this case.
+		_ = os.WriteFile(action.Filepath, []byte(replace(s, nodeIDs[i], action.ImportContent)), 0664)
+
 		err := withRetryOnNode(
 			node,
 			func() error { return node.BasicImport(s.Ctx, action.Filepath) },
@@ -1648,24 +2064,6 @@ func getTransaction(
 	return s.Txns[transactionID]
 }
 
-// commitTransaction commits the given transaction.
-//
-// Will panic if the given transaction does not exist. Discards the transaction if
-// an error is returned on commit.
-func commitTransaction(
-	s *state.State,
-	action CommitTransaction,
-) {
-	err := s.Txns[action.TransactionID].Commit()
-	if err != nil {
-		s.Txns[action.TransactionID].Discard()
-	}
-
-	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-}
-
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
 func AssertError(t testing.TB, err error, expectedError string) bool {
@@ -1694,18 +2092,20 @@ func AssertErrors(
 	expectedError string,
 ) bool {
 	if expectedError == "" {
-		require.Empty(t, errs)
+		require.Empty(t, errs, "Unexpected errors found")
 	} else {
-		for _, e := range errs {
-			// This is always a string at the moment, add support for other types as and when needed
-			errorString := e.Error()
-			if !strings.Contains(errorString, expectedError) {
-				// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
-				require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
-				continue
-			}
-			return true
+		require.NotEmpty(t, errs, "Expected error not found: %s", expectedError)
+	}
+
+	for _, e := range errs {
+		// This is always a string at the moment, add support for other types as and when needed
+		errorString := e.Error()
+		if !strings.Contains(errorString, expectedError) {
+			// We use ErrorIs for clearer failures (is a error comparison even if it is just a string)
+			require.ErrorIs(t, errors.New(errorString), errors.New(expectedError))
+			continue
 		}
+		return true
 	}
 	return false
 }
@@ -1994,6 +2394,38 @@ func skipIfVectorEmbeddingTest(t testing.TB, actions []any) {
 	}
 }
 
+// skipIfUnsupportedLevelDBAction skips the test if it contains an action that leveldb does
+// not support.
+func skipIfUnsupportedLevelDBAction(t testing.TB, dbt state.DatabaseType, actions []any) {
+	if dbt != LevelStoreType {
+		return
+	}
+
+	for _, act := range actions {
+		switch a := act.(type) {
+		case *action.Truncate:
+			if a.TransactionID.HasValue() {
+				// https://github.com/sourcenetwork/defradb/issues/4983
+				t.Skip("explicit transactions for truncate with leveldb are not supported")
+			}
+		case *action.RefreshViews, *action.AddView:
+			// These actions are skipped due to:
+			// https://github.com/sourcenetwork/defradb/issues/4959
+			t.Skip("RefreshViews does not yet support the leveldb store")
+		case *action.Parallel:
+			for _, inner := range a.Children {
+				switch inner.(type) {
+				case *action.Truncate, *action.RefreshViews, *action.AddView:
+					t.Skip("write actions that acquire write locks are unsupported with leveldb in" +
+						" the test framework.  Another action may lock the store by opening a transaction" +
+						" after one of these acquires the write lock, but before it itself locks the leveldb" +
+						" store - causing a deadlock.")
+				}
+			}
+		}
+	}
+}
+
 func MustParseTime(timeString string) time.Time {
 	t, err := time.Parse(time.RFC3339, timeString)
 	if err != nil {
@@ -2060,10 +2492,25 @@ func resetMatchers(s *state.State) {
 func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
+		// Check if a transaction is attached to this action. If so, we will be using it.
+		var txn client.Txn
+		var err error
+		hadTxn := action.TransactionID.HasValue()
+		if hadTxn {
+			txn, err = s.GetTransaction(node, action.TransactionID)
+			require.NoError(s.T, err)
+		}
+
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
-		err := node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
+		cid := replace(s, i, action.Cid)
+
+		if hadTxn {
+			err = txn.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
+		} else {
+			err = node.VerifySignature(s.Ctx, cid, signerIdentity.PublicKey(), opt)
+		}
 
 		if action.ExpectedError != "" {
 			require.Error(s.T, err)

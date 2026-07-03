@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/action"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/identity"
@@ -109,12 +110,17 @@ func (db *DB) addView(
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
+func (db *DB) refreshViews(
+	ctx context.Context,
+	opts *options.GetCollectionsOptions,
+) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
 		return err
 	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	for _, col := range cols {
 		if !col.IsMaterialized {
@@ -122,15 +128,58 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 			continue
 		}
 
-		// Clearing and then constructing is a bit inefficient, but it should do for now.
-		// Long term we probably want to update inline as much as possible to avoid unnessecarily
-		// moving/adding/deleting keys in storage
-		err := db.clearViewCache(ctx, col)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+		db.lockSet.CollectionLock(txn, collectionShortID)
+
+		colObject, err := db.newCollection(ctx, col, immutable.Some(txn))
 		if err != nil {
 			return err
 		}
 
+		multistore := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
+
+		// Clear the transaction on the context used to write the action execution information, otherwise
+		// corekv will pick it up again, writing using the transaction.
+		// https://github.com/sourcenetwork/corekv/issues/107
+		txnFreeCtx := datastore.CtxSetTxn(ctx, nil)
+		err = action.Register(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
+		if err != nil {
+			return err
+		}
+
+		// Clearing and then constructing is a bit inefficient, but it should do for now.
+		// Long term we probably want to update inline as much as possible to avoid unnessecarily
+		// moving/adding/deleting keys in storage
+		err = colObject.truncate(ctx)
+		if err != nil {
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.RefreshDatastoreAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
+		}
+
 		err = db.buildViewCache(ctx, col)
+		if err != nil {
+			errErr := action.Set(
+				txnFreeCtx,
+				multistore,
+				db.events,
+				col.CollectionID,
+				client.RefreshDatastoreAction,
+				client.ErroredActionStatus,
+			)
+			return errors.Join(errErr, err)
+		}
+
+		err = action.Complete(txnFreeCtx, multistore, db.events, col.CollectionID, client.RefreshDatastoreAction)
 		if err != nil {
 			return err
 		}
@@ -140,7 +189,7 @@ func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOpti
 }
 
 func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions) ([]client.CollectionVersion, error) {
-	cols, err := db.getCollections(ctx, opts)
+	cols, err := db.getCollections(ctx, opts, true)
 	if err != nil {
 		return nil, err
 	}
@@ -158,8 +207,6 @@ func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions)
 }
 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) (err error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	p := planner.New(
 		ctx,
 		identity.FromContext(ctx),
@@ -168,18 +215,19 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		db,
 		db.p2p,
 		db.getLensStore(ctx),
+		db.collectionRepository,
 	)
 
 	// temporarily disable the cache in order to query without using it
 	col.IsMaterialized = false
-	err = description.SaveCollection(ctx, col)
+	err = description.SaveCollection(ctx, db.collectionRepository, col)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
 		col.IsMaterialized = true
-		defErr = description.SaveCollection(ctx, col)
+		defErr = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -220,6 +268,8 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		return err
 	}
 
+	ds := datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize).Datastore()
+
 	// View items are currently keyed by their index, starting at 1.
 	// The order in which results are returned must be consistent with the results of the
 	// underlying query/transform.
@@ -232,15 +282,15 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 			return err
 		}
 
-		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(shortID, itemID)
-		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
+		itemKey := keys.NewViewCacheKey(collectionShortID, itemID)
+		err = ds.Set(ctx, itemKey, serializedItem)
 		if err != nil {
-			return err
+			return NewErrStoreViewCacheItem(err)
 		}
 
 		hasValue, err = source.Next()
@@ -250,45 +300,6 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 	}
 
 	return nil
-}
-
-func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
-	if err != nil {
-		return err
-	}
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   keys.NewViewCacheColPrefix(shortID),
-		KeysOnly: true,
-	})
-	if err != nil {
-		return err
-	}
-
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		err = txn.Datastore().Delete(ctx, key)
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-	}
-
-	return iter.Close()
 }
 
 func (db *DB) generateMaximalSelectFromCollection(
@@ -309,7 +320,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	childRequests := []request.Selection{}
 	for _, field := range col.Fields {
 		if field.RelationName.HasValue() && field.Kind.IsObject() {
-			relatedCol, _, err := description.GetRelatedCollection(ctx, col, field.Kind)
+			relatedCol, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col, field.Kind)
 			if err != nil {
 				return nil, err
 			}

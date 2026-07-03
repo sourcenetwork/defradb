@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -151,7 +152,9 @@ func waitForUpdateEvents(
 
 		expect := make(map[string]struct{}, len(docIDs))
 
-		col := node.Collections[collectionIndex]
+		collections := node.Collections
+
+		col := collections[collectionIndex]
 		if col.Version().IsBranchable {
 			expect[col.CollectionID()] = struct{}{}
 		}
@@ -179,7 +182,22 @@ func waitForUpdateEvents(
 					if node.Composites == nil {
 						node.Composites = make(map[string][]cid.Cid)
 					}
-					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					updateKey := getUpdateEventKey(evt)
+					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+					if node.FieldCIDs == nil {
+						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+					}
+					if node.FieldCIDs[updateKey] == nil {
+						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+					}
+					block, err := coreblock.GetFromBytes(evt.Block)
+					require.NoError(s.T, err)
+					for _, link := range block.Links {
+						node.FieldCIDs[updateKey][link.Name] = append(
+							node.FieldCIDs[updateKey][link.Name],
+							link.Link.Cid,
+						)
+					}
 					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
@@ -205,8 +223,6 @@ func waitForUpdateEvents(
 	}
 }
 
-// waitForMergeEvents waits for all expected heads to be merged to all nodes.
-//
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 //
@@ -436,22 +452,6 @@ func updateConnectedNodes(
 		}
 
 		updateConnectedNodes(s, originNodeID, id, nodesCovered, ident, collectionID, docIndex, evt)
-	}
-}
-
-// getEventsForUpdateDoc returns a map of docIDs that should be
-// published to the local event bus after an UpdateDoc action.
-func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
-	s.DocIDsLock.RLock()
-	docID := s.DocIDs[action.CollectionID][action.DocID]
-	s.DocIDsLock.RUnlock()
-
-	docMap := make(map[string]any)
-	err := json.Unmarshal([]byte(action.Doc), &docMap)
-	require.NoError(s.T, err)
-
-	return map[string]struct{}{
-		docID.String(): {},
 	}
 }
 

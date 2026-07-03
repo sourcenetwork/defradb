@@ -24,7 +24,7 @@ import (
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
 	test := testUtils.TestCase{
 		// LevelDB does not support concurrent transactions
-		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
@@ -51,14 +51,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
+					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "{{.DocID2_0}}"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"add_Book": []map[string]any{
 						{
-							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},
@@ -66,14 +66,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
+					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "{{.DocID2_1}}"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"add_Book": []map[string]any{
 						{
-							"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},
@@ -94,20 +94,21 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID":    "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
+							"_docID":    testUtils.NewDocIndex(2, 1),
 							"name":      "Online",
 							"published": nil,
 						},
 						{
-							"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+							"_docID": testUtils.NewDocIndex(2, 0),
 							"name":   "Website",
 							"published": map[string]any{
-								"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+								"_docID": testUtils.ValidDocID(),
 								"name":   "Book By Website",
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			// Assert publisher -> books direction within transaction 1.
 			&action.Request{
@@ -125,29 +126,30 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
+							"_docID": testUtils.NewDocIndex(2, 1),
 							"name":   "Online",
 							"published": map[string]any{
-								"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
+								"_docID": testUtils.ValidDocID(),
 								"name":   "Book By Online",
 							},
 						},
 						{
-							"_docID":    "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+							"_docID":    testUtils.NewDocIndex(2, 0),
 							"name":      "Website",
 							"published": nil,
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
 			// The second commit fails with a transaction conflict due to SSI semantics:
 			// - Txn0 writes index key for Website publisher, reads index key for Online publisher (via query)
 			// - Txn1 writes index key for Online publisher, reads index key for Website publisher (via query)
 			// - This creates an anti-dependency cycle that SSI detects as a conflict
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
@@ -167,10 +169,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+							"_docID": testUtils.ValidDocID(),
 							"name":   "Book By Website",
 							"publisher": map[string]any{
-								"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+								"_docID": testUtils.NewDocIndex(2, 0),
 								"name":   "Website",
 							},
 						},
@@ -186,7 +188,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
 	test := testUtils.TestCase{
 		// LevelDB does not support concurrent transactions
-		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		// todo: https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
@@ -213,14 +215,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"}) {
+					add_Book(input: {name: "Book By Website", rating: 4.0, _publisherID: "{{.DocID2_0}}"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"add_Book": []map[string]any{
 						{
-							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},
@@ -228,14 +230,14 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
-					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "bae-0c752d75-5819-599f-ba18-31ee6f177d91"}) {
+					add_Book(input: {name: "Book By Online", rating: 4.0, _publisherID: "{{.DocID2_1}}"}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"add_Book": []map[string]any{
 						{
-							"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
+							"_docID": testUtils.ValidDocID(),
 						},
 					},
 				},
@@ -256,10 +258,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+							"_docID": testUtils.ValidDocID(),
 							"name":   "Book By Website",
 							"publisher": map[string]any{
-								"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+								"_docID": testUtils.NewDocIndex(2, 0),
 								"name":   "Website",
 							},
 						},
@@ -282,10 +284,10 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
+							"_docID": testUtils.ValidDocID(),
 							"name":   "Book By Online",
 							"publisher": map[string]any{
-								"_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
+								"_docID": testUtils.NewDocIndex(2, 1),
 								"name":   "Online",
 							},
 						},
@@ -293,11 +295,12 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				},
 			},
 			// Commit the transactions before querying the end result
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 0,
 			},
-			testUtils.CommitTransaction{
+			&action.CommitTransaction{
 				TransactionID: 1,
+				ExpectedError: "transaction conflict",
 			},
 			&action.Request{
 				// Assert publishers -> books direction outside the transactions.
@@ -314,18 +317,15 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{
-							"_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
-							"name":   "Online",
-							"published": map[string]any{
-								"_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
-								"name":   "Book By Online",
-							},
+							"_docID":    testUtils.NewDocIndex(2, 1),
+							"name":      "Online",
+							"published": nil,
 						},
 						{
-							"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
+							"_docID": testUtils.NewDocIndex(2, 0),
 							"name":   "Website",
 							"published": map[string]any{
-								"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
+								"_docID": testUtils.ValidDocID(),
 								"name":   "Book By Website",
 							},
 						},

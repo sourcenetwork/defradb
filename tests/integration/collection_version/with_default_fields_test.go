@@ -26,13 +26,13 @@ func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00.000Z")
-						name: String @default(string: "Bob")
-						age: Int @default(int: 10)
-						points: Float @default(float: 30)
-						metadata: JSON @default(json: "{\"value\":1}")
-						image: Blob @default(blob: "ff0099")
+						active: Boolean @default(value: true)
+						created: DateTime @default(value: "2000-07-23T03:00:00.000Z")
+						name: String @default(value: "Bob")
+						age: Int @default(value: 10)
+						points: Float @default(value: 30)
+						metadata: JSON @default(value: "{\"value\":1}")
+						image: Blob @default(value: "ff0099")
 					}
 				`,
 				ExpectedResults: []client.CollectionVersion{
@@ -103,10 +103,10 @@ func TestCollectionVersion_WithInvalidDefaultFieldValueType_ReturnsError(t *test
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(bool: invalid)
+						active: Boolean @default(value: invalid)
 					}
 				`,
-				ExpectedError: "Argument \"bool\" has invalid value invalid",
+				ExpectedError: "default value is invalid. Field: active, Expected: Boolean, Actual: Enum, Value: invalid",
 			},
 		},
 	}
@@ -120,10 +120,10 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(int: 10)
+						active: Boolean @default(value: 10)
 					}
 				`,
-				ExpectedError: "default value type must match field type. Name: active, Expected: bool, Actual: int",
+				ExpectedError: "default value is invalid. Field: active, Expected: Boolean, Actual: Int, Value: 10",
 			},
 		},
 	}
@@ -131,16 +131,33 @@ func TestCollectionVersion_WithIncorrectDefaultFieldValueType_ReturnsError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestCollectionVersion_WithMultipleDefaultFieldValueTypes_ReturnsError(t *testing.T) {
+func TestCollectionVersion_WithDefaultFieldValueNoArg_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						name: String @default(string: "Bob", int: 10, bool: true, float: 10)
+						name: String @default
 					}
 				`,
 				ExpectedError: "default value must specify one argument. Field: name",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersion_WithUnknownDefaultFieldArg_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						active: Boolean @default(` + `bool: true)
+					}
+				`,
+				ExpectedError: `Unknown argument "bool" on directive "@default"`,
 			},
 		},
 	}
@@ -154,7 +171,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnRelation_ReturnsError(t *testi
 			&action.AddCollection{
 				SDL: `
 					type User {
-						friend: User @default(string: "Bob")
+						friend: User @default(value: "Bob")
 					}
 				`,
 				ExpectedError: "default value is not allowed for this field type. Name: friend, Type: User",
@@ -171,7 +188,7 @@ func TestCollectionVersion_WithDefaultFieldValueOnList_ReturnsError(t *testing.T
 			&action.AddCollection{
 				SDL: `
 					type User {
-						names: [String] @default(string: "Bob")
+						names: [String] @default(value: "Bob")
 					}
 				`,
 				ExpectedError: "default value is not allowed for this field type. Name: names, Type: List",

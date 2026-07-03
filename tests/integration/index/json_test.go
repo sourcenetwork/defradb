@@ -89,6 +89,59 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestJSONIndex_WithNonNillableField_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {height: {_eq: 168}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						custom: JSON! @index
+					}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"height": 168, "weight": 70}
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": {"height": 168}
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"weight": 80}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Islam"},
+						{"name": "John"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {height: {_gt: 178}}}) {
@@ -510,6 +563,7 @@ func TestJSONIndex_WithEqFilterOnStringField_ShouldUseIndex(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -898,6 +952,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -999,7 +1054,7 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					"custom": {"height": 180, "BMI": 25}
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 172, "BMI": 22}
@@ -1089,6 +1144,7 @@ func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -1263,6 +1319,7 @@ func TestJSONIndex_WithNotAndInFilter_ShouldNotUseIndex(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			// we don't assert index usage here because the query is not using the index
 		},

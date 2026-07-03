@@ -35,7 +35,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -65,7 +65,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
+	bookID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -81,7 +81,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -140,7 +140,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
-	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	authorID := "{{.DocID1_0}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -160,7 +160,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -177,7 +177,7 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
-	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
+	authorID := "{{.DocID1_0}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -196,7 +196,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -213,7 +213,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
+	bookID := "{{.DocID0_0}}"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -236,7 +236,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
 				Doc: fmt.Sprintf(
@@ -254,7 +254,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -280,7 +280,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -298,7 +298,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing.T) {
-	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
+	author2ID := "{{.DocID1_1}}"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
@@ -323,7 +323,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 0,
 				DocID:        0,
 				Doc: fmt.Sprintf(
@@ -358,7 +358,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				CollectionID: 1,
 				DocID:        0,
 				Doc: fmt.Sprintf(

@@ -511,12 +511,12 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"_docID": "{{.DocID0_0}}",
 							"age":    int64(21),
 							"name":   "John",
 							"_version": []map[string]any{
 								{
-									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+									"collectionVersionId": "{{.CollectionVersionID0}}",
 								},
 							},
 						},
@@ -575,10 +575,10 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"_docID": "{{.DocID0_0}}",
 							"_version": []map[string]any{
 								{
-									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+									"collectionVersionId": "{{.CollectionVersionID0}}",
 								},
 							},
 						},

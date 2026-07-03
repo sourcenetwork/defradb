@@ -41,18 +41,18 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
-							"docID":     john21DocID,
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), docRefKey(1, 1), "age"),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
 						},
 						{
 							"delta":     testUtils.CBORValue("John"),
-							"docID":     john21DocID,
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 						},
 						{
 							"delta":     nil,
-							"docID":     john21DocID,
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 						},
 					},
@@ -158,7 +158,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name1", "name3"},
 			},
-			testUtils.UpdateDoc{
+			&action.UpdateDoc{
 				Doc: `{
 					"name1": "Andy",
 					"name2": "Andy",

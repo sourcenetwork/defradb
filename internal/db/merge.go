@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
+
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -33,7 +34,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -41,11 +41,6 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
-		log.ErrorContextE(
-			ctx,
-			"Failed to execute merge",
-			err,
-			corelog.Any("Event", evt))
 		return err
 	}
 
@@ -81,49 +76,43 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return NewErrCreateMergeTxn(err, dagMerge.DocID, dagMerge.Cid.String())
 	}
+
 	defer txn.Discard()
 
-	var key keys.HeadstoreKey
-	if dagMerge.DocID != "" {
-		key = keys.HeadstoreDocKey{
-			DocID:   dagMerge.DocID,
-			FieldID: core.COMPOSITE_NAMESPACE,
-		}
-	} else {
-		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
-		if err != nil {
-			return err
-		}
-
-		key = keys.NewHeadstoreColKey(shortID)
-	}
-
-	mt, err := getHeadsAsMergeTarget(ctx, key)
+	key, exists, err := getDocHeadstoreKey(ctx, col, dagMerge.DocID)
 	if err != nil {
 		return err
 	}
 
-	mp, err := db.newMergeProcessor(ctx, col)
+	mt := newMergeTarget()
+	if exists {
+		mt, err = getHeadsAsMergeTarget(ctx, key)
+		if err != nil {
+			return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
+		}
+	}
+
+	mp, err := db.newMergeProcessor(ctx, col, len(mt.heads) == 0)
 	if err != nil {
 		return err
 	}
 
 	err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 	if err != nil {
-		return err
+		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
 	err = mp.mergeComposites(ctx)
 	if err != nil {
-		return err
+		return NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
 		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
-			return err
+			return NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
 
@@ -183,6 +172,7 @@ type mergeProcessor struct {
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
 	col        *collection
+	db         *DB
 
 	// docIDs contains all docIDs and their original values
 	// that have been merged so far by the mergeProcessor
@@ -191,11 +181,70 @@ type mergeProcessor struct {
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
+
+	blockDocRefs           map[string]resolvedDocRef
+	currentCompositeDocRef *resolvedDocRef
+	newDocCreateMode       bool
+}
+
+type resolvedDocRef struct {
+	docID      string
+	docShortID uint64
+}
+
+func (mp *mergeProcessor) resolveOrAllocateDocShortID(
+	ctx context.Context,
+	collectionShortID uint32,
+	docID string,
+) (uint64, error) {
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
+	if err != nil {
+		return 0, err
+	}
+	if found {
+		return docShortID, nil
+	}
+
+	docShortID, err = id.NextDocShortID(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if err := id.SetDocIDMapping(ctx, collectionShortID, docShortID, docID); err != nil {
+		return 0, err
+	}
+	return docShortID, nil
+}
+
+// getDocHeadstoreKey returns the headstore key under which the given document's composite heads are
+// stored. The returned exists is false when the document does not yet exist locally (the merge is
+// creating it), in which case it has no heads and the caller must treat the merge target as empty.
+func getDocHeadstoreKey(ctx context.Context, col *collection, docID string) (keys.HeadstoreKey, bool, error) {
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if docID != "" {
+		docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, docID)
+		if err != nil {
+			return nil, false, err
+		}
+		if !found {
+			return nil, false, nil
+		}
+		return keys.HeadstoreDocKey{
+			DocShortID: docShortID,
+			FieldID:    core.COMPOSITE_NAMESPACE,
+		}, true, nil
+	}
+
+	return keys.NewHeadstoreColKey(collectionShortID), true, nil
 }
 
 func (db *DB) newMergeProcessor(
 	ctx context.Context,
 	col *collection,
+	newDocCreateMode bool,
 ) (*mergeProcessor, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
@@ -206,11 +255,14 @@ func (db *DB) newMergeProcessor(
 	encBlockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Encstore()))
 
 	return &mergeProcessor{
-		blockLS:    blockLS,
-		encBlockLS: encBlockLS,
-		col:        col,
-		docIDs:     make(map[client.DocID]*client.Document),
-		composites: list.New(),
+		blockLS:          blockLS,
+		encBlockLS:       encBlockLS,
+		col:              col,
+		db:               db,
+		docIDs:           make(map[client.DocID]*client.Document),
+		composites:       list.New(),
+		blockDocRefs:     make(map[string]resolvedDocRef),
+		newDocCreateMode: newDocCreateMode,
 	}, nil
 }
 
@@ -239,12 +291,12 @@ func (mp *mergeProcessor) loadComposites(
 
 	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
-		return err
+		return NewErrLoadBlockForMerge(err, blockCid.String())
 	}
 
 	block, err := coreblock.GetFromNode(nd)
 	if err != nil {
-		return err
+		return NewErrDecodeBlockForMerge(err, blockCid.String())
 	}
 
 	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
@@ -255,7 +307,7 @@ func (mp *mergeProcessor) loadComposites(
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
 			if err != nil {
-				return err
+				return NewErrLoadParentComposite(err, head.Cid.String())
 			}
 		}
 	} else {
@@ -264,12 +316,12 @@ func (mp *mergeProcessor) loadComposites(
 			for _, link := range b.Heads {
 				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
 				if err != nil {
-					return err
+					return NewErrLoadMergeTargetBlock(err, link.String())
 				}
 
 				childBlock, err := coreblock.GetFromNode(nd)
 				if err != nil {
-					return err
+					return NewErrDecodeMergeTargetBlock(err, link.String())
 				}
 
 				newMT.heads[link.Cid] = childBlock
@@ -286,56 +338,15 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
-			return err
+			return NewErrGenerateMergeLink(err)
 		}
 		err = mp.processBlock(ctx, block, link)
 		if err != nil {
-			return err
+			return NewErrProcessBlockMerge(err, link.String())
 		}
 	}
 
 	return nil
-}
-
-func (mp *mergeProcessor) loadEncryptionBlock(
-	ctx context.Context,
-	encLink cidlink.Link,
-) (*coreblock.Encryption, error) {
-	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
-	if err != nil {
-		return nil, err
-	}
-
-	return coreblock.GetEncryptionBlockFromNode(nd)
-}
-
-// processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
-// If the block is encrypted and we were not able to decrypt it, it returns false as the second return value
-// which indicates that the we can't read the block.
-// If we were able to decrypt the block, we return the decrypted block and true as the second return value.
-func (mp *mergeProcessor) processEncryptedBlock(
-	ctx context.Context,
-	dagBlock *coreblock.Block,
-) (*coreblock.Block, bool, error) {
-	if dagBlock.IsEncrypted() {
-		encBlock, err := mp.loadEncryptionBlock(ctx, *dagBlock.Encryption)
-		if err != nil {
-			return nil, false, err
-		}
-
-		if encBlock == nil {
-			return dagBlock, false, nil
-		}
-
-		plainTextBlock, err := decryptBlock(ctx, dagBlock, encBlock)
-		if err != nil {
-			return nil, false, err
-		}
-		if plainTextBlock != nil {
-			return plainTextBlock, true, nil
-		}
-	}
-	return dagBlock, true, nil
 }
 
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
@@ -344,15 +355,15 @@ func (mp *mergeProcessor) processBlock(
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
 ) error {
-	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
+	block, canRead, err := coreblock.ProcessEncryptedBlock(ctx, mp.encBlockLS, dagBlock)
 	if err != nil {
-		return err
+		return NewErrProcessEncryptedBlock(err, blockLink.String())
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
+		crdt, docRef, err := mp.initCRDTForType(ctx, block, blockLink)
 		if err != nil {
-			return err
+			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
 		// If the CRDT is nil, it means the field is not part
@@ -361,137 +372,314 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
+		var previousCompositeDocRef *resolvedDocRef
+		if block.Delta.IsComposite() && docRef.docID != "" {
+			previousCompositeDocRef = mp.currentCompositeDocRef
+			resolved := docRef
+			mp.currentCompositeDocRef = &resolved
+			defer func() {
+				mp.currentCompositeDocRef = previousCompositeDocRef
+			}()
+		}
+
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
-			return err
+			return NewErrProcessCRDTBlock(err, blockLink.String())
+		}
+		if docRef.docID != "" {
+			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, blockLink.Cid); err != nil {
+				return err
+			}
+			if dagBlock.Encryption != nil {
+				if err := mp.setBlockDocIDMapping(ctx, docRef.docID, dagBlock.Encryption.Cid); err != nil {
+					return err
+				}
+			}
+		}
+		if block.Delta.IsComposite() && docRef.docID != "" {
+			if err := mp.setLinkedBlockDocIDMappings(ctx, docRef.docID, dagBlock.Links); err != nil {
+				return err
+			}
 		}
 	}
 
 	for _, link := range dagBlock.Links {
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
-			return err
+			return NewErrLoadChildBlock(err, link.Link.String())
 		}
 
 		childBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return NewErrDecodeChildBlock(err, link.Link.String())
 		}
 
 		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
-			return err
+			return NewErrProcessChildBlock(err, link.Link.String())
 		}
 	}
 
 	return nil
 }
 
-func decryptBlock(
+func (mp *mergeProcessor) setBlockDocIDMapping(
 	ctx context.Context,
-	block *coreblock.Block,
-	encBlock *coreblock.Encryption,
-) (*coreblock.Block, error) {
-	_, encryptor := encryption.EnsureContextWithEncryptor(ctx)
-
-	if block.Delta.IsComposite() || block.Delta.IsCollection() {
-		// for composite blocks there is nothing to decrypt
-		return block, nil
+	docID string,
+	blockCID cid.Cid,
+) error {
+	if docID == "" || !blockCID.Defined() {
+		return nil
 	}
 
-	bytes, err := encryptor.Decrypt(block.Delta.GetData(), encBlock.Key)
-	if err != nil {
-		return nil, err
-	}
-	if len(bytes) == 0 {
-		return nil, nil
-	}
-	newBlock := block.Clone()
-	newBlock.Delta.SetData(bytes)
-	return newBlock, nil
+	return id.SetBlockDocIDMapping(ctx, blockCID, docID)
 }
 
-func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (crdt.ReplicatedData, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
+func (mp *mergeProcessor) setLinkedBlockDocIDMappings(
+	ctx context.Context,
+	docID string,
+	links []coreblock.DAGLink,
+) error {
+	if docID == "" || len(links) == 0 {
+		return nil
+	}
 
-	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	for _, link := range links {
+		if err := id.SetBlockDocIDMapping(ctx, link.Cid, docID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (mp *mergeProcessor) initCRDTForType(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+) (crdt.ReplicatedData, resolvedDocRef, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	crdtUnion := block.Delta
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, err
+		return nil, resolvedDocRef{}, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {
 	case crdtUnion.IsComposite():
-		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		docRef, err := mp.resolveCompositeBlockDocRef(
+			ctx,
+			collectionShortID,
+			block,
+			blockLink.Cid,
+		)
 		if err != nil {
-			return nil, err
+			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
+		}
+		docID, err := client.NewDocIDFromString(docRef.docID)
+		if err != nil {
+			return nil, resolvedDocRef{}, err
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, err
+			return nil, resolvedDocRef{}, err
 		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             docID.String(),
+				CollectionShortID: collectionShortID,
+				DocShortID:        docRef.docShortID,
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
-		), nil
+		), docRef, nil
 
 	case crdtUnion.IsCollection():
 		return crdt.NewCollection(
 			mp.col.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		), nil
+			keys.NewHeadstoreColKey(collectionShortID),
+		), resolvedDocRef{}, nil
 
 	default:
-		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		// A field block is always processed as a child of its composite block, which records
+		// the owning document in currentCompositeDocRef. A field block's delta must be merged
+		// into that document - never one resolved from the block-CID owner index, since a field
+		// block can be shared across documents.
+		if mp.currentCompositeDocRef == nil {
+			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(client.ErrMalformedDocID, blockLink.Cid.String())
+		}
+		docRef := *mp.currentCompositeDocRef
+		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
-			return nil, err
+			return nil, resolvedDocRef{}, err
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, err
+			return nil, resolvedDocRef{}, err
 		}
 
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the collection definition, we can safely ignore it.
-			return nil, nil
+			return nil, resolvedDocRef{}, nil
 		}
 
-		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
+		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
 		if err != nil {
-			return nil, err
+			return nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
-		return crdt.FieldLevelCRDTWithStore(
+		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             docID.String(),
+				CollectionShortID: collectionShortID,
+				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
+		if err != nil {
+			return nil, resolvedDocRef{}, err
+		}
+		return fieldCRDT, docRef, nil
 	}
+}
+
+func (mp *mergeProcessor) resolveCompositeBlockDocRef(
+	ctx context.Context,
+	collectionShortID uint32,
+	block *coreblock.Block,
+	blockCID cid.Cid,
+) (resolvedDocRef, error) {
+	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
+		return resolved, nil
+	}
+
+	// A composite block is owned by exactly one document. Use the recorded owner as a fast
+	// path only when it is unambiguous; otherwise determine the DocID from the block itself:
+	// a genesis composite's CID is the DocID, an update inherits it from the genesis reached
+	// through its heads.
+	owners, err := id.GetDocIDsForBlockFromStore(
+		ctx,
+		datastore.CtxMustGetTxn(ctx).Systemstore(),
+		blockCID,
+	)
+	if err != nil {
+		return resolvedDocRef{}, err
+	}
+	if len(owners) == 1 {
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
+	}
+
+	if len(block.Heads) == 0 {
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, client.NewDocIDV0(blockCID).String())
+	}
+
+	for _, head := range block.Heads {
+		resolved, err := mp.resolveDocRefForCompositeCID(ctx, collectionShortID, head.Cid)
+		if err != nil {
+			return resolvedDocRef{}, err
+		}
+		if resolved.docID != "" {
+			mp.blockDocRefs[blockCID.String()] = resolved
+			return resolved, nil
+		}
+	}
+
+	return resolvedDocRef{}, client.ErrMalformedDocID
+}
+
+func (mp *mergeProcessor) resolveDocRefForCompositeCID(
+	ctx context.Context,
+	collectionShortID uint32,
+	blockCID cid.Cid,
+) (resolvedDocRef, error) {
+	if resolved, ok := mp.blockDocRefs[blockCID.String()]; ok {
+		return resolved, nil
+	}
+
+	// A composite block is owned by exactly one document. Use the recorded owner as a fast
+	// path only when it is unambiguous; otherwise load the block and determine the DocID from
+	// the composite itself.
+	owners, err := id.GetDocIDsForBlockFromStore(
+		ctx,
+		datastore.CtxMustGetTxn(ctx).Systemstore(),
+		blockCID,
+	)
+	if err != nil {
+		return resolvedDocRef{}, err
+	}
+	if len(owners) == 1 {
+		return mp.resolveAndCacheBlockDocRef(ctx, collectionShortID, blockCID, owners[0])
+	}
+
+	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCID}, coreblock.BlockSchemaPrototype)
+	if err != nil {
+		return resolvedDocRef{}, err
+	}
+	block, err := coreblock.GetFromNode(nd)
+	if err != nil {
+		return resolvedDocRef{}, err
+	}
+	if !block.Delta.IsComposite() {
+		return resolvedDocRef{}, client.ErrMalformedDocID
+	}
+	return mp.resolveCompositeBlockDocRef(ctx, collectionShortID, block, blockCID)
+}
+
+func (mp *mergeProcessor) resolveAndCacheBlockDocRef(
+	ctx context.Context,
+	collectionShortID uint32,
+	blockCID cid.Cid,
+	docID string,
+) (resolvedDocRef, error) {
+	docShortID, err := mp.resolveOrAllocateDocShortID(ctx, collectionShortID, docID)
+	if err != nil {
+		return resolvedDocRef{}, err
+	}
+	resolved := resolvedDocRef{docID: docID, docShortID: docShortID}
+	mp.blockDocRefs[blockCID.String()] = resolved
+	return resolved, nil
 }
 
 // trackMergedDocument tracks the current version of the document so we
 // can correctly sync indexes after a merge.
 func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
+	if len(mp.col.indexes) == 0 {
+		mp.docIDs[docID] = nil
+		return nil
+	}
 	_, exists := mp.docIDs[docID]
 	if exists {
 		return nil
 	}
-	doc, err := mp.col.GetDocument(ctx, docID)
-	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+	if mp.newDocCreateMode {
+		mp.docIDs[docID] = nil
 		return nil
+	}
+	doc, err := getDocForMerge(ctx, mp.col, docID)
+	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+		return err
 	}
 	mp.docIDs[docID] = doc
 	return nil
+}
+
+// getDocForMerge fetches a doc during inbound merge without the ACP read filter.
+// The merge ctx has no caller identity, so GetDocument would deny access and
+// return nil, silently skipping the secondary-index Save. Access was already
+// gated at the P2P boundary, so we read directly.
+func getDocForMerge(
+	ctx context.Context,
+	col *collection,
+	docID client.DocID,
+) (*client.Document, error) {
+	primaryKey, err := col.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
+	return col.getInternal(ctx, primaryKey, nil, false)
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
@@ -504,6 +692,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 	cols, err := db.getCollections(
 		ctx,
 		utils.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
+		true,
 	)
 	if err != nil {
 		return nil, err
@@ -522,7 +711,7 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 	cids, err := getHeads(ctx, key)
 
 	if err != nil {
-		return mergeTarget{}, err
+		return mergeTarget{}, NewErrGetHeadsForMerge(err, string(key.Bytes()))
 	}
 
 	mt := newMergeTarget()
@@ -557,12 +746,12 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 	txn := datastore.CtxMustGetTxn(ctx)
 	b, err := txn.Blockstore().Get(ctx, cid)
 	if err != nil {
-		return nil, err
+		return nil, NewErrLoadBlockFromStore(err, cid.String())
 	}
 
 	block, err := coreblock.GetFromBytes(b.RawData())
 	if err != nil {
-		return nil, err
+		return nil, NewErrDecodeBlockFromStore(err, cid.String())
 	}
 
 	return block, nil
@@ -574,9 +763,15 @@ func syncIndexedDoc(
 	col *collection,
 	oldDoc *client.Document,
 ) error {
-	newDoc, err := col.GetDocument(ctx, docID)
+	newDoc, err := getDocForMerge(ctx, col, docID)
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
+	}
+	// Both can be nil during concurrent P2P operations (e.g. delete + update)
+	// where the document was already deleted and no prior indexed state exists.
+	if oldDoc == nil && newDoc == nil {
+		log.InfoContext(ctx, "skipping index update: no document found", corelog.String("docID", docID.String()))
+		return nil
 	}
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)

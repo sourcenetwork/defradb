@@ -75,6 +75,18 @@ func GetIdentity(s *State, identity immutable.Option[Identity]) acpIdentity.Iden
 	return GetIdentityHolder(s, identity.Value()).Identity
 }
 
+// GetIdentityDID returns the DID of the given identity, the "*" selector as-is, or the empty string
+// if no identity is set.
+func GetIdentityDID(s *State, identity immutable.Option[Identity]) string {
+	if identity.HasValue() {
+		if identity.Value().Selector == "*" {
+			return identity.Value().Selector
+		}
+		return GetIdentity(s, identity).DID()
+	}
+	return ""
+}
+
 // GetIdentityHolder returns the identity holder for the given reference.
 // If the identity does not exist, it will be generated.
 func GetIdentityHolder(s *State, identity Identity) *IdentityHolder {

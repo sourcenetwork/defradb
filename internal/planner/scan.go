@@ -11,6 +11,10 @@
 package planner
 
 import (
+	"context"
+	"maps"
+
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -47,7 +51,8 @@ type scanNode struct {
 
 	showDeleted bool
 
-	prefixes []keys.Walkable
+	prefixes  []keys.Walkable
+	noResults bool
 
 	filter   *mapper.Filter
 	ordering []mapper.OrderCondition
@@ -65,6 +70,10 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filter)
+	if err != nil {
+		return err
+	}
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
@@ -75,7 +84,7 @@ func (n *scanNode) Init() error {
 		n.index,
 		n.col,
 		n.fields,
-		n.filter,
+		filter,
 		n.ordering,
 		n.slct.DocumentMapping,
 		n.showDeleted,
@@ -83,6 +92,216 @@ func (n *scanNode) Init() error {
 		return err
 	}
 	return n.initScan()
+}
+
+// filterWithDocIDAliases rewrites backup/import DocID aliases to the current DocID.
+func filterWithDocIDAliases(
+	ctx context.Context,
+	col client.Collection,
+	mapping *core.DocumentMapping,
+	filter *mapper.Filter,
+) (*mapper.Filter, error) {
+	if filter == nil {
+		return nil, nil
+	}
+
+	conditions, changed, err := expandDocIDAliasesInConditions(ctx, col, mapping, filter.Conditions)
+	if err != nil {
+		return nil, err
+	}
+	if !changed {
+		return filter, nil
+	}
+
+	result := mapper.NewFilter()
+	result.Conditions = conditions
+	result.ExternalConditions = make(map[string]any, len(filter.ExternalConditions))
+	maps.Copy(result.ExternalConditions, filter.ExternalConditions)
+	return result, nil
+}
+
+func expandDocIDAliasesInConditions(
+	ctx context.Context,
+	col client.Collection,
+	mapping *core.DocumentMapping,
+	conditions map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, bool, error) {
+	result := make(map[connor.FilterKey]any, len(conditions))
+	var changed bool
+	for key, value := range conditions {
+		switch typedKey := key.(type) {
+		case *mapper.PropertyIndex:
+			opMap, ok := value.(map[connor.FilterKey]any)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			if isDocIDFilterField(col, mapping, typedKey.Index) {
+				expandedOpMap, opChanged, err := expandDocIDAliasesInOpMap(ctx, opMap)
+				if err != nil {
+					return nil, false, err
+				}
+				changed = changed || opChanged
+				result[key] = expandedOpMap
+				continue
+			}
+
+			childMapping := mapping
+			if mapping != nil && typedKey.Index < len(mapping.ChildMappings) &&
+				mapping.ChildMappings[typedKey.Index] != nil {
+				childMapping = mapping.ChildMappings[typedKey.Index]
+			}
+			expandedConditions, conditionsChanged, err := expandDocIDAliasesInConditions(ctx, col, childMapping, opMap)
+			if err != nil {
+				return nil, false, err
+			}
+			changed = changed || conditionsChanged
+			result[key] = expandedConditions
+
+		case *mapper.Operator:
+			switch typedValue := value.(type) {
+			case map[connor.FilterKey]any:
+				expandedConditions, conditionsChanged, err := expandDocIDAliasesInConditions(ctx, col, mapping, typedValue)
+				if err != nil {
+					return nil, false, err
+				}
+				changed = changed || conditionsChanged
+				result[key] = expandedConditions
+			case []any:
+				expandedList := make([]any, len(typedValue))
+				var listChanged bool
+				for i, item := range typedValue {
+					itemMap, ok := item.(map[connor.FilterKey]any)
+					if !ok {
+						expandedList[i] = item
+						continue
+					}
+					expandedItem, itemChanged, err := expandDocIDAliasesInConditions(ctx, col, mapping, itemMap)
+					if err != nil {
+						return nil, false, err
+					}
+					listChanged = listChanged || itemChanged
+					expandedList[i] = expandedItem
+				}
+				changed = changed || listChanged
+				result[key] = expandedList
+			default:
+				result[key] = value
+			}
+
+		default:
+			result[key] = value
+		}
+	}
+	return result, changed, nil
+}
+
+func expandDocIDAliasesInOpMap(
+	ctx context.Context,
+	opMap map[connor.FilterKey]any,
+) (map[connor.FilterKey]any, bool, error) {
+	result := make(map[connor.FilterKey]any, len(opMap))
+	var changed bool
+	for key, value := range opMap {
+		op, ok := key.(*mapper.Operator)
+		if !ok {
+			result[key] = value
+			continue
+		}
+
+		switch op.Operation {
+		case connor.EqualOp:
+			docID, ok := value.(string)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			docID, docIDChanged, err := docIDForFilterValue(ctx, docID)
+			if err != nil {
+				return nil, false, err
+			}
+			result[key] = docID
+			changed = changed || docIDChanged
+		case connor.InOp:
+			values, ok := value.([]any)
+			if !ok {
+				result[key] = value
+				continue
+			}
+			expandedValues, valuesChanged, err := expandDocIDAliasValues(ctx, values)
+			if err != nil {
+				return nil, false, err
+			}
+			result[key] = expandedValues
+			changed = changed || valuesChanged
+		default:
+			result[key] = value
+		}
+	}
+	return result, changed, nil
+}
+
+func expandDocIDAliasValues(ctx context.Context, values []any) ([]any, bool, error) {
+	expandedValues := make([]any, 0, len(values))
+	seenStrings := map[string]struct{}{}
+	var changed bool
+	for _, value := range values {
+		docID, ok := value.(string)
+		if !ok {
+			expandedValues = append(expandedValues, value)
+			continue
+		}
+		docID, docIDChanged, err := docIDForFilterValue(ctx, docID)
+		if err != nil {
+			return nil, false, err
+		}
+		if _, exists := seenStrings[docID]; exists {
+			changed = true
+			continue
+		}
+		seenStrings[docID] = struct{}{}
+		expandedValues = append(expandedValues, docID)
+		changed = changed || docIDChanged
+	}
+	return expandedValues, changed, nil
+}
+
+func isDocIDFilterField(col client.Collection, mapping *core.DocumentMapping, fieldIndex int) bool {
+	if col == nil || mapping == nil {
+		return false
+	}
+	fieldName, ok := mapping.TryToFindNameFromIndex(fieldIndex)
+	if !ok {
+		return false
+	}
+	if fieldName == request.DocIDFieldName {
+		return true
+	}
+	fieldDef, ok := col.Version().GetFieldByName(fieldName)
+	return ok && fieldDef.Kind == client.FieldKind_DocID
+}
+
+func docIDForFilterValue(ctx context.Context, docID string) (string, bool, error) {
+	if docID == "" {
+		return docID, false, nil
+	}
+
+	docRef, found, err := id.GetDocRef(ctx, docID)
+	if err != nil {
+		return "", false, err
+	}
+	if !found {
+		return docID, false, nil
+	}
+
+	currentDocID, _, err := id.GetDocID(ctx, docRef.DocShortID)
+	if err != nil {
+		return "", false, err
+	}
+	if currentDocID == docID {
+		return docID, false, nil
+	}
+	return currentDocID, true, nil
 }
 
 func (n *scanNode) initCollection(col client.Collection) error {
@@ -164,13 +383,36 @@ func (n *scanNode) addField(field client.CollectionFieldDescription) {
 func (n *scanNode) initFetcher(cid immutable.Option[[]string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
-		f = new(fetcher.VersionedFetcher)
+		f = new(fetcher.MultiVersioned)
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, n.p.lensStore)
+		f = lens.NewFetcher(f, n.p.lensStore, n.p.collectionRepository)
 	}
 	n.fetcher = f
+}
+
+// cloneWithFilter creates a new scanNode that shares the collection, fields, select mapping,
+// and planner reference from this node but uses the given filter and index.
+// A fresh fetcher is initialized. The clone is independent and safe to use concurrently
+// with the original (e.g., for orphan fetching while the main scan is in use).
+func (n *scanNode) cloneWithFilter(
+	filter *mapper.Filter,
+	index immutable.Option[client.IndexDescription],
+	ordering []mapper.OrderCondition,
+) *scanNode {
+	clone := &scanNode{
+		p:         n.p,
+		col:       n.col,
+		fields:    n.fields,
+		slct:      n.slct,
+		docMapper: n.docMapper,
+		filter:    filter,
+		index:     index,
+		ordering:  ordering,
+	}
+	clone.initFetcher(immutable.Option[[]string]{})
+	return clone
 }
 
 // Start starts the internal logic of the scanner
@@ -180,14 +422,17 @@ func (n *scanNode) Start() error {
 }
 
 func (n *scanNode) initScan() error {
+	if n.noResults {
+		return nil
+	}
 	if len(n.prefixes) == 0 {
-		shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 
 		prefix := keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
@@ -206,6 +451,10 @@ func (n *scanNode) initScan() error {
 func (n *scanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
+	if n.noResults {
+		return false, nil
+	}
+
 	if len(n.prefixes) == 0 {
 		return false, nil
 	}
@@ -220,12 +469,12 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
 	if err != nil {
 		return false, err
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
+	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, collectionShortID, doc, n.documentMapping, false)
 	if err != nil {
 		return false, err
 	}
@@ -241,6 +490,7 @@ func (n *scanNode) Next() (bool, error) {
 
 func (n *scanNode) Prefixes(prefixes []keys.Walkable) {
 	n.prefixes = prefixes
+	n.noResults = false
 }
 
 func (n *scanNode) Close() error {
@@ -342,13 +592,17 @@ func (p *Planner) Scan(
 type multiScanNode struct {
 	planNode   planNode
 	numReaders int
+
 	nextCount  int
 	initCount  int
 	startCount int
 	closeCount int
 
 	nextResult bool
-	err        error
+	nextErr    error
+	initErr    error
+	startErr   error
+	closeErr   error
 }
 
 // Init initializes the multiScanNode.
@@ -356,49 +610,38 @@ type multiScanNode struct {
 // doesn't not provide idempotency guarantees. Counting is purely for performance
 // reasons and removing it should be safe.
 func (n *multiScanNode) Init() error {
-	n.countAndCall(&n.initCount, func() error {
-		return n.planNode.Init()
-	})
-	return n.err
+	if n.initCount == 0 {
+		n.initErr = n.planNode.Init()
+	}
+	n.initCount++
+	if n.initCount == n.numReaders {
+		n.initCount = 0
+	}
+	return n.initErr
 }
 
 func (n *multiScanNode) Start() error {
-	n.countAndCall(&n.startCount, func() error {
-		return n.planNode.Start()
-	})
-	return n.err
-}
-
-// countAndCall keeps track of number of requests to call a given function by checking a
-// function's count.
-// The function is only called when the count is 0.
-// If the count is equal to the number of readers, the count is reset.
-// If the function returns an error, the error is stored in the multiScanNode.
-func (n *multiScanNode) countAndCall(count *int, f func() error) {
-	if *count == 0 {
-		err := f()
-		if err != nil {
-			n.err = err
-		}
+	if n.startCount == 0 {
+		n.startErr = n.planNode.Start()
 	}
-	*count++
-
-	// if the number of calls equals the numbers of readers
-	// reset the counter, so our next call actually executes the function
-	if *count == n.numReaders {
-		*count = 0
+	n.startCount++
+	if n.startCount == n.numReaders {
+		n.startCount = 0
 	}
+	return n.startErr
 }
 
 // Next only calls Next() on the underlying
 // scanNode every numReaders.
 func (n *multiScanNode) Next() (bool, error) {
-	n.countAndCall(&n.nextCount, func() (err error) {
-		n.nextResult, err = n.planNode.Next()
-		return
-	})
-
-	return n.nextResult, n.err
+	if n.nextCount == 0 {
+		n.nextResult, n.nextErr = n.planNode.Next()
+	}
+	n.nextCount++
+	if n.nextCount == n.numReaders {
+		n.nextCount = 0
+	}
+	return n.nextResult, n.nextErr
 }
 
 func (n *multiScanNode) Value() core.Doc {
@@ -418,10 +661,14 @@ func (n *multiScanNode) Kind() string {
 }
 
 func (n *multiScanNode) Close() error {
-	n.countAndCall(&n.closeCount, func() error {
-		return n.planNode.Close()
-	})
-	return n.err
+	if n.closeCount == 0 {
+		n.closeErr = n.planNode.Close()
+	}
+	n.closeCount++
+	if n.closeCount == n.numReaders {
+		n.closeCount = 0
+	}
+	return n.closeErr
 }
 
 func (n *multiScanNode) DocumentMap() *core.DocumentMapping {

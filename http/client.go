@@ -14,16 +14,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/immutable"
@@ -53,33 +56,35 @@ func NewClient(rawURL string) (*Client, error) {
 	return &Client{httpClient}, nil
 }
 
-func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
-	query := url.Values{}
-	if readOnly {
-		query.Add("read_only", "true")
-	}
-
-	methodURL := c.http.apiURL.JoinPath("tx")
-	methodURL.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
+// NewInsecureClient returns a Client that skips TLS certificate verification.
+// Only use for loopback health checks against a server with a self-signed cert.
+func NewInsecureClient(rawURL string) (*Client, error) {
+	httpClient, err := newInsecureHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	var txRes CreateTxResponse
-	if err := c.http.requestJson(req, &txRes); err != nil {
-		return nil, err
-	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
+	return &Client{httpClient}, nil
 }
 
-func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
+func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
+	return c.newTxn(readOnly, immutable.None[time.Duration]())
+}
+
+// NewTxnWithTTL creates a new HTTP transaction with the given idle TTL.
+func (c *Client) NewTxnWithTTL(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
+	return c.newTxn(readOnly, immutable.Some(txnTTL))
+}
+
+func (c *Client) newTxn(readOnly bool, txnTTL immutable.Option[time.Duration]) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
 	}
+	if txnTTL.HasValue() {
+		query.Add("ttl", txnTTL.Value().String())
+	}
 
-	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
+	methodURL := c.http.apiURL.JoinPath("tx")
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
@@ -136,6 +141,28 @@ func (c *Client) BasicExport(
 	return err
 }
 
+func (c *Client) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("actions")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []client.ActionExecution
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (c *Client) AddCollection(
 	ctx context.Context,
 	sdl string,
@@ -179,6 +206,30 @@ func (c *Client) PatchCollection(
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) DeleteCollection(
+	ctx context.Context,
+	names []string,
+	opts ...options.Enumerable[options.DeleteCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("collections")
+	q := methodURL.Query()
+	q.Set("name", strings.Join(names, ","))
+	if opt.ActiveOnly {
+		q.Set("active-only", "true")
+	}
+	methodURL.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -375,6 +426,9 @@ func (c *Client) GetCollections(
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
+	// If there is an explicit transaction, we need to get it to attach to the collection
+	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if opt.CollectionName.HasValue() {
@@ -400,8 +454,16 @@ func (c *Client) GetCollections(
 		return nil, err
 	}
 	collections := make([]client.Collection, len(descriptions))
+
+	var txnOpt immutable.Option[client.Txn]
+	if hadTxn {
+		txnOpt = immutable.Some(txn)
+	} else {
+		txnOpt = immutable.None[client.Txn]()
+	}
+
 	for i, d := range descriptions {
-		collections[i] = &Collection{c.http, d}
+		collections[i] = &Collection{c.http, d, txnOpt}
 	}
 	return collections, nil
 }
@@ -409,7 +471,7 @@ func (c *Client) GetCollections(
 func (c *Client) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -419,7 +481,7 @@ func (c *Client) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes map[client.CollectionName][]client.IndexDescription
+	var indexes map[client.CollectionName][]client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
@@ -510,6 +572,26 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
+	// Non-200 responses from middleware (e.g. invalid/unknown transaction ID) use
+	// the {"error": "..."} envelope rather than the GraphQL {"errors": [...]} one.
+	// Convert those so the error surfaces to the caller instead of being silently
+	// swallowed as {"data": null}.
+	if res.StatusCode != http.StatusOK {
+		var raw map[string]any
+		if jsonErr := json.Unmarshal(data, &raw); jsonErr == nil {
+			if errMsg, ok := raw["error"].(string); ok {
+				result.GQL.Errors = append(result.GQL.Errors, client.ReviveError(errMsg))
+				return result
+			}
+		}
+		// If the body isn't of the form {"error": "..."}, wrap the raw body in a raw error.
+		errMsg := fmt.Sprintf(
+			"server returned non-200 status %d: %s",
+			res.StatusCode, bytes.TrimSpace(data),
+		)
+		result.GQL.Errors = append(result.GQL.Errors, fmt.Errorf("%s", errMsg))
+		return result
+	}
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
@@ -575,6 +657,20 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	_, err = c.http.request(req)
 	return err
+}
+
+func (c *Client) GetNodeOptions(ctx context.Context) (map[string]any, error) {
+	methodURL := c.http.apiURL.JoinPath("node", "options")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var opts map[string]any
+	if err := c.http.requestJson(req, &opts); err != nil {
+		return nil, err
+	}
+	return opts, nil
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
