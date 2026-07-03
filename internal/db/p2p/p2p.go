@@ -70,10 +70,6 @@ const (
 	// Messages that arrive when the queue is full are dropped with a warning.
 	msgQueueSize = 50_000
 
-	// collectionCacheTTL is how long to cache collection existence checks.
-	// GetCollections hits the KV store on every call; the TTL amortises that
-	// cost across the large number of incoming pubsub messages per second.
-	collectionCacheTTL = 30 * time.Second
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -174,15 +170,6 @@ type P2P struct {
 	msgQueue   chan *protocol.PushLogRequest
 	msgWorkers sync.WaitGroup
 
-	// collectionCache caches collection existence checks to reduce KV reads per message.
-	collectionCache   map[string]*cachedCollection
-	collectionCacheMu sync.RWMutex
-}
-
-// cachedCollection stores a cached collection-existence lookup result with expiry.
-type cachedCollection struct {
-	exists  bool
-	expires time.Time
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -239,7 +226,6 @@ func New(
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan *protocol.PushLogRequest, msgQueueSize),
-		collectionCache:      make(map[string]*cachedCollection),
 	}
 
 	for i := 0; i < dagSyncWorkers; i++ {
@@ -1047,24 +1033,6 @@ func (pq *processQueue) enqueue(key string, handler func() error) error {
 		pq.mu.Unlock()
 		return ErrSyncQueueFull
 	}
-}
-
-// tryEnqueue submits a fire-and-forget request.
-// Silently drops the request if the key is already in-flight or the queue is full.
-func (pq *processQueue) tryEnqueue(key string, handler func() error) {
-	pq.mu.Lock()
-	if _, ok := pq.inFlight[key]; ok {
-		pq.mu.Unlock()
-		return
-	}
-	pq.inFlight[key] = struct{}{}
-	req := syncRequest{key: key, handler: handler, result: nil}
-	select {
-	case pq.queue <- req:
-	default:
-		delete(pq.inFlight, key)
-	}
-	pq.mu.Unlock()
 }
 
 func (pq *processQueue) close() {

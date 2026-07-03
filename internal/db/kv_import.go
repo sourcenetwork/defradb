@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io"
 	"strconv"
 
@@ -60,7 +61,7 @@ func (db *DB) ImportRawKVs(ctx context.Context, r io.Reader) (int, error) {
 	for {
 		var keyLen uint32
 		if err := binary.Read(r, binary.BigEndian, &keyLen); err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return total, err
@@ -175,7 +176,7 @@ func (db *DB) importRawKVsWithRemap(ctx context.Context, r io.Reader, remap kvRe
 	for {
 		var keyLen uint32
 		if err := binary.Read(r, binary.BigEndian, &keyLen); err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return total, err

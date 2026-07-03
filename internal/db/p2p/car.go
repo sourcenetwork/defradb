@@ -13,6 +13,7 @@ package p2p
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -141,7 +142,7 @@ func peekCARRootBlock(carData []byte) (*coreblock.Block, error) {
 	rootCID := reader.Roots[0]
 	for {
 		carBlock, err := reader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -173,7 +174,7 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 	for {
 		carBlock, err := reader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

@@ -37,5 +37,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("batch signing: ok")
+	fmt.Println("batch signing: ok") //nolint:forbidigo
 }

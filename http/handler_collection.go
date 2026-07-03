@@ -248,8 +248,8 @@ func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) 
 }
 
 type purgeDocIDsRequest struct {
-	DocIDs      []string `json:"docIDs"`
-	PruneHistory bool   `json:"pruneHistory"`
+	DocIDs       []string `json:"docIDs"`
+	PruneHistory bool     `json:"pruneHistory"`
 }
 
 func (h *collectionHandler) PurgeDocuments(rw http.ResponseWriter, req *http.Request) {
@@ -558,7 +558,8 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	purgeDocuments := openapi3.NewOperation()
 	purgeDocuments.OperationID = "purgeDocuments"
-	purgeDocuments.Description = "Permanently remove a set of documents by DocID, including all headstore and blockstore state."
+	purgeDocuments.Description = "Permanently remove a set of documents by DocID, " +
+		"including all headstore and blockstore state."
 	purgeDocuments.Tags = []string{"purge"}
 	purgeDocuments.AddParameter(collectionNamePathParam)
 	purgeDocuments.Responses = openapi3.NewResponses()

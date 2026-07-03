@@ -56,7 +56,8 @@ does not propagate to other nodes in the peer network.`,
 
 	setCollectionSelectorFlags(cmd)
 	cmd.Flags().StringArrayVar(&docIDStrs, "docID", nil, "DocID of a document to purge (may be repeated)")
-	cmd.Flags().BoolVar(&pruneHistory, "prune-history", false, "Also delete all blockstore blocks reachable from the documents' head CIDs")
+	cmd.Flags().BoolVar(&pruneHistory, "prune-history", false,
+		"Also delete all blockstore blocks reachable from the documents' head CIDs")
 
 	return cmd
 }

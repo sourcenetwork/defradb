@@ -42,7 +42,7 @@ Use it against a local node instance (not a remote HTTP endpoint).`,
 			if err != nil {
 				return err
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 
 			cliClient := mustGetContextCLIClient(cmd)
 

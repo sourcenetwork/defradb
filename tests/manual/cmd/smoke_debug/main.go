@@ -16,16 +16,20 @@ func main() {
 		SetDisableP2P(true).SetDisableAPI(true).SetEnableDevelopment(true).
 		Store().SetBadgerInMemory(true).Node()
 	n, err := node.New(ctx, opts)
-	if err != nil { panic(err) }
-	if err := n.Start(ctx); err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
+	if err := n.Start(ctx); err != nil {
+		panic(err)
+	}
 	defer n.DB.Close()
 	db := n.DB
 
 	_, err = db.AddCollection(ctx, `type Book { title: String, year: Int, author: String }`)
-	fmt.Println("AddCollection err:", err)
+	fmt.Println("AddCollection err:", err) //nolint:forbidigo
 
 	col, err := db.GetCollectionByName(ctx, "Book")
-	fmt.Println("GetCollectionByName err:", err)
+	fmt.Println("GetCollectionByName err:", err) //nolint:forbidigo
 
 	// Same 5 books as smoke_addmany
 	books := []map[string]any{
@@ -39,25 +43,27 @@ func main() {
 	for i, b := range books {
 		raw, _ := json.Marshal(b)
 		doc, docErr := client.NewDocFromJSON(ctx, raw, col.Version())
-		if docErr != nil { panic("NewDocFromJSON: " + docErr.Error()) }
+		if docErr != nil {
+			panic("NewDocFromJSON: " + docErr.Error())
+		}
 		docs[i] = doc
 	}
 
 	err = col.SaveManyDocuments(ctx, docs)
-	fmt.Println("SaveManyDocuments err:", err)
+	fmt.Println("SaveManyDocuments err:", err) //nolint:forbidigo
 
 	res := db.ExecRequest(ctx, `{Book{_docID,title}}`)
-	fmt.Println("ExecRequest errors:", res.GQL.Errors)
-	fmt.Printf("ExecRequest data type: %T\n", res.GQL.Data)
-	fmt.Printf("ExecRequest data: %v\n", res.GQL.Data)
+	fmt.Println("ExecRequest errors:", res.GQL.Errors) //nolint:forbidigo
+	fmt.Printf("ExecRequest data type: %T\n", res.GQL.Data) //nolint:forbidigo
+	fmt.Printf("ExecRequest data: %v\n", res.GQL.Data) //nolint:forbidigo
 
 	m, ok := res.GQL.Data.(map[string]any)
-	fmt.Printf("type assert ok=%v\n", ok)
+	fmt.Printf("type assert ok=%v\n", ok) //nolint:forbidigo
 	if ok {
 		for k, v := range m {
-			fmt.Printf("  key=%q type=%T\n", k, v)
+			fmt.Printf("  key=%q type=%T\n", k, v) //nolint:forbidigo
 		}
 		rows, _ := m["Book"].([]any)
-		fmt.Printf("  rows len=%d\n", len(rows))
+		fmt.Printf("  rows len=%d\n", len(rows)) //nolint:forbidigo
 	}
 }

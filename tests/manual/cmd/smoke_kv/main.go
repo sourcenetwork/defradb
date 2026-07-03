@@ -66,7 +66,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ExportDocKVs:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("ExportDocKVs: %d pairs, %d bytes\n", n2, buf.Len())
+	fmt.Printf("ExportDocKVs: %d pairs, %d bytes\n", n2, buf.Len()) //nolint:forbidigo
 
 	// ExportFieldMapping
 	mappingJSON, err := db.ExportFieldMapping(ctx, "Book")
@@ -87,7 +87,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "mapping missing fields key")
 		os.Exit(1)
 	}
-	fmt.Printf("ExportFieldMapping: %s\n", string(mappingJSON))
+	fmt.Printf("ExportFieldMapping: %s\n", string(mappingJSON)) //nolint:forbidigo
 
 	// ImportRawKVs (idempotent re-import of same data)
 	snap := buf.Bytes()
@@ -96,7 +96,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ImportRawKVs:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("ImportRawKVs: %d pairs\n", n3)
+	fmt.Printf("ImportRawKVs: %d pairs\n", n3) //nolint:forbidigo
 
 	// ImportRawKVsWithMapping (identity remap — src/dst IDs are the same node)
 	n4, err := db.ImportRawKVsWithMapping(ctx, bytes.NewReader(snap), mappingJSON)
@@ -104,7 +104,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ImportRawKVsWithMapping:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("ImportRawKVsWithMapping: %d pairs\n", n4)
+	fmt.Printf("ImportRawKVsWithMapping: %d pairs\n", n4) //nolint:forbidigo
 
-	fmt.Println("kv: ok")
+	fmt.Println("kv: ok") //nolint:forbidigo
 }

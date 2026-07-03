@@ -40,5 +40,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("BatchMarkAsMerged: ok")
+	fmt.Println("BatchMarkAsMerged: ok") //nolint:forbidigo
 }

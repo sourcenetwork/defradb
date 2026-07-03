@@ -82,10 +82,10 @@ func main() {
 		os.Exit(1)
 	}
 	readable := len(result["Book"])
-	fmt.Printf("SaveManyDocuments: saved=%d readable=%d\n", len(docs), readable)
+	fmt.Printf("SaveManyDocuments: saved=%d readable=%d\n", len(docs), readable) //nolint:forbidigo
 	if readable != len(docs) {
 		fmt.Fprintf(os.Stderr, "count mismatch: expected %d, got %d\n", len(docs), readable)
 		os.Exit(1)
 	}
-	fmt.Println("SaveManyDocuments: ok")
+	fmt.Println("SaveManyDocuments: ok") //nolint:forbidigo
 }

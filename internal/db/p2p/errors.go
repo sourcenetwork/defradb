@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	errGenerateCARStr  string = "failed to generate CAR for replication"
-	errImportCARStr    string = "failed to import CAR during sync"
-	errReadCARBlockStr string = "failed to read block from CAR stream"
+	errGenerateCARStr          string = "failed to generate CAR for replication"
+	errImportCARStr            string = "failed to import CAR during sync"
+	errReadCARBlockStr         string = "failed to read block from CAR stream"
 	errStoreBlockDAGSync       string = "failed to store block in DAG sync"
 	errGenerateBlockLink       string = "failed to generate block link"
 	errCheckBlockMerged        string = "failed to check if block is merged"
@@ -64,7 +64,7 @@ const (
 )
 
 var (
-	ErrEmptyCARRoots               = errors.New("CAR file contains no root CIDs")
+	ErrEmptyCARRoots               = errors.New("no root CIDs in CAR file")
 	ErrCARRootBlockNotFound        = errors.New("root block not found in CAR file")
 	ErrSyncQueueFull               = errors.New("sync queue is full")
 	ErrSelfTargetForReplicator     = errors.New("can't target ourselves as a replicator")

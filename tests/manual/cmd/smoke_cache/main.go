@@ -56,5 +56,5 @@ func main() {
 		}
 	}
 
-	fmt.Println("MergedCIDCache: ok")
+	fmt.Println("MergedCIDCache: ok") //nolint:forbidigo
 }

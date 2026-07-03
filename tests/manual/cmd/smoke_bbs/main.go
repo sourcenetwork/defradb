@@ -48,5 +48,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("blind-write blockstore: ok")
+	fmt.Println("blind-write blockstore: ok") //nolint:forbidigo
 }
