@@ -125,8 +125,8 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		//
-		// Signed counter deltas are double-applied to replicated peers.
-		// https://github.com/sourcenetwork/defradb/issues/4742
+		// Signing makes each node's genesis block (and thus DocID) signer-specific, so creating the
+		// doc on every node yields distinct docs that never converge.
 		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
