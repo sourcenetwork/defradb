@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	errActionInProgress            string = "multiple actions of the same kind and collection cannot be submitted concurrently"
+	errActionInProgress string = "multiple actions of the same kind and collection " +
+		"cannot be submitted concurrently"
 	errInvalidActionStatusEncoding string = "invalid action status encoding"
 )
 
