@@ -81,6 +81,9 @@ type Node struct {
 	// shutdown path rather than leaving a half-alive process for the user
 	// to SIGKILL. Buffered so startAPI never blocks on a missing reader.
 	apiErrCh chan error
+	// ReplicationFilter is an optional filter that rejects incoming P2P documents
+	// before they are stored locally. Set this between New() and Start().
+	ReplicationFilter client.ReplicationFilter
 }
 
 // APIError returns a buffered, never-closed channel that receives at most one
@@ -188,6 +191,9 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	if n.peer != nil {
 		dbBuilder.SetP2P(n.peer)
+	}
+	if n.ReplicationFilter != nil {
+		dbBuilder.SetReplicationFilter(n.ReplicationFilter)
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
