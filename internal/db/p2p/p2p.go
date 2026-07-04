@@ -69,7 +69,6 @@ const (
 	// msgQueueSize is the capacity of the incoming pubsub message queue.
 	// Messages that arrive when the queue is full are dropped with a warning.
 	msgQueueSize = 50_000
-
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -169,7 +168,6 @@ type P2P struct {
 	// msgQueue receives incoming pubsub messages for async processing by a fixed worker pool.
 	msgQueue   chan *protocol.PushLogRequest
 	msgWorkers sync.WaitGroup
-
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality

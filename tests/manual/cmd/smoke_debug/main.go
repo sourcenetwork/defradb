@@ -53,9 +53,9 @@ func main() {
 	fmt.Println("SaveManyDocuments err:", err) //nolint:forbidigo
 
 	res := db.ExecRequest(ctx, `{Book{_docID,title}}`)
-	fmt.Println("ExecRequest errors:", res.GQL.Errors) //nolint:forbidigo
+	fmt.Println("ExecRequest errors:", res.GQL.Errors)      //nolint:forbidigo
 	fmt.Printf("ExecRequest data type: %T\n", res.GQL.Data) //nolint:forbidigo
-	fmt.Printf("ExecRequest data: %v\n", res.GQL.Data) //nolint:forbidigo
+	fmt.Printf("ExecRequest data: %v\n", res.GQL.Data)      //nolint:forbidigo
 
 	m, ok := res.GQL.Data.(map[string]any)
 	fmt.Printf("type assert ok=%v\n", ok) //nolint:forbidigo

@@ -9,6 +9,7 @@ import (
 	"os"
 
 	blocks "github.com/ipfs/go-block-format"
+
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 

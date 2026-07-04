@@ -17,6 +17,7 @@ import (
 	"io"
 
 	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/corekv"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
