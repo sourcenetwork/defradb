@@ -234,6 +234,7 @@ func (c *collection) add(
 	}
 
 	ctx = setContextDocEncryption(ctx, opt)
+	ctx = coreblock.ContextWithNewDocCreateMode(ctx)
 
 	err = c.save(ctx, doc, true)
 	if err != nil {
