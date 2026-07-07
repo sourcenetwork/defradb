@@ -15,6 +15,7 @@ import (
 
 	badgerds "github.com/dgraph-io/badger/v4"
 	badgeropts "github.com/dgraph-io/badger/v4/options"
+
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
 
