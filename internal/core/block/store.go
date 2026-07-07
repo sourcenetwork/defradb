@@ -115,10 +115,15 @@ func addDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
-		if err != nil {
-			return cidlink.Link{}, nil, NewErrSignBlock(err)
+	// When a batch collector is active, the batch is signed once over the Merkle
+	// root of the collected CIDs, so per-block signing is skipped.
+	collector := BatchSigningCollectorFromContext(ctx)
+	if collector == nil {
+		if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
+			err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
+			if err != nil {
+				return cidlink.Link{}, nil, NewErrSignBlock(err)
+			}
 		}
 	}
 
@@ -127,7 +132,7 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
 
-	if collector := BatchSigningCollectorFromContext(ctx); collector != nil {
+	if collector != nil {
 		collector.Add(link.Cid)
 	}
 

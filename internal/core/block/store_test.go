@@ -16,11 +16,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
@@ -45,4 +49,46 @@ func TestAddDelta_DoesNotEncryptCollectionBlocks(t *testing.T) {
 	block, err := GetFromBytes(rawBlock)
 	require.NoError(t, err)
 	require.Nil(t, block.Encryption)
+}
+
+func TestAddDelta_WithBatchCollector_SkipsBlockSignatureAndCollectsCID(t *testing.T) {
+	ctx := context.Background()
+	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	ident, err := identity.Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	ctx = iIdentity.WithContext(ctx, immutable.Some[identity.Identity](ident))
+	ctx = ContextWithEnabledSigning(ctx)
+
+	collector := NewBatchCIDCollector()
+	ctx = ContextWithBatchSigning(ctx, collector)
+
+	collectionCRDT := crdt.NewCollection("collection-version", keys.NewHeadstoreColKey(1))
+	link, rawBlock, err := AddDelta(ctx, collectionCRDT, collectionCRDT.Delta())
+	require.NoError(t, err)
+
+	block, err := GetFromBytes(rawBlock)
+	require.NoError(t, err)
+	require.Nil(t, block.Signature)
+	require.Equal(t, []cid.Cid{link.Cid}, collector.GetCIDs())
+}
+
+func TestAddDelta_WithoutBatchCollector_SignsBlock(t *testing.T) {
+	ctx := context.Background()
+	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	ident, err := identity.Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	ctx = iIdentity.WithContext(ctx, immutable.Some[identity.Identity](ident))
+	ctx = ContextWithEnabledSigning(ctx)
+
+	collectionCRDT := crdt.NewCollection("collection-version", keys.NewHeadstoreColKey(1))
+	_, rawBlock, err := AddDelta(ctx, collectionCRDT, collectionCRDT.Delta())
+	require.NoError(t, err)
+
+	block, err := GetFromBytes(rawBlock)
+	require.NoError(t, err)
+	require.NotNil(t, block.Signature)
 }
