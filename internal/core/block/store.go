@@ -132,7 +132,10 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
 
-	if collector != nil {
+	// Collect one CID per document. The composite block is the document root and
+	// commits to its field blocks, so collecting field CIDs is redundant and
+	// repeats CIDs across documents that share a field value.
+	if collector != nil && block.Delta.IsComposite() {
 		collector.Add(link.Cid)
 	}
 
