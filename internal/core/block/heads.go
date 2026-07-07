@@ -42,6 +42,14 @@ func (hh *heads) key(c cid.Cid) keys.HeadstoreKey {
 }
 
 func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
+	if cache := getHeadsCache(ctx); cache != nil {
+		cache.updateOnWrite(string(hh.namespace.Bytes()), c, height)
+	}
+	return hh.writeHead(ctx, c, height)
+}
+
+// writeHead persists a head to the store without touching the heads cache.
+func (hh *heads) writeHead(ctx context.Context, c cid.Cid, height uint64) error {
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutUvarint(buf, height)
 
@@ -63,17 +71,40 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
+	if cache := getHeadsCache(ctx); cache != nil {
+		cache.updateOnReplace(string(hh.namespace.Bytes()), old, new, height)
+	}
+
 	err := hh.store.Delete(ctx, hh.key(old).Bytes())
 	if err != nil {
 		return NewErrDeletingHead(old, err)
 	}
 
-	return hh.Write(ctx, new, height)
+	return hh.writeHead(ctx, new, height)
 }
 
 // List returns the list of current heads plus the max height.
 // @todo Document Heads.List function
 func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
+	namespaceKey := string(hh.namespace.Bytes())
+	cache := getHeadsCache(ctx)
+
+	if cache != nil {
+		if entry := cache.get(namespaceKey); entry != nil {
+			return entry.heads, entry.maxHeight, nil
+		}
+	}
+
+	// A new document has no document heads, so skip the scan. This is limited to
+	// document heads: a collection head advances across documents, so a branchable
+	// collection must still read it.
+	if _, isDocHead := hh.namespace.(keys.HeadstoreDocKey); isDocHead && IsNewDocCreateMode(ctx) {
+		if cache != nil {
+			cache.set(namespaceKey, nil, 0)
+		}
+		return nil, 0, nil
+	}
+
 	iter, err := hh.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: hh.namespace.Bytes(),
 	})
@@ -117,5 +148,12 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		return bytes.Compare(ci, cj) < 0
 	})
 
-	return heads, maxHeight, iter.Close()
+	if err := iter.Close(); err != nil {
+		return nil, 0, err
+	}
+
+	if cache != nil {
+		cache.set(namespaceKey, heads, maxHeight)
+	}
+	return heads, maxHeight, nil
 }
