@@ -13,7 +13,9 @@ package client
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -288,4 +290,59 @@ func TestNewDocFromJSON_OmittedNonNillableArrayField_NoError(t *testing.T) {
 	}
 	_, err := NewDocFromJSON(ctx, []byte(`{}`), nillableArrayDef)
 	require.NoError(t, err)
+}
+
+func TestNewDocFromMap_TypedStringSliceForNillableArray_Persisted(t *testing.T) {
+	ctx := context.Background()
+	nillableArrayDef := CollectionVersion{
+		Name: "Block",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "cids",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_STRING_ARRAY,
+			},
+		},
+	}
+
+	doc, err := NewDocFromMap(ctx, map[string]any{
+		"cids": []string{"bafyA", "bafyB", "bafyC"},
+	}, nillableArrayDef)
+	require.NoError(t, err)
+
+	val, err := doc.Get("cids")
+	require.NoError(t, err)
+	assert.Equal(t, []immutable.Option[string]{
+		immutable.Some("bafyA"),
+		immutable.Some("bafyB"),
+		immutable.Some("bafyC"),
+	}, val)
+}
+
+func TestNewDocFromMap_TypedTimeSliceForNillableArray_Persisted(t *testing.T) {
+	ctx := context.Background()
+	nillableArrayDef := CollectionVersion{
+		Name: "Block",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "times",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_DATETIME_ARRAY,
+			},
+		},
+	}
+
+	first := time.Date(2026, 7, 7, 12, 0, 0, 0, time.UTC)
+	second := time.Date(2026, 7, 8, 12, 0, 0, 0, time.UTC)
+	doc, err := NewDocFromMap(ctx, map[string]any{
+		"times": []time.Time{first, second},
+	}, nillableArrayDef)
+	require.NoError(t, err)
+
+	val, err := doc.Get("times")
+	require.NoError(t, err)
+	assert.Equal(t, []immutable.Option[time.Time]{
+		immutable.Some(first),
+		immutable.Some(second),
+	}, val)
 }

@@ -608,6 +608,12 @@ func getNillableArray[T any](
 		}
 
 		array = arr
+	case []T:
+		arr := make([]immutable.Option[T], len(val))
+		for i, item := range val {
+			arr[i] = immutable.Some(item)
+		}
+		array = arr
 	case []immutable.Option[T]:
 		array = val
 	}
@@ -704,6 +710,12 @@ func getNillableDateTimeArray(
 			if err != nil {
 				return nil, err
 			}
+			arr[i] = immutable.Some(t)
+		}
+		array = arr
+	case []time.Time:
+		arr := make([]immutable.Option[time.Time], len(val))
+		for i, t := range val {
 			arr[i] = immutable.Some(t)
 		}
 		array = arr
