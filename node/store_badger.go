@@ -34,7 +34,7 @@ func init() {
 		badgerOpts.InMemory = opts.BadgerInMemory
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
-		badgerOpts.MemTableSize = 256 << 20
+		badgerOpts.MemTableSize = 512 << 20
 		badgerOpts.ValueThreshold = 1 << 8
 		badgerOpts.Compression = badgeropts.ZSTD
 		badgerOpts.ZSTDCompressionLevel = 1
