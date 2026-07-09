@@ -928,7 +928,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			return err
 		}
 
-		if evt.DocID != "" {
+		if evt.DocID != "" && !evt.IsRelay {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
 				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 			}
