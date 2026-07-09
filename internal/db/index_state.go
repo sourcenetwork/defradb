@@ -230,7 +230,16 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) ([]in
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		state, err := loadIndexState(ctx, k, action.DecodeStatus(val))
+		status, err := action.DecodeStatus(val)
+		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping index action record with invalid status encoding", err, corelog.String("key", key))
+				continue
+			}
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		state, err := loadIndexState(ctx, k, status)
 		if err != nil {
 			if skipCorrupt {
 				log.ErrorE("Skipping index action record with undecodable data", err, corelog.String("key", key))
