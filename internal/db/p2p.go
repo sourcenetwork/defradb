@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -368,6 +369,10 @@ func (db *DB) SyncDocuments(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+
+	if opt.BlockSyncTimeout.HasValue() {
+		ctx = p2p.WithBlockSyncTimeout(ctx, opt.BlockSyncTimeout.Value())
+	}
 
 	if db.p2p == nil {
 		return ErrNoP2P

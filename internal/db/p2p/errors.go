@@ -72,6 +72,11 @@ var (
 	ErrCollectionNotBranchable     = errors.New("collection is not branchable")
 	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
 	ErrBlockCIDMismatch            = errors.New("pushed block does not match the advertised CID")
+	// ErrBlockSyncTimeout distinguishes a per-block fetch that ran out of time from other
+	// load failures. It usually means the peer serving the block was too slow to respond within
+	// the block-sync timeout (for policy-gated collections, often because its access check is
+	// slower than the timeout), rather than a decode or storage failure.
+	ErrBlockSyncTimeout = errors.New("timeout while fetching linked block during DAG sync")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
@@ -162,6 +167,13 @@ func NewErrCheckBlockMerged(inner error) error   { return errors.Wrap(errCheckBl
 func NewErrVerifyBlockSig(inner error) error     { return errors.Wrap(errVerifyBlockSig, inner) }
 func NewErrGetEncKeysForBlock(inner error) error { return errors.Wrap(errGetEncKeysForBlock, inner) }
 func NewErrLoadLinkedBlock(inner error) error    { return errors.Wrap(errLoadLinkedBlock, inner) }
+
+// NewErrBlockSyncTimeout wraps the timeout error with the link that could not be fetched in time.
+// The result matches both [ErrBlockSyncTimeout] and the underlying cause under errors.Is.
+func NewErrBlockSyncTimeout(inner error, link string) error {
+	return errors.Wrap(ErrBlockSyncTimeout.Error(), errors.Join(ErrBlockSyncTimeout, inner), errors.NewKV("Link", link))
+}
+
 func NewErrDecodeLinkedBlock(inner error) error  { return errors.Wrap(errDecodeLinkedBlock, inner) }
 func NewErrProcessLinkedBlock(inner error) error { return errors.Wrap(errProcessLinkedBlock, inner) }
 func NewErrRetrieveEncKey(inner error) error     { return errors.Wrap(errRetrieveEncKey, inner) }

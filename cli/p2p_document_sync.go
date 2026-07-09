@@ -41,6 +41,9 @@ It doesn't automatically subscribe to the collection or the documents.`,
 
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.SyncDocuments(), iIdentity.FromContext(cmd.Context()))
+			if blockSyncTimeout, _ := cmd.Flags().GetDuration("block-sync-timeout"); blockSyncTimeout > 0 {
+				opt = opt.SetBlockSyncTimeout(blockSyncTimeout)
+			}
 			return cliClient.SyncDocuments(ctx, collectionName, docIDs, opt)
 		},
 	}
@@ -51,6 +54,8 @@ It doesn't automatically subscribe to the collection or the documents.`,
 	EmbedCLIExample(ctx, cmd, "sync multiple documents",
 		`defradb client p2p document sync Users bae123 bae456`)
 
-	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
+	cmd.Flags().Duration("timeout", 0, "Timeout for the whole sync operation")
+	cmd.Flags().Duration("block-sync-timeout", 0,
+		"Per-block fetch timeout for this sync, overriding the node default (e.g. 30s)")
 	return cmd
 }
