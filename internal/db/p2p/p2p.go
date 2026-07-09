@@ -464,9 +464,12 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	// A DAG sync serves many blocks of the same document to the same peer in quick succession.
 	// Reuse a recent positive decision so that the whole sync costs one access-control round-trip
 	// rather than one per block. Only grants are cached (see accessCache), so a peer that was
-	// denied is always re-checked and picks up a freshly propagated grant without delay.
+	// denied is always re-checked and picks up a freshly propagated grant without delay. The
+	// collection id is part of the key because a collection-level block resolves to an empty
+	// docID, and access to it is decided per collection.
+	collectionID := cols[0].CollectionID()
 	for _, docID := range docIDs {
-		if p.accessCache.allowed(pid, docID) {
+		if p.accessCache.allowed(pid, collectionID, docID) {
 			return true
 		}
 	}
@@ -485,7 +488,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 			return false
 		}
 		if peerHasAccess {
-			p.accessCache.storeAllowed(pid, docID)
+			p.accessCache.storeAllowed(pid, collectionID, docID)
 			return true
 		}
 	}
