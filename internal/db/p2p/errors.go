@@ -72,11 +72,7 @@ var (
 	ErrCollectionNotBranchable     = errors.New("collection is not branchable")
 	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
 	ErrBlockCIDMismatch            = errors.New("pushed block does not match the advertised CID")
-	// ErrBlockSyncTimeout distinguishes a per-block fetch that ran out of time from other
-	// load failures. It usually means the peer serving the block was too slow to respond within
-	// the block-sync timeout (for policy-gated collections, often because its access check is
-	// slower than the timeout), rather than a decode or storage failure.
-	ErrBlockSyncTimeout = errors.New("timeout while fetching linked block during DAG sync")
+	ErrBlockSyncTimeout            = errors.New("timeout while fetching linked block during DAG sync")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

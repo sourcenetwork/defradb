@@ -654,14 +654,10 @@ func (p *P2P) processPushlogRequest(
 		if !mightHaveAccess {
 			// This node does not (yet) have read access to the document, so the pushed block is
 			// dropped. On the subscription path this commonly means the access grant has not
-			// propagated yet; the block will be retried when the sender announces it again. Log
-			// it so a dropped push can be told apart from one that never arrived.
-			log.Info(
-				"Dropping pushed block: no read access to document (grant may not have propagated yet)",
-				corelog.String("DocID", req.DocID),
-				corelog.String("CID", headCID.String()),
-				corelog.String("CollectionID", req.CollectionID),
-			)
+			// propagated yet; the block is retried when the sender next announces it. This is an
+			// expected, self-healing transient, so it is intentionally not logged: the sender
+			// re-announces on every update, and logging here would spam a node running under
+			// document ACP once per update per not-yet-granted document.
 			return nil
 		}
 	}
