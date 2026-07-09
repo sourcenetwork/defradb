@@ -652,6 +652,7 @@ func (p *P2P) processPushlogRequest(
 			return err
 		}
 		if !mightHaveAccess {
+			// If we know we don't have access, we can skip the rest of the processing.
 			return nil
 		}
 	}
