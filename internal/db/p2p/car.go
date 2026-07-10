@@ -23,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/immutable"
@@ -143,7 +144,7 @@ func peekCARRootBlock(carData []byte) (*coreblock.Block, error) {
 	rootCID := reader.Roots[0]
 	for {
 		carBlock, err := reader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
