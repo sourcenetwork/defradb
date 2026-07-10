@@ -263,9 +263,6 @@ func syncDocs(s *state.State, action SyncDocs) {
 	if identOption.HasValue() {
 		syncOpts.SetIdentity(identOption.Value())
 	}
-	if action.BlockSyncTimeout.HasValue() {
-		syncOpts.SetBlockSyncTimeout(action.BlockSyncTimeout.Value())
-	}
 
 	err := withRetryOnNode(
 		node,

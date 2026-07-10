@@ -12,8 +12,6 @@
 package tests
 
 import (
-	"time"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -716,10 +714,6 @@ type SyncDocs struct {
 	// be looked up for WaitForSync action.
 	// There must an item for each document in DocIDs.
 	SourceNodes []int
-
-	// BlockSyncTimeout, when set, overrides the node's default per-block fetch timeout for this
-	// sync only. Used to exercise the per-request timeout path.
-	BlockSyncTimeout immutable.Option[time.Duration]
 
 	// Any error expected from the action.
 	ExpectedError string
