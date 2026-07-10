@@ -63,20 +63,10 @@ jobs:
         shell: bash
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> ${GITHUB_ENV}
 
+      # The MACOS_* secrets are optional: while they are unset the notarize
+      # step in .goreleaser.yaml is disabled and macOS binaries ship unsigned.
+      # Signing activates automatically once the secrets are added.
       - name: Run GoReleaser
-        if: matrix.os != 'macos-latest'
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser-pro
-          version: ${{ env.GORELEASER_VERSION }}
-          args: release --clean --split ${{ env.flags }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-
-      - name: Run GoReleaser with MacOS notarization
-        if: matrix.os == 'macos-latest'
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser-pro

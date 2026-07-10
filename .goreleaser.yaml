@@ -32,18 +32,22 @@ builds:
 partial:
   by: target
 
+# Signing and notarization are skipped until the MACOS_SIGN_P12 secret is set,
+# so releases work while the Apple certificates are pending. Once the MACOS_*
+# secrets are added this activates on its own; also remove the quarantine
+# hook from homebrew_casks at that point.
 notarize:
   macos:
-    - enabled: "true"
+    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
       ids:
         - defradb
       sign:
-        certificate: "{{ .Env.MACOS_SIGN_P12 }}"
-        password: "{{ .Env.MACOS_SIGN_PASSWORD }}"
+        certificate: '{{ envOrDefault "MACOS_SIGN_P12" "" }}'
+        password: '{{ envOrDefault "MACOS_SIGN_PASSWORD" "" }}'
       notarize:
-        issuer_id: "{{ .Env.MACOS_NOTARY_ISSUER_ID }}"
-        key_id: "{{ .Env.MACOS_NOTARY_KEY_ID }}"
-        key: "{{ .Env.MACOS_NOTARY_KEY }}"
+        issuer_id: '{{ envOrDefault "MACOS_NOTARY_ISSUER_ID" "" }}'
+        key_id: '{{ envOrDefault "MACOS_NOTARY_KEY_ID" "" }}'
+        key: '{{ envOrDefault "MACOS_NOTARY_KEY" "" }}'
         wait: true
 
 archives:
@@ -107,6 +111,15 @@ homebrew_casks:
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
+    # The binaries are not yet signed/notarized, so Gatekeeper quarantines
+    # them and macOS reports them as damaged. Strip the quarantine attribute
+    # on install; remove this hook once notarization is enabled.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/defradb"]
+          end
 
 release:
   target_commitish: "{{ .Commit }}"
