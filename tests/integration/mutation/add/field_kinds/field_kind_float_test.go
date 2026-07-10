@@ -458,7 +458,7 @@ func TestMutationAddFieldKinds_WithNonNillableFloatArray_FromAnySlice(t *testing
 			&action.AddCollection{
 				SDL: `
 					type User {
-						points: [Float64!]
+						points: [Float!]
 					}
 				`,
 			},
