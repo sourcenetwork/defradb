@@ -25,22 +25,28 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-const purgeChunkSize = 10
+// purgeChunkSize is the number of documents purged per transaction when no caller
+// transaction is supplied. It keeps each commit well under the store's per-transaction
+// size limit.
+const purgeChunkSize = 100
 
-// PurgeByDocIDs permanently removes all state for the given documents from this node.
-// The collection is locked for the duration; no concurrent document reads or writes
-// on this collection will progress while this executes.
+// PurgeByDocIDs permanently removes all state for the given documents from this node:
+// datastore values, headstore entries, and, when pruneHistory is true, every blockstore
+// block reachable from each document's head CIDs. Unlike DeleteDocument, this is a hard,
+// irreversible removal rather than a soft-delete CRDT operation.
 //
-// Unlike DeleteDocument (a soft-delete CRDT operation), PurgeByDocIDs performs a hard,
-// irreversible removal of datastore values, headstore entries, and — when pruneHistory
-// is true — all blockstore blocks reachable from each document's head CIDs.
+// Without a caller-provided transaction the documents are purged in chunks, each committed
+// in its own transaction, so no single transaction exceeds the store's size limit. The
+// collection lock is therefore held per chunk, and other transactions on the collection can
+// proceed between chunks. With a caller-provided transaction the whole purge runs inside it,
+// so a set too large for one transaction must be purged without a caller transaction.
 func (c *collection) PurgeByDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
 	pruneHistory bool,
 	opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
-	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+	ctx, _, hasCallerTxn := getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -51,6 +57,27 @@ func (c *collection) PurgeByDocIDs(
 		return err
 	}
 
+	if hasCallerTxn {
+		return c.purgeChunk(ctx, docIDs, pruneHistory)
+	}
+
+	for i := 0; i < len(docIDs); i += purgeChunkSize {
+		end := min(i+purgeChunkSize, len(docIDs))
+		if err := c.purgeChunk(ctx, docIDs[i:end], pruneHistory); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// purgeChunk purges the given documents within a single transaction. When the context
+// already carries a transaction it is reused and committing it is left to the owner.
+func (c *collection) purgeChunk(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+) error {
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -64,28 +91,13 @@ func (c *collection) PurgeByDocIDs(
 
 	c.db.lockSet.CollectionLock(txn, shortID)
 
-	for i := 0; i < len(docIDs); i += purgeChunkSize {
-		end := min(i+purgeChunkSize, len(docIDs))
-		if err := c.purgeChunk(ctx, shortID, docIDs[i:end], pruneHistory); err != nil {
-			return err
-		}
-	}
-
-	return txn.Commit()
-}
-
-func (c *collection) purgeChunk(
-	ctx context.Context,
-	shortID uint32,
-	docIDs []client.DocID,
-	pruneHistory bool,
-) error {
 	for _, docID := range docIDs {
 		if err := c.purgeOneDoc(ctx, shortID, docID, pruneHistory); err != nil {
 			return err
 		}
 	}
-	return nil
+
+	return txn.Commit()
 }
 
 func (c *collection) purgeOneDoc(
@@ -148,7 +160,7 @@ func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID u
 
 		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
 
-		for i := 0; i < hardDeleteChunkSize; i++ {
+		for range hardDeleteChunkSize {
 			hasNext, err := iter.Next()
 			if err != nil {
 				return errors.Join(err, iter.Close())
