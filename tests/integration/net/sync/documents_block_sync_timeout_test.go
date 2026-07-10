@@ -21,11 +21,11 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// A per-request block-sync timeout that is too small for any block fetch to complete must abort the
-// DAG fetch (the receiver logs the distinct block-sync timeout error and the document does not
-// materialise). A generous per-request timeout on the same setup syncs cleanly. Together these
-// exercise the SyncDocuments BlockSyncTimeout option end-to-end: the option threads through to
-// loadBlockLinks and actually bounds the per-block fetch.
+// A per-request block-sync timeout that is too small for any block fetch to complete aborts the
+// DAG fetch, so the document does not materialise on the receiver. A generous per-request timeout
+// on the same setup syncs it cleanly. Together these exercise the SyncDocuments BlockSyncTimeout
+// option end-to-end: the option threads through to loadBlockLinks and actually bounds the
+// per-block fetch (the generous case is the control that rules out an unrelated sync failure).
 func TestDocSync_PerRequestBlockSyncTimeout_BoundsBlockFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
