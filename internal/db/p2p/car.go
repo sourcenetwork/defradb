@@ -13,7 +13,6 @@ package p2p
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -101,7 +100,9 @@ func (p *P2P) collectDAGBlocks(
 		coreblock.BlockSchemaPrototype,
 	)
 	if err != nil {
-		return err
+		// Block may have been pruned locally; it was already pushed to replicators before
+		// pruning so they already hold it. Skip rather than aborting the CAR.
+		return nil
 	}
 
 	block, err := coreblock.GetFromNode(node)
@@ -142,7 +143,7 @@ func peekCARRootBlock(carData []byte) (*coreblock.Block, error) {
 	rootCID := reader.Roots[0]
 	for {
 		carBlock, err := reader.Next()
-		if errors.Is(err, io.EOF) {
+		if err == io.EOF {
 			break
 		}
 		if err != nil {
@@ -174,7 +175,7 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 	for {
 		carBlock, err := reader.Next()
-		if errors.Is(err, io.EOF) {
+		if err == io.EOF {
 			break
 		}
 		if err != nil {
