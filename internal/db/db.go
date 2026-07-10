@@ -213,6 +213,7 @@ func newDB(
 			db.nodeIdentity,
 			NewCollectionRetriever(db),
 			db.collectionRepository,
+			cfg.ReplicationFilter,
 		)
 		if err != nil {
 			return nil, err

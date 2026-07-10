@@ -65,7 +65,10 @@ const (
 	// PurgeName is the name of the purge event.
 	PurgeName = Name("purge")
 	// TopicPeerEventName is the name of the topic peer join/leave event.
-	TopicPeerEventName  = Name("topic-peer-event")
+	TopicPeerEventName = Name("topic-peer-event")
+	// P2PNoPeersName is the name of the event emitted when a pubsub publish finds no
+	// subscribed peers on the topic, indicating the update may not have been received.
+	P2PNoPeersName      = Name("p2p-no-peers")
 	ActionExecutionName = Name("action-execution")
 )
 
@@ -183,6 +186,17 @@ type TopicPeerEvent struct {
 	Topic string
 	// EventType is the type of event: "JOINED" or "LEFT".
 	EventType string
+}
+
+// P2PNoPeers is emitted when a pubsub publish finds no subscribed peers on the topic.
+// Consumers can use this to trigger a retry or log a warning that the update may be lost.
+type P2PNoPeers struct {
+	// DocID is the document ID that triggered the update, if applicable.
+	DocID string
+	// CollectionID is the collection the document belongs to.
+	CollectionID string
+	// Topic is the pubsub topic on which no peers were found.
+	Topic string
 }
 
 type ActionExecution struct {

@@ -234,6 +234,7 @@ func (c *collection) add(
 	}
 
 	ctx = setContextDocEncryption(ctx, opt)
+	ctx = coreblock.ContextWithNewDocCreateMode(ctx)
 
 	err = c.save(ctx, doc, true)
 	if err != nil {
@@ -408,6 +409,28 @@ func (c *collection) SaveDocument(
 	}
 	if err != nil {
 		return err
+	}
+
+	return txn.Commit()
+}
+
+func (c *collection) SaveManyDocuments(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	for _, doc := range docs {
+		if err := c.SaveDocument(ctx, doc, opts...); err != nil {
+			return err
+		}
 	}
 
 	return txn.Commit()

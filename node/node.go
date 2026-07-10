@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -48,6 +49,16 @@ type DB interface {
 	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	Close()
+	// ExportDocKVs writes raw KV pairs for the given documents to w.
+	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	// ExportFieldMapping returns a JSON mapping of collection and field short IDs for the named collection.
+	ExportFieldMapping(ctx context.Context, collectionName string) ([]byte, error)
+	// ImportRawKVs reads raw KV pairs from r and writes them to the rootstore.
+	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	// ImportRawKVsWithMapping reads raw KV pairs from r, remapping short IDs per mappingJSON.
+	ImportRawKVsWithMapping(ctx context.Context, r io.Reader, mappingJSON []byte) (int, error)
+	// RebuildCollectionIndexes rebuilds secondary indexes for the named collection.
+	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 }
 
 // Node is a DefraDB instance with optional sub-systems.
@@ -70,6 +81,9 @@ type Node struct {
 	// shutdown path rather than leaving a half-alive process for the user
 	// to SIGKILL. Buffered so startAPI never blocks on a missing reader.
 	apiErrCh chan error
+	// ReplicationFilter is an optional filter that rejects incoming P2P documents
+	// before they are stored locally. Set this between New() and Start().
+	ReplicationFilter client.ReplicationFilter
 }
 
 // APIError returns a buffered, never-closed channel that receives at most one
@@ -177,6 +191,9 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	if n.peer != nil {
 		dbBuilder.SetP2P(n.peer)
+	}
+	if n.ReplicationFilter != nil {
+		dbBuilder.SetReplicationFilter(n.ReplicationFilter)
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)

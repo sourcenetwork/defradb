@@ -59,6 +59,11 @@ type Collection interface {
 	// will be created.
 	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
+	// SaveManyDocuments saves multiple documents in a single transaction.
+	// For each document, if one already exists with the given DocID it will be updated;
+	// otherwise a new document will be created.
+	SaveManyDocuments(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
+
 	// DeleteDocument will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error
@@ -172,6 +177,20 @@ type Collection interface {
 	// User-managed transactions are not supported by this function if the backing store does not support
 	// concurrent open transactions, such as LevelDB.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
+
+	// PurgeByDocIDs permanently removes all documents with the given docIDs from this node.
+	// This call will lock the collection, and no other read or write document operations on this collection
+	// will progress whilst this is executing.
+	//
+	// Unlike DeleteDocument (a soft-delete CRDT operation), this performs a hard, irreversible removal.
+	// When pruneHistory is true, all blockstore blocks reachable from each document's head CIDs are
+	// also deleted.
+	PurgeByDocIDs(
+		ctx context.Context,
+		docIDs []DocID,
+		pruneHistory bool,
+		opts ...options.Enumerable[options.TruncateCollectionOptions],
+	) error
 }
 
 // UpdateResult wraps the result of an update call.

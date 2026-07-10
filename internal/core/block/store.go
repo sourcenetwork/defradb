@@ -115,16 +115,28 @@ func addDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
-		if err != nil {
-			return cidlink.Link{}, nil, NewErrSignBlock(err)
+	// When a batch collector is active, the batch is signed once over the Merkle
+	// root of the collected CIDs, so per-block signing is skipped.
+	collector := BatchSigningCollectorFromContext(ctx)
+	if collector == nil {
+		if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
+			err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
+			if err != nil {
+				return cidlink.Link{}, nil, NewErrSignBlock(err)
+			}
 		}
 	}
 
 	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
+	}
+
+	// Collect one CID per document. The composite block is the document root and
+	// commits to its field blocks, so collecting field CIDs is redundant and
+	// repeats CIDs across documents that share a field value.
+	if collector != nil && block.Delta.IsComposite() {
+		collector.Add(link.Cid)
 	}
 
 	// merge the delta and update the state

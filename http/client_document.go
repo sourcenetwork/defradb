@@ -217,6 +217,16 @@ func (c *Collection) SaveDocument(
 	return err
 }
 
+func (c *Collection) SaveManyDocuments(
+	_ context.Context,
+	_ []*client.Document,
+	_ ...options.Enumerable[options.SaveDocumentOptions],
+) error {
+	// SaveManyDocuments requires a shared transaction and batch signing, neither of which
+	// can be preserved across stateless HTTP requests. Use direct node access instead.
+	return ErrNotSupportedViaHTTP
+}
+
 func (c *Collection) DeleteDocument(
 	ctx context.Context,
 	docID client.DocID,

@@ -328,3 +328,17 @@ func (c *Collection) Truncate(
 
 	return nil
 }
+
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	ctx = setCtxTxnFromCollection(ctx, c)
+	col, err := c.w.GetCollectionByName(ctx, c.def.Name)
+	if err != nil {
+		return err
+	}
+	return col.PurgeByDocIDs(ctx, docIDs, pruneHistory, opts...)
+}

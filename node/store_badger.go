@@ -14,6 +14,7 @@ import (
 	"context"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	badgeropts "github.com/dgraph-io/badger/v4/options"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
@@ -33,6 +34,9 @@ func init() {
 		badgerOpts.InMemory = opts.BadgerInMemory
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
+		badgerOpts.ValueThreshold = 1 << 8
+		badgerOpts.Compression = badgeropts.ZSTD
+		badgerOpts.ZSTDCompressionLevel = 1
 
 		if len(opts.BadgerEncryptionKey) > 0 {
 			// Having a cache improves the performance.
