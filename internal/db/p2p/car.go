@@ -176,7 +176,7 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 	for {
 		carBlock, err := reader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
