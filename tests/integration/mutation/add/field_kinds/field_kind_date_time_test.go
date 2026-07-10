@@ -405,3 +405,91 @@ func TestMutationAdd_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestMutationAddFieldKinds_WithNillableDateTimeArray_FromStringSlice verifies
+// that a []string of RFC3339 timestamps is parsed element-by-element rather than
+// silently dropped, matching the []any behaviour.
+func TestMutationAddFieldKinds_WithNillableDateTimeArray_FromStringSlice(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						times: [DateTime]
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"times": []string{
+						"2017-07-23T03:46:56Z",
+						"2018-08-24T04:47:57Z",
+					},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						times
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"times": []immutable.Option[time.Time]{
+								immutable.Some(time.Date(2017, time.July, 23, 3, 46, 56, 0, time.UTC)),
+								immutable.Some(time.Date(2018, time.August, 24, 4, 47, 57, 0, time.UTC)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestMutationAddFieldKinds_WithNonNillableDateTimeArray_FromStringSlice verifies
+// that a []string of RFC3339 timestamps is parsed rather than silently dropped for
+// a non-nillable array field.
+func TestMutationAddFieldKinds_WithNonNillableDateTimeArray_FromStringSlice(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						times: [DateTime!]
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"times": []string{
+						"2017-07-23T03:46:56Z",
+						"2018-08-24T04:47:57Z",
+					},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						times
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"times": []time.Time{
+								time.Date(2017, time.July, 23, 3, 46, 56, 0, time.UTC),
+								time.Date(2018, time.August, 24, 4, 47, 57, 0, time.UTC),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

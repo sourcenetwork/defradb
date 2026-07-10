@@ -272,3 +272,82 @@ func TestMutationAddFieldKinds_WithNonNillableIntArray_FromAnySlice(t *testing.T
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestMutationAddFieldKinds_WithNillableIntArray_FromIntSlice verifies that a
+// []int (Go's default integer literal type, which differs from the field's
+// int64 element type) is accepted rather than silently dropped.
+func TestMutationAddFieldKinds_WithNillableIntArray_FromIntSlice(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						numbers: [Int]
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"numbers": []int{1, 2, 3},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						numbers
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"numbers": []immutable.Option[int64]{
+								immutable.Some(int64(1)),
+								immutable.Some(int64(2)),
+								immutable.Some(int64(3)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestMutationAddFieldKinds_WithNonNillableIntArray_FromIntSlice verifies that a
+// []int is accepted rather than silently dropped for a non-nillable array field.
+func TestMutationAddFieldKinds_WithNonNillableIntArray_FromIntSlice(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						numbers: [Int!]
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"numbers": []int{1, 2, 3},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						numbers
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"numbers": []int64{1, 2, 3},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
