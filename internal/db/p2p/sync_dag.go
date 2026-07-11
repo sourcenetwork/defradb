@@ -104,6 +104,16 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 				return ctx.Err()
 			}
 
+			// Skip fetch if the linked block is already merged locally — avoids a BitSwap
+			// round-trip for historical blocks that may have been pruned on the sender.
+			linkedMerged, err := bstore.IsMerged(ctx, lnk.Cid)
+			if err != nil {
+				return NewErrCheckBlockMerged(err)
+			}
+			if linkedMerged {
+				continue
+			}
+
 			ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
 			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 			cancel()

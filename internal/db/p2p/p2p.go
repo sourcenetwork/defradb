@@ -908,19 +908,31 @@ func (p *P2P) processBatchedDocuments(
 
 	return results, nil
 }
-
 func (p *P2P) SendUpdate(evt event.Update) error {
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
 	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry {
+		// Pre-generate a CAR so receivers import the full DAG without a BitSwap round-trip.
+		var carData []byte
+		if block, err := coreblock.GetFromBytes(evt.Block); err == nil {
+			ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
+			if data, err := p.generateCAR(ctx, block); err == nil {
+				carData = data
+			} else {
+				log.ErrorE("Failed to generate CAR for pubsub, receivers will fall back to DAG sync", err)
+			}
+			cancel()
+		}
+
 		req := &protocol.PushLogRequest{
 			DocID:        evt.DocID,
 			CID:          evt.Cid.Bytes(),
 			CollectionID: evt.CollectionID,
 			Creator:      p.host.ID(),
 			Block:        evt.Block,
+			CAR:          carData,
 		}
 
 		b, err := cbor.Marshal(req)
@@ -950,6 +962,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			DocID: evt.DocID,
 			CID:   evt.Cid.Bytes(),
 			Block: evt.Block,
+			CAR:   carData,
 		})
 		p.topicPeerMu.RLock()
 		noPeers := p.topicPeerCounts[evt.CollectionID] == 0

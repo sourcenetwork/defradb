@@ -13,7 +13,6 @@ package p2p
 import (
 	"bytes"
 	"context"
-	"errors"
 	"io"
 
 	"github.com/ipfs/go-cid"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/immutable"
@@ -101,7 +101,9 @@ func (p *P2P) collectDAGBlocks(
 		coreblock.BlockSchemaPrototype,
 	)
 	if err != nil {
-		return err
+		// Block may have been pruned locally; it was already pushed to replicators before
+		// pruning so they already hold it. Skip rather than aborting the CAR.
+		return nil
 	}
 
 	block, err := coreblock.GetFromNode(node)
