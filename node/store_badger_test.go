@@ -11,9 +11,12 @@
 package node
 
 import (
+	"context"
 	"crypto/rand"
 	"testing"
+	"time"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,4 +41,58 @@ func TestSetBadgerEncryptionKey(t *testing.T) {
 
 	opts := utils.NewOptions(options.Node().Store().SetBadgerEncryptionKey(encryptionKey).Node())
 	assert.Equal(t, encryptionKey, opts.Store.BadgerEncryptionKey)
+}
+
+func TestNewStoreBadgerGCWrapping(t *testing.T) {
+	ctx := context.Background()
+
+	inMem, _, err := NewStore(ctx, options.NodeStore().
+		SetType(options.NodeBadgerStore).SetBadgerInMemory(true).SetBadgerFileSize(1<<20))
+	require.NoError(t, err)
+	defer inMem.Close()
+	_, wrapped := inMem.(*badgerStore)
+	assert.False(t, wrapped, "in-memory store must not run value log GC")
+
+	persistent, _, err := NewStore(ctx, options.NodeStore().
+		SetType(options.NodeBadgerStore).SetPath(t.TempDir()).SetBadgerFileSize(1<<20))
+	require.NoError(t, err)
+	defer persistent.Close()
+	_, wrapped = persistent.(*badgerStore)
+	assert.True(t, wrapped, "persistent store must run value log GC")
+}
+
+func TestBadgerStoreCloseStopsGCAndIsIdempotent(t *testing.T) {
+	store, err := newBadgerStore(t.TempDir(), badgerds.DefaultOptions(""))
+	require.NoError(t, err)
+
+	require.NoError(t, store.Close())
+
+	select {
+	case <-store.done:
+	default:
+		t.Fatal("value log GC goroutine did not stop on Close")
+	}
+
+	// A second Close must not panic on the already-closed stop channel.
+	assert.NotPanics(t, func() { _ = store.Close() })
+}
+
+func TestBadgerStoreReclaimValueLogTerminates(t *testing.T) {
+	store, err := newBadgerStore(t.TempDir(), badgerds.DefaultOptions(""))
+	require.NoError(t, err)
+	defer store.Close()
+
+	// With no value log file eligible for GC, RunValueLogGC returns ErrNoRewrite on
+	// the first call, so reclaimValueLog must return rather than spin on the error.
+	done := make(chan struct{})
+	go func() {
+		store.reclaimValueLog()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(30 * time.Second):
+		t.Fatal("reclaimValueLog did not terminate")
+	}
 }
