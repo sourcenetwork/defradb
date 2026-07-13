@@ -160,8 +160,7 @@ func GetDocIDsForBlockFromStore(
 		return nil, nil
 	}
 
-	prefix := keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes()
-	prefix = append(prefix, '/')
+	prefix := blockOwnersPrefix(blockCID)
 	iter, err := store.Iterator(ctx, corekv.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
@@ -188,6 +187,43 @@ func GetDocIDsForBlockFromStore(
 		return nil, err
 	}
 	return docIDs, nil
+}
+
+// blockOwnersPrefix is the key prefix under which every owner DocID of blockCID is stored.
+func blockOwnersPrefix(blockCID cid.Cid) []byte {
+	return append(keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes(), '/')
+}
+
+// BlockHasOwners reports whether any document still owns blockCID. Prefer this over
+// GetDocIDsForBlockFromStore when only the presence of an owner matters: it stops at the
+// first match rather than materializing the whole owner set.
+func BlockHasOwners(ctx context.Context, store corekv.Reader, blockCID cid.Cid) (bool, error) {
+	if !blockCID.Defined() {
+		return false, nil
+	}
+
+	prefix := blockOwnersPrefix(blockCID)
+	iter, err := store.Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefix,
+		KeysOnly: true,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return false, stderrors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		if len(bytes.TrimPrefix(iter.Key(), prefix)) != 0 {
+			return true, iter.Close()
+		}
+	}
+	return false, iter.Close()
 }
 
 func DeleteBlockDocIDMapping(

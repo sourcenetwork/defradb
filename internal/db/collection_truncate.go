@@ -496,11 +496,11 @@ func (c *collection) deleteBlocks(
 		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
 			return false, err
 		}
-		docIDs, err := id.GetDocIDsForBlockFromStore(ctx, systemstore, blockCID)
+		hasOwners, err := id.BlockHasOwners(ctx, systemstore, blockCID)
 		if err != nil {
 			return false, err
 		}
-		return len(docIDs) == 0, nil
+		return !hasOwners, nil
 	}
 
 	deleteBlock := func(blockCID cid.Cid) error {
