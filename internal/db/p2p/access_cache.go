@@ -102,6 +102,9 @@ func (c *accessCache) storeAllowed(peerID, collectionID, docID string) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	// Reads keep their own key fresh (see allowed), but a key that is never read again would leak.
+	// Store is the only place the map grows, so bound it here with a bulk sweep rather than scanning
+	// the whole map on every (hot-path) read.
 	if len(c.entries) >= sweepThreshold {
 		c.sweepExpired()
 	}
