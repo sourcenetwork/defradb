@@ -45,6 +45,7 @@ func (c *collection) DeleteDocumentsWithFilter(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -109,14 +110,9 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		primaryKey, err := c.getPrimaryKeyFromDocIDString(ctx, docID)
 		if err != nil {
 			return nil, err
-		}
-
-		primaryKey := keys.PrimaryDataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
@@ -138,6 +134,11 @@ func (c *collection) applyDelete(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
 ) error {
+	docID, err := c.getDocIDFromPrimaryKey(ctx, primaryKey)
+	if err != nil {
+		return err
+	}
+
 	// Must also have read permission to delete, inorder to check if document exists.
 	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
@@ -147,14 +148,14 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if isDeleted {
-		return NewErrDocumentDeleted(primaryKey.DocID)
+		return NewErrDocumentDeleted(docID)
 	}
 
 	// Stop deletion of document if the correct permissions aren't there.
-	canDelete, err := c.checkAccessOfDocWithACP(
+	canDelete, err := c.checkAccessOfDoc(
 		ctx,
 		acpTypes.DocumentDeletePerm,
-		primaryKey.DocID,
+		docID,
 	)
 
 	if err != nil {
@@ -164,25 +165,18 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	docID, err := client.NewDocIDFromString(primaryKey.DocID)
+	parsedDocID, err := client.NewDocIDFromString(docID)
 	if err != nil {
 		return err
 	}
 
-	if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
+	if err := c.deleteIndexedDocWithID(ctx, parsedDocID); err != nil {
 		return err
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	ident := identity.FromContext(ctx)
-	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
-	}
-
-	if !c.db.signingDisabled {
-		ctx = coreblock.ContextWithEnabledSigning(ctx)
-	}
+	signingCtx := c.contextForSigning(ctx)
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
@@ -190,14 +184,33 @@ func (c *collection) applyDelete(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
+	link, b, err := coreblock.AddDeltaWithOptions(
+		signingCtx,
+		merkleCRDT,
+		merkleCRDT.DeleteDelta(),
+		coreblock.AddDeltaOptions{
+			EncryptionDocKey: keys.EncodeDocRef(primaryKey.CollectionShortID, primaryKey.DocShortID),
+		},
+	)
 	if err != nil {
 		return err
+	}
+	if err := id.SetBlockDocIDMapping(ctx, link.Cid, docID); err != nil {
+		return err
+	}
+	encryptionCIDs, err := appendEncryptionCID(nil, b)
+	if err != nil {
+		return err
+	}
+	for _, encCID := range encryptionCIDs {
+		if err := id.SetBlockDocIDMapping(ctx, encCID, docID); err != nil {
+			return err
+		}
 	}
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{
-		DocID:        primaryKey.DocID,
+		DocID:        docID,
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        b,
@@ -207,18 +220,18 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.IsBranchable {
-		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 		if err != nil {
 			return err
 		}
 
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
+			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(
-			ctx,
+			signingCtx,
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,

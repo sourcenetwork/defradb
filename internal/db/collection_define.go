@@ -78,9 +78,9 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
-		// Index epoch allocation needs the short collection ID, but SaveCollection only registers
+		// Index epoch allocation needs the collection short ID, but SaveCollection only registers
 		// it after the indexes are built, so register it now. The call is idempotent.
-		if err := id.SetShortCollectionID(ctx, def.Definition.CollectionID); err != nil {
+		if err := id.SetCollectionShortID(ctx, def.Definition.CollectionID); err != nil {
 			return nil, err
 		}
 
@@ -103,6 +103,15 @@ func (db *DB) addCollections(
 		col, err := db.newCollection(ctx, def.Definition, txnOpt)
 		if err != nil {
 			return nil, err
+		}
+
+		// Only branchable collections have a collection-level commit DAG, so only they need to be
+		// registered as an acp object (to gate access to that DAG). Registration is further a no-op
+		// unless the collection is permissioned and the request carries an identity.
+		if col.Version().IsBranchable {
+			if err := col.registerCollection(ctx); err != nil {
+				return nil, err
+			}
 		}
 
 		for _, index := range def.Definition.Indexes {

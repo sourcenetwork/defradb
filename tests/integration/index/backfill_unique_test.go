@@ -80,7 +80,8 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 			},
 			// The planner ignores the failed index: both docs come back via a full scan.
 			&action.Request{
-				Request: req,
+				Request:           req,
+				NonOrderedResults: true,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Bob", "age": int64(21)},

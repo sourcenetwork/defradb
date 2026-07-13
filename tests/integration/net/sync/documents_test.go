@@ -128,7 +128,8 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				NodeID: immutable.Some(2),
+				NodeID:            immutable.Some(2),
+				NonOrderedResults: true,
 				Request: `query {
 					Users {
 						Name

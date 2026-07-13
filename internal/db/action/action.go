@@ -30,9 +30,15 @@ func encodeStatus(status client.ActionStatus) []byte {
 }
 
 // DecodeStatus decodes an action status value (a bare uvarint).
-func DecodeStatus(val []byte) client.ActionStatus {
-	status, _ := binary.Uvarint(val)
-	return client.ActionStatus(status)
+//
+// It returns ErrInvalidActionStatusEncoding when the input is empty,
+// truncated or overflows a uint64 (binary.Uvarint byte-count ≤ 0).
+func DecodeStatus(val []byte) (client.ActionStatus, error) {
+	status, n := binary.Uvarint(val)
+	if n <= 0 {
+		return 0, ErrInvalidActionStatusEncoding
+	}
+	return client.ActionStatus(status), nil
 }
 
 // Register a new action for execution.
@@ -270,7 +276,7 @@ func getStatus(
 		return 0, err
 	}
 
-	return DecodeStatus(val), nil
+	return DecodeStatus(val)
 }
 
 // ListExecutions lists all the actions that have not yet successfully completed.
@@ -311,11 +317,16 @@ func ListExecutions(ctx context.Context) ([]client.ActionExecution, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
+		status, err := DecodeStatus(val)
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+
 		results = append(results, client.ActionExecution{
 			CollectionID: key.CollectionID,
 			Action:       key.Action,
 			Subject:      key.Subject,
-			Status:       DecodeStatus(val),
+			Status:       status,
 			Reason:       reason,
 		})
 	}

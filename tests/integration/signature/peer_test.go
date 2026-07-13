@@ -202,6 +202,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: `query {
@@ -228,6 +229,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

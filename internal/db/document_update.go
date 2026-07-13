@@ -48,6 +48,7 @@ func (c *collection) UpdateDocumentsWithFilter(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = setContextSigning(ctx, c.db.signingDisabled, opt.EnableSigning)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

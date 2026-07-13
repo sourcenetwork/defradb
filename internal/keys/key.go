@@ -33,6 +33,8 @@ func PrettyPrint(k Key) string {
 	switch typed := k.(type) {
 	case DataStoreKey:
 		return typed.PrettyPrint()
+	case PrimaryDataStoreKey:
+		return typed.PrettyPrint()
 	default:
 		return typed.ToString()
 	}

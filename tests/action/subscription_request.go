@@ -81,13 +81,14 @@ func (a *SubscriptionRequest) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		reqOption := options.ExecRequest()
-		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIDs[index])
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			reqOption.SetIdentity(identOption.Value())
 		}
 
-		result := node.ExecRequest(a.s.Ctx, a.Request, reqOption)
+		result := node.ExecRequest(a.s.Ctx, replace(a.s, nodeID, a.Request), reqOption)
 		if assertErrors(a.s.T, result.GQL.Errors, a.ExpectedError) {
 			return
 		}
@@ -121,7 +122,7 @@ func (a *SubscriptionRequest) Execute() {
 						r,
 						a.ExpectedError,
 						nil,
-						0,
+						nodeID,
 						true,
 					)
 

@@ -40,14 +40,14 @@ type indexState struct {
 	Status client.ActionStatus
 	// Reason is the action's generic error reason, set when failed.
 	Reason string
-	// Watermark is the last indexed docID, decoded from the action payload while building.
-	Watermark string
+	// Watermark is the last indexed document short ID, decoded from the action payload while building.
+	Watermark uint64
 }
 
 // buildPayload is the opaque payload of a build (backfill) action record.
 type buildPayload struct {
-	// Watermark is the last indexed docID, letting an interrupted build resume.
-	Watermark string
+	// Watermark is the last indexed document short ID, letting an interrupted build resume.
+	Watermark uint64
 }
 
 func (s indexState) isBuilding() bool {
@@ -137,7 +137,7 @@ func (db *DB) startIndexDrop(ctx context.Context, collectionID string, indexID u
 
 // advanceIndexWatermark records build progress on the transaction bound to ctx, without
 // publishing an event since the status is unchanged.
-func (db *DB) advanceIndexWatermark(ctx context.Context, collectionID string, indexID uint32, watermark string) error {
+func (db *DB) advanceIndexWatermark(ctx context.Context, collectionID string, indexID uint32, watermark uint64) error {
 	payload, err := json.Marshal(buildPayload{Watermark: watermark})
 	if err != nil {
 		return err
@@ -237,7 +237,16 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) ([]in
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		state, err := loadIndexState(ctx, k, action.DecodeStatus(val))
+		status, err := action.DecodeStatus(val)
+		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping index action record with invalid status encoding", err, corelog.String("key", key))
+				continue
+			}
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		state, err := loadIndexState(ctx, k, status)
 		if err != nil {
 			if skipCorrupt {
 				log.ErrorE("Skipping index action record with undecodable data", err, corelog.String("key", key))

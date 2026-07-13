@@ -63,8 +63,8 @@ func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state
 		return err
 	}
 
-	startAfter := immutable.None[string]()
-	if state.Watermark != "" {
+	startAfter := immutable.None[uint64]()
+	if state.Watermark != 0 {
 		startAfter = immutable.Some(state.Watermark)
 	}
 	return db.backfillIndex(ctx, def, desc, startAfter)
@@ -122,12 +122,12 @@ func (db *DB) findIndexDefinition(
 // drop record. Rebuilds leave no drop record — their superseded epochs are collected by
 // recoverStaleEpochs instead.
 func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error {
-	shortID, err := db.resolveShortCollectionID(ctx, key.CollectionID)
+	collectionShortID, err := db.resolveCollectionShortID(ctx, key.CollectionID)
 	if err != nil {
 		return err
 	}
 	name := fmt.Sprintf("index %d", key.IndexID)
-	return db.gcIndex(ctx, key.CollectionID, shortID, key.IndexID, name)
+	return db.gcIndex(ctx, key.CollectionID, collectionShortID, key.IndexID, name)
 }
 
 // recoverStaleEpochs collects superseded epochs left by interrupted rebuilds across every active
@@ -157,7 +157,7 @@ func (db *DB) recoverStaleEpochs(ctx context.Context) error {
 		if len(col.Indexes) == 0 {
 			continue
 		}
-		shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
+		collectionShortID, err := db.resolveCollectionShortID(ctx, col.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -167,7 +167,7 @@ func (db *DB) recoverStaleEpochs(ctx context.Context) error {
 				return err
 			}
 			name := fmt.Sprintf("index %d", desc.ID)
-			if err := db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, name); err != nil {
+			if err := db.gcStaleEpochs(ctx, collectionShortID, desc.ID, liveEpoch, name); err != nil {
 				return err
 			}
 		}
@@ -186,13 +186,13 @@ func (db *DB) indexLiveEpoch(ctx context.Context, collectionID string, indexID u
 	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
 }
 
-// resolveShortCollectionID opens a read-only transaction to look up the short
+// resolveCollectionShortID opens a read-only transaction to look up the short
 // collection ID, then discards the transaction.
-func (db *DB) resolveShortCollectionID(ctx context.Context, collectionID string) (uint32, error) {
+func (db *DB) resolveCollectionShortID(ctx context.Context, collectionID string) (uint32, error) {
 	rawTxn, err := db.NewTxn(true)
 	if err != nil {
 		return 0, err
 	}
 	defer rawTxn.Discard()
-	return id.GetShortCollectionID(InitContext(ctx, rawTxn), collectionID)
+	return id.GetCollectionShortID(InitContext(ctx, rawTxn), collectionID)
 }

@@ -26,7 +26,6 @@ import (
 // LWWDelta is a single delta operation for an LWWRegister
 // @todo: Expand delta metadata (investigate if needed)
 type LWWDelta struct {
-	DocID     []byte
 	FieldName string
 	Priority  uint64
 	// CollectionVersionID is the collection version datastore key at the time of commit.
@@ -44,7 +43,6 @@ var _ Delta = (*LWWDelta)(nil)
 func (d LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type LWWDelta struct {
-		docID     			Bytes
 		fieldName 			String
 		priority  			Int
 		collectionVersionID String
@@ -102,7 +100,6 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 
 	return &LWWDelta{
 		Data:                bytes,
-		DocID:               []byte(l.key.DocID),
 		FieldName:           l.fieldName,
 		CollectionVersionID: l.collectionVersionID,
 	}, nil
@@ -122,18 +119,16 @@ func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 }
 
 func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
+	key := l.key.WithValueFlag()
+
 	curPrio, err := getPriority(ctx, l.store, l.key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)
 	}
 
-	// if the current priority is higher ignore put
-	// else if the current value is lexicographically
-	// greater than the new then ignore
-	key := l.key.WithValueFlag()
 	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return NewErrGetRegisterStatus(err, l.key.DocID, l.fieldName)
+		return NewErrGetRegisterStatus(err, l.fieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
@@ -143,7 +138,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	} else if priority == curPrio {
 		curValue, err := l.store.Get(ctx, key)
 		if err != nil {
-			return NewErrGetRegisterValue(err, l.key.DocID, l.fieldName)
+			return NewErrGetRegisterValue(err, l.fieldName)
 		}
 
 		if bytes.Compare(curValue, val) >= 0 {
@@ -156,13 +151,11 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = l.store.Delete(ctx, key)
-		if err != nil {
-			return NewErrDeleteRegisterValue(err, l.key.DocID, l.fieldName)
+		if err := l.store.Delete(ctx, key); err != nil {
+			return NewErrDeleteRegisterValue(err, l.fieldName)
 		}
 	} else {
-		err = l.store.Set(ctx, key, val)
-		if err != nil {
+		if err := l.store.Set(ctx, key, val); err != nil {
 			return NewErrFailedToStoreValue(err)
 		}
 	}

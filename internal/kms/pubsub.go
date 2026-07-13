@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -26,7 +27,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -69,6 +69,7 @@ type CollectionRetriever interface {
 		string,
 		immutable.Option[identity.Identity],
 	) (client.Collection, error)
+	ResolveBlockDocIDs(context.Context, cid.Cid) ([]string, error)
 }
 
 type pubSubService struct {
@@ -516,29 +517,29 @@ func (s *pubSubService) getEncryptionKeysLocally(
 			continue
 		}
 
-		docID := string(encBlock.DocID)
-		if docID != "" {
-			// Doc-scoped block: gate on per-doc DAC.
-			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+		_, encBlockCID, err := cid.CidFromBytes(link)
+		if err != nil {
+			return nil, nil, err
+		}
+		docIDs, err := s.colRetriever.ResolveBlockDocIDs(ctx, encBlockCID)
+		if err != nil {
+			return nil, nil, err
+		}
+		// An encryption block may be co-owned by several documents; share the key if the
+		// requester may read any one of them.
+		hasPerm := false
+		for _, docID := range docIDs {
+			ok, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
 				return nil, nil, err
 			}
-			if !hasPerm {
-				continue
+			if ok {
+				hasPerm = true
+				break
 			}
-		} else {
-			// Collection-scoped block (e.g. a `@branchable` collection's own head).
-			// The block doesn't carry a CollectionID, so we can't run a per-collection
-			// DAC check. Fall back to a node-level NAC gate: if the requester has no
-			// authorized access on this node, refuse to serve. When NAC is not enabled
-			// this is a no-op, preserving existing behaviour.
-			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
-			if err != nil {
-				return nil, nil, err
-			}
-			if !hasNodeAccess {
-				continue
-			}
+		}
+		if !hasPerm {
+			continue
 		}
 
 		encBlockBytes, err := encBlock.Marshal()
@@ -569,45 +570,18 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return acpDB.CheckAccessOfDocOnCollectionWithACP(
+	// Read access to the document gates access to its encryption key. See [acpDB.CheckDocReadAccess]
+	// for the canonical rules (an explicit grant on the document suffices; otherwise a branchable
+	// collection also gates on the collection object, so a private branchable collection gates its
+	// whole DAG).
+	return acpDB.CheckDocReadAccess(
 		ctx,
 		actorIdentity,
 		s.nodeACP(),
 		s.documentACP.Value(),
 		collection,
-		acpTypes.DocumentReadPerm,
 		docID,
 	)
-}
-
-// doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to
-// perform a read on this node, used as a fallback gate for encryption blocks
-// that have no DocID (e.g. a `@branchable` collection's own head, where there
-// is no per-doc ACL to consult). Returns true unconditionally when NAC is not
-// enabled.
-func (s *pubSubService) doesIdentityHaveNodeReadAccess(
-	ctx context.Context,
-	actorIdentity immutable.Option[identity.Identity],
-) (bool, error) {
-	var actorDID string
-	if actorIdentity.HasValue() {
-		actorDID = actorIdentity.Value().DID()
-	}
-
-	err := acpDB.CheckNodeOperationAccess(
-		ctx,
-		actorDID,
-		s.nodeACP(),
-		acpTypes.NodeReadDocumentPerm,
-		acpTypes.NodeACPObject,
-	)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-		return false, nil
-	}
-	return false, err
 }
 
 func encodeToBase64(data []byte) []byte {

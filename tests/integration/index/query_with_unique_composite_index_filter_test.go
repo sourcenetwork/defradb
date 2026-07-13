@@ -947,6 +947,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnFirstFieldAndNilFilter_S
 						{"name": nil, "age": 32, "email": "bob@gmail.com"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -1077,6 +1078,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnSecondFieldsAndNilFilter
 						{"name": "Bob", "age": nil, "email": "bob2@gmail.com"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -1151,6 +1153,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						{"about": "nil_nil_1"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: `
@@ -1166,6 +1169,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						{"about": "nil_22"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: `
@@ -1181,6 +1185,7 @@ func TestQueryWithUniqueCompositeIndex_WithMultipleNilOnBothFieldsAndNilFilter_S
 						{"about": "bob_nil"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -1305,6 +1310,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						{"about": "nil_nil -> nil_22"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request: `
@@ -1321,6 +1327,7 @@ func TestQueryWithUniqueCompositeIndex_AfterUpdateOnNilFields_ShouldFetch(t *tes
 						{"about": "nil_22 -> bob_nil"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

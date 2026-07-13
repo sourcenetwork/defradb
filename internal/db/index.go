@@ -223,7 +223,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 func (index *collectionBaseIndex) getDocumentsIndexKey(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 ) (keys.IndexDataStoreKey, error) {
 	fieldValues, err := index.getDocFieldValues(doc)
 	if err != nil {
@@ -236,16 +236,25 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 
-	if appendDocID {
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
-	}
-
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
+	var docShortID uint64
+	if appendDocShortID {
+		var found bool
+		docShortID, found, err = id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+		if err != nil {
+			return keys.IndexDataStoreKey{}, err
+		}
+		if !found {
+			return keys.IndexDataStoreKey{}, client.ErrDocumentNotFoundOrNotAuthorized
+		}
+	}
 
-	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, index.epoch, fields), nil
+	key := keys.NewIndexDataStoreKey(collectionShortID, index.desc.ID, index.epoch, fields)
+	key.DocShortID = docShortID
+	return key, nil
 }
 
 // deleteIndexKey removes a single index entry. While the index is building, a missing
@@ -289,11 +298,11 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 func (index *collectionBaseIndex) generateKeysAndProcess(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocShortID)
 	if err != nil {
 		return err
 	}
@@ -416,7 +425,14 @@ func saveUniqueKey(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	docShortID, found, err := id.GetDocShortID(ctx, key.CollectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	key, val, err := makeUniqueKeyValueRecord(key, docShortID)
 	if err != nil {
 		return err
 	}
@@ -427,7 +443,7 @@ func saveUniqueKey(
 			return NewErrCheckUniqueIndexConstraint(err)
 		}
 		if existing != nil {
-			if tolerateSameDoc && string(existing) == doc.ID().String() {
+			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
 			}
 			return newUniqueIndexError(doc, fieldsDescs)
@@ -460,13 +476,14 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	doc *client.Document,
+	docShortID uint64,
 ) (keys.IndexDataStoreKey, []byte, error) {
+	encodedDocShortID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
+		key.DocShortID = docShortID
 		return key, []byte{}, nil
 	} else {
-		return key, []byte(doc.ID().String()), nil
+		return key, encodedDocShortID, nil
 	}
 }
 
@@ -475,8 +492,19 @@ func (index *collectionUniqueIndex) Delete(
 	doc *client.Document,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		key, _, err := makeUniqueKeyValueRecord(key, doc)
+		key, _, err := makeUniqueKeyValueRecord(key, docShortID)
 		if err != nil {
 			return err
 		}

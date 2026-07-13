@@ -34,7 +34,7 @@ func TestSubscriptionWithAddMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-9591c619-4bca-58eb-8820-28028736ef0c",
+								"_docID": testUtils.ValidDocID(),
 								"age":    int64(27),
 								"name":   "John",
 							},
@@ -43,7 +43,7 @@ func TestSubscriptionWithAddMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-45e90427-d499-598b-902a-6a3c65d0b504",
+								"_docID": testUtils.ValidDocID(),
 								"age":    int64(31),
 								"name":   "Addo",
 							},
@@ -351,32 +351,6 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.SubscriptionRequest{
-				Request: `subscription {
-					User(docID: "bae-a160ba13-dbf9-50da-a598-018bffa10569") {
-						name
-						age
-					}
-				}`,
-				Results: []map[string]any{
-					{
-						"User": []map[string]any{
-							{
-								"age":  int64(31),
-								"name": "Addo",
-							},
-						},
-					},
-					{
-						"User": []map[string]any{
-							{
-								"age":  int64(32),
-								"name": "Addo",
-							},
-						},
-					},
-				},
-			},
 			&action.AddDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
@@ -389,6 +363,24 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 				DocMap: map[string]any{
 					"name": "Addo",
 					"age":  31,
+				},
+			},
+			&action.SubscriptionRequest{
+				Request: `subscription {
+					User(docID: "{{.DocID0_1}}") {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"age":  int64(32),
+								"name": "Addo",
+							},
+						},
+					},
 				},
 			},
 			&action.UpdateDoc{

@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -265,11 +266,30 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, collectionShortID, docID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
-		docID,
+		docShortID,
 	)
 	if err != nil {
 		return err

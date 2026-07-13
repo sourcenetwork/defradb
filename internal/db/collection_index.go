@@ -257,11 +257,11 @@ func processNewIndexRequest(
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.
 func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
-	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, collectionID)
 	if err != nil {
 		return 0, err
 	}
-	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(shortID, indexID))
+	seq, err := sequence.Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID))
 	if err != nil {
 		return 0, err
 	}
@@ -340,34 +340,34 @@ func (c *collection) appendNewIndexAndIndexExistingDocs(
 	return colIndex, nil
 }
 
-// collectDocIDsAfter performs a keys-only raw range scan over the datastore and collects
-// up to limit distinct docIDs in key order: all of them when watermark is None, or only
+// collectDocShortIDsAfter performs a keys-only raw range scan over the datastore and collects
+// up to limit distinct document short IDs in key order: all of them when watermark is None, or only
 // those sorting strictly after it.
 //
 // The scan range covers only active-value keys for the collection, so deleted docs and
 // non-document keys are never visited.
-func (c *collection) collectDocIDsAfter(
+func (c *collection) collectDocShortIDsAfter(
 	ctx context.Context,
-	shortID uint32,
-	watermark immutable.Option[string],
+	collectionShortID uint32,
+	watermark immutable.Option[uint64],
 	limit int,
-) (docIDs []string, err error) {
+) (docShortIDs []uint64, err error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	var startKey datastore.Key = keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		InstanceType:      keys.ValueKey,
 	}
 	if watermark.HasValue() {
 		startKey = keys.DataStoreKey{
-			CollectionShortID: shortID,
+			CollectionShortID: collectionShortID,
 			InstanceType:      keys.ValueKey,
-			DocID:             watermark.Value(),
+			DocShortID:        watermark.Value(),
 		}.PrefixEnd()
 	}
 
 	endKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
+		CollectionShortID: collectionShortID,
 		InstanceType:      keys.ValueKey,
 	}.PrefixEnd()
 
@@ -380,8 +380,8 @@ func (c *collection) collectDocIDsAfter(
 		return nil, err
 	}
 
-	var prevDocID string
-	for len(docIDs) < limit {
+	var prevDocShortID uint64
+	for len(docShortIDs) < limit {
 		hasNext, err := iter.Next()
 		if err != nil {
 			return nil, errors.Join(err, iter.Close())
@@ -390,67 +390,67 @@ func (c *collection) collectDocIDsAfter(
 			break
 		}
 
-		dsKey, err := keys.NewDataStoreKey(string(iter.Key()))
+		dsKey, err := keys.DecodeDataStoreKey(iter.Key())
 		if err != nil {
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		if dsKey.DocID == "" || dsKey.DocID == prevDocID {
+		if dsKey.DocShortID == 0 || dsKey.DocShortID == prevDocShortID {
 			continue
 		}
 
-		prevDocID = dsKey.DocID
-		docIDs = append(docIDs, dsKey.DocID)
+		prevDocShortID = dsKey.DocShortID
+		docShortIDs = append(docShortIDs, dsKey.DocShortID)
 	}
 
-	return docIDs, iter.Close()
+	return docShortIDs, iter.Close()
 }
 
-// iterateDocsBatch iterates a batch of the collection's documents in docID order.
+// iterateDocsBatch iterates a batch of the collection's documents in storage order.
 //
-// When limit > 0 a keys-only scan collects the batch's docIDs (after startAfter, if set),
-// and the document fetcher is started with one exact per-doc prefix per collected docID.
-// Progress (lastDocID, count) is based on those candidate docIDs, not on what the fetcher
-// yields, so documents filtered out by ACP cannot stall or truncate the backfill.
+// When limit > 0 a keys-only scan collects the batch's document short IDs (after startAfter,
+// if set), and the document fetcher is started with one exact per-doc prefix per collected
+// document short ID. Progress is based on those candidates, not on what the fetcher yields,
+// so documents filtered out by ACP cannot stall or truncate the backfill.
 //
 // When limit == 0 the fetcher scans the whole collection and progress is based on
 // fetched documents.
 func (c *collection) iterateDocsBatch(
 	ctx context.Context,
 	fields []client.CollectionFieldDescription,
-	startAfter immutable.Option[string],
+	startAfter immutable.Option[uint64],
 	limit int,
 	exec func(doc *client.Document) error,
-) (lastDocID string, count int, err error) {
-	shortID, idErr := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+) (lastDocShortID uint64, count int, err error) {
+	collectionShortID, idErr := id.GetCollectionShortID(ctx, c.Version().CollectionID)
 	if idErr != nil {
-		return "", 0, idErr
+		return 0, 0, idErr
 	}
 
 	var prefixes []keys.Walkable
 
 	if limit > 0 {
-		candidates, scanErr := c.collectDocIDsAfter(ctx, shortID, startAfter, limit)
+		candidates, scanErr := c.collectDocShortIDsAfter(ctx, collectionShortID, startAfter, limit)
 		if scanErr != nil {
-			return "", 0, scanErr
+			return 0, 0, scanErr
 		}
 		if len(candidates) == 0 {
-			return "", 0, nil
+			return 0, 0, nil
 		}
 
-		lastDocID = candidates[len(candidates)-1]
+		lastDocShortID = candidates[len(candidates)-1]
 		count = len(candidates)
 
 		prefixes = make([]keys.Walkable, len(candidates))
-		for i, docID := range candidates {
+		for i, docShortID := range candidates {
 			prefixes[i] = keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             docID,
+				CollectionShortID: collectionShortID,
+				DocShortID:        docShortID,
 			}
 		}
 	} else {
 		prefixes = []keys.Walkable{
-			keys.DataStoreKey{CollectionShortID: shortID},
+			keys.DataStoreKey{CollectionShortID: collectionShortID},
 		}
 	}
 
@@ -471,18 +471,18 @@ func (c *collection) iterateDocsBatch(
 		false,
 	)
 	if initErr != nil {
-		return "", 0, errors.Join(initErr, df.Close())
+		return 0, 0, errors.Join(initErr, df.Close())
 	}
 
 	startErr := df.Start(ctx, prefixes...)
 	if startErr != nil {
-		return "", 0, errors.Join(startErr, df.Close())
+		return 0, 0, errors.Join(startErr, df.Close())
 	}
 
 	for {
 		encodedDoc, _, fetchErr := df.FetchNext(ctx)
 		if fetchErr != nil {
-			return "", 0, errors.Join(fetchErr, df.Close())
+			return 0, 0, errors.Join(fetchErr, df.Close())
 		}
 		if encodedDoc == nil {
 			break
@@ -490,32 +490,30 @@ func (c *collection) iterateDocsBatch(
 
 		doc, decodeErr := fetcher.Decode(ctx, encodedDoc, c.Version())
 		if decodeErr != nil {
-			return "", 0, errors.Join(decodeErr, df.Close())
+			return 0, 0, errors.Join(decodeErr, df.Close())
 		}
 
 		execErr := exec(doc)
 		if execErr != nil {
-			return "", 0, errors.Join(execErr, df.Close())
+			return 0, 0, errors.Join(execErr, df.Close())
 		}
 
 		if limit == 0 {
-			// Whole-collection mode: track progress from fetched docs.
-			lastDocID = string(encodedDoc.ID())
 			count++
 		}
 	}
 
-	return lastDocID, count, df.Close()
+	return lastDocShortID, count, df.Close()
 }
 
-// iterateAllDocs iterates all documents in the collection in docID order,
+// iterateAllDocs iterates all documents in the collection in storage order,
 // calling exec for each one.  It is a thin wrapper around iterateDocsBatch.
 func (c *collection) iterateAllDocs(
 	ctx context.Context,
 	fields []client.CollectionFieldDescription,
 	exec func(doc *client.Document) error,
 ) error {
-	_, _, err := c.iterateDocsBatch(ctx, fields, immutable.None[string](), 0, exec)
+	_, _, err := c.iterateDocsBatch(ctx, fields, immutable.None[uint64](), 0, exec)
 	return err
 }
 
@@ -1032,10 +1030,10 @@ func (db *DB) reindexNewActiveVersion(
 // one. The stale-epoch GC needs no record: the entries left below the live epoch are themselves
 // the to-do list, so a crash mid-collection is recovered by simply repeating it.
 func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, desc client.IndexDescription) error {
-	if err := db.backfillIndex(ctx, col, desc, immutable.None[string]()); err != nil {
+	if err := db.backfillIndex(ctx, col, desc, immutable.None[uint64]()); err != nil {
 		return err
 	}
-	shortID, err := db.resolveShortCollectionID(ctx, col.CollectionID)
+	collectionShortID, err := db.resolveCollectionShortID(ctx, col.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -1043,5 +1041,5 @@ func (db *DB) rebuildIndex(ctx context.Context, col client.CollectionVersion, de
 	if err != nil {
 		return err
 	}
-	return db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, desc.Name)
+	return db.gcStaleEpochs(ctx, collectionShortID, desc.ID, liveEpoch, desc.Name)
 }

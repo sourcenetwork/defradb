@@ -32,8 +32,8 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						docID: [
-							"bae-186c2484-c3ea-5993-95d6-cb886e1b13a1",
-							"bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"
+							"{{.DocID4_0}}",
+							"{{.DocID4_1}}"
 						],
 						input: {country: "USA"}
 					) {

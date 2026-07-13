@@ -115,13 +115,3 @@ func getIdentityForRequestSpecificToNode(
 	}
 	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
 }
-
-func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) string {
-	if identity.HasValue() {
-		if identity.Value().Selector == "*" {
-			return identity.Value().Selector
-		}
-		return state.GetIdentity(s, identity).DID()
-	}
-	return ""
-}

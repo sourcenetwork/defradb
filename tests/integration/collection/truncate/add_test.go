@@ -164,6 +164,72 @@ func TestTruncateCollectionAdd_RemovesBlocks(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// Two documents in the same collection that share a field value also share a single, byte-identical
+// genesis field block, so that block's CID is owned by both documents. Truncate must remove the
+// shared block only once its last owning document is deleted (the multi-owner block->docID edge gate
+// in deleteBlocks), leaving no orphaned blocks behind and allowing the documents to be re-created.
+func TestTruncateCollectionAdd_RemovesSharedFieldBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap:       map[string]any{"name": "Shared", "age": 30},
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap:       map[string]any{"name": "Shared", "age": 40},
+			},
+			&action.Truncate{
+				CollectionIndex: 0,
+			},
+			&action.Request{
+				// Every block, including the field block shared by both documents, must be removed.
+				Request: `query {
+					_commits {
+						cid
+					}
+				}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap:       map[string]any{"name": "Shared", "age": 30},
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				DocMap:       map[string]any{"name": "Shared", "age": 40},
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Shared", "age": int64(30)},
+						{"name": "Shared", "age": int64(40)},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestTruncateCollectionAdd_AddsDocWithSameDocIDAsOriginal(t *testing.T) {
 	docID := testUtils.NewSameValue()
 

@@ -131,6 +131,10 @@ func assertRequestResults(
 		actual, ok := resultantData[key]
 		require.True(s.T, ok, "result key not found: %s", key)
 
+		if exp, ok := expect.(string); ok {
+			expect = replace(s, nodeID, exp)
+		}
+
 		switch exp := expect.(type) {
 		case []map[string]any:
 			actualDocs := ConvertToArrayOfMaps(s.T, actual)
@@ -244,7 +248,12 @@ func assertRequestResultDoc(
 	for field, actualValue := range actualDoc {
 		stack.pushMap(field)
 
-		switch expectedValue := expectedDoc[field].(type) {
+		expectedValue := expectedDoc[field]
+		if expectedString, ok := expectedValue.(string); ok {
+			expectedValue = replace(s, nodeID, expectedString)
+		}
+
+		switch expectedValue := expectedValue.(type) {
 		case gomega.OmegaMatcher:
 			if ordered {
 				execGomegaMatcher(expectedValue, s, actualValue, stack)

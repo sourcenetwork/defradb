@@ -40,6 +40,9 @@ type IndexDataStoreKey struct {
 	Epoch uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
+	// DocShortID is the trailing suffix that makes equal index values unique.
+	// It also lets index scans resolve the matching document without storing the full DocID.
+	DocShortID uint64
 	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
 	// is serialized.
 	//
@@ -74,7 +77,7 @@ func (k *IndexDataStoreKey) ToDS() ds.Key {
 
 // ToString returns the string representation of the key
 // It is in the following format:
-// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)
+// /[CollectionID]/[IndexID]/[FieldValue](/[FieldValue]...)(/[DocShortID])
 // If while composing the string from left to right, a component
 // is empty, the string is returned up to that point
 func (k *IndexDataStoreKey) ToString() string {
@@ -93,18 +96,19 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 	}
 
 	for i, field := range k.Fields {
-		if !field.Value.Equal(other.Fields[i].Value) || field.Descending != other.Fields[i].Descending {
+		if !field.Value.Equal(other.Fields[i].Value) ||
+			field.Descending != other.Fields[i].Descending {
 			return false
 		}
 	}
 
-	return true
+	return k.DocShortID == other.DocShortID
 }
 
 // DecodeIndexDataStoreKey decodes a IndexDataStoreKey from bytes.
 // It expects the input bytes is in the following format:
 //
-// /[CollectionID]/[IndexID](/[Epoch])(/[FieldValue]...)
+// /[CollectionID]/[IndexID](/[Epoch])(/[FieldValue]...)(/[DocShortID])
 //
 // Where [CollectionID], [IndexID] and [Epoch] are integers.
 //
@@ -128,12 +132,12 @@ func DecodeIndexDataStoreKey(
 	}
 	data = data[1:]
 
-	data, colID, err := encoding.DecodeUvarintAscending(data)
+	data, collectionShortID, err := encoding.DecodeUvarintAscending(data)
 	if err != nil {
 		return IndexDataStoreKey{}, err
 	}
 
-	key := IndexDataStoreKey{CollectionShortID: uint32(colID)}
+	key := IndexDataStoreKey{CollectionShortID: uint32(collectionShortID)}
 
 	if len(data) == 0 {
 		return key, nil
@@ -183,16 +187,22 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
-		var kind client.FieldKind = client.FieldKind_DocID
-		// If the key has more values encoded then fields on the index description, the last
-		// value must be the docID and we treat it as a string.
 		if i < len(indexDesc.Fields) {
 			descending = indexDesc.Fields[i].Descending
-			kind = fields[i].Kind
 		} else if i > len(indexDesc.Fields) {
 			return IndexDataStoreKey{}, ErrInvalidKey
+		} else {
+			if key.DocShortID != 0 {
+				return IndexDataStoreKey{}, ErrInvalidKey
+			}
+			data, key.DocShortID, err = DecodeDocShortIDPrefix(data)
+			if err != nil {
+				return IndexDataStoreKey{}, err
+			}
+			continue
 		}
 
+		kind := fields[i].Kind
 		if kind != nil && kind.IsArray() {
 			if arrKind, ok := kind.(client.ScalarArrayKind); ok {
 				kind = arrKind.SubKind()
@@ -234,6 +244,10 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 			b = append(b, '/')
 			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 		}
+		if key.DocShortID != 0 {
+			b = append(b, '/')
+			b = append(b, EncodeDocShortID(key.DocShortID)...)
+		}
 	}
 
 	for i := 0; i < int(key.Offset); i++ {
@@ -255,6 +269,7 @@ func (k *IndexDataStoreKey) PrefixEnd() Walkable {
 		IndexID:           k.IndexID,
 		Epoch:             k.Epoch,
 		Fields:            newFields,
+		DocShortID:        k.DocShortID,
 		Offset:            k.Offset + 1,
 	}
 }

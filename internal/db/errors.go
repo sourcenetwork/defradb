@@ -139,32 +139,32 @@ const (
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 
-	errCreateMergeTxn         string = "failed to create merge transaction"
-	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
-	errGetMergeTargetHeads    string = "failed to get merge target heads"
-	errLoadComposites         string = "failed to load composites for merge"
-	errMergeComposites        string = "failed to merge composites"
-	errSyncIndexedDoc         string = "failed to sync indexed document after merge"
-	errLoadBlockForMerge      string = "failed to load block for merge"
-	errDecodeBlockForMerge    string = "failed to decode block for merge"
-	errLoadParentComposite    string = "failed to load parent composite for merge"
-	errLoadMergeTargetBlock   string = "failed to load merge target block"
-	errDecodeMergeTargetBlock string = "failed to decode merge target block"
-	errGenerateMergeLink      string = "failed to generate link for merge composite"
-	errProcessBlockMerge      string = "failed to process block during merge"
-	errProcessEncryptedBlock  string = "failed to process encrypted block"
-	errInitCRDTForMerge       string = "failed to init CRDT for merge"
-	errProcessCRDTBlock       string = "failed to process CRDT block"
-	errLoadChildBlock         string = "failed to load child block for merge"
-	errDecodeChildBlock       string = "failed to decode child block for merge"
-	errProcessChildBlock      string = "failed to process child block for merge"
-	errGetHeadsForMerge       string = "failed to get heads for merge target"
-	errLoadBlockFromStore     string = "failed to get block from blockstore"
-	errDecodeBlockFromStore   string = "failed to decode block from bytes"
-	errParseDocIDMerge        string = "failed to parse doc ID during merge"
-	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
-	errGetDocStatus           string = "failed to get document status"
-	errGetShortIDForDoc       string = "failed to get short collection ID for document"
+	errCreateMergeTxn               string = "failed to create merge transaction"
+	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
+	errGetMergeTargetHeads          string = "failed to get merge target heads"
+	errLoadComposites               string = "failed to load composites for merge"
+	errMergeComposites              string = "failed to merge composites"
+	errSyncIndexedDoc               string = "failed to sync indexed document after merge"
+	errLoadBlockForMerge            string = "failed to load block for merge"
+	errDecodeBlockForMerge          string = "failed to decode block for merge"
+	errLoadParentComposite          string = "failed to load parent composite for merge"
+	errLoadMergeTargetBlock         string = "failed to load merge target block"
+	errDecodeMergeTargetBlock       string = "failed to decode merge target block"
+	errGenerateMergeLink            string = "failed to generate link for merge composite"
+	errProcessBlockMerge            string = "failed to process block during merge"
+	errProcessEncryptedBlock        string = "failed to process encrypted block"
+	errInitCRDTForMerge             string = "failed to init CRDT for merge"
+	errProcessCRDTBlock             string = "failed to process CRDT block"
+	errLoadChildBlock               string = "failed to load child block for merge"
+	errDecodeChildBlock             string = "failed to decode child block for merge"
+	errProcessChildBlock            string = "failed to process child block for merge"
+	errGetHeadsForMerge             string = "failed to get heads for merge target"
+	errLoadBlockFromStore           string = "failed to get block from blockstore"
+	errDecodeBlockFromStore         string = "failed to decode block from bytes"
+	errParseDocIDMerge              string = "failed to parse doc ID during merge"
+	errGetShortFieldIDMerge         string = "failed to get short field ID during merge"
+	errGetDocStatus                 string = "failed to get document status"
+	errGetCollectionShortIDForDoc   string = "failed to get collection short ID for document"
 
 	errDeleteNACState             string = "failed to delete NAC state"
 	errCommitNACTransaction       string = "failed to commit NAC transaction"
@@ -973,8 +973,8 @@ func NewErrCreateMergeTxn(inner error, docID string, cid string) error {
 		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
-func NewErrGetShortIDForMerge(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForMerge(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrGetMergeTargetHeads(inner error, docID string, key string) error {
@@ -1071,8 +1071,8 @@ func NewErrGetDocStatus(inner error, docID string) error {
 	return errors.Wrap(errGetDocStatus, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrGetShortIDForDoc(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForDoc(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrStoreViewCacheItem(inner error) error {

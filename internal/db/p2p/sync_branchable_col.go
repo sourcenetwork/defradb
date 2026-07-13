@@ -294,12 +294,12 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 		return nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
-	shortID, err := dbid.GetUncachedShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
+	collectionShortID, err := dbid.GetUncachedCollectionShortID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}
 
-	key := keys.NewHeadstoreColKey(shortID)
+	key := keys.NewHeadstoreColKey(collectionShortID)
 	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
 
 	cids, _, err := headset.List(p.ctx)
