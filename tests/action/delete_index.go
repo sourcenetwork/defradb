@@ -132,7 +132,9 @@ func waitForIndexDropped(s *state.State, node *state.NodeState, collectionID str
 	subject := strconv.FormatUint(uint64(indexID), 10)
 	require.Eventually(s.T, func() bool {
 		actions, err := node.ListActions(s.Ctx)
-		require.NoError(s.T, err)
+		if err != nil {
+			return false
+		}
 		for _, ex := range actions {
 			if ex.CollectionID == collectionID &&
 				ex.Action == client.DropIndexAction &&

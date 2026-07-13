@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // waitForIndexReady blocks until the index has no build/drop state record (ready), or fails the test.
@@ -28,7 +30,9 @@ func waitForIndexReady(t *testing.T, ctx context.Context, db *DB, collectionID s
 	t.Helper()
 	require.Eventually(t, func() bool {
 		rawTxn, err := db.NewTxn(true)
-		require.NoError(t, err)
+		if err != nil {
+			return false
+		}
 		defer rawTxn.Discard()
 		_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, indexID)
 		return err != nil // a missing record means ready
@@ -267,9 +271,42 @@ func TestDeleteIndex_WhileBuilding_NoOrphanEntries(t *testing.T) {
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 	require.Eventually(t, func() bool {
-		return countIndexEntries(t, ctx, db, shortID, idx.ID) == 0 &&
-			noIndexActionRecords(t, ctx, db, collectionID, idx.ID)
+		return indexFullyCleaned(t, ctx, db, shortID, collectionID, idx.ID)
 	}, 20*time.Second, 10*time.Millisecond, "index entries/records not fully cleaned up after delete-while-building")
+}
+
+// indexFullyCleaned reports whether the index has zero entries and no action records. It is safe to
+// call from a require.Eventually condition (a separate goroutine): a read error returns false to let
+// the poll continue rather than calling require, which would Goexit off the test goroutine.
+func indexFullyCleaned(t *testing.T, ctx context.Context, db *DB, shortID uint32, collectionID string, indexID uint32) bool {
+	t.Helper()
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return false
+	}
+	defer rawTxn.Discard()
+	txnCtx := InitContext(ctx, rawTxn)
+
+	prefix := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
+	iter, err := datastore.CtxMustGetTxn(txnCtx).Datastore().Iterator(txnCtx, datastore.IterOptions{Prefix: prefix, KeysOnly: true})
+	if err != nil {
+		return false
+	}
+	hasEntry, err := iter.Next()
+	if closeErr := iter.Close(); err != nil || closeErr != nil || hasEntry {
+		return false
+	}
+
+	records, err := scanIndexStates(txnCtx, indexActionCollectionPrefix(collectionID), false)
+	if err != nil {
+		return false
+	}
+	for _, rec := range records {
+		if rec.Key.IndexID == indexID {
+			return false
+		}
+	}
+	return true
 }
 
 // TestBuild_ConflictWithLiveWrite_ConvergesToReady checks that a backfill batch that conflicts with
@@ -339,20 +376,4 @@ func TestBuild_ConflictWithLiveWrite_ConvergesToReady(t *testing.T) {
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 	require.Equal(t, docCount, countIndexEntries(t, ctx, db, shortID, idx.ID))
 	require.Len(t, queryUserByName(t, db, ctx, "updated"), 1)
-}
-
-// noIndexActionRecords reports whether the index has no action record of any kind.
-func noIndexActionRecords(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) bool {
-	t.Helper()
-	rawTxn, err := db.NewTxn(true)
-	require.NoError(t, err)
-	defer rawTxn.Discard()
-	records, err := scanIndexStates(InitContext(ctx, rawTxn), indexActionCollectionPrefix(collectionID), false)
-	require.NoError(t, err)
-	for _, rec := range records {
-		if rec.Key.IndexID == indexID {
-			return false
-		}
-	}
-	return true
 }

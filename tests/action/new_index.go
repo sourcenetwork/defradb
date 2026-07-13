@@ -158,7 +158,9 @@ const indexBuildTimeout = 10 * time.Second
 func waitForIndexBuilt(s *state.State, collection client.Collection, indexID uint32) {
 	require.Eventually(s.T, func() bool {
 		results, err := collection.ListIndexes(s.Ctx)
-		require.NoError(s.T, err)
+		if err != nil {
+			return false
+		}
 		for _, r := range results {
 			if r.Description.ID != indexID {
 				continue

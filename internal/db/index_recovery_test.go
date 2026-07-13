@@ -314,7 +314,9 @@ func TestRecoverBuilding_OrphanRecordNoDefinition_Resolves(t *testing.T) {
 	// happens and the record stays InProgress, re-dispatched on a hot loop.
 	require.Eventually(t, func() bool {
 		rawTxn, err := db.NewTxn(true)
-		require.NoError(t, err)
+		if err != nil {
+			return false
+		}
 		defer rawTxn.Discard()
 		_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, orphanIndexID)
 		return err != nil // a missing record means the orphan was resolved
