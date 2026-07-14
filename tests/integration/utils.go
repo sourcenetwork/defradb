@@ -1616,7 +1616,11 @@ func deleteDoc(
 
 		nodeID := nodeIDs[index]
 
-		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocument()
@@ -1668,7 +1672,11 @@ func deleteWithFilter(s *state.State, a DeleteWithFilter) {
 		}
 
 		nodeID := nodeIDs[index]
-		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.DeleteDocumentsWithFilter()
@@ -1723,7 +1731,11 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		}
 
 		nodeID := nodeIDs[index]
-		collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.UpdateDocumentsWithFilter()
@@ -1774,7 +1786,13 @@ func newEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+
+		collections, err := action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
+			return
+		}
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {
@@ -1838,7 +1856,11 @@ func listEncryptedIndexes(
 			txnOption = immutable.Some(txn)
 		}
 
-		var collections = action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+		collections, err := action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised = expectedErrorRaised || AssertError(s.T, err, a.ExpectedError)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		err = withRetryOnNode(
@@ -1928,7 +1950,13 @@ func deleteEncryptedIndex(
 		}
 
 		nodeID := nodeIDs[index]
-		collections := action.MustGetCanonicallyOrderedCollections(s, node, txnOption)
+
+		collections, err := action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
+			return
+		}
 		collection := collections[a.CollectionID]
 
 		if a.FieldName == "" {

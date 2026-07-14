@@ -89,7 +89,13 @@ func (a *ListIndexes) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections := MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
+		if err != nil {
+			if assertError(a.s.T, err, a.ExpectedError) {
+				expectedErrorRaised = true
+			}
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()

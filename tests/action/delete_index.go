@@ -72,21 +72,19 @@ func (a *DeleteIndex) Execute() {
 		node := a.s.Nodes[nodeID]
 
 		nodeID := nodeIDs[index]
-		var collections []client.Collection
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var err error
-		var txn client.Txn
+		txnOption := immutable.None[client.Txn]()
 		if a.TransactionID.HasValue() {
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			txn, err := a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			txnOption = immutable.Some(txn)
 		}
 
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
-			return
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			continue
 		}
 
 		collection := collections[a.CollectionID]
