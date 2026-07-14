@@ -411,8 +411,10 @@ func getString(v any) (string, error) {
 	case *fastjson.Value:
 		b, err := val.StringBytes()
 		return string(b), err
+	case string:
+		return val, nil
 	default:
-		return val.(string), nil
+		return "", NewErrUnexpectedType[string]("field", v)
 	}
 }
 
@@ -420,8 +422,10 @@ func getBool(v any) (bool, error) {
 	switch val := v.(type) {
 	case *fastjson.Value:
 		return val.Bool()
+	case bool:
+		return val, nil
 	default:
-		return val.(bool), nil
+		return false, NewErrUnexpectedType[bool]("field", v)
 	}
 }
 
@@ -511,6 +515,55 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	return time.Parse(time.RFC3339, s)
 }
 
+// parseTypedSlice maps every element of a recognised typed slice through parse,
+// building the result in a single pass. It returns false if v is not one of the
+// recognised slice types.
+//
+// This lets the array parsers accept typed slices whose element type does not
+// exactly match the field's target type (e.g. []int for an [Int] field, or
+// []string of timestamps for a [DateTime] field), instead of silently dropping
+// them. parse receives each element boxed as an any and is responsible for nil
+// handling and conversion to the target type.
+func parseTypedSlice[R any](v any, parse func(any) (R, error)) ([]R, bool, error) {
+	var out []R
+	var err error
+	switch s := v.(type) {
+	case []any:
+		out, err = mapSlice(s, parse)
+	case []string:
+		out, err = mapSlice(s, parse)
+	case []bool:
+		out, err = mapSlice(s, parse)
+	case []int:
+		out, err = mapSlice(s, parse)
+	case []int32:
+		out, err = mapSlice(s, parse)
+	case []int64:
+		out, err = mapSlice(s, parse)
+	case []float32:
+		out, err = mapSlice(s, parse)
+	case []float64:
+		out, err = mapSlice(s, parse)
+	case []time.Time:
+		out, err = mapSlice(s, parse)
+	default:
+		return nil, false, nil
+	}
+	return out, true, err
+}
+
+// mapSlice applies parse to each element of s, boxing it as an any.
+func mapSlice[S, R any](s []S, parse func(any) (R, error)) ([]R, error) {
+	out := make([]R, len(s))
+	for i, e := range s {
+		var err error
+		if out[i], err = parse(e); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
 func getArray[T any](
 	v any,
 	typeGetter func(any) (T, error),
@@ -539,22 +592,25 @@ func getArray[T any](
 			}
 		}
 		array = arr
-	case []any:
-		arr := make([]T, len(val))
-		for i, arrItem := range val {
-			if arrItem == nil {
-				return nil, ErrNullValueForNonNillableField
-			}
-			var err error
-			arr[i], err = typeGetter(arrItem)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		array = arr
 	case []T:
 		array = val
+	default:
+		// Any other recognised typed slice (e.g. []int for an [Int] field) is
+		// handled element-by-element via the typeGetter, which accepts the range
+		// of scalar Go types a caller might reasonably provide.
+		arr, ok, err := parseTypedSlice(v, func(item any) (T, error) {
+			if item == nil {
+				var zero T
+				return zero, ErrNullValueForNonNillableField
+			}
+			return typeGetter(item)
+		})
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			array = arr
+		}
 	}
 	if size != 0 && len(array) != size {
 		return nil, NewErrArraySizeMismatch(array, size)
@@ -593,23 +649,29 @@ func getNillableArray[T any](
 		}
 
 		array = arr
-	case []any:
-		arr := make([]immutable.Option[T], len(val))
-		for i, arrItem := range val {
-			if arrItem == nil {
-				arr[i] = immutable.None[T]()
-				continue
-			}
-			v, err := typeGetter(arrItem)
-			if err != nil {
-				return nil, err
-			}
-			arr[i] = immutable.Some(v)
-		}
-
-		array = arr
 	case []immutable.Option[T]:
 		array = val
+	default:
+		// Any other recognised typed slice (e.g. []int for an [Int] field) is
+		// handled element-by-element via the typeGetter, which accepts the range
+		// of scalar Go types a caller might reasonably provide. A nil element
+		// becomes a None.
+		arr, ok, err := parseTypedSlice(v, func(item any) (immutable.Option[T], error) {
+			if item == nil {
+				return immutable.None[T](), nil
+			}
+			val, err := typeGetter(item)
+			if err != nil {
+				return immutable.None[T](), err
+			}
+			return immutable.Some(val), nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			array = arr
+		}
 	}
 	if size != 0 && len(array) != size {
 		return nil, NewErrArraySizeMismatch(array, size)
@@ -641,21 +703,23 @@ func getDateTimeArray(ctx context.Context, v any, size int) ([]time.Time, error)
 			}
 		}
 		array = arr
-	case []any:
-		arr := make([]time.Time, len(val))
-		for i, arrItem := range val {
-			if arrItem == nil {
-				return nil, ErrNullValueForNonNillableField
-			}
-			var err error
-			arr[i], err = getDateTime(ctx, arrItem)
-			if err != nil {
-				return nil, err
-			}
-		}
-		array = arr
 	case []time.Time:
 		array = val
+	default:
+		// Any other recognised typed slice (e.g. []string of RFC3339 timestamps)
+		// is handled element-by-element via getDateTime.
+		arr, ok, err := parseTypedSlice(v, func(item any) (time.Time, error) {
+			if item == nil {
+				return time.Time{}, ErrNullValueForNonNillableField
+			}
+			return getDateTime(ctx, item)
+		})
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			array = arr
+		}
 	}
 	if size != 0 && len(array) != size {
 		return nil, NewErrArraySizeMismatch(array, size)
@@ -693,22 +757,28 @@ func getNillableDateTimeArray(
 			arr[i] = immutable.Some(t)
 		}
 		array = arr
-	case []any:
-		arr := make([]immutable.Option[time.Time], len(val))
-		for i, arrItem := range val {
-			if arrItem == nil {
-				arr[i] = immutable.None[time.Time]()
-				continue
-			}
-			t, err := getDateTime(ctx, arrItem)
-			if err != nil {
-				return nil, err
-			}
-			arr[i] = immutable.Some(t)
-		}
-		array = arr
 	case []immutable.Option[time.Time]:
 		array = val
+	default:
+		// Any other recognised typed slice (e.g. []string of RFC3339 timestamps)
+		// is handled element-by-element via getDateTime. A nil element becomes
+		// a None.
+		arr, ok, err := parseTypedSlice(v, func(item any) (immutable.Option[time.Time], error) {
+			if item == nil {
+				return immutable.None[time.Time](), nil
+			}
+			t, err := getDateTime(ctx, item)
+			if err != nil {
+				return immutable.None[time.Time](), err
+			}
+			return immutable.Some(t), nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			array = arr
+		}
 	}
 	if size != 0 && len(array) != size {
 		return nil, NewErrArraySizeMismatch(array, size)
