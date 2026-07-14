@@ -309,6 +309,80 @@ func indexFullyCleaned(t *testing.T, ctx context.Context, db *DB, shortID uint32
 	return true
 }
 
+// TestDeleteIndex_WhileFailingBuild_NoOrphanRecord is the regression for a delete racing a build that
+// then fails. deleteIndex clears the build record up front, but the still-in-flight build can
+// re-create one after that clear: here a unique-index build over duplicate values fails and records
+// an Errored backfill record once its guard releases the drop. The drop's GC used to clear only the
+// drop record, leaving that Errored record orphaned for a deleted index. The GC now also clears any
+// leftover backfill record, so no action record of any kind survives.
+func TestDeleteIndex_WhileFailingBuild_NoOrphanRecord(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	// Gate: hold the build at its first batch boundary until released.
+	origGate := IndexBuildGate
+	defer func() { IndexBuildGate = origGate }()
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var entered sync.WaitGroup
+	entered.Add(1)
+	var enteredOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		select {
+		case <-release:
+			return
+		default:
+		}
+		enteredOnce.Do(entered.Done)
+		select {
+		case <-release:
+		case <-gateCtx.Done():
+		}
+	}
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String, tag: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	// Distinct tag keeps each doc's ID unique; a duplicate name for docs 6+ makes the unique
+	// name-index build fail on a later batch, after it has parked at the gate on the first.
+	const docCount = 40
+	for i := range docCount {
+		name := "dup"
+		if i < 6 {
+			name = fmt.Sprintf("u%02d", i)
+		}
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"%s","tag":"t%02d"}`, name, i), col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+	}
+
+	idx, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
+	})
+	require.NoError(t, err)
+
+	// Delete while the build is parked, then release it so it runs on to its unique-violation failure.
+	entered.Wait()
+	col, err = db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	require.NoError(t, col.DeleteIndex(ctx, idx.Name))
+	releaseOnce.Do(func() { close(release) })
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	require.Eventually(t, func() bool {
+		return indexFullyCleaned(t, ctx, db, shortID, collectionID, idx.ID)
+	}, 20*time.Second, 10*time.Millisecond, "a failed build racing a delete left an orphaned action record")
+}
+
 // TestBuild_ConflictWithLiveWrite_ConvergesToReady checks that a backfill batch that conflicts with
 // a concurrent live document write still converges to ready with a full entry set, rather than
 // wedging in building. The gate parks the build at its first batch; a racing goroutine updates a

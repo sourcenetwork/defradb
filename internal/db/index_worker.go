@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -24,80 +25,98 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// indexBuildConcurrency bounds concurrent builds and drops across distinct indexes. A var so tests
-// can adjust it.
+// indexBuildConcurrency is the number of worker goroutines, so also the max builds/drops running at
+// once. A var so tests can adjust it.
 var indexBuildConcurrency = 4
 
-// indexBuildRetryDelay is the backoff before re-draining a build or drop interrupted by a
-// transaction conflict, giving the racing writer time to commit first. A var so tests can shrink it.
+// indexTaskQueueSize caps the pending-task queue. If it fills, a drain drops the task and re-derives
+// it later from the records, so nothing is lost. Sized well above any real count of pending indexes.
+var indexTaskQueueSize = 1024
+
+// indexBuildRetryDelay is how long to wait before retrying a build or drop that hit a transaction
+// conflict, giving the other writer time to commit first. A var so tests can shrink it.
 var indexBuildRetryDelay = 100 * time.Millisecond
 
-// indexBuildWorker drains pending index build and drop state records in the background, reusing the
-// batched backfill and GC. It is shared by startup recovery and on-demand async NewIndex/DeleteIndex:
-// both stage a record and commit, the commit publishes an action event, and the worker drains it.
+// indexBuildWorker runs pending index builds and drops in the background, reusing the batched
+// backfill and GC. It serves both startup recovery and async NewIndex/DeleteIndex: each stages a
+// record and commits, the commit fires an action event, and the worker picks it up.
 //
-// The event is only a wake-up hint; the worker re-derives its work from the persisted records. This
-// is correct when the triggering transaction rolls back (no record), when several events arrive
-// (coalesced into one drain), and on restart (startup drain == on-demand drain).
+// The event is just a hint to wake up; the worker figures out its work from the persisted records.
+// That keeps it correct when the triggering txn rolls back (no record), when many events arrive at
+// once (one drain handles all), and on restart (startup drain is the same as any drain).
 type indexBuildWorker struct {
 	db *DB
 
-	// sub receives ActionExecution events, the primary wake source.
+	// sub receives ActionExecution events, the main wake source.
 	sub event.Subscription
 
-	// wake is a size-one coalesced wake-up channel for the initial drain and non-bus callers.
+	// wake is a size-one wake channel for the initial drain and callers not on the bus.
 	wake chan struct{}
 
-	// inFlight holds the keys of indexes whose build or drop is running, so a drain does not start
-	// a second one for the same index. Keyed by inFlightKey.
+	// inFlight holds the indexes with a build or drop queued or running, so a drain won't queue a
+	// second one for the same index. Keyed by inFlightKey.
 	inFlight sync.Map
 
-	// sem bounds concurrent builds across indexes.
-	sem chan struct{}
+	// tasks is the pending build/drop queue. drain fills it; up to indexBuildConcurrency workers
+	// drain it. This caps live goroutines at the pool size, not the number of pending indexes.
+	tasks chan buildTask
 
-	// drainMu serialises drain passes so only one pass increments builds at a time, letting
-	// drainSync await its own pass without racing a concurrent drain.
+	// liveWorkers counts running workers, so spawnWorker never starts more than indexBuildConcurrency.
+	liveWorkers atomic.Int32
+
+	// spawnMu makes spawnWorker's check-and-start atomic with a worker's exit check, so two drains
+	// can't both spawn past the cap and a worker can't exit just as an enqueue counts it present.
+	spawnMu sync.Mutex
+
+	// drainMu lets only one drain enqueue at a time, so drainSync can wait for its own pass without a
+	// concurrent drain racing it.
 	drainMu sync.Mutex
 
-	// builds counts dispatched build goroutines so a drain can be awaited. Incremented under drainMu.
+	// builds counts running workers so a drain can wait for them (drainSync, Close).
 	builds sync.WaitGroup
 }
 
-// newIndexBuildWorker constructs a worker subscribed to action events. The subscription is closed
-// by db.events.Close.
+// buildTask is one unit of work for a worker: the target index, the action (for logging), and the
+// closure that does it.
+type buildTask struct {
+	key    keys.IndexStateKey
+	action client.Action
+	work   func(context.Context) error
+}
+
+// newIndexBuildWorker builds a worker subscribed to action events. db.events.Close closes the sub.
 func (db *DB) newIndexBuildWorker() (*indexBuildWorker, error) {
 	sub, err := db.events.Subscribe(event.ActionExecutionName)
 	if err != nil {
 		return nil, err
 	}
 	return &indexBuildWorker{
-		db:   db,
-		sub:  sub,
-		wake: make(chan struct{}, 1),
-		sem:  make(chan struct{}, indexBuildConcurrency),
+		db:    db,
+		sub:   sub,
+		wake:  make(chan struct{}, 1),
+		tasks: make(chan buildTask, indexTaskQueueSize),
 	}, nil
 }
 
-// inFlightKey identifies an in-flight build or drop by its index. Build and drop of the same index
-// share one key so they are mutually exclusive: a whole-index drop range-deletes every epoch while
-// assuming no writer is touching them, so it must not run while a backfill of the same index is
-// still writing entries (which would leave orphaned entries past the drop). A rebuild's stale-epoch
-// sweep is bounded strictly below the live epoch and never dispatched here, so it is unaffected.
+// inFlightKey keys an in-flight build or drop by index only, so build and drop of the same index
+// share a key and can't run together. A whole-index drop range-deletes every epoch assuming no
+// writer is active, so it must not overlap a backfill still writing entries (that would leave
+// entries behind the dropped index). The rebuild stale-epoch sweep is bounded below the live epoch
+// and never dispatched here, so it's unaffected.
 func inFlightKey(key keys.IndexStateKey) string {
 	return key.CollectionID + "/" + indexSubject(key.IndexID)
 }
 
-// run drains pending records on start and on each wake-up until ctx is cancelled. It never blocks
-// on a build: builds run in the bounded pool while the loop keeps reading the subscription, so a
-// busy build cannot stall the bus (a blocked subscriber blocks every publisher).
+// run drains on start and on every wake until ctx is cancelled. drain only enqueues and returns, so
+// the loop keeps reading the bus and stays responsive while the pool does the builds.
 func (w *indexBuildWorker) run(ctx context.Context) {
 	w.drain(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
-			// Let dispatched builds observe cancellation and return before exiting, so the worker
-			// does not outlive the storage it writes to.
+			// Wait for in-flight builds to observe cancellation and stop, so the worker doesn't
+			// outlive the storage it writes to.
 			w.builds.Wait()
 			return
 
@@ -116,8 +135,8 @@ func (w *indexBuildWorker) run(ctx context.Context) {
 	}
 }
 
-// isWakeEvent reports whether an action event is a reason to drain: an index build or drop entering
-// the in-progress state. Terminal statuses and non-index actions are ignored.
+// isWakeEvent reports whether an event is worth a drain: an index build or drop going in-progress.
+// Terminal statuses and non-index actions are ignored.
 func (w *indexBuildWorker) isWakeEvent(msg event.Message) bool {
 	exec, ok := msg.Data.(event.ActionExecution)
 	if !ok {
@@ -126,8 +145,7 @@ func (w *indexBuildWorker) isWakeEvent(msg event.Message) bool {
 	return isIndexAction(exec.Action) && exec.Status == client.InProgressActionStatus
 }
 
-// notify is a non-blocking wake-up backstop for callers that do not go through the bus. The action
-// event published on commit is the primary trigger.
+// notify is a non-blocking wake for callers not on the bus. The commit event is the main trigger.
 func (w *indexBuildWorker) notify() {
 	select {
 	case w.wake <- struct{}{}:
@@ -136,17 +154,16 @@ func (w *indexBuildWorker) notify() {
 	}
 }
 
-// drain lists every index state record and dispatches each pending build or drop through the
-// in-flight guard and bounded pool, then sweeps stale epochs. It returns once work is dispatched,
-// not when builds finish. Safe to call repeatedly: records are the source of truth, the backfill
-// resumes from its watermark, and the GC is idempotent.
+// drain lists every index state record, queues each pending build or drop, then sweeps stale epochs.
+// It returns once work is queued, not when it finishes. Safe to repeat: records are the source of
+// truth, the backfill resumes from its watermark, and the GC is idempotent.
 func (w *indexBuildWorker) drain(ctx context.Context) {
 	w.drainMu.Lock()
 	defer w.drainMu.Unlock()
 	w.drainLocked(ctx)
 }
 
-// drainLocked is the drain body. The caller must hold drainMu so only one pass increments builds.
+// drainLocked is the drain body. The caller must hold drainMu.
 func (w *indexBuildWorker) drainLocked(ctx context.Context) {
 	if ctx.Err() != nil {
 		return
@@ -176,36 +193,43 @@ func (w *indexBuildWorker) drainLocked(ctx context.Context) {
 		}
 	}
 
-	// A rebuild leaves superseded epochs with no record, and may crash after its build finishes
-	// but before collecting them. Sweep every index; it is a no-op for an index with only its live
-	// epoch, and the delete range is bounded strictly below the live epoch so it never touches an
-	// in-flight build.
+	// A rebuild leaves superseded epochs with no record and may crash before collecting them. Sweep
+	// every index; it's a no-op when only the live epoch exists, and the delete range stays below the
+	// live epoch so it never touches an in-flight build.
 	if err := w.db.recoverStaleEpochs(ctx); err != nil {
 		log.ErrorE("Failed to collect stale index epochs during drain", err)
-		// Stale epochs have no action record to guarantee another dispatch, so a conflict here
-		// would leave them uncollected until an unrelated wake. Re-drive like build/drop.
+		// Stale epochs have no record to re-dispatch them, so on a conflict retry it ourselves;
+		// otherwise they'd wait for an unrelated wake.
 		if errors.Is(err, corekv.ErrTxnConflict) {
 			w.scheduleRetry(ctx)
 		}
 	}
 }
 
-// drainSync runs a drain and blocks until every dispatched build or drop has finished. It is
-// test-only: production never blocks on a build (see run). drainMu is held across both the dispatch
-// and the wait so no concurrent drain increments builds meanwhile. The in-flight guard is shared
-// with the background loop, so an index a prior pass is already building is not started twice;
-// drainSync waits for that work too, since builds is shared.
+// drainSync drains and waits for all workers, repeating until settled. Test-only: production never
+// blocks on a build (see run). One pass isn't always enough, since a finished task can re-drive via
+// notify (e.g. a drop that was skipped behind a build), so it loops until a pass leaves no work and
+// no pending wake. drainMu is held throughout so no other drain runs, and the shared guard and
+// builds WaitGroup mean it also waits for work an earlier pass started.
 func (w *indexBuildWorker) drainSync(ctx context.Context) {
 	w.drainMu.Lock()
 	defer w.drainMu.Unlock()
-	w.drainLocked(ctx)
-	w.builds.Wait()
+	for {
+		w.drainLocked(ctx)
+		w.builds.Wait()
+		// A finished task may have buffered a wake; consume it and drain again. No wake means settled.
+		select {
+		case <-w.wake:
+			continue
+		default:
+			return
+		}
+	}
 }
 
-// dispatch runs work for one index under the in-flight guard and the bounded pool. It skips the
-// index if a build/drop is already in flight, otherwise it runs work in a goroutine that acquires a
-// semaphore slot first. Acquiring the slot inside the goroutine keeps drain non-blocking when the
-// pool is full.
+// dispatch queues one index's work behind the in-flight guard, then makes sure a worker is running
+// to pick it up. It skips the index if a build or drop is already queued or running. The enqueue is
+// non-blocking, so drain never blocks; on a full queue the task is dropped and re-derived later.
 func (w *indexBuildWorker) dispatch(
 	ctx context.Context,
 	key keys.IndexStateKey,
@@ -214,49 +238,116 @@ func (w *indexBuildWorker) dispatch(
 ) {
 	guardKey := inFlightKey(key)
 	if _, loaded := w.inFlight.LoadOrStore(guardKey, struct{}{}); loaded {
-		return // a build or drop for this index is already in flight
+		return // already queued or running for this index
 	}
 
+	select {
+	case w.tasks <- buildTask{key: key, action: action, work: work}:
+		w.spawnWorker(ctx)
+	default:
+		// Queue full: drop the task and release the guard; a later drain re-queues this index. Don't
+		// notify. A full queue means every worker is busy, and each re-drives on completion (runTask's
+		// deferred notify), so this index gets picked up when a slot frees. Notifying instead would
+		// spin drain -> full -> notify at full CPU until then. The guard means one task per index, so
+		// with the default size this only happens past thousands of pending indexes.
+		w.inFlight.Delete(guardKey)
+	}
+}
+
+// spawnWorker starts a worker for the task just queued, unless the pool is already at the cap. It
+// spawns one per enqueue rather than counting idle workers, because a busy worker looks the same as
+// an idle one by count, and that would stop independent indexes from building in parallel. An extra
+// worker that finds nothing to do exits right away, so the pool never goes over the cap. The
+// check-and-start runs under spawnMu so two enqueues can't both spawn past it.
+func (w *indexBuildWorker) spawnWorker(ctx context.Context) {
+	w.spawnMu.Lock()
+	defer w.spawnMu.Unlock()
+
+	if w.liveWorkers.Load() >= int32(indexBuildConcurrency) {
+		return
+	}
+	w.liveWorkers.Add(1)
 	w.builds.Go(func() {
-		// Re-drain after releasing the guard: another record for this index may have been
-		// guard-skipped while this work ran (e.g. a drop staged while a build held the index), and
-		// the build finishing is not otherwise a wake reason. The drain is a cheap no-op when
-		// nothing is pending.
-		defer w.notify()
-		defer w.inFlight.Delete(guardKey)
-
-		select {
-		case w.sem <- struct{}{}:
-		case <-ctx.Done():
-			return
-		}
-		defer func() { <-w.sem }()
-
-		if ctx.Err() != nil {
-			return
-		}
-		err := work(ctx)
-		if err == nil {
-			return
-		}
-		log.ErrorE("Index build worker task failed", err,
-			corelog.String("collectionID", key.CollectionID),
-			corelog.Any("indexID", key.IndexID),
-			corelog.Any("action", action),
-		)
-		// A transaction conflict is transient: the record is still in place and resumable from its
-		// watermark, but nothing else re-drives it, so re-drain after a backoff. Without this the
-		// index would stay building/dropping forever. A terminal error already recorded the failed
-		// state and needs no retry.
-		if errors.Is(err, corekv.ErrTxnConflict) {
-			w.scheduleRetry(ctx)
-		}
+		w.consume(ctx)
 	})
 }
 
-// scheduleRetry wakes the worker after indexBuildRetryDelay so an index left building/dropping by a
-// transaction conflict is re-drained and resumed. It is tracked under builds so shutdown waits for
-// it, and returns early on ctx cancellation.
+// consume runs queued tasks until the queue is empty or ctx is cancelled, then returns so the worker
+// count drops back to zero when idle. The next drain refills the queue and re-spawns.
+//
+// The exit check runs under spawnMu and decrements liveWorkers there, making it atomic with
+// spawnWorker's cap check: a concurrent enqueue either sees this worker still counted (and it takes
+// the task on the re-check before exiting) or sees the decrement (and spawns a fresh worker). Either
+// way a queued task always has a worker.
+func (w *indexBuildWorker) consume(ctx context.Context) {
+	for {
+		if ctx.Err() != nil {
+			w.exitNow()
+			return
+		}
+		select {
+		case task := <-w.tasks:
+			w.runTask(ctx, task)
+		default:
+			if w.exitIfEmpty() {
+				return
+			}
+		}
+	}
+}
+
+// exitIfEmpty decrements the worker count and returns true (the caller must return) if the queue is
+// empty. If a task arrived after consume's non-blocking read, it returns false and the worker keeps
+// going. Runs under spawnMu with spawnWorker.
+func (w *indexBuildWorker) exitIfEmpty() bool {
+	w.spawnMu.Lock()
+	defer w.spawnMu.Unlock()
+	if len(w.tasks) > 0 {
+		return false
+	}
+	w.liveWorkers.Add(-1)
+	return true
+}
+
+// exitNow decrements the worker count for a worker leaving on ctx cancellation, dropping any queued
+// tasks (the next startup drain re-derives them from the records).
+func (w *indexBuildWorker) exitNow() {
+	w.spawnMu.Lock()
+	defer w.spawnMu.Unlock()
+	w.liveWorkers.Add(-1)
+}
+
+// runTask runs one build or drop, releases its guard, and re-drives. A conflict reschedules the
+// index; a terminal error has already recorded the failed state.
+func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
+	// Re-drive after releasing the guard: a record for this index may have been skipped while this
+	// ran (e.g. a drop staged behind the build), and finishing isn't otherwise a wake. Cheap no-op
+	// when nothing is pending.
+	defer w.notify()
+	defer w.inFlight.Delete(inFlightKey(task.key))
+
+	if ctx.Err() != nil {
+		return
+	}
+	err := task.work(ctx)
+	if err == nil {
+		return
+	}
+	log.ErrorE("Index build worker task failed", err,
+		corelog.String("collectionID", task.key.CollectionID),
+		corelog.Any("indexID", task.key.IndexID),
+		corelog.Any("action", task.action),
+	)
+	// A conflict is transient: the record is still there and resumes from its watermark, but nothing
+	// else re-drives it, so retry after a backoff or it stays building/dropping forever. A terminal
+	// error already recorded the failed state, so it needs no retry.
+	if errors.Is(err, corekv.ErrTxnConflict) {
+		w.scheduleRetry(ctx)
+	}
+}
+
+// scheduleRetry wakes the worker after indexBuildRetryDelay to retry an index left building or
+// dropping by a conflict. Tracked under builds so shutdown waits for it; returns early on cancel.
 func (w *indexBuildWorker) scheduleRetry(ctx context.Context) {
 	w.builds.Go(func() {
 		timer := time.NewTimer(indexBuildRetryDelay)
