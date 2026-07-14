@@ -75,8 +75,8 @@ func (a *ListIndexes) Execute() {
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
-		node := a.s.Nodes[index]
+	for _, nodeID := range nodeIDs {
+		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
