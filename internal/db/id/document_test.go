@@ -12,11 +12,14 @@ package id
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
@@ -184,6 +187,94 @@ func TestBlockDocIDMappings(t *testing.T) {
 	docIDs, err = GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.Empty(t, docIDs)
+}
+
+func TestBlockHasOwners(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
+
+	has, err := BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.False(t, has, "a block with no recorded owners has none")
+
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), cid.Undef)
+	require.NoError(t, err)
+	require.False(t, has, "an undefined CID has no owners")
+
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-one"))
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-two"))
+
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	// One of two owners removed: the block is still owned.
+	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-one"))
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-two"))
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.False(t, has)
+}
+
+// TestBlockHasOwnersStopsAtFirstOwner checks BlockHasOwners reports ownership after reading a
+// single key regardless of how many documents own the block, unlike GetDocIDsForBlockFromStore
+// which reads every owner.
+func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("shared field value")).Cid()
+	const owners = 500
+	for i := range owners {
+		require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, fmt.Sprintf("bae-doc-%d", i)))
+	}
+
+	var hasReads int
+	has, err := BlockHasOwners(ctx, countingReader{txn.Systemstore(), &hasReads}, fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+	require.Equal(t, 1, hasReads, "BlockHasOwners must stop at the first owner")
+
+	var listReads int
+	all, err := GetDocIDsForBlockFromStore(ctx, countingReader{txn.Systemstore(), &listReads}, fieldCID)
+	require.NoError(t, err)
+	require.Len(t, all, owners)
+	require.Greater(t, listReads, owners, "GetDocIDsForBlockFromStore reads every owner")
+}
+
+// countingReader wraps a corekv.Reader and tallies iterator advances so a test can assert
+// how much of a key range a function scans.
+type countingReader struct {
+	corekv.Reader
+	nextCalls *int
+}
+
+func (r countingReader) Iterator(ctx context.Context, opts corekv.IterOptions) (corekv.Iterator, error) {
+	iter, err := r.Reader.Iterator(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &countingIterator{Iterator: iter, nextCalls: r.nextCalls}, nil
+}
+
+type countingIterator struct {
+	corekv.Iterator
+	nextCalls *int
+}
+
+func (it *countingIterator) Next() (bool, error) {
+	*it.nextCalls++
+	return it.Iterator.Next()
 }
 
 func TestDeleteDocRefMappings(t *testing.T) {
