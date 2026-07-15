@@ -107,3 +107,27 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 		require.False(t, found)
 	}
 }
+
+// TestPurgeByDocIDsRemovesIndexEntries verifies a purge removes the pruned document's
+// secondary-index entries, so re-indexing the same document later does not collide with a
+// stale unique entry.
+func TestPurgeByDocIDsRemovesIndexEntries(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	desc, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
+	})
+	require.NoError(t, err)
+
+	doc := addUserDoc(t, ctx, col, "alice")
+
+	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
+	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, false))
+
+	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID),
+		"purge must delete the document's index entries")
+}
