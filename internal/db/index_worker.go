@@ -230,27 +230,6 @@ func (w *indexBuildWorker) dispatchSweep(ctx context.Context) {
 	})
 }
 
-// drainSync drains and waits for all workers, repeating until settled. Test-only: production never
-// blocks on a build (see run). One pass isn't always enough, since a finished task can re-drive via
-// notify (e.g. a drop that was skipped behind a build), so it loops until a pass leaves no work and
-// no pending wake. drainMu is held throughout so no other drain runs, and the shared guard and
-// builds WaitGroup mean it also waits for work an earlier pass started.
-func (w *indexBuildWorker) drainSync(ctx context.Context) {
-	w.drainMu.Lock()
-	defer w.drainMu.Unlock()
-	for {
-		w.drainLocked(ctx)
-		w.builds.Wait()
-		// A finished task may have buffered a wake; consume it and drain again. No wake means settled.
-		select {
-		case <-w.wake:
-			continue
-		default:
-			return
-		}
-	}
-}
-
 // dispatch queues one index's work behind the in-flight guard, then makes sure a worker is running
 // to pick it up. It skips the index if a build or drop is already queued or running. The enqueue is
 // non-blocking, so drain never blocks; on a full queue the task is dropped and re-derived later.
@@ -358,17 +337,9 @@ func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
 	if ctx.Err() != nil {
 		return
 	}
+
 	err := task.work(ctx)
-	if err == nil {
-		// The async error contract returns nothing to the caller, so this transition to ready/dropped
-		// is only visible here.
-		log.InfoContext(ctx, "Index build worker task completed",
-			corelog.String("collectionID", task.key.CollectionID),
-			corelog.Any("indexID", task.key.IndexID),
-			corelog.Any("action", task.action),
-		)
-		return
-	}
+
 	// A conflict is transient: the record is still there and resumes from its watermark, but nothing
 	// else re-drives it, so retry after a backoff or it stays building/dropping forever. A terminal
 	// error already recorded the failed state, so it needs no retry. Log the two apart so a routine
@@ -382,7 +353,18 @@ func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
 		w.scheduleRetry(ctx)
 		return
 	}
-	log.ErrorE("Index build worker task failed", err,
+	if err != nil {
+		log.ErrorE("Index build worker task failed", err,
+			corelog.String("collectionID", task.key.CollectionID),
+			corelog.Any("indexID", task.key.IndexID),
+			corelog.Any("action", task.action),
+		)
+		return
+	}
+
+	// The async error contract returns nothing to the caller, so this transition to ready/dropped is
+	// only visible here.
+	log.InfoContext(ctx, "Index build worker task completed",
 		corelog.String("collectionID", task.key.CollectionID),
 		corelog.Any("indexID", task.key.IndexID),
 		corelog.Any("action", task.action),

@@ -24,6 +24,27 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+// drainSync drains and waits for all workers, repeating until settled. Test-only helper: production
+// never blocks on a build (see run). One pass isn't always enough, since a finished task can re-drive
+// via notify (e.g. a drop that was skipped behind a build), so it loops until a pass leaves no work
+// and no pending wake. drainMu is held throughout so no other drain runs, and the shared guard and
+// builds WaitGroup mean it also waits for work an earlier pass started.
+func (w *indexBuildWorker) drainSync(ctx context.Context) {
+	w.drainMu.Lock()
+	defer w.drainMu.Unlock()
+	for {
+		w.drainLocked(ctx)
+		w.builds.Wait()
+		// A finished task may have buffered a wake; consume it and drain again. No wake means settled.
+		select {
+		case <-w.wake:
+			continue
+		default:
+			return
+		}
+	}
+}
+
 // TestIndexWorker_DrainNoRecords_NoOp checks that draining a collection with no pending build or
 // drop records does nothing and leaves no state.
 func TestIndexWorker_DrainNoRecords_NoOp(t *testing.T) {
