@@ -206,9 +206,18 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 		collectionSetsByID[collectionSetId] = collectionSet
 	}
 
-	collectionSets := [][]*client.CollectionVersion{}
-	for _, collectionSet := range collectionSetsByID {
-		collectionSets = append(collectionSets, collectionSet)
+	// The order the sets are returned in must be deterministic: it determines the order the
+	// collections are written, which can affect their generated IDs. Sort by the (deterministic)
+	// set IDs instead of ranging the map.
+	setIDs := make([]int, 0, len(collectionSetsByID))
+	for id := range collectionSetsByID {
+		setIDs = append(setIDs, id)
+	}
+	slices.Sort(setIDs)
+
+	collectionSets := make([][]*client.CollectionVersion, 0, len(collectionSetsByID))
+	for _, id := range setIDs {
+		collectionSets = append(collectionSets, collectionSetsByID[id])
 	}
 
 	return collectionSets
