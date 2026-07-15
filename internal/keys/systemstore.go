@@ -25,6 +25,7 @@ const (
 	DOC_SHORT_ID_SEQ    = "/seq/doc"
 	INDEX_ID_SEQ        = "/seq/index"
 	INDEX_EPOCH_SEQ     = "/seq/indexepoch"
+	INDEX_STALE_EPOCH   = "/index/staleepoch"
 	FIELD_ID_SEQ        = "/seq/field"
 	ACTION_STATUS       = "/a/s"
 	ACTION_REASON       = "/a/r"

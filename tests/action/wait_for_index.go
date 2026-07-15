@@ -17,7 +17,30 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// WaitForNodeIndexesBuilt blocks until every index on every collection of the node has left the
+// building state. A collection patch or version switch that reindexes stages the builds and returns;
+// the worker runs them in the background, so a following query would otherwise race the build. Call
+// this after such an action so the next query sees a built index.
+func WaitForNodeIndexesBuilt(s *state.State, node *state.NodeState) {
+	if node.Closed {
+		return
+	}
+	// Fetch collections outside any transaction: the caller's txn may already be committed, and a
+	// collection bound to it would fail ListIndexes with "transaction not found".
+	for _, collection := range MustGetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]()) {
+		if collection == nil {
+			continue
+		}
+		results, err := collection.ListIndexes(s.Ctx)
+		require.NoError(s.T, err)
+		for _, r := range results {
+			waitForIndexBuilt(s, collection, r.Description.ID)
+		}
+	}
+}
 
 // WaitForIndexReady blocks until every index on the collection has finished building (ready or
 // failed). It is for tests that create an index on an explicit transaction, where NewIndex cannot

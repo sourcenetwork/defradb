@@ -48,6 +48,18 @@ func countIndexEpochEntries(t *testing.T, ctx context.Context, db *DB, shortID, 
 	return count
 }
 
+// hasStaleEpochMarker reports whether the index's stale-epoch marker is present.
+func hasStaleEpochMarker(t *testing.T, ctx context.Context, db *DB, shortID, indexID uint32) bool {
+	t.Helper()
+	rawTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer rawTxn.Discard()
+	txn := datastore.CtxMustGetTxn(InitContext(ctx, rawTxn))
+	has, err := txn.Systemstore().Has(ctx, keys.NewIndexStaleEpochKey(shortID, indexID).Bytes())
+	require.NoError(t, err)
+	return has
+}
+
 // readEpoch returns the index's current epoch (the epoch sequence value).
 func readEpoch(t *testing.T, ctx context.Context, db *DB, collectionID string, indexID uint32) uint32 {
 	t.Helper()
@@ -59,17 +71,14 @@ func readEpoch(t *testing.T, ctx context.Context, db *DB, collectionID string, i
 	return epoch
 }
 
-// stageRebuild stages the build+drop records for a rebuild of every index in col the way
-// reindexNewActiveVersion does, and returns the deferred run function.
-func stageRebuild(t *testing.T, ctx context.Context, db *DB, col client.CollectionVersion) func(context.Context) error {
+// stageRebuild stages the fresh-epoch build records for every index in col the way
+// reindexNewActiveVersion does (advance epoch, mark stale, record building). The worker does the
+// actual rebuild; callers drive it with drainSync.
+func stageRebuild(t *testing.T, ctx context.Context, db *DB, col client.CollectionVersion) {
 	t.Helper()
-	var run func(context.Context) error
 	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
-		var err error
-		run, err = db.reindexNewActiveVersion(c, col)
-		return err
+		return db.reindexNewActiveVersion(c, col)
 	}))
-	return run
 }
 
 // TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld checks the rebuild mechanics: a fresh
@@ -95,8 +104,8 @@ func TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld(t *testing.T) {
 	def, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	run := stageRebuild(t, ctx, db, def.Version())
-	require.NoError(t, run(ctx))
+	stageRebuild(t, ctx, db, def.Version())
+	db.indexBuildWorker.drainSync(ctx)
 
 	// New epoch (2) holds every doc; old epoch is collected; the index resolves to the new epoch
 	// and is ready.
@@ -104,6 +113,8 @@ func TestReindexNewActiveVersion_BuildsNewEpochAndCollectsOld(t *testing.T) {
 	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
 	assert.Equal(t, uint32(2), readEpoch(t, ctx, db, collectionID, desc.ID))
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+	assert.False(t, hasStaleEpochMarker(t, ctx, db, shortID, desc.ID),
+		"the stale-epoch marker must be cleared after the rebuild collects the old epoch")
 
 	for _, name := range []string{"a", "b", "c"} {
 		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable after rebuild", name)
@@ -129,14 +140,18 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 	require.NoError(t, err)
 	oldEpoch := readEpoch(t, ctx, db, collectionID, desc.ID) // epoch 1
 
-	// Reproduce the interrupted state: advance to epoch 2 and build its entries, leaving epoch 1
-	// stale and no action record at all.
+	// Reproduce the interrupted state: advance to epoch 2, mark the stale epochs (as a real rebuild
+	// does atomically with the advance), and build the new epoch's entries, leaving epoch 1 stale
+	// and no build/drop action record.
 	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
 		newEpoch, err := allocateIndexEpoch(c, collectionID, desc.ID)
 		if err != nil {
 			return err
 		}
 		require.Equal(t, uint32(2), newEpoch)
+		if err := db.markStaleEpochs(c, shortID, desc.ID); err != nil {
+			return err
+		}
 		coll, err := db.newCollection(c, col.Version(), datastore.CtxTryGetTxnOption(c))
 		if err != nil {
 			return err
@@ -161,6 +176,8 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 
 	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, oldEpoch))
 	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+	assert.False(t, hasStaleEpochMarker(t, ctx, db, shortID, desc.ID),
+		"the stale-epoch marker must be cleared after recovery collects the stale epoch")
 	for _, name := range []string{"a", "b", "c"} {
 		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable after recovery", name)
 	}

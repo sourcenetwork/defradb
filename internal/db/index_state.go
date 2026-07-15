@@ -117,6 +117,12 @@ func getIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (ui
 	return fetcher.ReadIndexEpoch(ctx, datastore.CtxMustGetTxn(ctx), collectionID, indexID)
 }
 
+// readIndexEpochByShortID resolves the live epoch from the epoch sequence keyed by the collection's
+// short ID, for callers that already have it (the stale-epoch marker stores it).
+func readIndexEpochByShortID(ctx context.Context, collectionShortID, indexID uint32) (uint32, error) {
+	return fetcher.ReadIndexEpochByShortID(ctx, datastore.CtxMustGetTxn(ctx), collectionShortID, indexID)
+}
+
 // startIndexBuild records the start of a backfill and publishes an event. The record is
 // written on the transaction bound to ctx, so it commits atomically with any other work on
 // that transaction.

@@ -14,10 +14,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -130,60 +132,98 @@ func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error
 	return db.gcIndex(ctx, key.CollectionID, collectionShortID, key.IndexID, name)
 }
 
-// recoverStaleEpochs collects superseded epochs left by interrupted rebuilds across every active
-// index. Each index keeps only its live epoch (the sequence value); everything below it is stale
-// and deleted. It is a no-op for an index that has only its live epoch.
+// recoverStaleEpochs collects superseded epochs for indexes marked by a rebuild. Only marked indexes
+// are swept, so a drain with no pending rebuild is a no-op that touches no storage. Each index keeps
+// only its live epoch; everything below it is stale and deleted, then the marker is cleared.
 //
 // The delete range is bounded strictly below the live epoch, so it never touches an in-progress
 // build (which fills the live epoch itself). A superseded epoch holds pre-migration values that no
 // query reads — a building index is excluded from planning and full-scans instead — so collecting
 // it while a rebuild is still in flight is safe.
 func (db *DB) recoverStaleEpochs(ctx context.Context) error {
-	rawTxn, err := db.NewTxn(true)
-	if err != nil {
-		return err
-	}
-	txnCtx := InitContext(ctx, rawTxn)
-	cols, err := description.GetActiveCollections(txnCtx, db.collectionRepository)
-	rawTxn.Discard()
+	markers, err := db.listStaleEpochMarkers(ctx)
 	if err != nil {
 		return err
 	}
 
-	for _, col := range cols {
+	for _, m := range markers {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if len(col.Indexes) == 0 {
-			continue
-		}
-		collectionShortID, err := db.resolveCollectionShortID(ctx, col.CollectionID)
+		liveEpoch, err := db.indexLiveEpoch(ctx, m.CollectionShortID, m.IndexID)
 		if err != nil {
 			return err
 		}
-		for _, desc := range col.Indexes {
-			liveEpoch, err := db.indexLiveEpoch(ctx, col.CollectionID, desc.ID)
-			if err != nil {
-				return err
-			}
-			name := fmt.Sprintf("index %d", desc.ID)
-			if err := db.gcStaleEpochs(ctx, collectionShortID, desc.ID, liveEpoch, name); err != nil {
-				return err
-			}
+		name := fmt.Sprintf("index %d", m.IndexID)
+		if err := db.gcStaleEpochs(ctx, m.CollectionShortID, m.IndexID, liveEpoch, name); err != nil {
+			return err
+		}
+		if err := db.clearStaleEpochMarker(ctx, m.CollectionShortID, m.IndexID); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// indexLiveEpoch reads an index's live epoch (its sequence value) in a short read-only
-// transaction.
-func (db *DB) indexLiveEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+// listStaleEpochMarkers reads every stale-epoch marker in a short read-only transaction.
+func (db *DB) listStaleEpochMarkers(ctx context.Context) ([]keys.IndexStaleEpochKey, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return nil, err
+	}
+	defer rawTxn.Discard()
+	txn := datastore.CtxMustGetTxn(InitContext(ctx, rawTxn))
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   []byte(keys.IndexStaleEpochPrefix()),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var markers []keys.IndexStaleEpochKey
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		k, err := keys.NewIndexStaleEpochKeyFromString(string(iter.Key()))
+		if err != nil {
+			return nil, errors.Join(err, iter.Close())
+		}
+		markers = append(markers, k)
+	}
+	return markers, iter.Close()
+}
+
+// clearStaleEpochMarker deletes an index's stale-epoch marker once its stale epochs are collected.
+func (db *DB) clearStaleEpochMarker(ctx context.Context, collectionShortID, indexID uint32) error {
+	return db.withTxnRetries(ctx, func(c context.Context) error {
+		txn := datastore.CtxMustGetTxn(c)
+		return txn.Systemstore().Delete(c, keys.NewIndexStaleEpochKey(collectionShortID, indexID).Bytes())
+	})
+}
+
+// markStaleEpochs records that an index has superseded epochs to collect, on the transaction bound
+// to ctx so it commits with the rebuild that advanced the epoch. The worker's sweep reads it, GCs
+// the stale epochs, and clears it.
+func (db *DB) markStaleEpochs(ctx context.Context, collectionShortID, indexID uint32) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	return txn.Systemstore().Set(ctx, keys.NewIndexStaleEpochKey(collectionShortID, indexID).Bytes(), []byte{})
+}
+
+// indexLiveEpoch reads an index's live epoch (its sequence value) in a short read-only transaction.
+func (db *DB) indexLiveEpoch(ctx context.Context, collectionShortID, indexID uint32) (uint32, error) {
 	rawTxn, err := db.NewTxn(true)
 	if err != nil {
 		return 0, err
 	}
 	defer rawTxn.Discard()
-	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
+	return readIndexEpochByShortID(InitContext(ctx, rawTxn), collectionShortID, indexID)
 }
 
 // resolveCollectionShortID opens a read-only transaction to look up the short

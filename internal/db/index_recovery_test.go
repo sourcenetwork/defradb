@@ -262,6 +262,11 @@ func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
 			return err
 		}
 		require.Equal(t, uint32(2), newEpoch)
+		// A real rebuild marks the index as having stale epochs when it advances the sequence; the
+		// sweep only touches marked indexes.
+		if err := db.markStaleEpochs(c, shortID, desc.ID); err != nil {
+			return err
+		}
 		if err := db.startIndexBuild(c, collectionID, desc.ID); err != nil {
 			return err
 		}
