@@ -63,7 +63,15 @@ func (c *collection) PurgeByDocIDs(
 
 	for i := 0; i < len(docIDs); i += purgeChunkSize {
 		end := min(i+purgeChunkSize, len(docIDs))
-		if err := c.purgeChunk(ctx, docIDs[i:end], pruneHistory); err != nil {
+		chunk := docIDs[i:end]
+
+		// Each chunk commits in its own transaction and can conflict with a concurrent merge.
+		// Retry rather than drop the chunk; withTxnRetries uses a fresh transaction per
+		// attempt, so the retry sees the write that caused the conflict.
+		err := c.db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+			return c.purgeChunk(txnCtx, chunk, pruneHistory)
+		})
+		if err != nil {
 			return err
 		}
 	}
