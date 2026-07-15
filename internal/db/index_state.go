@@ -123,6 +123,17 @@ func readIndexEpochByShortID(ctx context.Context, collectionShortID, indexID uin
 	return fetcher.ReadIndexEpochByShortID(ctx, datastore.CtxMustGetTxn(ctx), collectionShortID, indexID)
 }
 
+// readIndexBuildEpoch resolves the epoch a backfill fills, in its own short read-only transaction so
+// the caller can pin it for the whole build independent of any batch transaction.
+func (db *DB) readIndexBuildEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return 0, err
+	}
+	defer rawTxn.Discard()
+	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
+}
+
 // startIndexBuild records the start of a backfill and publishes an event. The record is
 // written on the transaction bound to ctx, so it commits atomically with any other work on
 // that transaction.

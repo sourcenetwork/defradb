@@ -76,8 +76,47 @@ func NewCollectionIndex(
 	desc client.IndexDescription,
 	building bool,
 ) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	// Read the epoch after validation so an invalid description fails the same way whether or not a
+	// transaction is on the context.
+	base.epoch, err = getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
+	if err != nil {
+		return nil, err
+	}
+	return wrapCollectionIndex(base), nil
+}
+
+// newCollectionIndexWithEpoch builds an index instance pinned to a caller-resolved epoch, rather
+// than re-reading the sequence. A backfill uses it so every batch writes the same epoch even if a
+// concurrent version switch advances the sequence mid-build; splitting one build across two epochs
+// would leave the live epoch missing the documents indexed before the advance. Live writes use
+// NewCollectionIndex, which always targets the current epoch.
+func newCollectionIndexWithEpoch(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+	epoch uint32,
+) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	base.epoch = epoch
+	return wrapCollectionIndex(base), nil
+}
+
+// buildIndexBase validates the description against the collection and assembles the shared index
+// base, leaving the epoch unset for the caller to resolve.
+func buildIndexBase(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+) (collectionBaseIndex, error) {
 	if len(desc.Fields) == 0 {
-		return nil, NewErrIndexDescHasNoFields(desc)
+		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
@@ -89,27 +128,26 @@ func NewCollectionIndex(
 	for i := range desc.Fields {
 		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
-			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
 		if !isSupportedKind(field.Kind) {
-			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
+			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
-			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
+			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
+	return base, nil
+}
 
-	epoch, err := getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
-	if err != nil {
-		return nil, err
+// wrapCollectionIndex returns the unique or simple index implementation for the base.
+func wrapCollectionIndex(base collectionBaseIndex) client.CollectionIndex {
+	if base.desc.Unique {
+		return &collectionUniqueIndex{collectionBaseIndex: base}
 	}
-	base.epoch = epoch
-	if desc.Unique {
-		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
-	}
-	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
+	return &collectionSimpleIndex{collectionBaseIndex: base}
 }
 
 // FieldIndexGenerator generates index entries for a single field

@@ -69,8 +69,10 @@ type CollectionIndex interface {
 // Execution.Status):
 //   - building: InProgress + BackfillIndexAction
 //   - failed:   Errored    + BackfillIndexAction (Execution.Reason has the cause)
-//   - dropping: InProgress + DropIndexAction
 //   - ready:    Completed  (no in-flight action; Execution.Action is unset)
+//
+// A whole-index drop is not reported here: the index is removed from the listing when the drop is
+// requested, so a dropping index is simply absent rather than shown with a status.
 type ListIndexesResult struct {
 	// Description is the static index specification.
 	Description IndexDescription

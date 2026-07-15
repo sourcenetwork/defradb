@@ -74,6 +74,10 @@ type indexBuildWorker struct {
 
 	// builds counts running workers so a drain can wait for them (drainSync, Close).
 	builds sync.WaitGroup
+
+	// sweepRunning is set while a stale-epoch sweep goroutine is running, so a drain won't start a
+	// second one. The running sweep re-scans every marker, so a skipped drain loses no work.
+	sweepRunning atomic.Bool
 }
 
 // buildTask is one unit of work for a worker: the target index, the action (for logging), and the
@@ -194,16 +198,36 @@ func (w *indexBuildWorker) drainLocked(ctx context.Context) {
 	}
 
 	// A rebuild leaves superseded epochs with no record and may crash before collecting them. Sweep
-	// every index; it's a no-op when only the live epoch exists, and the delete range stays below the
-	// live epoch so it never touches an in-flight build.
-	if err := w.db.recoverStaleEpochs(ctx); err != nil {
-		log.ErrorE("Failed to collect stale index epochs during drain", err)
-		// Stale epochs have no record to re-dispatch them, so on a conflict retry it ourselves;
-		// otherwise they'd wait for an unrelated wake.
-		if errors.Is(err, corekv.ErrTxnConflict) {
-			w.scheduleRetry(ctx)
-		}
+	// them off the run loop: the GC can loop over many batches, and running it here would stop the
+	// loop reading the event bus and stall publishers (the same reason builds go through the pool).
+	w.dispatchSweep(ctx)
+}
+
+// dispatchSweep runs the stale-epoch sweep in a builds-tracked goroutine, unless one is already
+// running. The sweep is a single global pass over the markers, not per-index, so one at a time is
+// enough; the running pass re-scans every marker, and it re-drives on finish to catch markers that
+// appeared while it ran.
+func (w *indexBuildWorker) dispatchSweep(ctx context.Context) {
+	if !w.sweepRunning.CompareAndSwap(false, true) {
+		return
 	}
+	w.builds.Go(func() {
+		defer w.sweepRunning.Store(false)
+		swept, err := w.db.recoverStaleEpochs(ctx)
+		if swept > 0 {
+			// A marker committed while the sweep ran won't wake it again, so re-drive to catch it. Only
+			// when this pass did work, or an idle drain would spin sweep -> notify -> drain forever.
+			w.notify()
+		}
+		if err != nil {
+			log.ErrorE("Failed to collect stale index epochs", err)
+			// Stale epochs have no record to re-dispatch them, so on a conflict retry it ourselves;
+			// otherwise they'd wait for an unrelated wake.
+			if errors.Is(err, corekv.ErrTxnConflict) {
+				w.scheduleRetry(ctx)
+			}
+		}
+	})
 }
 
 // drainSync drains and waits for all workers, repeating until settled. Test-only: production never
@@ -251,6 +275,11 @@ func (w *indexBuildWorker) dispatch(
 		// spin drain -> full -> notify at full CPU until then. The guard means one task per index, so
 		// with the default size this only happens past thousands of pending indexes.
 		w.inFlight.Delete(guardKey)
+		log.InfoContext(ctx, "Index build queue full, deferring task to a later drain",
+			corelog.String("collectionID", key.CollectionID),
+			corelog.Any("indexID", key.IndexID),
+			corelog.Any("action", action),
+		)
 	}
 }
 
@@ -331,6 +360,26 @@ func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
 	}
 	err := task.work(ctx)
 	if err == nil {
+		// The async error contract returns nothing to the caller, so this transition to ready/dropped
+		// is only visible here.
+		log.InfoContext(ctx, "Index build worker task completed",
+			corelog.String("collectionID", task.key.CollectionID),
+			corelog.Any("indexID", task.key.IndexID),
+			corelog.Any("action", task.action),
+		)
+		return
+	}
+	// A conflict is transient: the record is still there and resumes from its watermark, but nothing
+	// else re-drives it, so retry after a backoff or it stays building/dropping forever. A terminal
+	// error already recorded the failed state, so it needs no retry. Log the two apart so a routine
+	// retry isn't read as a real failure in the log stream.
+	if errors.Is(err, corekv.ErrTxnConflict) {
+		log.InfoContext(ctx, "Index build worker task hit a conflict, retrying",
+			corelog.String("collectionID", task.key.CollectionID),
+			corelog.Any("indexID", task.key.IndexID),
+			corelog.Any("action", task.action),
+		)
+		w.scheduleRetry(ctx)
 		return
 	}
 	log.ErrorE("Index build worker task failed", err,
@@ -338,12 +387,6 @@ func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
 		corelog.Any("indexID", task.key.IndexID),
 		corelog.Any("action", task.action),
 	)
-	// A conflict is transient: the record is still there and resumes from its watermark, but nothing
-	// else re-drives it, so retry after a backoff or it stays building/dropping forever. A terminal
-	// error already recorded the failed state, so it needs no retry.
-	if errors.Is(err, corekv.ErrTxnConflict) {
-		w.scheduleRetry(ctx)
-	}
 }
 
 // scheduleRetry wakes the worker after indexBuildRetryDelay to retry an index left building or

@@ -15,6 +15,7 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -58,6 +59,10 @@ func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state
 		// was never committed, or a rebuild can orphan one. It can never build, so clear the record
 		// rather than return an error the drain would re-dispatch forever.
 		if errors.Is(err, ErrIndexWithIDDoesNotExist) {
+			log.InfoContext(ctx, "Clearing orphaned index build record with no definition",
+				corelog.String("collectionID", key.CollectionID),
+				corelog.Any("indexID", key.IndexID),
+			)
 			return db.withTxnRetries(ctx, func(c context.Context) error {
 				return db.clearIndexBuildRecord(c, key.CollectionID, key.IndexID)
 			})
@@ -140,29 +145,39 @@ func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error
 // build (which fills the live epoch itself). A superseded epoch holds pre-migration values that no
 // query reads — a building index is excluded from planning and full-scans instead — so collecting
 // it while a rebuild is still in flight is safe.
-func (db *DB) recoverStaleEpochs(ctx context.Context) error {
+func (db *DB) recoverStaleEpochs(ctx context.Context) (swept int, err error) {
 	markers, err := db.listStaleEpochMarkers(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	// One wedged marker must not starve the others: collect per-marker errors and keep going, so an
+	// unrelated marker doesn't block every index's GC until some later wake.
+	var errs error
+	for _, m := range markers {
+		if ctx.Err() != nil {
+			return swept, ctx.Err()
+		}
+		if err := db.collectStaleEpoch(ctx, m); err != nil {
+			errs = errors.Join(errs, err)
+			continue
+		}
+		swept++
+	}
+	return swept, errs
+}
+
+// collectStaleEpoch collects one marked index's superseded epochs and clears its marker.
+func (db *DB) collectStaleEpoch(ctx context.Context, m keys.IndexStaleEpochKey) error {
+	liveEpoch, err := db.indexLiveEpoch(ctx, m.CollectionShortID, m.IndexID)
 	if err != nil {
 		return err
 	}
-
-	for _, m := range markers {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-		liveEpoch, err := db.indexLiveEpoch(ctx, m.CollectionShortID, m.IndexID)
-		if err != nil {
-			return err
-		}
-		name := fmt.Sprintf("index %d", m.IndexID)
-		if err := db.gcStaleEpochs(ctx, m.CollectionShortID, m.IndexID, liveEpoch, name); err != nil {
-			return err
-		}
-		if err := db.clearStaleEpochMarker(ctx, m.CollectionShortID, m.IndexID); err != nil {
-			return err
-		}
+	name := fmt.Sprintf("index %d", m.IndexID)
+	if err := db.gcStaleEpochs(ctx, m.CollectionShortID, m.IndexID, liveEpoch, name); err != nil {
+		return err
 	}
-	return nil
+	return db.clearStaleEpochMarker(ctx, m.CollectionShortID, m.IndexID)
 }
 
 // listStaleEpochMarkers reads every stale-epoch marker in a short read-only transaction.

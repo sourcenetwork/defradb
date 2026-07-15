@@ -92,11 +92,23 @@ func (db *DB) backfillIndex(
 	desc client.IndexDescription,
 	startAfter immutable.Option[uint64],
 ) error {
-	if err := db.fillIndexBatches(ctx, def, desc, startAfter); err != nil {
+	builtEpoch, err := db.fillIndexBatches(ctx, def, desc, startAfter)
+	if err != nil {
 		return err
 	}
 
-	err := db.withTxnRetries(ctx, func(c context.Context) error {
+	err = db.withTxnRetries(ctx, func(c context.Context) error {
+		// A version switch can advance the epoch while this build runs; the build stays pinned to the
+		// epoch it started on, which is now stale. Completing would delete the record the version switch
+		// staged for the new epoch, leaving it unbuilt. Only complete if this build still filled the
+		// live epoch; otherwise leave the record for the worker to build the new epoch from the top.
+		liveEpoch, err := getIndexEpoch(c, def.CollectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		if liveEpoch != builtEpoch {
+			return nil
+		}
 		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
 	})
 	if err == nil {
@@ -107,7 +119,7 @@ func (db *DB) backfillIndex(
 	}
 	markErr := db.markIndexFailed(ctx, def, desc, err)
 	if markErr != nil {
-		log.ErrorE("failed to record index failure", markErr,
+		log.ErrorE("failed to record index failure", errors.Join(markErr, err),
 			corelog.String("collectionID", def.CollectionID),
 			corelog.Any("indexID", desc.ID),
 		)
@@ -116,7 +128,8 @@ func (db *DB) backfillIndex(
 }
 
 // fillIndexBatches indexes every document from startAfter to the end of the collection in batched
-// transactions. The index writes the epoch resolved from its sequence.
+// transactions, returning the epoch it filled. The epoch is resolved once and pinned for the whole
+// build.
 //
 // A non-retryable error marks the index failed; a conflict leaves it resumable. It does not
 // complete the build — the caller deletes the record once the fill is done.
@@ -125,12 +138,21 @@ func (db *DB) fillIndexBatches(
 	def client.CollectionVersion,
 	desc client.IndexDescription,
 	startAfter immutable.Option[uint64],
-) error {
+) (uint32, error) {
 	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
 	for _, f := range desc.Fields {
 		if colField, ok := def.GetFieldByName(f.Name); ok {
 			fields = append(fields, colField)
 		}
+	}
+
+	// Resolve the epoch once and pin it for the whole build. A concurrent version switch can advance
+	// the sequence mid-build; if each batch re-read it, the build would split across two epochs and
+	// leave the new live epoch missing every document indexed before the advance. The version switch
+	// stages its own building record, which drives a complete fresh build of the new epoch.
+	epoch, err := db.readIndexBuildEpoch(ctx, def.CollectionID, desc.ID)
+	if err != nil {
+		return 0, err
 	}
 
 	watermark := startAfter
@@ -145,14 +167,29 @@ func (db *DB) fillIndexBatches(
 			n              int
 		)
 
+		superseded := false
 		batchErr := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
+			// A version switch mid-build advances the epoch and stages a fresh build to fill it from the
+			// top. This build is pinned to the old epoch, so it is now stale: stop, and don't touch the
+			// shared record's watermark, which the fresh build resets to rebuild from the start. Reading
+			// the epoch here also joins this batch's read-set, so a switch committing after the check but
+			// before this batch commits conflicts it (and it retries into this same superseded branch).
+			liveEpoch, err := getIndexEpoch(batchCtx, def.CollectionID, desc.ID)
+			if err != nil {
+				return err
+			}
+			if liveEpoch != epoch {
+				superseded = true
+				return nil
+			}
+
 			// Bare collection so this batch does not read sibling indexes' state into its read-set
 			// (see newBareCollection); the backfill maintains only its own index, built below.
 			col := db.newBareCollection(def, datastore.CtxTryGetTxnOption(batchCtx))
 
 			// building=true so Save tolerates entries a concurrent live write
-			// already stored for the same document.
-			colIndex, err := NewCollectionIndex(batchCtx, col, desc, true)
+			// already stored for the same document. The epoch is pinned above, not re-read per batch.
+			colIndex, err := newCollectionIndexWithEpoch(col, desc, true, epoch)
 			if err != nil {
 				return err
 			}
@@ -180,17 +217,23 @@ func (db *DB) fillIndexBatches(
 			// resumable rather than recording a permanent failure. Only non-retryable
 			// errors represent a genuine problem that warrants marking the index failed.
 			if errors.Is(batchErr, corekv.ErrTxnConflict) {
-				return NewErrIndexBackfillInterrupted(batchErr, desc.Name)
+				return epoch, NewErrIndexBackfillInterrupted(batchErr, desc.Name)
 			}
 			markErr := db.markIndexFailed(ctx, def, desc, batchErr)
 			if markErr != nil {
 				log.ErrorE("failed to record index failure",
-					markErr,
+					errors.Join(markErr, batchErr),
 					corelog.String("collectionID", def.CollectionID),
 					corelog.Any("indexID", desc.ID),
 				)
 			}
-			return errors.Join(NewErrIndexBackfillFailed(batchErr, desc.Name), markErr)
+			return epoch, errors.Join(NewErrIndexBackfillFailed(batchErr, desc.Name), markErr)
+		}
+
+		if superseded {
+			// The pinned epoch is no longer live; the fresh build staged by the version switch will fill
+			// the new epoch. Stop without completing, leaving the record for that build.
+			return epoch, nil
 		}
 
 		if n == 0 || n < indexBackfillBatchSize {
@@ -200,7 +243,7 @@ func (db *DB) fillIndexBatches(
 		watermark = immutable.Some(lastDocShortID)
 	}
 
-	return nil
+	return epoch, nil
 }
 
 // markIndexFailed records a failed state for the index with the cause as the reason, in its

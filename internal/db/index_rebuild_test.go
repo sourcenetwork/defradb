@@ -12,7 +12,10 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -180,5 +183,85 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 		"the stale-epoch marker must be cleared after recovery collects the stale epoch")
 	for _, name := range []string{"a", "b", "c"} {
 		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable after recovery", name)
+	}
+}
+
+// TestBackfill_EpochAdvancedMidBuild_LiveEpochComplete is the regression for the mid-build epoch
+// split: an initial build resolves its epoch once and pins it, so a version switch that advances the
+// sequence while the build is in flight cannot make the build write its later batches into the new
+// epoch while its earlier batches landed in the old one. If the epoch were re-read per batch, the new
+// live epoch would be missing every document indexed before the advance. Here the initial build is
+// parked mid-flight, the epoch is advanced underneath it (as a version switch does), and after
+// everything settles the live epoch must hold every document.
+func TestBackfill_EpochAdvancedMidBuild_LiveEpochComplete(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	// Gate: park the initial build at its first batch boundary until released.
+	origGate := IndexBuildGate
+	defer func() { IndexBuildGate = origGate }()
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	var entered sync.WaitGroup
+	entered.Add(1)
+	var enteredOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		select {
+		case <-release:
+			return
+		default:
+		}
+		enteredOnce.Do(entered.Done)
+		select {
+		case <-release:
+		case <-gateCtx.Done():
+		}
+	}
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	const docCount = 40
+	for i := range docCount {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%02d"}`, i), col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+	}
+
+	idx, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	// Wait until the initial build is parked mid-flight, then advance the epoch underneath it exactly
+	// as a version switch does: allocate the next epoch, mark the old one stale, and stage a fresh
+	// build record.
+	entered.Wait()
+	def, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.reindexNewActiveVersion(c, def.Version())
+	}))
+
+	// Release the parked build and let the worker settle: the pinned build finishes the old epoch
+	// (now stale, collected by the sweep), and the staged rebuild fills the new live epoch in full.
+	releaseOnce.Do(func() { close(release) })
+
+	waitForIndexReady(t, ctx, db, collectionID, idx.ID)
+	liveEpoch := readEpoch(t, ctx, db, collectionID, idx.ID)
+	assert.Equal(t, docCount, countIndexEpochEntries(t, ctx, db, shortID, idx.ID, liveEpoch),
+		"the live epoch must hold every document, not just those indexed after the advance")
+	for i := range docCount {
+		name := fmt.Sprintf("n%02d", i)
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable", name)
 	}
 }

@@ -282,7 +282,8 @@ func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
 	}))
 	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
 
-	require.NoError(t, db.recoverStaleEpochs(ctx))
+	_, err = db.recoverStaleEpochs(ctx)
+	require.NoError(t, err)
 
 	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1),
 		"stale epoch below the building epoch must be collected")
