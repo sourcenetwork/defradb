@@ -489,6 +489,18 @@ func (c *collection) deleteBlocks(
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
+	// Block content is immutable and content-addressed; the walk only reads it to find child
+	// links. Reading it through the purge's write transaction adds every visited CID to that
+	// transaction's conflict set, so a concurrent write of any of them aborts the purge for a
+	// read whose value never changed. Read it through a read-only transaction instead; ownership
+	// checks and deletions stay on the write transaction, so the keep/delete decision is unchanged.
+	readTxn, err := c.db.NewTxn(true)
+	if err != nil {
+		return err
+	}
+	defer readTxn.Discard()
+	readCtx := InitContext(ctx, readTxn)
+
 	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
 		if systemstore == nil || docID == "" {
 			return true, nil
@@ -519,7 +531,7 @@ func (c *collection) deleteBlocks(
 		block *coreblock.Block
 	}
 
-	coreBlock, isFound, err := getBlock(ctx, blockstore, currentCid)
+	coreBlock, isFound, err := getBlock(readCtx, blockstore, currentCid)
 	if err != nil {
 		return err
 	}
@@ -565,7 +577,7 @@ func (c *collection) deleteBlocks(
 		currentBlock := toDelete[i]
 
 		if currentBlock.block == nil {
-			coreBlock, isFound, err := getBlock(ctx, blockstore, currentBlock.id)
+			coreBlock, isFound, err := getBlock(readCtx, blockstore, currentBlock.id)
 			if err != nil {
 				return err
 			}
