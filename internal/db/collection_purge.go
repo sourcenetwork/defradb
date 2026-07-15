@@ -114,6 +114,14 @@ func (c *collection) purgeOneDoc(
 		return nil
 	}
 
+	// Index entries are keyed by the document's field values, so they must be deleted before
+	// the datastore prefixes holding those values are removed.
+	if len(c.indexes) > 0 {
+		if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
+			return err
+		}
+	}
+
 	// InstanceType sits between CollectionShortID and DocShortID in the encoded key, so we
 	// must include it in the prefix; a key without InstanceType matches nothing.
 	for _, itype := range []keys.InstanceType{keys.ValueKey, keys.PriorityKey, keys.DeletedKey} {
