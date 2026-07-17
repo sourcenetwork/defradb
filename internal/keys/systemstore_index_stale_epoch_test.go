@@ -11,6 +11,7 @@
 package keys
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +52,29 @@ func TestIndexStaleEpochKey_RoundTrip(t *testing.T) {
 		got, err := NewIndexStaleEpochKeyFromString(want.ToString())
 		require.NoError(t, err)
 		assert.Equal(t, want, got)
+	}
+}
+
+// TestIndexStaleEpochKey_TrailingSlashSibling checks a sibling key that shares the prefix bytes but
+// not the separator is not mis-parsed as a marker. The prefix is INDEX_STALE_EPOCH with no trailing
+// slash, so a prefix scan also yields siblings like "/index/staleepochX" and "/index/staleepochs/1/2";
+// the parser must reject them rather than return a bogus key pointing the sweep at the wrong index.
+func TestIndexStaleEpochKey_TrailingSlashSibling(t *testing.T) {
+	siblings := []string{
+		INDEX_STALE_EPOCH + "X",         // no separator: not a real marker
+		INDEX_STALE_EPOCH + "X/3/7",     // sibling namespace that happens to share the prefix bytes
+		INDEX_STALE_EPOCH + "s/3/7",     // pluralized sibling
+		INDEX_STALE_EPOCH + "extra/3/7", // longer sibling name
+	}
+	for _, key := range siblings {
+		t.Run(key, func(t *testing.T) {
+			// The sibling shares the prefix bytes, so a prefix scan would surface it.
+			require.True(t, strings.HasPrefix(key, IndexStaleEpochPrefix()),
+				"sibling must share the prefix bytes for this test to be meaningful")
+			// But it must not parse as a valid marker.
+			_, err := NewIndexStaleEpochKeyFromString(key)
+			require.Error(t, err, "sibling key %q must not parse as a stale-epoch marker", key)
+		})
 	}
 }
 

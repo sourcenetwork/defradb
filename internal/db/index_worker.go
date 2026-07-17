@@ -340,10 +340,15 @@ func (w *indexBuildWorker) runTask(ctx context.Context, task buildTask) {
 
 	err := task.work(ctx)
 
-	// A conflict is transient: the record is still there and resumes from its watermark, but nothing
-	// else re-drives it, so retry after a backoff or it stays building/dropping forever. A terminal
-	// error already recorded the failed state, so it needs no retry. Log the two apart so a routine
-	// retry isn't read as a real failure in the log stream.
+	// Shutdown cancelled the build. The record stays and the next startup drain resumes it, so this is
+	// expected. Return quietly with no retry, since the worker is stopping.
+	if ctx.Err() != nil {
+		return
+	}
+
+	// A conflict is temporary: the record is still there and resumes from its watermark, but nothing
+	// else wakes it, so retry after a backoff or it stays building forever. A real error already
+	// recorded the failed state and needs no retry. Log them apart so a retry isn't read as a failure.
 	if errors.Is(err, corekv.ErrTxnConflict) {
 		log.InfoContext(ctx, "Index build worker task hit a conflict, retrying",
 			corelog.String("collectionID", task.key.CollectionID),

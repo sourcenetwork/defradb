@@ -80,7 +80,7 @@ func (db *DB) recoverBuilding(ctx context.Context, key keys.IndexStateKey, state
 // findIndexDefinition resolves the collection version and index description for the
 // given state key from the collection repository. It prefers the active version when
 // multiple versions contain the index; if no active version matches, the first match
-// is returned. Multiple active versions matching the same index ID should not occur —
+// is returned. Multiple active versions matching the same index ID should not occur;
 // if they do, a warning is logged and the first active match is used.
 func (db *DB) findIndexDefinition(
 	ctx context.Context,
@@ -126,7 +126,7 @@ func (db *DB) findIndexDefinition(
 }
 
 // recoverDropping resumes an interrupted whole-index drop, deleting the remaining entries and the
-// drop record. Rebuilds leave no drop record — their superseded epochs are collected by
+// drop record. Rebuilds leave no drop record, so their superseded epochs are collected by
 // recoverStaleEpochs instead.
 func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error {
 	collectionShortID, err := db.resolveCollectionShortID(ctx, key.CollectionID)
@@ -143,7 +143,7 @@ func (db *DB) recoverDropping(ctx context.Context, key keys.IndexStateKey) error
 //
 // The delete range is bounded strictly below the live epoch, so it never touches an in-progress
 // build (which fills the live epoch itself). A superseded epoch holds pre-migration values that no
-// query reads — a building index is excluded from planning and full-scans instead — so collecting
+// query reads (a building index is excluded from planning and full-scans instead), so collecting
 // it while a rebuild is still in flight is safe.
 func (db *DB) recoverStaleEpochs(ctx context.Context) (swept int, err error) {
 	markers, err := db.listStaleEpochMarkers(ctx)

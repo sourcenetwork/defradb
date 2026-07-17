@@ -452,7 +452,7 @@ func (index *collectionUniqueIndex) Save(
 //
 // Keys whose value is empty embed the docID in the key itself, so they are already
 // doc-specific and are written unconditionally. For value-bearing keys, an entry that
-// already exists is a uniqueness violation — except while the index is building, where
+// already exists is a uniqueness violation, except while the index is building, where
 // an entry for the same doc means a concurrent live write got there first and is skipped.
 func saveUniqueKey(
 	ctx context.Context,

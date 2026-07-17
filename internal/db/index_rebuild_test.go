@@ -186,6 +186,101 @@ func TestReindexNewActiveVersion_RecoversStaleEpochs(t *testing.T) {
 	}
 }
 
+// TestCollectStaleEpoch_SecondRebuildRaceLeaksMarker documents a known stale-epoch marker leak. It
+// guards current behavior, it is not a fix. If a second rebuild advances the epoch and re-marks
+// between the sweep's gc and clear steps, the clear still removes the marker, so the second rebuild's
+// stale epoch is left uncollected until a later rebuild re-marks the index.
+func TestCollectStaleEpoch_SecondRebuildRaceLeaksMarker(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	for _, name := range []string{"a", "b", "c"} {
+		addUserDoc(t, ctx, col, name)
+	}
+
+	desc, err := newNameIndex(t, ctx, db, col)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), readEpoch(t, ctx, db, collectionID, desc.ID))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1))
+
+	// First rebuild: advance to epoch 2, fill it, mark the stale epochs. Epoch 1 is now stale.
+	fillNextEpoch(t, ctx, db, col, desc, 2)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.markStaleEpochs(c, shortID, desc.ID)
+	}))
+	require.True(t, hasStaleEpochMarker(t, ctx, db, shortID, desc.ID))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+
+	// Run the sweep by hand so a second rebuild can interleave between its gc and clear steps. First
+	// read the live epoch and gc below it, collecting epoch 1.
+	liveEpoch, err := db.indexLiveEpoch(ctx, shortID, desc.ID)
+	require.NoError(t, err)
+	require.Equal(t, uint32(2), liveEpoch)
+	require.NoError(t, db.gcStaleEpochs(ctx, shortID, desc.ID, liveEpoch, "index"))
+	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1),
+		"epoch 1 must be collected by the first sweep")
+
+	// A second rebuild lands before the first sweep clears the marker: advance to epoch 3, fill it,
+	// re-mark. Epoch 2 is now stale.
+	fillNextEpoch(t, ctx, db, col, desc, 3)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.markStaleEpochs(c, shortID, desc.ID)
+	}))
+	require.Equal(t, uint32(3), readEpoch(t, ctx, db, collectionID, desc.ID))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2),
+		"epoch 2 is now stale but not yet collected")
+
+	// The first sweep clears the marker, removing the one the second rebuild relied on.
+	require.NoError(t, db.clearStaleEpochMarker(ctx, shortID, desc.ID))
+	assert.False(t, hasStaleEpochMarker(t, ctx, db, shortID, desc.ID),
+		"the marker is cleared despite the second rebuild's stale epoch remaining")
+
+	// With no marker, the re-sweep collects nothing, so epoch 2 leaks until a later rebuild re-marks.
+	swept, err := db.recoverStaleEpochs(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 0, swept, "no marker means the re-sweep touches nothing")
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2),
+		"the second rebuild's stale epoch 2 is leaked")
+
+	// The index still resolves to the live epoch and queries stay correct despite the leaked entries.
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 3))
+	for _, name := range []string{"a", "b", "c"} {
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must stay queryable", name)
+	}
+}
+
+// fillNextEpoch advances the index to the given epoch and fills it with the current live docs,
+// mirroring the epoch-advance-and-build a rebuild performs. It asserts the allocated epoch matches.
+func fillNextEpoch(
+	t *testing.T,
+	ctx context.Context,
+	db *DB,
+	col client.Collection,
+	desc client.IndexDescription,
+	wantEpoch uint32,
+) {
+	t.Helper()
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		newEpoch, err := allocateIndexEpoch(c, col.Version().CollectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		require.Equal(t, wantEpoch, newEpoch)
+		coll, err := db.newCollection(c, col.Version(), datastore.CtxTryGetTxnOption(c))
+		if err != nil {
+			return err
+		}
+		colIndex, err := NewCollectionIndex(c, coll, desc, false)
+		if err != nil {
+			return err
+		}
+		return coll.indexExistingDocs(c, colIndex)
+	}))
+}
+
 // TestBackfill_EpochAdvancedMidBuild_LiveEpochComplete is the regression for the mid-build epoch
 // split: an initial build resolves its epoch once and pins it, so a version switch that advances the
 // sequence while the build is in flight cannot make the build write its later batches into the new

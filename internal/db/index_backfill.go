@@ -80,6 +80,15 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 	return lastErr
 }
 
+// isBuildInterrupted reports whether the build stopped for a reason that lets it resume later, rather
+// than failing: a transaction conflict or ctx cancellation on shutdown. The record stays in place and
+// the next drain resumes it, so it must not be marked failed.
+func isBuildInterrupted(err error) bool {
+	return errors.Is(err, corekv.ErrTxnConflict) ||
+		errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded)
+}
+
 // backfillIndex builds an index by indexing every existing document in batched transactions, then
 // deleting the build record to mark it ready. It is used both for a fresh index and for a rebuild
 // filling a new epoch; in both cases the epoch is resolved from the index's sequence.
@@ -114,7 +123,7 @@ func (db *DB) backfillIndex(
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, corekv.ErrTxnConflict) {
+	if isBuildInterrupted(err) {
 		return NewErrIndexBackfillInterrupted(err, desc.Name)
 	}
 	markErr := db.markIndexFailed(ctx, def, desc, err)
@@ -132,7 +141,7 @@ func (db *DB) backfillIndex(
 // build.
 //
 // A non-retryable error marks the index failed; a conflict leaves it resumable. It does not
-// complete the build — the caller deletes the record once the fill is done.
+// complete the build. The caller deletes the record once the fill is done.
 func (db *DB) fillIndexBatches(
 	ctx context.Context,
 	def client.CollectionVersion,
@@ -212,11 +221,9 @@ func (db *DB) fillIndexBatches(
 		})
 
 		if batchErr != nil {
-			// A transaction conflict means a concurrent write raced with this batch.
-			// The building state and watermark are still valid, so leave the index
-			// resumable rather than recording a permanent failure. Only non-retryable
-			// errors represent a genuine problem that warrants marking the index failed.
-			if errors.Is(batchErr, corekv.ErrTxnConflict) {
+			// A conflicting write or shutdown cancellation leaves the state and watermark valid, so the
+			// index can resume. Only a real error marks it failed.
+			if isBuildInterrupted(batchErr) {
 				return epoch, NewErrIndexBackfillInterrupted(batchErr, desc.Name)
 			}
 			markErr := db.markIndexFailed(ctx, def, desc, batchErr)

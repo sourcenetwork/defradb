@@ -148,6 +148,91 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
 }
 
+// TestRecoverBuilding_WatermarkAtDeletedDoc_ResumesCleanly checks that a build resuming from a
+// watermark that points at a since-deleted document does not panic or error: the deleted doc is
+// simply gone, and every remaining doc whose short ID sorts after the watermark is indexed. This
+// guards the resume path against a watermark referencing a doc the collection no longer holds.
+func TestRecoverBuilding_WatermarkAtDeletedDoc_ResumesCleanly(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	docs := make([]*client.Document, 6)
+	for i := range 6 {
+		docs[i] = addUserDoc(t, ctx, col, "name"+string(rune('0'+i)))
+	}
+
+	desc, err := newNameIndex(t, ctx, db, col)
+	require.NoError(t, err)
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	// Map each doc's short ID (storage order) so the deleted doc can be placed at the midpoint.
+	type docRef struct {
+		doc     *client.Document
+		shortID uint64
+	}
+	refs := make([]docRef, len(docs))
+	func() {
+		rawTxn, err := db.NewTxn(true)
+		require.NoError(t, err)
+		defer rawTxn.Discard()
+		txnCtx := InitContext(ctx, rawTxn)
+		for i, d := range docs {
+			sid, found, err := id.GetDocShortID(txnCtx, shortID, d.ID().String())
+			require.NoError(t, err)
+			require.True(t, found)
+			refs[i] = docRef{doc: d, shortID: sid}
+		}
+	}()
+	sort.Slice(refs, func(i, j int) bool { return refs[i].shortID < refs[j].shortID })
+
+	// Delete the midpoint doc and use its short ID as the watermark. Docs before it count as done;
+	// docs after it must be re-indexed; the deleted doc itself is gone.
+	deleted := refs[2]
+	ok, err := col.DeleteDocument(ctx, deleted.doc.ID())
+	require.NoError(t, err)
+	require.True(t, ok)
+	watermark := deleted.shortID
+
+	// Wipe entries and stage a building record resuming from the deleted doc's short ID.
+	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
+			return err
+		}
+		return db.advanceIndexWatermark(txnCtx, collectionID, desc.ID, watermark)
+	})
+	require.NoError(t, err)
+
+	// The build must resume without panicking on the missing doc.
+	db.indexBuildWorker.drainSync(context.Background())
+
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+
+	// Only docs after the watermark are re-indexed (refs[3..5]); the deleted doc is absent.
+	assert.Equal(t, 3, countIndexEntries(t, ctx, db, shortID, desc.ID),
+		"docs after the watermark must be indexed, the deleted doc must not reappear")
+	for i := 3; i < len(refs); i++ {
+		name := "name" + string(rune('0'+indexOfDoc(docs, refs[i].doc)))
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable", name)
+	}
+
+	// The deleted doc must not be queryable under its old name.
+	deletedName := "name" + string(rune('0'+indexOfDoc(docs, deleted.doc)))
+	assert.Empty(t, queryUserByName(t, db, ctx, deletedName),
+		"the deleted doc must be absent from query results")
+}
+
+// indexOfDoc returns the position of doc in docs, for recovering the name assigned at insert.
+func indexOfDoc(docs []*client.Document, doc *client.Document) int {
+	for i, d := range docs {
+		if d.ID().String() == doc.ID().String() {
+			return i
+		}
+	}
+	return -1
+}
+
 // TestRecoverIndexStates_OrphanedBuildingRecord_Skipped checks that a building record with no
 // matching index definition is skipped (not propagated as an error) and leaves the DB usable.
 func TestRecoverIndexStates_OrphanedBuildingRecord_Skipped(t *testing.T) {
