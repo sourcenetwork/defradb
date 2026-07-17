@@ -26,8 +26,10 @@ const (
 	INDEX_ID_SEQ        = "/seq/index"
 	INDEX_EPOCH_SEQ     = "/seq/indexepoch"
 	INDEX_STALE_EPOCH   = "/index/staleepoch"
-	FIELD_ID_SEQ        = "/seq/field"
-	ACTION_STATUS       = "/a/s"
-	ACTION_REASON       = "/a/r"
-	ACTION_PAYLOAD      = "/a/p"
+
+	INDEX_MUTATION_COUNTER = "/index/mutationcounter"
+	FIELD_ID_SEQ           = "/seq/field"
+	ACTION_STATUS          = "/a/s"
+	ACTION_REASON          = "/a/r"
+	ACTION_PAYLOAD         = "/a/p"
 )

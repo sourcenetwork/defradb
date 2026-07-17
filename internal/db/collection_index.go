@@ -12,9 +12,12 @@ package db
 
 import (
 	"context"
+	"encoding/binary"
+	"maps"
 	"strconv"
 	"strings"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"slices"
@@ -65,18 +68,188 @@ func (db *DB) listIndexDescriptions(
 	return indexes, nil
 }
 
-func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
-	err := c.deleteIndexedDoc(ctx, oldDoc)
+// currentIndexes resolves the indexes a write must maintain, on the write's own transaction.
+//
+// A handle's cached c.indexes is a snapshot from construction and goes stale when an index is
+// created, dropped, or rebuilt. Each of those bumps the collection's index-mutation counter (create
+// and rebuild via the epoch advance, drop via the drop staging). A write reads the counter: if it
+// matches the value the cache was resolved at, the cache is returned as is; otherwise it re-resolves
+// and caches the fresh instances and counter.
+//
+// The read also keeps it correct under concurrency: the counter key is in the write's read-set, so a
+// concurrent index change that bumped it conflicts the commit, and withTxnRetries re-runs against the
+// new counter.
+//
+// A build finishing (building->ready) deliberately does not bump. The building flag only widens the
+// unique-index same-doc and delete-of-missing tolerances, so a stale-building handle still rejects a
+// real cross-doc duplicate; not bumping also keeps the worker's completion from conflicting live index
+// creates.
+func (c *collection) currentIndexes(ctx context.Context) ([]client.CollectionIndex, error) {
+	collectionShortID, err := c.collectionShortID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	counter, err := readIndexMutationCounter(ctx, collectionShortID)
+	if err != nil {
+		return nil, err
+	}
+
+	if counter == c.indexesCounter {
+		return c.indexes, nil
+	}
+
+	indexes, err := c.resolveIndexes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.indexes = indexes
+	c.indexesCounter = counter
+	return indexes, nil
+}
+
+// collectionShortID returns the collection's short ID, resolving it once and caching it. The short ID
+// is stable for the collection's life, so the write path reads it from storage only on the first call.
+func (c *collection) collectionShortID(ctx context.Context) (uint32, error) {
+	if c.shortID != 0 {
+		return c.shortID, nil
+	}
+	shortID, err := id.GetCollectionShortID(ctx, c.def.CollectionID)
+	if err != nil {
+		return 0, err
+	}
+	c.shortID = shortID
+	return shortID, nil
+}
+
+// resolveIndexes builds the write-path index instances from the current definition and live epochs.
+//
+// The per-index building/failed status lives in action-status records. In the steady state no index
+// has a record (a completed build deletes its own), which means every index is ready: a keys-only
+// probe that stops at the first record confirms this without decoding anything, and the instances
+// are built ready (building=false). Only when the probe finds a record (a build or drop is in
+// flight) is the full state decode run to get each index's real building/failed status. The epoch is
+// always read live, since a rebuild advances it while the index id is unchanged.
+func (c *collection) resolveIndexes(ctx context.Context) ([]client.CollectionIndex, error) {
+	def, err := description.GetCollectionByID(ctx, c.db.collectionRepository, c.def.VersionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(def.Indexes) == 0 {
+		return nil, nil
+	}
+
+	hasActions, err := hasAnyIndexAction(ctx, def.CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only decode the per-index status when a record exists. With none, every index is ready:
+	// building=false is correct (a ready index carries no record) and none is failed.
+	var states map[uint32]indexState
+	if hasActions {
+		states, err = getIndexBuildStates(ctx, def.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	indexes := make([]client.CollectionIndex, 0, len(def.Indexes))
+	for _, index := range def.Indexes {
+		state := states[index.ID]
+		// A failed index is abandoned and not maintained by writes. A building index is maintained
+		// so its epoch keeps receiving concurrent writes while the backfill runs. The building flag
+		// only affects correctness for a unique index mid-build (saveUniqueKey tolerates a concurrent
+		// entry when building), so getting the real status when a record exists is what matters.
+		if state.isFailed() {
+			continue
+		}
+		colIndex, err := NewCollectionIndex(ctx, c, index, state.isBuilding())
+		if err != nil {
+			return nil, err
+		}
+		indexes = append(indexes, colIndex)
+	}
+	return indexes, nil
+}
+
+// readIndexMutationCounter returns the collection's current index-mutation counter, or 0 if it has
+// never been bumped. It is a plain read (not sequence.Get, which seeds the key on a miss) so the write
+// hot path never writes; the read still puts the key in the caller's read-set, which is what makes a
+// concurrent bump conflict the write and retry.
+func readIndexMutationCounter(ctx context.Context, collectionShortID uint32) (uint64, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexMutationCounterKey(collectionShortID).Bytes())
+	if errors.Is(err, corekv.ErrNotFound) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return binary.BigEndian.Uint64(val), nil
+}
+
+// bumpIndexMutationCounter advances the collection's index-mutation counter on the transaction bound
+// to ctx. Called wherever the write-maintained index set changes: index create and rebuild (the epoch
+// advance) and drop. It advances a sequence, which reads the counter and writes it back, so a
+// concurrent bump or an in-flight write that read the old value conflicts, keeping writes maintaining
+// the right index set across a concurrent change.
+func bumpIndexMutationCounter(ctx context.Context, collectionShortID uint32) error {
+	seq, err := sequence.Get(ctx, keys.NewIndexMutationCounterKey(collectionShortID))
 	if err != nil {
 		return err
 	}
+	_, err = seq.Next(ctx)
+	return err
+}
 
-	return c.addDocToIndex(ctx, newDoc)
+// hasAnyIndexAction reports whether the collection has any index action-status record (a build or
+// drop in flight). It is a keys-only probe that stops at the first key, so it decodes nothing; the
+// steady state (no records = every index ready) pays only this probe, not the full state decode.
+func hasAnyIndexAction(ctx context.Context, collectionID string) (bool, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   indexActionCollectionPrefix(collectionID),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return false, err
+	}
+	hasValue, err := iter.Next()
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
+	return hasValue, iter.Close()
+}
+
+func (c *collection) updateDocIndex(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	indexes, err := c.currentIndexes(ctx)
+	if err != nil {
+		return err
+	}
+	if err := c.deleteFromIndexes(ctx, indexes, oldDoc); err != nil {
+		return err
+	}
+	return c.saveToIndexes(ctx, indexes, newDoc)
 }
 
 func (c *collection) addDocToIndex(ctx context.Context, doc *client.Document) error {
 	// callers of this function must set a context transaction
-	for _, index := range c.indexes {
+	indexes, err := c.currentIndexes(ctx)
+	if err != nil {
+		return err
+	}
+	return c.saveToIndexes(ctx, indexes, doc)
+}
+
+func (c *collection) saveToIndexes(
+	ctx context.Context,
+	indexes []client.CollectionIndex,
+	doc *client.Document,
+) error {
+	for _, index := range indexes {
 		err := index.Save(ctx, doc)
 		if err != nil {
 			return err
@@ -89,21 +262,32 @@ func (c *collection) updateIndexedDoc(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
+	indexes, err := c.currentIndexes(ctx)
+	if err != nil {
+		return err
+	}
+	if len(indexes) == 0 {
+		return nil
+	}
+
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
 	if err != nil {
 		return err
 	}
 
+	// Collect the fields to fetch from the resolved indexes, not the handle's snapshot. A stale
+	// handle does not list a concurrently-created index, so its snapshot would omit that index's
+	// field and the old value needed to delete its stale entry would never be fetched.
 	oldDoc, err := c.get(
 		ctx,
 		primaryKey,
-		c.Version().CollectIndexedFields(),
+		c.collectIndexedFields(indexes),
 		false,
 	)
 	if err != nil {
 		return err
 	}
-	for _, index := range c.indexes {
+	for _, index := range indexes {
 		err = index.Update(ctx, oldDoc, doc)
 		if err != nil {
 			return err
@@ -112,11 +296,46 @@ func (c *collection) updateIndexedDoc(
 	return nil
 }
 
+// collectIndexedFields returns the distinct fields covered by the given indexes, for fetching the
+// prior document state a secondary-index update needs. Field lookup uses the collection schema,
+// which an index creation does not change, so the handle's definition is fine here.
+func (c *collection) collectIndexedFields(
+	indexes []client.CollectionIndex,
+) []client.CollectionFieldDescription {
+	seen := make(map[string]bool)
+	fields := make([]client.CollectionFieldDescription, 0, len(indexes))
+	for _, index := range indexes {
+		for _, field := range index.Description().Fields {
+			if seen[field.Name] {
+				continue
+			}
+			seen[field.Name] = true
+			colField, ok := c.Version().GetFieldByName(field.Name)
+			if ok {
+				fields = append(fields, colField)
+			}
+		}
+	}
+	return fields
+}
+
 func (c *collection) deleteIndexedDoc(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	for _, index := range c.indexes {
+	indexes, err := c.currentIndexes(ctx)
+	if err != nil {
+		return err
+	}
+	return c.deleteFromIndexes(ctx, indexes, doc)
+}
+
+func (c *collection) deleteFromIndexes(
+	ctx context.Context,
+	indexes []client.CollectionIndex,
+	doc *client.Document,
+) error {
+	for _, index := range indexes {
 		err := index.Delete(ctx, doc)
 		if err != nil {
 			return NewErrDeleteIndexedDoc(err, index.Description().Name)
@@ -130,17 +349,26 @@ func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
 ) error {
+	indexes, err := c.currentIndexes(ctx)
+	if err != nil {
+		return err
+	}
+	if len(indexes) == 0 {
+		return nil
+	}
+
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
 		return err
 	}
 
 	// we need to fetch the document to delete it from the indexes, because in order to do so
-	// we need to know the values of the fields that are indexed.
+	// we need to know the values of the fields that are indexed. Fields come from the resolved
+	// indexes so a stale handle still fetches a concurrently-created index's field.
 	doc, err := c.get(
 		ctx,
 		primaryKey,
-		c.Version().CollectIndexedFields(),
+		c.collectIndexedFields(indexes),
 		false,
 	)
 	if err != nil {
@@ -152,7 +380,7 @@ func (c *collection) deleteIndexedDocWithID(
 		// error in applyDelete.
 		return nil
 	}
-	return c.deleteIndexedDoc(ctx, doc)
+	return c.deleteFromIndexes(ctx, indexes, doc)
 }
 
 // NewIndex makes a new index on the collection.
@@ -191,21 +419,35 @@ func (c *collection) NewIndex(
 		return client.IndexDescription{}, err
 	}
 
-	defer txn.Discard()
-
-	indexDesc, err := c.newIndex(ctx, desc)
-	if err != nil {
-		return client.IndexDescription{}, err
-	}
-
-	// With an explicit transaction the caller's Commit() commits the build record and publishes
-	// the event that wakes the worker. With an implicit one we commit here. Either way the worker
-	// runs the backfill.
+	// With an explicit transaction the caller owns the commit (and any retry). Stage on it and return;
+	// the caller's Commit() commits the build record and wakes the worker.
 	if txn.explicit {
-		return indexDesc, nil
+		defer txn.Discard()
+		return c.newIndex(ctx, desc)
 	}
+	txn.Discard()
 
-	if err := txn.Commit(); err != nil {
+	// Implicit transaction: stage and commit under retry. Allocating the epoch bumps the collection's
+	// index-mutation counter, which another concurrent index change also writes, so the commit can
+	// legitimately conflict; retry re-stages from a clean slate. The staged in-memory state on the
+	// handle is restored before each attempt so a retry does not stack a second index.
+	baseIndexes := slices.Clone(c.def.Indexes)
+	baseColIndexes := slices.Clone(c.indexes)
+	baseStates := maps.Clone(c.indexBuildStates)
+
+	var indexDesc client.IndexDescription
+	err = c.db.withTxnRetries(ctx, func(attemptCtx context.Context) error {
+		c.def.Indexes = slices.Clone(baseIndexes)
+		c.indexes = slices.Clone(baseColIndexes)
+		c.indexBuildStates = maps.Clone(baseStates)
+		var err error
+		indexDesc, err = c.newIndex(attemptCtx, desc)
+		return err
+	})
+	if err != nil {
+		c.def.Indexes = baseIndexes
+		c.indexes = baseColIndexes
+		c.indexBuildStates = baseStates
 		return client.IndexDescription{}, err
 	}
 	return indexDesc, nil
@@ -267,6 +509,12 @@ func allocateIndexEpoch(ctx context.Context, collectionID string, indexID uint32
 	}
 	next, err := seq.Next(ctx)
 	if err != nil {
+		return 0, err
+	}
+
+	// Advancing the epoch changes what a write must maintain (create allocates a first epoch, rebuild
+	// advances it), so bump the counter here to cover both in one place.
+	if err := bumpIndexMutationCounter(ctx, collectionShortID); err != nil {
 		return 0, err
 	}
 	return uint32(next), nil
@@ -422,7 +670,7 @@ func (c *collection) iterateDocsBatch(
 	limit int,
 	exec func(doc *client.Document) error,
 ) (lastDocShortID uint64, count int, err error) {
-	collectionShortID, idErr := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+	collectionShortID, idErr := c.collectionShortID(ctx)
 	if idErr != nil {
 		return 0, 0, idErr
 	}
@@ -560,18 +808,34 @@ func (c *collection) DeleteIndex(
 		return err
 	}
 
-	defer txn.Discard()
+	// With an explicit transaction the caller owns the commit (and any retry). Stage on it and return;
+	// the caller's Commit() commits the drop record and wakes the worker.
+	if txn.explicit {
+		defer txn.Discard()
+		return c.deleteIndex(ctx, indexName)
+	}
+	txn.Discard()
 
-	if err := c.deleteIndex(ctx, indexName); err != nil {
+	// Implicit transaction: stage and commit under retry. The drop bumps the collection's
+	// index-mutation counter, which another concurrent index change also writes, so the commit can
+	// legitimately conflict; retry re-stages from the restored index set.
+	baseIndexes := slices.Clone(c.def.Indexes)
+	baseColIndexes := slices.Clone(c.indexes)
+	baseStates := maps.Clone(c.indexBuildStates)
+
+	err = c.db.withTxnRetries(ctx, func(attemptCtx context.Context) error {
+		c.def.Indexes = slices.Clone(baseIndexes)
+		c.indexes = slices.Clone(baseColIndexes)
+		c.indexBuildStates = maps.Clone(baseStates)
+		return c.deleteIndex(attemptCtx, indexName)
+	})
+	if err != nil {
+		c.def.Indexes = baseIndexes
+		c.indexes = baseColIndexes
+		c.indexBuildStates = baseStates
 		return err
 	}
-
-	// With an explicit transaction the caller's Commit() commits the drop record; with an implicit
-	// one we commit here. Either way the commit wakes the worker, which runs the batched entry GC.
-	if txn.explicit {
-		return nil
-	}
-	return txn.Commit()
+	return nil
 }
 
 // deleteIndex stages the deletion in the current transaction: it removes the definition and writes
@@ -617,6 +881,18 @@ func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 	// Clear any leftover backfill record (building or failed); the drop record alone does not, so it
 	// would otherwise orphan once the definition is gone.
 	if err := c.db.clearIndexBuildRecord(ctx, c.def.CollectionID, desc.ID); err != nil {
+		c.def.Indexes = oldIndexes
+		return err
+	}
+
+	// A drop removes an index from the set a write must maintain without touching any epoch, so bump
+	// the counter here on the same transaction as the definition change.
+	collectionShortID, err := c.collectionShortID(ctx)
+	if err != nil {
+		c.def.Indexes = oldIndexes
+		return err
+	}
+	if err := bumpIndexMutationCounter(ctx, collectionShortID); err != nil {
 		c.def.Indexes = oldIndexes
 		return err
 	}

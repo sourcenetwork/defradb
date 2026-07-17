@@ -451,3 +451,250 @@ func TestBuild_ConflictWithLiveWrite_ConvergesToReady(t *testing.T) {
 	require.Equal(t, docCount, countIndexEntries(t, ctx, db, shortID, idx.ID))
 	require.Len(t, queryUserByName(t, db, ctx, "updated"), 1)
 }
+
+// gateAtSecondBatch drives IndexBuildGate so the build runs its first batch, then parks at the
+// second batch boundary. It returns a channel that closes once parked (first batch committed) and
+// a release func that lets the rest of the build proceed. This makes the mid-build window
+// deterministic: no timing luck decides whether a batch has run.
+func gateAtSecondBatch(t *testing.T) (parked <-chan struct{}, release func()) {
+	t.Helper()
+	orig := IndexBuildGate
+	t.Cleanup(func() { IndexBuildGate = orig })
+
+	parkedCh := make(chan struct{})
+	releaseCh := make(chan struct{})
+	var boundary int
+	var mu sync.Mutex
+	var parkedOnce, releaseOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		mu.Lock()
+		boundary++
+		b := boundary
+		mu.Unlock()
+		if b != 2 {
+			return // let the first batch run, then run freely after the release boundary
+		}
+		parkedOnce.Do(func() { close(parkedCh) })
+		select {
+		case <-releaseCh:
+		case <-gateCtx.Done():
+		}
+	}
+	return parkedCh, func() { releaseOnce.Do(func() { close(releaseCh) }) }
+}
+
+// TestConcurrentWrite_StaleHandleDuringBuild_MaintainsIndex guards against a document written
+// through a collection handle that predates the index creation being left out of the index.
+//
+// A handle caches its index set when it is built and is reused across writes. A handle obtained
+// before an index is created does not list that index. If such a handle updates a document while the
+// backfill runs, the update must still maintain the new index: the document's old value must lose
+// its (backfill-written) entry and its new value must gain one. Otherwise the live value is
+// unqueryable via the index once the build finishes.
+func TestConcurrentWrite_StaleHandleDuringBuild_MaintainsIndex(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	parked, release := gateAtSecondBatch(t)
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+
+	const docCount = 20
+	docs := make([]*client.Document, docCount)
+	freshCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	for i := range docCount {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%02d"}`, i), freshCol.Version())
+		require.NoError(t, err)
+		require.NoError(t, freshCol.AddDocument(ctx, doc))
+		docs[i] = doc
+	}
+
+	// Handle captured before the index exists; its cached index set has no name index.
+	staleCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	idxCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	idx, err := idxCol.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+
+	// Wait until the first batch (docs 0..4) is indexed and the build is parked, so doc 0 already has
+	// an entry at its old value.
+	<-parked
+
+	// Change doc 0's indexed field through the stale handle, then let the build finish.
+	require.NoError(t, docs[0].Set(ctx, "name", "CHANGED"))
+	require.NoError(t, staleCol.UpdateDocument(ctx, docs[0]))
+	release()
+
+	collectionID := idxCol.Version().CollectionID
+	waitForIndexReady(t, ctx, db, collectionID, idx.ID)
+
+	// The live value must be found via the index, and no stale entry for the old value may remain.
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	require.Equal(t, docCount, countIndexEntries(t, ctx, db, shortID, idx.ID))
+	require.Len(t, queryUserByName(t, db, ctx, "CHANGED"), 1)
+	require.Empty(t, queryUserByName(t, db, ctx, "n00"))
+}
+
+// TestConcurrentWrite_HandleHeldAcrossRebuild_LandsInLiveEpoch guards the epoch-rebuild case: a
+// handle that already maintained an index (so it cached that index's epoch) and then writes while a
+// rebuild is in flight must land in the NEW epoch, not the one it cached.
+//
+// A rebuild advances the epoch while the index ID is unchanged, so a handle keyed only on the index
+// ID would reuse its cached instance and write the old, superseded epoch, leaving the live epoch
+// missing the doc. The index-mutation counter is bumped when the rebuild advances the epoch, so the
+// handle re-resolves and picks up the live epoch. The write happens while the rebuild's build is
+// parked (epoch already advanced, build not yet complete), so only the epoch-advance bump can save it,
+// not the build-completion bump. The warm-up write is load-bearing: it makes the handle cache the old
+// epoch. Removing the epoch-advance bump makes the mid-rebuild write land in the stale epoch, and this
+// test fails.
+func TestConcurrentWrite_HandleHeldAcrossRebuild_LandsInLiveEpoch(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 100)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	for i := range 5 {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%d"}`, i), col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+	}
+	idx, err := col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+	db.indexBuildWorker.drainSync(ctx)
+
+	collectionID := col.Version().CollectionID
+
+	// Handle held across the rebuild. Warm it with a write so it resolves and caches the current
+	// (pre-rebuild) epoch; without this the next write would resolve fresh regardless of the counter.
+	handle, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	warm, err := client.NewDocFromJSON(ctx, []byte(`{"name":"WARM"}`), handle.Version())
+	require.NoError(t, err)
+	require.NoError(t, handle.AddDocument(ctx, warm))
+
+	// Park the rebuild's build at its first batch so the epoch is advanced but the build has not yet
+	// completed (its completion bump has not fired).
+	parked, release := gateAtFirstBatch(t)
+
+	stageRebuild(t, ctx, db, col.Version())
+
+	<-parked
+
+	// The epoch is now advanced (bumped on the epoch-advance) but the build is still in flight. Write
+	// through the warm handle: it must re-resolve on the bumped counter and land in the live epoch.
+	after, err := client.NewDocFromJSON(ctx, []byte(`{"name":"AFTER"}`), handle.Version())
+	require.NoError(t, err)
+	require.NoError(t, handle.AddDocument(ctx, after))
+
+	liveEpoch := readEpoch(t, ctx, db, collectionID, idx.ID)
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	liveCount := countIndexEpochEntries(t, ctx, db, shortID, idx.ID, liveEpoch)
+	t.Logf("liveEpoch=%d liveEpochEntries=%d", liveEpoch, liveCount)
+	require.NotZero(t, liveCount, "AFTER must have been written to the live epoch")
+
+	release()
+	waitForIndexReady(t, ctx, db, collectionID, idx.ID)
+	require.Len(t, queryUserByName(t, db, ctx, "AFTER"), 1,
+		"doc written through a handle held across a rebuild must be queryable via the live epoch")
+}
+
+// gateAtFirstBatch parks the build at its first batch boundary until released. It returns a channel
+// that closes once parked and a release func. Unlike gateAtSecondBatch it stops before any batch
+// commits, which for a rebuild means the epoch is advanced but no build progress is committed yet.
+func gateAtFirstBatch(t *testing.T) (parked <-chan struct{}, release func()) {
+	t.Helper()
+	orig := IndexBuildGate
+	t.Cleanup(func() { IndexBuildGate = orig })
+
+	parkedCh := make(chan struct{})
+	releaseCh := make(chan struct{})
+	var parkedOnce, releaseOnce sync.Once
+	IndexBuildGate = func(gateCtx context.Context, _ string, _ uint32) {
+		select {
+		case <-releaseCh:
+			return
+		default:
+		}
+		parkedOnce.Do(func() { close(parkedCh) })
+		select {
+		case <-releaseCh:
+		case <-gateCtx.Done():
+		}
+	}
+	return parkedCh, func() { releaseOnce.Do(func() { close(releaseCh) }) }
+}
+
+// TestConcurrentWrite_FreshHandleDuringBuild_MaintainsIndex is the counterpart control: the
+// mid-build update uses a handle obtained after the index was created, which already lists the
+// building index. It must keep the index correct too. Passing here alongside the stale-handle test
+// shows the fix covers the reused stale handle without regressing the ordinary case.
+func TestConcurrentWrite_FreshHandleDuringBuild_MaintainsIndex(t *testing.T) {
+	setForTest(t, &indexBackfillBatchSize, 5)
+	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
+
+	parked, release := gateAtSecondBatch(t)
+
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+
+	const docCount = 20
+	docs := make([]*client.Document, docCount)
+	freshCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	for i := range docCount {
+		doc, err := client.NewDocFromJSON(ctx, fmt.Appendf(nil, `{"name":"n%02d"}`, i), freshCol.Version())
+		require.NoError(t, err)
+		require.NoError(t, freshCol.AddDocument(ctx, doc))
+		docs[i] = doc
+	}
+
+	idxCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	idx, err := idxCol.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+	})
+	require.NoError(t, err)
+
+	<-parked
+
+	// Handle obtained after the index was created; its cached index set includes the building index.
+	updCol, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	require.NoError(t, docs[0].Set(ctx, "name", "CHANGED"))
+	require.NoError(t, updCol.UpdateDocument(ctx, docs[0]))
+	release()
+
+	collectionID := idxCol.Version().CollectionID
+	waitForIndexReady(t, ctx, db, collectionID, idx.ID)
+
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+	require.Equal(t, docCount, countIndexEntries(t, ctx, db, shortID, idx.ID))
+	require.Len(t, queryUserByName(t, db, ctx, "CHANGED"), 1)
+	require.Empty(t, queryUserByName(t, db, ctx, "n00"))
+}

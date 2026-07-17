@@ -33,6 +33,14 @@ type collection struct {
 	db      *DB
 	def     client.CollectionVersion
 	indexes []client.CollectionIndex
+	// indexesCounter is the index-mutation counter value c.indexes was resolved at. A write reads the
+	// live counter and reuses c.indexes only while it still matches; see currentIndexes. Set at
+	// construction for an indexed collection, so a fresh handle already trusts its snapshot.
+	indexesCounter uint64
+	// shortID caches the collection's short ID, which is stable for the collection's life. Resolved
+	// once on first use so the write path does not re-read it every time. Zero means not yet resolved,
+	// since a valid short ID starts at 1.
+	shortID uint32
 	// indexBuildStates holds the build (backfill) state of the collection's indexes that have one,
 	// keyed by index ID: an index is present while it is building or failed, and absent once ready.
 	// Presence therefore means "not yet queryable". Populated at construction time from the index
@@ -88,6 +96,17 @@ func (db *DB) newCollection(
 			}
 
 			col.indexes = append(col.indexes, colIndex)
+		}
+
+		// Record the counter c.indexes was resolved at, so a write reuses this snapshot until an index
+		// change bumps it. A collection with no indexes keeps the zero value, which a first change moves.
+		shortID, err := col.collectionShortID(stateCtx)
+		if err != nil {
+			return nil, err
+		}
+		col.indexesCounter, err = readIndexMutationCounter(stateCtx, shortID)
+		if err != nil {
+			return nil, err
 		}
 	}
 
