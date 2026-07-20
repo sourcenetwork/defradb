@@ -72,6 +72,8 @@ type CollectionIndex interface {
 //   - dropping: InProgress + DropIndexAction
 //   - ready:    Completed  (no in-flight action; Execution.Action is unset)
 type ListIndexesResult struct {
+	// CollectionName is the name of the collection the index belongs to.
+	CollectionName string
 	// Description is the static index specification.
 	Description IndexDescription
 	// Execution is the index's current (or most recent) lifecycle action.
