@@ -58,7 +58,7 @@ func (db *DB) listIndexDescriptions(
 		results := make([]client.ListIndexesResult, len(col.Indexes))
 		for i, desc := range col.Indexes {
 			state, ok := states[desc.ID]
-			results[i] = state.listResult(col.CollectionID, desc, ok)
+			results[i] = state.listResult(col.CollectionID, col.Name, desc, ok)
 		}
 		indexes[col.Name] = results
 	}
@@ -684,11 +684,12 @@ func (c *collection) ListIndexes(
 		return nil, err
 	}
 
-	indexes := c.Version().Indexes
+	version := c.Version()
+	indexes := version.Indexes
 	result := make([]client.ListIndexesResult, len(indexes))
 	for i, desc := range indexes {
 		state, ok := states[desc.ID]
-		result[i] = state.listResult(c.def.CollectionID, desc, ok)
+		result[i] = state.listResult(c.def.CollectionID, version.Name, desc, ok)
 	}
 	return result, nil
 }
