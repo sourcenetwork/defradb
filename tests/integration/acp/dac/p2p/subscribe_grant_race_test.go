@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// This mirrors the downstream group-chat timeline that surfaced #4837: on the subscription
+// This mirrors a downstream group-chat timeline: on the subscription
 // (pull) path, a policy-gated document is created on the source node BEFORE the read grant for
 // the eventual non-creator reader and the grant for the receiving node have propagated. The
 // receiver's pushlog handler then walks the document's DAG, and the source serves each linked
@@ -162,7 +162,7 @@ resources:
 
 			testUtils.WaitForSync{},
 
-			// Owner can read the fully-updated document on the receiver — confirms the whole DAG
+			// Owner can read the fully-updated document on the receiver, confirming the whole DAG
 			// replicated, not just the genesis block.
 			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
@@ -181,7 +181,7 @@ resources:
 				},
 			},
 
-			// The #4837 assertion: the non-creator with a reader grant sees the document on the
+			// The key assertion: the non-creator with a reader grant sees the document on the
 			// receiving node.
 			&action.Request{
 				Identity: testUtils.ClientIdentity(2),

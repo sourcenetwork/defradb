@@ -17,47 +17,50 @@ import (
 
 // accessCacheKey identifies a cached read-access decision.
 //
-// The collection is part of the key because a collection-level (branchable) block resolves to an
-// empty docID, and access to such a block is decided per collection. Without the collection in the
-// key, a grant on one branchable collection would be reused for another under the shared ("", peer)
-// key and wrongly authorise it.
+// collectionID is in the key because a collection-level (branchable) block has an empty docID and
+// its access is decided per collection; without it, a grant on one branchable collection would
+// authorize another under the shared ("", peer) key.
 //
-// The peer is keyed by its libp2p id rather than its resolved identity. This is safe only because a
-// peer's verified identity is pinned per-id (see p.peerIdentities in hasAccess) and the cache is
-// grant-only: a stale positive can never wrongly deny a peer, and a peer's id→identity binding does
-// not change within a session. If per-id identities ever become refreshable, this key must fold in
-// an identity fingerprint.
+// Keying on peerID rather than the resolved identity is safe only while a peer's verified identity
+// stays pinned per-id (see p.peerIdentities in hasAccess): the cache is grant-only, so a stale key
+// can never wrongly deny a peer. If per-id identities ever become mutable, fold an identity
+// fingerprint into the key.
 type accessCacheKey struct {
 	peerID       string
 	collectionID string
 	docID        string
 }
 
-// accessCache memoizes positive read-access decisions for a short period so that serving every
-// block of a document's DAG to a peer does not require a separate access-control round-trip per
-// block.
+// accessCache memoizes positive read-access decisions so that serving a document's DAG to a peer
+// costs one access-control round-trip instead of one per block.
 //
-// Only positive (allowed) decisions are stored. A denial is never cached: on the subscription
-// path a denial usually means the access grant has not propagated yet, and caching it would keep
-// a peer locked out until the entry expired even after the grant lands. Re-checking a denial is
-// cheap relative to the sync failure that caching one would cause.
+// Only grants are cached. A denial usually means the grant has not propagated yet, so caching it
+// would lock the peer out until it expired even after the grant lands; re-checking a denial is
+// cheap next to the sync failure caching one would cause.
 //
-// Entries expire after ttl. Because only grants are cached, the ttl is short, and a cache hit does
-// not extend expiry, the worst case after a revocation is that a peer retains read access for at
-// most one ttl window — a briefly stale grant, never a stale denial. Expiry is lazy (stale entries
-// are dropped when their key is read), with an opportunistic sweep on write to bound growth from
-// keys that are never read again.
+// A hit does not extend expiry, so with a short ttl a revocation takes effect within one ttl
+// window: the worst case is a briefly stale grant, never a stale denial.
 type accessCache struct {
 	mu  sync.Mutex
 	ttl time.Duration
-	// now is injectable so tests can advance time deterministically. Defaults to time.Now.
+	// now is a seam for tests to advance time without sleeping. Defaults to time.Now.
 	now     func() time.Time
-	entries map[accessCacheKey]time.Time // key -> expiry time
+	entries map[accessCacheKey]time.Time
+	// order lets eviction find expired entries without scanning the map: every entry shares one
+	// ttl, so insertion order is expiry order and the expired ones sit at the front. A re-stored
+	// key appends a new slot and leaves a stale one behind, told apart by its expiry no longer
+	// matching the map.
+	order []orderEntry
 }
 
-// sweepThreshold is the entry count above which a store triggers an opportunistic sweep of expired
-// entries. It only bounds growth; correctness does not depend on it.
-const sweepThreshold = 1024
+type orderEntry struct {
+	key    accessCacheKey
+	expiry time.Time
+}
+
+// evictBatch caps the work one store does so a burst that all expires at once can't hold the lock
+// for a long scan. Each subsequent store clears another batch, so growth stays bounded.
+const evictBatch = 64
 
 // newAccessCache returns a cache whose positive entries live for ttl. A ttl of zero disables
 // caching (every lookup misses), which keeps the cache inert if it is ever misconfigured.
@@ -85,7 +88,6 @@ func (c *accessCache) allowed(peerID, collectionID, docID string) bool {
 		return false
 	}
 	if !c.now().Before(expiry) {
-		// Expired; drop it lazily.
 		delete(c.entries, key)
 		return false
 	}
@@ -102,21 +104,31 @@ func (c *accessCache) storeAllowed(peerID, collectionID, docID string) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	// Reads keep their own key fresh (see allowed), but a key that is never read again would leak.
-	// Store is the only place the map grows, so bound it here with a bulk sweep rather than scanning
-	// the whole map on every (hot-path) read.
-	if len(c.entries) >= sweepThreshold {
-		c.sweepExpired()
-	}
-	c.entries[key] = c.now().Add(c.ttl)
+	// A read only reclaims the key it looks up, so a key never read again would leak. Evict here,
+	// on the map's only growth path, to keep that work off the hot read path.
+	c.evictExpired()
+	expiry := c.now().Add(c.ttl)
+	c.entries[key] = expiry
+	c.order = append(c.order, orderEntry{key: key, expiry: expiry})
 }
 
-// sweepExpired removes all expired entries. The caller must hold c.mu.
-func (c *accessCache) sweepExpired() {
+// evictExpired drops expired entries from the front of the insertion order, up to evictBatch, and
+// stops at the first live one. Caller must hold c.mu.
+func (c *accessCache) evictExpired() {
 	now := c.now()
-	for k, expiry := range c.entries {
-		if !now.Before(expiry) {
-			delete(c.entries, k)
+	evicted := 0
+	for len(c.order) > 0 && evicted < evictBatch {
+		front := c.order[0]
+		mapExpiry, ok := c.entries[front.key]
+		switch {
+		case ok && mapExpiry.Equal(front.expiry) && now.Before(mapExpiry):
+			// Oldest live slot is fresh, so nothing behind it can be expired.
+			return
+		case ok && mapExpiry.Equal(front.expiry):
+			delete(c.entries, front.key)
+			evicted++
 		}
+		// A slot the map no longer matches was superseded by a re-store; drop just the slot.
+		c.order = c.order[1:]
 	}
 }
