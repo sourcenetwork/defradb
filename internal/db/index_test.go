@@ -91,6 +91,9 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	// Close awaits the background index worker, so it cannot outlive the test and race a later
+	// test that mutates the package-level build tunables (indexBackfillBatchSize, etc.).
+	t.Cleanup(func() { db.Close() })
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 

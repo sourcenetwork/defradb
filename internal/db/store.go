@@ -243,44 +243,21 @@ func (db *DB) PatchCollection(
 
 	defer txn.Discard()
 
-	backfills, err := db.patchCollection(ctx, patchString, migration)
-	if err != nil {
+	if err := db.patchCollection(ctx, patchString, migration); err != nil {
 		return err
 	}
 
-	return commitAndRunDeferred(ctx, txn, backfills)
+	return commitImplicit(txn)
 }
 
-// commitAndRunDeferred commits the transaction and then runs each deferred function
-// sequentially. If the transaction is explicit (caller-provided), the functions are
-// instead registered as OnSuccess callbacks so they run when the caller commits.
-//
-// On the explicit-transaction path the deferred functions run after the caller's commit, so an
-// error cannot be returned and is only logged. A failed index backfill/rebuild still records a
-// failed index state, so the failure shows up in the index status; callers should check it there.
-func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
+// commitImplicit commits an implicit transaction. An explicit (caller-provided) one is left for the
+// caller to commit. A collection patch or version switch that reindexes stages the builds on this
+// transaction; the background worker runs them once it commits, so nothing needs to run here.
+func commitImplicit(txn *Txn) error {
 	if txn.explicit {
-		for _, fn := range deferred {
-			fn := fn
-			txn.OnSuccess(func() {
-				if err := fn(ctx); err != nil {
-					log.ErrorE("deferred operation after commit failed; check index status", err)
-				}
-			})
-		}
 		return nil
 	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	for _, fn := range deferred {
-		if err := fn(ctx); err != nil {
-			return err
-		}
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (db *DB) DeleteCollection(
@@ -304,21 +281,20 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	backfills, err := db.deleteCollection(ctx, names, opt.ActiveOnly)
-	if err != nil {
+	if err := db.deleteCollection(ctx, names, opt.ActiveOnly); err != nil {
 		return err
 	}
 
-	return commitAndRunDeferred(ctx, txn, backfills)
+	return commitImplicit(txn)
 }
 
 func (db *DB) deleteCollection(
 	ctx context.Context,
 	names []string,
 	activeOnly bool,
-) ([]func(context.Context) error, error) {
+) error {
 	if len(names) == 0 {
-		return nil, client.ErrCollectionNameRequired
+		return client.ErrCollectionNameRequired
 	}
 
 	seen := make(map[string]struct{}, len(names))
@@ -331,7 +307,7 @@ func (db *DB) deleteCollection(
 
 		col, err := db.getCollectionByName(ctx, name)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if activeOnly {
@@ -343,7 +319,7 @@ func (db *DB) deleteCollection(
 			ctx, db.collectionRepository, col.Version().CollectionID,
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for _, v := range allVersions {
 			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
@@ -375,16 +351,11 @@ func (db *DB) SetActiveCollectionVersion(
 
 	defer txn.Discard()
 
-	runRebuild, err := db.setActiveCollectionVersion(ctx, collectionVersionID)
-	if err != nil {
+	if err := db.setActiveCollectionVersion(ctx, collectionVersionID); err != nil {
 		return err
 	}
 
-	// The rebuild drives its own batched transactions, so it must run after the transaction that
-	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
-	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
-	// explicit one so it never runs before the caller's commit.
-	return commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild})
+	return commitImplicit(txn)
 }
 
 func (db *DB) SetMigration(
@@ -408,16 +379,12 @@ func (db *DB) SetMigration(
 	}
 	defer txn.Discard()
 
-	lensID, runRebuild, err := db.setMigration(ctx, cfg)
+	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
 		return "", err
 	}
 
-	// The rebuild drives its own batched transactions, so it must run after the transaction that
-	// recorded the builds commits. commitAndRunDeferred handles both paths: it runs the rebuild
-	// after committing an implicit transaction, or registers it as an OnSuccess callback of an
-	// explicit one so it never runs before the caller's commit.
-	if err := commitAndRunDeferred(ctx, txn, []func(context.Context) error{runRebuild}); err != nil {
+	if err := commitImplicit(txn); err != nil {
 		return "", err
 	}
 

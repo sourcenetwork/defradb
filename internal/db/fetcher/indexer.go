@@ -37,11 +37,26 @@ func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string,
 	if err != nil {
 		return 0, err
 	}
-	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID).Bytes())
+	epoch, err := ReadIndexEpochByShortID(ctx, txn, collectionShortID, indexID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)
 		}
+		return 0, err
+	}
+	return epoch, nil
+}
+
+// ReadIndexEpochByShortID is ReadIndexEpoch given the collection's short ID directly, for callers
+// that already have it (e.g. the stale-epoch marker, which stores it). Returns corekv.ErrNotFound if
+// the sequence is missing.
+func ReadIndexEpochByShortID(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionShortID, indexID uint32,
+) (uint32, error) {
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID).Bytes())
+	if err != nil {
 		return 0, err
 	}
 	return uint32(binary.BigEndian.Uint64(val)), nil

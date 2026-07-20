@@ -50,12 +50,12 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 21}`,
 			},
-			// Backfill fails: two documents share age 21.
+			// Backfill fails: two docs share age 21. The failure is not returned from NewIndex; the
+			// action waits for the failed state, asserted below.
 			&action.NewIndex{
-				CollectionID:  0,
-				FieldName:     "age",
-				Unique:        true,
-				ExpectedError: "can not index a doc's field(s) that violates unique index",
+				CollectionID: 0,
+				FieldName:    "age",
+				Unique:       true,
 			},
 			// The definition persists even though the backfill failed, with a failed status.
 			&action.ListIndexes{
