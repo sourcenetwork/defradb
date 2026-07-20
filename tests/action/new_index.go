@@ -140,7 +140,7 @@ func (a *NewIndex) Execute() {
 		// query sees a built index. With an explicit transaction the record is not committed until
 		// the caller commits, so there is nothing to wait for yet; the test waits after its commit.
 		if err == nil && !a.Async && !a.TransactionID.HasValue() {
-			waitForIndexBuilt(a.s, collection, desc.ID)
+			waitForIndexBuilt(a.s, collection, desc.ID, listIndexesOptions(a.s, node))
 		}
 	}
 
@@ -155,9 +155,14 @@ const indexBuildTimeout = 10 * time.Second
 // waitForIndexBuilt blocks until the given index leaves the building state (ready or failed). It
 // polls ListIndexes rather than the action event bus so it composes with explicit Wait actions that
 // consume the shared subscription.
-func waitForIndexBuilt(s *state.State, collection client.Collection, indexID uint32) {
+func waitForIndexBuilt(
+	s *state.State,
+	collection client.Collection,
+	indexID uint32,
+	opts options.Enumerable[options.ListCollectionIndexesOptions],
+) {
 	require.Eventually(s.T, func() bool {
-		results, err := collection.ListIndexes(s.Ctx)
+		results, err := collection.ListIndexes(s.Ctx, opts)
 		if err != nil {
 			return false
 		}

@@ -17,8 +17,29 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// listIndexesOptions returns the ListIndexes options carrying the node's identity, so the call is
+// authorized when NAC is enabled. Waiting for a build is test infrastructure, not a user operation,
+// so it uses the node identity to bypass NAC rather than the test's client identity. ListIndexes
+// reads the identity from its options, not the context.
+func listIndexesOptions(s *state.State, node *state.NodeState) options.Enumerable[options.ListCollectionIndexesOptions] {
+	nodeID := -1
+	for i, n := range s.Nodes {
+		if n == node {
+			nodeID = i
+			break
+		}
+	}
+	builder := options.ListCollectionIndexes()
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(nodeID), nodeID)
+	if identOption.HasValue() {
+		builder.SetIdentity(identOption.Value())
+	}
+	return builder
+}
 
 // WaitForNodeIndexesBuilt blocks until every index on every collection of the node has left the
 // building state. A collection patch or version switch that reindexes stages the builds and returns;
@@ -28,16 +49,17 @@ func WaitForNodeIndexesBuilt(s *state.State, node *state.NodeState) {
 	if node.Closed {
 		return
 	}
+	opts := listIndexesOptions(s, node)
 	// Fetch collections outside any transaction: the caller's txn may already be committed, and a
 	// collection bound to it would fail ListIndexes with "transaction not found".
 	for _, collection := range MustGetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]()) {
 		if collection == nil {
 			continue
 		}
-		results, err := collection.ListIndexes(s.Ctx)
+		results, err := collection.ListIndexes(s.Ctx, opts)
 		require.NoError(s.T, err)
 		for _, r := range results {
-			waitForIndexBuilt(s, collection, r.Description.ID)
+			waitForIndexBuilt(s, collection, r.Description.ID, opts)
 		}
 	}
 }
@@ -72,10 +94,11 @@ func (a *WaitForIndexReady) Execute() {
 		collections := MustGetCanonicallyOrderedCollections(a.s, node, immutable.None[client.Txn]())
 		collection := collections[a.CollectionID]
 
-		results, err := collection.ListIndexes(a.s.Ctx)
+		opts := listIndexesOptions(a.s, node)
+		results, err := collection.ListIndexes(a.s.Ctx, opts)
 		require.NoError(a.s.T, err)
 		for _, r := range results {
-			waitForIndexBuilt(a.s, collection, r.Description.ID)
+			waitForIndexBuilt(a.s, collection, r.Description.ID, opts)
 		}
 	}
 }
