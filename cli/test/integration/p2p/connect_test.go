@@ -58,6 +58,18 @@ func TestConnect_WithInvalidIP_ShouldFail(t *testing.T) {
 	test.Execute(t)
 }
 
+func TestConnect_WithNoAddresses_ShouldFail(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.ConnectP2P{
+				ExpectError: "requires at least 1 arg(s), only received 0",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
 // NOTE: This test currently fails because there is no peer listening at the given address.
 // However, it does at least verify that a single address can be passed in.
 //

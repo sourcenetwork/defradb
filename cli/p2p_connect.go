@@ -24,6 +24,7 @@ func MakeP2PConnectCommand(ctx context.Context) *cobra.Command {
 		Use:   "connect <addresses...>",
 		Short: "Connect to one or more peers",
 		Long:  `Connect to one or more peers with the given addresses`,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.Connect(), identity.FromContext(cmd.Context()))

@@ -24,6 +24,7 @@ func MakeP2PDisconnectCommand(ctx context.Context) *cobra.Command {
 		Use:   "disconnect <addresses...>",
 		Short: "Disconnect from one or more peers",
 		Long:  `Disconnect from one or more peers with the given addresses`,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(options.Disconnect(), identity.FromContext(cmd.Context()))

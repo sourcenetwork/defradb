@@ -43,6 +43,18 @@ func TestDisconnect_WithInvalidIP_ShouldFail(t *testing.T) {
 	test.Execute(t)
 }
 
+func TestDisconnect_WithNoAddresses_ShouldFail(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.DisconnectP2P{
+				ExpectError: "requires at least 1 arg(s), only received 0",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
 func TestDisconnect_WithSinglePeer_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
