@@ -25,7 +25,10 @@ import (
 // authorized when NAC is enabled. Waiting for a build is test infrastructure, not a user operation,
 // so it uses the node identity to bypass NAC rather than the test's client identity. ListIndexes
 // reads the identity from its options, not the context.
-func listIndexesOptions(s *state.State, node *state.NodeState) options.Enumerable[options.ListCollectionIndexesOptions] {
+func listIndexesOptions(
+	s *state.State,
+	node *state.NodeState,
+) options.Enumerable[options.ListCollectionIndexesOptions] {
 	nodeID := -1
 	for i, n := range s.Nodes {
 		if n == node {
