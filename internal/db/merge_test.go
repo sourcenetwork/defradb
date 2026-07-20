@@ -52,6 +52,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -211,6 +212,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -299,6 +301,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -634,6 +637,7 @@ func TestMerge_ThreeWayFork_NoError(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -718,6 +722,7 @@ func TestMerge_DiamondMerge_NoError(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -788,6 +793,7 @@ func TestMerge_AsymmetricBranches_NoError(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -863,6 +869,7 @@ func TestMerge_DeleteVsUpdate_DeleteWins(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -924,6 +931,7 @@ func TestMerge_UpdateVsDelete_DeleteStillWins(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchema)
 	require.NoError(t, err)
@@ -984,6 +992,7 @@ func TestMerge_CounterThreeWayFork_Accumulates(t *testing.T) {
 
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.AddCollection(ctx, userSchemaWithCounter)
 	require.NoError(t, err)

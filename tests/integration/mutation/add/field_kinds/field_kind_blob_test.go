@@ -18,31 +18,31 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationAddFieldKinds_WithFloat(t *testing.T) {
+func TestMutationAddFieldKinds_WithBlob(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						points: Float
+						data: Blob
 					}
 				`,
 			},
 			&action.AddDoc{
 				DocMap: map[string]any{
-					"points": 1.2,
+					"data": "00FF",
 				},
 			},
 			&action.Request{
 				Request: `query {
 					User {
-						points
+						data
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"points": float64(1.2),
+							"data": "00FF",
 						},
 					},
 				},
@@ -53,31 +53,31 @@ func TestMutationAddFieldKinds_WithFloat(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationAddFieldKinds_WithFloat32(t *testing.T) {
+func TestMutationAddFieldKinds_WithNillableBlob_Nil(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						points: Float32
+						data: Blob
 					}
 				`,
 			},
 			&action.AddDoc{
 				DocMap: map[string]any{
-					"points": 1.2,
+					"data": nil,
 				},
 			},
 			&action.Request{
 				Request: `query {
 					User {
-						points
+						data
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"points": float32(1.2),
+							"data": nil,
 						},
 					},
 				},
@@ -88,31 +88,31 @@ func TestMutationAddFieldKinds_WithFloat32(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationAddFieldKinds_WithFloat64(t *testing.T) {
+func TestMutationAddFieldKinds_WithNonNillableBlob(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type User {
-						points: Float64
+						data: Blob!
 					}
 				`,
 			},
 			&action.AddDoc{
 				DocMap: map[string]any{
-					"points": 1.2,
+					"data": "00FF",
 				},
 			},
 			&action.Request{
 				Request: `query {
 					User {
-						points
+						data
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"points": float64(1.2),
+							"data": "00FF",
 						},
 					},
 				},

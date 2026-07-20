@@ -11,117 +11,136 @@ type Author {
     """
     
     Returns the average of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined average of all items within each set
-    (true average, not an average of averages) will be returned as a single value.
+     multiple fields/sets are specified, the combined average of all items within each set
+     (true average, not an average of averages) will be returned as a single value.
 
     """
-    AVG(GROUP: Author__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    AVG(
+        GROUP: Author__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-age: ScalarAggregateNumericBlock): Float!
+        """
+        age: ScalarAggregateNumericBlock
+    ): Float!
     """
     
     Returns the total number of items within the specified child sets. If multiple child
-    sets are specified, the combined total of all of them will be returned as a single value.
+     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
     COUNT(GROUP: Author__CountSelector, _version: Author___version__CountSelector): Int!
     """
     
     The group field may be used to return a set of records belonging to the group.
-    It must be used alongside a 'groupBy' argument on the parent selector. It may
-    contain any field on the type being grouped, including those used by the
-    groupBy.
+     It must be used alongside a 'groupBy' argument on the parent selector. It may
+     contain any field on the type being grouped, including those used by the
+     groupBy.
 
     """
-    GROUP(    """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+    GROUP(
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this join, if none of the related records meet the filter
-    criteria the host record will still be returned, but the value of this field will
-    be empty.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this join, if none of the related records meet the filter
+         criteria the host record will still be returned, but the value of this field will
+         be empty.
 
-    """
-filter: AuthorFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: AuthorFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [AuthorField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [AuthorField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [AuthorOrderArg]): [Author]
+        """
+        order: [AuthorOrderArg]
+    ): [Author]
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined maximum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined maximum of all items within each set
+     will be returned as a single value.
 
     """
-    MAX(GROUP: Author__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    MAX(
+        GROUP: Author__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-age: ScalarAggregateNumericBlock): Float
+        """
+        age: ScalarAggregateNumericBlock
+    ): Float
     """
     
     Returns the minimum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined minimum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined minimum of all items within each set
+     will be returned as a single value.
 
     """
-    MIN(GROUP: Author__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    MIN(
+        GROUP: Author__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-age: ScalarAggregateNumericBlock): Float
+        """
+        age: ScalarAggregateNumericBlock
+    ): Float
     "Returns the cosine similarity between the specified field and the provided vector."
     SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined sum of all of them will be returned as
-    a single value.
+     multiple fields/sets are specified, the combined sum of all of them will be returned as
+     a single value.
 
     """
-    SUM(GROUP: Author__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    SUM(
+        GROUP: Author__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-age: ScalarAggregateNumericBlock): Float!
+        """
+        age: ScalarAggregateNumericBlock
+    ): Float!
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -143,14 +162,16 @@ age: ScalarAggregateNumericBlock): Float!
     _version: [Commit]
     age: Int
     name: String
-    published(    """
-    
-    An optional filter for this join, if the related record does
-    not meet the filter criteria the host record will still be returned,
-    but the value of this field will be null.
+    published(
+        """
+        
+        An optional filter for this join, if the related record does
+         not meet the filter criteria the host record will still be returned,
+         but the value of this field will be null.
 
-    """
-filter: BookFilterArg): Book
+        """
+        filter: BookFilterArg
+    ): Book
     verified: Boolean
 }
 
@@ -232,33 +253,33 @@ input Author__CountSelector {
     """
     
     An optional filter for this aggregate, only documents matching the given criteria
-    will be aggregated.
+     will be aggregated.
 
     """
     filter: AuthorFilterArg
     """
     
     An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+     If this argument is provided, only fields used to group may be rendered in
+     the immediate child selector.  Additional fields may be selected by using
+     the 'GROUP' selector within the immediate child selector. If an empty set
+     is provided, the restrictions mentioned still apply, although all results
+     will appear within the same group.
 
     """
     groupBy: [AuthorField!]
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -268,15 +289,15 @@ input Author__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -287,29 +308,29 @@ input Author__NumericSelector {
     """
     
     An optional filter for this aggregate, only documents matching the given criteria
-    will be aggregated.
+     will be aggregated.
 
     """
     filter: AuthorFilterArg
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
     """
     
     An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+     empty set will be ignored.
 
     """
     order: [AuthorOrderArg]
@@ -319,15 +340,15 @@ input Author___version__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -352,8 +373,8 @@ input BlobOperatorBlock {
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-    ending in 'Ritchie'.
+     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _ilike: String
@@ -366,8 +387,8 @@ input BlobOperatorBlock {
     """
     
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-    ending in 'Ritchie'.
+     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _like: String
@@ -380,23 +401,23 @@ input BlobOperatorBlock {
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nilike: String
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Blob]
     """
     
     The not-like operator - if the target value does not contain the given sub-string the check will
-    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nlike: String
@@ -406,117 +427,136 @@ type Book {
     """
     
     Returns the average of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined average of all items within each set
-    (true average, not an average of averages) will be returned as a single value.
+     multiple fields/sets are specified, the combined average of all items within each set
+     (true average, not an average of averages) will be returned as a single value.
 
     """
-    AVG(GROUP: Book__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    AVG(
+        GROUP: Book__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-rating: ScalarAggregateNumericBlock): Float!
+        """
+        rating: ScalarAggregateNumericBlock
+    ): Float!
     """
     
     Returns the total number of items within the specified child sets. If multiple child
-    sets are specified, the combined total of all of them will be returned as a single value.
+     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
     COUNT(GROUP: Book__CountSelector, _version: Book___version__CountSelector): Int!
     """
     
     The group field may be used to return a set of records belonging to the group.
-    It must be used alongside a 'groupBy' argument on the parent selector. It may
-    contain any field on the type being grouped, including those used by the
-    groupBy.
+     It must be used alongside a 'groupBy' argument on the parent selector. It may
+     contain any field on the type being grouped, including those used by the
+     groupBy.
 
     """
-    GROUP(    """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+    GROUP(
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this join, if none of the related records meet the filter
-    criteria the host record will still be returned, but the value of this field will
-    be empty.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this join, if none of the related records meet the filter
+         criteria the host record will still be returned, but the value of this field will
+         be empty.
 
-    """
-filter: BookFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: BookFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [BookField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [BookField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [BookOrderArg]): [Book]
+        """
+        order: [BookOrderArg]
+    ): [Book]
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined maximum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined maximum of all items within each set
+     will be returned as a single value.
 
     """
-    MAX(GROUP: Book__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    MAX(
+        GROUP: Book__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-rating: ScalarAggregateNumericBlock): Float
+        """
+        rating: ScalarAggregateNumericBlock
+    ): Float
     """
     
     Returns the minimum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined minimum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined minimum of all items within each set
+     will be returned as a single value.
 
     """
-    MIN(GROUP: Book__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    MIN(
+        GROUP: Book__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-rating: ScalarAggregateNumericBlock): Float
+        """
+        rating: ScalarAggregateNumericBlock
+    ): Float
     "Returns the cosine similarity between the specified field and the provided vector."
     SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined sum of all of them will be returned as
-    a single value.
+     multiple fields/sets are specified, the combined sum of all of them will be returned as
+     a single value.
 
     """
-    SUM(GROUP: Book__NumericSelector,     """
-    
-    The scalar field selection type for aggregate input arguments.
+    SUM(
+        GROUP: Book__NumericSelector
+        """
+        
+        The scalar field selection type for aggregate input arguments.
 
-    """
-rating: ScalarAggregateNumericBlock): Float!
+        """
+        rating: ScalarAggregateNumericBlock
+    ): Float!
     _authorID: ID
     """
     
@@ -536,14 +576,16 @@ rating: ScalarAggregateNumericBlock): Float!
 
     """
     _version: [Commit]
-    author(    """
-    
-    An optional filter for this join, if the related record does
-    not meet the filter criteria the host record will still be returned,
-    but the value of this field will be null.
+    author(
+        """
+        
+        An optional filter for this join, if the related record does
+         not meet the filter criteria the host record will still be returned,
+         but the value of this field will be null.
 
-    """
-filter: AuthorFilterArg): Author
+        """
+        filter: AuthorFilterArg
+    ): Author
     name: String
     rating: Float64
 }
@@ -623,33 +665,33 @@ input Book__CountSelector {
     """
     
     An optional filter for this aggregate, only documents matching the given criteria
-    will be aggregated.
+     will be aggregated.
 
     """
     filter: BookFilterArg
     """
     
     An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+     If this argument is provided, only fields used to group may be rendered in
+     the immediate child selector.  Additional fields may be selected by using
+     the 'GROUP' selector within the immediate child selector. If an empty set
+     is provided, the restrictions mentioned still apply, although all results
+     will appear within the same group.
 
     """
     groupBy: [BookField!]
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -659,15 +701,15 @@ input Book__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -678,29 +720,29 @@ input Book__NumericSelector {
     """
     
     An optional filter for this aggregate, only documents matching the given criteria
-    will be aggregated.
+     will be aggregated.
 
     """
     filter: BookFilterArg
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
     """
     
     An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+     empty set will be ignored.
 
     """
     order: [BookOrderArg]
@@ -710,15 +752,15 @@ input Book___version__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+     A limit of zero will be ignored.
 
     """
     limit: Int
     """
     
     An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+     otherwise been returned.  Commonly used alongside the 'limit' argument,
+     this argument will still work on its own.
 
     """
     offset: Int
@@ -798,7 +840,7 @@ input BooleanOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Boolean]
@@ -811,7 +853,7 @@ enum CRDTType {
     """
     Positive Counter.
 
-    	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+    WARNING: Incrementing an integer and causing it to overflow the int64 max value
     will cause the value to roll over to the int64 min value. Incremeting a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
@@ -819,7 +861,7 @@ enum CRDTType {
     """
     Positive-Negative Counter.
 
-    	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+    WARNING: Incrementing an integer and causing it to overflow the int64 max value
     will cause the value to roll over to the int64 min value. Incremeting a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
@@ -839,30 +881,30 @@ type Commit {
     """
     
     Returns the total number of items within the specified child sets. If multiple child
-    sets are specified, the combined total of all of them will be returned as a single value.
+     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
     COUNT(field: commitCountFieldArg): Int
     """
     
     The group field may be used to return a set of records belonging to the group.
-    It must be used alongside a 'groupBy' argument on the parent selector. It may
-    contain any field on the type being grouped, including those used by the
-    groupBy.
+     It must be used alongside a 'groupBy' argument on the parent selector. It may
+     contain any field on the type being grouped, including those used by the
+     groupBy.
 
     """
     GROUP: [Commit]
     """
     
     The unique CID of this commit, and the primary means through which to safely identify
-    a specific commit.
+     a specific commit.
 
     """
     cid: String
     """
     
     The ID of the collection version that this commit was committed against. This ID allows one
-    to determine the state of the data model at the time of commit.
+     to determine the state of the data model at the time of commit.
 
     """
     collectionVersionId: String
@@ -881,98 +923,110 @@ type Commit {
     """
     
     The name of the field that this commit was committed against. If this is a composite
-    or a collection the value will be null.
+     or a collection the value will be null.
 
     """
     fieldName: String
     """
     
     Child commits in the DAG that contribute to the composition of this commit.
-    Composite commits will link to the field commits for the fields modified during
-    the single mutation.  Collection commits will link to composites.
+     Composite commits will link to the field commits for the fields modified during
+     the single mutation.  Collection commits will link to composites.
 
     """
-    heads(    """
-    
-    An optional value that specifies the commit IDs of the commits to return. If a
-    matching commit is not found then an empty set will be returned.
+    heads(
+        """
+        
+        An optional value that specifies the commit IDs of the commits to return. If a
+         matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional docID parameter for this commit query. Only commits for a document
-    with a matching docID will be returned.  If no documents match, the result
-    set will be empty.
+        """
+        cid: [ID!]
+        """
+        
+        An optional docID parameter for this commit query. Only commits for a document
+         with a matching docID will be returned.  If no documents match, the result
+         set will be empty.
 
-    """
-docID: [ID!],     "Filter results based on specified conditions."
-filter: CommitsFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        docID: [ID!]
+        "Filter results based on specified conditions."
+        filter: CommitsFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [commitFields!],     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        groupBy: [commitFields!]
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [commitsOrderArg]): [Commit]
+        """
+        order: [commitsOrderArg]
+    ): [Commit]
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on add will have a height of '1', each subsequent local update
-    will increment this by one for the new commits.
+     and field level) on add will have a height of '1', each subsequent local update
+     will increment this by one for the new commits.
 
     """
     height: Int
     """
     
     Child commits in the DAG that contribute to the composition of this commit.
-    Composite commits will link to the field commits for the fields modified during
-    the single mutation.  Collection commits will link to composites.
+     Composite commits will link to the field commits for the fields modified during
+     the single mutation.  Collection commits will link to composites.
 
     """
-    links(    """
-    
-    An optional value that specifies the commit IDs of the commits to return. If a
-    matching commit is not found then an empty set will be returned.
+    links(
+        """
+        
+        An optional value that specifies the commit IDs of the commits to return. If a
+         matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional docID parameter for this commit query. Only commits for a document
-    with a matching docID will be returned.  If no documents match, the result
-    set will be empty.
+        """
+        cid: [ID!]
+        """
+        
+        An optional docID parameter for this commit query. Only commits for a document
+         with a matching docID will be returned.  If no documents match, the result
+         set will be empty.
 
-    """
-docID: [ID!],     "Filter results based on specified conditions."
-filter: CommitsFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        docID: [ID!]
+        "Filter results based on specified conditions."
+        filter: CommitsFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [commitFields!],     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        groupBy: [commitFields!]
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [commitsOrderArg]): [Commit]
+        """
+        order: [commitsOrderArg]
+    ): [Commit]
     """
     
     The signature of the commit, if one exists. This is used to verify the integrity
-    of the commit and the data it contains.
+     of the commit and the data it contains.
 
     """
     signature: Signature
@@ -1001,7 +1055,7 @@ input CommitsFieldNameFilterArg {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [String]
@@ -1093,14 +1147,14 @@ input DateTimeOperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: DateTime
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: DateTime
@@ -1113,7 +1167,7 @@ input DateTimeOperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: DateTime
@@ -1132,7 +1186,7 @@ input DateTimeOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [DateTime]
@@ -1223,14 +1277,14 @@ input Float32OperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Float32
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Float32
@@ -1243,7 +1297,7 @@ input Float32OperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Float32
@@ -1262,7 +1316,7 @@ input Float32OperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Float32]
@@ -1334,14 +1388,14 @@ input Float64OperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Float64
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Float64
@@ -1354,7 +1408,7 @@ input Float64OperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Float64
@@ -1373,7 +1427,7 @@ input Float64OperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Float64]
@@ -1412,7 +1466,7 @@ input IDOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [ID!]
@@ -1490,14 +1544,14 @@ input IntOperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Int
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Int
@@ -1510,7 +1564,7 @@ input IntOperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Int
@@ -1529,7 +1583,7 @@ input IntOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Int]
@@ -1545,173 +1599,203 @@ type Mutation {
     Adds one or more documents of this type using the data provided.
 
     """
-    add_Author(    """
-    
-    Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
-    DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
-    use it to encrypt all fields' values.
+    add_Author(
+        """
+        
+        Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
+         DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
+         use it to encrypt all fields' values.
 
-    """
-encrypt: Boolean,     """
-    
-    An optional list of individual fields that should be encrypted. For every field
-    in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
-    If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
-    be encrypted with the same key.
+        """
+        encrypt: Boolean
+        """
+        
+        An optional list of individual fields that should be encrypted. For every field
+         in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
+         If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
+         be encrypted with the same key.
 
-    """
-encryptFields: [AuthorExplicitField!],     "Add Author documents"
-input: [AuthorMutationInputArg!]): [Author]
+        """
+        encryptFields: [AuthorExplicitField!]
+        "Add Author documents"
+        input: [AuthorMutationInputArg!]
+    ): [Author]
     """
     
     Adds one or more documents of this type using the data provided.
 
     """
-    add_Book(    """
-    
-    Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
-    DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
-    use it to encrypt all fields' values.
+    add_Book(
+        """
+        
+        Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
+         DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
+         use it to encrypt all fields' values.
 
-    """
-encrypt: Boolean,     """
-    
-    An optional list of individual fields that should be encrypted. For every field
-    in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
-    If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
-    be encrypted with the same key.
+        """
+        encrypt: Boolean
+        """
+        
+        An optional list of individual fields that should be encrypted. For every field
+         in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
+         If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
+         be encrypted with the same key.
 
-    """
-encryptFields: [BookExplicitField!],     "Add Book documents"
-input: [BookMutationInputArg!]): [Book]
-    """
-    
-    Deletes documents in this collection matching any provided criteria. If no
-    criteria are provided all documents in the collection will be deleted.
-
-    """
-    delete_Author(    """
-    
-    An optional set of docID values that will limit the delete to documents with
-    a matching docID. If no matching documents are found, the operation will
-    succeed, but no documents will be deleted. If an empty set is provided, no
-    documents will be deleted.
-
-    """
-docID: [ID!],     """
-    
-    An optional filter for this delete that will limit the delete to documents
-    matching the given criteria. If no matching documents are found, the operation
-    will succeed, but no documents will be deleted.
-
-    """
-filter: AuthorFilterArg): [Author]
+        """
+        encryptFields: [BookExplicitField!]
+        "Add Book documents"
+        input: [BookMutationInputArg!]
+    ): [Book]
     """
     
     Deletes documents in this collection matching any provided criteria. If no
-    criteria are provided all documents in the collection will be deleted.
+     criteria are provided all documents in the collection will be deleted.
 
     """
-    delete_Book(    """
+    delete_Author(
+        """
+        
+        An optional set of docID values that will limit the delete to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be deleted. If an empty set is provided, no
+         documents will be deleted.
+
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this delete that will limit the delete to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be deleted.
+
+        """
+        filter: AuthorFilterArg
+    ): [Author]
+    """
     
-    An optional set of docID values that will limit the delete to documents with
-    a matching docID. If no matching documents are found, the operation will
-    succeed, but no documents will be deleted. If an empty set is provided, no
-    documents will be deleted.
+    Deletes documents in this collection matching any provided criteria. If no
+     criteria are provided all documents in the collection will be deleted.
 
     """
-docID: [ID!],     """
-    
-    An optional filter for this delete that will limit the delete to documents
-    matching the given criteria. If no matching documents are found, the operation
-    will succeed, but no documents will be deleted.
+    delete_Book(
+        """
+        
+        An optional set of docID values that will limit the delete to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be deleted. If an empty set is provided, no
+         documents will be deleted.
 
-    """
-filter: BookFilterArg): [Book]
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this delete that will limit the delete to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be deleted.
+
+        """
+        filter: BookFilterArg
+    ): [Book]
     """
     
     Updates documents in this collection using the data provided. Only documents
-    matching any provided criteria will be updated, if no criteria are provided
-    the update will be applied to all documents in the collection.
+     matching any provided criteria will be updated, if no criteria are provided
+     the update will be applied to all documents in the collection.
 
     """
-    update_Author(    """
-    
-    An optional set of docID values that will limit the update to documents
-    with a matching docID. If no matching documents are found, the operation will
-    succeed, but no documents will be updated.
+    update_Author(
+        """
+        
+        An optional set of docID values that will limit the update to documents
+         with a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be updated.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this update that will limit the update to the documents
-    matching the given criteria. If no matching documents are found, the operation
-    will succeed, but no documents will be updated.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this update that will limit the update to the documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be updated.
 
-    """
-filter: AuthorFilterArg,     "Update field values"
-input: AuthorMutationInputArg): [Author]
+        """
+        filter: AuthorFilterArg
+        "Update field values"
+        input: AuthorMutationInputArg
+    ): [Author]
     """
     
     Updates documents in this collection using the data provided. Only documents
-    matching any provided criteria will be updated, if no criteria are provided
-    the update will be applied to all documents in the collection.
+     matching any provided criteria will be updated, if no criteria are provided
+     the update will be applied to all documents in the collection.
 
     """
-    update_Book(    """
-    
-    An optional set of docID values that will limit the update to documents
-    with a matching docID. If no matching documents are found, the operation will
-    succeed, but no documents will be updated.
+    update_Book(
+        """
+        
+        An optional set of docID values that will limit the update to documents
+         with a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be updated.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this update that will limit the update to the documents
-    matching the given criteria. If no matching documents are found, the operation
-    will succeed, but no documents will be updated.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this update that will limit the update to the documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be updated.
 
-    """
-filter: BookFilterArg,     "Update field values"
-input: BookMutationInputArg): [Book]
-    """
-    
-    Update or add a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided
-    update input, or if no matching document is found, a new document will be added with the
-    provided add input.
-
-    NOTE: It is highly recommended to add an index on the fields used to filter.
-    """
-    upsert_Author(    "Add field values"
-add: AuthorMutationInputArg!,     """
-    
-    A required filter for this upsert that must match one or zero documents.
-    If a matching document is found it will be updated, otherwise a new
-    document will be added.
-
-    """
-filter: AuthorFilterArg!,     "Update field values"
-update: AuthorMutationInputArg!): [Author]
+        """
+        filter: BookFilterArg
+        "Update field values"
+        input: BookMutationInputArg
+    ): [Book]
     """
     
     Update or add a document in this collection using the data provided. The provided filter
-    must match at most one document. The matching document will be updated with the provided
-    update input, or if no matching document is found, a new document will be added with the
-    provided add input.
+     must match at most one document. The matching document will be updated with the provided
+     update input, or if no matching document is found, a new document will be added with the
+     provided add input.
 
     NOTE: It is highly recommended to add an index on the fields used to filter.
     """
-    upsert_Book(    "Add field values"
-add: BookMutationInputArg!,     """
-    
-    A required filter for this upsert that must match one or zero documents.
-    If a matching document is found it will be updated, otherwise a new
-    document will be added.
+    upsert_Author(
+        "Add field values"
+        add: AuthorMutationInputArg!
+        """
+        
+        A required filter for this upsert that must match one or zero documents.
+         If a matching document is found it will be updated, otherwise a new
+         document will be added.
 
+        """
+        filter: AuthorFilterArg!
+        "Update field values"
+        update: AuthorMutationInputArg!
+    ): [Author]
     """
-filter: BookFilterArg!,     "Update field values"
-update: BookMutationInputArg!): [Book]
+    
+    Update or add a document in this collection using the data provided. The provided filter
+     must match at most one document. The matching document will be updated with the provided
+     update input, or if no matching document is found, a new document will be added with the
+     provided add input.
+
+    NOTE: It is highly recommended to add an index on the fields used to filter.
+    """
+    upsert_Book(
+        "Add field values"
+        add: BookMutationInputArg!
+        """
+        
+        A required filter for this upsert that must match one or zero documents.
+         If a matching document is found it will be updated, otherwise a new
+         document will be added.
+
+        """
+        filter: BookFilterArg!
+        "Update field values"
+        update: BookMutationInputArg!
+    ): [Book]
 }
 
 """
@@ -1730,8 +1814,8 @@ input NotNullBlobOperatorBlock {
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-    ending in 'Ritchie'.
+     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _ilike: String
@@ -1744,8 +1828,8 @@ input NotNullBlobOperatorBlock {
     """
     
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-    ending in 'Ritchie'.
+     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _like: String
@@ -1758,23 +1842,23 @@ input NotNullBlobOperatorBlock {
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nilike: String
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Blob!]
     """
     
     The not-like operator - if the target value does not contain the given sub-string the check will
-    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nlike: String
@@ -1851,7 +1935,7 @@ input NotNullBooleanOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Boolean!]
@@ -1920,14 +2004,14 @@ input NotNullDateTimeOperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: DateTime
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: DateTime
@@ -1940,7 +2024,7 @@ input NotNullDateTimeOperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: DateTime
@@ -1959,7 +2043,7 @@ input NotNullDateTimeOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [DateTime!]
@@ -2028,14 +2112,14 @@ input NotNullFloat32OperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Float32
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Float32
@@ -2048,7 +2132,7 @@ input NotNullFloat32OperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Float32
@@ -2067,7 +2151,7 @@ input NotNullFloat32OperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Float32!]
@@ -2136,14 +2220,14 @@ input NotNullFloat64OperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Float64
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Float64
@@ -2156,7 +2240,7 @@ input NotNullFloat64OperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Float64
@@ -2175,7 +2259,7 @@ input NotNullFloat64OperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Float64!]
@@ -2244,14 +2328,14 @@ input NotNullIntOperatorBlock {
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _geq: Int
     """
     
     The greater than operator - if the target value is greater than the given value the
-    check will pass.
+     check will pass.
 
     """
     _gt: Int
@@ -2264,7 +2348,7 @@ input NotNullIntOperatorBlock {
     """
     
     The less than or equal to operator - if the target value is less than or equal to the
-    given value the check will pass.
+     given value the check will pass.
 
     """
     _leq: Int
@@ -2283,7 +2367,7 @@ input NotNullIntOperatorBlock {
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [Int!]
@@ -2352,8 +2436,8 @@ input NotNullStringOperatorBlock {
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-    ending in 'Ritchie'.
+     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _ilike: String
@@ -2366,8 +2450,8 @@ input NotNullStringOperatorBlock {
     """
     
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-    ending in 'Ritchie'.
+     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _like: String
@@ -2380,23 +2464,23 @@ input NotNullStringOperatorBlock {
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nilike: String
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [String!]
     """
     
     The not-like operator - if the target value does not contain the given sub-string the check will
-    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nlike: String
@@ -2421,214 +2505,241 @@ type Query {
     """
     
     Returns the average of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined average of all items within each set
-    (true average, not an average of averages) will be returned as a single value.
+     multiple fields/sets are specified, the combined average of all items within each set
+     (true average, not an average of averages) will be returned as a single value.
 
     """
     AVG(Author: Author__NumericSelector, Book: Book__NumericSelector): Float!
-    Author(    """
-    
-    An optional value that specifies the commit ID of a document or a branchable collection.
-    This CID does not need to be the most recent. If it corresponds to an older version
-    the document(s) will be returned at the state they were in at the time of that commit.
-    If a matching commit is not found then an empty set will be returned.
+    Author(
+        """
+        
+        An optional value that specifies the commit ID of a document or a branchable collection.
+         This CID does not need to be the most recent. If it corresponds to an older version
+         the document(s) will be returned at the state they were in at the time of that commit.
+         If a matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+        """
+        cid: [ID!]
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this select, only documents matching the given criteria
-    will be returned.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this select, only documents matching the given criteria
+         will be returned.
 
-    """
-filter: AuthorFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: AuthorFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [AuthorField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [AuthorField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [AuthorOrderArg],     """
-    
-    An optional value that specifies as to whether deleted documents may be
-    returned. This argument will propagate down through any child selects/joins.
+        """
+        order: [AuthorOrderArg]
+        """
+        
+        An optional value that specifies as to whether deleted documents may be
+         returned. This argument will propagate down through any child selects/joins.
 
-    """
-showDeleted: Boolean): [Author]
-    Book(    """
-    
-    An optional value that specifies the commit ID of a document or a branchable collection.
-    This CID does not need to be the most recent. If it corresponds to an older version
-    the document(s) will be returned at the state they were in at the time of that commit.
-    If a matching commit is not found then an empty set will be returned.
+        """
+        showDeleted: Boolean
+    ): [Author]
+    Book(
+        """
+        
+        An optional value that specifies the commit ID of a document or a branchable collection.
+         This CID does not need to be the most recent. If it corresponds to an older version
+         the document(s) will be returned at the state they were in at the time of that commit.
+         If a matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+        """
+        cid: [ID!]
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this select, only documents matching the given criteria
-    will be returned.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this select, only documents matching the given criteria
+         will be returned.
 
-    """
-filter: BookFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: BookFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [BookField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [BookField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [BookOrderArg],     """
-    
-    An optional value that specifies as to whether deleted documents may be
-    returned. This argument will propagate down through any child selects/joins.
+        """
+        order: [BookOrderArg]
+        """
+        
+        An optional value that specifies as to whether deleted documents may be
+         returned. This argument will propagate down through any child selects/joins.
 
-    """
-showDeleted: Boolean): [Book]
+        """
+        showDeleted: Boolean
+    ): [Book]
     """
     
     Returns the total number of items within the specified child sets. If multiple child
-    sets are specified, the combined total of all of them will be returned as a single value.
+     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
     COUNT(Author: Author__CountSelector, Book: Book__CountSelector): Int!
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined maximum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined maximum of all items within each set
+     will be returned as a single value.
 
     """
     MAX(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the minimum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined minimum of all items within each set
-    will be returned as a single value.
+     multiple fields/sets are specified, the combined minimum of all items within each set
+     will be returned as a single value.
 
     """
     MIN(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
-    multiple fields/sets are specified, the combined sum of all of them will be returned as
-    a single value.
+     multiple fields/sets are specified, the combined sum of all of them will be returned as
+     a single value.
 
     """
     SUM(Author: Author__NumericSelector, Book: Book__NumericSelector): Float!
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
-    provided all commits in the system will be returned.
+     provided all commits in the system will be returned.
 
     """
-    _commits(    """
-    
-    An optional value that specifies the commit IDs of the commits to return. If a
-    matching commit is not found then an empty set will be returned.
+    _commits(
+        """
+        
+        An optional value that specifies the commit IDs of the commits to return. If a
+         matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional value that specifies the maximum depth to which the commit DAG graph
-    should be traversed from matching commits.
+        """
+        cid: [ID!]
+        """
+        
+        An optional value that specifies the maximum depth to which the commit DAG graph
+         should be traversed from matching commits.
 
-    """
-depth: Int,     """
-    
-    An optional docID parameter for this commit query. Only commits for a document
-    with a matching docID will be returned.  If no documents match, the result
-    set will be empty.
+        """
+        depth: Int
+        """
+        
+        An optional docID parameter for this commit query. Only commits for a document
+         with a matching docID will be returned.  If no documents match, the result
+         set will be empty.
 
-    """
-docID: [ID!],     "Filter results based on specified conditions."
-filter: CommitsFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        docID: [ID!]
+        "Filter results based on specified conditions."
+        filter: CommitsFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [commitFields!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [commitFields!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [commitsOrderArg]): [Commit]
+        """
+        order: [commitsOrderArg]
+    ): [Commit]
 }
 
 """
@@ -2641,7 +2752,7 @@ input ScalarAggregateNumericBlock {
     """
     
     An optional filter for this aggregate, only documents matching the given criteria
-    will be aggregated.
+     will be aggregated.
 
     """
     filter: IntFilterArg
@@ -2728,8 +2839,8 @@ input StringOperatorBlock {
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-    ending in 'Ritchie'.
+     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _ilike: String
@@ -2742,8 +2853,8 @@ input StringOperatorBlock {
     """
     
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-    ending in 'Ritchie'.
+     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+     ending in 'Ritchie'.
 
     """
     _like: String
@@ -2756,201 +2867,228 @@ input StringOperatorBlock {
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nilike: String
     """
     
     The does not contains operator - if the target value is not within the given set the
-    check will pass.
+     check will pass.
 
     """
     _nin: [String]
     """
     
     The not-like operator - if the target value does not contain the given sub-string the check will
-    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-    the string 'Quentin Tarantino'.
+     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+     the string 'Quentin Tarantino'.
 
     """
     _nlike: String
 }
 
 type Subscription {
-    Author(    """
-    
-    An optional value that specifies the commit ID of a document or a branchable collection.
-    This CID does not need to be the most recent. If it corresponds to an older version
-    the document(s) will be returned at the state they were in at the time of that commit.
-    If a matching commit is not found then an empty set will be returned.
+    Author(
+        """
+        
+        An optional value that specifies the commit ID of a document or a branchable collection.
+         This CID does not need to be the most recent. If it corresponds to an older version
+         the document(s) will be returned at the state they were in at the time of that commit.
+         If a matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+        """
+        cid: [ID!]
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this select, only documents matching the given criteria
-    will be returned.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this select, only documents matching the given criteria
+         will be returned.
 
-    """
-filter: AuthorFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: AuthorFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [AuthorField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [AuthorField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [AuthorOrderArg],     """
-    
-    An optional value that specifies as to whether deleted documents may be
-    returned. This argument will propagate down through any child selects/joins.
+        """
+        order: [AuthorOrderArg]
+        """
+        
+        An optional value that specifies as to whether deleted documents may be
+         returned. This argument will propagate down through any child selects/joins.
 
-    """
-showDeleted: Boolean): [Author]
-    Book(    """
-    
-    An optional value that specifies the commit ID of a document or a branchable collection.
-    This CID does not need to be the most recent. If it corresponds to an older version
-    the document(s) will be returned at the state they were in at the time of that commit.
-    If a matching commit is not found then an empty set will be returned.
+        """
+        showDeleted: Boolean
+    ): [Author]
+    Book(
+        """
+        
+        An optional value that specifies the commit ID of a document or a branchable collection.
+         This CID does not need to be the most recent. If it corresponds to an older version
+         the document(s) will be returned at the state they were in at the time of that commit.
+         If a matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional set of docIDs for this field. Only documents with a docID
-    matching a docID in the given set will be returned.  If no documents match,
-    the result will be null/empty. If an empty set is provided, this argument will
-    be ignored.
+        """
+        cid: [ID!]
+        """
+        
+        An optional set of docIDs for this field. Only documents with a docID
+         matching a docID in the given set will be returned.  If no documents match,
+         the result will be null/empty. If an empty set is provided, this argument will
+         be ignored.
 
-    """
-docID: [ID!],     """
-    
-    An optional filter for this select, only documents matching the given criteria
-    will be returned.
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this select, only documents matching the given criteria
+         will be returned.
 
-    """
-filter: BookFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        filter: BookFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [BookField!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [BookField!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [BookOrderArg],     """
-    
-    An optional value that specifies as to whether deleted documents may be
-    returned. This argument will propagate down through any child selects/joins.
+        """
+        order: [BookOrderArg]
+        """
+        
+        An optional value that specifies as to whether deleted documents may be
+         returned. This argument will propagate down through any child selects/joins.
 
-    """
-showDeleted: Boolean): [Book]
+        """
+        showDeleted: Boolean
+    ): [Book]
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
-    provided all commits in the system will be returned.
+     provided all commits in the system will be returned.
 
     """
-    _commits(    """
-    
-    An optional value that specifies the commit IDs of the commits to return. If a
-    matching commit is not found then an empty set will be returned.
+    _commits(
+        """
+        
+        An optional value that specifies the commit IDs of the commits to return. If a
+         matching commit is not found then an empty set will be returned.
 
-    """
-cid: [ID!],     """
-    
-    An optional value that specifies the maximum depth to which the commit DAG graph
-    should be traversed from matching commits.
+        """
+        cid: [ID!]
+        """
+        
+        An optional value that specifies the maximum depth to which the commit DAG graph
+         should be traversed from matching commits.
 
-    """
-depth: Int,     """
-    
-    An optional docID parameter for this commit query. Only commits for a document
-    with a matching docID will be returned.  If no documents match, the result
-    set will be empty.
+        """
+        depth: Int
+        """
+        
+        An optional docID parameter for this commit query. Only commits for a document
+         with a matching docID will be returned.  If no documents match, the result
+         set will be empty.
 
-    """
-docID: [ID!],     "Filter results based on specified conditions."
-filter: CommitsFilterArg,     """
-    
-    An optional set of fields for which to group the contents of this field by.
-    If this argument is provided, only fields used to group may be rendered in
-    the immediate child selector.  Additional fields may be selected by using
-    the 'GROUP' selector within the immediate child selector. If an empty set
-    is provided, the restrictions mentioned still apply, although all results
-    will appear within the same group.
+        """
+        docID: [ID!]
+        "Filter results based on specified conditions."
+        filter: CommitsFilterArg
+        """
+        
+        An optional set of fields for which to group the contents of this field by.
+         If this argument is provided, only fields used to group may be rendered in
+         the immediate child selector.  Additional fields may be selected by using
+         the 'GROUP' selector within the immediate child selector. If an empty set
+         is provided, the restrictions mentioned still apply, although all results
+         will appear within the same group.
 
-    """
-groupBy: [commitFields!],     """
-    
-    An optional value that caps the number of results to the number provided.
-    A limit of zero will be ignored.
+        """
+        groupBy: [commitFields!]
+        """
+        
+        An optional value that caps the number of results to the number provided.
+         A limit of zero will be ignored.
 
-    """
-limit: Int,     """
-    
-    An optional value that skips the given number of results that would have
-    otherwise been returned.  Commonly used alongside the 'limit' argument,
-    this argument will still work on its own.
+        """
+        limit: Int
+        """
+        
+        An optional value that skips the given number of results that would have
+         otherwise been returned.  Commonly used alongside the 'limit' argument,
+         this argument will still work on its own.
 
-    """
-offset: Int,     """
-    
-    An optional set of field-orders which may be used to sort the results. An
-    empty set will be ignored.
+        """
+        offset: Int
+        """
+        
+        An optional set of field-orders which may be used to sort the results. An
+         empty set will be ignored.
 
-    """
-order: [commitsOrderArg]): [Commit]
+        """
+        order: [commitsOrderArg]
+    ): [Commit]
 }
 
 """
@@ -3096,16 +3234,16 @@ enum commitCountFieldArg {
     """
     
     Child commits in the DAG that contribute to the composition of this commit.
-    Composite commits will link to the field commits for the fields modified during
-    the single mutation.  Collection commits will link to composites.
+     Composite commits will link to the field commits for the fields modified during
+     the single mutation.  Collection commits will link to composites.
 
     """
     heads
     """
     
     Child commits in the DAG that contribute to the composition of this commit.
-    Composite commits will link to the field commits for the fields modified during
-    the single mutation.  Collection commits will link to composites.
+     Composite commits will link to the field commits for the fields modified during
+     the single mutation.  Collection commits will link to composites.
 
     """
     links
@@ -3120,7 +3258,7 @@ enum commitFields {
     """
     
     The unique CID of this commit, and the primary means through which to safely identify
-    a specific commit.
+     a specific commit.
 
     """
     cid
@@ -3133,15 +3271,15 @@ enum commitFields {
     """
     
     The name of the field that this commit was committed against. If this is a composite
-    or a collection the value will be null.
+     or a collection the value will be null.
 
     """
     fieldName
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on add will have a height of '1', each subsequent local update
-    will increment this by one for the new commits.
+     and field level) on add will have a height of '1', each subsequent local update
+     will increment this by one for the new commits.
 
     """
     height
@@ -3157,7 +3295,7 @@ input commitsOrderArg {
     """
     
     The unique CID of this commit, and the primary means through which to safely identify
-    a specific commit.
+     a specific commit.
 
     """
     cid: Ordering
@@ -3170,8 +3308,8 @@ input commitsOrderArg {
     """
     
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-    and field level) on add will have a height of '1', each subsequent local update
-    will increment this by one for the new commits.
+     and field level) on add will have a height of '1', each subsequent local update
+     will increment this by one for the new commits.
 
     """
     height: Ordering
@@ -3179,16 +3317,16 @@ input commitsOrderArg {
 
 """
 @branchable is a directive that defines whether the history of this collection is tracked
- as a single, verifiable entity or not. It will default to false if ommited.
+as a single, verifiable entity or not. It will default to false if ommited.
 
- If multiple @branchable directives are provided, they will aggregated with OR logic (if any are true, the
- collection history will be tracked).
+If multiple @branchable directives are provided, they will aggregated with OR logic (if any are true, the
+collection history will be tracked).
 
- The history may be queried like a document history can be queried, for example via 'commits'
- GQL queries.
+The history may be queried like a document history can be queried, for example via 'commits'
+GQL queries.
 
- Currently this property is immutable and can only be set on collection creation, however
- that will change in the future.
+Currently this property is immutable and can only be set on collection creation, however
+that will change in the future.
 """
 directive @branchable(
     if: Boolean
@@ -3214,8 +3352,8 @@ directive @crdt(
 
 """
 @default is a directive that can be used to set a default field value.
-		
-		Setting a default value on a field within a view has no effect.
+
+Setting a default value on a field within a view has no effect.
 """
 directive @default(
     value: Any
@@ -3277,8 +3415,8 @@ directive @index(
 
 """
 @materialized is a directive that specifies whether a collection is cached or not.
- It will default to true if ommited.  If multiple @materialized directives are provided, they will aggregated
- with OR logic (if any are true, the collection will be cached).
+It will default to true if ommited.  If multiple @materialized directives are provided, they will aggregated
+with OR logic (if any are true, the collection will be cached).
 """
 directive @materialized(
     if: Boolean
