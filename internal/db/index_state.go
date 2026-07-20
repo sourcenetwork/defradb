@@ -117,6 +117,23 @@ func getIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (ui
 	return fetcher.ReadIndexEpoch(ctx, datastore.CtxMustGetTxn(ctx), collectionID, indexID)
 }
 
+// readIndexEpochByShortID resolves the live epoch from the epoch sequence keyed by the collection's
+// short ID, for callers that already have it (the stale-epoch marker stores it).
+func readIndexEpochByShortID(ctx context.Context, collectionShortID, indexID uint32) (uint32, error) {
+	return fetcher.ReadIndexEpochByShortID(ctx, datastore.CtxMustGetTxn(ctx), collectionShortID, indexID)
+}
+
+// readIndexBuildEpoch resolves the epoch a backfill fills, in its own short read-only transaction so
+// the caller can pin it for the whole build independent of any batch transaction.
+func (db *DB) readIndexBuildEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return 0, err
+	}
+	defer rawTxn.Discard()
+	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
+}
+
 // startIndexBuild records the start of a backfill and publishes an event. The record is
 // written on the transaction bound to ctx, so it commits atomically with any other work on
 // that transaction.
@@ -164,6 +181,13 @@ func (db *DB) completeIndexBuild(ctx context.Context, collectionID string, index
 // completeIndexDrop deletes the drop action record, marking the index ready.
 func (db *DB) completeIndexDrop(ctx context.Context, collectionID string, indexID uint32) error {
 	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID))
+}
+
+// clearIndexBuildRecord deletes any backfill action record (status, reason, payload) for the index
+// without publishing an event. Used when dropping an index to discard a leftover building or failed
+// record, which would otherwise be orphaned once the index definition is gone.
+func (db *DB) clearIndexBuildRecord(ctx context.Context, collectionID string, indexID uint32) error {
+	return action.ClearTxn(ctx, collectionID, client.BackfillIndexAction, indexSubject(indexID))
 }
 
 // indexStateRecord is one index action record: its index identity plus the decoded state. An

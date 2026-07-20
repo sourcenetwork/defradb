@@ -12,6 +12,8 @@
 package action
 
 import (
+	"time"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -52,10 +54,22 @@ type NewIndex struct {
 	// If Unique is true, the index will be added as a unique index.
 	Unique bool
 
+	// Async, when true, returns without waiting for the backfill. The index stays building until
+	// the worker completes it.
+	//
+	// By default the action waits for the build to reach ready or failed, so a following query
+	// sees a built index. Set Async true to observe the building window, e.g. with a following
+	// ListIndexes asserting an in-progress status.
+	Async bool
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
+	//
+	// NewIndex is async: a backfill failure is not returned here, it surfaces as a failed index
+	// status. Use ListIndexes with ExpectedStatuses to assert a build failure; ExpectedError
+	// only covers synchronous validation errors (e.g. a duplicate index name).
 	ExpectedError string
 
 	// Used to identify the transaction for this to be executed in. Optional.
@@ -115,13 +129,52 @@ func (a *NewIndex) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		_, err = collection.NewIndex(a.s.Ctx, indexDesc, opts)
+		desc, err := collection.NewIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {
 			return
 		}
+
+		// Unless the test wants to observe the building window, wait for the build so a following
+		// query sees a built index. With an explicit transaction the record is not committed until
+		// the caller commits, so there is nothing to wait for yet; the test waits after its commit.
+		if err == nil && !a.Async && !a.TransactionID.HasValue() {
+			waitForIndexBuilt(a.s, collection, desc.ID, listIndexesOptions(a.s, node))
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, false)
+}
+
+// indexBuildTimeout bounds the wait for a background build or drop to finish. The poll returns as
+// soon as the state clears, so this only elapses on a real hang; it is sized for a slow backfill of
+// a large collection in CI.
+const indexBuildTimeout = 10 * time.Second
+
+// waitForIndexBuilt blocks until the given index leaves the building state (ready or failed). It
+// polls ListIndexes rather than the action event bus so it composes with explicit Wait actions that
+// consume the shared subscription.
+func waitForIndexBuilt(
+	s *state.State,
+	collection client.Collection,
+	indexID uint32,
+	opts options.Enumerable[options.ListCollectionIndexesOptions],
+) {
+	require.Eventually(s.T, func() bool {
+		results, err := collection.ListIndexes(s.Ctx, opts)
+		if err != nil {
+			return false
+		}
+		for _, r := range results {
+			if r.Description.ID != indexID {
+				continue
+			}
+			// building → BackfillIndexAction + InProgress; anything else is terminal.
+			return r.Execution.Action != client.BackfillIndexAction ||
+				r.Execution.Status != client.InProgressActionStatus
+		}
+		// The index is gone from the listing only if it was dropped; treat as settled.
+		return true
+	}, indexBuildTimeout, time.Millisecond, "timed out waiting for index %d to finish building", indexID)
 }

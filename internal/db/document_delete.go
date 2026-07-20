@@ -220,7 +220,7 @@ func (c *collection) applyDelete(
 	})
 
 	if c.def.IsBranchable {
-		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+		collectionShortID, err := c.collectionShortID(ctx)
 		if err != nil {
 			return err
 		}
