@@ -266,6 +266,7 @@ var (
 	ErrDocumentAlreadyExists                     = errors.New(errDocumentAlreadyExists)
 	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
 	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
+	ErrIndexWithIDDoesNotExist                   = errors.New(errIndexWithIDDoesNotExist)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
