@@ -31,6 +31,11 @@ import (
 // multi-batch runs.
 var indexBackfillBatchSize = 100
 
+// IndexBuildGate is a test hook called at each backfill batch boundary. Tests set it to block a
+// build at the building state so that window is observable. It is nil in production (only the nil
+// check runs) and exported so tests in other packages can install it.
+var IndexBuildGate func(ctx context.Context, collectionID string, indexID uint32)
+
 // withTxnRetries runs attempt with a fresh read-write transaction set on the context
 // and commits it afterwards. When the attempt or the commit fails with a transaction
 // conflict, the attempt is re-run with a new transaction, up to db.MaxTxnRetries() times;
@@ -75,6 +80,15 @@ func (db *DB) withTxnRetries(ctx context.Context, attempt func(ctx context.Conte
 	return lastErr
 }
 
+// isBuildInterrupted reports whether the build stopped for a reason that lets it resume later, rather
+// than failing: a transaction conflict or ctx cancellation on shutdown. The record stays in place and
+// the next drain resumes it, so it must not be marked failed.
+func isBuildInterrupted(err error) bool {
+	return errors.Is(err, corekv.ErrTxnConflict) ||
+		errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded)
+}
+
 // backfillIndex builds an index by indexing every existing document in batched transactions, then
 // deleting the build record to mark it ready. It is used both for a fresh index and for a rebuild
 // filling a new epoch; in both cases the epoch is resolved from the index's sequence.
@@ -87,22 +101,34 @@ func (db *DB) backfillIndex(
 	desc client.IndexDescription,
 	startAfter immutable.Option[uint64],
 ) error {
-	if err := db.fillIndexBatches(ctx, def, desc, startAfter); err != nil {
+	builtEpoch, err := db.fillIndexBatches(ctx, def, desc, startAfter)
+	if err != nil {
 		return err
 	}
 
-	err := db.withTxnRetries(ctx, func(c context.Context) error {
+	err = db.withTxnRetries(ctx, func(c context.Context) error {
+		// A version switch can advance the epoch while this build runs; the build stays pinned to the
+		// epoch it started on, which is now stale. Completing would delete the record the version switch
+		// staged for the new epoch, leaving it unbuilt. Only complete if this build still filled the
+		// live epoch; otherwise leave the record for the worker to build the new epoch from the top.
+		liveEpoch, err := getIndexEpoch(c, def.CollectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		if liveEpoch != builtEpoch {
+			return nil
+		}
 		return db.completeIndexBuild(c, def.CollectionID, desc.ID)
 	})
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, corekv.ErrTxnConflict) {
+	if isBuildInterrupted(err) {
 		return NewErrIndexBackfillInterrupted(err, desc.Name)
 	}
 	markErr := db.markIndexFailed(ctx, def, desc, err)
 	if markErr != nil {
-		log.ErrorE("failed to record index failure", markErr,
+		log.ErrorE("failed to record index failure", errors.Join(markErr, err),
 			corelog.String("collectionID", def.CollectionID),
 			corelog.Any("indexID", desc.ID),
 		)
@@ -111,16 +137,17 @@ func (db *DB) backfillIndex(
 }
 
 // fillIndexBatches indexes every document from startAfter to the end of the collection in batched
-// transactions. The index writes the epoch resolved from its sequence.
+// transactions, returning the epoch it filled. The epoch is resolved once and pinned for the whole
+// build.
 //
 // A non-retryable error marks the index failed; a conflict leaves it resumable. It does not
-// complete the build — the caller deletes the record once the fill is done.
+// complete the build. The caller deletes the record once the fill is done.
 func (db *DB) fillIndexBatches(
 	ctx context.Context,
 	def client.CollectionVersion,
 	desc client.IndexDescription,
 	startAfter immutable.Option[uint64],
-) error {
+) (uint32, error) {
 	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
 	for _, f := range desc.Fields {
 		if colField, ok := def.GetFieldByName(f.Name); ok {
@@ -128,23 +155,50 @@ func (db *DB) fillIndexBatches(
 		}
 	}
 
+	// Resolve the epoch once and pin it for the whole build. A concurrent version switch can advance
+	// the sequence mid-build; if each batch re-read it, the build would split across two epochs and
+	// leave the new live epoch missing every document indexed before the advance. The version switch
+	// stages its own building record, which drives a complete fresh build of the new epoch.
+	epoch, err := db.readIndexBuildEpoch(ctx, def.CollectionID, desc.ID)
+	if err != nil {
+		return 0, err
+	}
+
 	watermark := startAfter
 
 	for {
+		if IndexBuildGate != nil {
+			IndexBuildGate(ctx, def.CollectionID, desc.ID)
+		}
+
 		var (
 			lastDocShortID uint64
 			n              int
 		)
 
+		superseded := false
 		batchErr := db.withTxnRetries(ctx, func(batchCtx context.Context) error {
-			col, err := db.newCollection(batchCtx, def, datastore.CtxTryGetTxnOption(batchCtx))
+			// A version switch mid-build advances the epoch and stages a fresh build to fill it from the
+			// top. This build is pinned to the old epoch, so it is now stale: stop, and don't touch the
+			// shared record's watermark, which the fresh build resets to rebuild from the start. Reading
+			// the epoch here also joins this batch's read-set, so a switch committing after the check but
+			// before this batch commits conflicts it (and it retries into this same superseded branch).
+			liveEpoch, err := getIndexEpoch(batchCtx, def.CollectionID, desc.ID)
 			if err != nil {
 				return err
 			}
+			if liveEpoch != epoch {
+				superseded = true
+				return nil
+			}
+
+			// Bare collection so this batch does not read sibling indexes' state into its read-set
+			// (see newBareCollection); the backfill maintains only its own index, built below.
+			col := db.newBareCollection(def, datastore.CtxTryGetTxnOption(batchCtx))
 
 			// building=true so Save tolerates entries a concurrent live write
-			// already stored for the same document.
-			colIndex, err := NewCollectionIndex(batchCtx, col, desc, true)
+			// already stored for the same document. The epoch is pinned above, not re-read per batch.
+			colIndex, err := newCollectionIndexWithEpoch(col, desc, true, epoch)
 			if err != nil {
 				return err
 			}
@@ -167,22 +221,26 @@ func (db *DB) fillIndexBatches(
 		})
 
 		if batchErr != nil {
-			// A transaction conflict means a concurrent write raced with this batch.
-			// The building state and watermark are still valid, so leave the index
-			// resumable rather than recording a permanent failure. Only non-retryable
-			// errors represent a genuine problem that warrants marking the index failed.
-			if errors.Is(batchErr, corekv.ErrTxnConflict) {
-				return NewErrIndexBackfillInterrupted(batchErr, desc.Name)
+			// A conflicting write or shutdown cancellation leaves the state and watermark valid, so the
+			// index can resume. Only a real error marks it failed.
+			if isBuildInterrupted(batchErr) {
+				return epoch, NewErrIndexBackfillInterrupted(batchErr, desc.Name)
 			}
 			markErr := db.markIndexFailed(ctx, def, desc, batchErr)
 			if markErr != nil {
 				log.ErrorE("failed to record index failure",
-					markErr,
+					errors.Join(markErr, batchErr),
 					corelog.String("collectionID", def.CollectionID),
 					corelog.Any("indexID", desc.ID),
 				)
 			}
-			return errors.Join(NewErrIndexBackfillFailed(batchErr, desc.Name), markErr)
+			return epoch, errors.Join(NewErrIndexBackfillFailed(batchErr, desc.Name), markErr)
+		}
+
+		if superseded {
+			// The pinned epoch is no longer live; the fresh build staged by the version switch will fill
+			// the new epoch. Stop without completing, leaving the record for that build.
+			return epoch, nil
 		}
 
 		if n == 0 || n < indexBackfillBatchSize {
@@ -192,7 +250,7 @@ func (db *DB) fillIndexBatches(
 		watermark = immutable.Some(lastDocShortID)
 	}
 
-	return nil
+	return epoch, nil
 }
 
 // markIndexFailed records a failed state for the index with the cause as the reason, in its

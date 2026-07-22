@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
+	actionPkg "github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -106,4 +107,12 @@ func configureMigration(
 	// that's why we need to refresh collections, so that the in-memory collection versions are updated.
 	// Originally was added for [NewIndex] to be able to index docs with migrated values.
 	refreshCollections(s, action.TransactionID, immutable.None[state.Identity]())
+
+	// Setting a migration can create a new active version and reindex it in the background; wait so a
+	// following query sees a built index.
+	if !action.TransactionID.HasValue() {
+		for _, node := range s.Nodes {
+			actionPkg.WaitForNodeIndexesBuilt(s, node)
+		}
+	}
 }

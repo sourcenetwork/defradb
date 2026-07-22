@@ -1520,17 +1520,17 @@ func rebuildDocCommitCIDs(s *state.State, nodeIndex int, docID client.DocID) {
 
 func setActiveCollectionVersion(
 	s *state.State,
-	action SetActiveCollectionVersion,
+	act SetActiveCollectionVersion,
 ) {
-	replacedIDs := replaceMap(s, 0, []string{action.VersionID})
-	versionID := replacedIDs[action.VersionID]
+	replacedIDs := replaceMap(s, 0, []string{act.VersionID})
+	versionID := replacedIDs[act.VersionID]
 
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(act.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
 		opts := options.SetActiveCollectionVersion()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, act.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
@@ -1538,22 +1538,27 @@ func setActiveCollectionVersion(
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
 		var err error
-		hadTxn := action.TransactionID.HasValue()
+		hadTxn := act.TransactionID.HasValue()
 		if hadTxn {
-			txn, err = s.GetTransaction(node, action.TransactionID)
+			txn, err = s.GetTransaction(node, act.TransactionID)
 			require.NoError(s.T, err)
 			err = txn.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		} else {
 			err = node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		}
 
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, act.ExpectedError)
 
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, act.ExpectedError, expectedErrorRaised)
 	}
 
-	if !action.TransactionID.HasValue() {
+	if !act.TransactionID.HasValue() {
 		refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+
+		// A version switch reindexes in the background; wait so a following query sees a built index.
+		for _, node := range s.Nodes {
+			action.WaitForNodeIndexesBuilt(s, node)
+		}
 	}
 }
 

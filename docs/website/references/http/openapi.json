@@ -2390,7 +2390,21 @@
         },
         "/p2p/connect": {
             "post": {
+                "description": "Connect to peers",
                 "operationId": "connect",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -2406,7 +2420,21 @@
         },
         "/p2p/disconnect": {
             "post": {
+                "description": "Disconnect from peers",
                 "operationId": "disconnect",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"

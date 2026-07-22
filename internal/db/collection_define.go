@@ -155,16 +155,14 @@ func (db *DB) patchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
-) ([]func(context.Context) error, error) {
-	var backfills []func(context.Context) error
-
+) error {
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	existingCols, err := description.GetCollections(ctx, db.collectionRepository)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	existingColsByName := map[string]client.CollectionVersion{}
@@ -179,17 +177,17 @@ func (db *DB) patchCollection(
 	// Here we swap out any string representations of enums for their integer values
 	patch, err = substituteCollectionPatch(patch, existingColsByName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	newDescriptionJson, err := patch.Apply(existingDescriptionJson)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var newColsByID map[string]client.CollectionVersion
@@ -197,7 +195,7 @@ func (db *DB) patchCollection(
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&newColsByID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	removedCollectionVersions := []client.CollectionVersion{}
@@ -235,7 +233,7 @@ existingVersionLoop:
 
 	oneToOneIndexRequests, err := getOneToOneIndexRequestsForPatch(newColsByID, existingColsByName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for key, col := range newColsByID {
@@ -257,7 +255,7 @@ existingVersionLoop:
 
 	err = setCollectionIDs(ctx, db.collectionRepository, newCollections, existingCols)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, existingCol := range existingColsByName {
@@ -319,12 +317,12 @@ existingVersionLoop:
 
 	err = db.validateCollectionChanges(ctx, existingCols, newCollections)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = db.deleteCollectionVersions(ctx, removedCollectionVersions)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, col := range newCollections {
@@ -352,7 +350,7 @@ existingVersionLoop:
 
 		err := description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if col.IsActive {
@@ -360,45 +358,39 @@ existingVersionLoop:
 				txnOpt := datastore.CtxTryGetTxnOption(ctx)
 				colObj, err := db.newCollection(ctx, col, txnOpt)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				for _, indexReq := range indexReqs {
-					_, backfill, err := colObj.newIndex(ctx, indexReq)
-					if err != nil {
-						return nil, err
+					if _, err := colObj.newIndex(ctx, indexReq); err != nil {
+						return err
 					}
-					backfills = append(backfills, backfill)
 				}
 				col = colObj.Version()
 			}
 		}
 
 		if !colExists && col.PreviousVersion.HasValue() && migration.HasValue() {
-			_, runRebuild, err := db.setMigration(ctx, client.LensConfig{
+			if _, err := db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
 				Lens:                           migration.Value(),
-			})
-			if err != nil {
-				return nil, err
+			}); err != nil {
+				return err
 			}
-			backfills = append(backfills, runRebuild)
 		}
 	}
 
-	// Reindex placeholder upgrades that carry a migration; the rebuild runs after commit with
-	// the backfills.
+	// Reindex placeholder upgrades that carry a migration. The worker runs the rebuild in the
+	// background once this transaction commits.
 	for _, col := range placeholderReplacers {
 		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			runRebuild, err := db.reindexNewActiveVersion(ctx, col)
-			if err != nil {
-				return nil, err
+			if err := db.reindexNewActiveVersion(ctx, col); err != nil {
+				return err
 			}
-			backfills = append(backfills, runRebuild)
 		}
 	}
 
-	return backfills, db.loadCollectionDefinitions(ctx)
+	return db.loadCollectionDefinitions(ctx)
 }
 
 const (
@@ -558,23 +550,18 @@ func containsLetter(s string) bool {
 //
 // Any resulting index rebuild is staged on the transaction bound to ctx; the returned function
 // runs it after that commit, and is a no-op when no reindex is needed.
-func (db *DB) setActiveCollectionVersion(
-	ctx context.Context,
-	versionID string,
-) (func(context.Context) error, error) {
-	noRebuild := func(context.Context) error { return nil }
-
+func (db *DB) setActiveCollectionVersion(ctx context.Context, versionID string) error {
 	if versionID == "" {
-		return noRebuild, ErrCollectionVersionIDEmpty
+		return ErrCollectionVersionIDEmpty
 	}
 	col, err := description.GetCollectionByID(ctx, db.collectionRepository, versionID)
 	if err != nil {
-		return noRebuild, err
+		return err
 	}
 
 	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, db.collectionRepository, col.CollectionID)
 	if err != nil {
-		return noRebuild, err
+		return err
 	}
 
 	// The optional collection is used to track if there was a switch to another version.
@@ -589,7 +576,7 @@ func (db *DB) setActiveCollectionVersion(
 			col.IsActive = true
 			err = description.SaveCollection(ctx, db.collectionRepository, col)
 			if err != nil {
-				return noRebuild, err
+				return err
 			}
 
 			newActiveCol = immutable.Some(col)
@@ -604,30 +591,25 @@ func (db *DB) setActiveCollectionVersion(
 		col.IsActive = false
 		err = description.SaveCollection(ctx, db.collectionRepository, col)
 		if err != nil {
-			return noRebuild, err
+			return err
 		}
 	}
 
-	runRebuild := noRebuild
 	if newActiveCol.HasValue() {
 		shouldReindex, err := db.shouldReindexForVersionSwitch(ctx, newActiveCol.Value())
 		if err != nil {
-			return noRebuild, err
+			return err
 		}
 
 		if shouldReindex {
-			runRebuild, err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
-			if err != nil {
-				return noRebuild, err
+			if err := db.reindexNewActiveVersion(ctx, newActiveCol.Value()); err != nil {
+				return err
 			}
 		}
 	}
 
 	// Load the collection definitions into the clients (e.g. GQL)
-	if err := db.loadCollectionDefinitions(ctx); err != nil {
-		return noRebuild, err
-	}
-	return runRebuild, nil
+	return db.loadCollectionDefinitions(ctx)
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
