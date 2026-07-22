@@ -38,9 +38,39 @@ jobs:
     steps:
       - name: Checkout code into the directory
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
       - name: Run wire format drift detection
         run: make test:wire-snapshot
+
+      # A changed snapshot means a wire type changed shape. Require a note
+      # explaining the change and its cross-version impact, so the break is
+      # intentional and documented, the same bar as data_format_changes.
+      - name: Require a wire format change note
+        if: github.event_name == 'pull_request'
+        run: |
+          base="origin/${{ github.base_ref }}"
+          golden="internal/wire/snapshottest/wire_snapshot.golden"
+          status=$(git diff --name-status "$base"...HEAD -- "$golden" | cut -f1)
+          if [ -z "$status" ]; then
+            echo "Snapshot unchanged; no note needed."
+            exit 0
+          fi
+          if [ "$status" = "A" ]; then
+            echo "Snapshot newly added (the tool itself); no note needed."
+            exit 0
+          fi
+          added_notes=$(git diff --name-only --diff-filter=A "$base"...HEAD -- docs/wire_format_changes/ \
+            | grep '\.md$' | grep -v '/README.md$' || true)
+          if [ -n "$added_notes" ]; then
+            echo "Wire format change is documented: $added_notes"
+            exit 0
+          fi
+          echo "::error::The wire snapshot changed but no docs/wire_format_changes/*.md note was added."
+          echo "Add a short markdown file under docs/wire_format_changes/ describing the change and its"
+          echo "cross-version impact (can old and new nodes still talk?), then commit it with the golden."
+          exit 1
