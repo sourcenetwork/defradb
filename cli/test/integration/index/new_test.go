@@ -41,7 +41,7 @@ func TestIndexNew_WithSingleField_ShouldSucceed(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "name", Descending: false},
 					},
-					Unique: false,
+					Secondary: &client.SecondaryIndexDescription{Unique: false},
 				}),
 			},
 		},
@@ -72,7 +72,7 @@ func TestIndexNew_WithMultipleFieldsAndOrders_ShouldSucceed(t *testing.T) {
 						{Name: "name", Descending: false},
 						{Name: "age", Descending: true},
 					},
-					Unique: false,
+					Secondary: &client.SecondaryIndexDescription{Unique: false},
 				}),
 			},
 		},
@@ -103,7 +103,7 @@ func TestIndexNew_WithUniqueFlag_ShouldMakeNewUniqueIndex(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "email", Descending: false},
 					},
-					Unique: true,
+					Secondary: &client.SecondaryIndexDescription{Unique: true},
 				}),
 			},
 		},
@@ -132,7 +132,7 @@ func TestIndexNew_WithoutName_ShouldGenerateName(t *testing.T) {
 					Fields: []client.IndexedFieldDescription{
 						{Name: "age", Descending: false},
 					},
-					Unique: false,
+					Secondary: &client.SecondaryIndexDescription{Unique: false},
 				}),
 			},
 		},

@@ -62,9 +62,9 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_age_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User_age_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age"},
 						},
@@ -119,9 +119,9 @@ func TestUniqueIndexBackfill_WithDuplicateValues_FailsAndPersistsDefinition(t *t
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						// The sequence advances even after a delete, so the new index gets ID 2.
-						Name:   "User_age_ASC",
-						ID:     2,
-						Unique: true,
+						Name:      "User_age_ASC",
+						ID:        2,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age"},
 						},

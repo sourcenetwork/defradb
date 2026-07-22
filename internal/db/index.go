@@ -144,10 +144,15 @@ func buildIndexBase(
 
 // wrapCollectionIndex returns the unique or simple index implementation for the base.
 func wrapCollectionIndex(base collectionBaseIndex) client.CollectionIndex {
-	if base.desc.Unique {
-		return &collectionUniqueIndex{collectionBaseIndex: base}
+	switch base.desc.Kind() {
+	case client.IndexKindVector:
+		return &collectionVectorIndex{collectionBaseIndex: base}
+	default:
+		if base.desc.Secondary.Unique {
+			return &collectionUniqueIndex{collectionBaseIndex: base}
+		}
+		return &collectionSimpleIndex{collectionBaseIndex: base}
 	}
-	return &collectionSimpleIndex{collectionBaseIndex: base}
 }
 
 // FieldIndexGenerator generates index entries for a single field
@@ -422,6 +427,25 @@ func (index *collectionSimpleIndex) Delete(
 		return index.deleteIndexKey(ctx, key)
 	})
 }
+
+// collectionVectorIndex is a placeholder vector (ANN) index. It satisfies the
+// [client.CollectionIndex] contract so a collection carrying an @vectorIndex can be created and
+// maintained without error, but performs no graph indexing yet. The HNSW graph engine is wired in
+// in Phase 3 (see ai/context/feat/vector-index-hnsw/plan.md); until then Save/Update/Delete are
+// no-ops and similarity queries fall back to the existing brute-force scan.
+type collectionVectorIndex struct {
+	collectionBaseIndex
+}
+
+var _ client.CollectionIndex = (*collectionVectorIndex)(nil)
+
+func (index *collectionVectorIndex) Save(context.Context, *client.Document) error { return nil }
+
+func (index *collectionVectorIndex) Update(context.Context, *client.Document, *client.Document) error {
+	return nil
+}
+
+func (index *collectionVectorIndex) Delete(context.Context, *client.Document) error { return nil }
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *keys.IndexDataStoreKey) bool {

@@ -192,7 +192,7 @@ func TestNewIndex_IfValidInput_NewIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
-	assert.Equal(t, desc.Unique, resultDesc.Unique)
+	assert.Equal(t, desc.Unique, resultDesc.Secondary.Unique)
 }
 
 func TestNewIndex_IfFieldNameIsEmpty_ReturnError(t *testing.T) {
@@ -480,10 +480,10 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 	desc := getUsersIndexDescOnName()
 	desc.Fields = nil
 	descWithID := client.IndexDescription{
-		Name:   desc.Name,
-		ID:     1,
-		Fields: desc.Fields,
-		Unique: desc.Unique,
+		Name:      desc.Name,
+		ID:        1,
+		Fields:    desc.Fields,
+		Secondary: &client.SecondaryIndexDescription{Unique: desc.Unique},
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
@@ -495,10 +495,10 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 	desc := getUsersIndexDescOnName()
 	desc.Fields[0].Name = "non_existing_field"
 	descWithID := client.IndexDescription{
-		Name:   desc.Name,
-		ID:     1,
-		Fields: desc.Fields,
-		Unique: desc.Unique,
+		Name:      desc.Name,
+		ID:        1,
+		Fields:    desc.Fields,
+		Secondary: &client.SecondaryIndexDescription{Unique: desc.Unique},
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))

@@ -65,9 +65,9 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_age_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User_age_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age"},
 						},
@@ -129,9 +129,9 @@ func TestUniqueIndexNew_UponAddingDocWithExistingFieldValue_ReturnError(t *testi
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "age_unique_index",
-						ID:     1,
-						Unique: true,
+						Name:      "age_unique_index",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "age",
@@ -183,9 +183,9 @@ func TestUniqueIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "age_unique_index",
-						ID:     1,
-						Unique: true,
+						Name:      "age_unique_index",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "age",
@@ -243,9 +243,9 @@ func TestUniqueIndexNew_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "age_unique_index",
-						ID:     1,
-						Unique: true,
+						Name:      "age_unique_index",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "age",

@@ -38,9 +38,9 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoAdded(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User__addressID_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User__addressID_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_addressID"},
 						},
@@ -72,9 +72,9 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "user_address_unique",
-						ID:     1,
-						Unique: true,
+						Name:      "user_address_unique",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_addressID"},
 						},
@@ -128,9 +128,9 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User__addressID_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User__addressID_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_addressID"},
 							{Name: "name"},
@@ -187,18 +187,18 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillAdded(
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_name_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User_name_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name"},
 							{Name: "_addressID"},
 						},
 					},
 					{
-						Name:   "User__addressID_ASC",
-						ID:     2,
-						Unique: true,
+						Name:      "User__addressID_ASC",
+						ID:        2,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_addressID"},
 						},

@@ -155,6 +155,12 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
+			case types.VectorIndexDirectiveLabel:
+				index, err := vectorIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				indexes = append(indexes, index)
 			}
 		}
 	}
@@ -639,6 +645,113 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 		}
 	}
 	return policyDesc, nil
+}
+
+func vectorIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.NewIndexRequest, error) {
+	algorithm := client.VectorAlgorithmHNSW
+	metric := client.DistanceMetricCosine
+	var dimensions uint32
+	// Defaults come from client so the directive definition and the parser cannot drift.
+	hnswParams := client.HNSWParams{
+		M:              client.DefaultHNSWM,
+		EfConstruction: client.DefaultHNSWEfConstruction,
+		EfSearch:       client.DefaultHNSWEfSearch,
+	}
+
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.VectorIndexDirectivePropType:
+			typeVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			switch typeVal.Value {
+			case "HNSW":
+				algorithm = client.VectorAlgorithmHNSW
+			default:
+				return client.NewIndexRequest{}, NewErrVectorIndexUnknownAlgorithm(typeVal.Value)
+			}
+
+		case types.VectorIndexDirectivePropMetric:
+			metricVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			switch metricVal.Value {
+			case "COSINE":
+				metric = client.DistanceMetricCosine
+			default:
+				return client.NewIndexRequest{}, NewErrVectorIndexUnknownMetric(metricVal.Value)
+			}
+
+		case types.VectorIndexDirectivePropDimensions:
+			dimensionsVal, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			parsed, err := strconv.ParseUint(dimensionsVal.Value, 10, 32)
+			if err != nil {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			dimensions = uint32(parsed)
+
+		case types.VectorIndexDirectivePropM:
+			mVal, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			parsed, err := strconv.ParseUint(mVal.Value, 10, 32)
+			if err != nil {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			hnswParams.M = uint32(parsed)
+
+		case types.VectorIndexDirectivePropEfConstruction:
+			efConstructionVal, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			parsed, err := strconv.ParseUint(efConstructionVal.Value, 10, 32)
+			if err != nil {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			hnswParams.EfConstruction = uint32(parsed)
+
+		case types.VectorIndexDirectivePropEfSearch:
+			efSearchVal, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			parsed, err := strconv.ParseUint(efSearchVal.Value, 10, 32)
+			if err != nil {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			hnswParams.EfSearch = uint32(parsed)
+
+		default:
+			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+		}
+	}
+
+	vectorDesc := client.VectorIndexDescription{
+		Algorithm:  algorithm,
+		Metric:     metric,
+		Dimensions: dimensions,
+	}
+	if algorithm == client.VectorAlgorithmHNSW {
+		vectorDesc.HNSW = &hnswParams
+	}
+
+	return client.NewIndexRequest{
+		Name: "",
+		Fields: []client.IndexedFieldDescription{
+			{Name: fieldDef.Name.Value},
+		},
+		Vector: &vectorDesc,
+	}, nil
 }
 
 func vectorEmbeddingFromAST(

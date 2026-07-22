@@ -172,9 +172,9 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "User__hostsID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "User__hostsID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
@@ -228,9 +228,9 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Dog__walkerID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Dog__walkerID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
 								},
@@ -542,9 +542,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "User__hostsID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "User__hostsID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
@@ -596,9 +596,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Dog__walkerID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Dog__walkerID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
 								},
@@ -665,17 +665,17 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Cat__lovesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Cat__lovesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
 							},
 							{
-								Name:   "Cat__toleratesID_ASC",
-								ID:     2,
-								Unique: true,
+								Name:      "Cat__toleratesID_ASC",
+								ID:        2,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
 								},
@@ -727,9 +727,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Mouse__hatesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Mouse__hatesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
 								},
@@ -844,17 +844,17 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "User__feedsID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "User__feedsID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_feedsID"},
 								},
 							},
 							{
-								Name:   "User__hostsID_ASC",
-								ID:     2,
-								Unique: true,
+								Name:      "User__hostsID_ASC",
+								ID:        2,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
@@ -904,9 +904,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Dog__walkerID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Dog__walkerID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
 								},
@@ -980,17 +980,17 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Cat__lovesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Cat__lovesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
 							},
 							{
-								Name:   "Cat__toleratesID_ASC",
-								ID:     2,
-								Unique: true,
+								Name:      "Cat__toleratesID_ASC",
+								ID:        2,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
 								},
@@ -1040,9 +1040,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Mouse__hatesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Mouse__hatesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
 								},
@@ -1144,9 +1144,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "User__hostsID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "User__hostsID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
@@ -1209,17 +1209,17 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Dog__licksID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Dog__licksID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_licksID"},
 								},
 							},
 							{
-								Name:   "Dog__walkerID_ASC",
-								ID:     2,
-								Unique: true,
+								Name:      "Dog__walkerID_ASC",
+								ID:        2,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
 								},
@@ -1282,17 +1282,17 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Cat__lovesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Cat__lovesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
 							},
 							{
-								Name:   "Cat__toleratesID_ASC",
-								ID:     2,
-								Unique: true,
+								Name:      "Cat__toleratesID_ASC",
+								ID:        2,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
 								},
@@ -1353,9 +1353,9 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "Mouse__hatesID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "Mouse__hatesID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
 								},

@@ -60,9 +60,9 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_name_ASC",
-						ID:     1,
-						Unique: true,
+						Name:      "User_name_ASC",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name"},
 							{Name: "age"},
@@ -169,9 +169,9 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "name_age_unique_index",
-						ID:     1,
-						Unique: true,
+						Name:      "name_age_unique_index",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "name",
@@ -241,9 +241,9 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreOrdered_Succeed(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "name_age_unique_index",
-						ID:     1,
-						Unique: true,
+						Name:      "name_age_unique_index",
+						ID:        1,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name:       "name",

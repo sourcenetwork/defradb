@@ -134,7 +134,9 @@ func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) 
 	descWithoutID := client.NewIndexRequest{
 		Name:   indexDesc.Name,
 		Fields: indexDesc.Fields,
-		Unique: indexDesc.Unique,
+	}
+	if indexDesc.Secondary != nil {
+		descWithoutID.Unique = indexDesc.Secondary.Unique
 	}
 
 	newIndexOpt := options.WithIdentity(options.NewCollectionIndex(), identity.FromContext(ctx))

@@ -38,6 +38,15 @@ type ListIndexes struct {
 
 var _ Action = (*ListIndexes)(nil)
 
+// indexUnique returns the effective uniqueness of a secondary index description, treating
+// a nil [client.IndexDescription.Secondary] as non-unique.
+func indexUnique(desc client.IndexDescription) bool {
+	if desc.Secondary == nil {
+		return false
+	}
+	return desc.Secondary.Unique
+}
+
 func (a *ListIndexes) Execute() {
 	args := []string{"client", "index", "list"}
 
@@ -71,7 +80,7 @@ func (a *ListIndexes) Execute() {
 				}
 				require.Equal(a.s.T, expected.Name, actual.Name)
 				require.Equal(a.s.T, expected.Fields, actual.Fields)
-				require.Equal(a.s.T, expected.Unique, actual.Unique)
+				require.Equal(a.s.T, indexUnique(expected), indexUnique(actual))
 			}
 		}
 	} else {
@@ -102,7 +111,7 @@ func (a *ListIndexes) Execute() {
 					}
 					require.Equal(a.s.T, expected.Name, actual.Name)
 					require.Equal(a.s.T, expected.Fields, actual.Fields)
-					require.Equal(a.s.T, expected.Unique, actual.Unique)
+					require.Equal(a.s.T, indexUnique(expected), indexUnique(actual))
 				}
 			}
 		}

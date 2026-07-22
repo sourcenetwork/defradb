@@ -51,9 +51,9 @@ func TestPatchRelation_OneToOne_AddsUniqueIndex(t *testing.T) {
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						ID:     1,
-						Name:   "Author__publishedID_ASC",
-						Unique: true,
+						ID:        1,
+						Name:      "Author__publishedID_ASC",
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_publishedID"},
 						},
@@ -114,17 +114,17 @@ func TestPatchRelation_MultipleOneToOne_AddsUniqueIndexesWithCorrectIDs(t *testi
 				CollectionID: 1,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						ID:     1,
-						Name:   "Book__authorID_ASC",
-						Unique: true,
+						ID:        1,
+						Name:      "Book__authorID_ASC",
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_authorID"},
 						},
 					},
 					{
-						ID:     2,
-						Name:   "Book__publisherID_ASC",
-						Unique: true,
+						ID:        2,
+						Name:      "Book__publisherID_ASC",
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_publisherID"},
 						},
@@ -224,9 +224,9 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						ID:     1,
-						Name:   "Author__publishedID_ASC",
-						Unique: true,
+						ID:        1,
+						Name:      "Author__publishedID_ASC",
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_publishedID"},
 						},
@@ -247,9 +247,9 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						ID:     1,
-						Name:   "Author__publishedID_ASC",
-						Unique: true,
+						ID:        1,
+						Name:      "Author__publishedID_ASC",
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 						Fields: []client.IndexedFieldDescription{
 							{Name: "_publishedID"},
 						},

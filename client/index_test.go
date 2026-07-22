@@ -11,9 +11,11 @@
 package client
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCollectIndexesOnField(t *testing.T) {
@@ -126,4 +128,94 @@ func TestCollectIndexesOnField(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestIndexDescription_NewUniqueSecondary_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:      "some_index",
+		ID:        1,
+		Fields:    []IndexedFieldDescription{{Name: "name"}},
+		Secondary: &SecondaryIndexDescription{Unique: true},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	err = json.Unmarshal(bytes, &actual)
+	require.NoError(t, err)
+
+	require.NotNil(t, actual.Secondary)
+	assert.True(t, actual.Secondary.Unique)
+	assert.Nil(t, actual.Vector)
+	assert.Equal(t, IndexKindSecondary, actual.Kind())
+	assert.Equal(t, original, actual)
+}
+
+func TestIndexDescription_LegacyTopLevelUniqueTrue_MigratesToSecondary(t *testing.T) {
+	legacyJSON := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(legacyJSON), &actual)
+	require.NoError(t, err)
+
+	require.NotNil(t, actual.Secondary)
+	assert.True(t, actual.Secondary.Unique)
+	assert.Nil(t, actual.Vector)
+	assert.Equal(t, IndexKindSecondary, actual.Kind())
+}
+
+func TestIndexDescription_LegacyTopLevelUniqueFalse_MigratesToSecondary(t *testing.T) {
+	legacyJSON := `{"Unique":false}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(legacyJSON), &actual)
+	require.NoError(t, err)
+
+	require.NotNil(t, actual.Secondary)
+	assert.False(t, actual.Secondary.Unique)
+	assert.Nil(t, actual.Vector)
+}
+
+func TestIndexDescription_NoUniqueOrKindFields_DefaultsToSecondary(t *testing.T) {
+	legacyJSON := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}]}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(legacyJSON), &actual)
+	require.NoError(t, err)
+
+	require.NotNil(t, actual.Secondary)
+	assert.False(t, actual.Secondary.Unique)
+	assert.Nil(t, actual.Vector)
+	assert.Equal(t, IndexKindSecondary, actual.Kind())
+}
+
+func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:   "some_vector_index",
+		ID:     2,
+		Fields: []IndexedFieldDescription{{Name: "embedding"}},
+		Vector: &VectorIndexDescription{
+			Algorithm:  VectorAlgorithmHNSW,
+			Metric:     DistanceMetricCosine,
+			Dimensions: 128,
+			HNSW: &HNSWParams{
+				M:              16,
+				EfConstruction: 200,
+				EfSearch:       50,
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	err = json.Unmarshal(bytes, &actual)
+	require.NoError(t, err)
+
+	require.NotNil(t, actual.Vector)
+	assert.Nil(t, actual.Secondary)
+	assert.Equal(t, IndexKindVector, actual.Kind())
+	assert.Equal(t, original, actual)
 }

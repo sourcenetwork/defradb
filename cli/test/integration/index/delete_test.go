@@ -43,7 +43,7 @@ func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name", Descending: false},
 						},
-						Unique: false,
+						Secondary: &client.SecondaryIndexDescription{Unique: false},
 					},
 				},
 			},
@@ -170,21 +170,21 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name", Descending: false},
 						},
-						Unique: false,
+						Secondary: &client.SecondaryIndexDescription{Unique: false},
 					},
 					{
 						Name: "UsersByAge",
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age", Descending: false},
 						},
-						Unique: false,
+						Secondary: &client.SecondaryIndexDescription{Unique: false},
 					},
 					{
 						Name: "UsersByEmail",
 						Fields: []client.IndexedFieldDescription{
 							{Name: "email", Descending: false},
 						},
-						Unique: true,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 					},
 				},
 			},
@@ -202,14 +202,14 @@ func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name", Descending: false},
 						},
-						Unique: false,
+						Secondary: &client.SecondaryIndexDescription{Unique: false},
 					},
 					{
 						Name: "UsersByEmail",
 						Fields: []client.IndexedFieldDescription{
 							{Name: "email", Descending: false},
 						},
-						Unique: true,
+						Secondary: &client.SecondaryIndexDescription{Unique: true},
 					},
 				},
 			},

@@ -22,6 +22,8 @@ func defaultSchema() (gql.Schema, error) {
 	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
+	vectorIndexAlgorithmEnum := types.VectorIndexAlgorithmEnum()
+	vectorDistanceMetricEnum := types.VectorDistanceMetricEnum()
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -45,10 +47,19 @@ func defaultSchema() (gql.Schema, error) {
 			explainEnum,
 			indexFieldInput,
 			encryptedSearchResult,
+			vectorIndexAlgorithmEnum,
+			vectorDistanceMetricEnum,
 		),
-		Query:        defaultQueryType(queryCommits),
-		Mutation:     defaultMutationType(),
-		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
+		Query:    defaultQueryType(queryCommits),
+		Mutation: defaultMutationType(),
+		Directives: defaultDirectivesType(
+			crdtEnum,
+			explainEnum,
+			orderEnum,
+			indexFieldInput,
+			vectorIndexAlgorithmEnum,
+			vectorDistanceMetricEnum,
+		),
 		Subscription: defaultSubscriptionType(queryCommits),
 	})
 
@@ -93,6 +104,8 @@ func defaultDirectivesType(
 	explainEnum *gql.Enum,
 	orderEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	vectorIndexAlgorithmEnum *gql.Enum,
+	vectorDistanceMetricEnum *gql.Enum,
 ) []*gql.Directive {
 	return []*gql.Directive{
 		types.CRDTFieldDirective(crdtEnum),
@@ -108,6 +121,7 @@ func defaultDirectivesType(
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
 		types.EncryptedIndexDirective(),
+		types.VectorIndexDirective(vectorIndexAlgorithmEnum, vectorDistanceMetricEnum),
 	}
 }
 
@@ -138,6 +152,8 @@ func defaultTypes(
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
+	vectorIndexAlgorithmEnum *gql.Enum,
+	vectorDistanceMetricEnum *gql.Enum,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -225,5 +241,8 @@ func defaultTypes(
 
 		indexFieldInput,
 		encryptedSearchResult,
+
+		vectorIndexAlgorithmEnum,
+		vectorDistanceMetricEnum,
 	}
 }

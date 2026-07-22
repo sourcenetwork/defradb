@@ -61,6 +61,8 @@ const (
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
+	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
+	errVectorIndexMissingDimensions              string = "vector index requires dimensions when the field is not a generated embedding"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
@@ -573,6 +575,24 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 	return errors.New(
 		errUnsupportedIndexFieldType,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrUnsupportedVectorIndexFieldType returns a new error indicating that the given field kind is
+// not supported for a vector (ANN) index.
+func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
+	return errors.New(
+		errUnsupportedVectorIndexFieldType,
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request is
+// missing its dimensions, and dimensions could not be inferred from a generated embedding.
+func NewErrVectorIndexMissingDimensions(fieldName string) error {
+	return errors.New(
+		errVectorIndexMissingDimensions,
+		errors.NewKV("Field", fieldName),
 	)
 }
 

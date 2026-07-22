@@ -44,6 +44,8 @@ const (
 	errEncryptedIndexTypeNotSupported   string = "encrypted index type not supported"
 	errEncryptedIndexOnNonExistentField string = "encrypted index on non-existent field"
 	errEncryptedIndexAlreadyExists      string = "encrypted index already exists on field"
+	errVectorIndexUnknownAlgorithm      string = "vector index with unknown algorithm"
+	errVectorIndexUnknownMetric         string = "vector index with unknown metric"
 )
 
 var (
@@ -227,6 +229,20 @@ func NewErrEncryptedIndexTypeNotSupported(typeName string) error {
 	return errors.New(
 		errEncryptedIndexTypeNotSupported,
 		errors.NewKV("Type", typeName),
+	)
+}
+
+func NewErrVectorIndexUnknownAlgorithm(algorithm string) error {
+	return errors.New(
+		errVectorIndexUnknownAlgorithm,
+		errors.NewKV("Algorithm", algorithm),
+	)
+}
+
+func NewErrVectorIndexUnknownMetric(metric string) error {
+	return errors.New(
+		errVectorIndexUnknownMetric,
+		errors.NewKV("Metric", metric),
 	)
 }
 

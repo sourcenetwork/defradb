@@ -115,9 +115,9 @@ func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 						},
 						Indexes: []client.IndexDescription{
 							{
-								Name:   "User__bossID_ASC",
-								ID:     1,
-								Unique: true,
+								Name:      "User__bossID_ASC",
+								ID:        1,
+								Secondary: &client.SecondaryIndexDescription{Unique: true},
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_bossID"},
 								},

@@ -53,6 +53,14 @@ const (
 	EncryptedIndexDirectiveLabel    = "encryptedIndex"
 	EncryptedIndexDirectivePropType = "type"
 
+	VectorIndexDirectiveLabel              = "vectorIndex"
+	VectorIndexDirectivePropType           = "type"
+	VectorIndexDirectivePropMetric         = "metric"
+	VectorIndexDirectivePropDimensions     = "dimensions"
+	VectorIndexDirectivePropM              = "m"
+	VectorIndexDirectivePropEfConstruction = "efConstruction"
+	VectorIndexDirectivePropEfSearch       = "efSearch"
+
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
@@ -83,6 +91,32 @@ func OrderingEnum() *gql.Enum {
 			"DESC": &gql.EnumValueConfig{
 				Description: descOrderDescription,
 				Value:       1,
+			},
+		},
+	})
+}
+
+// VectorIndexAlgorithmEnum is an enum for the @vectorIndex `type` argument.
+func VectorIndexAlgorithmEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "VectorIndexAlgorithm",
+		Values: gql.EnumValueConfigMap{
+			"HNSW": &gql.EnumValueConfig{
+				Description: "Hierarchical Navigable Small World graph.",
+				Value:       "HNSW",
+			},
+		},
+	})
+}
+
+// VectorDistanceMetricEnum is an enum for the @vectorIndex `metric` argument.
+func VectorDistanceMetricEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "VectorDistanceMetric",
+		Values: gql.EnumValueConfigMap{
+			"COSINE": &gql.EnumValueConfig{
+				Description: "Cosine distance on normalised vectors.",
+				Value:       "COSINE",
 			},
 		},
 	})
@@ -378,6 +412,48 @@ func EncryptedIndexDirective() *gql.Directive {
 				Description:  "The type of searchable encryption (currently only 'equality' is supported).",
 				Type:         gql.String,
 				DefaultValue: string(client.EncryptedIndexTypeEquality),
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+// VectorIndexDirective @vectorIndex builds an approximate-nearest-neighbour index over a vector field.
+func VectorIndexDirective(algorithmEnum *gql.Enum, metricEnum *gql.Enum) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        VectorIndexDirectiveLabel,
+		Description: "@vectorIndex builds an approximate-nearest-neighbour index over a vector field.",
+		Args: gql.FieldConfigArgument{
+			VectorIndexDirectivePropType: &gql.ArgumentConfig{
+				Description:  "ANN algorithm (currently only HNSW).",
+				Type:         algorithmEnum,
+				DefaultValue: "HNSW",
+			},
+			VectorIndexDirectivePropMetric: &gql.ArgumentConfig{
+				Description:  "Distance metric (currently only COSINE).",
+				Type:         metricEnum,
+				DefaultValue: "COSINE",
+			},
+			VectorIndexDirectivePropDimensions: &gql.ArgumentConfig{
+				Description: "Vector dimensions; required unless inferable from an @embedding.",
+				Type:        gql.Int,
+			},
+			VectorIndexDirectivePropM: &gql.ArgumentConfig{
+				Description:  "HNSW max connections per node. Higher improves recall at the cost of memory and build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWM),
+			},
+			VectorIndexDirectivePropEfConstruction: &gql.ArgumentConfig{
+				Description:  "HNSW build-time exploration factor. Higher improves graph quality (recall) at the cost of build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfConstruction),
+			},
+			VectorIndexDirectivePropEfSearch: &gql.ArgumentConfig{
+				Description:  "HNSW default query-time exploration factor. Higher improves recall at the cost of query latency; overridable per query.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfSearch),
 			},
 		},
 		Locations: []string{

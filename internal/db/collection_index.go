@@ -468,6 +468,13 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	if desc.Vector != nil {
+		err = validateVectorIndexDescription(def, desc)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+	}
+
 	indexName, err := generateIndexNameIfNeeded(def, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -489,12 +496,49 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	return client.IndexDescription{
+	res := client.IndexDescription{
 		Name:   indexName,
 		ID:     uint32(indexID),
 		Fields: desc.Fields,
-		Unique: desc.Unique,
-	}, nil
+	}
+
+	if desc.Vector != nil {
+		res.Vector = desc.Vector
+	} else {
+		res.Secondary = &client.SecondaryIndexDescription{Unique: desc.Unique}
+	}
+
+	return res, nil
+}
+
+// validateVectorIndexDescription validates the vector-specific parts of an index request: that the
+// target field is of a vector-compatible kind, and that dimensions are either explicitly set or
+// inferable from a matching @embedding on the same field.
+//
+// Field presence and non-empty Fields are already validated by validateIndexDescription and
+// checkExistingFieldsAndAdjustRelFieldNames, which run before this; the field is therefore
+// guaranteed to exist here.
+func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
+	fieldName := desc.Fields[0].Name
+	field, _ := def.GetFieldByName(fieldName)
+
+	if !client.IsVectorEmbeddingCompatible(field.Kind) {
+		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
+	}
+
+	if desc.Vector.Dimensions > 0 {
+		return nil
+	}
+
+	// Dimensions were not explicitly provided; allow inference only if the field is a generated
+	// embedding (has a matching @embedding). Actual inference is resolved later.
+	for _, embedding := range def.VectorEmbeddings {
+		if embedding.FieldName == fieldName {
+			return nil
+		}
+	}
+
+	return NewErrVectorIndexMissingDimensions(fieldName)
 }
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.

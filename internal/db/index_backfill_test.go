@@ -343,9 +343,10 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	// Stage an in-memory index definition so NewCollectionIndex can resolve "name";
 	// it is not persisted — this exercises storage-level conflict behavior, not the API.
 	nameDesc := client.IndexDescription{
-		Name:   "name_idx",
-		ID:     1,
-		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Name:      "name_idx",
+		ID:        1,
+		Fields:    []client.IndexedFieldDescription{{Name: "name"}},
+		Secondary: &client.SecondaryIndexDescription{},
 	}
 	colVersion := col.Version()
 	colVersion.Indexes = append(colVersion.Indexes, nameDesc)
