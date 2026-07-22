@@ -43,6 +43,11 @@ type ListIndexes struct {
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
 
+	// ExpectedCollectionName is the collection name expected on every returned result.
+	//
+	// Only asserted when set.
+	ExpectedCollectionName string
+
 	// ExpectedStatuses maps index name to the expected execution for that index.
 	// When set for a name, asserts Status, Action and Reason (partial match) instead of the
 	// default ready assertion.
@@ -102,6 +107,7 @@ func (a *ListIndexes) Execute() {
 
 		assertIndexesListsEqual(a.ExpectedIndexes, actualStatuses, a.s.T)
 		assertIndexStatuses(a.ExpectedStatuses, actualStatuses, a.s.T)
+		assertIndexCollectionNames(a.ExpectedCollectionName, actualStatuses, a.s.T)
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
@@ -178,6 +184,23 @@ func assertIndexStatuses(
 	// index name fails rather than silently passing.
 	for name := range expectedStatuses {
 		assert.Contains(t, actualByName, name, "expected status configured for missing index %s", name)
+	}
+}
+
+// assertIndexCollectionNames checks that every returned result names its owning collection.
+//
+// When expectedName is empty, no assertions are made.
+func assertIndexCollectionNames(
+	expectedName string,
+	actualResults []client.ListIndexesResult,
+	t require.TestingT,
+) {
+	if expectedName == "" {
+		return
+	}
+	for _, actual := range actualResults {
+		assert.Equal(t, expectedName, actual.CollectionName,
+			"index %s collection name mismatch", actual.Description.Name)
 	}
 }
 

@@ -29,6 +29,12 @@ type ListIndexes struct {
 	// The expected indexes when listing for a specific collection.
 	ExpectedIndexes []client.IndexDescription
 
+	// ExpectedCollectionName is the collection name expected on every returned result.
+	//
+	// Only asserted when set, and only meaningful on the scoped (--collection) branch:
+	// the unscoped branch always asserts each result against its own map key.
+	ExpectedCollectionName string
+
 	// The expected indexes when listing all indexes (map of collection name to indexes).
 	ExpectedAllIndexes map[client.CollectionName][]client.IndexDescription
 
@@ -72,6 +78,11 @@ func (a *ListIndexes) Execute() {
 				require.Equal(a.s.T, expected.Name, actual.Name)
 				require.Equal(a.s.T, expected.Fields, actual.Fields)
 				require.Equal(a.s.T, expected.Unique, actual.Unique)
+
+				if a.ExpectedCollectionName != "" {
+					require.Equal(a.s.T, a.ExpectedCollectionName, result[i].CollectionName,
+						"index %s collection name mismatch", expected.Name)
+				}
 			}
 		}
 	} else {
@@ -103,6 +114,10 @@ func (a *ListIndexes) Execute() {
 					require.Equal(a.s.T, expected.Name, actual.Name)
 					require.Equal(a.s.T, expected.Fields, actual.Fields)
 					require.Equal(a.s.T, expected.Unique, actual.Unique)
+
+					// Each element must name its own collection, matching the key it was filed under.
+					require.Equal(a.s.T, collectionName, actualIndexes[i].CollectionName,
+						"index %s collection name mismatch", expected.Name)
 				}
 			}
 		}
