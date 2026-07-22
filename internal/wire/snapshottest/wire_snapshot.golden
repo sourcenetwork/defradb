@@ -1,0 +1,80 @@
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem struct
+	DocID string
+	Heads [][]uint8
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncReply struct
+	Results []github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem
+	Sender string
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncRequest struct
+	DocIDs []string
+github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionReply struct
+	CollectionID string
+	Heads [][]uint8
+	Sender string
+github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionRequest struct
+	CollectionID string
+github.com/sourcenetwork/defradb/internal/db/p2p/message.Message interface
+	GetErrMessage func() string
+	GetMessageID func() string
+	GetPubkey func() []uint8
+	GetSenderID func() string
+	GetSignature func() []uint8
+	GetVersion func() string
+	SetErrMessage func(string)
+	SetMessageID func(string)
+	SetPubkey func([]uint8)
+	SetSenderID func(string)
+	SetSignature func([]uint8)
+	SetVersion func()
+github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8
+	ErrMessage string
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityRequest struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	PeerID string
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityResponse struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	IdentityToken []uint8
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogReply struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogRequest struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	DocID string
+	CID []uint8
+	CollectionID string
+	Creator string
+	Block []uint8
+github.com/sourcenetwork/defradb/internal/kms.fetchEncryptionKeyReply struct
+	Links [][]uint8
+	Blocks [][]uint8
+	EphemeralPublicKey []uint8
+	Sender string
+github.com/sourcenetwork/defradb/internal/kms.fetchEncryptionKeyRequest struct
+	Identity []uint8
+	Links [][]uint8
+	EphemeralPublicKey []uint8
+	RequestID []uint8
+github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsReply struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsRequest struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	CollectionID string
+	Artifacts []github.com/sourcenetwork/defradb/internal/se.SEArtifact
+github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsReply struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	DocIDs []string
+github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsRequest struct
+	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	CollectionID string
+	Queries []github.com/sourcenetwork/defradb/internal/se.SEFieldQuery
+github.com/sourcenetwork/defradb/internal/se.SEArtifact struct
+	DocID string
+	IndexID string
+	SearchTag []uint8
+github.com/sourcenetwork/defradb/internal/se.SEFieldQuery struct
+	FieldName string
+	IndexID string
+	SearchTag []uint8
