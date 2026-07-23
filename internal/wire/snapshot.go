@@ -74,6 +74,8 @@ func reachableFrom(roots []reflect.Type) []reflect.Type {
 		out = append(out, t)
 		// A type that declares an IPLD schema is rendered from that schema, so its
 		// Go fields are not walked (they hold ipld/cid internals, not the shape).
+		// Types the schema names (a union's variants, a linked block) are not
+		// reached this way, so each must be registered on its own to be covered.
 		if hasIPLDSchema(t) {
 			return
 		}
@@ -114,7 +116,9 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	case reflect.Struct:
 		fmt.Fprintf(b, "%s struct\n", typePath(t))
 		for i := range t.NumField() {
-			// Only exported fields are encoded, so only they are the wire shape.
+			// The Go field name is the wire key: the encoder does not use a
+			// renaming cbor tag on any wire type today. A field that ever gained
+			// one would change the wire key without changing this line.
 			if f := t.Field(i); f.IsExported() {
 				fmt.Fprintf(b, "\t%s %s\n", f.Name, typeName(f.Type))
 			}

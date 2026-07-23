@@ -10,15 +10,11 @@
 
 name: Check Wire Format Drift Workflow
 
+# Pull requests only: this checks that a wire format change carries a note, which
+# is a change-versus-base concern. Golden freshness (the snapshot matches the
+# code) is covered by the normal test suite on every push.
 on:
   pull_request:
-    branches:
-      - master
-      - develop
-
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
     branches:
       - master
       - develop

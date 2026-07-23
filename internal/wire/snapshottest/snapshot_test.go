@@ -108,7 +108,9 @@ func relGoldenPath() string {
 }
 
 // sourceBranchEnv is the change detector's base-branch variable, reused here so
-// both checks share one notion of the base branch.
+// both checks share one notion of the base branch. Both read a bare branch name
+// (e.g. develop). The change detector clones it; here it is resolved as a local
+// remote ref (origin/<name>).
 const sourceBranchEnv = "DEFRA_CHANGE_DETECTOR_SOURCE_BRANCH"
 
 // baseRef returns the remote base branch to diff the note against: the branch

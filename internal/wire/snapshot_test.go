@@ -12,6 +12,7 @@ package wire
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +52,22 @@ func (schemaValue) IPLDSchemaBytes() []byte { return []byte("type schemaValue st
 type schemaPtr struct{ Ignored int }
 
 func (*schemaPtr) IPLDSchemaBytes() []byte { return []byte("type schemaPtr struct { b Int }") }
+
+// selfCycle references itself; cycleA and cycleB reference each other. The walk
+// must terminate on both via the seen set.
+type selfCycle struct {
+	Self *selfCycle
+	Name string
+}
+
+type cycleA struct{ B *cycleB }
+type cycleB struct{ A *cycleA }
+
+// twoRefs reaches nested by two different fields; nested must render exactly once.
+type twoRefs struct {
+	First  nested
+	Second nested
+}
 
 func snap(t ...reflect.Type) string { return snapshotOf(t) }
 
@@ -112,4 +129,20 @@ func TestSnapshot_PointerRootDerefs(t *testing.T) {
 	assert.Equal(t,
 		snap(reflect.TypeFor[structFields]()),
 		snap(reflect.TypeFor[*structFields]()))
+}
+
+// TestSnapshot_Cycles terminates on self-referential and mutually-referential
+// types rather than looping. A regression that recurses before marking a type
+// seen would hang here.
+func TestSnapshot_Cycles(t *testing.T) {
+	assert.NotEmpty(t, snap(reflect.TypeFor[selfCycle]()))
+	assert.NotEmpty(t, snap(reflect.TypeFor[cycleA]()))
+}
+
+// TestSnapshot_RendersEachTypeOnce renders a type reachable by two paths exactly
+// once, so a dedup regression would show up as a repeated block.
+func TestSnapshot_RendersEachTypeOnce(t *testing.T) {
+	out := snap(reflect.TypeFor[twoRefs]())
+	header := typePath(reflect.TypeFor[nested]()) + " struct"
+	assert.Equal(t, 1, strings.Count(out, header), "nested must render exactly once")
 }
