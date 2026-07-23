@@ -44,8 +44,9 @@ const (
 	changesDocPackage = "docs"
 )
 
-// TestWireSnapshot fails when a wire type changed shape unless the change is
-// documented. Set WIRE_SNAPSHOT_UPDATE=1 to regenerate the golden.
+// TestWireSnapshot keeps the committed golden honest: it must match the current
+// wire types (else a shape change went unrecorded). Set WIRE_SNAPSHOT_UPDATE=1 to
+// regenerate it.
 func TestWireSnapshot(t *testing.T) {
 	got := wire.Snapshot()
 
@@ -56,39 +57,53 @@ func TestWireSnapshot(t *testing.T) {
 
 	want, err := os.ReadFile(goldenPath)
 	require.NoError(t, err, "read golden; create it with WIRE_SNAPSHOT_UPDATE=1")
-
-	if string(want) == got {
-		return
-	}
-
-	if wireFormatChangeIsDocumented(t) {
-		t.Skip("wire snapshot changed, but the change is documented")
-	}
-
-	t.Fatal("wire snapshot changed. If intentional, regenerate the golden with " +
-		"WIRE_SNAPSHOT_UPDATE=1 and add a note under docs/wire_format_changes " +
-		"describing the change and whether old and new nodes can still talk.")
+	require.Equal(t, string(want), got,
+		"wire types changed but the golden was not regenerated; run WIRE_SNAPSHOT_UPDATE=1 go test ./internal/wire/snapshottest")
 }
 
-// wireFormatChangeIsDocumented reports whether this branch adds a note under
-// docs/wire_format_changes that is not on the base branch, mirroring how the
-// change detector treats a new data_format_changes file as the acknowledgement.
-func wireFormatChangeIsDocumented(t *testing.T) bool {
+// TestWireFormatChangeIsDocumented requires a note whenever the golden differs
+// from the base branch: a changed golden means a wire type changed shape, and
+// that change must be documented, the same bar as a data format change. Adding a
+// note under docs/wire_format_changes is the acknowledgement. Skips when the base
+// branch is not available (e.g. a local run with no fetched base).
+func TestWireFormatChangeIsDocumented(t *testing.T) {
 	base := baseRef(t)
 	if base == "" {
-		return false
+		t.Skipf("base branch not found locally; skipping note check")
 	}
-	dir := filepath.Join(repoRoot(t), changesDocPackage, changesDir)
+	if !goldenChangedFrom(t, base) {
+		return
+	}
+	require.True(t, noteAddedSince(t, base),
+		"the wire snapshot changed from %s but no note was added under docs/%s; "+
+			"add a short markdown file describing the change and whether old and new nodes can still talk",
+		base, changesDir)
+}
+
+// goldenChangedFrom reports whether the golden file differs between base and HEAD.
+func goldenChangedFrom(t *testing.T, base string) bool {
+	out, err := runGit(t, "diff", "--name-only", base+"...HEAD", "--", relGoldenPath())
+	require.NoError(t, err)
+	return strings.TrimSpace(out) != ""
+}
+
+// noteAddedSince reports whether a note (not the README) was added under the wire
+// format changes directory between base and HEAD.
+func noteAddedSince(t *testing.T, base string) bool {
+	dir := changesDocPackage + "/" + changesDir
 	out, err := runGit(t, "diff", "--name-only", "--diff-filter=A", base+"...HEAD", "--", dir)
-	if err != nil {
-		return false
-	}
+	require.NoError(t, err)
 	for f := range strings.SplitSeq(strings.TrimSpace(out), "\n") {
 		if strings.HasSuffix(f, ".md") && !strings.HasSuffix(f, "README.md") {
 			return true
 		}
 	}
 	return false
+}
+
+// relGoldenPath is the golden's path relative to the repo root, for git.
+func relGoldenPath() string {
+	return "internal/wire/snapshottest/" + goldenPath
 }
 
 // sourceBranchEnv is the change detector's base-branch variable, reused here so
@@ -111,16 +126,28 @@ func baseRef(t *testing.T) string {
 	return ""
 }
 
-// repoRoot returns the repository root.
-func repoRoot(t *testing.T) string {
-	out, err := runGit(t, "rev-parse", "--show-toplevel")
-	require.NoError(t, err)
-	return strings.TrimSpace(out)
-}
-
-// runGit runs a git command and returns its stdout.
+// runGit runs a git command from the repo root and returns its stdout. Running
+// at the root makes repo-relative pathspecs resolve regardless of the test's cwd.
 func runGit(t *testing.T, args ...string) (string, error) {
 	t.Helper()
-	out, err := exec.Command("git", args...).Output()
+	full := append([]string{"-C", repoRoot(t)}, args...)
+	out, err := exec.Command("git", full...).Output()
 	return string(out), err
+}
+
+// repoRoot returns the repository root, found by walking up for a .git entry.
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	for {
+		if _, err := os.Stat(dir + "/.git"); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("repo root (.git) not found")
+		}
+		dir = parent
+	}
 }
