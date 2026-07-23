@@ -60,6 +60,11 @@ type (
 
 const networkRequestTimeout = 10 * time.Second
 
+// accessCacheTTL is how long a positive read-access decision for a (peer, document) pair is
+// reused before being re-checked. It is short so that a revoked grant becomes effective quickly,
+// while still collapsing the per-block access checks of a single DAG sync into one round-trip.
+const accessCacheTTL = 3 * time.Second
+
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
 // Implementations can perform additional actions like generating SE artifacts.
 type PushToReplicatorsHandler interface {
@@ -122,6 +127,10 @@ type P2P struct {
 
 	peerIdentities map[peerID]identity.Identity
 	piMu           sync.RWMutex
+
+	// accessCache memoizes positive read-access decisions per (peer, document) so that serving
+	// an entire document DAG to a peer does not incur one access-control round-trip per block.
+	accessCache *accessCache
 
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
@@ -191,6 +200,7 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
+		accessCache:          newAccessCache(accessCacheTTL),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
@@ -451,6 +461,18 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return false
 	}
 
+	// The block is servable if the peer can read any one of its owning documents, so a cached
+	// grant for any of them is enough. Caching collapses a document's many per-block checks into
+	// one round-trip; only grants are cached, so a denied peer is re-checked and picks up a fresh
+	// grant without delay. The collection id is keyed because a collection-level block has an empty
+	// docID whose access is decided per collection. See accessCache.
+	collectionID := cols[0].CollectionID()
+	for _, docID := range docIDs {
+		if p.accessCache.allowed(pid, collectionID, docID) {
+			return true
+		}
+	}
+
 	for _, docID := range docIDs {
 		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
 			ctx,
@@ -465,6 +487,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 			return false
 		}
 		if peerHasAccess {
+			p.accessCache.storeAllowed(pid, collectionID, docID)
 			return true
 		}
 	}
