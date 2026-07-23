@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
@@ -86,7 +87,7 @@ func NewCollectionIndex(
 	if err != nil {
 		return nil, err
 	}
-	return wrapCollectionIndex(base), nil
+	return wrapCollectionIndex(base)
 }
 
 // newCollectionIndexWithEpoch builds an index instance pinned to a caller-resolved epoch, rather
@@ -105,7 +106,7 @@ func newCollectionIndexWithEpoch(
 		return nil, err
 	}
 	base.epoch = epoch
-	return wrapCollectionIndex(base), nil
+	return wrapCollectionIndex(base)
 }
 
 // buildIndexBase validates the description against the collection and assembles the shared index
@@ -142,16 +143,16 @@ func buildIndexBase(
 	return base, nil
 }
 
-// wrapCollectionIndex returns the unique or simple index implementation for the base.
-func wrapCollectionIndex(base collectionBaseIndex) client.CollectionIndex {
+// wrapCollectionIndex returns the concrete index implementation for the base, dispatched by kind.
+func wrapCollectionIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
 	switch base.desc.Kind() {
 	case client.IndexKindVector:
-		return &collectionVectorIndex{collectionBaseIndex: base}
+		return newCollectionVectorIndex(base)
 	default:
 		if base.desc.Secondary.Unique {
-			return &collectionUniqueIndex{collectionBaseIndex: base}
+			return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 		}
-		return &collectionSimpleIndex{collectionBaseIndex: base}
+		return &collectionSimpleIndex{collectionBaseIndex: base}, nil
 	}
 }
 
@@ -428,24 +429,175 @@ func (index *collectionSimpleIndex) Delete(
 	})
 }
 
-// collectionVectorIndex is a placeholder vector (ANN) index. It satisfies the
-// [client.CollectionIndex] contract so a collection carrying an @vectorIndex can be created and
-// maintained without error, but performs no graph indexing yet. The HNSW graph engine is wired in
-// in Phase 3 (see ai/context/feat/vector-index-hnsw/plan.md); until then Save/Update/Delete are
-// no-ops and similarity queries fall back to the existing brute-force scan.
+// collectionVectorIndex is a vector index backed by the HNSW graph engine (internal/index/hnsw).
+// Save/Update/Delete update the graph in the same transaction as the document write.
+//
+// The metric and params come from the index description and never change, so they are stored once.
+// The collection short id needs a store read, so it is read on first use and kept. The graph and
+// its store are built fresh on each call because they hold the request's transaction.
 type collectionVectorIndex struct {
 	collectionBaseIndex
+
+	metric hnsw.Metric
+	params hnsw.Params
+
+	collectionShortID uint32
+	shortIDResolved   bool
 }
 
 var _ client.CollectionIndex = (*collectionVectorIndex)(nil)
 
-func (index *collectionVectorIndex) Save(context.Context, *client.Document) error { return nil }
+// newCollectionVectorIndex reads the metric and params from the index description. An unsupported
+// metric fails here, when the index is created, instead of later on the first write.
+func newCollectionVectorIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
+	vdesc := base.desc.Vector
+	var metric hnsw.Metric
+	switch vdesc.Metric {
+	case client.DistanceMetricCosine:
+		metric = hnsw.Cosine
+	default:
+		return nil, NewErrUnsupportedVectorMetric(vdesc.Metric)
+	}
 
-func (index *collectionVectorIndex) Update(context.Context, *client.Document, *client.Document) error {
-	return nil
+	params := hnsw.DefaultParams(int(vdesc.HNSW.M))
+	params.EfConstruction = int(vdesc.HNSW.EfConstruction)
+	params.EfSearch = int(vdesc.HNSW.EfSearch)
+
+	return &collectionVectorIndex{
+		collectionBaseIndex: base,
+		metric:              metric,
+		params:              params,
+	}, nil
 }
 
-func (index *collectionVectorIndex) Delete(context.Context, *client.Document) error { return nil }
+// resolveCollectionShortID returns the collection short id, reading it from the store on the first
+// call and reusing it after. The id never changes, so this saves a store read on every write.
+func (index *collectionVectorIndex) resolveCollectionShortID(ctx context.Context) (uint32, error) {
+	if index.shortIDResolved {
+		return index.collectionShortID, nil
+	}
+	shortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return 0, err
+	}
+	index.collectionShortID = shortID
+	index.shortIDResolved = true
+	return shortID, nil
+}
+
+// graph builds the HNSW graph for this index, reading and writing through the transaction on ctx.
+//
+// The seed is fixed (the index id) rather than random so that inserts make the same random choices
+// every run. The index id is stable and unique within the collection, so it works as the seed.
+func (index *collectionVectorIndex) graph(ctx context.Context) (*hnsw.Graph, uint32, error) {
+	collectionShortID, err := index.resolveCollectionShortID(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	store := newDatastoreNodeStore(ctx, collectionShortID, index.desc.ID, index.epoch)
+	g := hnsw.New(store, index.metric, index.params, int64(index.desc.ID))
+	return g, collectionShortID, nil
+}
+
+// nodeAndVector returns the node id (the document's short id) and the vector to index for doc.
+// found is false when the document has no short id, which the callers decide how to treat. vec is
+// nil when the document has no value for the field, meaning there is nothing to index.
+func (index *collectionVectorIndex) nodeAndVector(
+	ctx context.Context,
+	collectionShortID uint32,
+	doc *client.Document,
+) (hnsw.NodeID, []float32, bool, error) {
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil || !found {
+		return 0, nil, found, err
+	}
+
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return 0, nil, false, err
+	}
+	if fieldVal == nil || fieldVal.Value() == nil {
+		// No vector on this doc, so nothing to index.
+		return hnsw.NodeID(docShortID), nil, true, nil
+	}
+
+	vec, ok := fieldVal.NormalValue().Float32Array()
+	if !ok {
+		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name)
+	}
+
+	return hnsw.NodeID(docShortID), vec, true, nil
+}
+
+// Save indexes doc by inserting its vector into the graph. If the document has no value for the
+// indexed field, there is nothing to index and Save does nothing.
+func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Document) error {
+	g, collectionShortID, err := index.graph(ctx)
+	if err != nil {
+		return err
+	}
+
+	nodeID, vec, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
+	if err != nil {
+		return err
+	}
+	if !found {
+		// A document being written always has a short id by this point. Not finding one means the
+		// document is missing or the caller cannot access it, which is an error, not a doc to skip.
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	if vec == nil {
+		return nil
+	}
+
+	if index.desc.Vector.Dimensions > 0 && len(vec) != int(index.desc.Vector.Dimensions) {
+		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), len(vec))
+	}
+
+	return g.Insert(nodeID, vec)
+}
+
+// Update re-indexes a document whose vector changed.
+//
+// A document keeps the same id across an update, so the old and new vectors map to the same node.
+// We must delete the old node before inserting the new one. If we insert straight over a node that
+// is still live, the insert can pick that same node as one of its own nearest neighbours and link
+// the node to itself. Deleting first marks the node dead so the insert ignores it; the insert then
+// overwrites the node and clears the dead mark.
+//
+// TODO(Phase 4/reclaim): like every HNSW delete, links from other nodes into the old node stay
+// until a later cleanup pass removes them. This only lowers recall; results stay correct because a
+// deleted node is never returned.
+func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	if err := index.Delete(ctx, oldDoc); err != nil {
+		return err
+	}
+	return index.Save(ctx, newDoc)
+}
+
+// Delete marks doc's node dead in the graph. While the index is still building, the backfill may
+// not have reached this document yet, so a missing short id is expected and Delete does nothing.
+// Once the index is built, a missing short id means the index is out of step with the data.
+func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Document) error {
+	g, collectionShortID, err := index.graph(ctx)
+	if err != nil {
+		return err
+	}
+
+	nodeID, _, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
+	if err != nil {
+		return err
+	}
+	if !found {
+		if index.building {
+			return nil
+		}
+		return NewErrCorruptedIndex(index.desc.Name)
+	}
+
+	return g.Delete(nodeID)
+}
 
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *keys.IndexDataStoreKey) bool {

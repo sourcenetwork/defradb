@@ -511,13 +511,12 @@ func processNewIndexRequest(
 	return res, nil
 }
 
-// validateVectorIndexDescription validates the vector-specific parts of an index request: that the
-// target field is of a vector-compatible kind, and that dimensions are either explicitly set or
-// inferable from a matching @embedding on the same field.
+// validateVectorIndexDescription checks the parts of an index request specific to a vector index:
+// the field must hold a float32 array, and the dimensions must be set, or come from an @embedding
+// on the same field.
 //
-// Field presence and non-empty Fields are already validated by validateIndexDescription and
-// checkExistingFieldsAndAdjustRelFieldNames, which run before this; the field is therefore
-// guaranteed to exist here.
+// The field is guaranteed to exist here because validateIndexDescription and
+// checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
 func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
 	fieldName := desc.Fields[0].Name
 	field, _ := def.GetFieldByName(fieldName)
@@ -530,8 +529,8 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return nil
 	}
 
-	// Dimensions were not explicitly provided; allow inference only if the field is a generated
-	// embedding (has a matching @embedding). Actual inference is resolved later.
+	// No dimensions were given. That is only allowed when the field is an @embedding, since the
+	// model then fixes the dimensions. The value itself is filled in later.
 	for _, embedding := range def.VectorEmbeddings {
 		if embedding.FieldName == fieldName {
 			return nil

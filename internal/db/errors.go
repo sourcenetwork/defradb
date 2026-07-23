@@ -140,6 +140,10 @@ const (
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
+	errVectorIndexStore                    string = "vector index store operation failed"
+	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
+	errVectorDimensionMismatch             string = "vector dimension mismatch"
+	errUnsupportedVectorMetric             string = "unsupported vector distance metric"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -1221,5 +1225,39 @@ func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
 		errIndexWithIDDoesNotExist,
 		errors.NewKV("IndexID", indexID),
 		errors.NewKV("CollectionID", collectionID),
+	)
+}
+
+// NewErrVectorIndexStore returns a new error indicating that a vector index store operation
+// (against its datastore-backed node/meta keyspace) failed.
+func NewErrVectorIndexStore(inner error) error {
+	return errors.Wrap(errVectorIndexStore, inner)
+}
+
+// NewErrVectorIndexFieldNotFloat32Array returns a new error indicating that a vector index's
+// indexed field held a value that could not be read as a float32 array.
+func NewErrVectorIndexFieldNotFloat32Array(fieldName string) error {
+	return errors.New(
+		errVectorIndexFieldNotFloat32Array,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorDimensionMismatch returns a new error indicating that a vector's length did not
+// match the dimensions configured on the vector index.
+func NewErrVectorDimensionMismatch(expected, actual int) error {
+	return errors.New(
+		errVectorDimensionMismatch,
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+	)
+}
+
+// NewErrUnsupportedVectorMetric returns a new error indicating that the vector index's
+// configured distance metric is not supported by the HNSW engine.
+func NewErrUnsupportedVectorMetric(metric client.DistanceMetric) error {
+	return errors.New(
+		errUnsupportedVectorMetric,
+		errors.NewKV("Metric", metric),
 	)
 }
