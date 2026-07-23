@@ -25,6 +25,11 @@ concurrency:
     ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# The job only reads the repo and runs tests over PR code; grant no write scope
+# and do not persist the checkout token while that code runs.
+permissions:
+  contents: read
+
 jobs:
   check-wire-format-drift:
     name: Check wire format drift job
@@ -36,6 +41,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb

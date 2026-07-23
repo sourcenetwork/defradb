@@ -69,6 +69,32 @@ type twoRefs struct {
 	Second nested
 }
 
+// tagged fields carry encoder tags: cbor wins over json, json renames, "-" skips,
+// options are recorded.
+type tagged struct {
+	Renamed  string `cbor:"wire_name"`
+	FromJSON string `json:"json_name"`
+	Opt      string `cbor:"opt,omitempty"`
+	Skipped  string `cbor:"-"`
+	DashName string `cbor:"-,omitempty"` // literal key "-", not skipped
+	Plain    string
+}
+
+// namedList is a named container: a change to its element type must still show.
+type namedList [][]byte
+
+type holdsNamedList struct {
+	L namedList
+}
+
+// schemaSpaced declares a discriminator whose quoted value contains a double
+// space, which must survive normalization.
+type schemaSpaced struct{}
+
+func (schemaSpaced) IPLDSchemaBytes() []byte {
+	return []byte("type schemaSpaced union {\n\t| A \"a  b\"\n} representation keyed")
+}
+
 func snap(t ...reflect.Type) string { return snapshotOf(t) }
 
 // TestSnapshot_StructFields renders exported fields with their types and skips
@@ -96,7 +122,8 @@ func TestSnapshot_Containers(t *testing.T) {
 	assert.Contains(t, out, "Bytes []uint8")
 	assert.Contains(t, out, "Rows [][]string")
 	assert.Contains(t, out, "FixedArr [3]uint8")
-	assert.Contains(t, out, "ByKey map[string]")
+	// The full map type including the value, so a value-type change is detected.
+	assert.Contains(t, out, "ByKey map[string]"+typePath(reflect.TypeFor[nested]()))
 }
 
 // TestSnapshot_Interface renders an interface's method set.
@@ -132,11 +159,17 @@ func TestSnapshot_PointerRootDerefs(t *testing.T) {
 }
 
 // TestSnapshot_Cycles terminates on self-referential and mutually-referential
-// types rather than looping. A regression that recurses before marking a type
-// seen would hang here.
+// types rather than looping, and still traverses their fields. A regression that
+// recurses before marking a type seen would hang; one that skips fields would
+// drop the referenced type.
 func TestSnapshot_Cycles(t *testing.T) {
-	assert.NotEmpty(t, snap(reflect.TypeFor[selfCycle]()))
-	assert.NotEmpty(t, snap(reflect.TypeFor[cycleA]()))
+	self := snap(reflect.TypeFor[selfCycle]())
+	assert.Contains(t, self, "Self *"+typePath(reflect.TypeFor[selfCycle]()))
+	assert.Contains(t, self, "Name string")
+
+	mutual := snap(reflect.TypeFor[cycleA]())
+	assert.Contains(t, mutual, typePath(reflect.TypeFor[cycleA]())+" struct")
+	assert.Contains(t, mutual, typePath(reflect.TypeFor[cycleB]())+" struct")
 }
 
 // TestSnapshot_RendersEachTypeOnce renders a type reachable by two paths exactly
@@ -145,4 +178,31 @@ func TestSnapshot_RendersEachTypeOnce(t *testing.T) {
 	out := snap(reflect.TypeFor[twoRefs]())
 	header := typePath(reflect.TypeFor[nested]()) + " struct"
 	assert.Equal(t, 1, strings.Count(out, header), "nested must render exactly once")
+}
+
+// TestSnapshot_EncoderTags records the encoded key, not the Go field name: a cbor
+// tag wins, a json tag renames, "-" skips, and options are recorded.
+func TestSnapshot_EncoderTags(t *testing.T) {
+	out := snap(reflect.TypeFor[tagged]())
+	assert.Contains(t, out, "wire_name string")
+	assert.Contains(t, out, "json_name string")
+	assert.Contains(t, out, "opt string [omitempty]")
+	assert.Contains(t, out, "Plain string")
+	assert.Contains(t, out, "- string [omitempty]", `"-,omitempty" is a literal key, not a skip`)
+	assert.NotContains(t, out, "Renamed", "the Go name must not appear once tagged")
+	assert.NotContains(t, out, "Skipped", "a - tag drops the field")
+}
+
+// TestSnapshot_NamedContainer renders a named container's underlying shape, so a
+// change to its element type is visible.
+func TestSnapshot_NamedContainer(t *testing.T) {
+	out := snap(reflect.TypeFor[holdsNamedList]())
+	assert.Contains(t, out, typePath(reflect.TypeFor[namedList]())+"=[][]uint8")
+}
+
+// TestSnapshot_QuotedWhitespace keeps whitespace inside a quoted discriminator,
+// so "a  b" and "a b" do not collapse to the same text.
+func TestSnapshot_QuotedWhitespace(t *testing.T) {
+	out := snap(reflect.TypeFor[schemaSpaced]())
+	assert.Contains(t, out, `"a  b"`)
 }

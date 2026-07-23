@@ -106,9 +106,10 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	if schema, ok := ipldSchema(t); ok {
 		fmt.Fprintf(b, "%s ipld\n", typePath(t))
 		for line := range strings.SplitSeq(strings.TrimSpace(schema), "\n") {
-			// Collapse the schema literal's own indentation to one tab so the
-			// snapshot reads and diffs cleanly regardless of source formatting.
-			fmt.Fprintf(b, "\t%s\n", strings.Join(strings.Fields(line), " "))
+			// Normalize the schema literal's own indentation so the snapshot reads
+			// and diffs cleanly regardless of source formatting, without touching
+			// whitespace inside a quoted discriminator.
+			fmt.Fprintf(b, "\t%s\n", collapseUnquoted(line))
 		}
 		return
 	}
@@ -116,12 +117,18 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	case reflect.Struct:
 		fmt.Fprintf(b, "%s struct\n", typePath(t))
 		for i := range t.NumField() {
-			// The Go field name is the wire key: the encoder does not use a
-			// renaming cbor tag on any wire type today. A field that ever gained
-			// one would change the wire key without changing this line.
-			if f := t.Field(i); f.IsExported() {
-				fmt.Fprintf(b, "\t%s %s\n", f.Name, typeName(f.Type))
+			f := t.Field(i)
+			if !f.IsExported() {
+				continue
 			}
+			key, opts, skip := cborField(f)
+			if skip {
+				continue
+			}
+			// The encoded key, not the Go field name, is the wire contract: the
+			// encoder honors a cbor or json tag. Options (omitempty, toarray,
+			// keyasint) are recorded too since they change the encoding.
+			fmt.Fprintf(b, "\t%s %s%s\n", key, typeName(f.Type), opts)
 		}
 	case reflect.Interface:
 		fmt.Fprintf(b, "%s interface\n", typePath(t))
@@ -162,6 +169,52 @@ func ipldSchema(t reflect.Type) (string, bool) {
 	return "", false
 }
 
+// collapseUnquoted trims a line and collapses runs of whitespace to a single
+// space, but leaves whitespace inside double-quoted spans untouched so distinct
+// discriminators like "a  b" and "a b" stay distinct.
+func collapseUnquoted(line string) string {
+	var out strings.Builder
+	inQuote := false
+	prevSpace := false
+	for _, r := range strings.TrimSpace(line) {
+		if r == '"' {
+			inQuote = !inQuote
+		}
+		if !inQuote && (r == ' ' || r == '\t') {
+			if !prevSpace {
+				out.WriteByte(' ')
+			}
+			prevSpace = true
+			continue
+		}
+		out.WriteRune(r)
+		prevSpace = false
+	}
+	return out.String()
+}
+
+// cborField resolves how a struct field is encoded: its wire key, an options
+// suffix (e.g. ",omitempty"), and whether it is skipped entirely. It follows the
+// encoder's precedence, checking the cbor tag then the json tag, so a rename via
+// either tag changes the snapshot.
+func cborField(f reflect.StructField) (key, opts string, skip bool) {
+	tag := f.Tag.Get("cbor")
+	if tag == "" {
+		tag = f.Tag.Get("json")
+	}
+	name, rest, _ := strings.Cut(tag, ",")
+	if name == "-" && rest == "" {
+		return "", "", true
+	}
+	if name == "" {
+		name = f.Name
+	}
+	if rest != "" {
+		opts = " [" + rest + "]"
+	}
+	return name, opts, false
+}
+
 // typePath is the package-qualified name of a named type.
 func typePath(t reflect.Type) string {
 	if t.PkgPath() == "" {
@@ -170,12 +223,24 @@ func typePath(t reflect.Type) string {
 	return t.PkgPath() + "." + t.Name()
 }
 
-// typeName renders a field's type: named types by full path, containers
-// structurally, so a change to either is visible.
+// typeName renders a field's type. A named struct or interface is named by path,
+// since its own shape is rendered as its own entry. A named container (e.g.
+// type Links [][]byte) is named by path plus its underlying shape, so a change to
+// its element type is still visible. Unnamed types render structurally.
 func typeName(t reflect.Type) string {
 	if t.PkgPath() != "" {
-		return typePath(t)
+		switch t.Kind() {
+		case reflect.Struct, reflect.Interface:
+			return typePath(t)
+		default:
+			return typePath(t) + "=" + underlyingName(t)
+		}
 	}
+	return underlyingName(t)
+}
+
+// underlyingName renders a type structurally, ignoring any name it has.
+func underlyingName(t reflect.Type) string {
 	switch t.Kind() {
 	case reflect.Pointer:
 		return "*" + typeName(t.Elem())
@@ -186,7 +251,7 @@ func typeName(t reflect.Type) string {
 	case reflect.Map:
 		return fmt.Sprintf("map[%s]%s", typeName(t.Key()), typeName(t.Elem()))
 	default:
-		return t.String()
+		return t.Kind().String()
 	}
 }
 

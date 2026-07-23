@@ -82,19 +82,19 @@ github.com/sourcenetwork/defradb/internal/core/crdt.LWWDelta ipld
 	data Bytes
 	}
 github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem struct
-	DocID string
-	Heads [][]uint8
+	docID string
+	heads [][]uint8
 github.com/sourcenetwork/defradb/internal/db/p2p.docSyncReply struct
-	Results []github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem
-	Sender string
+	results []github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem
+	sender string
 github.com/sourcenetwork/defradb/internal/db/p2p.docSyncRequest struct
-	DocIDs []string
+	docIDs []string
 github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionReply struct
-	CollectionID string
-	Heads [][]uint8
-	Sender string
+	collectionID string
+	heads [][]uint8
+	sender string
 github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionRequest struct
-	CollectionID string
+	collectionID string
 github.com/sourcenetwork/defradb/internal/db/p2p/message.Message interface
 	GetErrMessage func() string
 	GetMessageID func() string
@@ -113,8 +113,8 @@ github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData struct
 	MessageID string
 	SenderID string
 	Pubkey []uint8
-	Signature []uint8
-	ErrMessage string
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityRequest struct
 	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
 	PeerID string
