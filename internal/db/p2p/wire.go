@@ -12,12 +12,11 @@ package p2p
 
 import "github.com/sourcenetwork/defradb/internal/wire"
 
+// retryInfo is deliberately not registered: it is CBOR-encoded only into the
+// local peerstore, never sent to a peer.
 func init() {
 	wire.Register[syncBranchableCollectionRequest]()
 	wire.Register[syncBranchableCollectionReply]()
 	wire.Register[docSyncRequest]()
 	wire.Register[docSyncReply]()
-
-	// Retry bookkeeping stored in the local peerstore, not sent to a peer.
-	wire.MarkLocal[retryInfo]()
 }

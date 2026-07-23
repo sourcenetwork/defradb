@@ -12,12 +12,11 @@ package se
 
 import "github.com/sourcenetwork/defradb/internal/wire"
 
+// seRetryInfo is deliberately not registered: it is CBOR-encoded only into the
+// local peerstore, never sent to a peer.
 func init() {
 	wire.Register[QuerySEArtifactsRequest]()
 	wire.Register[QuerySEArtifactsReply]()
 	wire.Register[PushSEArtifactsRequest]()
 	wire.Register[PushSEArtifactsReply]()
-
-	// Retry bookkeeping stored in the local peerstore, not sent to a peer.
-	wire.MarkLocal[seRetryInfo]()
 }

@@ -8,12 +8,11 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// Package wire records the types that a node sends to another node over CBOR.
+// Package wire records the types that a node sends to another node.
 //
-// Each wire type registers itself from its own package's init, so the set has
-// one source of truth that both runtime code and the wirecheck linter read: the
-// linter fails a cbor.Marshal of a type that was never registered here, and a
-// later snapshot check reads the registered set to catch a field-shape change.
+// Each wire type registers itself from its own package's init, giving one source
+// of truth for what crosses the wire. The snapshot check reads the registered set
+// to catch a field-shape change that would break communication with an older node.
 package wire
 
 import (
@@ -32,20 +31,6 @@ func Register[T any]() {
 	mu.Lock()
 	defer mu.Unlock()
 	registered[reflect.TypeFor[T]()] = struct{}{}
-}
-
-// MarkLocal records that T is CBOR-encoded only for local storage, never sent to
-// a peer. It exists so the wirecheck linter stops flagging a local encode in a
-// wire package, and so the decision that T is local is written down next to T.
-// It does not add T to the wire set.
-func MarkLocal[T any]() {}
-
-// IsRegistered reports whether T has been registered.
-func IsRegistered[T any]() bool {
-	mu.Lock()
-	defer mu.Unlock()
-	_, ok := registered[reflect.TypeFor[T]()]
-	return ok
 }
 
 // Registered returns the registered types, for the snapshot check.
