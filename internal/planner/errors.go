@@ -50,6 +50,7 @@ var (
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
+	ErrUnsupportedVectorMetric             = errors.New("unsupported vector index distance metric")
 )
 
 func NewErrUnknownDependency(name string) error {
