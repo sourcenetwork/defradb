@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"math"
+
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -109,26 +111,14 @@ func (n *similarityNode) Next() (bool, error) {
 		child := n.currentValue.Fields[n.target.Index]
 		switch childCollection := child.(type) {
 		case []int64:
-			vector := convertArray[int64](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = float64(result)
+			similarity, err = cosineSimilarity(childCollection, convertArray[int64](n.vector))
 		case []float32:
-			vector := convertArray[float32](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = float64(result)
+			similarity, err = cosineSimilarity(childCollection, convertArray[float32](n.vector))
 		case []float64:
-			vector := convertArray[float64](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = result
+			similarity, err = cosineSimilarity(childCollection, convertArray[float64](n.vector))
+		}
+		if err != nil {
+			return false, err
 		}
 
 		n.currentValue.Fields[n.virtualFieldIndex] = similarity
@@ -146,18 +136,36 @@ func (n *similarityNode) Next() (bool, error) {
 
 func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 
+// cosineSimilarity returns the cosine similarity of two equal-length vectors: the dot product of
+// their unit-normalised forms, in the range [-1, 1] where 1 means identical direction. Normalising
+// is what makes this a true cosine (not a bare dot product), so the result does not depend on the
+// vectors' magnitudes. A zero-length vector has no direction, so its similarity is defined as 0.
+//
+// This must match the indexed path (which derives similarity as 1 - cosine distance from the graph),
+// so an ordered query returns the same results whether or not a vector index is used.
 func cosineSimilarity[T number](
 	source []T,
 	vector []T,
-) (T, error) {
-	var value T
+) (float64, error) {
 	if len(source) != len(vector) {
-		return value, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
+		return 0, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
 	}
+
+	var dot, sourceNorm, vectorNorm float64
 	for i := range source {
-		value += vector[i] * source[i]
+		s, v := float64(source[i]), float64(vector[i])
+		dot += s * v
+		sourceNorm += s * s
+		vectorNorm += v * v
 	}
-	return value, nil
+
+	// A zero vector (all elements zero) has no direction; treat its similarity to anything as 0
+	// rather than dividing by zero.
+	if sourceNorm == 0 || vectorNorm == 0 {
+		return 0, nil
+	}
+
+	return dot / (math.Sqrt(sourceNorm) * math.Sqrt(vectorNorm)), nil
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {

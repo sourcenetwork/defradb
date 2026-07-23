@@ -10,6 +10,12 @@
 
 package hnsw
 
+// Neighbor is one search hit: a node id and its distance to the query vector (smaller is nearer).
+type Neighbor struct {
+	ID       NodeID
+	Distance float64
+}
+
 // Search returns up to k of the nearest non-deleted node ids to query,
 // nearest-first, following Algorithm 5 (K-NN-SEARCH) of the HNSW paper:
 // descend greedily (ef=1) from the entry point at the top layer down to
@@ -18,6 +24,34 @@ package hnsw
 // If the graph is empty, Search returns an empty (nil) slice and no
 // error.
 func (g *Graph) Search(query []float32, k, efSearch int) ([]NodeID, error) {
+	w, err := g.search(query, k, efSearch)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]NodeID, len(w))
+	for i, c := range w {
+		out[i] = c.id
+	}
+	return out, nil
+}
+
+// SearchWithDistance is Search but each hit also carries its distance to the query. The caller uses
+// the distance to rank or score results (e.g. to fill a similarity field) without recomputing it.
+func (g *Graph) SearchWithDistance(query []float32, k, efSearch int) ([]Neighbor, error) {
+	w, err := g.search(query, k, efSearch)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Neighbor, len(w))
+	for i, c := range w {
+		out[i] = Neighbor{ID: c.id, Distance: float64(c.dist)}
+	}
+	return out, nil
+}
+
+// search runs the K-NN-SEARCH traversal and returns the top-k candidates (with distances),
+// nearest-first. Both Search and SearchWithDistance are thin wrappers over this.
+func (g *Graph) search(query []float32, k, efSearch int) ([]candidate, error) {
 	if k <= 0 {
 		return nil, nil
 	}
@@ -63,12 +97,7 @@ func (g *Graph) Search(query []float32, k, efSearch int) ([]NodeID, error) {
 	if len(w) > k {
 		w = w[:k]
 	}
-
-	out := make([]NodeID, len(w))
-	for i, c := range w {
-		out[i] = c.id
-	}
-	return out, nil
+	return w, nil
 }
 
 // Delete tombstones the node with the given id: it marks the node as
