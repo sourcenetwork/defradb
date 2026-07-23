@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/vectorstore"
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
@@ -486,17 +487,15 @@ func (index *collectionVectorIndex) resolveCollectionShortID(ctx context.Context
 }
 
 // graph builds the HNSW graph for this index, reading and writing through the transaction on ctx.
-//
-// The seed is fixed (the index id) rather than random so that inserts make the same random choices
-// every run. The index id is stable and unique within the collection, so it works as the seed.
+// The graph itself (and its datastore-backed store) lives in the shared vectorstore package so the
+// query planner builds it the same way when searching.
 func (index *collectionVectorIndex) graph(ctx context.Context) (*hnsw.Graph, uint32, error) {
 	collectionShortID, err := index.resolveCollectionShortID(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	store := newDatastoreNodeStore(ctx, collectionShortID, index.desc.ID, index.epoch)
-	g := hnsw.New(store, index.metric, index.params, int64(index.desc.ID))
+	g := vectorstore.NewGraph(ctx, collectionShortID, index.desc.ID, index.epoch, index.metric, index.params)
 	return g, collectionShortID, nil
 }
 

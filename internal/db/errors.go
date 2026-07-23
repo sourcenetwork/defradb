@@ -140,7 +140,6 @@ const (
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
-	errVectorIndexStore                    string = "vector index store operation failed"
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
 	errUnsupportedVectorMetric             string = "unsupported vector distance metric"
@@ -1226,12 +1225,6 @@ func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
 		errors.NewKV("IndexID", indexID),
 		errors.NewKV("CollectionID", collectionID),
 	)
-}
-
-// NewErrVectorIndexStore returns a new error indicating that a vector index store operation
-// (against its datastore-backed node/meta keyspace) failed.
-func NewErrVectorIndexStore(inner error) error {
-	return errors.Wrap(errVectorIndexStore, inner)
 }
 
 // NewErrVectorIndexFieldNotFloat32Array returns a new error indicating that a vector index's

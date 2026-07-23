@@ -8,37 +8,47 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package db
+package vectorstore
 
 import (
 	"context"
 	"testing"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 )
 
-// newVectorIndexStoreTestCtx opens an in-memory badger DB and returns a context carrying a live
-// write transaction, suitable for exercising a datastoreNodeStore directly.
-func newVectorIndexStoreTestCtx(t *testing.T) context.Context {
+// newStoreTestCtx opens an in-memory badger store and returns a context carrying a live write
+// transaction, the way the store resolves it (datastore.CtxMustGetTxn / corekv txn on context).
+// This is self-contained so the store test does not depend on the parent db package.
+func newStoreTestCtx(t *testing.T) context.Context {
 	t.Helper()
 	ctx := context.Background()
-	db, err := newBadgerDB(ctx)
-	require.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
 
-	txn, err := db.NewTxn(false)
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
+	t.Cleanup(func() { _ = rootstore.Close() })
+
+	txn := datastore.NewTxnFrom(rootstore, lock.NewLockSet(), 1, false, immutable.None[int]())
 	t.Cleanup(txn.Discard)
 
-	return InitContext(ctx, txn)
+	ctx = datastore.CtxSetTxn(ctx, txn)
+	ctx = corekv.SetCtxTxn(ctx, txn.Txn())
+	return ctx
 }
 
-func TestDatastoreNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store := newDatastoreNodeStore(ctx, 1, 1, 1)
+func TestNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store := NewNodeStore(ctx, 1, 1, 1)
 
 	node := hnsw.Node{
 		ID:     5,
@@ -55,9 +65,9 @@ func TestDatastoreNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
 	assert.Equal(t, node, got)
 }
 
-func TestDatastoreNodeStore_GetNode_IfMissing_ReturnsNotFound(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store := newDatastoreNodeStore(ctx, 1, 1, 1)
+func TestNodeStore_GetNode_IfMissing_ReturnsNotFound(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store := NewNodeStore(ctx, 1, 1, 1)
 
 	got, ok, err := store.GetNode(999)
 	require.NoError(t, err)
@@ -65,9 +75,9 @@ func TestDatastoreNodeStore_GetNode_IfMissing_ReturnsNotFound(t *testing.T) {
 	assert.Equal(t, hnsw.Node{}, got)
 }
 
-func TestDatastoreNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store := newDatastoreNodeStore(ctx, 1, 1, 1)
+func TestNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store := NewNodeStore(ctx, 1, 1, 1)
 
 	meta := hnsw.Meta{
 		EntryPoint: 3,
@@ -82,18 +92,18 @@ func TestDatastoreNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
 	assert.Equal(t, meta, got)
 }
 
-func TestDatastoreNodeStore_GetMeta_IfEmptyKeyspace_ReturnsEmptyMeta(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store := newDatastoreNodeStore(ctx, 1, 1, 1)
+func TestNodeStore_GetMeta_IfEmptyKeyspace_ReturnsEmptyMeta(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store := NewNodeStore(ctx, 1, 1, 1)
 
 	got, err := store.GetMeta()
 	require.NoError(t, err)
 	assert.Equal(t, hnsw.Meta{Empty: true}, got)
 }
 
-func TestDatastoreNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store := newDatastoreNodeStore(ctx, 1, 1, 1)
+func TestNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store := NewNodeStore(ctx, 1, 1, 1)
 
 	require.NoError(t, store.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 	require.NoError(t, store.PutNode(hnsw.Node{ID: 2, Vector: []float32{2}}))
@@ -109,10 +119,10 @@ func TestDatastoreNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testin
 	assert.Equal(t, map[hnsw.NodeID]bool{1: true, 2: true}, visited)
 }
 
-func TestDatastoreNodeStore_DifferentIndexIDs_AreIsolated(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store1 := newDatastoreNodeStore(ctx, 1, 1, 1)
-	store2 := newDatastoreNodeStore(ctx, 1, 2, 1)
+func TestNodeStore_DifferentIndexIDs_AreIsolated(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store1 := NewNodeStore(ctx, 1, 1, 1)
+	store2 := NewNodeStore(ctx, 1, 2, 1)
 
 	require.NoError(t, store1.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 
@@ -129,10 +139,10 @@ func TestDatastoreNodeStore_DifferentIndexIDs_AreIsolated(t *testing.T) {
 	assert.Equal(t, 0, visited)
 }
 
-func TestDatastoreNodeStore_DifferentEpochs_AreIsolated(t *testing.T) {
-	ctx := newVectorIndexStoreTestCtx(t)
-	store1 := newDatastoreNodeStore(ctx, 1, 1, 1)
-	store2 := newDatastoreNodeStore(ctx, 1, 1, 2)
+func TestNodeStore_DifferentEpochs_AreIsolated(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	store1 := NewNodeStore(ctx, 1, 1, 1)
+	store2 := NewNodeStore(ctx, 1, 1, 2)
 
 	require.NoError(t, store1.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 	require.NoError(t, store1.PutMeta(hnsw.Meta{EntryPoint: 1, TopLayer: 0}))
