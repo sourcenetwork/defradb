@@ -61,9 +61,16 @@ func reachableTypes() []reflect.Type {
 		}
 		seen[t] = true
 		out = append(out, t)
+		// Only struct fields are walked. A named type carried by an interface
+		// method is not reached here; today no wire interface method carries one.
 		if t.Kind() == reflect.Struct {
 			for i := range t.NumField() {
-				visit(t.Field(i).Type)
+				// Only exported fields are encoded, so only they are part of the
+				// wire shape. Skipping the rest also avoids descending into a
+				// stdlib type's unexported internals (e.g. time.Time).
+				if f := t.Field(i); f.IsExported() {
+					visit(f.Type)
+				}
 			}
 		}
 	}
@@ -80,8 +87,10 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	case reflect.Struct:
 		fmt.Fprintf(b, "%s struct\n", typePath(t))
 		for i := range t.NumField() {
-			f := t.Field(i)
-			fmt.Fprintf(b, "\t%s %s\n", f.Name, typeName(f.Type))
+			// Only exported fields are encoded, so only they are the wire shape.
+			if f := t.Field(i); f.IsExported() {
+				fmt.Fprintf(b, "\t%s %s\n", f.Name, typeName(f.Type))
+			}
 		}
 	case reflect.Interface:
 		fmt.Fprintf(b, "%s interface\n", typePath(t))
