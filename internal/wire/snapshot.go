@@ -18,27 +18,38 @@ import (
 )
 
 // Snapshot renders the shape of every registered type as deterministic text. A
-// change to any field name, field type, or field order changes the output, so a
-// diff against the committed golden snapshot flags a wire-format change that
-// must be intentional. The CBOR encoder keys struct fields by their Go name, so
-// the field names this records are the wire contract.
+// change to any field name, field type, field order, or IPLD discriminator
+// changes the output, so a diff against the committed golden flags a wire-format
+// change that must be intentional.
 //
-// Each registered type is rendered top to bottom, types sorted by path. A struct
-// lists its fields; nested named structs are rendered once at the top level too
-// if reachable, so their own shape is covered. An interface records its method
-// set: its concrete implementers are registered and rendered separately.
+// Two wire layers are covered. CBOR message types are rendered from their Go
+// fields, since the encoder keys fields by their Go name. IPLD block types are
+// rendered from the schema they declare (including the CRDT union's wire-critical
+// discriminator strings), since that schema, not the Go struct, is their wire
+// shape.
+//
+// Types are sorted by path. A struct lists its fields; nested named structs are
+// rendered at the top level too if reachable, so their shape is covered. An
+// interface records its method set.
 func Snapshot() string {
+	return snapshotOf(Registered())
+}
+
+// snapshotOf renders the shape of the given roots plus their reachable named
+// types. Split from Snapshot so it can be tested with an explicit set instead of
+// the global registry.
+func snapshotOf(roots []reflect.Type) string {
 	var b strings.Builder
-	for _, t := range sortedByPath(reachableTypes()) {
+	for _, t := range sortedByPath(reachableFrom(roots)) {
 		writeType(&b, t)
 	}
 	return b.String()
 }
 
-// reachableTypes returns the registered types plus every named struct reachable
-// through their fields, so a shape change in a nested type is covered even if
-// that type is not itself registered.
-func reachableTypes() []reflect.Type {
+// reachableFrom returns roots plus every named struct reachable through their
+// fields, so a shape change in a nested type is covered even if that type is not
+// itself a root.
+func reachableFrom(roots []reflect.Type) []reflect.Type {
 	seen := map[reflect.Type]bool{}
 	var out []reflect.Type
 	var visit func(t reflect.Type)
@@ -61,6 +72,11 @@ func reachableTypes() []reflect.Type {
 		}
 		seen[t] = true
 		out = append(out, t)
+		// A type that declares an IPLD schema is rendered from that schema, so its
+		// Go fields are not walked (they hold ipld/cid internals, not the shape).
+		if hasIPLDSchema(t) {
+			return
+		}
 		// Only struct fields are walked. A named type carried by an interface
 		// method is not reached here; today no wire interface method carries one.
 		if t.Kind() == reflect.Struct {
@@ -74,15 +90,26 @@ func reachableTypes() []reflect.Type {
 			}
 		}
 	}
-	for _, t := range Registered() {
+	for _, t := range roots {
 		visit(t)
 	}
 	return out
 }
 
-// writeType renders one named type: a struct as its ordered fields, an interface
-// as its method set, anything else as its kind.
+// writeType renders one named type. A type that declares an IPLD schema is
+// rendered from that schema, which already describes its fields and, for the
+// union, its wire-critical discriminators. Otherwise a struct is rendered as its
+// ordered fields, an interface as its method set.
 func writeType(b *strings.Builder, t reflect.Type) {
+	if schema, ok := ipldSchema(t); ok {
+		fmt.Fprintf(b, "%s ipld\n", typePath(t))
+		for line := range strings.SplitSeq(strings.TrimSpace(schema), "\n") {
+			// Collapse the schema literal's own indentation to one tab so the
+			// snapshot reads and diffs cleanly regardless of source formatting.
+			fmt.Fprintf(b, "\t%s\n", strings.Join(strings.Fields(line), " "))
+		}
+		return
+	}
 	switch t.Kind() {
 	case reflect.Struct:
 		fmt.Fprintf(b, "%s struct\n", typePath(t))
@@ -100,6 +127,35 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	default:
 		fmt.Fprintf(b, "%s %s\n", typePath(t), t.Kind())
 	}
+}
+
+// ipldSchemaMethod is the method an IPLD wire type uses to declare its schema.
+const ipldSchemaMethod = "IPLDSchemaBytes"
+
+// hasIPLDSchema reports whether t declares an IPLD schema.
+func hasIPLDSchema(t reflect.Type) bool {
+	_, ok := ipldSchema(t)
+	return ok
+}
+
+// ipldSchema returns t's declared IPLD schema, checking both value and pointer
+// receivers. Returns false if t declares no schema.
+func ipldSchema(t reflect.Type) (string, bool) {
+	for _, rt := range []reflect.Type{t, reflect.PointerTo(t)} {
+		m, ok := rt.MethodByName(ipldSchemaMethod)
+		if !ok || m.Type.NumIn() != 1 || m.Type.NumOut() != 1 {
+			continue
+		}
+		v := reflect.New(t)
+		if rt.Kind() != reflect.Pointer {
+			v = v.Elem()
+		}
+		out := m.Func.Call([]reflect.Value{v})
+		if b, ok := out[0].Interface().([]byte); ok {
+			return string(b), true
+		}
+	}
+	return "", false
 }
 
 // typePath is the package-qualified name of a named type.

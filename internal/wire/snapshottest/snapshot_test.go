@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/wire"
 
 	// Blank imports run each package's init so its wire types register.
+	_ "github.com/sourcenetwork/defradb/internal/core/block"
 	_ "github.com/sourcenetwork/defradb/internal/db/p2p"
 	_ "github.com/sourcenetwork/defradb/internal/db/p2p/message"
 	_ "github.com/sourcenetwork/defradb/internal/db/p2p/protocol"

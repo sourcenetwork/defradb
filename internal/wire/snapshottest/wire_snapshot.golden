@@ -1,3 +1,86 @@
+github.com/sourcenetwork/defradb/internal/core/block.Block ipld
+	type Block struct {
+	delta CRDT
+	heads optional [Link]
+	links optional [DAGLink]
+	encryption optional Link
+	signature optional Link
+	}
+github.com/sourcenetwork/defradb/internal/core/block.DAGLink ipld
+	type DAGLink struct {
+	name String
+	link Link
+	}
+github.com/sourcenetwork/defradb/internal/core/block.Encryption ipld
+	type Encryption struct {
+	key Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/block.Signature ipld
+	type Signature struct {
+	header SignatureHeader
+	value Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/block.SignatureHeader ipld
+	type SignatureHeader struct {
+	type String
+	identity Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CRDT ipld
+	type CRDT union {
+	| LWWDelta "lww"
+	| DocCompositeDelta "composite"
+	| CounterDelta "counter"
+	| CollectionDelta "collection"
+	| CollectionSetDelta "collectionSet"
+	| CollectionDefinitionDelta "collectionDefinition"
+	| FieldDefinitionDelta "fieldDefinition"
+	} representation keyed
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionDefinitionDelta ipld
+	type CollectionDefinitionDelta struct {
+	priority Int
+	name optional String
+	querySelect optional Bytes
+	queryTransform optional Link
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionDelta ipld
+	type CollectionDelta struct {
+	priority Int
+	collectionVersionID String
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionSetDelta ipld
+	type CollectionSetDelta struct {
+	priority Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CounterDelta ipld
+	type CounterDelta struct {
+	fieldName String
+	priority Int
+	nonce Int
+	collectionVersionID String
+	data Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.DocCompositeDelta ipld
+	type DocCompositeDelta struct {
+	priority Int
+	collectionVersionID String
+	status Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.FieldDefinitionDelta ipld
+	type FieldDefinitionDelta struct {
+	priority Int
+	name optional String
+	crdt optional Int
+	scalarKind optional Int
+	collectionID optional String
+	relativeID optional Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.LWWDelta ipld
+	type LWWDelta struct {
+	fieldName String
+	priority Int
+	collectionVersionID String
+	data Bytes
+	}
 github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem struct
 	DocID string
 	Heads [][]uint8
