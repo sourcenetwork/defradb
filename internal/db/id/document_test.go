@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -250,6 +251,80 @@ func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, all, owners)
 	require.Greater(t, listReads, owners, "GetDocIDsForBlockFromStore reads every owner")
+}
+
+// blockOwnerKey builds the owner-edge key for (blockCID, docID) in the form BlockHasOwnersExcept
+// expects its excluded set to hold: the same bytes the owner-edge iterator yields.
+func blockOwnerKey(blockCID cid.Cid, docID string) string {
+	return string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())
+}
+
+// TestBlockHasOwnersExceptExcludedSoleOwner checks that a block whose only owner edge is in the
+// excluded set reports no owner, while the same block reports an owner when nothing is excluded.
+func TestBlockHasOwnersExceptExcludedSoleOwner(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-one"))
+
+	has, err := BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
+	require.NoError(t, err)
+	require.True(t, has, "with nothing excluded the block has an owner")
+
+	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-one"): {}}
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
+	require.NoError(t, err)
+	require.False(t, has, "excluding the only owner edge reports no owner")
+}
+
+// TestBlockHasOwnersExceptKeepsUnexcludedOwner checks that a block shared by two documents still
+// reports an owner while any of its edges is unexcluded, and reports none only once all are.
+func TestBlockHasOwnersExceptKeepsUnexcludedOwner(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("shared field value")).Cid()
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-one"))
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-two"))
+
+	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-one"): {}}
+	has, err := BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
+	require.NoError(t, err)
+	require.True(t, has, "one of two owners excluded: the block is still owned")
+
+	excluded[blockOwnerKey(fieldCID, "bae-doc-two")] = struct{}{}
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
+	require.NoError(t, err)
+	require.False(t, has, "both owners excluded: no owner remains")
+}
+
+// TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner checks the scan skips excluded owners but
+// stops at the first owner that is not excluded, rather than reading the whole owner set.
+func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("shared field value")).Cid()
+	const owners = 500
+	for i := range owners {
+		require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, fmt.Sprintf("bae-doc-%03d", i)))
+	}
+
+	// Owner edges iterate in key order, so excluding the first makes the scan skip it and stop at
+	// the second: two advances, not one and not the whole set.
+	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-000"): {}}
+	var reads int
+	has, err := BlockHasOwnersExcept(ctx, countingReader{txn.Systemstore(), &reads}, fieldCID, excluded)
+	require.NoError(t, err)
+	require.True(t, has)
+	require.Equal(t, 2, reads, "scan skips the excluded owner and stops at the next")
 }
 
 // countingReader wraps a corekv.Reader and tallies iterator advances so a test can assert

@@ -226,7 +226,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID)
+						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID, nil)
 						if err != nil {
 							return err
 						}
@@ -329,6 +329,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docShortID uint64,
+	prunedOwners map[string]struct{},
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 	docID, _, err := id.GetDocIDFromStore(ctx, systemstore, docShortID)
@@ -379,7 +380,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -455,7 +456,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			// the document blocks and their owner edges are deleted earlier in truncate (see the
 			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
 			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid)
+			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -486,6 +487,7 @@ func (c *collection) deleteBlocks(
 	systemstore corekv.ReaderWriter,
 	docID string,
 	currentCid cid.Cid,
+	prunedOwners map[string]struct{},
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
@@ -508,7 +510,18 @@ func (c *collection) deleteBlocks(
 		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
 			return false, err
 		}
-		hasOwners, err := id.BlockHasOwners(ctx, systemstore, blockCID)
+
+		// Reading ownership from the purge's write transaction re-sorts its entire pending-write
+		// set on every block, which is quadratic over a chunk. When prunedOwners is set, read the
+		// read-only snapshot and exclude this chunk's uncommitted edge deletions instead. Truncate
+		// has no transaction here, so it reads ownership directly.
+		ownerCtx := ctx
+		if prunedOwners != nil {
+			prunedOwners[string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())] = struct{}{}
+			ownerCtx = readCtx
+		}
+
+		hasOwners, err := id.BlockHasOwnersExcept(ownerCtx, systemstore, blockCID, prunedOwners)
 		if err != nil {
 			return false, err
 		}

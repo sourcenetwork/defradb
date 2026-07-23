@@ -16,11 +16,13 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
@@ -130,4 +132,102 @@ func TestPurgeByDocIDsRemovesIndexEntries(t *testing.T) {
 
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID),
 		"purge must delete the document's index entries")
+}
+
+// addSharedFieldDocs adds two User documents with the same name, so they share the name field
+// block, and different ages, so their age field and composite blocks differ.
+func addSharedFieldDocs(t *testing.T, ctx context.Context, col client.Collection) (*client.Document, *client.Document) {
+	t.Helper()
+
+	docA, err := client.NewDocFromJSON(ctx, []byte(`{"name":"shared","age":1}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docA))
+
+	docB, err := client.NewDocFromJSON(ctx, []byte(`{"name":"shared","age":2}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docB))
+
+	return docA, docB
+}
+
+// sharedFieldBlock returns the one field block that the documents with composite heads headA and
+// headB have in common, failing if they do not share exactly one. Field blocks are
+// content-addressed and carry no document identity, so an identical field value yields a shared
+// block owned by both documents.
+func sharedFieldBlock(t *testing.T, ctx context.Context, db *DB, headA, headB cid.Cid) cid.Cid {
+	t.Helper()
+
+	inB := make(map[cid.Cid]struct{})
+	for _, link := range loadTestBlock(t, ctx, db, headB).Links {
+		inB[link.Cid] = struct{}{}
+	}
+
+	var shared []cid.Cid
+	for _, link := range loadTestBlock(t, ctx, db, headA).Links {
+		if _, ok := inB[link.Cid]; ok {
+			shared = append(shared, link.Cid)
+		}
+	}
+	require.Len(t, shared, 1, "documents must share exactly one field block")
+	return shared[0]
+}
+
+func requireBlockPresent(t *testing.T, ctx context.Context, bs datastore.Blockstore, blockCID cid.Cid, want bool) {
+	t.Helper()
+	_, found, err := getBlock(ctx, bs, blockCID)
+	require.NoError(t, err)
+	require.Equal(t, want, found)
+}
+
+// TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc checks that pruning one document's
+// history keeps a field block a second document still owns, and removes it once the second
+// document is pruned too. The two purges run in separate transactions, so the second reads the
+// first's edge deletion from committed state.
+func TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docA, docB := addSharedFieldDocs(t, ctx, col)
+	shared := sharedFieldBlock(t, ctx, db, docA.Head(), docB.Head())
+
+	bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+	requireBlockPresent(t, ctx, bs, shared, true)
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID()}, true))
+	requireBlockPresent(t, ctx, bs, shared, true)
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docB.ID()}, true))
+	requireBlockPresent(t, ctx, bs, shared, false)
+}
+
+// TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether checks the same block is
+// removed when both owners are purged in one chunk. Here the first document's edge deletion is
+// still uncommitted when the second is checked, so the per-chunk owner tracking is what lets the
+// shared block be recognised as unowned rather than leaked.
+func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docA, docB := addSharedFieldDocs(t, ctx, col)
+	shared := sharedFieldBlock(t, ctx, db, docA.Head(), docB.Head())
+
+	bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+	requireBlockPresent(t, ctx, bs, shared, true)
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), docB.ID()}, true))
+	requireBlockPresent(t, ctx, bs, shared, false)
 }
