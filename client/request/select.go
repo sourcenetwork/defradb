@@ -92,18 +92,16 @@ func (s *Select) validateGroupBy() []error {
 				continue
 			}
 
-			var fieldExistsInGroupBy bool
-			var isAliasFieldInGroupBy bool
-			for _, groupByField := range s.GroupBy.Value().Fields {
-				if typedChildSelection.Name == groupByField {
-					fieldExistsInGroupBy = true
-					break
-				} else if typedChildSelection.Name == ToFieldID(groupByField) {
-					isAliasFieldInGroupBy = true
-					break
-				}
+			if !s.isFieldInGroupBy(typedChildSelection.Name) {
+				result = append(result, NewErrSelectOfNonGroupField(typedChildSelection.Name))
 			}
-			if !fieldExistsInGroupBy && !isAliasFieldInGroupBy {
+		case *Select:
+			if typedChildSelection.Name == GroupFieldName {
+				// GROUP is permitted
+				continue
+			}
+
+			if !s.isSelectInGroupBy(typedChildSelection.Name) {
 				result = append(result, NewErrSelectOfNonGroupField(typedChildSelection.Name))
 			}
 		default:
@@ -112,6 +110,24 @@ func (s *Select) validateGroupBy() []error {
 	}
 
 	return result
+}
+
+func (s *Select) isFieldInGroupBy(fieldName string) bool {
+	for _, groupByField := range s.GroupBy.Value().Fields {
+		if fieldName == groupByField || fieldName == ToFieldID(groupByField) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Select) isSelectInGroupBy(fieldName string) bool {
+	for _, groupByField := range s.GroupBy.Value().Fields {
+		if fieldName == groupByField || ToFieldID(fieldName) == groupByField {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
