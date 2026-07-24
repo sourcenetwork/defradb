@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -236,6 +237,49 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
+}
+
+// cosineSimilarityTolerance is how far an actual _similarity value may sit from the computed cosine
+// and still match. It absorbs the small difference between the mathematically exact (float64) cosine
+// and the value the engine produces from float32-stored vectors, whose components are not all exactly
+// representable in float32.
+const cosineSimilarityTolerance = 1e-6
+
+// CosineSimilarity matches a _similarity result against the cosine similarity of the two given
+// vectors, computed here rather than hard-coded. Use it wherever a test asserts a _similarity value:
+// it documents the vectors being compared and stays correct without pasting an opaque long float.
+//
+// The vectors are given as any numeric slices (the element type is irrelevant to cosine); the match
+// is within a small tolerance (see cosineSimilarityTolerance).
+func CosineSimilarity(source, vector []float64) *cosineSimilarity {
+	return &cosineSimilarity{source: source, vector: vector}
+}
+
+type cosineSimilarity struct {
+	source []float64
+	vector []float64
+}
+
+var _ gomega.OmegaMatcher = (*cosineSimilarity)(nil)
+
+// expected computes the cosine similarity of the two vectors using the SAME function the production
+// query path uses, so the matcher is an oracle that cannot drift from what the code computes.
+func (m *cosineSimilarity) expected() float64 {
+	return dbmath.CosineSimilarity(m.source, m.vector)
+}
+
+func (m *cosineSimilarity) Match(actual any) (bool, error) {
+	return gomega.BeNumerically("~", m.expected(), cosineSimilarityTolerance).Match(actual)
+}
+
+func (m *cosineSimilarity) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be the cosine similarity\n\t%v (within %v)",
+		actual, m.expected(), cosineSimilarityTolerance)
+}
+
+func (m *cosineSimilarity) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be the cosine similarity\n\t%v (within %v)",
+		actual, m.expected(), cosineSimilarityTolerance)
 }
 
 func ValidDocID() *validDocID {

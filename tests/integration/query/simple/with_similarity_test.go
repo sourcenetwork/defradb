@@ -161,7 +161,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(0.9759000729485332),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -228,7 +228,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(0.9759000729485332),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -265,7 +265,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(0.9759000729485332),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -302,7 +302,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(0.9759000729485332),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -351,11 +351,11 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 					"User": []map[string]any{
 						{
 							"name": "Bob",
-							"sim":  float64(0.7745966692414834),
+							"sim":  testUtils.CosineSimilarity([]float64{1, 1, 1}, []float64{1, 2, 0}),
 						},
 						{
 							"name": "Alice",
-							"sim":  float64(0.8854377448471461),
+							"sim":  testUtils.CosineSimilarity([]float64{4, 5, 3}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -404,11 +404,11 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 					"User": []map[string]any{
 						{
 							"name": "John",
-							"sim":  float64(0.9759000729485332),
+							"sim":  testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 						{
 							"name": "Alice",
-							"sim":  float64(0.8854377448471461),
+							"sim":  testUtils.CosineSimilarity([]float64{4, 5, 3}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -458,8 +458,8 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 					"User": []map[string]any{
 						{
 							"name": "John",
-							"sim":  float64(0.9759000729485332),
-							"sim2": float64(0.9683640522700839),
+							"sim":  testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
+							"sim2": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{2, 3, 0}),
 						},
 					},
 				},

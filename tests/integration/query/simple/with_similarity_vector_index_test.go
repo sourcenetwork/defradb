@@ -43,8 +43,8 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "x", "sim": float64(1)},
-						{"name": "xy", "sim": float64(0.9138115423811489)},
+						{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
+						{"name": "xy", "sim": testUtils.CosineSimilarity([]float64{0.9, 0.4, 0}, []float64{1, 0, 0})},
 					},
 				},
 			},
@@ -115,7 +115,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testin
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "b", "sim": float64(1)},
+						{"name": "b", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
 					},
 				},
 			},
@@ -149,8 +149,9 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"sim": float64(1)},
-						{"sim": float64(1)},
+						// unit [1,0,0] and long [10,0,0] both point along the query, so both are 1.
+						{"sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
+						{"sim": testUtils.CosineSimilarity([]float64{10, 0, 0}, []float64{1, 0, 0})},
 					},
 				},
 			},

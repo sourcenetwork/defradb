@@ -62,8 +62,8 @@ func TestVectorIndex_BackfillOverExistingDocs_ThenKNNReturnsNearest(t *testing.T
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "x", "sim": float64(1)},
-						{"name": "xy", "sim": float64(0.9138115423811489)},
+						{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
+						{"name": "xy", "sim": testUtils.CosineSimilarity([]float64{0.9, 0.4, 0}, []float64{1, 0, 0})},
 					},
 				},
 			},

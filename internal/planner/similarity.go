@@ -11,11 +11,10 @@
 package planner
 
 import (
-	"math"
-
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
 )
 
 type similarityNode struct {
@@ -136,13 +135,11 @@ func (n *similarityNode) Next() (bool, error) {
 
 func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 
-// cosineSimilarity returns the cosine similarity of two equal-length vectors: the dot product of
-// their unit-normalised forms, in the range [-1, 1] where 1 means identical direction. Normalising
-// is what makes this a true cosine (not a bare dot product), so the result does not depend on the
-// vectors' magnitudes. A zero-length vector has no direction, so its similarity is defined as 0.
-//
-// This must match the indexed path (which derives similarity as 1 - cosine distance from the graph),
-// so an ordered query returns the same results whether or not a vector index is used.
+// cosineSimilarity returns the cosine similarity of the field value and the query vector, requiring
+// them to be the same length. The similarity is in [-1, 1] where 1 means the same direction; because
+// it is a true cosine (normalised), it must match the indexed path (which derives similarity as
+// 1 - cosine distance from the graph), so an ordered query returns the same results whether or not a
+// vector index is used.
 func cosineSimilarity[T number](
 	source []T,
 	vector []T,
@@ -150,22 +147,7 @@ func cosineSimilarity[T number](
 	if len(source) != len(vector) {
 		return 0, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
 	}
-
-	var dot, sourceNorm, vectorNorm float64
-	for i := range source {
-		s, v := float64(source[i]), float64(vector[i])
-		dot += s * v
-		sourceNorm += s * s
-		vectorNorm += v * v
-	}
-
-	// A zero vector (all elements zero) has no direction; treat its similarity to anything as 0
-	// rather than dividing by zero.
-	if sourceNorm == 0 || vectorNorm == 0 {
-		return 0, nil
-	}
-
-	return dot / (math.Sqrt(sourceNorm) * math.Sqrt(vectorNorm)), nil
+	return dbmath.CosineSimilarity(source, vector), nil
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {
