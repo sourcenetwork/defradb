@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package vectorstore
+package vectorindex
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ import (
 
 // SearchWithDistance returns hits nearest-first, and the distance decreases towards the query. This
 // pins the ordering contract the query planner relies on (nearest first, smaller distance = nearer)
-// at the graph level, independent of the docID resolution that vectorstore.Search adds on top.
+// at the graph level, independent of the docID resolution that vectorindex.Search adds on top.
 func TestGraphSearchWithDistance_ReturnsNearestFirstByDistance(t *testing.T) {
 	ctx := newStoreTestCtx(t)
 	params := hnsw.DefaultParams(16)

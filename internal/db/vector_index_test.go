@@ -20,7 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/vectorstore"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 )
 
@@ -70,7 +70,7 @@ func vectorIndexGraph(t *testing.T, ctx context.Context, db *DB, col client.Coll
 	params := hnsw.DefaultParams(int(desc.Vector.HNSW.M))
 	params.EfConstruction = int(desc.Vector.HNSW.EfConstruction)
 	params.EfSearch = int(desc.Vector.HNSW.EfSearch)
-	return vectorstore.NewGraph(readCtx, collectionShortID, desc.ID, epoch, hnsw.Cosine, params)
+	return vectorindex.NewGraph(readCtx, collectionShortID, desc.ID, epoch, hnsw.Cosine, params)
 }
 
 func vectorIndexDocShortID(t *testing.T, ctx context.Context, db *DB, col client.Collection, docID string) hnsw.NodeID {

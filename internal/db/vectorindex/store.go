@@ -8,12 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// Package vectorstore binds the datastore-independent HNSW engine (internal/index/hnsw) to
-// DefraDB's transaction datastore. It is the one place that knows how a vector index's graph is
-// laid out in the key/value store, so both the write path (package db, maintaining the graph as
-// documents change) and the read path (the query planner, searching the graph) build a graph the
-// same way without either importing the other.
-package vectorstore
+// Package vectorindex is the DefraDB side of a vector index: it binds the datastore-independent HNSW
+// engine (internal/index/hnsw) to DefraDB's transaction datastore, and builds and searches the graph
+// on top of it. It is the one place that knows how a vector index's graph is laid out in the
+// key/value store, so both the write path (package db, maintaining the graph as documents change)
+// and the read path (the query planner, searching the graph) work through it without either
+// importing the other.
+package vectorindex
 
 import (
 	"context"

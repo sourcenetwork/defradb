@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/vectorstore"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
@@ -487,7 +487,7 @@ func (index *collectionVectorIndex) resolveCollectionShortID(ctx context.Context
 }
 
 // graph builds the HNSW graph for this index, reading and writing through the transaction on ctx.
-// The graph itself (and its datastore-backed store) lives in the shared vectorstore package so the
+// The graph itself (and its datastore-backed store) lives in the shared vectorindex package so the
 // query planner builds it the same way when searching.
 func (index *collectionVectorIndex) graph(ctx context.Context) (*hnsw.Graph, uint32, error) {
 	collectionShortID, err := index.resolveCollectionShortID(ctx)
@@ -495,7 +495,7 @@ func (index *collectionVectorIndex) graph(ctx context.Context) (*hnsw.Graph, uin
 		return nil, 0, err
 	}
 
-	g := vectorstore.NewGraph(ctx, collectionShortID, index.desc.ID, index.epoch, index.metric, index.params)
+	g := vectorindex.NewGraph(ctx, collectionShortID, index.desc.ID, index.epoch, index.metric, index.params)
 	return g, collectionShortID, nil
 }
 

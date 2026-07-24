@@ -15,7 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
-	"github.com/sourcenetwork/defradb/internal/db/vectorstore"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -134,7 +134,7 @@ func (n *selectNode) vectorSearchPrefixes(
 		return nil, err
 	}
 
-	results, err := vectorstore.Search(
+	results, err := vectorindex.Search(
 		n.planner.ctx, collectionShortID, index.ID, epoch, metric, params, query, k,
 	)
 	if err != nil {
