@@ -60,6 +60,7 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 	}
 
 	origScan.Prefixes(prefixes)
+	origScan.vectorIndexed = true
 	// Empty prefixes would otherwise let the scan fall back to reading the whole collection.
 	if len(prefixes) == 0 {
 		origScan.noResults = true

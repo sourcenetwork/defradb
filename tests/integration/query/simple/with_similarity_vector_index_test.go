@@ -49,8 +49,8 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 					},
 				},
 			},
-			// The same query under explain fetches only the two nearest documents, not all four,
-			// proving the vector index narrowed the scan rather than falling back to a full scan.
+			// The same query under explain reports one index fetch (the graph search) and fetches only
+			// the two nearest documents, proving it routed to the vector index rather than full-scanning.
 			&action.Request{
 				Request: `query @explain(type: execute) {
 					User(order: {_alias: {sim: DESC}}, limit: 2){
@@ -58,7 +58,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
 			},
 		},
 	}
@@ -135,6 +135,87 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing
 						{"sim": testUtils.CosineSimilarity([]float64{10, 0, 0}, []float64{1, 0, 0})},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// The vector index answers "nearest", which is order:DESC. An ascending order asks for the farthest
+// documents, which HNSW cannot serve, so the query must fall back to a full scan and still return the
+// correct farthest-first result. The explain variant confirms the fallback: no index fetch, and all
+// four documents scanned.
+func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *testing.T) {
+	docs := []any{
+		&action.AddDoc{DocMap: map[string]any{"name": "near", "vector": []float32{1, 0, 0}}},
+		&action.AddDoc{DocMap: map[string]any{"name": "mid", "vector": []float32{0.8, 0.6, 0}}},
+		&action.AddDoc{DocMap: map[string]any{"name": "far", "vector": []float32{0.1, 1, 0}}},
+		&action.AddDoc{DocMap: map[string]any{"name": "opp", "vector": []float32{-1, 0.2, 0}}},
+	}
+
+	test := testUtils.TestCase{
+		Actions: append([]any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+				}`,
+			},
+		}, append(docs,
+			// The two farthest from [1,0,0]: opp (negative similarity) then far.
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: ASC}}, limit: 2){
+						name
+						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "opp", "sim": testUtils.CosineSimilarity([]float64{-1, 0.2, 0}, []float64{1, 0, 0})},
+						{"name": "far", "sim": testUtils.CosineSimilarity([]float64{0.1, 1, 0}, []float64{1, 0, 0})},
+					},
+				},
+			},
+			&action.Request{
+				Request: `query @explain(type: execute) {
+					User(order: {_alias: {sim: ASC}}, limit: 2){
+						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(4),
+			},
+		)...),
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Without an order clause a _similarity + limit query is not a nearest-neighbour query: it asks for
+// any k documents plus their similarity, not the k nearest. Routing would wrongly return the nearest,
+// so the query must not route. Explain confirms it: no index fetch. (docFetches cannot show this, as
+// a limit reads only k documents whether or not it routed.)
+func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotRoute(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "z", "vector": []float32{0, 0, 1}}},
+			&action.Request{
+				Request: `query @explain(type: execute) {
+					User(limit: 2){
+						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}

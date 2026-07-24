@@ -23,9 +23,9 @@ import (
 // scalar indexes. The build is held at the gate to observe the building state, then released; once
 // ready, a nearest-neighbour query fetches only the two nearest of the four pre-existing documents.
 //
-// The docFetches assertion is what proves the backfill actually built a usable graph: a failed or
-// empty backfill would leave the index non-ready, the query would fall back to a full scan, and
-// docFetches would be four, not two.
+// The explain assertion is what proves the backfill actually built a usable graph: a failed or empty
+// backfill would leave the index non-ready and the query would full-scan, giving indexFetches 0 and
+// docFetches four instead of the routed 1 and 2.
 func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.T) {
 	release, cleanup := installBuildGate(t)
 	defer cleanup()
@@ -125,7 +125,7 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(2),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
 			},
 		},
 	}
