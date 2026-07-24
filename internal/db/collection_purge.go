@@ -91,8 +91,16 @@ func (c *collection) purgeChunk(
 
 	c.db.lockSet.CollectionLock(txn, shortID)
 
+	// Tracks owner edges this chunk deletes but has not yet committed. deleteBlocks checks
+	// ownership against a read-only snapshot that cannot see those uncommitted deletions, and a
+	// block may be owned by several documents in the chunk, so the set is chunk-wide.
+	var prunedOwners map[string]struct{}
+	if pruneHistory {
+		prunedOwners = make(map[string]struct{})
+	}
+
 	for _, docID := range docIDs {
-		if err := c.purgeOneDoc(ctx, shortID, docID, pruneHistory); err != nil {
+		if err := c.purgeOneDoc(ctx, shortID, docID, pruneHistory, prunedOwners); err != nil {
 			return err
 		}
 	}
@@ -105,6 +113,7 @@ func (c *collection) purgeOneDoc(
 	shortID uint32,
 	docID client.DocID,
 	pruneHistory bool,
+	prunedOwners map[string]struct{},
 ) error {
 	docShortID, found, err := id.GetDocShortID(ctx, shortID, docID.String())
 	if err != nil {
@@ -137,7 +146,7 @@ func (c *collection) purgeOneDoc(
 
 	systemstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Systemstore()
 	if pruneHistory {
-		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, docShortID); err != nil {
+		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, docShortID, prunedOwners); err != nil {
 			return err
 		}
 	} else {

@@ -56,6 +56,26 @@ func (c *BatchCIDCollector) GetCIDs() []cid.Cid {
 	return out
 }
 
+// Len returns the number of collected CIDs.
+func (c *BatchCIDCollector) Len() int {
+	c.mu.Lock()
+	n := len(c.cids)
+	c.mu.Unlock()
+	return n
+}
+
+// Truncate keeps the first n collected CIDs and discards the rest. It panics if n is out
+// of range [0, Len], since that is a caller bug.
+func (c *BatchCIDCollector) Truncate(n int) {
+	c.mu.Lock()
+	if n < 0 || n > len(c.cids) {
+		c.mu.Unlock()
+		panic("coreblock: BatchCIDCollector.Truncate out of range")
+	}
+	c.cids = c.cids[:n]
+	c.mu.Unlock()
+}
+
 // ContextWithBatchSigning embeds a BatchCIDCollector into the context so that
 // code deep in the call stack can record CIDs without threading extra parameters.
 func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) context.Context {

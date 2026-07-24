@@ -38,6 +38,11 @@ func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) 
 	return coreblock.ContextWithBatchSigning(ctx, collector)
 }
 
+// BatchSigningCollectorFromContext returns the BatchCIDCollector embedded in ctx, or nil.
+func BatchSigningCollectorFromContext(ctx context.Context) *BatchCIDCollector {
+	return coreblock.BatchSigningCollectorFromContext(ctx)
+}
+
 // IsBatchSigningEnabled returns true if a BatchCIDCollector is present in ctx.
 func IsBatchSigningEnabled(ctx context.Context) bool {
 	return coreblock.IsBatchSigningEnabled(ctx)
