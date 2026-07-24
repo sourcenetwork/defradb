@@ -8,12 +8,6 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// Package vectorindex is the DefraDB side of a vector index: it binds the datastore-independent HNSW
-// engine (internal/index/hnsw) to DefraDB's transaction datastore, and builds and searches the graph
-// on top of it. It is the one place that knows how a vector index's graph is laid out in the
-// key/value store, so both the write path (package db, maintaining the graph as documents change)
-// and the read path (the query planner, searching the graph) work through it without either
-// importing the other.
 package vectorindex
 
 import (
@@ -27,21 +21,21 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// NodeStore implements hnsw.NodeStore over one vector index's (collection, index, epoch) keyspace.
+// nodeStore implements hnsw.NodeStore over one vector index's (collection, index, epoch) keyspace.
 // It holds ctx because, like the rest of the index code, it resolves the transaction from ctx per
 // call rather than pinning one.
-type NodeStore struct {
+type nodeStore struct {
 	ctx               context.Context
 	collectionShortID uint32
 	indexID           uint32
 	epoch             uint32
 }
 
-var _ hnsw.NodeStore = (*NodeStore)(nil)
+var _ hnsw.NodeStore = (*nodeStore)(nil)
 
-// NewNodeStore returns a NodeStore scoped to the given (collection, index, epoch) keyspace.
-func NewNodeStore(ctx context.Context, collectionShortID, indexID, epoch uint32) *NodeStore {
-	return &NodeStore{
+// newNodeStore returns a nodeStore scoped to the given (collection, index, epoch) keyspace.
+func newNodeStore(ctx context.Context, collectionShortID, indexID, epoch uint32) *nodeStore {
+	return &nodeStore{
 		ctx:               ctx,
 		collectionShortID: collectionShortID,
 		indexID:           indexID,
@@ -50,7 +44,7 @@ func NewNodeStore(ctx context.Context, collectionShortID, indexID, epoch uint32)
 }
 
 // GetNode returns the node with the given id, or ok == false if no such node has been stored.
-func (s *NodeStore) GetNode(id hnsw.NodeID) (hnsw.Node, bool, error) {
+func (s *nodeStore) GetNode(id hnsw.NodeID) (hnsw.Node, bool, error) {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	key := keys.NewVectorNodeKey(s.collectionShortID, s.indexID, s.epoch, uint64(id))
 
@@ -70,7 +64,7 @@ func (s *NodeStore) GetNode(id hnsw.NodeID) (hnsw.Node, bool, error) {
 }
 
 // PutNode stores n, replacing any previously stored node with the same id.
-func (s *NodeStore) PutNode(n hnsw.Node) error {
+func (s *nodeStore) PutNode(n hnsw.Node) error {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	key := keys.NewVectorNodeKey(s.collectionShortID, s.indexID, s.epoch, uint64(n.ID))
 
@@ -87,7 +81,7 @@ func (s *NodeStore) PutNode(n hnsw.Node) error {
 
 // GetMeta returns the graph's meta singleton, or a zero-value Meta with Empty set to true if no
 // graph has been built yet.
-func (s *NodeStore) GetMeta() (hnsw.Meta, error) {
+func (s *nodeStore) GetMeta() (hnsw.Meta, error) {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	key := keys.NewVectorMetaKey(s.collectionShortID, s.indexID, s.epoch)
 
@@ -107,7 +101,7 @@ func (s *NodeStore) GetMeta() (hnsw.Meta, error) {
 }
 
 // PutMeta stores m as the graph's meta singleton, replacing any previously stored value.
-func (s *NodeStore) PutMeta(m hnsw.Meta) error {
+func (s *nodeStore) PutMeta(m hnsw.Meta) error {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	key := keys.NewVectorMetaKey(s.collectionShortID, s.indexID, s.epoch)
 
@@ -125,7 +119,7 @@ func (s *NodeStore) PutMeta(m hnsw.Meta) error {
 // IterateNodes iterates over all non-deleted node entries stored for this (collection, index,
 // epoch), calling fn for each. Iteration stops early if fn returns an error, and that error is
 // returned to the caller.
-func (s *NodeStore) IterateNodes(fn func(hnsw.Node) error) error {
+func (s *nodeStore) IterateNodes(fn func(hnsw.Node) error) error {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	prefix := keys.NewVectorNodePrefix(s.collectionShortID, s.indexID, s.epoch)
 

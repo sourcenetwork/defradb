@@ -142,7 +142,6 @@ const (
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
-	errUnsupportedVectorMetric             string = "unsupported vector distance metric"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -1243,14 +1242,5 @@ func NewErrVectorDimensionMismatch(expected, actual int) error {
 		errVectorDimensionMismatch,
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),
-	)
-}
-
-// NewErrUnsupportedVectorMetric returns a new error indicating that the vector index's
-// configured distance metric is not supported by the HNSW engine.
-func NewErrUnsupportedVectorMetric(metric client.DistanceMetric) error {
-	return errors.New(
-		errUnsupportedVectorMetric,
-		errors.NewKV("Metric", metric),
 	)
 }

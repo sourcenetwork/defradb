@@ -48,7 +48,7 @@ func newStoreTestCtx(t *testing.T) context.Context {
 
 func TestNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store := NewNodeStore(ctx, 1, 1, 1)
+	store := newNodeStore(ctx, 1, 1, 1)
 
 	node := hnsw.Node{
 		ID:     5,
@@ -67,7 +67,7 @@ func TestNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
 
 func TestNodeStore_GetNode_IfMissing_ReturnsNotFound(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store := NewNodeStore(ctx, 1, 1, 1)
+	store := newNodeStore(ctx, 1, 1, 1)
 
 	got, ok, err := store.GetNode(999)
 	require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestNodeStore_GetNode_IfMissing_ReturnsNotFound(t *testing.T) {
 
 func TestNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store := NewNodeStore(ctx, 1, 1, 1)
+	store := newNodeStore(ctx, 1, 1, 1)
 
 	meta := hnsw.Meta{
 		EntryPoint: 3,
@@ -94,7 +94,7 @@ func TestNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
 
 func TestNodeStore_GetMeta_IfEmptyKeyspace_ReturnsEmptyMeta(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store := NewNodeStore(ctx, 1, 1, 1)
+	store := newNodeStore(ctx, 1, 1, 1)
 
 	got, err := store.GetMeta()
 	require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestNodeStore_GetMeta_IfEmptyKeyspace_ReturnsEmptyMeta(t *testing.T) {
 
 func TestNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store := NewNodeStore(ctx, 1, 1, 1)
+	store := newNodeStore(ctx, 1, 1, 1)
 
 	require.NoError(t, store.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 	require.NoError(t, store.PutNode(hnsw.Node{ID: 2, Vector: []float32{2}}))
@@ -121,8 +121,8 @@ func TestNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testing.T) {
 
 func TestNodeStore_DifferentIndexIDs_AreIsolated(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store1 := NewNodeStore(ctx, 1, 1, 1)
-	store2 := NewNodeStore(ctx, 1, 2, 1)
+	store1 := newNodeStore(ctx, 1, 1, 1)
+	store2 := newNodeStore(ctx, 1, 2, 1)
 
 	require.NoError(t, store1.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 
@@ -141,8 +141,8 @@ func TestNodeStore_DifferentIndexIDs_AreIsolated(t *testing.T) {
 
 func TestNodeStore_DifferentEpochs_AreIsolated(t *testing.T) {
 	ctx := newStoreTestCtx(t)
-	store1 := NewNodeStore(ctx, 1, 1, 1)
-	store2 := NewNodeStore(ctx, 1, 1, 2)
+	store1 := newNodeStore(ctx, 1, 1, 1)
+	store2 := newNodeStore(ctx, 1, 1, 2)
 
 	require.NoError(t, store1.PutNode(hnsw.Node{ID: 1, Vector: []float32{1}}))
 	require.NoError(t, store1.PutMeta(hnsw.Meta{EntryPoint: 1, TopLayer: 0}))

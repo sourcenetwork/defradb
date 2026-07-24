@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
-	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -129,13 +128,8 @@ func (n *selectNode) vectorSearchPrefixes(
 		return nil, err
 	}
 
-	metric, params, err := vectorIndexMetricAndParams(index)
-	if err != nil {
-		return nil, err
-	}
-
 	results, err := vectorindex.Search(
-		n.planner.ctx, collectionShortID, index.ID, epoch, metric, params, query, k,
+		n.planner.ctx, collectionShortID, index.ID, epoch, *index.Vector, query, k,
 	)
 	if err != nil {
 		return nil, err
@@ -164,21 +158,4 @@ func similarityQueryVector(vector any) ([]float32, bool) {
 		return nil, false
 	}
 	return vec, true
-}
-
-// vectorIndexMetricAndParams must build the metric and params the same way the write path does, so
-// search traverses the same graph that maintenance wrote.
-func vectorIndexMetricAndParams(index client.IndexDescription) (hnsw.Metric, hnsw.Params, error) {
-	var metric hnsw.Metric
-	switch index.Vector.Metric {
-	case client.DistanceMetricCosine:
-		metric = hnsw.Cosine
-	default:
-		return 0, hnsw.Params{}, ErrUnsupportedVectorMetric
-	}
-
-	params := hnsw.DefaultParams(int(index.Vector.HNSW.M))
-	params.EfConstruction = int(index.Vector.HNSW.EfConstruction)
-	params.EfSearch = int(index.Vector.HNSW.EfSearch)
-	return metric, params, nil
 }

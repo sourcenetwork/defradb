@@ -11,12 +11,27 @@
 package vectorindex
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errVectorIndexStore string = "vector index store operation failed"
+	errUnsupportedAlgorithm string = "unsupported vector index algorithm"
+	errUnsupportedMetric    string = "unsupported vector index distance metric"
+	errVectorIndexStore     string = "vector index store operation failed"
 )
+
+// newErrUnsupportedAlgorithm returns an error indicating the index description asked for a vector
+// algorithm that has no implementation.
+func newErrUnsupportedAlgorithm(a client.VectorAlgorithm) error {
+	return errors.New(errUnsupportedAlgorithm, errors.NewKV("Algorithm", a))
+}
+
+// newErrUnsupportedMetric returns an error indicating the index asked for a distance metric the
+// selected algorithm does not support.
+func newErrUnsupportedMetric(m client.DistanceMetric) error {
+	return errors.New(errUnsupportedMetric, errors.NewKV("Metric", m))
+}
 
 // newErrVectorIndexStore returns a new error indicating that a vector index store operation
 // (against its datastore-backed node/meta keyspace) failed.

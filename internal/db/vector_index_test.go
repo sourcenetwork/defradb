@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
-	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 )
 
 // newVectorIndexTestDB opens an in-memory badger-backed DB with a collection carrying a
@@ -47,9 +46,13 @@ func newVectorIndexTestDB(t *testing.T, dimensions int) (context.Context, *DB, c
 	return ctx, db, col
 }
 
-// vectorIndexGraph builds a read-only view of the graph maintained by col's vector index,
-// against a fresh read transaction on ctx.
-func vectorIndexGraph(t *testing.T, ctx context.Context, db *DB, col client.Collection) *hnsw.Graph {
+// vectorIndexSearch runs a nearest-neighbour search against col's vector index over a fresh read
+// transaction, returning the matched document ids nearest-first. It goes through the same
+// vectorindex.Search the query planner uses, so the write-path tests verify the graph the way the
+// database actually reads it.
+func vectorIndexSearch(
+	t *testing.T, ctx context.Context, db *DB, col client.Collection, query []float32, k int,
+) []string {
 	t.Helper()
 
 	txn, err := db.NewTxn(true)
@@ -67,27 +70,14 @@ func vectorIndexGraph(t *testing.T, ctx context.Context, db *DB, col client.Coll
 	epoch, err := getIndexEpoch(readCtx, col.Version().CollectionID, desc.ID)
 	require.NoError(t, err)
 
-	params := hnsw.DefaultParams(int(desc.Vector.HNSW.M))
-	params.EfConstruction = int(desc.Vector.HNSW.EfConstruction)
-	params.EfSearch = int(desc.Vector.HNSW.EfSearch)
-	return vectorindex.NewGraph(readCtx, collectionShortID, desc.ID, epoch, hnsw.Cosine, params)
-}
-
-func vectorIndexDocShortID(t *testing.T, ctx context.Context, db *DB, col client.Collection, docID string) hnsw.NodeID {
-	t.Helper()
-
-	txn, err := db.NewTxn(true)
-	require.NoError(t, err)
-	t.Cleanup(txn.Discard)
-	readCtx := InitContext(ctx, txn)
-
-	collectionShortID, err := id.GetCollectionShortID(readCtx, col.Version().CollectionID)
+	results, err := vectorindex.Search(readCtx, collectionShortID, desc.ID, epoch, *desc.Vector, query, k)
 	require.NoError(t, err)
 
-	docShortID, found, err := id.GetDocShortID(readCtx, collectionShortID, docID)
-	require.NoError(t, err)
-	require.True(t, found)
-	return hnsw.NodeID(docShortID)
+	docIDs := make([]string, len(results))
+	for i, r := range results {
+		docIDs[i] = r.DocID
+	}
+	return docIDs
 }
 
 func TestCollectionVectorIndex_Save_InsertsIntoGraphAndIsSearchable(t *testing.T) {
@@ -101,13 +91,9 @@ func TestCollectionVectorIndex_Save_InsertsIntoGraphAndIsSearchable(t *testing.T
 	require.NoError(t, err)
 	require.NoError(t, col.SaveDocument(ctx, doc2))
 
-	graph := vectorIndexGraph(t, ctx, db, col)
-	results, err := graph.Search([]float32{1, 0, 0}, 1, 10)
-	require.NoError(t, err)
+	results := vectorIndexSearch(t, ctx, db, col, []float32{1, 0, 0}, 1)
 	require.Len(t, results, 1)
-
-	wantID := vectorIndexDocShortID(t, ctx, db, col, doc1.ID().String())
-	assert.Equal(t, wantID, results[0])
+	assert.Equal(t, doc1.ID().String(), results[0])
 }
 
 func TestCollectionVectorIndex_Delete_ExcludesDocFromSearch(t *testing.T) {
@@ -125,13 +111,9 @@ func TestCollectionVectorIndex_Delete_ExcludesDocFromSearch(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, deleted)
 
-	graph := vectorIndexGraph(t, ctx, db, col)
-	results, err := graph.Search([]float32{1, 0, 0}, 2, 10)
-	require.NoError(t, err)
-
-	wantExcludedID := vectorIndexDocShortID(t, ctx, db, col, doc1.ID().String())
-	for _, id := range results {
-		assert.NotEqual(t, wantExcludedID, id)
+	results := vectorIndexSearch(t, ctx, db, col, []float32{1, 0, 0}, 2)
+	for _, docID := range results {
+		assert.NotEqual(t, doc1.ID().String(), docID)
 	}
 }
 
@@ -151,23 +133,17 @@ func TestCollectionVectorIndex_Update_ReplacesVectorInGraph(t *testing.T) {
 	require.NoError(t, doc.Set(ctx, "embedding", []float32{0, 1, 0}))
 	require.NoError(t, col.UpdateDocument(ctx, doc))
 
-	graph := vectorIndexGraph(t, ctx, db, col)
-
 	// The updated doc is now the nearest match to its new vector.
-	results, err := graph.Search([]float32{0, 1, 0}, 1, 10)
-	require.NoError(t, err)
+	results := vectorIndexSearch(t, ctx, db, col, []float32{0, 1, 0}, 1)
 	require.Len(t, results, 1)
-	wantID := vectorIndexDocShortID(t, ctx, db, col, doc.ID().String())
-	assert.Equal(t, wantID, results[0])
+	assert.Equal(t, doc.ID().String(), results[0])
 
 	// Searching near the old vector now finds "stationary" as the nearest match: "moving"'s old
 	// entry was replaced in place (its node id now holds the new vector), not left behind as a
 	// stale duplicate at the old location.
-	oldResults, err := graph.Search([]float32{1, 0, 0}, 1, 10)
-	require.NoError(t, err)
+	oldResults := vectorIndexSearch(t, ctx, db, col, []float32{1, 0, 0}, 1)
 	require.Len(t, oldResults, 1)
-	stationaryID := vectorIndexDocShortID(t, ctx, db, col, stationary.ID().String())
-	assert.Equal(t, stationaryID, oldResults[0])
+	assert.Equal(t, stationary.ID().String(), oldResults[0])
 }
 
 func TestCollectionVectorIndex_Save_DimensionMismatch_ReturnsTypedError(t *testing.T) {
