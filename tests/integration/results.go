@@ -239,18 +239,12 @@ func (matcher *docIDAt) String() string {
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
-// cosineSimilarityTolerance is how far an actual _similarity value may sit from the computed cosine
-// and still match. It absorbs the small difference between the mathematically exact (float64) cosine
-// and the value the engine produces from float32-stored vectors, whose components are not all exactly
-// representable in float32.
+// cosineSimilarityTolerance absorbs the gap between the exact float64 cosine and the value the engine
+// gets from float32-stored vectors, whose components are not all exactly representable in float32.
 const cosineSimilarityTolerance = 1e-6
 
-// CosineSimilarity matches a _similarity result against the cosine similarity of the two given
-// vectors, computed here rather than hard-coded. Use it wherever a test asserts a _similarity value:
-// it documents the vectors being compared and stays correct without pasting an opaque long float.
-//
-// The vectors are given as any numeric slices (the element type is irrelevant to cosine); the match
-// is within a small tolerance (see cosineSimilarityTolerance).
+// CosineSimilarity matches a _similarity result against the cosine of the two given vectors. Prefer
+// it over a hard-coded float: it names the vectors under comparison and cannot go stale.
 func CosineSimilarity(source, vector []float64) *cosineSimilarity {
 	return &cosineSimilarity{source: source, vector: vector}
 }

@@ -26,9 +26,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// NodeStore implements hnsw.NodeStore over a DefraDB transaction datastore, persisting the graph
-// under the vector-index keyspace for one (collection, index, epoch). The transaction is carried on
-// ctx, same as the rest of the index code, and is resolved per call.
+// NodeStore implements hnsw.NodeStore over one vector index's (collection, index, epoch) keyspace.
+// It holds ctx because, like the rest of the index code, it resolves the transaction from ctx per
+// call rather than pinning one.
 type NodeStore struct {
 	ctx               context.Context
 	collectionShortID uint32
@@ -38,8 +38,7 @@ type NodeStore struct {
 
 var _ hnsw.NodeStore = (*NodeStore)(nil)
 
-// NewNodeStore returns an hnsw.NodeStore backed by the transaction datastore reachable from ctx,
-// scoped to the given (collection, index, epoch) keyspace.
+// NewNodeStore returns a NodeStore scoped to the given (collection, index, epoch) keyspace.
 func NewNodeStore(ctx context.Context, collectionShortID, indexID, epoch uint32) *NodeStore {
 	return &NodeStore{
 		ctx:               ctx,

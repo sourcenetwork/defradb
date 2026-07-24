@@ -565,9 +565,9 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 // the node to itself. Deleting first marks the node dead so the insert ignores it; the insert then
 // overwrites the node and clears the dead mark.
 //
-// TODO(Phase 4/reclaim): like every HNSW delete, links from other nodes into the old node stay
-// until a later cleanup pass removes them. This only lowers recall; results stay correct because a
-// deleted node is never returned.
+// Links from other nodes into the replaced node are left dangling, as with any HNSW delete. This
+// only lowers recall over time, never correctness, since a deleted node is never returned; a reclaim
+// pass to unlink and physically remove tombstones is not yet built.
 func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
 	if err := index.Delete(ctx, oldDoc); err != nil {
 		return err

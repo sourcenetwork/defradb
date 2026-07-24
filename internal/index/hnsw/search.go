@@ -100,15 +100,10 @@ func (g *Graph) search(query []float32, k, efSearch int) ([]candidate, error) {
 	return w, nil
 }
 
-// Delete tombstones the node with the given id: it marks the node as
-// deleted but leaves its links intact so that graph connectivity (and
-// traversal through it) is preserved. Deleted nodes are excluded from
-// Search results.
-//
-// TODO: if the entry point itself is deleted, search still works because
-// traversal passes through deleted nodes, but a full reclaim/repair pass
-// (e.g. picking a new entry point, unlinking tombstones) is left for a
-// later phase.
+// Delete tombstones the node: it stays linked so traversal through it is preserved, but is excluded
+// from Search results. Links are left intact deliberately, even when the entry point is deleted,
+// because traversal still passes through tombstones. Physically unlinking them and promoting a new
+// entry point needs a reclaim pass that is not yet built.
 func (g *Graph) Delete(id NodeID) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()

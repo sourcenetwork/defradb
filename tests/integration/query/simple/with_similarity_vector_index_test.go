@@ -19,8 +19,9 @@ import (
 )
 
 // A _similarity + order:{_similarity:DESC} + limit query on a field with a ready @vectorIndex returns
-// the k documents nearest to the query vector, in nearest-first order. The vectors are chosen so the
-// nearest to [1,0,0] is clearly "x", then "xy", then "y"; the query asks for the two nearest.
+// the k documents nearest to the query vector, in nearest-first order (the nearest to [1,0,0] is "x",
+// then "xy"), AND fetches only those k documents rather than scanning the whole collection: the
+// explain variant of the same query reports two doc fetches (a full-scan fallback would fetch four).
 func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -48,28 +49,8 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 					},
 				},
 			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-// The routed query fetches only the k nearest documents, not the whole collection: with four
-// documents and limit 2, the scan reads two. This proves the vector index narrowed the scan (a
-// full-scan fallback would fetch all four).
-func TestQuerySimple_WithSimilarityOnVectorIndex_FetchesOnlyKDocuments(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `type User {
-					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
-				}`,
-			},
-			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "z", "vector": []float32{0, 0, 1}}},
+			// The same query under explain fetches only the two nearest documents, not all four,
+			// proving the vector index narrowed the scan rather than falling back to a full scan.
 			&action.Request{
 				Request: `query @explain(type: execute) {
 					User(order: {_alias: {sim: DESC}}, limit: 2){

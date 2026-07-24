@@ -16,12 +16,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/index/hnsw"
 )
 
-// NewGraph builds the HNSW graph for one vector index, reading and writing through the transaction
-// on ctx. Both the write path (maintaining the graph) and the read path (searching it) call this so
-// they always build the graph the same way.
+// NewGraph exists so the write path (maintaining the graph) and the read path (searching it) build
+// it identically; a mismatch would make search traverse a graph unlike the one that was written.
 //
-// The seed is the index id rather than a random value, so inserts make the same random layer choices
-// every run. The index id is stable and unique within its collection, so it works as a seed.
+// The seed is the index id, not a random value, so layer choices are reproducible across runs. The
+// index id is stable and unique within its collection, so it serves as one.
 func NewGraph(
 	ctx context.Context,
 	collectionShortID, indexID, epoch uint32,
