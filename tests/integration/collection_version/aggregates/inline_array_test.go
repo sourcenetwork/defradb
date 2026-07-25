@@ -1459,6 +1459,12 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter
 																	"name": nil,
 																},
 															},
+															map[string]any{
+																"name": "_regex",
+																"type": map[string]any{
+																	"name": "String",
+																},
+															},
 														},
 													},
 												},
@@ -1607,6 +1613,12 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *test
 																"name": "_or",
 																"type": map[string]any{
 																	"name": nil,
+																},
+															},
+															map[string]any{
+																"name": "_regex",
+																"type": map[string]any{
+																	"name": "String",
 																},
 															},
 														},

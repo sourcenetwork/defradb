@@ -742,6 +742,10 @@ func StringOperatorBlock() *gql.InputObject {
 				Description: nilikeStringOperatorDescription,
 				Type:        gql.String,
 			},
+			connor.RegexOp: &gql.InputObjectFieldConfig{
+				Description: regexStringOperatorDescription,
+				Type:        gql.String,
+			},
 		},
 	})
 }
@@ -812,6 +816,10 @@ func NotNullStringOperatorBlock() *gql.InputObject {
 			},
 			connor.CaseInsensitiveNotLikeOp: &gql.InputObjectFieldConfig{
 				Description: nilikeStringOperatorDescription,
+				Type:        gql.String,
+			},
+			connor.RegexOp: &gql.InputObjectFieldConfig{
+				Description: regexStringOperatorDescription,
 				Type:        gql.String,
 			},
 		},

@@ -240,6 +240,11 @@ The case insensitive not-like operator - if the target value does not contain th
  the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
  the string 'Quentin Tarantino'.
 `
+	regexStringOperatorDescription string = `
+The regex operator - if the target value matches the given regular expression anywhere within it the check will
+ pass. The syntax is RE2, for example '_regex: "^Jo.*n$"' would match on the string 'John'. Anchor the pattern
+ with '^' and '$' to match the whole value.
+`
 	AndOperatorDescription string = `
 The and operator - all checks within this clause must pass in order for this check to pass.
 `
