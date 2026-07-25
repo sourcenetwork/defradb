@@ -50,6 +50,19 @@ func queryableIndexesOnField(col client.Collection, fieldName string) []client.I
 	return result
 }
 
+// invertibleJoinIndexesOnField returns the indexes on fieldName that can drive the child scan of
+// an inverted join. That scan runs through the ordinary index path with a filter derived from the
+// parent side, so only a kind that serves such a condition qualifies.
+func invertibleJoinIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
+	var result []client.IndexDescription
+	for _, idx := range queryableIndexesOnField(col, fieldName) {
+		if indexKindServesOperator(idx.Kind, opRelatedFilter) {
+			result = append(result, idx)
+		}
+	}
+	return result
+}
+
 // opRelatedFilter stands in for a condition that is not applied to the field itself but to a
 // field of the collection it relates to, and so has no operator of its own on this field.
 const opRelatedFilter = ""

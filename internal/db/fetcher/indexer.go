@@ -145,10 +145,18 @@ func newIndexFetcher(
 	}
 
 	var iter indexIterator
-	if indexDesc.Kind == client.IndexKindTrigram {
+	switch indexDesc.Kind {
+	case client.IndexKindTrigram:
 		iter, err = f.createTrigramIndexIterator(docFilter)
-	} else {
+	case "":
 		iter, err = f.createIndexIterator(f.indexFilter)
+	default:
+		// Every kind lays its entries out differently, so reading one kind's entries with
+		// another kind's iterator produces a candidate set the recheck can only shrink, and
+		// documents go missing. The planner is expected to select only a kind this fetcher
+		// implements, but it selects from several places; refusing here means a site that
+		// forgets to check degrades to a full scan rather than returning wrong results.
+		return nil, nil
 	}
 	if err != nil || iter == nil {
 		return nil, err
