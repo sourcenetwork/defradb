@@ -14,6 +14,13 @@ import (
 	"context"
 )
 
+const (
+	// IndexKindBM25 is the kind of a BM25 full-text index.
+	IndexKindBM25 = "bm25"
+	// IndexKindTrigram is the kind of a trigram index.
+	IndexKindTrigram = "trigram"
+)
+
 // IndexFieldDescription describes how a field is being indexed.
 type IndexedFieldDescription struct {
 	// Name contains the name of the field.
@@ -32,6 +39,13 @@ type IndexDescription struct {
 	Fields []IndexedFieldDescription
 	// Unique indicates whether the index is unique.
 	Unique bool
+	// Kind selects the index implementation. The empty string means the ordered key index
+	// that has always existed, so descriptions written before this field existed deserialize
+	// unchanged.
+	Kind string
+	// Options carries kind-specific configuration, and is nil when the kind takes none.
+	// The kind's constructor validates it; this package does not know any kind's schema.
+	Options map[string]any
 }
 
 // NewIndexRequest describes an index creation request.
@@ -44,6 +58,11 @@ type NewIndexRequest struct {
 	Fields []IndexedFieldDescription
 	// Unique indicates whether the index is unique.
 	Unique bool
+	// Kind selects the index implementation. The empty string means the ordered key index
+	// that has always existed.
+	Kind string
+	// Options carries kind-specific configuration, and is nil when the kind takes none.
+	Options map[string]any
 }
 
 // CollectionIndex is an interface for indexing documents in a collection.

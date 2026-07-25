@@ -49,6 +49,13 @@ const (
 	IndexDirectivePropUnique    = "unique"
 	IndexDirectivePropDirection = "direction"
 	IndexDirectivePropIncludes  = "includes"
+	IndexDirectivePropKind      = "kind"
+	IndexDirectivePropOptions   = "options"
+
+	// The values of the index kind enum. indexFromAST maps them onto the kind names used in
+	// client.IndexDescription.
+	IndexKindBM25    = "BM25"
+	IndexKindTrigram = "TRIGRAM"
 
 	EncryptedIndexDirectiveLabel    = "encryptedIndex"
 	EncryptedIndexDirectivePropType = "type"
@@ -83,6 +90,25 @@ func OrderingEnum() *gql.Enum {
 			"DESC": &gql.EnumValueConfig{
 				Description: descOrderDescription,
 				Value:       1,
+			},
+		},
+	})
+}
+
+// IndexKindEnum is an enum for the kind argument of the @index directive. Omitting the
+// argument selects the ordered key index, which has no enum value of its own.
+func IndexKindEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name:        "IndexKind",
+		Description: "One of the possible index kinds.",
+		Values: gql.EnumValueConfigMap{
+			IndexKindBM25: &gql.EnumValueConfig{
+				Value:       client.IndexKindBM25,
+				Description: "BM25 full-text relevance index.",
+			},
+			IndexKindTrigram: &gql.EnumValueConfig{
+				Value:       client.IndexKindTrigram,
+				Description: "Trigram index for substring and pattern matching.",
 			},
 		},
 	})
@@ -194,7 +220,11 @@ func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 	})
 }
 
-func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.Directive {
+func IndexDirective(
+	orderingEnum *gql.Enum,
+	indexKindEnum *gql.Enum,
+	indexFieldInputObject *gql.InputObject,
+) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
 		Description: "@index is a directive that can be used to add an index on a type or a field.",
@@ -220,6 +250,16 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 	When used on a field definition and the field is not in the includes list
 	it will be implicitly added as the first entry.`,
 				Type: gql.NewList(indexFieldInputObject),
+			},
+			IndexDirectivePropKind: &gql.ArgumentConfig{
+				Description: `Sets the kind of the index.
+
+	If omitted the ordered key index is used.`,
+				Type: indexKindEnum,
+			},
+			IndexDirectivePropOptions: &gql.ArgumentConfig{
+				Description: "Sets the configuration specific to the index kind.",
+				Type:        JSON,
 			},
 		},
 		Locations: []string{

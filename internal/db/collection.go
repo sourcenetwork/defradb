@@ -90,9 +90,13 @@ func (db *DB) newCollection(
 				continue
 			}
 
-			colIndex, err := NewCollectionIndex(stateCtx, col, index, state.isBuilding())
+			colIndex, err := db.newLoadedCollectionIndex(stateCtx, col, index, state.isBuilding())
 			if err != nil {
 				return nil, err
+			}
+			// A kind this build does not implement was recorded as failed and skipped.
+			if colIndex == nil {
+				continue
 			}
 
 			col.indexes = append(col.indexes, colIndex)

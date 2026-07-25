@@ -262,6 +262,8 @@ func IsValidIndexName(name string) bool {
 func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
 	var name string
 	var unique bool
+	var kind string
+	var indexOptions map[string]any
 
 	var direction *ast.EnumValue
 	var includes *ast.ListValue
@@ -298,6 +300,30 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
 			unique = uniqueVal.Value
+
+		case types.IndexDirectivePropKind:
+			kindVal, ok := arg.Value.(*ast.EnumValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			switch kindVal.Value {
+			case types.IndexKindBM25:
+				kind = client.IndexKindBM25
+			case types.IndexKindTrigram:
+				kind = client.IndexKindTrigram
+			default:
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+
+		case types.IndexDirectivePropOptions:
+			optionsVal, ok := arg.Value.(*ast.ObjectValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			indexOptions, ok = types.JSON.ParseLiteral(optionsVal, nil).(map[string]any)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
 
 		default:
 			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
@@ -338,9 +364,11 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 	}
 
 	return client.NewIndexRequest{
-		Name:   name,
-		Fields: fields,
-		Unique: unique,
+		Name:    name,
+		Fields:  fields,
+		Unique:  unique,
+		Kind:    kind,
+		Options: indexOptions,
 	}, nil
 }
 

@@ -86,7 +86,7 @@ func NewCollectionIndex(
 	if err != nil {
 		return nil, err
 	}
-	return wrapCollectionIndex(base), nil
+	return wrapCollectionIndex(base)
 }
 
 // newCollectionIndexWithEpoch builds an index instance pinned to a caller-resolved epoch, rather
@@ -105,7 +105,7 @@ func newCollectionIndexWithEpoch(
 		return nil, err
 	}
 	base.epoch = epoch
-	return wrapCollectionIndex(base), nil
+	return wrapCollectionIndex(base)
 }
 
 // buildIndexBase validates the description against the collection and assembles the shared index
@@ -142,12 +142,13 @@ func buildIndexBase(
 	return base, nil
 }
 
-// wrapCollectionIndex returns the unique or simple index implementation for the base.
-func wrapCollectionIndex(base collectionBaseIndex) client.CollectionIndex {
-	if base.desc.Unique {
-		return &collectionUniqueIndex{collectionBaseIndex: base}
+// wrapCollectionIndex returns the implementation registered for the description's kind.
+func wrapCollectionIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
+	constructor, ok := indexKinds[base.desc.Kind]
+	if !ok {
+		return nil, NewErrUnknownIndexKind(base.desc.Kind)
 	}
-	return &collectionSimpleIndex{collectionBaseIndex: base}
+	return constructor(base), nil
 }
 
 // FieldIndexGenerator generates index entries for a single field

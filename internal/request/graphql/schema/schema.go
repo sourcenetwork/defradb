@@ -22,6 +22,7 @@ func defaultSchema() (gql.Schema, error) {
 	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
+	indexKindEnum := types.IndexKindEnum()
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -43,12 +44,13 @@ func defaultSchema() (gql.Schema, error) {
 			orderEnum,
 			crdtEnum,
 			explainEnum,
+			indexKindEnum,
 			indexFieldInput,
 			encryptedSearchResult,
 		),
 		Query:        defaultQueryType(queryCommits),
 		Mutation:     defaultMutationType(),
-		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
+		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexKindEnum, indexFieldInput),
 		Subscription: defaultSubscriptionType(queryCommits),
 	})
 
@@ -92,6 +94,7 @@ func defaultDirectivesType(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	orderEnum *gql.Enum,
+	indexKindEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 ) []*gql.Directive {
 	return []*gql.Directive{
@@ -100,7 +103,7 @@ func defaultDirectivesType(
 		types.ExhaustiveDirective(),
 		types.ExplainDirective(explainEnum),
 		types.PolicyDirective(),
-		types.IndexDirective(orderEnum, indexFieldInput),
+		types.IndexDirective(orderEnum, indexKindEnum, indexFieldInput),
 		types.PrimaryDirective(),
 		types.RelationDirective(),
 		types.MaterializedDirective(),
@@ -136,6 +139,7 @@ func defaultTypes(
 	orderEnum *gql.Enum,
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
+	indexKindEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
 ) []gql.Type {
@@ -222,6 +226,7 @@ func defaultTypes(
 
 		crdtEnum,
 		explainEnum,
+		indexKindEnum,
 
 		indexFieldInput,
 		encryptedSearchResult,

@@ -132,9 +132,11 @@ func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 	descWithoutID := client.NewIndexRequest{
-		Name:   indexDesc.Name,
-		Fields: indexDesc.Fields,
-		Unique: indexDesc.Unique,
+		Name:    indexDesc.Name,
+		Fields:  indexDesc.Fields,
+		Unique:  indexDesc.Unique,
+		Kind:    indexDesc.Kind,
+		Options: indexDesc.Options,
 	}
 
 	newIndexOpt := options.WithIdentity(options.NewCollectionIndex(), identity.FromContext(ctx))

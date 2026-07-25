@@ -138,6 +138,7 @@ const (
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
+	errUnknownIndexKind                    string = "unknown index kind"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -267,6 +268,7 @@ var (
 	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
 	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
 	ErrIndexWithIDDoesNotExist                   = errors.New(errIndexWithIDDoesNotExist)
+	ErrUnknownIndexKind                          = errors.New(errUnknownIndexKind)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
@@ -1192,6 +1194,12 @@ func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
 // could not be decoded.
 func NewErrCorruptIndexPayload(value []byte) error {
 	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrUnknownIndexKind returns a new error indicating that the given index kind is not
+// implemented by this build.
+func NewErrUnknownIndexKind(kind string) error {
+	return errors.New(errUnknownIndexKind, errors.NewKV("Kind", kind))
 }
 
 // NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the

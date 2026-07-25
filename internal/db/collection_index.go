@@ -166,9 +166,13 @@ func (c *collection) resolveIndexes(ctx context.Context) ([]client.CollectionInd
 		if state.isFailed() {
 			continue
 		}
-		colIndex, err := NewCollectionIndex(ctx, c, index, state.isBuilding())
+		colIndex, err := c.db.newLoadedCollectionIndex(ctx, c, index, state.isBuilding())
 		if err != nil {
 			return nil, err
+		}
+		// A kind this build does not implement was recorded as failed and skipped.
+		if colIndex == nil {
+			continue
 		}
 		indexes = append(indexes, colIndex)
 	}
@@ -490,10 +494,12 @@ func processNewIndexRequest(
 	}
 
 	return client.IndexDescription{
-		Name:   indexName,
-		ID:     uint32(indexID),
-		Fields: desc.Fields,
-		Unique: desc.Unique,
+		Name:    indexName,
+		ID:      uint32(indexID),
+		Fields:  desc.Fields,
+		Unique:  desc.Unique,
+		Kind:    desc.Kind,
+		Options: desc.Options,
 	}, nil
 }
 
@@ -1191,7 +1197,7 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 			return ErrIndexFieldMissingName
 		}
 	}
-	return nil
+	return validateIndexKind(desc)
 }
 
 func generateIndexName(colName string, fields []client.IndexedFieldDescription, inc int) (string, error) {

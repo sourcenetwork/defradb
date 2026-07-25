@@ -269,8 +269,15 @@
                                     "minimum": 0,
                                     "type": "integer"
                                 },
+                                "Kind": {
+                                    "type": "string"
+                                },
                                 "Name": {
                                     "type": "string"
+                                },
+                                "Options": {
+                                    "additionalProperties": {},
+                                    "type": "object"
                                 },
                                 "Unique": {
                                     "type": "boolean"
@@ -492,8 +499,15 @@
                         "minimum": 0,
                         "type": "integer"
                     },
+                    "Kind": {
+                        "type": "string"
+                    },
                     "Name": {
                         "type": "string"
+                    },
+                    "Options": {
+                        "additionalProperties": {},
+                        "type": "object"
                     },
                     "Unique": {
                         "type": "boolean"
@@ -557,8 +571,15 @@
                         },
                         "type": "array"
                     },
+                    "Kind": {
+                        "type": "string"
+                    },
                     "Name": {
                         "type": "string"
+                    },
+                    "Options": {
+                        "additionalProperties": {},
+                        "type": "object"
                     },
                     "Unique": {
                         "type": "boolean"
