@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -95,14 +96,14 @@ func readBM25State(
 	var state bm25State
 	withBM25Index(t, ctx, db, col, desc,
 		func(index *collectionBM25Index, txnCtx context.Context, collectionShortID uint32) {
-			totalsKey := index.key(collectionShortID, bm25TotalsPart, "", 0)
+			totalsKey := index.key(collectionShortID, core.BM25TotalsPart, "", 0)
 			totals, found, err := index.readUvarints(txnCtx, &totalsKey, 2)
 			require.NoError(t, err)
 			if found {
 				state.documents, state.totalLength = totals[0], totals[1]
 			}
-			state.postings = countKeysUnder(t, txnCtx, index.key(collectionShortID, bm25PostingPart, "", 0))
-			state.lengths = countKeysUnder(t, txnCtx, index.key(collectionShortID, bm25LengthPart, "", 0))
+			state.postings = countKeysUnder(t, txnCtx, index.key(collectionShortID, core.BM25PostingPart, "", 0))
+			state.lengths = countKeysUnder(t, txnCtx, index.key(collectionShortID, core.BM25LengthPart, "", 0))
 		})
 	return state
 }
@@ -125,7 +126,7 @@ func bm25TermFrequency(
 		func(index *collectionBM25Index, txnCtx context.Context, collectionShortID uint32) {
 			_, docShortID, err := index.docShortIDs(txnCtx, doc)
 			require.NoError(t, err)
-			key := index.key(collectionShortID, bm25PostingPart, term, docShortID)
+			key := index.key(collectionShortID, core.BM25PostingPart, term, docShortID)
 			values, exists, err := index.readUvarints(txnCtx, &key, 1)
 			require.NoError(t, err)
 			found = exists
@@ -310,20 +311,4 @@ func TestBM25Index_WithInvalidOptionValue_ReturnsError(t *testing.T) {
 
 	_, err = newBM25NameIndex(t, ctx, db, col, map[string]any{"b": 2.0})
 	require.ErrorIs(t, err, NewErrBM25IndexInvalidOption("b", 2.0))
-}
-
-// A number written as an integer literal in a schema parses to an int, while the same option read
-// back from the JSON the description is stored as gives a float64. Both are the same option.
-func TestBM25Option_AcceptsIntAndFloat(t *testing.T) {
-	fromLiteral, err := bm25Option(map[string]any{"k1": 2}, "k1", bm25DefaultK1)
-	require.NoError(t, err)
-	fromStore, err := bm25Option(map[string]any{"k1": 2.0}, "k1", bm25DefaultK1)
-	require.NoError(t, err)
-
-	assert.Equal(t, 2.0, fromLiteral)
-	assert.Equal(t, fromLiteral, fromStore)
-
-	missing, err := bm25Option(nil, "b", bm25DefaultB)
-	require.NoError(t, err)
-	assert.Equal(t, bm25DefaultB, missing)
 }

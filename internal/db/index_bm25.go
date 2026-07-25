@@ -24,36 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// The parts of a BM25 index's keyspace. Every key it writes is an ordinary IndexDataStoreKey
-// under the index's own prefix, /<collection short ID>/<index ID>/<epoch>/, with one of these
-// as the first field value. Staying inside that prefix is what leaves epoch handling,
-// rebuild-on-version-switch and the garbage collector's range delete working unchanged:
-//
-//	<prefix>/t/<term>/<doc short ID> -> how often the term occurs in the document
-//	<prefix>/d/<doc short ID>        -> the document's field length, in terms
-//	<prefix>/s                       -> the collection's document count and summed field length
-//
-// There is no per-term document frequency record. It is the number of entries under
-// <prefix>/t/<term>/, which a query reads as a range while it walks that term's documents
-// anyway, so storing it would mean a read-modify-write per distinct term of every document
-// written, on keys that the most common terms make hot across every writer.
-const (
-	bm25PostingPart = "t"
-	bm25LengthPart  = "d"
-	bm25TotalsPart  = "s"
-)
-
-// The scoring parameters of a BM25 index, settable through the index's options. k1 controls how
-// quickly a repeated term stops adding to a document's score, and b how strongly a field longer
-// than average is penalised. Only scoring reads them, so nothing here uses them beyond checking
-// that what was given is usable.
-const (
-	bm25OptionK1  = "k1"
-	bm25OptionB   = "b"
-	bm25DefaultK1 = 1.2
-	bm25DefaultB  = 0.75
-)
-
 // collectionBM25Index maintains everything needed to score a document against a query: how often
 // each term occurs in it, how long its indexed field is, and the collection totals those are
 // scored relative to.
@@ -98,14 +68,14 @@ func (index *collectionBM25Index) Save(ctx context.Context, doc *client.Document
 
 	var length uint64
 	for term, frequency := range tokens {
-		postingKey := index.key(collectionShortID, bm25PostingPart, term, docShortID)
+		postingKey := index.key(collectionShortID, core.BM25PostingPart, term, docShortID)
 		if err := ds.Set(ctx, &postingKey, encodeUvarints(uint64(frequency))); err != nil {
 			return NewErrStoreIndexKey(err)
 		}
 		length += uint64(frequency)
 	}
 
-	lengthKey := index.key(collectionShortID, bm25LengthPart, "", docShortID)
+	lengthKey := index.key(collectionShortID, core.BM25LengthPart, "", docShortID)
 	stored, alreadyIndexed, err := index.readUvarints(ctx, &lengthKey, 1)
 	if err != nil {
 		return err
@@ -138,7 +108,7 @@ func (index *collectionBM25Index) Delete(ctx context.Context, doc *client.Docume
 		return err
 	}
 
-	lengthKey := index.key(collectionShortID, bm25LengthPart, "", docShortID)
+	lengthKey := index.key(collectionShortID, core.BM25LengthPart, "", docShortID)
 	stored, indexed, err := index.readUvarints(ctx, &lengthKey, 1)
 	if err != nil {
 		return err
@@ -152,7 +122,7 @@ func (index *collectionBM25Index) Delete(ctx context.Context, doc *client.Docume
 	}
 
 	for term := range tokens {
-		if err := index.deleteIndexKey(ctx, index.key(collectionShortID, bm25PostingPart, term, docShortID)); err != nil {
+		if err := index.deleteIndexKey(ctx, index.key(collectionShortID, core.BM25PostingPart, term, docShortID)); err != nil {
 			return err
 		}
 	}
@@ -196,7 +166,7 @@ func (index *collectionBM25Index) addToTotals(
 	documents int64,
 	length int64,
 ) error {
-	key := index.key(collectionShortID, bm25TotalsPart, "", 0)
+	key := index.key(collectionShortID, core.BM25TotalsPart, "", 0)
 	totals, found, err := index.readUvarints(ctx, &key, 2)
 	if err != nil {
 		return err
@@ -211,21 +181,14 @@ func (index *collectionBM25Index) addToTotals(
 	return nil
 }
 
-// key returns the key of one part of the index's keyspace. term is empty for the parts that are
-// not per-term, and docShortID is zero for the parts that are not per-document.
+// key returns the key of one part of the index's keyspace.
 func (index *collectionBM25Index) key(
 	collectionShortID uint32,
 	part string,
 	term string,
 	docShortID uint64,
 ) keys.IndexDataStoreKey {
-	fields := []keys.IndexedField{{Value: client.NewNormalString(part)}}
-	if term != "" {
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(term)})
-	}
-	key := keys.NewIndexDataStoreKey(collectionShortID, index.desc.ID, index.epoch, fields)
-	key.DocShortID = docShortID
-	return key
+	return core.BM25Key(collectionShortID, index.desc.ID, index.epoch, part, term, docShortID)
 }
 
 // docShortIDs resolves the collection and document short IDs the index's keys are built from.
@@ -324,44 +287,17 @@ func validateBM25Index(def client.CollectionVersion, req client.NewIndexRequest)
 		return NewErrBM25IndexFieldNotString(field.Name, field.Kind.String())
 	}
 	for name := range req.Options {
-		if name != bm25OptionK1 && name != bm25OptionB {
+		if name != core.BM25OptionK1 && name != core.BM25OptionB {
 			return NewErrBM25IndexUnknownOption(name)
 		}
 	}
-	k1, err := bm25Option(req.Options, bm25OptionK1, bm25DefaultK1)
-	if err != nil {
-		return err
+	k1, ok := core.BM25Option(req.Options, core.BM25OptionK1, core.BM25DefaultK1)
+	if !ok || k1 < 0 {
+		return NewErrBM25IndexInvalidOption(core.BM25OptionK1, req.Options[core.BM25OptionK1])
 	}
-	if k1 < 0 {
-		return NewErrBM25IndexInvalidOption(bm25OptionK1, k1)
-	}
-	b, err := bm25Option(req.Options, bm25OptionB, bm25DefaultB)
-	if err != nil {
-		return err
-	}
-	if b < 0 || b > 1 {
-		return NewErrBM25IndexInvalidOption(bm25OptionB, b)
+	b, ok := core.BM25Option(req.Options, core.BM25OptionB, core.BM25DefaultB)
+	if !ok || b < 0 || b > 1 {
+		return NewErrBM25IndexInvalidOption(core.BM25OptionB, req.Options[core.BM25OptionB])
 	}
 	return nil
-}
-
-// bm25Option reads a numeric index option, returning fallback when it is not set.
-//
-// An integer written in a GraphQL literal parses to an int, while the same description read back
-// from the JSON it is stored as gives a float64, so both are accepted. For the same reason a
-// description parsed from a schema and one read back from the store can differ in the Go types
-// they hold, and so can not be compared with reflect.DeepEqual.
-func bm25Option(options map[string]any, name string, fallback float64) (float64, error) {
-	value, ok := options[name]
-	if !ok {
-		return fallback, nil
-	}
-	switch number := value.(type) {
-	case float64:
-		return number, nil
-	case int:
-		return float64(number), nil
-	default:
-		return 0, NewErrBM25IndexInvalidOption(name, value)
-	}
 }
