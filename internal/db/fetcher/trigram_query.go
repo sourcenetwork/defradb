@@ -180,103 +180,20 @@ func (q *trigramQuery) andOr(r *trigramQuery, op trigramQueryOp) *trigramQuery {
 		return r
 	}
 
-	// We are creating an AND of ORs or an OR of ANDs. Factor out common trigrams, if any.
-	common := stringSet{}
-	i, j := 0, 0
-	wi, wj := 0, 0
-	for i < len(q.trigram) && j < len(r.trigram) {
-		qt, rt := q.trigram[i], r.trigram[j]
-		switch {
-		case qt < rt:
-			q.trigram[wi] = qt
-			wi++
-			i++
-		case qt > rt:
-			r.trigram[wj] = rt
-			wj++
-			j++
-		default:
-			common = append(common, qt)
-			i++
-			j++
-		}
-	}
-	for ; i < len(q.trigram); i++ {
-		q.trigram[wi] = q.trigram[i]
-		wi++
-	}
-	for ; j < len(r.trigram); j++ {
-		r.trigram[wj] = r.trigram[j]
-		wj++
-	}
-	q.trigram = q.trigram[:wi]
-	r.trigram = r.trigram[:wj]
-	if len(common) > 0 {
-		// If there were common trigrams, rewrite
-		//
-		//	(abc|def|ghi|jkl) AND (abc|def|mno|prs) =>
-		//		(abc|def) OR ((ghi|jkl) AND (mno|prs))
-		//
-		//	(abc&def&ghi&jkl) OR (abc&def&mno&prs) =>
-		//		(abc&def) AND ((ghi&jkl) OR (mno&prs))
-		//
-		// Call andOr recursively in case q and r can now be simplified, since we removed
-		// some trigrams from both.
-		s := q.andOr(r, op)
-
-		otherOp := trigramAnd + trigramOr - op
-		t := &trigramQuery{op: otherOp, trigram: common}
-		return t.andOr(s, t.op)
-	}
-
+	// We are creating an AND of ORs or an OR of ANDs.
 	return &trigramQuery{op: op, sub: []*trigramQuery{q, r}}
 }
 
-// implies reports whether q implies r. It is allowed to return false negatives.
+// implies reports whether q implies r. It is allowed to return false negatives, and only
+// answers the two cases that keep trigramAll and trigramNone from being nested inside a
+// query: a nested trigramAll node constrains nothing, and isEvaluable rejects it.
 func (q *trigramQuery) implies(r *trigramQuery) bool {
 	if q.op == trigramNone || r.op == trigramAll {
 		// False implies everything, and everything implies true.
 		return true
 	}
-	if q.op == trigramAll || r.op == trigramNone {
-		// True implies nothing, and nothing implies false.
-		return false
-	}
-
-	if q.op == trigramAnd || (q.op == trigramOr && len(q.trigram) == 1 && len(q.sub) == 0) {
-		return trigramsImply(q.trigram, r)
-	}
-
-	if q.op == trigramOr && r.op == trigramOr &&
-		len(q.trigram) > 0 && len(q.sub) == 0 &&
-		stringSet.isSubsetOf(q.trigram, r.trigram) {
-		return true
-	}
-	return false
-}
-
-func trigramsImply(t []string, q *trigramQuery) bool {
-	switch q.op {
-	case trigramOr:
-		for _, qq := range q.sub {
-			if trigramsImply(t, qq) {
-				return true
-			}
-		}
-		for i := range t {
-			if stringSet.isSubsetOf(t[i:i+1], q.trigram) {
-				return true
-			}
-		}
-		return false
-	case trigramAnd:
-		for _, qq := range q.sub {
-			if !trigramsImply(t, qq) {
-				return false
-			}
-		}
-		return stringSet.isSubsetOf(q.trigram, t)
-	}
+	// True implies nothing, and nothing implies false. Anything else is reported as no
+	// implication, which costs a larger query and never a wrong one.
 	return false
 }
 
@@ -792,18 +709,4 @@ func (s stringSet) cross(t stringSet, isSuffix bool) stringSet {
 // copy returns a copy of the set that does not share storage with the original.
 func (s stringSet) copy() stringSet {
 	return append(stringSet{}, s...)
-}
-
-// isSubsetOf reports whether every string in s is also in t. Both sets must be sorted.
-func (s stringSet) isSubsetOf(t stringSet) bool {
-	j := 0
-	for _, ss := range s {
-		for j < len(t) && t[j] < ss {
-			j++
-		}
-		if j >= len(t) || t[j] != ss {
-			return false
-		}
-	}
-	return true
 }

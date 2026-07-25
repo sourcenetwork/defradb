@@ -29,15 +29,15 @@ func TestRegexTrigramQuery(t *testing.T) {
 		{`Abcdef`, `"abc" "bcd" "cde" "def"`},
 		{`(abc)(def)`, `"abc" "bcd" "cde" "def"`},
 		{`abc.*(def|ghi)`, `"abc" ("def"|"ghi")`},
-		{`abc(def|ghi)`, `"abc" ("bcd" "cde" "def")|("bcg" "cgh" "ghi")`},
+		{`abc(def|ghi)`, `("abc" "bcd" "cde" "def")|("abc" "bcg" "cgh" "ghi")`},
 		{`a+hello`, `"ahe" "ell" "hel" "llo"`},
 		{`(a+hello|b+world)`, `("ahe" "ell" "hel" "llo")|("bwo" "orl" "rld" "wor")`},
 		{`a*bbb`, `"bbb"`},
-		{`a?bbb`, `"bbb"`},
+		{`a?bbb`, `("abb" "bbb")|("bbb")`},
 		{`ab[cde]f`, `("abc" "bcf")|("abd" "bdf")|("abe" "bef")`},
-		{`(abc|bac)de`, `"cde" ("abc" "bcd")|("acd" "bac")`},
-		{`ab(cab|cat)`, `"abc" "bca" ("cab"|"cat")`},
-		{`(a|ab)cde`, `"cde" ("abc" "bcd")|("acd")`},
+		{`(abc|bac)de`, `("abc" "bcd" "cde")|("acd" "bac" "cde")`},
+		{`ab(cab|cat)`, `("abc" "bca" "cab")|("abc" "bca" "cat")`},
+		{`(a|ab)cde`, `("abc" "bcd" "cde")|("acd" "cde")`},
 		{`[ab][cd][ef]`, `("ace"|"acf"|"ade"|"adf"|"bce"|"bcf"|"bde"|"bdf")`},
 		{`a{3}bc`, `"aaa" "aab" "abc"`},
 
@@ -59,9 +59,9 @@ func TestRegexTrigramQuery(t *testing.T) {
 		// A rune that case-folds to a letter it does not lowercase to still has to be allowed
 		// for, or the index would miss documents the filter matches. Here 'ſ' folds to 's'
 		// but lowercases to itself, so the query accepts either spelling of the first
-		// trigram. The two-part branch is the trigrams of "ſto", whose leading rune is two
+		// trigram. The second branch holds the trigrams of "ſto", whose leading rune is two
 		// bytes long.
-		{`(?i)stone`, `"one" "ton" ("sto")|("\xbfto" "ſt")`},
+		{`(?i)stone`, `"one" ("sto" "ton")|("ton" "\xbfto" "ſt")`},
 
 		// Nothing can match, so nothing needs to be scanned.
 		{`[^\s\S]`, `-`},
