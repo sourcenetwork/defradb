@@ -16,16 +16,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// A number written as an integer literal in a schema parses to an int, while the same option read
-// back from the JSON the description is stored as gives a float64. Both are the same option.
+// A number written as an integer literal in a schema parses to an int32, while the same option
+// read back from the JSON the description is stored as gives a float64, and a request built in Go
+// carries whatever the caller wrote. All of them are the same option.
 func TestBM25Option_AcceptsIntAndFloat(t *testing.T) {
-	fromLiteral, ok := BM25Option(map[string]any{"k1": 2}, "k1", BM25DefaultK1)
+	fromLiteral, ok := BM25Option(map[string]any{"k1": int32(2)}, "k1", BM25DefaultK1)
 	assert.True(t, ok)
 	fromStore, ok := BM25Option(map[string]any{"k1": 2.0}, "k1", BM25DefaultK1)
+	assert.True(t, ok)
+	fromGo, ok := BM25Option(map[string]any{"k1": 2}, "k1", BM25DefaultK1)
 	assert.True(t, ok)
 
 	assert.Equal(t, 2.0, fromLiteral)
 	assert.Equal(t, fromLiteral, fromStore)
+	assert.Equal(t, fromLiteral, fromGo)
 
 	missing, ok := BM25Option(nil, "b", BM25DefaultB)
 	assert.True(t, ok)

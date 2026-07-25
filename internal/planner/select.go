@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -128,6 +129,10 @@ type selectNode struct {
 
 	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
+
+	// bm25 is the requested _bm25 field, if there is one. Only initSource can serve it, since
+	// the score comes from a scan of a BM25 index and nothing else produces it.
+	bm25 *mapper.Bm25
 
 	execInfo selectExecInfo
 }
@@ -406,7 +411,49 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 
+	if n.bm25 != nil {
+		if !isScanNode || n.selectReq.Cids.HasValue() || len(origScan.prefixes) > 0 {
+			return nil, nil, ErrBM25NotOnCollectionScan
+		}
+		if err := setBM25Scan(origScan, n.bm25); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	return aggregates, similarity, nil
+}
+
+// setBM25Scan points the scan at the BM25 index on the field the _bm25 field targets, and gives
+// it the query and the slot the score goes in.
+//
+// A BM25 score is not computable from the document: how much a term is worth depends on how many
+// documents in the collection hold it and how long their fields are. So unlike a cosine
+// similarity there is nothing to fall back to, and a field with no BM25 index is an error rather
+// than a slower query.
+//
+// The index chosen here replaces whatever a filter selected. A filter is still applied in full by
+// the filtered fetcher, so the only thing given up is the narrowing.
+func setBM25Scan(scan *scanNode, bm25 *mapper.Bm25) error {
+	for _, idx := range queryableIndexesOnField(scan.col, bm25.Target) {
+		if idx.Kind != client.IndexKindBM25 {
+			continue
+		}
+		scan.index = immutable.Some(idx)
+		scan.rank = &fetcher.Rank{Query: bm25.Query}
+		scan.rankFieldIndex = bm25.Index
+		return nil
+	}
+	return NewErrNoBM25Index(scan.col.Name(), bm25.Target)
+}
+
+// bm25Field returns the _bm25 field of a selection, if it has one.
+func bm25Field(fields []mapper.Requestable) *mapper.Bm25 {
+	for _, field := range fields {
+		if bm25, ok := field.(*mapper.Bm25); ok {
+			return bm25
+		}
+	}
+	return nil
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
@@ -480,6 +527,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 			var simFilter *mapper.Filter
 			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
 			similarity = append(similarity, n.planner.Similarity(f, simFilter))
+		case *mapper.Bm25:
+			n.bm25 = f
 		}
 	}
 
@@ -559,6 +608,11 @@ func (p *Planner) SelectTopNodeFromSource(
 	aggregates, similarity, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
+	}
+	if s.bm25 != nil {
+		// This select reads from a source it was handed - a group, a commit, or the result of a
+		// mutation - rather than from a scan of its own, so there is no index scan to score with.
+		return nil, ErrBM25NotOnCollectionScan
 	}
 
 	groupPlan, err := p.GroupBy(groupBy, selectReq, s.groupSelects)

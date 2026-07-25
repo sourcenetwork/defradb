@@ -68,10 +68,11 @@ func BM25Key(
 // BM25Option reads a numeric index option, returning fallback when it is not set and false when
 // what is set is not a number.
 //
-// An integer written in a GraphQL literal parses to an int, while the same description read back
-// from the JSON it is stored as gives a float64, so both are accepted. For the same reason a
-// description parsed from a schema and one read back from the store can differ in the Go types
-// they hold, and so can not be compared with reflect.DeepEqual.
+// The same option arrives as three different Go types depending on where it came from: an integer
+// written in a GraphQL literal parses to an int32, the same description read back from the JSON it
+// is stored as gives a float64, and a request built in Go carries whatever the caller wrote. For
+// the same reason a description parsed from a schema and one read back from the store can differ
+// in the Go types they hold, and so can not be compared with reflect.DeepEqual.
 func BM25Option(options map[string]any, name string, fallback float64) (float64, bool) {
 	value, ok := options[name]
 	if !ok {
@@ -80,7 +81,13 @@ func BM25Option(options map[string]any, name string, fallback float64) (float64,
 	switch number := value.(type) {
 	case float64:
 		return number, true
+	case float32:
+		return float64(number), true
 	case int:
+		return float64(number), true
+	case int32:
+		return float64(number), true
+	case int64:
 		return float64(number), true
 	default:
 		return 0, false

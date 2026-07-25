@@ -438,8 +438,26 @@ func isOrderedByIndex(plan planNode) bool {
 		return false
 	}
 
+	if scan.rank != nil {
+		return isOrderedByRank(scan)
+	}
+
 	ok, _ := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
 	return ok
+}
+
+// isOrderedByRank reports whether the requested ordering is exactly the scan's _bm25 field,
+// descending, which a ranked scan already yields.
+//
+// Without this the order node stays, and its first Next drains the whole scan into a sort buffer
+// to re-sort what was already sorted. The results are the same either way, which is why this has
+// to be covered by a test that looks at the plan rather than at the results.
+func isOrderedByRank(scan *scanNode) bool {
+	if len(scan.ordering) != 1 || scan.ordering[0].Direction != mapper.DESC {
+		return false
+	}
+	return len(scan.ordering[0].FieldIndexes) == 1 &&
+		scan.ordering[0].FieldIndexes[0] == scan.rankFieldIndex
 }
 
 // tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.

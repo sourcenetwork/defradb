@@ -304,6 +304,13 @@ func (p *Planner) newInvertableTypeJoin(
 ) (invertibleTypeJoin, error) {
 	prepareScanNodeFilterForTypeJoin(parent, sourcePlan, subSelect)
 
+	if bm25Field(subSelect.Fields) != nil {
+		// The child scan of a join runs once per parent row, against the documents that row
+		// relates to. A ranked scan produces its own document set in score order, which is not
+		// that, so the two cannot be composed.
+		return invertibleTypeJoin{}, ErrBM25NotOnCollectionScan
+	}
+
 	subSelectPlan, err := p.Select(subSelect)
 	if err != nil {
 		return invertibleTypeJoin{}, err

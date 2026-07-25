@@ -1545,6 +1545,14 @@ func toMutation(
 	if err != nil {
 		return nil, err
 	}
+	for _, field := range underlyingSelect.Fields {
+		// A mutation's select decides which documents are written, and a BM25 index would decide
+		// it by relevance to a text query rather than by the mutation's own filter. Ranking the
+		// documents a mutation returns is not worth that.
+		if _, isBm25 := field.(*Bm25); isBm25 {
+			return nil, ErrBm25InMutation
+		}
+	}
 	return &Mutation{
 		Select:        *underlyingSelect,
 		Type:          MutationType(mutationRequest.Type),

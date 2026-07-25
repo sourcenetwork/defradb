@@ -96,12 +96,16 @@ type bm25IndexIterator struct {
 	execInfo  *ExecInfo
 
 	scored bm25ScoreHeap
+	// postingsRead is what Init read, carried to the first Next. The execution counters are
+	// reset per fetched document, and Init runs before the first of them.
+	postingsRead uint64
 }
 
 var _ indexIterator = (*bm25IndexIterator)(nil)
 
 func (iter *bm25IndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.scored = nil
+	iter.postingsRead = 0
 
 	totalsKey := iter.partKey(core.BM25TotalsPart, "", 0)
 	totals, err := readUvarints(ctx, store, &totalsKey, 2)
@@ -239,7 +243,7 @@ func (iter *bm25IndexIterator) readPostings(
 			return nil, errors.Join(err, postings.Close())
 		}
 
-		iter.execInfo.IndexesFetched++
+		iter.postingsRead++
 		result = append(result, bm25Posting{docShortID: docShortID, frequency: float64(frequency)})
 	}
 }
@@ -254,6 +258,8 @@ func (iter *bm25IndexIterator) Next() (indexIterResult, error) {
 	}
 	best := heap.Pop(&iter.scored).(bm25ScoredDoc)
 	iter.rank.Score = best.score
+	iter.execInfo.IndexesFetched += iter.postingsRead
+	iter.postingsRead = 0
 
 	// The entries hold terms of the value rather than the value, so there is nothing to report in
 	// the key's fields; the document short ID is the whole result.

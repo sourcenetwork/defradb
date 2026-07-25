@@ -25,6 +25,7 @@ var (
 	ErrInvalidFieldIndex        = errors.New("given field doesn't have any indexes")
 	ErrMissingSelect            = errors.New("missing target select field")
 	ErrInvalidSelect            = errors.New("select type is invalid")
+	ErrBm25InMutation           = errors.New("_bm25 may not be requested on a mutation")
 )
 
 func NewErrInvalidFieldToGroupBy(field string) error {
