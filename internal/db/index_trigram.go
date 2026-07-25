@@ -11,40 +11,9 @@
 package db
 
 import (
-	"strings"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/core"
 )
-
-// trigrams returns the distinct trigrams of val: the value lowercased, then every 3-byte
-// window of it, stride 1 and overlapping, with no padding.
-//
-// The windows are bytes, not runes. A multi-byte rune is therefore split across windows,
-// which is safe because a trigram index only ever produces candidates and the real pattern
-// match is re-run on each one.
-//
-// A value shorter than 3 bytes produces no trigrams at all, so the document holding it has
-// no entry in the index and cannot be found through it. That is intended: padding short
-// values to reach three bytes would put every one of them under the same handful of keys.
-func trigrams(val string) []string {
-	val = strings.ToLower(val)
-	if len(val) < 3 {
-		return nil
-	}
-	// One entry per distinct trigram per document. A repeated trigram would otherwise write
-	// the same key twice, and the second delete of it would report the index as corrupt.
-	seen := make(map[string]struct{}, len(val)-2)
-	result := make([]string, 0, len(val)-2)
-	for i := 0; i+3 <= len(val); i++ {
-		trigram := val[i : i+3]
-		if _, ok := seen[trigram]; ok {
-			continue
-		}
-		seen[trigram] = struct{}{}
-		result = append(result, trigram)
-	}
-	return result
-}
 
 // TrigramFieldGenerator fans a string field value out into one index entry per distinct
 // trigram of it. This is the same shape as ArrayFieldGenerator - one field value, many
@@ -63,7 +32,7 @@ func (g *TrigramFieldGenerator) Generate(value client.NormalValue, f func(client
 		str = nillableStr.Value()
 	}
 
-	for _, trigram := range trigrams(str) {
+	for _, trigram := range core.Trigrams(str) {
 		if err := f(client.NewNormalString(trigram)); err != nil {
 			return err
 		}
