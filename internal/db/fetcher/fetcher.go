@@ -49,6 +49,22 @@ func (s *ExecInfo) Reset() {
 	s.IndexesFetched = 0
 }
 
+// Rank asks a ranked index scan to score every document it yields against a query, and carries
+// the score of the document [Fetcher.FetchNext] last returned back out.
+//
+// It is one value passed in and mutated rather than an extra result, because a score has to be
+// attached to a document that several fetchers may still reject on the way up, and the fetcher
+// that produced it is not the one that returns it.
+//
+// Only a BM25 index scan produces a score. A document reached any other way scores zero.
+type Rank struct {
+	// Query is the text documents are scored against.
+	Query string
+
+	// Score is the score of the document [Fetcher.FetchNext] last returned.
+	Score float64
+}
+
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {
@@ -63,6 +79,7 @@ type Fetcher interface {
 		fields []client.CollectionFieldDescription,
 		filter *mapper.Filter,
 		ordering []mapper.OrderCondition,
+		rank *Rank,
 		docmapper *core.DocumentMapping,
 		showDeleted bool,
 	) error

@@ -722,6 +722,7 @@ func (c *collection) iterateDocsBatch(
 		nil,
 		nil,
 		nil,
+		nil,
 		false,
 	)
 	if initErr != nil {

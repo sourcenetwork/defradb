@@ -83,6 +83,7 @@ func (f *lensedFetcher) Init(
 	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
+	rank *fetcher.Rank,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -154,6 +155,7 @@ func (f *lensedFetcher) Init(
 		innerFetcherFields,
 		innerFetcherFilter,
 		ordering,
+		rank,
 		docmapper,
 		showDeleted,
 	)

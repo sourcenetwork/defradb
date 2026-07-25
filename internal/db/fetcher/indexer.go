@@ -97,11 +97,16 @@ func newIndexFetcher(
 	docMapper *core.DocumentMapping,
 	execInfo *ExecInfo,
 	ordering []mapper.OrderCondition,
+	rank *Rank,
 ) (*indexFetcher, error) {
 	// Check if the filter has an OR at the root level that spans different fields.
 	// This check MUST happen here before filter.CopyField strips out non-indexed fields,
 	// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
-	if docFilter != nil && hasOrWithMultipleFields(docFilter.Conditions, indexDesc, docMapper) {
+	//
+	// A BM25 index is exempt because falling back to a scan loses the score rather than only the
+	// narrowing, and its iterator does not read the filter at all.
+	if indexDesc.Kind != client.IndexKindBM25 && docFilter != nil &&
+		hasOrWithMultipleFields(docFilter.Conditions, indexDesc, docMapper) {
 		return nil, nil
 	}
 
@@ -146,6 +151,8 @@ func newIndexFetcher(
 
 	var iter indexIterator
 	switch indexDesc.Kind {
+	case client.IndexKindBM25:
+		iter, err = f.createBM25IndexIterator(rank)
 	case client.IndexKindTrigram:
 		iter, err = f.createTrigramIndexIterator(docFilter)
 	case "":

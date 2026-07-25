@@ -128,6 +128,7 @@ func (vf *VersionedFetcher) Init(
 	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
+	rank *Rank,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -200,6 +201,7 @@ func (vf *VersionedFetcher) Init(
 		fields,
 		filter,
 		ordering,
+		rank,
 		docmapper,
 		showDeleted,
 	)

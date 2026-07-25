@@ -121,6 +121,7 @@ func (c *collection) getDocument(
 		nil,
 		nil,
 		nil,
+		nil,
 		showDeleted,
 	)
 	if err != nil {

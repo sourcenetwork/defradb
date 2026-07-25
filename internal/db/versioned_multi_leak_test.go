@@ -102,6 +102,7 @@ func TestMultiVersioned_Start_OnChildStartError_TracksChildForClose(t *testing.T
 		nil,
 		nil,
 		nil,
+		nil,
 		false,
 	)
 	require.NoError(t, err)

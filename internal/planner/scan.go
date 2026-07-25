@@ -61,6 +61,11 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
+	// rank is set when the scan is driven by a ranked index, and carries the score of the
+	// document the fetcher last returned. rankFieldIndex is the _bm25 field it is written to.
+	rank           *fetcher.Rank
+	rankFieldIndex int
+
 	execInfo scanExecInfo
 }
 
@@ -86,6 +91,7 @@ func (n *scanNode) Init() error {
 		n.fields,
 		filter,
 		n.ordering,
+		n.rank,
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {
@@ -484,6 +490,10 @@ func (n *scanNode) Next() (bool, error) {
 		request.DeletedFieldName,
 		n.currentValue.Status.IsDeleted(),
 	)
+
+	if n.rank != nil {
+		n.currentValue.Fields[n.rankFieldIndex] = n.rank.Score
+	}
 
 	return true, nil
 }

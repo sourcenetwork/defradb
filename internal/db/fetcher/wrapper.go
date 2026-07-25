@@ -44,6 +44,7 @@ type wrappingFetcher struct {
 	fields      []client.CollectionFieldDescription
 	filter      *mapper.Filter
 	ordering    []mapper.OrderCondition
+	rank        *Rank
 	docMapper   *core.DocumentMapping
 	showDeleted bool
 }
@@ -65,6 +66,7 @@ func (f *wrappingFetcher) Init(
 	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
+	rank *Rank,
 	docMapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -77,6 +79,7 @@ func (f *wrappingFetcher) Init(
 	f.fields = fields
 	f.filter = filter
 	f.ordering = ordering
+	f.rank = rank
 	f.docMapper = docMapper
 	f.showDeleted = showDeleted
 
@@ -143,7 +146,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	var top fetcher
 	if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
-			f.docMapper, &f.execInfo, f.ordering)
+			f.docMapper, &f.execInfo, f.ordering, f.rank)
 		if err != nil {
 			return err
 		}
@@ -186,6 +189,12 @@ func (f *wrappingFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecI
 	f.execInfo.Reset()
 
 	for {
+		if f.rank != nil {
+			// Only the ranked scan sets a score. A document reached any other way - a deleted one,
+			// which the index does not hold - would otherwise keep the previous document's.
+			f.rank.Score = 0
+		}
+
 		docID, err := f.fetcher.NextDoc()
 		if err != nil {
 			return nil, ExecInfo{}, err

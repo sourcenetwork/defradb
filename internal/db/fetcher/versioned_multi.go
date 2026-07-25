@@ -45,6 +45,7 @@ type MultiVersioned struct {
 	fields      []client.CollectionFieldDescription
 	filter      *mapper.Filter
 	ordering    []mapper.OrderCondition
+	rank        *Rank
 	docmapper   *core.DocumentMapping
 	showDeleted bool
 }
@@ -62,6 +63,7 @@ func (f *MultiVersioned) Init(
 	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
+	rank *Rank,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
@@ -75,6 +77,7 @@ func (f *MultiVersioned) Init(
 	f.fields = fields
 	f.filter = filter
 	f.ordering = ordering
+	f.rank = rank
 	f.docmapper = docmapper
 	f.showDeleted = showDeleted
 
@@ -124,6 +127,7 @@ func (f *MultiVersioned) Start(ctx context.Context, prefixes ...keys.Walkable) e
 			f.fields,
 			f.filter,
 			f.ordering,
+			f.rank,
 			f.docmapper,
 			f.showDeleted,
 		)
