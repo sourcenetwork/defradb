@@ -49,8 +49,11 @@ func validateIndexKind(def client.CollectionVersion, req client.NewIndexRequest)
 	if _, ok := indexKinds[req.Kind]; !ok {
 		return NewErrUnknownIndexKind(req.Kind)
 	}
-	if req.Kind == client.IndexKindTrigram {
+	switch req.Kind {
+	case client.IndexKindTrigram:
 		return validateTrigramIndex(def, req)
+	case client.IndexKindBM25:
+		return validateBM25Index(def, req)
 	}
 	return nil
 }

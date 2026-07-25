@@ -142,6 +142,11 @@ const (
 	errTrigramIndexUnique                  string = "a trigram index can not be unique"
 	errTrigramIndexNotSingleField          string = "a trigram index must be on exactly one field"
 	errTrigramIndexFieldNotString          string = "a trigram index can only be on a string field"
+	errBM25IndexUnique                     string = "a bm25 index can not be unique"
+	errBM25IndexNotSingleField             string = "a bm25 index must be on exactly one field"
+	errBM25IndexFieldNotString             string = "a bm25 index can only be on a string field"
+	errBM25IndexUnknownOption              string = "unknown bm25 index option"
+	errBM25IndexInvalidOption              string = "invalid bm25 index option value"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -274,6 +279,8 @@ var (
 	ErrUnknownIndexKind                          = errors.New(errUnknownIndexKind)
 	ErrTrigramIndexUnique                        = errors.New(errTrigramIndexUnique)
 	ErrTrigramIndexNotSingleField                = errors.New(errTrigramIndexNotSingleField)
+	ErrBM25IndexUnique                           = errors.New(errBM25IndexUnique)
+	ErrBM25IndexNotSingleField                   = errors.New(errBM25IndexNotSingleField)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
@@ -1214,6 +1221,32 @@ func NewErrTrigramIndexFieldNotString(fieldName, fieldKind string) error {
 		errTrigramIndexFieldNotString,
 		errors.NewKV("Field", fieldName),
 		errors.NewKV("Kind", fieldKind),
+	)
+}
+
+// NewErrBM25IndexFieldNotString returns a new error indicating that a BM25 index was requested
+// on a field that does not hold a string.
+func NewErrBM25IndexFieldNotString(fieldName, fieldKind string) error {
+	return errors.New(
+		errBM25IndexFieldNotString,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Kind", fieldKind),
+	)
+}
+
+// NewErrBM25IndexUnknownOption returns a new error indicating that a BM25 index was requested
+// with an option it does not take.
+func NewErrBM25IndexUnknownOption(name string) error {
+	return errors.New(errBM25IndexUnknownOption, errors.NewKV("Option", name))
+}
+
+// NewErrBM25IndexInvalidOption returns a new error indicating that a BM25 index option was given
+// a value it can not take.
+func NewErrBM25IndexInvalidOption(name string, value any) error {
+	return errors.New(
+		errBM25IndexInvalidOption,
+		errors.NewKV("Option", name),
+		errors.NewKV("Value", value),
 	)
 }
 

@@ -22,6 +22,10 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 )
 
+// unregisteredKind is a kind name no build registers, standing in for a kind a peer's collection
+// version can name that this build does not implement.
+const unregisteredKind = "test_only_unregistered_kind"
+
 func TestWrapCollectionIndex_WithEmptyKind_ReturnsSimpleIndex(t *testing.T) {
 	index, err := wrapCollectionIndex(collectionBaseIndex{desc: client.IndexDescription{}})
 
@@ -37,7 +41,7 @@ func TestWrapCollectionIndex_WithEmptyKindAndUnique_ReturnsUniqueIndex(t *testin
 }
 
 func TestWrapCollectionIndex_WithUnregisteredKind_ReturnsError(t *testing.T) {
-	index, err := wrapCollectionIndex(collectionBaseIndex{desc: client.IndexDescription{Kind: client.IndexKindBM25}})
+	index, err := wrapCollectionIndex(collectionBaseIndex{desc: client.IndexDescription{Kind: unregisteredKind}})
 
 	assert.Nil(t, index)
 	require.ErrorIs(t, err, ErrUnknownIndexKind)
@@ -46,7 +50,7 @@ func TestWrapCollectionIndex_WithUnregisteredKind_ReturnsError(t *testing.T) {
 func TestValidateIndexKind_WithUnregisteredKind_ReturnsError(t *testing.T) {
 	require.NoError(t, validateIndexKind(client.CollectionVersion{}, client.NewIndexRequest{}))
 	require.ErrorIs(t,
-		validateIndexKind(client.CollectionVersion{}, client.NewIndexRequest{Kind: client.IndexKindBM25}),
+		validateIndexKind(client.CollectionVersion{}, client.NewIndexRequest{Kind: unregisteredKind}),
 		ErrUnknownIndexKind,
 	)
 }
@@ -96,8 +100,8 @@ func TestNewCollection_WithIndexKindThisBuildDoesNotImplement_MarksIndexFailed(t
 }
 
 func TestNewErrUnknownIndexKind_MatchesSentinelAndNamesTheKind(t *testing.T) {
-	err := NewErrUnknownIndexKind(client.IndexKindBM25)
+	err := NewErrUnknownIndexKind(unregisteredKind)
 
 	assert.True(t, errors.Is(err, ErrUnknownIndexKind))
-	assert.Contains(t, err.Error(), client.IndexKindBM25)
+	assert.Contains(t, err.Error(), unregisteredKind)
 }
