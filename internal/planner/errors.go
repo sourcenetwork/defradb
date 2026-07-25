@@ -53,6 +53,7 @@ var (
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
 	ErrBM25NotOnCollectionScan             = errors.New(
 		"_bm25 may only be requested on a query that scans a collection")
+	ErrMultipleBM25Fields = errors.New("a query may request only one _bm25 field")
 )
 
 func NewErrNoBM25Index(collectionName string, fieldName string) error {

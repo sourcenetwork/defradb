@@ -528,6 +528,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
 			similarity = append(similarity, n.planner.Similarity(f, simFilter))
 		case *mapper.Bm25:
+			if n.bm25 != nil {
+				// One scan yields one ranking, so a second _bm25 field would be left unfilled
+				// rather than answered.
+				return nil, nil, ErrMultipleBM25Fields
+			}
 			n.bm25 = f
 		}
 	}

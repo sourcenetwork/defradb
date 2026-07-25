@@ -68,6 +68,7 @@ func DefaultFields(collectionName string) fields {
 			groupField(collectionName),
 			deletedField,
 			similarityField,
+			bm25Field,
 		},
 		aggregateFields,
 	)
@@ -80,6 +81,7 @@ func DefaultViewObjFields(viewName string) fields {
 		fields{
 			groupField(viewName),
 			similarityField,
+			bm25Field,
 		},
 		aggregateFields,
 	)
@@ -131,6 +133,15 @@ func groupField(collectionName string) Field {
 
 var similarityField = Field{
 	"name": "SIMILARITY",
+	"type": map[string]any{
+		"kind":   "SCALAR",
+		"name":   "Float",
+		"ofType": nil,
+	},
+}
+
+var bm25Field = Field{
+	"name": "_bm25",
 	"type": map[string]any{
 		"kind":   "SCALAR",
 		"name":   "Float",

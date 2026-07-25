@@ -391,6 +391,23 @@ func TestBM25Query_OnAMutation_ReturnsError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// One scan yields one ranking, so a second _bm25 field would come back unfilled.
+func TestBM25Query_WithTwoBM25Fields_ReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: bm25ArticleActions(`@index(kind: BM25)`, &action.Request{
+			Request: `query {
+				Article {
+					first: _bm25(body: {query: "database"})
+					second: _bm25(body: {query: "indexing"})
+				}
+			}`,
+			ExpectedError: planner.ErrMultipleBM25Fields.Error(),
+		}),
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // A query term no document holds matches nothing, the same as any other query whose terms are all
 // absent.
 func TestBM25Query_WithUnknownTerm_ReturnsNothing(t *testing.T) {
