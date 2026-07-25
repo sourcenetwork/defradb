@@ -115,6 +115,13 @@ func buildIndexBase(
 	desc client.IndexDescription,
 	building bool,
 ) (collectionBaseIndex, error) {
+	// Resolve the kind before validating anything else. The rest of this function enforces the
+	// ordered index's own rules, which a description belonging to another kind need not satisfy.
+	// Checking it later would report that unrelated failure instead of the unknown kind, and the
+	// caller only skips an index it can recognise as belonging to a kind this build lacks.
+	if _, ok := indexKinds[desc.Kind]; !ok {
+		return collectionBaseIndex{}, NewErrUnknownIndexKind(desc.Kind)
+	}
 	if len(desc.Fields) == 0 {
 		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
