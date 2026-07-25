@@ -43,6 +43,7 @@ const (
 	compOpAll  = connor.AllOp
 	compOpNone = connor.NoneOp
 	opNot      = connor.NotOp
+	opAnd      = connor.AndOp
 	opOr       = connor.OrOp
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
@@ -971,8 +972,8 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //     For nested paths, _neq: null CAN use the index efficiently.
 //   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
 //     leaf values (scalars), not entire objects or arrays.
-//   - _regex - an ordered key index cannot narrow a regular expression to a key range, and
-//     no other index kind is selected for a query yet.
+//   - _regex - an ordered key index cannot narrow a regular expression to a key range. A
+//     trigram index can, and never reaches here: it has its own iterator.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
 	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 

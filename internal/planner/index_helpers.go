@@ -15,9 +15,10 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/immutable"
 )
@@ -30,27 +31,11 @@ type queryableIndexesProvider interface {
 
 // queryableIndexes returns the indexes usable for planning on col. Collections
 // that do not track status expose all their indexes (legacy behavior).
-//
-// Only the ordered key index (the empty kind) can serve a query. Another kind stores
-// something derived from the field value under the index prefix, which the index fetcher
-// would read back as if it were the value, so selecting one would silently return the
-// wrong documents. Selecting an index by what the filter asks of it, rather than only by
-// field name, is what lets the other kinds be used.
 func queryableIndexes(col client.Collection) []client.IndexDescription {
-	var all []client.IndexDescription
 	if p, ok := col.(queryableIndexesProvider); ok {
-		all = p.QueryableIndexes()
-	} else {
-		all = col.Version().Indexes
+		return p.QueryableIndexes()
 	}
-
-	result := make([]client.IndexDescription, 0, len(all))
-	for _, idx := range all {
-		if idx.Kind == "" {
-			result = append(result, idx)
-		}
-	}
-	return result
+	return col.Version().Indexes
 }
 
 // queryableIndexesOnField mirrors CollectionVersion.GetIndexesOnField over queryableIndexes:
@@ -63,6 +48,79 @@ func queryableIndexesOnField(col client.Collection, fieldName string) []client.I
 		}
 	}
 	return result
+}
+
+// opRelatedFilter stands in for a condition that is not applied to the field itself but to a
+// field of the collection it relates to, and so has no operator of its own on this field.
+const opRelatedFilter = ""
+
+// indexKindServesOperator reports whether an index of the given kind can produce candidate
+// documents for a filter condition using op.
+//
+// The answer is what the kind's read path implements, not a list of kinds known to exist. A
+// kind that stores entries but has no read path yet therefore serves nothing and is never
+// selected, which is what stops a query silently reading entries it cannot interpret.
+func indexKindServesOperator(kind string, op string) bool {
+	switch kind {
+	case "":
+		// The ordered key index turns a condition into a range of keys. A regular expression
+		// is not a range of keys, so it is the one operator on a string this kind cannot
+		// serve, and it falls back to a full scan. It is also the only kind selected for a
+		// filter reached through a relation, as it was before there were other kinds.
+		return op != connor.RegexOp
+	case client.IndexKindTrigram:
+		// A trigram index stores fragments of the value rather than the value, so it can
+		// generate candidates only for the operators that match somewhere inside a value.
+		// The negated forms are excluded because a candidate set cannot express "every
+		// document that does not match".
+		return op == connor.LikeOp || op == connor.CaseInsensitiveLikeOp || op == connor.RegexOp
+	default:
+		return false
+	}
+}
+
+// traverseFilterFieldOperators calls f once per leaf condition in an external filter, with
+// the name of the top-level field the condition sits under and the operator applied to that
+// field. A condition on a field of a related collection reports opRelatedFilter, since its
+// operator applies to the related field and not to this one.
+//
+// Conditions under _not are skipped, following what the index fetcher already does with
+// them: an index produces candidate documents, and no candidate set can express "every
+// document that does not match".
+func traverseFilterFieldOperators(field string, conditions any, f func(field, op string)) {
+	switch t := conditions.(type) {
+	case map[string]any:
+		for key, val := range t {
+			switch {
+			case !isFilterOperator(key):
+				if field == "" {
+					traverseFilterFieldOperators(key, val, f)
+				} else {
+					f(field, opRelatedFilter)
+				}
+			case key == request.FilterOpNot:
+				// Skipped, see the comment above.
+			case key == request.FilterOpAnd || key == request.FilterOpOr || key == request.AliasFieldName:
+				traverseFilterFieldOperators(field, val, f)
+			case field != "":
+				f(field, key)
+			}
+		}
+	case []any:
+		for _, val := range t {
+			traverseFilterFieldOperators(field, val, f)
+		}
+	}
+}
+
+// isFilterOperator reports whether a key in an external filter is an operator rather than a
+// field name. It matches what filter.TraverseFields treats as an operator.
+func isFilterOperator(key string) bool {
+	if len(key) == 0 || key[0] != '_' || key == request.DocIDFieldName {
+		return false
+	}
+	_, isRelated := request.ToRelatedObjectName(key)
+	return !isRelated
 }
 
 // indexSource indicates what criteria was used to select an index.
@@ -88,6 +146,9 @@ type indexSelectionResult struct {
 // findIndexByFilter finds an index that can be used for the given filter conditions.
 // Returns the first matching index sorted by name for deterministic behavior.
 // See https://github.com/sourcenetwork/defradb/issues/2680 for cost-based optimization.
+//
+// A candidate has to be able to serve the operator its field is filtered by, not merely be
+// an index on that field, since which operators a kind can answer differs by kind.
 func findIndexByFilter(
 	col client.Collection,
 	filterConditions map[string]any,
@@ -99,18 +160,17 @@ func findIndexByFilter(
 	var indexCandidates []client.IndexDescription
 	colVersion := col.Version()
 
-	filter.TraverseFields(filterConditions, func(path []string, val any) bool {
+	traverseFilterFieldOperators("", filterConditions, func(fieldName, op string) {
 		for _, field := range colVersion.Fields {
-			if field.Name != path[0] {
+			if field.Name != fieldName {
 				continue
 			}
-			indexes := queryableIndexesOnField(col, field.Name)
-			if len(indexes) > 0 {
-				indexCandidates = append(indexCandidates, indexes...)
-				return true
+			for _, idx := range queryableIndexesOnField(col, fieldName) {
+				if indexKindServesOperator(idx.Kind, op) {
+					indexCandidates = append(indexCandidates, idx)
+				}
 			}
 		}
-		return true
 	})
 
 	if len(indexCandidates) == 0 {
@@ -138,9 +198,12 @@ func findIndexByFieldName(
 		if field.Name != fieldName {
 			continue
 		}
-		indexes := queryableIndexesOnField(col, field.Name)
-		if len(indexes) > 0 {
-			return immutable.Some(indexes[0])
+		for _, idx := range queryableIndexesOnField(col, field.Name) {
+			// The relation ID is looked up by value, so only a kind that can serve _eq is a
+			// candidate.
+			if indexKindServesOperator(idx.Kind, connor.EqualOp) {
+				return immutable.Some(idx)
+			}
 		}
 	}
 

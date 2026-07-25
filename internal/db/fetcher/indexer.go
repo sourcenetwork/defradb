@@ -144,7 +144,12 @@ func newIndexFetcher(
 		}
 	}
 
-	iter, err := f.createIndexIterator(f.indexFilter)
+	var iter indexIterator
+	if indexDesc.Kind == client.IndexKindTrigram {
+		iter, err = f.createTrigramIndexIterator(docFilter)
+	} else {
+		iter, err = f.createIndexIterator(f.indexFilter)
+	}
 	if err != nil || iter == nil {
 		return nil, err
 	}
@@ -166,7 +171,9 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	hasNilField := false
-	for i := range f.indexedFields {
+	// Bounded by the key rather than by the indexed fields: a trigram index entry carries a
+	// trigram of the value rather than the value, so its result has no field values at all.
+	for i := range res.key.Fields {
 		hasNilField = hasNilField || res.key.Fields[i].Value.IsNil()
 	}
 
@@ -244,6 +251,13 @@ func CanBeOrderedByIndex(
 	index client.IndexDescription,
 	mapping *core.DocumentMapping,
 ) (bool, bool) {
+	// Only the ordered key index holds the field value itself in the key, so it is the only
+	// kind whose scan order is the order of the field. Every other kind keys on something
+	// derived from the value and scans in the derived value's order instead.
+	if index.Kind != "" {
+		return false, false
+	}
+
 	// if there is no ordering in the query or the query requests ordering on more fields, then index
 	// contains, we can't use index
 	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
