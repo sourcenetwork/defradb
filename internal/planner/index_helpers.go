@@ -15,10 +15,10 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/immutable"
 )
@@ -56,16 +56,12 @@ func queryableIndexesOnField(col client.Collection, fieldName string) []client.I
 func invertibleJoinIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
 	var result []client.IndexDescription
 	for _, idx := range queryableIndexesOnField(col, fieldName) {
-		if indexKindServesOperator(idx.Kind, opRelatedFilter) {
+		if indexKindServesOperator(idx.Kind, filter.OpRelatedFilter) {
 			result = append(result, idx)
 		}
 	}
 	return result
 }
-
-// opRelatedFilter stands in for a condition that is not applied to the field itself but to a
-// field of the collection it relates to, and so has no operator of its own on this field.
-const opRelatedFilter = ""
 
 // indexKindServesOperator reports whether an index of the given kind can produce candidate
 // documents for a filter condition using op.
@@ -90,50 +86,6 @@ func indexKindServesOperator(kind string, op string) bool {
 	default:
 		return false
 	}
-}
-
-// traverseFilterFieldOperators calls f once per leaf condition in an external filter, with
-// the name of the top-level field the condition sits under and the operator applied to that
-// field. A condition on a field of a related collection reports opRelatedFilter, since its
-// operator applies to the related field and not to this one.
-//
-// Conditions under _not are skipped, following what the index fetcher already does with
-// them: an index produces candidate documents, and no candidate set can express "every
-// document that does not match".
-func traverseFilterFieldOperators(field string, conditions any, f func(field, op string)) {
-	switch t := conditions.(type) {
-	case map[string]any:
-		for key, val := range t {
-			switch {
-			case !isFilterOperator(key):
-				if field == "" {
-					traverseFilterFieldOperators(key, val, f)
-				} else {
-					f(field, opRelatedFilter)
-				}
-			case key == request.FilterOpNot:
-				// Skipped, see the comment above.
-			case key == request.FilterOpAnd || key == request.FilterOpOr || key == request.AliasFieldName:
-				traverseFilterFieldOperators(field, val, f)
-			case field != "":
-				f(field, key)
-			}
-		}
-	case []any:
-		for _, val := range t {
-			traverseFilterFieldOperators(field, val, f)
-		}
-	}
-}
-
-// isFilterOperator reports whether a key in an external filter is an operator rather than a
-// field name. It matches what filter.TraverseFields treats as an operator.
-func isFilterOperator(key string) bool {
-	if len(key) == 0 || key[0] != '_' || key == request.DocIDFieldName {
-		return false
-	}
-	_, isRelated := request.ToRelatedObjectName(key)
-	return !isRelated
 }
 
 // indexSource indicates what criteria was used to select an index.
@@ -173,7 +125,7 @@ func findIndexByFilter(
 	var indexCandidates []client.IndexDescription
 	colVersion := col.Version()
 
-	traverseFilterFieldOperators("", filterConditions, func(fieldName, op string) {
+	filter.TraverseFieldOperators("", filterConditions, func(fieldName, op string) {
 		for _, field := range colVersion.Fields {
 			if field.Name != fieldName {
 				continue

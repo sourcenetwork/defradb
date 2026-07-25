@@ -19,22 +19,16 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-func TestTraverseFields(t *testing.T) {
+func TestTraverseFieldOperators(t *testing.T) {
 	tests := []struct {
-		name          string
-		input         map[string]any
-		expectedPaths [][]string
-		expectedVals  []any
+		name     string
+		input    map[string]any
+		expected [][2]string
 	}{
 		{
-			name: "simple field",
-			input: map[string]any{
-				"name": map[string]any{
-					"_eq": "John",
-				},
-			},
-			expectedPaths: [][]string{{"name"}},
-			expectedVals:  []any{"John"},
+			name:     "simple field",
+			input:    map[string]any{"name": map[string]any{"_eq": "John"}},
+			expected: [][2]string{{"name", "_eq"}},
 		},
 		{
 			name: "multiple fields",
@@ -42,168 +36,35 @@ func TestTraverseFields(t *testing.T) {
 				"name": map[string]any{"_eq": "John"},
 				"age":  map[string]any{"_gt": 25},
 			},
-			expectedPaths: [][]string{{"name"}, {"age"}},
-			expectedVals:  []any{"John", 25},
+			expected: [][2]string{{"name", "_eq"}, {"age", "_gt"}},
 		},
 		{
-			name: "nested fields",
+			name: "field of a related collection reports no operator",
 			input: map[string]any{
 				"author": map[string]any{
-					"books": map[string]any{
-						"title": map[string]any{
-							"_eq": "Sample Book",
-						},
-					},
+					"books": map[string]any{"title": map[string]any{"_eq": "Sample"}},
 				},
 			},
-			expectedPaths: [][]string{{"author", "books", "title"}},
-			expectedVals:  []any{"Sample Book"},
+			expected: [][2]string{{"author", OpRelatedFilter}},
 		},
 		{
 			name: "with _or operator",
 			input: map[string]any{
 				request.FilterOpOr: []any{
-					map[string]any{
-						"name": map[string]any{"_eq": "John"},
-					},
-					map[string]any{
-						"age": map[string]any{"_gt": 30},
-					},
+					map[string]any{"name": map[string]any{"_eq": "John"}},
+					map[string]any{"age": map[string]any{"_gt": 30}},
 				},
 			},
-			expectedPaths: [][]string{{"name"}, {"age"}},
-			expectedVals:  []any{"John", 30},
-		},
-		{
-			name: "with _or operator with nil value",
-			input: map[string]any{
-				request.FilterOpOr: nil,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _or operator with empty array value",
-			input: map[string]any{
-				request.FilterOpOr: []any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _or operator with empty map value",
-			input: map[string]any{
-				request.FilterOpOr: map[string]any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _or operator with invalid value",
-			input: map[string]any{
-				request.FilterOpOr: 1,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
+			expected: [][2]string{{"name", "_eq"}, {"age", "_gt"}},
 		},
 		{
 			name: "with _and operator",
 			input: map[string]any{
 				request.FilterOpAnd: []any{
-					map[string]any{
-						"name": map[string]any{"_eq": "John"},
-					},
-					map[string]any{
-						"age": map[string]any{"_gt": 30},
-					},
+					map[string]any{"name": map[string]any{"_like": "%Jo%"}},
 				},
 			},
-			expectedPaths: [][]string{{"name"}, {"age"}},
-			expectedVals:  []any{"John", 30},
-		},
-		{
-			name: "with _and operator with nil value",
-			input: map[string]any{
-				request.FilterOpAnd: nil,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _and operator with empty array value",
-			input: map[string]any{
-				request.FilterOpAnd: []any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _and operator with empty map value",
-			input: map[string]any{
-				request.FilterOpAnd: map[string]any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _and operator with invalid value",
-			input: map[string]any{
-				request.FilterOpAnd: 1,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _not operator",
-			input: map[string]any{
-				request.FilterOpNot: []any{
-					map[string]any{
-						"name": map[string]any{"_eq": "John"},
-					},
-				},
-			},
-			expectedPaths: [][]string{{"name"}},
-			expectedVals:  []any{"John"},
-		},
-		{
-			name: "with _not operator with nil value",
-			input: map[string]any{
-				request.FilterOpNot: nil,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _not operator with empty array value",
-			input: map[string]any{
-				request.FilterOpNot: []any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _not operator with empty map value",
-			input: map[string]any{
-				request.FilterOpNot: map[string]any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with _not operator with invalid value",
-			input: map[string]any{
-				request.FilterOpNot: 1,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with alias operator with nil value",
-			input: map[string]any{
-				request.AliasFieldName: nil,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
+			expected: [][2]string{{"name", "_like"}},
 		},
 		{
 			name: "with alias operator",
@@ -212,132 +73,43 @@ func TestTraverseFields(t *testing.T) {
 					"age": map[string]any{"_eq": 30},
 				},
 			},
-			expectedPaths: [][]string{{"age"}},
-			expectedVals:  []any{30},
+			expected: [][2]string{{"age", "_eq"}},
 		},
 		{
-			name: "with empty alias operator",
+			name: "conditions under _not are skipped",
 			input: map[string]any{
-				request.AliasFieldName: map[string]any{},
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-		{
-			name: "with alias operator of invalid type",
-			input: map[string]any{
-				request.AliasFieldName: 1,
-			},
-			expectedPaths: [][]string{},
-			expectedVals:  []any{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var actualPaths [][]string
-			var actualVals []any
-
-			TraverseFields(tt.input, func(path []string, val any) bool {
-				pathCopy := make([]string, len(path))
-				copy(pathCopy, path)
-				actualPaths = append(actualPaths, pathCopy)
-				actualVals = append(actualVals, val)
-				return true // continue traversal
-			})
-
-			assert.ElementsMatch(t, tt.expectedPaths, actualPaths)
-			assert.ElementsMatch(t, tt.expectedVals, actualVals)
-		})
-	}
-}
-
-func TestTraverseFieldsEarlyExit(t *testing.T) {
-	tests := []struct {
-		name          string
-		input         map[string]any
-		expectedCount int
-		exitAfter     int
-	}{
-		{
-			name: "exit in flat fields",
-			input: map[string]any{
-				"name": map[string]any{"_eq": "John"},
-				"age":  map[string]any{"_gt": 25},
-				"city": map[string]any{"_eq": "New York"},
-			},
-			expectedCount: 2,
-			exitAfter:     2,
-		},
-		{
-			name: "exit in nested fields",
-			input: map[string]any{
-				"author": map[string]any{
+				request.FilterOpNot: map[string]any{
 					"name": map[string]any{"_eq": "John"},
-					"books": map[string]any{
-						"title": map[string]any{"_eq": "Book 1"},
-						"year":  map[string]any{"_gt": 2000},
-					},
 				},
+				"age": map[string]any{"_gt": 30},
 			},
-			expectedCount: 1,
-			exitAfter:     1,
+			expected: [][2]string{{"age", "_gt"}},
 		},
 		{
-			name: "exit in array operator",
-			input: map[string]any{
-				"_or": []any{
-					map[string]any{
-						"name": map[string]any{"_eq": "John"},
-					},
-					map[string]any{
-						"age": map[string]any{"_gt": 30},
-					},
-					map[string]any{
-						"city": map[string]any{"_eq": "Paris"},
-					},
-				},
-			},
-			expectedCount: 2,
-			exitAfter:     2,
+			name:     "_docID is a field, not an operator",
+			input:    map[string]any{request.DocIDFieldName: map[string]any{"_eq": "bae-1"}},
+			expected: [][2]string{{request.DocIDFieldName, "_eq"}},
 		},
 		{
-			name: "exit in mixed operators",
-			input: map[string]any{
-				"_and": []any{
-					map[string]any{
-						"name": map[string]any{"_eq": "John"},
-					},
-					map[string]any{
-						"_or": []any{
-							map[string]any{"age": map[string]any{"_gt": 30}},
-							map[string]any{"city": map[string]any{"_eq": "Paris"}},
-						},
-					},
-				},
-			},
-			expectedCount: 1,
-			exitAfter:     1,
+			name:     "operator with nil value",
+			input:    map[string]any{request.FilterOpOr: nil},
+			expected: nil,
+		},
+		{
+			name:     "operator with value of invalid type",
+			input:    map[string]any{request.FilterOpAnd: 1},
+			expected: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var actualPaths [][]string
-			var actualVals []any
-
-			TraverseFields(tt.input, func(path []string, val any) bool {
-				pathCopy := make([]string, len(path))
-				copy(pathCopy, path)
-				actualPaths = append(actualPaths, pathCopy)
-				actualVals = append(actualVals, val)
-				return len(actualPaths) < tt.exitAfter
+			var actual [][2]string
+			TraverseFieldOperators("", tt.input, func(field, op string) {
+				actual = append(actual, [2]string{field, op})
 			})
 
-			assert.Equal(t, tt.expectedCount, len(actualPaths),
-				"should have stopped after %d fields", tt.expectedCount)
-			assert.Equal(t, tt.expectedCount, len(actualVals),
-				"should have stopped after %d values", tt.expectedCount)
+			assert.ElementsMatch(t, tt.expected, actual)
 		})
 	}
 }

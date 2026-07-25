@@ -15,76 +15,57 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// TraverseFields walks through a filter condition tree and calls the provided function f
-// for each leaf node (field value) encountered. The function f receives the path to the field
-// (as a string slice) and its value. If f returns false, traversal stops immediately.
-//
-// The path parameter in f represents the nested field names leading to the value, excluding
-// operator keys (those starting with '_'). For example, given the filter:
-//
-//	{
-//	    "author": {
-//	        "books": {
-//	            "title": {"_eq": "Sample"}
-//	        }
-//	    }
-//	}
-//
-// The callback would receive path=["author", "books", "title"] and value="Sample"
-func TraverseFields(conditions map[string]any, f func([]string, any) bool) {
-	traverseFields(nil, "", conditions, f)
-}
+// OpRelatedFilter stands in for a condition that is not applied to the field itself but to a
+// field of the collection it relates to, and so has no operator of its own on this field.
+const OpRelatedFilter = ""
 
-func traverseFields(path []string, key string, value any, f func([]string, any) bool) bool {
-	isKeyOp := func(k string) bool {
-		if len(k) == 0 || k[0] != '_' || k == request.DocIDFieldName {
-			return false
-		}
-		_, ok := request.ToRelatedObjectName(k)
-		return !ok
-	}
-	isOpComplex := func(k string) bool {
-		switch k {
-		// all these ops should have a map or an array as value and can not have a single value
-		case request.AliasFieldName, request.FilterOpOr, request.FilterOpAnd, request.FilterOpNot:
-			return true
-		}
+// IsOperator reports whether a key in an external filter is an operator rather than a field
+// name.
+func IsOperator(key string) bool {
+	if len(key) == 0 || key[0] != '_' || key == request.DocIDFieldName {
 		return false
 	}
-	switch t := value.(type) {
+	_, isRelated := request.ToRelatedObjectName(key)
+	return !isRelated
+}
+
+// TraverseFieldOperators calls f once per leaf condition in an external filter, with the name
+// of the top-level field the condition sits under and the operator applied to that field. A
+// condition on a field of a related collection reports OpRelatedFilter, since its operator
+// applies to the related field and not to this one.
+//
+// Conditions under _not are skipped, following what the index fetcher already does with
+// them: an index produces candidate documents, and no candidate set can express "every
+// document that does not match".
+func TraverseFieldOperators(field string, conditions any, f func(field, op string)) {
+	switch t := conditions.(type) {
 	case map[string]any:
-		for key, value := range t {
-			if isKeyOp(key) {
-				if !traverseFields(path, key, value, f) {
-					return false
+		for key, val := range t {
+			switch {
+			case !IsOperator(key):
+				if field == "" {
+					TraverseFieldOperators(key, val, f)
+				} else {
+					f(field, OpRelatedFilter)
 				}
-			} else {
-				newPath := make([]string, len(path), len(path)+1)
-				copy(newPath, path)
-				newPath = append(newPath, key)
-				if !traverseFields(newPath, key, value, f) {
-					return false
-				}
+			case key == request.FilterOpNot:
+				// Skipped, see the comment above.
+			case key == request.FilterOpAnd || key == request.FilterOpOr || key == request.AliasFieldName:
+				TraverseFieldOperators(field, val, f)
+			case field != "":
+				f(field, key)
 			}
 		}
 	case []any:
-		for _, v := range t {
-			if !traverseFields(path, "", v, f) {
-				return false
-			}
+		for _, val := range t {
+			TraverseFieldOperators(field, val, f)
 		}
-	default:
-		if isKeyOp(key) && isOpComplex(key) {
-			return false
-		}
-		return f(path, value)
 	}
-	return true
 }
 
 // TraverseProperties walks through a mapper filter tree and calls the provided function f
-// for each PropertyIndex node encountered. Unlike TraverseFields, this function works with
-// the internal filter representation using mapper.PropertyIndex and connor.FilterKey types.
+// for each PropertyIndex node encountered. This function works with the internal filter
+// representation using mapper.PropertyIndex and connor.FilterKey types.
 //
 // The function f receives:
 // - The property index node being visited

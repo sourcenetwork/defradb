@@ -11,8 +11,9 @@
 package fetcher
 
 import (
+	"cmp"
 	"regexp/syntax"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -410,7 +411,7 @@ func analyzeRegexp(re *syntax.Regexp) regexpInfo {
 		info = analyzeRegexp(re.Sub[0])
 		if info.exact.have() {
 			info.prefix = info.exact
-			info.suffix = info.exact.copy()
+			info.suffix = slices.Clone(info.exact)
 			info.exact = nil
 		}
 
@@ -496,7 +497,7 @@ func concatRegexpInfo(x, y regexpInfo) regexpInfo {
 	// If every string in the cross product of x's suffixes and y's prefixes is long enough,
 	// then one of their trigrams must be present, and nothing else would have recorded it.
 	if !x.exact.have() && !y.exact.have() &&
-		x.suffix.size() <= maxSet && y.prefix.size() <= maxSet &&
+		len(x.suffix) <= maxSet && len(y.prefix) <= maxSet &&
 		x.suffix.minLen()+y.prefix.minLen() >= 3 {
 		xy.match = xy.match.andTrigrams(x.suffix.cross(y.prefix, false))
 	}
@@ -517,7 +518,7 @@ func alternateRegexpInfo(x, y regexpInfo) regexpInfo {
 		x.addExact()
 	case y.exact.have():
 		xy.prefix = x.prefix.union(y.exact, false)
-		xy.suffix = x.suffix.union(y.exact.copy(), true)
+		xy.suffix = x.suffix.union(slices.Clone(y.exact), true)
 		y.addExact()
 	default:
 		xy.prefix = x.prefix.union(y.prefix, false)
@@ -573,7 +574,7 @@ func (info *regexpInfo) simplifySet(s *stringSet) {
 	// Harvest the trigrams of the current set before shortening it.
 	info.match = info.match.andTrigrams(t)
 
-	for n := 3; n == 3 || t.size() > maxSet; n-- {
+	for n := 3; n == 3 || len(t) > maxSet; n-- {
 		// Replace the set by strings of length n-1.
 		w := 0
 		for _, str := range t {
@@ -617,32 +618,15 @@ func (s stringSet) have() bool {
 	return s != nil
 }
 
-type byPrefix []string
-
-func (x *byPrefix) Len() int           { return len(*x) }
-func (x *byPrefix) Swap(i, j int)      { (*x)[i], (*x)[j] = (*x)[j], (*x)[i] }
-func (x *byPrefix) Less(i, j int) bool { return (*x)[i] < (*x)[j] }
-
-// bySuffix orders strings by their last character first, so that the redundancy check in
-// simplifySet sees strings sharing a suffix as one sorted run.
-type bySuffix []string
-
-func (x *bySuffix) Len() int      { return len(*x) }
-func (x *bySuffix) Swap(i, j int) { (*x)[i], (*x)[j] = (*x)[j], (*x)[i] }
-func (x *bySuffix) Less(i, j int) bool {
-	s := (*x)[i]
-	t := (*x)[j]
+// compareBySuffix orders strings by their last character first, so that the redundancy check
+// in simplifySet sees strings sharing a suffix as one sorted run.
+func compareBySuffix(s, t string) int {
 	for i := 1; i <= len(s) && i <= len(t); i++ {
-		si := s[len(s)-i]
-		ti := t[len(t)-i]
-		if si < ti {
-			return true
-		}
-		if si > ti {
-			return false
+		if c := cmp.Compare(s[len(s)-i], t[len(t)-i]); c != 0 {
+			return c
 		}
 	}
-	return len(s) < len(t)
+	return cmp.Compare(len(s), len(t))
 }
 
 // add adds str to the set.
@@ -653,24 +637,11 @@ func (s *stringSet) add(str string) {
 // clean sorts the set and removes duplicates.
 func (s *stringSet) clean(isSuffix bool) {
 	if isSuffix {
-		sort.Sort((*bySuffix)(s))
+		slices.SortFunc(*s, compareBySuffix)
 	} else {
-		sort.Sort((*byPrefix)(s))
+		slices.Sort(*s)
 	}
-	t := *s
-	w := 0
-	for _, str := range t {
-		if w == 0 || t[w-1] != str {
-			t[w] = str
-			w++
-		}
-	}
-	*s = t[:w]
-}
-
-// size returns the number of strings in s.
-func (s stringSet) size() int {
-	return len(s)
+	*s = slices.Compact(*s)
 }
 
 // minLen returns the length of the shortest string in s.
@@ -704,9 +675,4 @@ func (s stringSet) cross(t stringSet, isSuffix bool) stringSet {
 	}
 	p.clean(isSuffix)
 	return p
-}
-
-// copy returns a copy of the set that does not share storage with the original.
-func (s stringSet) copy() stringSet {
-	return append(stringSet{}, s...)
 }
