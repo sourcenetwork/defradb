@@ -65,8 +65,9 @@ func BM25Key(
 	return key
 }
 
-// BM25Option reads a numeric index option, returning fallback when it is not set and false when
-// what is set is not a number.
+// BM25Option reads a numeric index option, returning fallback when it is not set. The second
+// result is false when what is set is not a number at all, in which case fallback is returned
+// too: index creation rejects that, and scoring with the default beats scoring with a zero.
 //
 // The same option arrives as three different Go types depending on where it came from: an integer
 // written in a GraphQL literal parses to an int32, the same description read back from the JSON it
@@ -90,6 +91,6 @@ func BM25Option(options map[string]any, name string, fallback float64) (float64,
 	case int64:
 		return float64(number), true
 	default:
-		return 0, false
+		return fallback, false
 	}
 }

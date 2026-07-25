@@ -35,8 +35,11 @@ func TestBM25Option_AcceptsIntAndFloat(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, BM25DefaultB, missing)
 
-	_, ok = BM25Option(map[string]any{"b": "fast"}, "b", BM25DefaultB)
+	// A value that is not a number reports itself as unusable and reads as the default, so a
+	// caller with no error to give scores with the default rather than with a zero.
+	notANumber, ok := BM25Option(map[string]any{"b": "fast"}, "b", BM25DefaultB)
 	assert.False(t, ok)
+	assert.Equal(t, BM25DefaultB, notANumber)
 }
 
 // The parts of the keyspace must stay distinct once encoded, since a term and a document short
