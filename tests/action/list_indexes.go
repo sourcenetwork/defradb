@@ -208,6 +208,7 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t re
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
 	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
 	assert.Equal(t, expectedIndex.Unique, actualIndex.Unique, "index unique mismatch")
+	assert.Equal(t, expectedIndex.Kind, actualIndex.Kind, "index kind mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))

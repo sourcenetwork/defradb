@@ -26,10 +26,10 @@ func TestIndexKind_IfKindHasNoImplementation_ShouldReturnError(t *testing.T) {
 			&action.AddCollection{
 				SDL: `
 					type User {
-						name: String @index(kind: TRIGRAM)
+						name: String @index(kind: BM25)
 					}
 				`,
-				ExpectedError: db.NewErrUnknownIndexKind(client.IndexKindTrigram).Error(),
+				ExpectedError: db.NewErrUnknownIndexKind(client.IndexKindBM25).Error(),
 			},
 		},
 	}

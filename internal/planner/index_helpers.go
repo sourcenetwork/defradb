@@ -30,11 +30,27 @@ type queryableIndexesProvider interface {
 
 // queryableIndexes returns the indexes usable for planning on col. Collections
 // that do not track status expose all their indexes (legacy behavior).
+//
+// Only the ordered key index (the empty kind) can serve a query. Another kind stores
+// something derived from the field value under the index prefix, which the index fetcher
+// would read back as if it were the value, so selecting one would silently return the
+// wrong documents. Selecting an index by what the filter asks of it, rather than only by
+// field name, is what lets the other kinds be used.
 func queryableIndexes(col client.Collection) []client.IndexDescription {
+	var all []client.IndexDescription
 	if p, ok := col.(queryableIndexesProvider); ok {
-		return p.QueryableIndexes()
+		all = p.QueryableIndexes()
+	} else {
+		all = col.Version().Indexes
 	}
-	return col.Version().Indexes
+
+	result := make([]client.IndexDescription, 0, len(all))
+	for _, idx := range all {
+		if idx.Kind == "" {
+			result = append(result, idx)
+		}
+	}
+	return result
 }
 
 // queryableIndexesOnField mirrors CollectionVersion.GetIndexesOnField over queryableIndexes:

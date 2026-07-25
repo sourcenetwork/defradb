@@ -139,6 +139,9 @@ const (
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 	errUnknownIndexKind                    string = "unknown index kind"
+	errTrigramIndexUnique                  string = "a trigram index can not be unique"
+	errTrigramIndexNotSingleField          string = "a trigram index must be on exactly one field"
+	errTrigramIndexFieldNotString          string = "a trigram index can only be on a string field"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -269,6 +272,8 @@ var (
 	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
 	ErrIndexWithIDDoesNotExist                   = errors.New(errIndexWithIDDoesNotExist)
 	ErrUnknownIndexKind                          = errors.New(errUnknownIndexKind)
+	ErrTrigramIndexUnique                        = errors.New(errTrigramIndexUnique)
+	ErrTrigramIndexNotSingleField                = errors.New(errTrigramIndexNotSingleField)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
@@ -1200,6 +1205,16 @@ func NewErrCorruptIndexPayload(value []byte) error {
 // implemented by this build.
 func NewErrUnknownIndexKind(kind string) error {
 	return errors.New(errUnknownIndexKind, errors.NewKV("Kind", kind))
+}
+
+// NewErrTrigramIndexFieldNotString returns a new error indicating that a trigram index was
+// requested on a field that does not hold a string.
+func NewErrTrigramIndexFieldNotString(fieldName, fieldKind string) error {
+	return errors.New(
+		errTrigramIndexFieldNotString,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Kind", fieldKind),
+	)
 }
 
 // NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the

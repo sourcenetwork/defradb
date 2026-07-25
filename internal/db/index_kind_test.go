@@ -44,9 +44,9 @@ func TestWrapCollectionIndex_WithUnregisteredKind_ReturnsError(t *testing.T) {
 }
 
 func TestValidateIndexKind_WithUnregisteredKind_ReturnsError(t *testing.T) {
-	require.NoError(t, validateIndexKind(client.NewIndexRequest{}))
+	require.NoError(t, validateIndexKind(client.CollectionVersion{}, client.NewIndexRequest{}))
 	require.ErrorIs(t,
-		validateIndexKind(client.NewIndexRequest{Kind: client.IndexKindTrigram}),
+		validateIndexKind(client.CollectionVersion{}, client.NewIndexRequest{Kind: client.IndexKindBM25}),
 		ErrUnknownIndexKind,
 	)
 }

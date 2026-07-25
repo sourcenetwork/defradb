@@ -45,9 +45,12 @@ func init() {
 
 // validateIndexKind checks a new index request against the kind it names. Per-kind validation of
 // the options and of the kinds of the fields being indexed belongs here.
-func validateIndexKind(req client.NewIndexRequest) error {
+func validateIndexKind(def client.CollectionVersion, req client.NewIndexRequest) error {
 	if _, ok := indexKinds[req.Kind]; !ok {
 		return NewErrUnknownIndexKind(req.Kind)
+	}
+	if req.Kind == client.IndexKindTrigram {
+		return validateTrigramIndex(def, req)
 	}
 	return nil
 }

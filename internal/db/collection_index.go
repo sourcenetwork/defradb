@@ -462,7 +462,7 @@ func processNewIndexRequest(
 	def client.CollectionVersion,
 	desc client.NewIndexRequest,
 ) (client.IndexDescription, error) {
-	err := validateIndexDescription(desc)
+	err := validateIndexDescription(def, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -1185,7 +1185,7 @@ func generateIndexNameIfNeeded(
 	return indexName, nil
 }
 
-func validateIndexDescription(desc client.NewIndexRequest) error {
+func validateIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return schema.NewErrIndexWithInvalidName(desc.Name)
 	}
@@ -1197,7 +1197,7 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 			return ErrIndexFieldMissingName
 		}
 	}
-	return validateIndexKind(desc)
+	return validateIndexKind(def, desc)
 }
 
 func generateIndexName(colName string, fields []client.IndexedFieldDescription, inc int) (string, error) {

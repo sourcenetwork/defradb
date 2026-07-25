@@ -137,7 +137,7 @@ func buildIndexBase(
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
 			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
 		}
-		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
+		base.fieldGenerators[i] = getFieldGenerator(desc.Kind, field.Kind)
 	}
 	return base, nil
 }
@@ -211,8 +211,15 @@ func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.No
 	)
 }
 
-// getFieldGenerator returns appropriate generator for the field type
-func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
+// getFieldGenerator returns appropriate generator for the field type.
+//
+// A kind that indexes something derived from the field value rather than the value itself
+// picks its generator by index kind and ignores the field kind; index creation has already
+// checked that the field is one the kind can handle.
+func getFieldGenerator(indexKind string, kind client.FieldKind) FieldIndexGenerator {
+	if indexKind == client.IndexKindTrigram {
+		return &TrigramFieldGenerator{}
+	}
 	if kind.IsArray() {
 		return &ArrayFieldGenerator{}
 	}
