@@ -300,6 +300,12 @@ func parseSelectFields(
 					return nil, err
 				}
 				selection = s
+			} else if node.Name.Value == request.Bm25FieldName {
+				s, err := parseBm25(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else if node.SelectionSet == nil { // regular field
 				selection = parseField(node)
 			} else if node.Name.Value == request.LinksFieldName ||

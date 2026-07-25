@@ -188,6 +188,15 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		return nil, err
 	}
 
+	if err := g.genTextSearchFields(); err != nil {
+		return nil, err
+	}
+
+	// resolve types
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
 	generatedFilterLeafArgs := []*gql.InputObject{}
 	for _, defaultType := range inlineArrayTypes() {
 		leafFilterArg := g.genLeafFilterArgInput(defaultType)
@@ -942,6 +951,39 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 	return field, nil
 }
 
+func (g *Generator) genBm25FieldConfig(obj *gql.Object) (gql.Field, error) {
+	field := gql.Field{
+		Name:        request.Bm25FieldName,
+		Description: "Returns how well the specified field matches the provided query, scored with BM25.",
+		Type:        gql.Float,
+		Args:        gql.FieldConfigArgument{},
+	}
+
+	for _, objectField := range obj.Fields() {
+		if objectField.Type != gql.String {
+			continue
+		}
+
+		inputObject := gql.NewInputObject(gql.InputObjectConfig{
+			Name:        genBm25SelectorName(obj.Name(), objectField.Name),
+			Description: objectField.Description,
+			Fields: gql.InputObjectConfigFieldMap{
+				schemaTypes.Bm25ArgQuery: &gql.InputObjectFieldConfig{
+					Type:        gql.NewNonNull(gql.String),
+					Description: "The text to score the field against.",
+				},
+			},
+		})
+		err := g.appendIfNotExists(inputObject)
+		if err != nil {
+			return gql.Field{}, err
+		}
+		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
+	}
+
+	return field, nil
+}
+
 func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
@@ -1015,6 +1057,10 @@ func genNumericInlineArraySelectorName(hostName string, fieldName string) string
 
 func genSimilaritySelectorName(hostName string, fieldName string) string {
 	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "SimilaritySelector")
+}
+
+func genBm25SelectorName(hostName string, fieldName string) string {
+	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "Bm25Selector")
 }
 
 func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
@@ -1610,6 +1656,17 @@ func (g *Generator) genVectorOpsFields() error {
 			return err
 		}
 		t.AddFieldConfig(similarityField.Name, &similarityField)
+	}
+	return nil
+}
+
+func (g *Generator) genTextSearchFields() error {
+	for _, t := range g.typeDefs {
+		bm25Field, err := g.genBm25FieldConfig(t)
+		if err != nil {
+			return err
+		}
+		t.AddFieldConfig(bm25Field.Name, &bm25Field)
 	}
 	return nil
 }

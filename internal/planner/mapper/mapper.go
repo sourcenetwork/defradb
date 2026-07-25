@@ -996,6 +996,21 @@ func getRequestables(
 				Key:   getRenderKey(&f.Field),
 			})
 			mapping.Add(index, f.Name)
+		case *request.Bm25:
+			index := mapping.GetNextIndex()
+			fields = append(fields, &Bm25{
+				Field: Field{
+					Index: index,
+					Name:  f.Name,
+				},
+				Target: f.Target,
+				Query:  f.Query,
+			})
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}

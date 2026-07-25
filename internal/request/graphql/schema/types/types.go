@@ -76,6 +76,8 @@ const (
 	FieldOrderDESC = "DESC"
 
 	SimilarityArgVector = "vector"
+
+	Bm25ArgQuery = "query"
 )
 
 // OrderingEnum is an enum for the Ordering argument.

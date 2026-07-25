@@ -261,6 +261,31 @@ func parseSimilarity(
 	}, nil
 }
 
+func parseBm25(
+	exe *gql.ExecutionContext,
+	parent *gql.Object,
+	field *ast.Field,
+) (*request.Bm25, error) {
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
+	var target string
+	var query string
+	for _, argument := range field.Arguments {
+		target = argument.Name.Value
+		v := arguments[target].(map[string]any)
+		query, _ = v[types.Bm25ArgQuery].(string)
+	}
+
+	return &request.Bm25{
+		Field: request.Field{
+			Name:  field.Name.Value,
+			Alias: getFieldAlias(field),
+		},
+		Target: target,
+		Query:  query,
+	}, nil
+}
+
 func parseAggregateTarget(
 	hostName string,
 	arguments map[string]any,
