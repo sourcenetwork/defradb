@@ -12,6 +12,7 @@
 package action
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -94,7 +95,7 @@ func (a *DeleteIndex) Execute() {
 		}
 
 		// Capture the index ID before deletion so the wait below can target its drop record.
-		indexID, hadIndex := indexIDByName(a.s, collection, a.IndexName)
+		indexID, hadIndex := indexIDByName(a.s, node, collection, a.IndexName)
 
 		err = collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
@@ -111,8 +112,10 @@ func (a *DeleteIndex) Execute() {
 }
 
 // indexIDByName returns the ID of the named index on the collection, and whether it was found.
-func indexIDByName(s *state.State, collection client.Collection, name string) (uint32, bool) {
-	results, err := collection.ListIndexes(s.Ctx)
+// It lists as the node identity so the lookup is authorized when NAC is enabled (it is bookkeeping
+// for the drop-wait, not the operation under test).
+func indexIDByName(s *state.State, node *state.NodeState, collection client.Collection, name string) (uint32, bool) {
+	results, err := collection.ListIndexes(s.Ctx, listIndexesOptions(s, node))
 	require.NoError(s.T, err)
 	for _, r := range results {
 		if r.Description.Name == name {
@@ -125,9 +128,17 @@ func indexIDByName(s *state.State, collection client.Collection, name string) (u
 // waitForIndexDropped blocks until no in-progress drop record remains for the index, i.e. the GC has
 // finished and cleared it. It polls ListActions so it composes with explicit Wait actions.
 func waitForIndexDropped(s *state.State, node *state.NodeState, collectionID string, indexID uint32) {
+	// Poll as the node identity so the ListActions call is authorized when NAC is enabled; waiting
+	// for the drop is test infrastructure, not the operation under test.
+	nodeID := slices.Index(s.Nodes, node)
+	opts := options.ListActions()
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(nodeID), nodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
 	subject := strconv.FormatUint(uint64(indexID), 10)
 	require.Eventually(s.T, func() bool {
-		actions, err := node.ListActions(s.Ctx)
+		actions, err := node.ListActions(s.Ctx, opts)
 		if err != nil {
 			return false
 		}

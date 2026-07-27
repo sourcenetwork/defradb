@@ -12,6 +12,7 @@
 package action
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -107,14 +108,7 @@ func GetCollectionsCanonically(
 		clientTxn = txn.Value()
 	}
 
-	// Find the nodeID for this node
-	nodeID := -1
-	for i, n := range s.Nodes {
-		if n == node {
-			nodeID = i
-			break
-		}
-	}
+	nodeID := slices.Index(s.Nodes, node)
 
 	newCollections := make([]client.Collection, len(s.CollectionNames))
 
