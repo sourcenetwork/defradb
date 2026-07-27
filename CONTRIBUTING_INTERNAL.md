@@ -59,7 +59,7 @@ In specific cases, internal developers may use the Branch Flow instead of Fork F
 
 **Branch naming convention:**
 
-```
+```text
 <dev-name>/<label>/<description>
 ```
 
@@ -102,15 +102,15 @@ We use labels inspired by **[Conventional Comments](https://conventionalcomments
 
 &nbsp;
 
-```
+```text
 suggestion: Consider using a map here instead of a slice for O(1) lookups.
 ```
 
-```
+```text
 todo: This needs error handling - if the connection drops mid-sync we'll panic.
 ```
 
-```
+```text
 thought: We might want to consider extracting this into its own package
 if we end up reusing it across the codebase.
 ```
