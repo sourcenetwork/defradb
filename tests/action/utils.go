@@ -94,6 +94,9 @@ func RefreshCollections(
 // GetCollectionsCanonically resolves the collections as the given actor identity, using the same
 // canonical ordering as the node.Collections slice refreshed by [RefreshCollections].
 //
+// The given transaction is optional, if one is not provided the collections will be resolved
+// by running the GetCollections function on the node itself.
+//
 // It performs no identity substitution, so under node acp an unauthorized actor is denied while
 // resolving (on get-collection); the error is returned so callers can assert an expected
 // authorization failure. Use it for an operation whose authorization is under test.
