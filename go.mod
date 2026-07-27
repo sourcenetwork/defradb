@@ -11,11 +11,11 @@ require (
 	github.com/cosmos/cosmos-sdk v0.53.5
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1
-	github.com/dgraph-io/badger/v4 v4.9.2
+	github.com/dgraph-io/badger/v4 v4.9.5
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/getkin/kin-openapi v0.137.0
-	github.com/go-chi/chi/v5 v5.3.0
+	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-chi/cors v1.2.2
 	github.com/go-errors/errors v1.5.1
 	github.com/gofrs/uuid/v5 v5.4.0
@@ -23,14 +23,14 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.41.0
-	github.com/ipfs/go-block-format v0.2.3
-	github.com/ipfs/go-cid v0.6.1
+	github.com/ipfs/go-block-format v0.2.4
+	github.com/ipfs/go-cid v0.6.2
 	github.com/ipfs/go-datastore v0.9.1
-	github.com/ipfs/go-ipld-format v0.6.3
+	github.com/ipfs/go-ipld-format v0.6.4
 	github.com/ipld/go-ipld-prime v0.24.0
 	github.com/ipld/go-ipld-prime/storage/bsadapter v0.0.0-20250821084354-a425e60cd714
 	github.com/joho/godotenv v1.5.1
-	github.com/lestrrat-go/jwx/v2 v2.1.6
+	github.com/lestrrat-go/jwx/v2 v2.1.7
 	github.com/libp2p/go-libp2p v0.48.0
 	github.com/multiformats/go-multiaddr v0.16.1
 	github.com/multiformats/go-multibase v0.3.0
@@ -75,7 +75,7 @@ require (
 	golang.org/x/crypto v0.54.0
 	golang.org/x/exp v0.0.0-20260603202125-055de637280b
 	golang.org/x/term v0.45.0
-	google.golang.org/grpc v1.82.0
+	google.golang.org/grpc v1.82.1
 )
 
 require (
@@ -233,7 +233,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.28.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
-	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
