@@ -72,8 +72,6 @@ func (a *ListIndexes) Execute() {
 		return
 	}
 
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
 		node := a.s.Nodes[nodeID]
@@ -91,9 +89,8 @@ func (a *ListIndexes) Execute() {
 
 		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
-			if assertError(a.s.T, err, a.ExpectedError) {
-				expectedErrorRaised = true
-			}
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 		collection := collections[a.CollectionID]
@@ -106,8 +103,9 @@ func (a *ListIndexes) Execute() {
 
 		actualStatuses, err := collection.ListIndexes(a.s.Ctx, opts)
 
-		if assertError(a.s.T, err, a.ExpectedError) {
-			expectedErrorRaised = true
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+		if err != nil {
 			continue
 		}
 
@@ -115,8 +113,6 @@ func (a *ListIndexes) Execute() {
 		assertIndexStatuses(a.ExpectedStatuses, actualStatuses, a.s.T)
 		assertIndexCollectionNames(a.ExpectedCollectionName, actualStatuses, a.s.T)
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(

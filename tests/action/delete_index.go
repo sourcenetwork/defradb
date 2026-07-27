@@ -66,8 +66,6 @@ var _ Action = (*DeleteIndex)(nil)
 var _ Stateful = (*DeleteIndex)(nil)
 
 func (a *DeleteIndex) Execute() {
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
 		node := a.s.Nodes[nodeID]
@@ -82,7 +80,8 @@ func (a *DeleteIndex) Execute() {
 
 		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
-			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 
@@ -99,7 +98,8 @@ func (a *DeleteIndex) Execute() {
 
 		err = collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the dropping window, wait for the drop record to clear
 		// so a following raw-entry assertion sees them gone.
@@ -107,8 +107,6 @@ func (a *DeleteIndex) Execute() {
 			waitForIndexDropped(a.s, node, collection.Version().CollectionID, indexID)
 		}
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // indexIDByName returns the ID of the named index on the collection, and whether it was found.

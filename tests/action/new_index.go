@@ -96,7 +96,7 @@ func (a *NewIndex) Execute() {
 		if err != nil {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
-			return
+			continue
 		}
 
 		collection := collections[a.CollectionID]
@@ -131,9 +131,7 @@ func (a *NewIndex) Execute() {
 		desc, err := collection.NewIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
-		if expectedErrorRaised {
-			return
-		}
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the building window, wait for the build so a following
 		// query sees a built index. With an explicit transaction the record is not committed until
@@ -142,8 +140,6 @@ func (a *NewIndex) Execute() {
 			waitForIndexBuilt(a.s, collection, desc.ID, listIndexesOptions(a.s, node))
 		}
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, false)
 }
 
 // indexBuildTimeout bounds the wait for a background build or drop to finish. The poll returns as

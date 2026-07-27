@@ -1595,7 +1595,6 @@ func deleteDoc(
 	s.DocIDsLock.RUnlock()
 
 	doNotWaitForUpdate := false
-	var expectedErrorRaised bool
 
 	var collections []client.Collection
 
@@ -1618,7 +1617,8 @@ func deleteDoc(
 
 		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
 		if err != nil {
-			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 		collection := collections[a.CollectionID]
@@ -1635,10 +1635,9 @@ func deleteDoc(
 				return err
 			},
 		)
-		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
 	if a.ExpectedError == "" && !doNotWaitForUpdate {
 		expect := map[string]struct{}{
@@ -1652,7 +1651,6 @@ func deleteDoc(
 // deleteWithFilter deletes the set of matched documents.
 func deleteWithFilter(s *state.State, a DeleteWithFilter) {
 	var res *client.DeleteResult
-	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
 	var collections []client.Collection
@@ -1674,7 +1672,8 @@ func deleteWithFilter(s *state.State, a DeleteWithFilter) {
 		nodeID := nodeIDs[index]
 		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
 		if err != nil {
-			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 		collection := collections[a.CollectionID]
@@ -1693,10 +1692,9 @@ func deleteWithFilter(s *state.State, a DeleteWithFilter) {
 			},
 		)
 
-		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
 	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		expect := make(map[string]struct{}, len(res.DocIDs))
@@ -1710,7 +1708,6 @@ func deleteWithFilter(s *state.State, a DeleteWithFilter) {
 // updateWithFilter updates the set of matched documents.
 func updateWithFilter(s *state.State, a UpdateWithFilter) {
 	var res *client.UpdateResult
-	var expectedErrorRaised bool
 	doNotWaitForUpdate := false
 
 	var collections []client.Collection
@@ -1733,7 +1730,8 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 		nodeID := nodeIDs[index]
 		collections, err = action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
 		if err != nil {
-			expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 		collection := collections[a.CollectionID]
@@ -1752,10 +1750,9 @@ func updateWithFilter(s *state.State, a UpdateWithFilter) {
 			},
 		)
 
-		expectedErrorRaised = AssertError(s.T, err, a.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 
 	if a.ExpectedError == "" && !a.SkipLocalUpdateEvent && !doNotWaitForUpdate {
 		waitForUpdateEvents(
@@ -1791,7 +1788,7 @@ func newEncryptedIndex(
 		if err != nil {
 			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
 			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
-			return
+			continue
 		}
 		collection := collections[a.CollectionID]
 
@@ -1817,12 +1814,9 @@ func newEncryptedIndex(
 				return err
 			},
 		)
-		if AssertError(s.T, err, a.ExpectedError) {
-			return
-		}
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 func listEncryptedIndexes(
@@ -1832,8 +1826,6 @@ func listEncryptedIndexes(
 	if len(s.Nodes) == 0 {
 		return
 	}
-
-	var expectedErrorRaised bool
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, s.Nodes)
 	for index, node := range nodes {
@@ -1858,7 +1850,8 @@ func listEncryptedIndexes(
 
 		collections, err := action.GetCollectionsCanonically(s, node, txnOption, a.Identity)
 		if err != nil {
-			expectedErrorRaised = expectedErrorRaised || AssertError(s.T, err, a.ExpectedError)
+			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 		collection := collections[a.CollectionID]
@@ -1877,11 +1870,9 @@ func listEncryptedIndexes(
 				return nil
 			},
 		)
-		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, a.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func listAllEncryptedIndexes(
@@ -1891,8 +1882,6 @@ func listAllEncryptedIndexes(
 	if len(s.Nodes) == 0 {
 		return
 	}
-
-	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
@@ -1925,11 +1914,9 @@ func listAllEncryptedIndexes(
 				return nil
 			},
 		)
-		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, a.ExpectedError)
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func deleteEncryptedIndex(
@@ -1955,7 +1942,7 @@ func deleteEncryptedIndex(
 		if err != nil {
 			expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
 			assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
-			return
+			continue
 		}
 		collection := collections[a.CollectionID]
 
@@ -1975,12 +1962,9 @@ func deleteEncryptedIndex(
 				return collection.DeleteEncryptedIndex(s.Ctx, a.FieldName, opts)
 			},
 		)
-		if AssertError(s.T, err, a.ExpectedError) {
-			return
-		}
+		expectedErrorRaised := AssertError(s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(s.T, a.ExpectedError, expectedErrorRaised)
 	}
-
-	assertExpectedErrorRaised(s.T, a.ExpectedError, false)
 }
 
 // exportBackup generates a backup using the db api.
