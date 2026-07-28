@@ -412,7 +412,7 @@ func aggregateGroupArg(fieldType string) map[string]any {
 							map[string]any{
 								"name": "_alias",
 								"type": map[string]any{
-									"name": "JSON",
+									"name": "FilterJSON",
 								},
 							},
 							map[string]any{
@@ -556,7 +556,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilte
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Boolean",
+																	"name": "FilterBoolean",
 																},
 															},
 															map[string]any{
@@ -568,7 +568,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableBooleanCountFilte
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Boolean",
+																	"name": "FilterBoolean",
 																},
 															},
 															map[string]any{
@@ -682,7 +682,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *tes
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Boolean",
+																	"name": "FilterBoolean",
 																},
 															},
 															map[string]any{
@@ -694,7 +694,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersBooleanCountFilter(t *tes
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Boolean",
+																	"name": "FilterBoolean",
 																},
 															},
 															map[string]any{
@@ -808,19 +808,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilte
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_geq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
@@ -832,19 +832,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableIntegerCountFilte
 															map[string]any{
 																"name": "_leq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
@@ -958,19 +958,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *tes
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_geq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
@@ -982,19 +982,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersIntegerCountFilter(t *tes
 															map[string]any{
 																"name": "_leq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Int",
+																	"name": "FilterInt",
 																},
 															},
 															map[string]any{
@@ -1108,19 +1108,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_geq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
@@ -1132,19 +1132,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableFloatCountFilter(
 															map[string]any{
 																"name": "_leq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
@@ -1258,19 +1258,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testi
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_geq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_gt",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
@@ -1282,19 +1282,19 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersFloatCountFilter(t *testi
 															map[string]any{
 																"name": "_leq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_lt",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "Float64",
+																	"name": "FilterFloat64",
 																},
 															},
 															map[string]any{
@@ -1408,7 +1408,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "String",
+																	"name": "FilterString",
 																},
 															},
 															map[string]any{
@@ -1432,7 +1432,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersNillableStringCountFilter
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "String",
+																	"name": "FilterString",
 																},
 															},
 															map[string]any{
@@ -1558,7 +1558,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *test
 															map[string]any{
 																"name": "_eq",
 																"type": map[string]any{
-																	"name": "String",
+																	"name": "FilterString",
 																},
 															},
 															map[string]any{
@@ -1582,7 +1582,7 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersStringCountFilter(t *test
 															map[string]any{
 																"name": "_neq",
 																"type": map[string]any{
-																	"name": "String",
+																	"name": "FilterString",
 																},
 															},
 															map[string]any{

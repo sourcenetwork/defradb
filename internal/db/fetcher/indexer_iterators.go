@@ -971,6 +971,13 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
 //     leaf values (scalars), not entire objects or arrays.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
+	// A field-to-field comparison has no value until a document has been fetched, so it cannot be
+	// turned into an index range key.  The full filter is still evaluated per document by
+	// filteredFetcher, so results stay correct - the index just cannot narrow the scan.
+	if _, isFieldValue := filterVal.(mapper.FieldValue); isFieldValue {
+		return true
+	}
+
 	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 
 	if filterVal == nil {

@@ -17,6 +17,8 @@ import (
 
 	"github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
+
+	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // BlobPattern is a regex for validating blob hex strings
@@ -118,6 +120,85 @@ var JSON = graphql.NewScalar(graphql.ScalarConfig{
 	// ParseLiteral converts the ast value to a json value
 	ParseLiteral: parseJSON,
 })
+
+// parseFilterJSON matches parseJSON, except that a bare, unquoted identifier parses into a
+// request.FieldReference instead of a plain string, so that a filter such as
+// `_alias: {myCount: {_lt: expectedChunks}}` compares against another field of the document.
+//
+// The shared JSON scalar cannot do this: it is also used for ordering, for filters on
+// JSON-typed fields, and for JSON values in mutation inputs, all of which expect a bare
+// identifier to stay a plain string.
+func parseFilterJSON(valueAST ast.Value, variables map[string]any) any {
+	switch valueAST := valueAST.(type) {
+	case *ast.ObjectValue:
+		out := make(map[string]any)
+		for _, f := range valueAST.Fields {
+			out[f.Name.Value] = parseFilterJSON(f.Value, variables)
+		}
+		return out
+
+	case *ast.ListValue:
+		out := make([]any, len(valueAST.Values))
+		for i, v := range valueAST.Values {
+			out[i] = parseFilterJSON(v, variables)
+		}
+		return out
+
+	case *ast.EnumValue:
+		return request.FieldReference{Name: valueAST.Value}
+
+	default:
+		return parseJSON(valueAST, variables)
+	}
+}
+
+// FilterJSON is the type of the `_alias` filter argument.  It is the JSON scalar plus
+// support for field-to-field comparison.
+var FilterJSON = graphql.NewScalar(graphql.ScalarConfig{
+	Name: "FilterJSON",
+	Description: "The `FilterJSON` scalar type represents a JSON value in a filter, where a bare " +
+		"identifier refers to another field of the same document.",
+	Serialize: func(value any) any {
+		return value
+	},
+	ParseValue: func(value any) any {
+		return value
+	},
+	ParseLiteral: parseFilterJSON,
+})
+
+// newFilterScalar returns a scalar for use inside filter operator blocks that behaves exactly
+// like the given base scalar, except that a bare, unquoted identifier (e.g. `expectedChunks`)
+// parses into a request.FieldReference instead of failing type validation.
+//
+// Two scalars cannot share a name within one schema, so each of these needs its own name.  They
+// are only visible in introspection as the argument types of filter operators - the base scalars
+// remain in use for field declarations and every other argument.
+func newFilterScalar(name string, base *graphql.Scalar) *graphql.Scalar {
+	return graphql.NewScalar(graphql.ScalarConfig{
+		Name:        name,
+		Description: base.Description(),
+		Serialize:   base.Serialize,
+		ParseValue:  base.ParseValue,
+		ParseLiteral: func(valueAST ast.Value, variables map[string]any) any {
+			if enum, ok := valueAST.(*ast.EnumValue); ok {
+				return request.FieldReference{Name: enum.Value}
+			}
+			return base.ParseLiteral(valueAST, variables)
+		},
+	})
+}
+
+// The scalars used by the comparison operators (`_eq`, `_neq`, `_gt`, `_geq`, `_lt`, `_leq`)
+// of the filter operator blocks in base.go.
+var (
+	FilterBoolean  = newFilterScalar("FilterBoolean", graphql.Boolean)
+	FilterDateTime = newFilterScalar("FilterDateTime", graphql.DateTime)
+	FilterFloat32  = newFilterScalar("FilterFloat32", Float32)
+	FilterFloat64  = newFilterScalar("FilterFloat64", Float64)
+	FilterInt      = newFilterScalar("FilterInt", graphql.Int)
+	FilterString   = newFilterScalar("FilterString", graphql.String)
+)
 
 // parseAny coerces an AST literal of any kind into a non-nil Go value. It deliberately
 // accepts every literal shape (scalars, enums, lists, and objects) so that the `Any`

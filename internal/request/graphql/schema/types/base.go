@@ -24,11 +24,11 @@ func BooleanOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Boolean,
+				Type:        FilterBoolean,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Boolean,
+				Type:        FilterBoolean,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -80,11 +80,11 @@ func NotNullBooleanOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Boolean,
+				Type:        FilterBoolean,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Boolean,
+				Type:        FilterBoolean,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -136,27 +136,27 @@ func DateTimeOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -178,27 +178,27 @@ func NotNullDateTimeOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.DateTime,
+				Type:        FilterDateTime,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -280,27 +280,27 @@ func Float64OperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -352,27 +352,27 @@ func NotNullFloat64OperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        Float64,
+				Type:        FilterFloat64,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -424,27 +424,27 @@ func Float32OperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -496,27 +496,27 @@ func NotNullFloat32OperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        Float32,
+				Type:        FilterFloat32,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -568,27 +568,27 @@ func IntOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -640,27 +640,27 @@ func NotNullIntOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.GreaterOp: &gql.InputObjectFieldConfig{
 				Description: gtOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.GreaterOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.LesserOp: &gql.InputObjectFieldConfig{
 				Description: ltOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.LesserOrEqualOp: &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
-				Type:        gql.Int,
+				Type:        FilterInt,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -712,11 +712,11 @@ func StringOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.String,
+				Type:        FilterString,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.String,
+				Type:        FilterString,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,
@@ -784,11 +784,11 @@ func NotNullStringOperatorBlock() *gql.InputObject {
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
-				Type:        gql.String,
+				Type:        FilterString,
 			},
 			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
-				Type:        gql.String,
+				Type:        FilterString,
 			},
 			connor.InOp: &gql.InputObjectFieldConfig{
 				Description: inOperatorDescription,

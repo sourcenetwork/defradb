@@ -175,7 +175,7 @@ func TestCollectionVersionAggregateSimpleAddsUsersSum(t *testing.T) {
 													"name": "_alias",
 													"type": map[string]any{
 														"kind":   "SCALAR",
-														"name":   "JSON",
+														"name":   "FilterJSON",
 														"ofType": any(nil),
 													},
 												},

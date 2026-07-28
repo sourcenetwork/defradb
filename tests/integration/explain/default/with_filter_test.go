@@ -337,3 +337,45 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 
 	explainUtils.ExecuteTestCase(t, test)
 }
+
+func TestDefaultExplainRequestWithFieldReferenceFilter(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			&action.ExplainRequest{
+
+				Request: `query @explain {
+					Book(filter: {pages: {_lt: rating}}) {
+						name
+					}
+				}`,
+
+				ExpectedPatterns: basicPattern,
+
+				ExpectedTargets: []action.PlanNodeTargetCase{
+					{
+						TargetNodeName:    "scanNode",
+						IncludeChildNodes: true, // should be last node, so will have no child nodes.
+						ExpectedAttributes: dataMap{
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
+							"collectionName": "Book",
+							"filter": dataMap{
+								"pages": dataMap{
+									// The referenced field renders as its name, not as an internal value.
+									"_lt": "rating",
+								},
+							},
+							"prefixes": []string{
+								"/2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
