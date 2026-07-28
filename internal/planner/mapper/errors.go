@@ -13,9 +13,11 @@ package mapper
 import "github.com/sourcenetwork/defradb/errors"
 
 const (
-	errInvalidFieldToGroupBy string = "cannot group by array or object field"
-	errTypeNotFound          string = "type not found"
-	errFieldOrAliasNotFound  string = "field or alias not found"
+	errInvalidFieldToGroupBy    string = "cannot group by array or object field"
+	errTypeNotFound             string = "type not found"
+	errFieldOrAliasNotFound     string = "field or alias not found"
+	errFieldReferenceOutOfScope string = "field-to-field comparison is only supported " +
+		"between fields of the same document"
 )
 
 var (
@@ -38,4 +40,8 @@ func NewErrTypeNotFound(name string) error {
 
 func NewErrFieldOrAliasNotFound(name string) error {
 	return errors.New(errFieldOrAliasNotFound, errors.NewKV("Name", name))
+}
+
+func NewErrFieldReferenceOutOfScope(name string) error {
+	return errors.New(errFieldReferenceOutOfScope, errors.NewKV("Name", name))
 }

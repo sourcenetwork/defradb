@@ -1208,6 +1208,23 @@ func resolveInnerFilterDependencies(
 ) ([]Requestable, error) {
 	newFields := []Requestable{}
 
+	// A filter value may reference another field of the same document, e.g.
+	// `{chunkCount: {_lt: expectedChunks}}`.  The referenced field has to be fetched even when
+	// it is not part of the selection set, otherwise there is nothing to compare against.
+	for _, name := range request.CollectFieldReferences(source) {
+		if len(mapping.IndexesByName[name]) == 0 {
+			// Unknown names are reported when the filter is run, in RunFilter.
+			continue
+		}
+		index := mapping.FirstIndexOfName(name)
+		if hasRequestableAtIndex(existingFields, index) ||
+			hasRequestableAtIndex(resolvedFields, index) ||
+			hasRequestableAtIndex(newFields, index) {
+			continue
+		}
+		newFields = append(newFields, &Field{Index: index, Name: name})
+	}
+
 	for key, value := range source {
 		// alias fields are guaranteed to be resolved
 		// because they refer to existing fields
@@ -1348,6 +1365,15 @@ func resolveInnerFilterDependencies(
 	}
 
 	return newFields, nil
+}
+
+func hasRequestableAtIndex(fields []Requestable, index int) bool {
+	for _, f := range fields {
+		if f.GetIndex() == index {
+			return true
+		}
+	}
+	return false
 }
 
 // constructEmptyJoin constructs a valid empty join with no requested fields.
@@ -1596,7 +1622,7 @@ func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
 	conditions := make(map[connor.FilterKey]any, len(source.Conditions))
 
 	for sourceKey, sourceClause := range source.Conditions {
-		key, clause := toFilterKeyValue(sourceKey, sourceClause, mapping)
+		key, clause := toFilterKeyValue(sourceKey, sourceClause, mapping, false)
 		conditions[key] = clause
 	}
 
@@ -1613,10 +1639,14 @@ func ToFilter(source request.Filter, mapping *core.DocumentMapping) *Filter {
 // - Operator: if the sourceKey is one of the defined filter operators
 // - PropertyIndex: if the sourceKey exists in the document mapping
 // - ObjectProperty: if the sourceKey does not match one of the above
+//
+// inRelationFilter must be true when the clause is nested within a relation sub-filter, as any
+// field referenced there names a field of the related document, not the one being filtered.
 func toFilterKeyValue(
 	sourceKey string,
 	sourceClause any,
 	mapping *core.DocumentMapping,
+	inRelationFilter bool,
 ) (connor.FilterKey, any) {
 	var propIndex = -1
 	if mapping != nil {
@@ -1645,6 +1675,9 @@ func toFilterKeyValue(
 		// if the operator is simple (not compound) then
 		// it does not require further expansion
 		if connor.IsOpSimple(sourceKey) {
+			if reference, isReference := sourceClause.(request.FieldReference); isReference {
+				return returnKey, toFieldValue(reference, mapping, inRelationFilter)
+			}
 			return returnKey, sourceClause
 		}
 	} else {
@@ -1655,24 +1688,52 @@ func toFilterKeyValue(
 
 	switch typedClause := sourceClause.(type) {
 	case []any:
-		return returnKey, toFilterList(typedClause, mapping)
+		return returnKey, toFilterList(typedClause, mapping, inRelationFilter)
 
 	case map[string]any:
-		return returnKey, toFilterMap(returnKey, typedClause, mapping)
+		return returnKey, toFilterMap(returnKey, typedClause, mapping, inRelationFilter)
+
+	case request.FieldReference:
+		return returnKey, toFieldValue(typedClause, mapping, inRelationFilter)
 
 	default:
 		return returnKey, typedClause
 	}
 }
 
+// toFieldValue resolves a field reference written in a filter to the index of the referenced
+// field in the given mapping.
+//
+// The returned FieldValue records why it could not be resolved rather than erroring, as filter
+// mapping has no error return.  The error is raised when the filter is run, in RunFilter.
+func toFieldValue(
+	reference request.FieldReference,
+	mapping *core.DocumentMapping,
+	inRelationFilter bool,
+) FieldValue {
+	value := FieldValue{Index: -1, Name: reference.Name, OutOfScope: inRelationFilter}
+	if inRelationFilter || mapping == nil {
+		return value
+	}
+
+	if indexes, ok := mapping.IndexesByName[reference.Name]; ok {
+		value.Index = indexes[0]
+	} else if index, ok := mapping.TryToFindIndexFromRenderKey(reference.Name); ok {
+		value.Index = index
+	}
+	return value
+}
+
 func toFilterMap(
 	sourceKey connor.FilterKey,
 	sourceClause map[string]any,
 	mapping *core.DocumentMapping,
+	inRelationFilter bool,
 ) map[connor.FilterKey]any {
 	innerMapClause := make(map[connor.FilterKey]any)
 	for innerSourceKey, innerSourceValue := range sourceClause {
 		var innerMapping *core.DocumentMapping
+		innerInRelationFilter := inRelationFilter
 		switch t := sourceKey.(type) {
 		case *PropertyIndex:
 			_, ok := innerSourceValue.(map[string]any)
@@ -1681,6 +1742,7 @@ func toFilterMap(
 				// using the child mapping, as this key must refer to a host property in a join
 				// and deeper keys must refer to properties on the child items.
 				innerMapping = mapping.ChildMappings[t.Index]
+				innerInRelationFilter = true
 			} else {
 				innerMapping = mapping
 			}
@@ -1692,13 +1754,13 @@ func toFilterMap(
 		case *Operator:
 			innerMapping = mapping
 		}
-		rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, innerMapping)
+		rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, innerMapping, innerInRelationFilter)
 		innerMapClause[rKey] = rValue
 	}
 	return innerMapClause
 }
 
-func toFilterList(sourceClause []any, mapping *core.DocumentMapping) []any {
+func toFilterList(sourceClause []any, mapping *core.DocumentMapping, inRelationFilter bool) []any {
 	returnClauses := make([]any, len(sourceClause))
 	for i, innerSourceClause := range sourceClause {
 		// innerSourceClause must be a map because only compound
@@ -1707,7 +1769,7 @@ func toFilterList(sourceClause []any, mapping *core.DocumentMapping) []any {
 		typedInnerSourceClause := innerSourceClause.(map[string]any)
 		innerMapClause := make(map[connor.FilterKey]any)
 		for innerSourceKey, innerSourceValue := range typedInnerSourceClause {
-			rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, mapping)
+			rKey, rValue := toFilterKeyValue(innerSourceKey, innerSourceValue, mapping, inRelationFilter)
 			innerMapClause[rKey] = rValue
 		}
 		returnClauses[i] = innerMapClause
@@ -1814,7 +1876,88 @@ func RunFilter(doc any, filter *Filter) (bool, error) {
 		return true, nil
 	}
 
-	return connor.Match(filter.Conditions, doc)
+	conditions := filter.Conditions
+	// Field-to-field comparisons are resolved against the document here, before matching, because
+	// connor narrows the data down to a single field's value before a comparison operator runs and
+	// so cannot reach the rest of the document itself.
+	//
+	// The check is repeated per document. If it ever shows up in a profile it can be computed once,
+	// when the filter is built, but that means keeping the answer in sync in every place a Filter
+	// is constructed or merged (see internal/planner/filter).
+	if hasFieldValue(conditions) {
+		resolved, err := resolveFieldValues(conditions, doc)
+		if err != nil {
+			return false, err
+		}
+		conditions = resolved.(map[connor.FilterKey]any)
+	}
+
+	return connor.Match(conditions, doc)
+}
+
+// hasFieldValue returns true if the given filter conditions contain a field-to-field comparison.
+func hasFieldValue(conditions any) bool {
+	switch typedConditions := conditions.(type) {
+	case map[connor.FilterKey]any:
+		for _, clause := range typedConditions {
+			if hasFieldValue(clause) {
+				return true
+			}
+		}
+	case []any:
+		for _, clause := range typedConditions {
+			if hasFieldValue(clause) {
+				return true
+			}
+		}
+	case FieldValue:
+		return true
+	}
+	return false
+}
+
+// resolveFieldValues returns a copy of the given filter conditions in which every FieldValue has
+// been replaced by the value of the field it references on the given document.
+func resolveFieldValues(conditions any, doc any) (any, error) {
+	switch typedConditions := conditions.(type) {
+	case map[connor.FilterKey]any:
+		result := make(map[connor.FilterKey]any, len(typedConditions))
+		for key, clause := range typedConditions {
+			resolved, err := resolveFieldValues(clause, doc)
+			if err != nil {
+				return nil, err
+			}
+			result[key] = resolved
+		}
+		return result, nil
+
+	case []any:
+		result := make([]any, len(typedConditions))
+		for i, clause := range typedConditions {
+			resolved, err := resolveFieldValues(clause, doc)
+			if err != nil {
+				return nil, err
+			}
+			result[i] = resolved
+		}
+		return result, nil
+
+	case FieldValue:
+		if typedConditions.OutOfScope {
+			return nil, NewErrFieldReferenceOutOfScope(typedConditions.Name)
+		}
+		if typedConditions.Index < 0 {
+			return nil, NewErrFieldOrAliasNotFound(typedConditions.Name)
+		}
+		typedDoc, isDoc := doc.(core.Doc)
+		if !isDoc || typedConditions.Index >= len(typedDoc.Fields) {
+			return nil, NewErrFieldReferenceOutOfScope(typedConditions.Name)
+		}
+		return typedDoc.Fields[typedConditions.Index], nil
+
+	default:
+		return conditions, nil
+	}
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.

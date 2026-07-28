@@ -177,6 +177,11 @@ func defaultTypes(
 		types.Blob,
 		types.JSON,
 
+		// The `_alias` filter argument's type.  It is only referenced from the per-collection
+		// filter arg input objects, whose fields are built lazily by a thunk, so it has to be
+		// registered here to make it into the schema's type map.
+		types.FilterJSON,
+
 		// Base Query types
 
 		// Sort/Order enum

@@ -83,7 +83,22 @@ func ParseFilterFieldsForDescription(
 	conditions map[string]any,
 	col client.CollectionVersion,
 ) ([]client.CollectionFieldDescription, error) {
-	return parseFilterFieldsForDescriptionMap(conditions, col)
+	fields, err := parseFilterFieldsForDescriptionMap(conditions, col)
+	if err != nil {
+		return nil, err
+	}
+
+	// A field-to-field comparison such as `{chunkCount: {_lt: expectedChunks}}` needs the
+	// referenced field to be fetched too, not just the field the condition is keyed by.
+	for _, name := range request.CollectFieldReferences(conditions) {
+		f, found := col.GetFieldByName(name)
+		if !found || f.Kind.IsObject() {
+			continue
+		}
+		fields = append(fields, f)
+	}
+
+	return fields, nil
 }
 
 func parseFilterFieldsForDescriptionMap(

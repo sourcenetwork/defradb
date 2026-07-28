@@ -72,11 +72,9 @@ func (a *ListIndexes) Execute() {
 		return
 	}
 
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
-		node := a.s.Nodes[index]
+	for _, nodeID := range nodeIDs {
+		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
@@ -89,7 +87,12 @@ func (a *ListIndexes) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections := MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
@@ -100,8 +103,9 @@ func (a *ListIndexes) Execute() {
 
 		actualStatuses, err := collection.ListIndexes(a.s.Ctx, opts)
 
-		if assertError(a.s.T, err, a.ExpectedError) {
-			expectedErrorRaised = true
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+		if err != nil {
 			continue
 		}
 
@@ -109,8 +113,6 @@ func (a *ListIndexes) Execute() {
 		assertIndexStatuses(a.ExpectedStatuses, actualStatuses, a.s.T)
 		assertIndexCollectionNames(a.ExpectedCollectionName, actualStatuses, a.s.T)
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(

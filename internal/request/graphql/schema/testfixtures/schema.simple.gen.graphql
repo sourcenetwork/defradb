@@ -81,9 +81,9 @@ scalar Boolean
 
 input BooleanFilterArg {
     _and: [BooleanFilterArg!]
-    _eq: Boolean
+    _eq: FilterBoolean
     _in: [Boolean]
-    _neq: Boolean
+    _neq: FilterBoolean
     _nin: [Boolean]
     _or: [BooleanFilterArg!]
 }
@@ -134,7 +134,7 @@ input BooleanOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Boolean
+    _eq: FilterBoolean
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -146,7 +146,7 @@ input BooleanOperatorBlock {
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Boolean
+    _neq: FilterBoolean
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -396,13 +396,13 @@ scalar DateTime
 
 input DateTimeFilterArg {
     _and: [DateTimeFilterArg!]
-    _eq: DateTime
-    _geq: DateTime
-    _gt: DateTime
+    _eq: FilterDateTime
+    _geq: FilterDateTime
+    _gt: FilterDateTime
     _in: [DateTime]
-    _leq: DateTime
-    _lt: DateTime
-    _neq: DateTime
+    _leq: FilterDateTime
+    _lt: FilterDateTime
+    _neq: FilterDateTime
     _nin: [DateTime]
     _or: [DateTimeFilterArg!]
 }
@@ -453,21 +453,21 @@ input DateTimeOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: DateTime
+    _eq: FilterDateTime
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: DateTime
+    _geq: FilterDateTime
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: DateTime
+    _gt: FilterDateTime
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -480,19 +480,19 @@ input DateTimeOperatorBlock {
      given value the check will pass.
 
     """
-    _leq: DateTime
+    _leq: FilterDateTime
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: DateTime
+    _lt: FilterDateTime
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: DateTime
+    _neq: FilterDateTime
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -518,6 +518,27 @@ enum ExplainType {
     simple
 }
 
+"The `Boolean` scalar type represents `true` or `false`."
+scalar FilterBoolean
+
+"The `DateTime` scalar type represents a DateTime. The DateTime is serialized as an RFC 3339 quoted string. A literal value of `UTC_NOW` is supported, and will be serialized  as the current UTC time. Note that this will be resolved as the UTC time on the server's side. It may not exactly match the resolution of time.Now().UTC() on the client's machine at the time of sending the request."
+scalar FilterDateTime
+
+"The `Float32` scalar type represents signed single-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
+scalar FilterFloat32
+
+"The `Float64` scalar type represents signed double-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
+scalar FilterFloat64
+
+"The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. "
+scalar FilterInt
+
+"The `FilterJSON` scalar type represents a JSON value in a filter, where a bare identifier refers to another field of the same document."
+scalar FilterJSON
+
+"The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text."
+scalar FilterString
+
 "The `Float` scalar type represents signed double-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
 scalar Float
 
@@ -526,13 +547,13 @@ scalar Float32
 
 input Float32FilterArg {
     _and: [Float32FilterArg!]
-    _eq: Float32
-    _geq: Float32
-    _gt: Float32
+    _eq: FilterFloat32
+    _geq: FilterFloat32
+    _gt: FilterFloat32
     _in: [Float32]
-    _leq: Float32
-    _lt: Float32
-    _neq: Float32
+    _leq: FilterFloat32
+    _lt: FilterFloat32
+    _neq: FilterFloat32
     _nin: [Float32]
     _or: [Float32FilterArg!]
 }
@@ -583,21 +604,21 @@ input Float32OperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Float32
+    _eq: FilterFloat32
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Float32
+    _geq: FilterFloat32
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Float32
+    _gt: FilterFloat32
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -610,19 +631,19 @@ input Float32OperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Float32
+    _leq: FilterFloat32
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Float32
+    _lt: FilterFloat32
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Float32
+    _neq: FilterFloat32
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -637,13 +658,13 @@ scalar Float64
 
 input Float64FilterArg {
     _and: [Float64FilterArg!]
-    _eq: Float64
-    _geq: Float64
-    _gt: Float64
+    _eq: FilterFloat64
+    _geq: FilterFloat64
+    _gt: FilterFloat64
     _in: [Float64]
-    _leq: Float64
-    _lt: Float64
-    _neq: Float64
+    _leq: FilterFloat64
+    _lt: FilterFloat64
+    _neq: FilterFloat64
     _nin: [Float64]
     _or: [Float64FilterArg!]
 }
@@ -694,21 +715,21 @@ input Float64OperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Float64
+    _eq: FilterFloat64
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Float64
+    _geq: FilterFloat64
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Float64
+    _gt: FilterFloat64
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -721,19 +742,19 @@ input Float64OperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Float64
+    _leq: FilterFloat64
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Float64
+    _lt: FilterFloat64
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Float64
+    _neq: FilterFloat64
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -788,18 +809,26 @@ input IndexField {
     field: String
 }
 
+"One of the possible index kinds."
+enum IndexKind {
+    "BM25 full-text relevance index."
+    BM25
+    "Trigram index for substring and pattern matching."
+    TRIGRAM
+}
+
 "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. "
 scalar Int
 
 input IntFilterArg {
     _and: [IntFilterArg!]
-    _eq: Int
-    _geq: Int
-    _gt: Int
+    _eq: FilterInt
+    _geq: FilterInt
+    _gt: FilterInt
     _in: [Int]
-    _leq: Int
-    _lt: Int
-    _neq: Int
+    _leq: FilterInt
+    _lt: FilterInt
+    _neq: FilterInt
     _nin: [Int]
     _or: [IntFilterArg!]
 }
@@ -850,21 +879,21 @@ input IntOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Int
+    _eq: FilterInt
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Int
+    _geq: FilterInt
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Int
+    _gt: FilterInt
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -877,19 +906,19 @@ input IntOperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Int
+    _leq: FilterInt
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Int
+    _lt: FilterInt
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Int
+    _neq: FilterInt
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1075,9 +1104,9 @@ input NotNullBlobOperatorBlock {
 
 input NotNullBooleanFilterArg {
     _and: [NotNullBooleanFilterArg!]
-    _eq: Boolean
+    _eq: FilterBoolean
     _in: [Boolean!]
-    _neq: Boolean
+    _neq: FilterBoolean
     _nin: [Boolean!]
     _or: [NotNullBooleanFilterArg!]
 }
@@ -1128,7 +1157,7 @@ input NotNullBooleanOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Boolean
+    _eq: FilterBoolean
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -1140,7 +1169,7 @@ input NotNullBooleanOperatorBlock {
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Boolean
+    _neq: FilterBoolean
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1152,13 +1181,13 @@ input NotNullBooleanOperatorBlock {
 
 input NotNullDateTimeFilterArg {
     _and: [NotNullDateTimeFilterArg!]
-    _eq: DateTime
-    _geq: DateTime
-    _gt: DateTime
+    _eq: FilterDateTime
+    _geq: FilterDateTime
+    _gt: FilterDateTime
     _in: [DateTime!]
-    _leq: DateTime
-    _lt: DateTime
-    _neq: DateTime
+    _leq: FilterDateTime
+    _lt: FilterDateTime
+    _neq: FilterDateTime
     _nin: [DateTime!]
     _or: [NotNullDateTimeFilterArg!]
 }
@@ -1209,21 +1238,21 @@ input NotNullDateTimeOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: DateTime
+    _eq: FilterDateTime
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: DateTime
+    _geq: FilterDateTime
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: DateTime
+    _gt: FilterDateTime
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -1236,19 +1265,19 @@ input NotNullDateTimeOperatorBlock {
      given value the check will pass.
 
     """
-    _leq: DateTime
+    _leq: FilterDateTime
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: DateTime
+    _lt: FilterDateTime
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: DateTime
+    _neq: FilterDateTime
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1260,13 +1289,13 @@ input NotNullDateTimeOperatorBlock {
 
 input NotNullFloat32FilterArg {
     _and: [NotNullFloat32FilterArg!]
-    _eq: Float32
-    _geq: Float32
-    _gt: Float32
+    _eq: FilterFloat32
+    _geq: FilterFloat32
+    _gt: FilterFloat32
     _in: [Float32!]
-    _leq: Float32
-    _lt: Float32
-    _neq: Float32
+    _leq: FilterFloat32
+    _lt: FilterFloat32
+    _neq: FilterFloat32
     _nin: [Float32!]
     _or: [NotNullFloat32FilterArg!]
 }
@@ -1317,21 +1346,21 @@ input NotNullFloat32OperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Float32
+    _eq: FilterFloat32
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Float32
+    _geq: FilterFloat32
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Float32
+    _gt: FilterFloat32
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -1344,19 +1373,19 @@ input NotNullFloat32OperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Float32
+    _leq: FilterFloat32
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Float32
+    _lt: FilterFloat32
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Float32
+    _neq: FilterFloat32
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1368,13 +1397,13 @@ input NotNullFloat32OperatorBlock {
 
 input NotNullFloat64FilterArg {
     _and: [NotNullFloat64FilterArg!]
-    _eq: Float64
-    _geq: Float64
-    _gt: Float64
+    _eq: FilterFloat64
+    _geq: FilterFloat64
+    _gt: FilterFloat64
     _in: [Float64!]
-    _leq: Float64
-    _lt: Float64
-    _neq: Float64
+    _leq: FilterFloat64
+    _lt: FilterFloat64
+    _neq: FilterFloat64
     _nin: [Float64!]
     _or: [NotNullFloat64FilterArg!]
 }
@@ -1425,21 +1454,21 @@ input NotNullFloat64OperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Float64
+    _eq: FilterFloat64
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Float64
+    _geq: FilterFloat64
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Float64
+    _gt: FilterFloat64
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -1452,19 +1481,19 @@ input NotNullFloat64OperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Float64
+    _leq: FilterFloat64
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Float64
+    _lt: FilterFloat64
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Float64
+    _neq: FilterFloat64
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1476,13 +1505,13 @@ input NotNullFloat64OperatorBlock {
 
 input NotNullIntFilterArg {
     _and: [NotNullIntFilterArg!]
-    _eq: Int
-    _geq: Int
-    _gt: Int
+    _eq: FilterInt
+    _geq: FilterInt
+    _gt: FilterInt
     _in: [Int!]
-    _leq: Int
-    _lt: Int
-    _neq: Int
+    _leq: FilterInt
+    _lt: FilterInt
+    _neq: FilterInt
     _nin: [Int!]
     _or: [NotNullIntFilterArg!]
 }
@@ -1533,21 +1562,21 @@ input NotNullIntOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: Int
+    _eq: FilterInt
     """
     
     The greater than or equal to operator - if the target value is greater than or equal to the
      given value the check will pass.
 
     """
-    _geq: Int
+    _geq: FilterInt
     """
     
     The greater than operator - if the target value is greater than the given value the
      check will pass.
 
     """
-    _gt: Int
+    _gt: FilterInt
     """
     
     The contains operator - if the target value is within the given set the check will pass.
@@ -1560,19 +1589,19 @@ input NotNullIntOperatorBlock {
      given value the check will pass.
 
     """
-    _leq: Int
+    _leq: FilterInt
     """
     
     The less than operator - if the target value is less than the given value the check will pass.
 
     """
-    _lt: Int
+    _lt: FilterInt
     """
     
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: Int
+    _neq: FilterInt
     """
     
     The does not contains operator - if the target value is not within the given set the
@@ -1584,15 +1613,16 @@ input NotNullIntOperatorBlock {
 
 input NotNullStringFilterArg {
     _and: [NotNullStringFilterArg!]
-    _eq: String
+    _eq: FilterString
     _ilike: String
     _in: [String!]
     _like: String
-    _neq: String
+    _neq: FilterString
     _nilike: String
     _nin: [String!]
     _nlike: String
     _or: [NotNullStringFilterArg!]
+    _regex: String
 }
 
 "These are the set of filter operators available for use when filtering on [String!] values."
@@ -1641,7 +1671,7 @@ input NotNullStringOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: String
+    _eq: FilterString
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
@@ -1669,7 +1699,7 @@ input NotNullStringOperatorBlock {
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: String
+    _neq: FilterString
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
@@ -1693,6 +1723,14 @@ input NotNullStringOperatorBlock {
 
     """
     _nlike: String
+    """
+    
+    The regex operator - if the target value matches the given regular expression anywhere within it the check will
+     pass. The syntax is RE2, for example '_regex: "^Jo.*n$"' would match on the string 'John'. Anchor the pattern
+     with '^' and '$' to match the whole value.
+
+    """
+    _regex: String
 }
 
 enum Ordering {
@@ -1920,15 +1958,16 @@ scalar String
 
 input StringFilterArg {
     _and: [StringFilterArg!]
-    _eq: String
+    _eq: FilterString
     _ilike: String
     _in: [String]
     _like: String
-    _neq: String
+    _neq: FilterString
     _nilike: String
     _nin: [String]
     _nlike: String
     _or: [StringFilterArg!]
+    _regex: String
 }
 
 "These are the set of filter operators available for use when filtering on [String] values."
@@ -1977,7 +2016,7 @@ input StringOperatorBlock {
     The equality operator - if the target matches the value the check will pass.
 
     """
-    _eq: String
+    _eq: FilterString
     """
     
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
@@ -2005,7 +2044,7 @@ input StringOperatorBlock {
     The inequality operator - if the target does not matches the value the check will pass.
 
     """
-    _neq: String
+    _neq: FilterString
     """
     
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
@@ -2029,6 +2068,14 @@ input StringOperatorBlock {
 
     """
     _nlike: String
+    """
+    
+    The regex operator - if the target value matches the given regular expression anywhere within it the check will
+     pass. The syntax is RE2, for example '_regex: "^Jo.*n$"' would match on the string 'John'. Anchor the pattern
+     with '^' and '$' to match the whole value.
+
+    """
+    _regex: String
 }
 
 type Subscription {
@@ -2324,6 +2371,15 @@ type User {
         """
         points: ScalarAggregateNumericBlock
     ): Float!
+    "Returns how well the document matches the provided query, scored with BM25."
+    _bm25(
+        """
+        The fields to score, each of which must carry a BM25 index. A field may be followed by "^" and the weight its score is given, for example "title^4". The default weight is 1, and a weight of 0 excludes the field.
+        """
+        fields: [String!]!
+        "The text to score the fields against."
+        query: String!
+    ): Float
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -2368,7 +2424,7 @@ enum UserField {
 
 input UserFilterArg {
     "The alias operator allows filters to target aliased fields."
-    _alias: JSON
+    _alias: FilterJSON
     """
     
     The and operator - all checks within this clause must pass in order for this check to pass.
@@ -2842,8 +2898,16 @@ directive @index(
     it will be implicitly added as the first entry.
     """
     includes: [IndexField]
+    """
+    Sets the kind of the index.
+
+    If omitted the ordered key index is used.
+    """
+    kind: IndexKind
     "Sets the index name."
     name: String
+    "Sets the configuration specific to the index kind."
+    options: JSON
     "Makes the index unique."
     unique: Boolean
 ) on OBJECT | FIELD_DEFINITION

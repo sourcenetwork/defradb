@@ -975,6 +975,13 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //   - _regex - an ordered key index cannot narrow a regular expression to a key range. A
 //     trigram index can, and never reaches here: it has its own iterator.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
+	// A field-to-field comparison has no value until a document has been fetched, so it cannot be
+	// turned into an index range key.  The full filter is still evaluated per document by
+	// filteredFetcher, so results stay correct - the index just cannot narrow the scan.
+	if _, isFieldValue := filterVal.(mapper.FieldValue); isFieldValue {
+		return true
+	}
+
 	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 
 	if op == opRegex {

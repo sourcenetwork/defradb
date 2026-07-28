@@ -12,6 +12,7 @@
 package action
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
@@ -65,28 +66,23 @@ var _ Action = (*DeleteIndex)(nil)
 var _ Stateful = (*DeleteIndex)(nil)
 
 func (a *DeleteIndex) Execute() {
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
+	for _, nodeID := range nodeIDs {
 		node := a.s.Nodes[nodeID]
 
-		nodeID := nodeIDs[index]
-		var collections []client.Collection
-
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var err error
-		var txn client.Txn
+		txnOption := immutable.None[client.Txn]()
 		if a.TransactionID.HasValue() {
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			txn, err := a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			txnOption = immutable.Some(txn)
 		}
 
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
-			return
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
 		}
 
 		collection := collections[a.CollectionID]
@@ -98,11 +94,12 @@ func (a *DeleteIndex) Execute() {
 		}
 
 		// Capture the index ID before deletion so the wait below can target its drop record.
-		indexID, hadIndex := indexIDByName(a.s, collection, a.IndexName)
+		indexID, hadIndex := indexIDByName(a.s, node, collection, a.IndexName)
 
 		err = collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the dropping window, wait for the drop record to clear
 		// so a following raw-entry assertion sees them gone.
@@ -110,13 +107,13 @@ func (a *DeleteIndex) Execute() {
 			waitForIndexDropped(a.s, node, collection.Version().CollectionID, indexID)
 		}
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 // indexIDByName returns the ID of the named index on the collection, and whether it was found.
-func indexIDByName(s *state.State, collection client.Collection, name string) (uint32, bool) {
-	results, err := collection.ListIndexes(s.Ctx)
+// It lists as the node identity so the lookup is authorized when NAC is enabled (it is bookkeeping
+// for the drop-wait, not the operation under test).
+func indexIDByName(s *state.State, node *state.NodeState, collection client.Collection, name string) (uint32, bool) {
+	results, err := collection.ListIndexes(s.Ctx, listIndexesOptions(s, node))
 	require.NoError(s.T, err)
 	for _, r := range results {
 		if r.Description.Name == name {
@@ -129,9 +126,17 @@ func indexIDByName(s *state.State, collection client.Collection, name string) (u
 // waitForIndexDropped blocks until no in-progress drop record remains for the index, i.e. the GC has
 // finished and cleared it. It polls ListActions so it composes with explicit Wait actions.
 func waitForIndexDropped(s *state.State, node *state.NodeState, collectionID string, indexID uint32) {
+	// Poll as the node identity so the ListActions call is authorized when NAC is enabled; waiting
+	// for the drop is test infrastructure, not the operation under test.
+	nodeID := slices.Index(s.Nodes, node)
+	opts := options.ListActions()
+	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(nodeID), nodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
 	subject := strconv.FormatUint(uint64(indexID), 10)
 	require.Eventually(s.T, func() bool {
-		actions, err := node.ListActions(s.Ctx)
+		actions, err := node.ListActions(s.Ctx, opts)
 		if err != nil {
 			return false
 		}
