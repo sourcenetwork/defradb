@@ -11,14 +11,33 @@ Companion to `docs/index-kinds-design.md`.
 query {
   Article(order: {_alias: {rank: DESC}}, limit: 10) {
     title
-    rank: _bm25(body: {query: "database indexing"})
+    rank: _bm25(query: "database indexing", fields: ["title^4", "body"])
   }
 }
 ```
 
-`_bm25` requires a BM25 index on the target field. Without one the query errors.
-BM25 needs collection-wide statistics (document frequency, average field length,
+`fields` names the fields to score. A field may be followed by `^` and the weight
+its score is given, as in Elasticsearch; the default weight is 1, and a weight of 0
+excludes the field. A document's score is the sum of its per-field scores after
+weighting, so a field weighted 4 counts four times as much as one left at the
+default.
+
+Every field named requires a BM25 index on it. Without one the query errors. BM25
+needs collection-wide statistics (document frequency, average field length,
 document count), so unlike `_similarity` it is not computable per document.
+
+Each field is scored against its own index and its own statistics. This is not
+BM25F, which adds the per-field term frequencies together first and applies the
+saturation curve once to that total. The two rank differently when a term appears
+in several fields of one document: here each field's contribution has its own
+ceiling, so no amount of repetition in a low-weight field catches a match in a
+high-weight one, whereas under BM25F it eventually does. Moving to BM25F later
+would be a change to the scoring loop only, since it needs no bytes on disk that
+the per-field indexes do not already hold.
+
+Field names are not enumerated in the GraphQL schema, so a name that does not exist
+or carries no BM25 index is reported when the query is planned rather than when it
+is validated.
 
 **Trigram** — no new query syntax for substring search. `_like` and `_ilike` are
 accelerated when a trigram index exists. One new operator is added for regular
@@ -199,8 +218,10 @@ covered by unit tests.
   `Fetcher.Init` with an optional rank specification — it is explicit and typed, and the
   other implementations only need pass-through edits. If that diff proves noisy, fall back
   to a small optional interface plus a setter on the wrapping fetcher.
-- Planner: resolve the BM25 index from the `_bm25` field's target; error clearly when the
-  field has no BM25 index.
+- Planner: resolve a BM25 index for every field the `_bm25` field names; error clearly,
+  naming the field, when one of them has no BM25 index. The scan carries a single index,
+  which is only what the fetcher reads to choose an iterator; the iterator reads all of
+  the targeted indexes from the rank.
 - Optimisation: drop `orderNode` when the ordering is exactly the `_bm25` alias descending,
   so the scan is pulled lazily. Without this the results are still correct — `orderNode`
   simply re-sorts what the scan already ordered — but the whole index is drained. Extend

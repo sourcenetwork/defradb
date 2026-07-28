@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"math"
+	"strconv"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -268,12 +270,29 @@ func parseBm25(
 ) (*request.Bm25, error) {
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-	var target string
-	var query string
-	for _, argument := range field.Arguments {
-		target = argument.Name.Value
-		v := arguments[target].(map[string]any)
-		query, _ = v[types.Bm25ArgQuery].(string)
+
+	query, _ := arguments[types.Bm25ArgQuery].(string)
+	entries, _ := arguments[types.Bm25ArgFields].([]any)
+	if len(entries) == 0 {
+		return nil, ErrBm25NoFields
+	}
+
+	targets := make([]request.Bm25Target, 0, len(entries))
+	named := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		text, ok := entry.(string)
+		if !ok {
+			return nil, NewErrInvalidBm25Field(entry)
+		}
+		target, err := parseBm25Target(text)
+		if err != nil {
+			return nil, err
+		}
+		if _, repeated := named[target.Field]; repeated {
+			return nil, NewErrDuplicateBm25Field(target.Field)
+		}
+		named[target.Field] = struct{}{}
+		targets = append(targets, target)
 	}
 
 	return &request.Bm25{
@@ -281,9 +300,33 @@ func parseBm25(
 			Name:  field.Name.Value,
 			Alias: getFieldAlias(field),
 		},
-		Target: target,
-		Query:  query,
+		Query:   query,
+		Targets: targets,
 	}, nil
+}
+
+// parseBm25Target reads one entry of the _bm25 fields argument: a field name, optionally followed
+// by "^" and the weight the field's score is given, for example "title^4".
+//
+// A field name can not itself contain "^", because it is a GraphQL name, so the first one always
+// separates the name from the weight.
+func parseBm25Target(entry string) (request.Bm25Target, error) {
+	name, weight, weighted := strings.Cut(entry, "^")
+	if name == "" {
+		return request.Bm25Target{}, NewErrInvalidBm25Field(entry)
+	}
+	if !weighted {
+		return request.Bm25Target{Field: name, Boost: 1}, nil
+	}
+
+	boost, err := strconv.ParseFloat(weight, 64)
+	// A negative weight would rank a document lower for matching, and an infinity or a NaN would
+	// make the comparison the scored documents are sorted by inconsistent, so neither is a weight
+	// this can be asked for.
+	if err != nil || boost < 0 || math.IsInf(boost, 0) || math.IsNaN(boost) {
+		return request.Bm25Target{}, NewErrInvalidBm25Boost(entry, weight)
+	}
+	return request.Bm25Target{Field: name, Boost: boost}, nil
 }
 
 func parseAggregateTarget(

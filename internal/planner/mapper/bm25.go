@@ -10,16 +10,21 @@
 
 package mapper
 
+import "github.com/sourcenetwork/defradb/client/request"
+
 // Bm25 represents a BM25 relevance score definition.
 //
-// It holds the target field by name rather than as a Targetable, the way Similarity does,
-// because the score is produced by the index scan and nothing reads the field's value.
+// It holds the scored fields by name rather than as Targetables, the way Similarity does, because
+// the score is produced by the index scan and nothing reads the fields' values. For the same
+// reason the targets are [request.Bm25Target] unchanged: there is no document mapping to apply to
+// them.
 type Bm25 struct {
 	Field
 
-	// Target is the name of the field that is scored. It must carry a BM25 index.
-	Target string
-
-	// Query is the text the target field is scored against.
+	// Query is the text the targets are scored against.
 	Query string
+
+	// Targets are the fields scored, each with the weight its score is given. Every one of them
+	// must carry a BM25 index.
+	Targets []request.Bm25Target
 }

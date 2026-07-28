@@ -951,37 +951,31 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 	return field, nil
 }
 
-func (g *Generator) genBm25FieldConfig(obj *gql.Object) (gql.Field, error) {
-	field := gql.Field{
+// genBm25FieldConfig generates the _bm25 field, which scores the document against a query over
+// the fields named in its fields argument.
+//
+// Each entry of that argument is a field name, optionally followed by "^" and the weight the
+// field's score is given, for example "title^4". The field names are not enumerated in the schema,
+// so an entry naming a field that does not exist or carries no BM25 index is reported when the
+// query is planned rather than when it is validated.
+func genBm25FieldConfig() gql.Field {
+	return gql.Field{
 		Name:        request.Bm25FieldName,
-		Description: "Returns how well the specified field matches the provided query, scored with BM25.",
+		Description: "Returns how well the document matches the provided query, scored with BM25.",
 		Type:        gql.Float,
-		Args:        gql.FieldConfigArgument{},
+		Args: gql.FieldConfigArgument{
+			schemaTypes.Bm25ArgQuery: schemaTypes.NewArgConfig(
+				gql.NewNonNull(gql.String),
+				"The text to score the fields against.",
+			),
+			schemaTypes.Bm25ArgFields: schemaTypes.NewArgConfig(
+				gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
+				`The fields to score, each of which must carry a BM25 index. A field may be `+
+					`followed by "^" and the weight its score is given, for example "title^4". `+
+					`The default weight is 1, and a weight of 0 excludes the field.`,
+			),
+		},
 	}
-
-	for _, objectField := range obj.Fields() {
-		if objectField.Type != gql.String {
-			continue
-		}
-
-		inputObject := gql.NewInputObject(gql.InputObjectConfig{
-			Name:        genBm25SelectorName(obj.Name(), objectField.Name),
-			Description: objectField.Description,
-			Fields: gql.InputObjectConfigFieldMap{
-				schemaTypes.Bm25ArgQuery: &gql.InputObjectFieldConfig{
-					Type:        gql.NewNonNull(gql.String),
-					Description: "The text to score the field against.",
-				},
-			},
-		})
-		err := g.appendIfNotExists(inputObject)
-		if err != nil {
-			return gql.Field{}, err
-		}
-		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
-	}
-
-	return field, nil
 }
 
 func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
@@ -1057,10 +1051,6 @@ func genNumericInlineArraySelectorName(hostName string, fieldName string) string
 
 func genSimilaritySelectorName(hostName string, fieldName string) string {
 	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "SimilaritySelector")
-}
-
-func genBm25SelectorName(hostName string, fieldName string) string {
-	return fmt.Sprintf("%s__%s__%s", hostName, fieldName, "Bm25Selector")
 }
 
 func (g *Generator) genCountBaseArgInputs(obj *gql.Object) *gql.InputObject {
@@ -1662,10 +1652,7 @@ func (g *Generator) genVectorOpsFields() error {
 
 func (g *Generator) genTextSearchFields() error {
 	for _, t := range g.typeDefs {
-		bm25Field, err := g.genBm25FieldConfig(t)
-		if err != nil {
-			return err
-		}
+		bm25Field := genBm25FieldConfig()
 		t.AddFieldConfig(bm25Field.Name, &bm25Field)
 	}
 	return nil

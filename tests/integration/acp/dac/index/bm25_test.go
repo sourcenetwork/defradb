@@ -73,7 +73,7 @@ func TestACPWithBM25Index_UponQueryingWithLimitWithoutIdentity_ReturnsThePermitt
 			Request: `query {
 				Users(order: {_alias: {rank: DESC}}, limit: 2) {
 					name
-					rank: _bm25(bio: {query: "alpha"})
+					rank: _bm25(query: "alpha", fields: ["bio"])
 				}
 			}`,
 			Results: bm25Results("public best", "public second"),
@@ -91,7 +91,7 @@ func TestACPWithBM25Index_UponQueryingWithLimitWithIdentity_ReturnsTheBest(t *te
 			Request: `query {
 				Users(order: {_alias: {rank: DESC}}, limit: 2) {
 					name
-					rank: _bm25(bio: {query: "alpha"})
+					rank: _bm25(query: "alpha", fields: ["bio"])
 				}
 			}`,
 			Results: bm25Results("private best", "private second"),

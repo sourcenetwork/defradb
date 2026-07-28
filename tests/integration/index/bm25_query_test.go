@@ -56,7 +56,7 @@ func TestBM25Query_RanksByRelevance(t *testing.T) {
 			Request: `query {
 				Article(order: {_alias: {rank: DESC}}) {
 					title
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			Results: map[string]any{
@@ -80,7 +80,7 @@ func TestBM25Query_WithLimit_ReturnsTheBestThatMany(t *testing.T) {
 			Request: `query {
 				Article(order: {_alias: {rank: DESC}}, limit: 2) {
 					title
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			Results: map[string]any{
@@ -109,7 +109,7 @@ func TestBM25Query_OrderedByRankDescending_DropsTheOrderNode(t *testing.T) {
 			Request: `query @explain(type: execute) {
 				Article(order: {_alias: {rank: DESC}}, limit: 2) {
 					title
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			ExpectedFullGraph: map[string]any{
@@ -152,7 +152,7 @@ func TestBM25Query_OrderedBySomethingElse_KeepsTheOrderNode(t *testing.T) {
 			Request: `query @explain(type: simple) {
 				Article(order: {title: ASC}) {
 					title
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			ExpectedPatterns: map[string]any{
@@ -205,7 +205,7 @@ func TestBM25Query_WithFieldLengthNormalisation_ChangesTheOrder(t *testing.T) {
 			Request: `query {
 				Article(order: {_alias: {rank: DESC}}) {
 					title
-					rank: _bm25(body: {query: "alpha"})
+					rank: _bm25(query: "alpha", fields: ["body"])
 				}
 			}`,
 			Results: map[string]any{"Article": results},
@@ -250,7 +250,7 @@ func TestBM25Query_WithTermFrequencySaturation_ChangesTheOrder(t *testing.T) {
 			Request: `query {
 				Article(order: {_alias: {rank: DESC}}, limit: 2) {
 					title
-					rank: _bm25(body: {query: "alpha beta"})
+					rank: _bm25(query: "alpha beta", fields: ["body"])
 				}
 			}`,
 			Results: map[string]any{"Article": results},
@@ -286,7 +286,7 @@ func TestBM25Query_AfterUpdateAndDelete_RanksWhatIsLeft(t *testing.T) {
 				Request: `query {
 					Article(order: {_alias: {rank: DESC}}) {
 						title
-						rank: _bm25(body: {query: "database indexing"})
+						rank: _bm25(query: "database indexing", fields: ["body"])
 					}
 				}`,
 				Results: map[string]any{
@@ -310,7 +310,7 @@ func TestBM25Query_WithoutIndex_ReturnsError(t *testing.T) {
 			Request: `query {
 				Article {
 					title
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			ExpectedError: planner.NewErrNoBM25Index("Article", "body").Error(),
@@ -326,7 +326,7 @@ func TestBM25Query_WithIndexOfAnotherKind_ReturnsError(t *testing.T) {
 		Actions: bm25ArticleActions(`@index(kind: TRIGRAM)`, &action.Request{
 			Request: `query {
 				Article {
-					rank: _bm25(body: {query: "database indexing"})
+					rank: _bm25(query: "database indexing", fields: ["body"])
 				}
 			}`,
 			ExpectedError: planner.NewErrNoBM25Index("Article", "body").Error(),
@@ -361,7 +361,7 @@ func TestBM25Query_OnTheChildSideOfAJoin_ReturnsError(t *testing.T) {
 						name
 						articles {
 							title
-							rank: _bm25(body: {query: "database"})
+							rank: _bm25(query: "database", fields: ["body"])
 						}
 					}
 				}`,
@@ -381,7 +381,7 @@ func TestBM25Query_OnAMutation_ReturnsError(t *testing.T) {
 			Request: `mutation {
 				delete_Article(filter: {title: {_eq: "common"}}) {
 					title
-					rank: _bm25(body: {query: "database"})
+					rank: _bm25(query: "database", fields: ["body"])
 				}
 			}`,
 			ExpectedError: mapper.ErrBm25InMutation.Error(),
@@ -397,8 +397,8 @@ func TestBM25Query_WithTwoBM25Fields_ReturnsError(t *testing.T) {
 		Actions: bm25ArticleActions(`@index(kind: BM25)`, &action.Request{
 			Request: `query {
 				Article {
-					first: _bm25(body: {query: "database"})
-					second: _bm25(body: {query: "indexing"})
+					first: _bm25(query: "database", fields: ["body"])
+					second: _bm25(query: "indexing", fields: ["body"])
 				}
 			}`,
 			ExpectedError: planner.ErrMultipleBM25Fields.Error(),
@@ -416,7 +416,7 @@ func TestBM25Query_WithUnknownTerm_ReturnsNothing(t *testing.T) {
 			Request: `query {
 				Article(order: {_alias: {rank: DESC}}) {
 					title
-					rank: _bm25(body: {query: "sharding"})
+					rank: _bm25(query: "sharding", fields: ["body"])
 				}
 			}`,
 			Results: map[string]any{"Article": []map[string]any{}},

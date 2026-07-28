@@ -423,27 +423,48 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	return aggregates, similarity, nil
 }
 
-// setBM25Scan points the scan at the BM25 index on the field the _bm25 field targets, and gives
+// setBM25Scan points the scan at the BM25 index of every field the _bm25 field scores, and gives
 // it the query and the slot the score goes in.
 //
 // A BM25 score is not computable from the document: how much a term is worth depends on how many
 // documents in the collection hold it and how long their fields are. So unlike a cosine
-// similarity there is nothing to fall back to, and a field with no BM25 index is an error rather
-// than a slower query.
+// similarity there is nothing to fall back to, and a scored field with no BM25 index is an error
+// rather than a slower query.
 //
-// The index chosen here replaces whatever a filter selected. A filter is still applied in full by
+// The indexes chosen here replace whatever a filter selected. A filter is still applied in full by
 // the filtered fetcher, so the only thing given up is the narrowing.
 func setBM25Scan(scan *scanNode, bm25 *mapper.Bm25) error {
-	for _, idx := range queryableIndexesOnField(scan.col, bm25.Target) {
-		if idx.Kind != client.IndexKindBM25 {
-			continue
-		}
-		scan.index = immutable.Some(idx)
-		scan.rank = &fetcher.Rank{Query: bm25.Query}
-		scan.rankFieldIndex = bm25.Index
-		return nil
+	if len(bm25.Targets) == 0 {
+		return ErrBM25NoFields
 	}
-	return NewErrNoBM25Index(scan.col.Name(), bm25.Target)
+
+	targets := make([]fetcher.RankTarget, 0, len(bm25.Targets))
+	for _, target := range bm25.Targets {
+		index, found := bm25IndexOnField(scan.col, target.Field)
+		if !found {
+			return NewErrNoBM25Index(scan.col.Name(), target.Field)
+		}
+		targets = append(targets, fetcher.RankTarget{Index: index, Boost: target.Boost})
+	}
+
+	// The scan carries one index, which is what the fetcher reads to decide the kind of iterator
+	// to build. Every target here is a BM25 index, so any of them routes to the same iterator, and
+	// that iterator reads all of them from the rank rather than from this field.
+	scan.index = immutable.Some(targets[0].Index)
+	scan.rank = &fetcher.Rank{Query: bm25.Query, Targets: targets}
+	scan.rankFieldIndex = bm25.Index
+	return nil
+}
+
+// bm25IndexOnField returns the BM25 index on the named field, if the collection has one that is
+// ready to be queried.
+func bm25IndexOnField(col client.Collection, fieldName string) (client.IndexDescription, bool) {
+	for _, idx := range queryableIndexesOnField(col, fieldName) {
+		if idx.Kind == client.IndexKindBM25 {
+			return idx, true
+		}
+	}
+	return client.IndexDescription{}, false
 }
 
 // bm25Field returns the _bm25 field of a selection, if it has one.

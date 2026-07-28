@@ -54,6 +54,7 @@ var (
 	ErrBM25NotOnCollectionScan             = errors.New(
 		"_bm25 may only be requested on a query that scans a collection")
 	ErrMultipleBM25Fields = errors.New("a query may request only one _bm25 field")
+	ErrBM25NoFields       = errors.New("_bm25 requires at least one field to score")
 )
 
 func NewErrNoBM25Index(collectionName string, fieldName string) error {

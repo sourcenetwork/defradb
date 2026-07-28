@@ -61,8 +61,25 @@ type Rank struct {
 	// Query is the text documents are scored against.
 	Query string
 
+	// Targets are the indexes documents are scored against. A document's score is the sum of its
+	// score against each of them, after each is multiplied by that target's boost. There is always
+	// at least one.
+	Targets []RankTarget
+
 	// Score is the score of the document [Fetcher.FetchNext] last returned.
 	Score float64
+}
+
+// RankTarget is one index a [Rank] scores documents against, and how much that index's score
+// counts towards the total.
+type RankTarget struct {
+	// Index is the description of the index scored against. Its scoring parameters are read from
+	// it, so each scored field is free to carry its own.
+	Index client.IndexDescription
+
+	// Boost multiplies this index's score before it is added to the document's total. A boost of
+	// zero excludes the index, which is not read at all.
+	Boost float64
 }
 
 // Fetcher is the interface for collecting documents from the underlying data store.

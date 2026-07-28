@@ -1003,8 +1003,8 @@ func getRequestables(
 					Index: index,
 					Name:  f.Name,
 				},
-				Target: f.Target,
-				Query:  f.Query,
+				Query:   f.Query,
+				Targets: f.Targets,
 			})
 			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
 				Index: index,
