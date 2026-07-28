@@ -18,10 +18,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// A _similarity + order:{_similarity:DESC} + limit query on a field with a ready @vectorIndex returns
-// the k documents nearest to the query vector, in nearest-first order (the nearest to [1,0,0] is "x",
-// then "xy"), AND fetches only those k documents rather than scanning the whole collection: the
-// explain variant of the same query reports two doc fetches (a full-scan fallback would fetch four).
+// A _similarity + order DESC + limit query on a ready @vectorIndex returns the k nearest documents
+// (nearest to [1,0,0] is "x", then "xy") and reads only those k, not the whole collection. The
+// explain variant asserts two doc fetches (a full scan would read four).
 func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -49,8 +48,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 					},
 				},
 			},
-			// The same query under explain reports one index fetch (the graph search) and fetches only
-			// the two nearest documents, proving it routed to the vector index rather than full-scanning.
+			// Under explain: one index fetch and two doc fetches, proving it routed to the index.
 			&action.Request{
 				Request: `query @explain(type: execute) {
 					User(order: {_alias: {sim: DESC}}, limit: 2){
@@ -66,9 +64,8 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Updating a document's vector re-indexes it: after moving "b" to sit right on the query vector, the
-// nearest-neighbour query returns "b" first. This exercises the write-path graph maintenance (update
-// = delete-then-insert) end to end through the query.
+// Updating a vector re-indexes it: after moving "b" onto the query vector, the query returns "b"
+// first. Exercises the update path (delete then insert) end to end.
 func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -106,10 +103,9 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Cosine ignores magnitude, so a very long vector pointing the same way as a short one is equally
-// near. Here "long" points exactly along the query but with magnitude 10; it ties "unit" at
-// similarity 1 and both beat the off-axis "off". This is the case the old unnormalised dot product
-// got wrong (it would have ranked the long vector far above the unit one), so it guards the fix.
+// Cosine ignores magnitude: "long" [10,0,0] ties "unit" [1,0,0] at similarity 1, both ahead of the
+// off-axis "off". Guards the normalization fix — the old raw dot product ranked "long" far above
+// "unit".
 func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -142,10 +138,9 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// The vector index answers "nearest", which is order:DESC. An ascending order asks for the farthest
-// documents, which HNSW cannot serve, so the query must fall back to a full scan and still return the
-// correct farthest-first result. The explain variant confirms the fallback: no index fetch, and all
-// four documents scanned.
+// The index answers "nearest" (order DESC). Ascending order asks for the farthest documents, which
+// HNSW cannot serve, so the query full-scans and still returns the correct farthest-first result.
+// Explain confirms the fallback: no index fetch, all four documents scanned.
 func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *testing.T) {
 	docs := []any{
 		&action.AddDoc{DocMap: map[string]any{"name": "near", "vector": []float32{1, 0, 0}}},
@@ -192,10 +187,9 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Without an order clause a _similarity + limit query is not a nearest-neighbour query: it asks for
-// any k documents plus their similarity, not the k nearest. Routing would wrongly return the nearest,
-// so the query must not route. Explain confirms it: no index fetch. (docFetches cannot show this, as
-// a limit reads only k documents whether or not it routed.)
+// Without an order clause, a _similarity + limit query asks for any k documents, not the k nearest,
+// so it must not route (routing would wrongly return the nearest). Explain asserts no index fetch.
+// (docFetches cannot show this: a limit reads only k documents whether or not it routed.)
 func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotRoute(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

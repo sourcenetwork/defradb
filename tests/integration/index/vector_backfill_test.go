@@ -19,18 +19,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// A vector index created on a populated collection is backfilled by the same async worker that builds
-// scalar indexes. The build is held at the gate to observe the building state, then released; once
-// ready, a nearest-neighbour query fetches only the two nearest of the four pre-existing documents.
-//
-// The explain assertion is what proves the backfill actually built a usable graph: a failed or empty
-// backfill would leave the index non-ready and the query would full-scan, giving indexFetches 0 and
-// docFetches four instead of the routed 1 and 2.
-func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.T) {
-	release, cleanup := installBuildGate(t)
-	defer cleanup()
-
-	vectorIndex := &action.NewIndex{
+// newAsyncVectorIndex creates an async HNSW/cosine vector index with default params on the "vector"
+// field of collection 0. Async so the build runs on the worker and can be held at the build gate.
+func newAsyncVectorIndex() *action.NewIndex {
+	return &action.NewIndex{
 		CollectionID: 0,
 		FieldName:    "vector",
 		Async:        true,
@@ -45,6 +37,16 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 			},
 		},
 	}
+}
+
+// Creating a vector index on a populated collection backfills the graph via the async worker. The
+// explain assertion is what proves the backfill built a usable graph: a broken build would leave the
+// index non-ready and the query would full-scan (indexFetches 0, docFetches 4) instead of routing.
+func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.T) {
+	release, cleanup := installBuildGate(t)
+	defer cleanup()
+
+	vectorIndex := newAsyncVectorIndex()
 
 	expectedIndexes := []client.IndexDescription{
 		{
@@ -65,8 +67,7 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 	}
 
 	test := testUtils.TestCase{
-		// The build gate is an in-process hook, so it only takes effect with the Go client running the
-		// DB in-process, on a single backend (see the var declarations for the full reasoning).
+		// The build gate is an in-process hook, so this runs only on the Go client (see the var docs).
 		SupportedClientTypes:   goClientTypes,
 		SupportedDatabaseTypes: inProcessDBType,
 		Actions: []any{
@@ -81,8 +82,7 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
 			&action.AddDoc{DocMap: map[string]any{"name": "z", "vector": []float32{0, 0, 1}}},
 			vectorIndex,
-			// The gate this test installed holds the build at its first batch, so the index is caught
-			// in-progress here deterministically rather than racing a build that might already be done.
+			// The gate holds the build, so the index is reliably caught in-progress here.
 			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: expectedIndexes,
@@ -93,8 +93,7 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 					},
 				},
 			},
-			// Releasing that gate is what lets the held build run to completion; without it the wait
-			// below would time out. (A build with no gate installed would just finish on its own.)
+			// Release the gate so the build can finish; the wait below would otherwise time out.
 			action.NewRunFunc(release),
 			&action.WaitForIndexReady{CollectionID: 0},
 			&action.ListIndexes{
@@ -126,6 +125,62 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 					}
 				}`,
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// While a vector index is building, the planner must not use it: the query full-scans (indexFetches
+// 0) but still returns correct results. Once ready, the same query routes to the index (indexFetches
+// 1).
+func TestVectorIndex_QueryWhileBuilding_FullScansThenRoutes(t *testing.T) {
+	release, cleanup := installBuildGate(t)
+	defer cleanup()
+
+	req := `query {
+		User(order: {_alias: {sim: DESC}}, limit: 2){
+			name
+			sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+		}
+	}`
+
+	test := testUtils.TestCase{
+		SupportedClientTypes:   goClientTypes,
+		SupportedDatabaseTypes: inProcessDBType,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!]
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "z", "vector": []float32{0, 0, 1}}},
+			newAsyncVectorIndex(),
+			// Building: full-scan (no index fetch), but still correct — nearest to [1,0,0] are x then xy.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
+						{"name": "xy", "sim": testUtils.CosineSimilarity([]float64{0.9, 0.4, 0}, []float64{1, 0, 0})},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+			action.NewRunFunc(release),
+			&action.WaitForIndexReady{CollectionID: 0},
+			// Ready: the same query now routes to the graph.
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 		},
 	}
