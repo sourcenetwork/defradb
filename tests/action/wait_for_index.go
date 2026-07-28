@@ -12,6 +12,8 @@
 package action
 
 import (
+	"slices"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
@@ -29,13 +31,7 @@ func listIndexesOptions(
 	s *state.State,
 	node *state.NodeState,
 ) options.Enumerable[options.ListCollectionIndexesOptions] {
-	nodeID := -1
-	for i, n := range s.Nodes {
-		if n == node {
-			nodeID = i
-			break
-		}
-	}
+	nodeID := slices.Index(s.Nodes, node)
 	builder := options.ListCollectionIndexes()
 	identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(nodeID), nodeID)
 	if identOption.HasValue() {
@@ -53,9 +49,18 @@ func WaitForNodeIndexesBuilt(s *state.State, node *state.NodeState) {
 		return
 	}
 	opts := listIndexesOptions(s, node)
-	// Fetch collections outside any transaction: the caller's txn may already be committed, and a
-	// collection bound to it would fail ListIndexes with "transaction not found".
-	for _, collection := range MustGetCanonicallyOrderedCollections(s, node, immutable.None[client.Txn]()) {
+	// Resolve as the node identity so every collection is visible when NAC is enabled, and outside
+	// any transaction: the caller's txn may already be committed, and a collection bound to it
+	// would fail ListIndexes with "transaction not found".
+	collections, err := GetCollectionsCanonically(
+		s,
+		node,
+		immutable.None[client.Txn](),
+		NodeIdentity(slices.Index(s.Nodes, node)),
+	)
+	require.NoError(s.T, err)
+
+	for _, collection := range collections {
 		if collection == nil {
 			continue
 		}
@@ -94,7 +99,14 @@ func (a *WaitForIndexReady) Execute() {
 		if node.Closed {
 			continue
 		}
-		collections := MustGetCanonicallyOrderedCollections(a.s, node, immutable.None[client.Txn]())
+		// Resolve as the node identity (visible under NAC) and outside any transaction.
+		collections, err := GetCollectionsCanonically(
+			a.s,
+			node,
+			immutable.None[client.Txn](),
+			NodeIdentity(nodeID),
+		)
+		require.NoError(a.s.T, err)
 		collection := collections[a.CollectionID]
 
 		opts := listIndexesOptions(a.s, node)

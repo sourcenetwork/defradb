@@ -66,6 +66,7 @@ func (s indexState) isDropping() bool {
 // false for a ready index (no action record), reported as a Completed execution.
 func (s indexState) listResult(
 	collectionID string,
+	collectionName string,
 	desc client.IndexDescription,
 	hasState bool,
 ) client.ListIndexesResult {
@@ -80,7 +81,7 @@ func (s indexState) listResult(
 		exec.Status = s.Status
 		exec.Reason = s.Reason
 	}
-	return client.ListIndexesResult{Description: desc, Execution: exec}
+	return client.ListIndexesResult{CollectionName: collectionName, Description: desc, Execution: exec}
 }
 
 // indexSubject is the action subject segment for an index action: the index ID.
