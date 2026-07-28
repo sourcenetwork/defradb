@@ -71,7 +71,7 @@ func TestFilterForSimpleCollection(t *testing.T) {
 													map[string]any{
 														"name": "_alias",
 														"type": map[string]any{
-															"name":   "JSON",
+															"name":   "FilterJSON",
 															"ofType": nil,
 														},
 													},
@@ -210,7 +210,7 @@ func TestFilterForOneToOneCollection(t *testing.T) {
 													map[string]any{
 														"name": "_alias",
 														"type": map[string]any{
-															"name":   "JSON",
+															"name":   "FilterJSON",
 															"ofType": nil,
 														},
 													},
@@ -375,7 +375,7 @@ func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 													map[string]any{
 														"name": "_alias",
 														"type": map[string]any{
-															"name":   "JSON",
+															"name":   "FilterJSON",
 															"ofType": nil,
 														},
 													},

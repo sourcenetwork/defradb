@@ -211,3 +211,42 @@ The `_not` conditional accepts an object instead of an array.
 > `filter: { _not: { genre: { _eq: "Thriller" } } }`
 
 *The`_not` operator should only be used when the available filter operators like `_neq` do not fit the use case.*
+
+## Comparing one field to another
+
+A comparison operator normally takes a literal value. It can also take a bare, unquoted field
+name, which compares the field being filtered against another field of the same document.
+
+The query below returns the books whose page count has not caught up with their expected page
+count.
+
+```graphql
+{
+	Books(filter: { pages: { _lt: expectedPages } }) {
+		title
+		pages
+	}
+}
+```
+
+The referenced field does not have to be part of the selection set - it is read from the
+document regardless.
+
+To compare an aggregate against a field, alias the aggregate and filter on it through `_alias`:
+
+```graphql
+{
+	Authors(filter: { _alias: { bookCount: { _lt: expectedBooks } } }) {
+		name
+		bookCount: COUNT(published: {})
+	}
+}
+```
+
+This works with the direct comparison operators only: `_eq`, `_neq`, `_gt`, `_geq`, `_lt` and
+`_leq`. Both fields must belong to the same document - a field name written inside a relation
+sub-filter is rejected, because it would name a field of a different document. Arithmetic on
+the compared values (for example `pages < expectedPages * 2`) is not supported.
+
+A field name written this way is not checked by GraphQL's type validation, so a misspelled name
+or a mismatched field type is reported when the query runs, not when it is parsed.

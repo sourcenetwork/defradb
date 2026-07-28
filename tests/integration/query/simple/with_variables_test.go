@@ -40,7 +40,7 @@ func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 					"age": 50,
 					"ord": "ASC",
 				}),
-				Request: `query($age: Int!, $ord: Ordering!) {
+				Request: `query($age: FilterInt!, $ord: Ordering!) {
 					Users(filter: {Age: {_lt: $age}}, order: {Age: $ord}) {
 						Name
 					}
@@ -78,7 +78,7 @@ func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 				}`,
 			},
 			&action.Request{
-				Request: `query($age: Int = 50, $ord: Ordering = ASC) {
+				Request: `query($age: FilterInt = 50, $ord: Ordering = ASC) {
 					Users(filter: {Age: {_lt: $age}}, order: {Age: $ord}) {
 						Name
 					}
@@ -116,12 +116,12 @@ func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 				}`,
 			},
 			&action.Request{
-				Request: `query($age: Int!) {
+				Request: `query($age: FilterInt!) {
 					Users(filter: {Age: {_lt: $age}}) {
 						Name
 					}
 				}`,
-				ExpectedError: "Variable \"$age\" of required type \"Int!\" was not provided.",
+				ExpectedError: "Variable \"$age\" of required type \"FilterInt!\" was not provided.",
 			},
 		},
 	}
@@ -148,7 +148,7 @@ func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 				Variables: immutable.Some(map[string]any{
 					"age": int64(30),
 				}),
-				Request: `query($age: Int = 50) {
+				Request: `query($age: FilterInt = 50) {
 					Users(filter: {Age: {_lt: $age}}) {
 						Name
 					}

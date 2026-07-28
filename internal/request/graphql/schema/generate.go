@@ -1374,7 +1374,7 @@ func (g *Generator) genTypeFilterArgInput(obj *gql.Object) *gql.InputObject {
 			}
 			fields[request.AliasFieldName] = &gql.InputObjectFieldConfig{
 				Description: "The alias operator allows filters to target aliased fields.",
-				Type:        schemaTypes.JSON,
+				Type:        schemaTypes.FilterJSON,
 			}
 
 			// generate basic filter operator blocks

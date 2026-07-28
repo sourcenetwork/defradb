@@ -91,6 +91,23 @@ func (k *ObjectProperty) Equal(other connor.FilterKey) bool {
 	return false
 }
 
+// FieldValue is a filter condition value that refers to another field of the document being
+// filtered, instead of a literal value.  It is the mapped form of a request.FieldReference.
+//
+// RunFilter replaces it with the referenced field's value before the filter is evaluated.
+type FieldValue struct {
+	// Index is the index of the referenced field in the document mapping, or -1 if the
+	// name could not be resolved.
+	Index int
+
+	// Name is the name of the referenced field, as written in the request.
+	Name string
+
+	// OutOfScope is true if the reference was written inside a relation sub-filter, where it
+	// would name a field of a different document than the one being filtered.
+	OutOfScope bool
+}
+
 // Filter represents a series of conditions that may reduce the number of
 // records that a request returns.
 type Filter struct {
@@ -162,7 +179,13 @@ func filterObjectToMap(mapping *core.DocumentMapping, obj map[connor.FilterKey]a
 					outmap[keyType.Operation] = filterObjectToMap(mapping, itemMap)
 				}
 			default:
-				outmap[keyType.Operation] = v
+				if fieldValue, isFieldValue := v.(FieldValue); isFieldValue {
+					// Render a field-to-field comparison as the referenced field's name, which is
+					// how it was written in the request.
+					outmap[keyType.Operation] = fieldValue.Name
+				} else {
+					outmap[keyType.Operation] = v
+				}
 			}
 
 		case *ObjectProperty:
