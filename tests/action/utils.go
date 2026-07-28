@@ -59,7 +59,6 @@ func RefreshCollections(
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
-		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
@@ -68,27 +67,34 @@ func RefreshCollections(
 		allCollections, err := txn.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
 
-		for i, collectionName := range s.CollectionNames {
-			for _, collection := range allCollections {
-				if collection.Name() == collectionName {
-					if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
-						// If the root is not found here this is likely the first refreshCollections
-						// call of the test, we map it by root in case the collection is renamed -
-						// we still wish to preserve the original index so test maintainers can reference
-						// them in a convenient manner.
-						s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
-					}
-					break
-				}
-			}
-		}
+		node.Collections = orderCollectionsCanonically(s, allCollections)
+	}
+}
 
+// orderCollectionsCanonically arranges the resolved collections into a slice indexed by their
+// canonical position (the order they were created). An absent collection leaves a nil slot.
+//
+// Each collection's ID is mapped to its index in s.CollectionIndexesByCollectionID on first
+// sighting and kept, so a later rename still resolves to the original index.
+func orderCollectionsCanonically(s *state.State, allCollections []client.Collection) []client.Collection {
+	for i, collectionName := range s.CollectionNames {
 		for _, collection := range allCollections {
-			if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
-				node.Collections[index] = collection
+			if collection.Name() == collectionName {
+				if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
+					s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
+				}
+				break
 			}
 		}
 	}
+
+	ordered := make([]client.Collection, len(s.CollectionNames))
+	for _, collection := range allCollections {
+		if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+			ordered[index] = collection
+		}
+	}
+	return ordered
 }
 
 // GetCollectionsCanonically resolves the collections as the given actor identity, using the same
@@ -113,8 +119,6 @@ func GetCollectionsCanonically(
 
 	nodeID := slices.Index(s.Nodes, node)
 
-	newCollections := make([]client.Collection, len(s.CollectionNames))
-
 	identOption := getIdentityForRequestSpecificToNode(s, actor, nodeID)
 	opts := options.GetCollections()
 	if identOption.HasValue() {
@@ -133,24 +137,7 @@ func GetCollectionsCanonically(
 		return nil, err
 	}
 
-	for i, collectionName := range s.CollectionNames {
-		for _, collection := range allCollections {
-			if collection.Name() == collectionName {
-				if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
-					s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
-				}
-				break
-			}
-		}
-	}
-
-	for _, collection := range allCollections {
-		if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
-			newCollections[index] = collection
-		}
-	}
-
-	return newCollections, nil
+	return orderCollectionsCanonically(s, allCollections), nil
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {
