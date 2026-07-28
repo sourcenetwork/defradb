@@ -1,8 +1,8 @@
 ![Test Coverage Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-coverage.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
-[![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.gg/w7jYQVJ)
-[![Twitter Follow](https://img.shields.io/twitter/follow/sourcenetwrk.svg?label=&style=social)](https://twitter.com/sourcenetwrk)
+[![Discord](https://img.shields.io/discord/1374835078781468722.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://source.network/discord)
+[![X URL](https://img.shields.io/twitter/follow/edgeofsource.svg?label=&style=social)](https://x.com/edgeofsource)
 
 <p align="center">
   <picture>
@@ -533,7 +533,7 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 ## Community
 
-Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
+Discuss on [Discord](https://source.network/discord) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [X](https://x.com/edgeofsource).
 
 ## Explorer
 
