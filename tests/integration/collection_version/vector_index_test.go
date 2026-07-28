@@ -29,7 +29,7 @@ func TestCollectionVersion_VectorIndexOnRawFloat32Array_ShouldSucceed(t *testing
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 					}
 				`,
 			},
@@ -109,15 +109,17 @@ func TestCollectionVersion_VectorIndexOnFloat64ArrayField_ShouldError(t *testing
 }
 
 func TestCollectionVersion_VectorIndexWithUnsupportedAlgorithm_ShouldError(t *testing.T) {
+	// An unknown algorithm is now an unknown directive argument (the algorithm is the argument key),
+	// so GraphQL rejects it before the parser runs.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(type: FOO, dimensions: 3)
+						embedding: [Float32!] @vectorIndex(dimensions: 3, IVFFlat: {})
 					}
 				`,
-				ExpectedError: `Expected type "VectorIndexAlgorithm", found FOO`,
+				ExpectedError: `Unknown argument "IVFFlat" on directive "@vectorIndex"`,
 			},
 		},
 	}
@@ -131,7 +133,7 @@ func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testi
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(metric: EUCLIDEAN, dimensions: 3)
+						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: EUCLIDEAN})
 					}
 				`,
 				ExpectedError: `Expected type "VectorDistanceMetric", found EUCLIDEAN`,

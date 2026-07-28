@@ -53,13 +53,16 @@ const (
 	EncryptedIndexDirectiveLabel    = "encryptedIndex"
 	EncryptedIndexDirectivePropType = "type"
 
-	VectorIndexDirectiveLabel              = "vectorIndex"
-	VectorIndexDirectivePropType           = "type"
-	VectorIndexDirectivePropMetric         = "metric"
-	VectorIndexDirectivePropDimensions     = "dimensions"
-	VectorIndexDirectivePropM              = "m"
-	VectorIndexDirectivePropEfConstruction = "efConstruction"
-	VectorIndexDirectivePropEfSearch       = "efSearch"
+	VectorIndexDirectiveLabel          = "vectorIndex"
+	VectorIndexDirectivePropDimensions = "dimensions"
+	VectorIndexDirectivePropHNSW       = "HNSW"
+
+	// Fields of the per-algorithm config objects. `metric` is shared in name but each config declares
+	// its own so a client only sees the knobs of the algorithm it is configuring.
+	VectorIndexConfigPropMetric         = "metric"
+	VectorIndexConfigPropM              = "M"
+	VectorIndexConfigPropEfConstruction = "efConstruction"
+	VectorIndexConfigPropEfSearch       = "efSearch"
 
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
@@ -96,20 +99,7 @@ func OrderingEnum() *gql.Enum {
 	})
 }
 
-// VectorIndexAlgorithmEnum is an enum for the @vectorIndex `type` argument.
-func VectorIndexAlgorithmEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name: "VectorIndexAlgorithm",
-		Values: gql.EnumValueConfigMap{
-			"HNSW": &gql.EnumValueConfig{
-				Description: "Hierarchical Navigable Small World graph.",
-				Value:       "HNSW",
-			},
-		},
-	})
-}
-
-// VectorDistanceMetricEnum is an enum for the @vectorIndex `metric` argument.
+// VectorDistanceMetricEnum is an enum for the `metric` field of a @vectorIndex algorithm config.
 func VectorDistanceMetricEnum() *gql.Enum {
 	return gql.NewEnum(gql.EnumConfig{
 		Name: "VectorDistanceMetric",
@@ -117,6 +107,38 @@ func VectorDistanceMetricEnum() *gql.Enum {
 			"COSINE": &gql.EnumValueConfig{
 				Description: "Cosine distance on normalised vectors.",
 				Value:       "COSINE",
+			},
+		},
+	})
+}
+
+// HNSWIndexConfigInputObject is the typed config for @vectorIndex's `HNSW` argument. Keying the
+// params under the algorithm keeps them type-safe and off the directive's top-level namespace, so a
+// client configuring HNSW only sees HNSW's knobs (and later, IVFFlat only sees IVFFlat's).
+func HNSWIndexConfigInputObject(metricEnum *gql.Enum) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "HNSWIndexConfig",
+		Description: "HNSW (Hierarchical Navigable Small World) vector index parameters.",
+		Fields: gql.InputObjectConfigFieldMap{
+			VectorIndexConfigPropMetric: &gql.InputObjectFieldConfig{
+				Description:  "Distance metric (currently only COSINE).",
+				Type:         metricEnum,
+				DefaultValue: "COSINE",
+			},
+			VectorIndexConfigPropM: &gql.InputObjectFieldConfig{
+				Description:  "Max connections per node. Higher improves recall at the cost of memory and build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWM),
+			},
+			VectorIndexConfigPropEfConstruction: &gql.InputObjectFieldConfig{
+				Description:  "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfConstruction),
+			},
+			VectorIndexConfigPropEfSearch: &gql.InputObjectFieldConfig{
+				Description:  "Default query-time exploration factor. Higher improves recall at the cost of query latency.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfSearch),
 			},
 		},
 	})
@@ -420,40 +442,22 @@ func EncryptedIndexDirective() *gql.Directive {
 	})
 }
 
-// VectorIndexDirective @vectorIndex builds an approximate-nearest-neighbour index over a vector field.
-func VectorIndexDirective(algorithmEnum *gql.Enum, metricEnum *gql.Enum) *gql.Directive {
+// VectorIndexDirective @vectorIndex builds an approximate-nearest-neighbour index over a vector
+// field. The algorithm is chosen by which config argument is set (HNSW today), and its parameters
+// live in that config object. `dimensions` is top-level because it describes the vector field, not
+// the algorithm. Omitting the algorithm config indexes with HNSW defaults.
+func VectorIndexDirective(hnswConfig *gql.InputObject) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        VectorIndexDirectiveLabel,
 		Description: "@vectorIndex builds an approximate-nearest-neighbour index over a vector field.",
 		Args: gql.FieldConfigArgument{
-			VectorIndexDirectivePropType: &gql.ArgumentConfig{
-				Description:  "ANN algorithm (currently only HNSW).",
-				Type:         algorithmEnum,
-				DefaultValue: "HNSW",
-			},
-			VectorIndexDirectivePropMetric: &gql.ArgumentConfig{
-				Description:  "Distance metric (currently only COSINE).",
-				Type:         metricEnum,
-				DefaultValue: "COSINE",
-			},
 			VectorIndexDirectivePropDimensions: &gql.ArgumentConfig{
 				Description: "Vector dimensions; required unless inferable from an @embedding.",
 				Type:        gql.Int,
 			},
-			VectorIndexDirectivePropM: &gql.ArgumentConfig{
-				Description:  "HNSW max connections per node. Higher improves recall at the cost of memory and build time.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWM),
-			},
-			VectorIndexDirectivePropEfConstruction: &gql.ArgumentConfig{
-				Description:  "HNSW build-time exploration factor. Higher improves graph quality (recall) at the cost of build time.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWEfConstruction),
-			},
-			VectorIndexDirectivePropEfSearch: &gql.ArgumentConfig{
-				Description:  "HNSW default query-time exploration factor. Higher improves recall at the cost of query latency; overridable per query.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWEfSearch),
+			VectorIndexDirectivePropHNSW: &gql.ArgumentConfig{
+				Description: "Build the index with the HNSW algorithm using these parameters.",
+				Type:        hnswConfig,
 			},
 		},
 		Locations: []string{

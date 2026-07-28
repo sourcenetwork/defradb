@@ -28,7 +28,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
@@ -75,7 +75,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testin
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 				}`,
 			},
 			// a sits off the query axis; b starts even further off. After the update b lands exactly on
@@ -116,7 +116,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "unit", "vector": []float32{1, 0, 0}}},
@@ -159,7 +159,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 				}`,
 			},
 		}, append(docs,
@@ -202,7 +202,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotRoute(t *testing.
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: 3)
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},

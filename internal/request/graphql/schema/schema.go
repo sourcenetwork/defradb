@@ -22,8 +22,8 @@ func defaultSchema() (gql.Schema, error) {
 	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
-	vectorIndexAlgorithmEnum := types.VectorIndexAlgorithmEnum()
 	vectorDistanceMetricEnum := types.VectorDistanceMetricEnum()
+	hnswIndexConfigInput := types.HNSWIndexConfigInputObject(vectorDistanceMetricEnum)
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -47,8 +47,8 @@ func defaultSchema() (gql.Schema, error) {
 			explainEnum,
 			indexFieldInput,
 			encryptedSearchResult,
-			vectorIndexAlgorithmEnum,
 			vectorDistanceMetricEnum,
+			hnswIndexConfigInput,
 		),
 		Query:    defaultQueryType(queryCommits),
 		Mutation: defaultMutationType(),
@@ -57,8 +57,7 @@ func defaultSchema() (gql.Schema, error) {
 			explainEnum,
 			orderEnum,
 			indexFieldInput,
-			vectorIndexAlgorithmEnum,
-			vectorDistanceMetricEnum,
+			hnswIndexConfigInput,
 		),
 		Subscription: defaultSubscriptionType(queryCommits),
 	})
@@ -104,8 +103,7 @@ func defaultDirectivesType(
 	explainEnum *gql.Enum,
 	orderEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
-	vectorIndexAlgorithmEnum *gql.Enum,
-	vectorDistanceMetricEnum *gql.Enum,
+	hnswIndexConfigInput *gql.InputObject,
 ) []*gql.Directive {
 	return []*gql.Directive{
 		types.CRDTFieldDirective(crdtEnum),
@@ -121,7 +119,7 @@ func defaultDirectivesType(
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
 		types.EncryptedIndexDirective(),
-		types.VectorIndexDirective(vectorIndexAlgorithmEnum, vectorDistanceMetricEnum),
+		types.VectorIndexDirective(hnswIndexConfigInput),
 	}
 }
 
@@ -152,8 +150,8 @@ func defaultTypes(
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
-	vectorIndexAlgorithmEnum *gql.Enum,
 	vectorDistanceMetricEnum *gql.Enum,
+	hnswIndexConfigInput *gql.InputObject,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -242,7 +240,7 @@ func defaultTypes(
 		indexFieldInput,
 		encryptedSearchResult,
 
-		vectorIndexAlgorithmEnum,
 		vectorDistanceMetricEnum,
+		hnswIndexConfigInput,
 	}
 }

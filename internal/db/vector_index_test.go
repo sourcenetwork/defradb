@@ -35,7 +35,7 @@ func newVectorIndexTestDB(t *testing.T, dimensions int) (context.Context, *DB, c
 	_, err = db.AddCollection(ctx, `
 		type Users {
 			name: String
-			embedding: [Float32!] @vectorIndex(type: HNSW, metric: COSINE, dimensions: `+strconv.Itoa(dimensions)+`)
+			embedding: [Float32!] @vectorIndex(dimensions: `+strconv.Itoa(dimensions)+`, HNSW: {metric: COSINE})
 		}
 	`)
 	require.NoError(t, err)
