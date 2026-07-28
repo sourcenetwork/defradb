@@ -29,6 +29,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/clients"
+	"github.com/sourcenetwork/defradb/tests/clients/external"
+	"github.com/sourcenetwork/defradb/tests/integration/version"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -46,6 +49,10 @@ func createBadgerEncryptionKey() error {
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 //
+// If ver is non-empty, the node runs as a separate process from a downloaded
+// release binary of that version instead of natively in-process; opts is
+// ignored in that case (the external process gets its own flags).
+//
 // Note: If the signature of this function is updated, don't forget to
 // also update the function in [tests/integration/db_setup_js.go] otherwise
 // the js client build may fail (the failure might not be obvious to find).
@@ -54,7 +61,12 @@ func setupNode(
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
 	opts *options.NodeOptionsBuilder,
+	ver string,
 ) (*state.NodeState, error) {
+	if ver != "" {
+		return setupExternalNode(s, ver)
+	}
+
 	if opts == nil {
 		opts = defaultNodeOpts()
 	}
@@ -153,37 +165,89 @@ func setupNode(
 	c, err := setupClient(s, nodeObj)
 	require.Nil(s.T, err)
 
+	st, err := newNodeState(s, c, path, false)
+	if err != nil {
+		return nil, err
+	}
+	return st, nil
+}
+
+// newNodeState builds a NodeState around a set-up client: it subscribes to the
+// client's events and discovers the node's cached peer addresses. It is shared
+// by the native and external node setup paths.
+func newNodeState(s *state.State, c clients.Client, path string, isExternal bool) (*state.NodeState, error) {
 	eventState, err := state.NewEventState(c.Events())
 	require.NoError(s.T, err)
 
 	st := &state.NodeState{
-		Client: c,
-		Event:  eventState,
-		P2P:    state.NewP2PState(),
-		DbPath: path,
+		Client:     c,
+		Event:      eventState,
+		P2P:        state.NewP2PState(),
+		DbPath:     path,
+		IsExternal: isExternal,
 	}
 
-	var addresses []string
+	addresses, err := discoverPeerAddresses(s, c)
+	if err != nil {
+		return nil, err
+	}
+	st.CachedAddresses = addresses
 
-	// Inject node identity to bypass NAC inorder to be able to call [PeerInfo] operation,
-	// otherwise when NAC is enabled, we will get authorization error.
+	return st, nil
+}
+
+// discoverPeerAddresses reads the node's listen addresses via PeerInfo and
+// strips the trailing /p2p/<peerID> so they can be reused as listen addresses
+// on restart.
+func discoverPeerAddresses(s *state.State, c clients.Client) ([]string, error) {
+	// Inject node identity so PeerInfo works when NAC is enabled.
+	//
+	// Only attach it when the token is non-empty. This runs before the node is on
+	// s.Nodes, so no audience exists yet and no bearer token is generated. An empty
+	// "Bearer " header is ignored by a current node but rejected by some older
+	// released servers.
 	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
 	peerInfoOpts := options.PeerInfo()
 	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
 	if identOption.HasValue() {
-		peerInfoOpts.SetIdentity(identOption.Value())
+		if tokenIdent, ok := identOption.Value().(acpIdentity.TokenIdentity); !ok || tokenIdent.BearerToken() != "" {
+			peerInfoOpts.SetIdentity(identOption.Value())
+		}
 	}
-	addresses, err = nodeObj.DB.PeerInfo(s.Ctx, peerInfoOpts)
-	require.NoError(s.T, err)
+
+	addresses, err := c.PeerInfo(s.Ctx, peerInfoOpts)
+	if err != nil {
+		return nil, err
+	}
 
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
 	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
 	// before caching the addresses on the state.
-	addresses, err = removePeerIDFromAddr(addresses)
-	require.NoError(s.T, err)
-	st.CachedAddresses = addresses
+	return removePeerIDFromAddr(addresses)
+}
 
-	return st, nil
+// setupExternalNode starts a node as a separate OS process from a downloaded
+// release binary of the given version, and wraps it in the same NodeState
+// shape a native node would produce.
+//
+// If no release asset exists for this platform, the test is skipped (not
+// failed) and a nil error is returned.
+func setupExternalNode(s *state.State, ver string) (*state.NodeState, error) {
+	path, skip, err := version.BinaryPath(s.Ctx, ver)
+	if err != nil {
+		return nil, err
+	}
+	if skip {
+		s.T.Skipf("no %s release asset for this platform", ver)
+		return nil, nil
+	}
+
+	w, err := external.NewWrapper(s.Ctx, s.T, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return newNodeState(s, w, "", true)
 }
 
 func removePeerIDFromAddr(addr []string) ([]string, error) {

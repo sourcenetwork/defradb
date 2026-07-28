@@ -49,6 +49,9 @@ func waitForUpdateEvents(
 		if node.Closed {
 			continue // node is closed
 		}
+		if node.IsExternal {
+			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
+		}
 
 		expect := make(map[string]struct{}, len(docIDs))
 

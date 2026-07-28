@@ -131,6 +131,24 @@ type SetupComplete struct{}
 // effected on all nodes.
 type ConfigureNode func() options.NodeP2POptions
 
+// NodeVersion configures a new node that runs as an external process from a
+// published release binary of the given version, instead of natively in-process.
+// It carries the same networking config a ConfigureNode would.
+//
+// Version is plain data (not a closure) so a future multiplier can rewrite it to
+// run existing tests against other versions.
+//
+// This lives here beside ConfigureNode rather than in the tests/action package
+// because node creation is entangled with this package's setup path, which
+// tests/action cannot import. When ConfigureNode migrates to tests/action, this
+// should move with it.
+type NodeVersion struct {
+	// Version names a published release, e.g. "v1.0.0".
+	Version string
+	// Config supplies the same networking config as a ConfigureNode.
+	Config ConfigureNode
+}
+
 func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
 	httpBuilder := opts.HTTP()
 	if httpOpts.Address != "" {

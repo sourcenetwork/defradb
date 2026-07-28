@@ -96,4 +96,3 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 func (w *Wrapper) Host() string {
 	return w.httpServer.URL
 }
-@tests/clients/http/wrapper.go:92-94
