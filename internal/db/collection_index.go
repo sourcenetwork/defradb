@@ -348,6 +348,7 @@ func (c *collection) deleteFromIndexes(
 func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
+	includeDeleted bool,
 ) error {
 	indexes, err := c.currentIndexes(ctx)
 	if err != nil {
@@ -361,6 +362,15 @@ func (c *collection) deleteIndexedDocWithID(
 	if err != nil {
 		return err
 	}
+	if includeDeleted {
+		_, isDeleted, err := c.exists(ctx, primaryKey)
+		if err != nil {
+			return err
+		}
+		if isDeleted {
+			return nil
+		}
+	}
 
 	// we need to fetch the document to delete it from the indexes, because in order to do so
 	// we need to know the values of the fields that are indexed. Fields come from the resolved
@@ -369,7 +379,7 @@ func (c *collection) deleteIndexedDocWithID(
 		ctx,
 		primaryKey,
 		c.collectIndexedFields(indexes),
-		false,
+		includeDeleted,
 	)
 	if err != nil {
 		return err

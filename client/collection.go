@@ -184,6 +184,21 @@ type Collection interface {
 	// User-managed transactions are not supported by this function if the backing store does not support
 	// concurrent open transactions, such as LevelDB.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
+
+	// PurgeByDocIDs permanently removes the selected documents from this node.
+	//
+	// Unlike DeleteDocument, this is a local hard delete and does not replicate over P2P.
+	// When pruneHistory is true, unshared history blocks are removed as well.
+	//
+	// Without a caller transaction, documents are committed in bounded chunks and an error
+	// may leave earlier chunks applied. A peer may reintroduce purged data unless a replicated
+	// soft delete has already propagated.
+	PurgeByDocIDs(
+		ctx context.Context,
+		docIDs []DocID,
+		pruneHistory bool,
+		opts ...options.Enumerable[options.TruncateCollectionOptions],
+	) error
 }
 
 // UpdateResult wraps the result of an update call.
