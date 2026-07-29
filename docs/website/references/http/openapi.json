@@ -1626,6 +1626,58 @@
                 ]
             }
         },
+        "/collections/{name}/documents/purge": {
+            "delete": {
+                "description": "Permanently remove documents from the local node",
+                "operationId": "purge_documents",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "docIDs": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "pruneHistory": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "docIDs"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "document"
+                ]
+            }
+        },
         "/collections/{name}/encrypted-indexes": {
             "get": {
                 "description": "List encrypted indexes",

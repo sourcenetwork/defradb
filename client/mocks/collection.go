@@ -1197,6 +1197,96 @@ func (_c *Collection_Truncate_Call) RunAndReturn(run func(ctx context.Context, o
 	return _c
 }
 
+// PurgeByDocIDs provides a mock function for the type Collection
+func (_mock *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	var ret mock.Arguments
+	if len(opts) > 0 {
+		ret = _mock.Called(ctx, docIDs, pruneHistory, opts)
+	} else {
+		ret = _mock.Called(ctx, docIDs, pruneHistory)
+	}
+
+	if len(ret) == 0 {
+		panic("no return value specified for PurgeByDocIDs")
+	}
+
+	if returnFunc, ok := ret.Get(0).(func(
+		context.Context,
+		[]client.DocID,
+		bool,
+		...options.Enumerable[options.TruncateCollectionOptions],
+	) error); ok {
+		return returnFunc(ctx, docIDs, pruneHistory, opts...)
+	}
+	return ret.Error(0)
+}
+
+// Collection_PurgeByDocIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PurgeByDocIDs'
+type Collection_PurgeByDocIDs_Call struct {
+	*mock.Call
+}
+
+// PurgeByDocIDs is a helper method to define mock.On call
+func (_e *Collection_Expecter) PurgeByDocIDs(
+	ctx interface{},
+	docIDs interface{},
+	pruneHistory interface{},
+	opts ...interface{},
+) *Collection_PurgeByDocIDs_Call {
+	return &Collection_PurgeByDocIDs_Call{Call: _e.mock.On(
+		"PurgeByDocIDs",
+		append([]interface{}{ctx, docIDs, pruneHistory}, opts...)...,
+	)}
+}
+
+func (_c *Collection_PurgeByDocIDs_Call) Run(run func(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+)) *Collection_PurgeByDocIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var ctx context.Context
+		if args[0] != nil {
+			ctx = args[0].(context.Context)
+		}
+		var docIDs []client.DocID
+		if args[1] != nil {
+			docIDs = args[1].([]client.DocID)
+		}
+		var pruneHistory bool
+		if args[2] != nil {
+			pruneHistory = args[2].(bool)
+		}
+		var opts []options.Enumerable[options.TruncateCollectionOptions]
+		if len(args) > 3 {
+			opts = args[3].([]options.Enumerable[options.TruncateCollectionOptions])
+		}
+		run(ctx, docIDs, pruneHistory, opts...)
+	})
+	return _c
+}
+
+func (_c *Collection_PurgeByDocIDs_Call) Return(err error) *Collection_PurgeByDocIDs_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_PurgeByDocIDs_Call) RunAndReturn(run func(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error) *Collection_PurgeByDocIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateDocument provides a mock function for the type Collection
 func (_mock *Collection) UpdateDocument(ctx context.Context, docs *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error {
 	var tmpRet mock.Arguments

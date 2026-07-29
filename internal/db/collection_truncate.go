@@ -226,7 +226,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID)
+						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID, nil)
 						if err != nil {
 							return err
 						}
@@ -329,6 +329,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docShortID uint64,
+	prunedOwners map[string]struct{},
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 	docID, _, err := id.GetDocIDFromStore(ctx, systemstore, docShortID)
@@ -379,7 +380,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -455,7 +456,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			// the document blocks and their owner edges are deleted earlier in truncate (see the
 			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
 			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid)
+			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -486,8 +487,21 @@ func (c *collection) deleteBlocks(
 	systemstore corekv.ReaderWriter,
 	docID string,
 	currentCid cid.Cid,
+	prunedOwners map[string]struct{},
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
+
+	// Block content is immutable and content-addressed; the walk only reads it to find child
+	// links. Reading it through the purge's write transaction adds every visited CID to that
+	// transaction's conflict set, so a concurrent write of any of them aborts the purge for a
+	// read whose value never changed. Read it through a read-only transaction instead; ownership
+	// checks and deletions stay on the write transaction, so the keep/delete decision is unchanged.
+	readTxn, err := c.db.NewTxn(true)
+	if err != nil {
+		return err
+	}
+	defer readTxn.Discard()
+	readCtx := InitContext(ctx, readTxn)
 
 	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
 		if systemstore == nil || docID == "" {
@@ -496,11 +510,22 @@ func (c *collection) deleteBlocks(
 		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
 			return false, err
 		}
-		docIDs, err := id.GetDocIDsForBlockFromStore(ctx, systemstore, blockCID)
+
+		// Reading ownership from the purge's write transaction re-sorts its entire pending-write
+		// set on every block, which is quadratic over a chunk. When prunedOwners is set, read the
+		// read-only snapshot and exclude this chunk's uncommitted edge deletions instead. Truncate
+		// has no transaction here, so it reads ownership directly.
+		ownerCtx := ctx
+		if prunedOwners != nil {
+			prunedOwners[string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())] = struct{}{}
+			ownerCtx = readCtx
+		}
+
+		hasOwners, err := id.BlockHasOwnersExcept(ownerCtx, systemstore, blockCID, prunedOwners)
 		if err != nil {
 			return false, err
 		}
-		return len(docIDs) == 0, nil
+		return !hasOwners, nil
 	}
 
 	deleteBlock := func(blockCID cid.Cid) error {
@@ -519,7 +544,7 @@ func (c *collection) deleteBlocks(
 		block *coreblock.Block
 	}
 
-	coreBlock, isFound, err := getBlock(ctx, blockstore, currentCid)
+	coreBlock, isFound, err := getBlock(readCtx, blockstore, currentCid)
 	if err != nil {
 		return err
 	}
@@ -565,7 +590,7 @@ func (c *collection) deleteBlocks(
 		currentBlock := toDelete[i]
 
 		if currentBlock.block == nil {
-			coreBlock, isFound, err := getBlock(ctx, blockstore, currentBlock.id)
+			coreBlock, isFound, err := getBlock(readCtx, blockstore, currentBlock.id)
 			if err != nil {
 				return err
 			}

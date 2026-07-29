@@ -285,6 +285,22 @@ func (col *txnCollection) Truncate(
 	return col.inner.Truncate(ctx, opts...)
 }
 
+func (col *txnCollection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.TruncateCollectionOptions],
+) error {
+	ctx, unlock := lockForTxn(ctx, col.txn)
+	defer unlock()
+
+	if col.txn.isClosed {
+		return client.ErrTransactionNotFound
+	}
+
+	return col.inner.PurgeByDocIDs(ctx, docIDs, pruneHistory, opts...)
+}
+
 // QueryableIndexes forwards to the inner collection's QueryableIndexes if it implements
 // the queryableIndexesProvider interface. Falls back to all indexes from the version
 // definition when the inner collection does not track index lifecycle status.
