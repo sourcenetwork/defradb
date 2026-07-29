@@ -196,6 +196,98 @@ func TestCollectionMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMig
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestCollectionMigrationQuery_LateP2PDocLazyMigrationUpdatesIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			&action.PatchCollection{
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceCollectionVersionID:      colVersionV1,
+					DestinationCollectionVersionID: colVersionV2,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				NodeID: immutable.Some(0),
+				DocMap: map[string]any{
+					"name": "Late",
+					"age":  20,
+				},
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				// The unfiltered read lazily migrates the late v1 document and
+				// must replace its v1 index entry in the same transaction.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Late",
+							"age":  int64(25),
+						},
+					},
+				},
+			},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users(filter: {age: {_eq: 25}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Late",
+							"age":  int64(25),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestCollectionMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActive_ShouldUseIndexWithOldValues(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

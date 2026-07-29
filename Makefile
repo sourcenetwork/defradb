@@ -557,7 +557,7 @@ endif
 		$(if $(DEFRA_MUTATION_TYPE),DEFRA_MUTATION_TYPE=$(DEFRA_MUTATION_TYPE)) \
 		$(if $(DEFRA_BADGER_FILE),DEFRA_BADGER_FILE=$(DEFRA_BADGER_FILE)) \
 		GOCACHE=$$cache_dir \
-		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
+		go test -tags rust_ffi ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
 		echo "{\"timestamp\":\"$$(date +%Y-%m-%d\ %H:%M:%S)\",\"rust_lib\":\"$$rust_lib_name\",\"rust_branch\":\"$$rust_branch\",\"rust_commit\":\"$$rust_commit\"}" > $$meta_file; \
 		echo ""; \
 		echo "=== Results for $$pkg ==="; \

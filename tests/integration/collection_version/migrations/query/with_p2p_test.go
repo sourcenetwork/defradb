@@ -117,6 +117,122 @@ func TestCollectionMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestCollectionMigrationQueryWithP2PLateDocRefreshesCachedMultiStepHistory(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			&action.PatchCollection{
+				NodeID: immutable.Some(1),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				// Register v2=>v3 first, while v3 is already active on node 1.
+				LensConfig: client.LensConfig{
+					SourceCollectionVersionID:      "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					DestinationCollectionVersionID: "bafyreiabghlustwur2y3pdxmoyq35rxcxg7bbgx6hxe2vezqow3q27g6za",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "email",
+									"value": "late@source.network",
+								},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				// Populate node 1's positive migration-history cache before the
+				// missing earlier edge is registered.
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+						verified
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+			testUtils.ConfigureMigration{
+				// Active version remains v3. This registration must invalidate
+				// the already-positive cached graph.
+				LensConfig: client.LensConfig{
+					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+					DestinationCollectionVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "verified",
+									"value": true,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Late"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						name
+						verified
+						email
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":     "Late",
+							"verified": true,
+							"email":    "late@source.network",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestCollectionMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
