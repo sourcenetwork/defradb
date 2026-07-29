@@ -492,3 +492,10 @@ API_LEVEL ?= 21
 .PHONY: build-c-shared-android
 build-c-shared-android:
 	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
+
+# Clones (or updates) defradb-java-sdk into .javaclient/ and builds
+# defradb.jar from it, for use by tests/clients/java (-tags javaclient).
+# Linux/WSL only - see tools/scripts/build-java-client.sh.
+.PHONY: build-java-client
+build-java-client:
+	@tools/scripts/build-java-client.sh

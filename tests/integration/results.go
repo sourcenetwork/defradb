@@ -73,7 +73,7 @@ var _ TestStateMatcher = (*anyOf)(nil)
 
 func (matcher *anyOf) Match(actual any) (bool, error) {
 	switch matcher.s.GetClientType() {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType, state.JavaClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
 			return gomega.ContainElement(actual).Match(matcher.Values)
 		}

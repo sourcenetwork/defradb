@@ -12,17 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result AddDocument(uintptr_t nodePtr, char* json, int isEncrypted,
-char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
-extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern void FreeIdentity(uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 

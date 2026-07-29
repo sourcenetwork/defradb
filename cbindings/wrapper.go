@@ -12,64 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result ACPAddDACPolicy(uintptr_t nodePtr, uintptr_t identity, char* policy);
-extern Result ACPAddDACActorRelationship(uintptr_t nodePtr, uintptr_t identityPtr,
-char* collection, char* docID, char* relation, char* actor);
-extern Result ACPDeleteDACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
-char* collection, char* docID, char* relation, char* actor);
-extern Result ACPDisableNAC(uintptr_t nodePtr, uintptr_t identityPtr);
-extern Result ACPReEnableNAC(uintptr_t nodePtr, uintptr_t identity);
-extern Result ACPAddNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
-char* relation, char* actor);
-extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
-char* relation, char* actor);
-extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
-extern Result VerifyBlockSignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid,
-uintptr_t identity);
-extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result PatchCollection(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
-extern Result DeleteCollection(uintptr_t nodePtr, char* name, int activeOnly, uintptr_t identityPtr);
-extern Result NewIdentity(char* keyType);
-extern void FreeIdentity(uintptr_t identityPtr);
-extern Result GetNodeIdentity(uintptr_t nodePtr);
-extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result SetLens(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
-extern Result AddLens(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
-extern Result ListLenses(uintptr_t nodePtr, uintptr_t identityPtr);
-extern NewNodeResult NewNode(NodeInitOptions cOptions);
-extern Result CloseNode(uintptr_t nodePtr);
-extern Result GetP2PInfo(uintptr_t nodePtr, uintptr_t identity);
-extern Result ListP2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
-extern Result ListP2PReplicators(uintptr_t nodePtr, uintptr_t identity);
-extern Result AddP2PReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
-extern Result DeleteP2PReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
-extern Result AddP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result DeleteP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result ListP2PCollections(uintptr_t nodePtr, uintptr_t identity);
-extern Result ConnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result DisconnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result AddP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result DeleteP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result ListP2PDocuments(uintptr_t nodePtr, uintptr_t identity);
-extern Result SyncP2PDocuments(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
-extern Result SyncP2PCollectionVersions(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
-extern Result SyncP2PBranchableCollection(uintptr_t nodePtr, char* collectionID, char* timeoutStr, uintptr_t identity);
-extern Result PollSubscription(char* id);
-extern Result CloseSubscription(char* id);
-extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
-char* operationName, char* variables);
-extern Result AddCollection(uintptr_t nodePtr, char* schema, uintptr_t identity);
-extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isReadOnly);
-extern Result GetVersion(int flagFull, int flagJSON);
-extern Result AddView(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
-extern Result RefreshView(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result ListActions(uintptr_t nodePtr, uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 

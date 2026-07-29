@@ -26,12 +26,18 @@ import (
 )
 
 func init() {
-	if !goClient && !httpClient && !cliClient && !cClient {
+	if !goClient && !httpClient && !cliClient && !cClient && !javaClient {
 		// Default is to test go client type.
 		goClient = true
 	}
 	if cClient {
 		skipNetworkTests = false
+		skipBackupTests = true
+	}
+	if javaClient {
+		skipNetworkTests = false
+		// BasicImport/BasicExport are not implemented by this client (see
+		// tests/clients/java/wrapper.go), mirroring the C client.
 		skipBackupTests = true
 	}
 }
@@ -52,6 +58,9 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 
 	case state.CClientType:
 		return cbindings.NewCWrapper(nodeObj)
+
+	case state.JavaClientType:
+		return setupJavaClient(nodeObj)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)

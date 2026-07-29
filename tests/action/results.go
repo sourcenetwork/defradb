@@ -150,7 +150,7 @@ func assertCollectionVersions(
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType, state.JavaClientType:
 		if !areResultsEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}
