@@ -199,6 +199,10 @@ typedef struct NodeInitOptions {
    */
   uintptr_t max_concurrent_push_tasks;
   /*
+   Maximum DocSync request document IDs. 0 means use default (1000).
+   */
+  uintptr_t max_doc_sync_request_doc_ids;
+  /*
    Per-peer rate limit burst capacity. 0 means use default (500).
    */
   uint32_t rate_limit_burst;
@@ -698,6 +702,32 @@ struct FfiResult block_verify_signature_in_txn(uintptr_t node_ptr,
                                                const char *public_key,
                                                const char *block_cid,
                                                const char *identity_did);
+
+/*
+ Eagerly migrate and cache every known-version document in a collection.
+
+ This advances datastore values, stored document-version keys, and secondary
+ indexes without creating or broadcasting document commits.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - Optional DID for permission checks (null for anonymous)
+ * `collection_name` - Name of the collection to materialize
+
+ # Returns
+
+ - Status 0: Success (value contains the number of documents advanced)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `identity_did` and `collection_name` must be valid null-terminated UTF-8
+ strings when non-null.
+ */
+struct FfiResult materialize_collection(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collection_name);
 
 /*
  Set migration for collection versions.
@@ -1333,9 +1363,20 @@ struct FfiResult defra_mobile_execute(uintptr_t node_ptr, const char *request_js
 struct FfiResult defra_mobile_peer_info(uintptr_t node_ptr);
 
 /*
+ Return the node's best shareable P2P address (JSON string, or JSON null
+ when the transport has no dialable shareable address yet).
+ */
+struct FfiResult defra_mobile_shareable_address(uintptr_t node_ptr);
+
+/*
  Connect the node to a peer address.
  */
 struct FfiResult defra_mobile_connect(uintptr_t node_ptr, const char *addr);
+
+/*
+ Disconnect the node from a peer address.
+ */
+struct FfiResult defra_mobile_disconnect(uintptr_t node_ptr, const char *addr);
 
 /*
  Notify the embedded iroh transport that network conditions may have changed.
@@ -1346,6 +1387,14 @@ struct FfiResult defra_mobile_notify_network_change(uintptr_t node_ptr);
  Sync branchable collections, schema versions, or specific documents.
  */
 struct FfiResult defra_mobile_sync_collection(uintptr_t node_ptr, const char *request_json);
+
+/*
+ Add a P2P replicator with optional per-collection filters for mobile embedding.
+
+ `request_json` is camelCase and accepts `collections`, `peerAddr`, optional
+ `identityDid`, and optional HTTP-shaped `filters` keyed by collection name.
+ */
+struct FfiResult defra_mobile_add_replicator(uintptr_t node_ptr, const char *request_json);
 
 /*
  Create a new DefraDB node without P2P.
@@ -1446,6 +1495,26 @@ struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options, const cha
 struct FfiResult p2p_peer_info(uintptr_t node_ptr, const char *identity_did);
 
 /*
+ Get the node's best shareable P2P address as a JSON value.
+
+ Returns the address another node can dial (a `p2p_connect` / replicator
+ target) as a JSON string, or JSON `null` when the node has no P2P transport
+ or the transport has no shareable address yet (e.g. an iroh endpoint before
+ relay/direct-address discovery completes — an identity-only ticket is not
+ shareable because a dialing peer resolves it to zero transport addresses).
+
+ This is a stronger contract than `p2p_peer_info`: callers get the one
+ address selected for remote sharing instead of guessing among the formatted
+ listen addresses.
+
+ # Safety
+
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null. `node_ptr` must
+ reference a live node handle created by this library.
+ */
+struct FfiResult p2p_shareable_address(uintptr_t node_ptr, const char *identity_did);
+
+/*
  Notify the active P2P transport that the network may have changed.
 
  # Safety
@@ -1476,7 +1545,22 @@ struct FfiResult p2p_active_peers(uintptr_t node_ptr, const char *identity_did);
 struct FfiResult p2p_connect(uintptr_t node_ptr, const char *identity_did, const char *addr);
 
 /*
- Retry pushing existing documents to all registered replicators.
+ Disconnect from a peer address.
+
+ # Safety
+
+ `identity_did` and `addr` must be valid null-terminated UTF-8 strings when non-null.
+ `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_disconnect(uintptr_t node_ptr, const char *identity_did, const char *addr);
+
+/*
+ Retry pushing existing documents to all registered replicators, and
+ regenerate/re-push their searchable-encryption artifacts.
+
+ Mirrors Go's `RetryReplicators`: an on-demand retry pass over peerstore retry
+ entries that re-pushes failed doc blocks AND the SE artifacts the replicator
+ needs to answer `encrypted_<Collection>` queries (#976).
 
  # Safety
 
@@ -1495,6 +1579,25 @@ struct FfiResult p2p_add_replicator(uintptr_t node_ptr,
                                     const char *identity_did,
                                     const char *peer_addr,
                                     const char *collections_json);
+
+/*
+ Set (add/update) a replicator for collections with per-collection filters.
+
+ `filters_json` is a JSON object keyed by collection name, mirroring the HTTP
+ `"Filters"` field. `null`, `{}`, or an empty string is treated as
+ unfiltered, matching [`p2p_add_replicator`]. This symbol is additive;
+ [`p2p_add_replicator`] is unchanged for ABI stability.
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ `filters_json` may be null.
+ */
+struct FfiResult p2p_add_replicator_with_filter(uintptr_t node_ptr,
+                                                const char *identity_did,
+                                                const char *peer_addr,
+                                                const char *collections_json,
+                                                const char *filters_json);
 
 /*
  Delete a replicator.
@@ -1719,6 +1822,7 @@ struct CreateSubscriptionResult create_merge_complete_subscription(uintptr_t nod
      "type": "update",
      "doc_id": "bae-...",
      "collection_id": "...",
+     "block": "<base64-encoded composite block>",
      "is_relay": false
  }
  ```

@@ -47,7 +47,17 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
+//
+// The identity and node configuration arguments are used by the Rust FFI
+// client to mirror the Go node's startup state.
+func setupClient(
+	s *state.State,
+	nodeObj *node.Node,
+	identity immutable.Option[acpIdentity.Identity],
+	nodeIndex int,
+	enableSigning bool,
+	dbPath string,
+) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)

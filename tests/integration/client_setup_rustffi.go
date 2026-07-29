@@ -125,7 +125,7 @@ func setupRustFFIClient(
 				}
 			}
 			// Mirror Go's nodeIdentity shortcut
-			nodeIdentityDID := getIdentityDID(s, NodeIdentity(nodeIndex))
+			nodeIdentityDID := state.GetIdentityDID(s, NodeIdentity(nodeIndex))
 			rustStatusForAdmin, _ := wrapper.GetNACStatus(identityCtx, rustNACOpt)
 			if nodeIdentityDID != "" && nodeIdentityDID != ownerDID && rustStatusForAdmin.Status != "disabled temporarily" {
 				if err := wrapper.AddNACAdminForInit(ownerDID, nodeIdentityDID); err != nil {

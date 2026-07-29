@@ -400,10 +400,15 @@ func NewWrapper(
 					if cidErr != nil {
 						continue
 					}
+					block, blockErr := base64.StdEncoding.DecodeString(result.Event.Block)
+					if blockErr != nil {
+						continue
+					}
 					eb.Publish(event.NewMessage(event.UpdateName, event.Update{
 						DocID:        result.Event.DocID,
 						Cid:          cidObj,
 						CollectionID: result.Event.CollectionID,
+						Block:        block,
 						IsRelay:      result.Event.IsRelay,
 					}))
 					continue
@@ -532,10 +537,15 @@ func NewWrapperWithP2P(
 					if cidErr != nil {
 						continue
 					}
+					block, blockErr := base64.StdEncoding.DecodeString(result.Event.Block)
+					if blockErr != nil {
+						continue
+					}
 					eb.Publish(event.NewMessage(event.UpdateName, event.Update{
 						DocID:        result.Event.DocID,
 						Cid:          cidObj,
 						CollectionID: result.Event.CollectionID,
+						Block:        block,
 						IsRelay:      result.Event.IsRelay,
 					}))
 					continue
@@ -1630,7 +1640,10 @@ func (w *Wrapper) resolveToVersionID(identityDID string, nameOrID string) string
 	return nameOrID
 }
 
-func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
+func (w *Wrapper) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListIndexesOptions],
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
@@ -1639,10 +1652,11 @@ func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[op
 		return nil, err
 	}
 
-	// Convert from our IndexDescription to client.IndexDescription
-	indexes := make(map[client.CollectionName][]client.IndexDescription)
+	// Rust completes index creation synchronously, so returned indexes are
+	// immediately ready.
+	indexes := make(map[client.CollectionName][]client.ListIndexesResult)
 	for name, descs := range result {
-		converted := make([]client.IndexDescription, len(descs))
+		converted := make([]client.ListIndexesResult, len(descs))
 		for i, d := range descs {
 			fields := make([]client.IndexedFieldDescription, len(d.Fields))
 			for j, f := range d.Fields {
@@ -1651,17 +1665,32 @@ func (w *Wrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[op
 					Descending: f.Descending,
 				}
 			}
-			converted[i] = client.IndexDescription{
-				Name:   d.Name,
-				ID:     d.ID,
-				Fields: fields,
-				Unique: d.Unique,
+			converted[i] = client.ListIndexesResult{
+				CollectionName: string(name),
+				Description: client.IndexDescription{
+					Name:   d.Name,
+					ID:     d.ID,
+					Fields: fields,
+					Unique: d.Unique,
+				},
+				Execution: client.ActionExecution{
+					Status: client.CompletedActionStatus,
+				},
 			}
 		}
 		indexes[name] = converted
 	}
 
 	return indexes, nil
+}
+
+// ListActions returns no active actions because Rust FFI collection
+// materialization and index maintenance complete synchronously.
+func (w *Wrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return []client.ActionExecution{}, nil
 }
 
 // ============================================================================
@@ -1878,6 +1907,19 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	return w.node.RefreshViews(identityDID, optsJSON)
 }
 
+// MaterializeCollection eagerly migrates and caches every known-version
+// document in the named collection. This Rust-specific extension is not part
+// of the Go client.Store interface.
+func (w *Wrapper) MaterializeCollection(
+	ctx context.Context,
+	collectionName string,
+	opts ...options.Enumerable[options.PatchCollectionOptions],
+) (int, error) {
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+	return w.node.MaterializeCollection(identityDID, collectionName)
+}
+
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
 	configJSON, err := json.Marshal(config)
 	if err != nil {
@@ -2057,6 +2099,22 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	// sufficient for full mesh stabilization in CRDT convergence tests.
 	time.Sleep(3 * time.Second)
 
+	return nil
+}
+
+func (w *Wrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	identityDID := identityDIDFromOption(opt.GetIdentity())
+
+	for _, addr := range addresses {
+		if err := w.node.P2PDisconnect(identityDID, addr); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -2690,8 +2748,15 @@ func findCollectionVersion(
 func (t *TxnWrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	return t.wrapper.ListIndexes(ctx, opts...)
+}
+
+func (t *TxnWrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	return t.wrapper.ListActions(ctx, opts...)
 }
 
 func (t *TxnWrapper) AddDACPolicy(ctx context.Context, policy string, opts ...options.Enumerable[options.AddDACPolicyOptions]) (client.AddPolicyResult, error) {
@@ -2869,6 +2934,9 @@ func (t *TxnWrapper) ActivePeers(ctx context.Context, opts ...options.Enumerable
 	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
+	return fmt.Errorf("p2p not available")
+}
+func (t *TxnWrapper) Disconnect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions]) error {
 	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) AddReplicator(ctx context.Context, addresses []string, opts ...options.Enumerable[options.AddReplicatorOptions]) error {
@@ -3088,7 +3156,7 @@ func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Documen
 					// change the document content and therefore its content-addressed ID.
 					newDocID, err := client.NewDocIDFromString(docID)
 					if err == nil && doc.ID().String() != docID {
-						doc.SetDocID(newDocID)
+						client.ApplySavedDocumentID(doc, newDocID)
 					}
 				}
 			}
@@ -3701,7 +3769,10 @@ func (c *CollectionWrapper) DeleteIndex(ctx context.Context, indexName string, o
 	return c.wrapper.node.DropIndex(identityDID, c.version.Name, indexName)
 }
 
-func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListCollectionIndexesOptions]) ([]client.IndexDescription, error) {
+func (c *CollectionWrapper) ListIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
+) ([]client.ListIndexesResult, error) {
 	if c.txn != nil {
 		indexes := append([]client.IndexDescription(nil), c.version.Indexes...)
 		for _, op := range c.txn.stagedIndexOps {
@@ -3725,7 +3796,17 @@ func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enu
 			}
 			indexes = filtered
 		}
-		return indexes, nil
+		result := make([]client.ListIndexesResult, len(indexes))
+		for i, index := range indexes {
+			result[i] = client.ListIndexesResult{
+				CollectionName: c.version.Name,
+				Description:    index,
+				Execution: client.ActionExecution{
+					Status: client.CompletedActionStatus,
+				},
+			}
+		}
+		return result, nil
 	}
 
 	opt := utils.NewOptions(opts...)
@@ -3736,7 +3817,7 @@ func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enu
 		return nil, err
 	}
 
-	result := make([]client.IndexDescription, len(indexes))
+	result := make([]client.ListIndexesResult, len(indexes))
 	for i, idx := range indexes {
 		fields := make([]client.IndexedFieldDescription, len(idx.Fields))
 		for j, f := range idx.Fields {
@@ -3745,11 +3826,17 @@ func (c *CollectionWrapper) ListIndexes(ctx context.Context, opts ...options.Enu
 				Descending: f.Descending,
 			}
 		}
-		result[i] = client.IndexDescription{
-			Name:   idx.Name,
-			ID:     idx.ID,
-			Fields: fields,
-			Unique: idx.Unique,
+		result[i] = client.ListIndexesResult{
+			CollectionName: c.version.Name,
+			Description: client.IndexDescription{
+				Name:   idx.Name,
+				ID:     idx.ID,
+				Fields: fields,
+				Unique: idx.Unique,
+			},
+			Execution: client.ActionExecution{
+				Status: client.CompletedActionStatus,
+			},
 		}
 	}
 	return result, nil

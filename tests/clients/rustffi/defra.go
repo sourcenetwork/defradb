@@ -31,6 +31,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"unsafe"
@@ -949,6 +950,35 @@ func (n *Node) RefreshViews(identityDID string, options string) error {
 	return nil
 }
 
+// MaterializeCollection eagerly migrates and caches every known-version
+// document in a collection. It returns the number of documents advanced.
+func (n *Node) MaterializeCollection(identityDID string, collectionName string) (int, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollectionName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollectionName))
+
+	result := C.materialize_collection(n.ptr, cIdentityDID, cCollectionName)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return 0, mapFFIError("materialize_collection", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	count, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("ffi: failed to parse materialized document count %q: %w", value, err)
+	}
+	return count, nil
+}
+
 // SetMigration sets the migration for collection versions.
 // The config parameter should be a JSON string containing LensConfig.
 func (n *Node) SetMigration(identityDID string, config string) (string, error) {
@@ -1789,6 +1819,7 @@ type SubscriptionEvent struct {
 	DocID        string `json:"doc_id,omitempty"`
 	CID          string `json:"cid,omitempty"`
 	CollectionID string `json:"collection_id,omitempty"`
+	Block        string `json:"block,omitempty"`
 	ByPeer       string `json:"by_peer,omitempty"`
 	IsRetry      bool   `json:"is_retry,omitempty"`
 	IsRelay      bool   `json:"is_relay,omitempty"`
@@ -2057,6 +2088,32 @@ func (n *Node) P2PConnect(identityDID string, addr string) error {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
 		return mapFFIError("p2p_connect", err)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PDisconnect disconnects from a peer at the given multiaddr.
+func (n *Node) P2PDisconnect(identityDID string, addr string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cAddr := C.CString(addr)
+	defer C.free(unsafe.Pointer(cAddr))
+
+	result := C.p2p_disconnect(n.ptr, cIdentityDID, cAddr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return mapFFIError("p2p_disconnect", err)
 	}
 
 	if result.value != nil {
