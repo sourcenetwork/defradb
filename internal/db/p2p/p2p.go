@@ -139,6 +139,8 @@ type P2P struct {
 
 	// a cid queue for the processing of Pushlogs
 	processQueue *processQueue
+	// New document merges share a global short-ID sequence.
+	mergeMu sync.Mutex
 
 	// timeout duration for syncing block links.
 	syncBlockLinkTimeout time.Duration
@@ -692,7 +694,7 @@ func (p *P2P) processPushlogRequest(
 		Cid:          headCID,
 		CollectionID: req.CollectionID,
 	}
-	err = p.db.Merge(ctx, mergeEvt)
+	err = p.merge(ctx, mergeEvt)
 	if err != nil {
 		return err
 	}
@@ -713,6 +715,12 @@ func (p *P2P) processPushlogRequest(
 	}
 
 	return nil
+}
+
+func (p *P2P) merge(ctx context.Context, evt event.Merge) error {
+	p.mergeMu.Lock()
+	defer p.mergeMu.Unlock()
+	return p.db.Merge(ctx, evt)
 }
 
 func (p *P2P) SendUpdate(evt event.Update) error {

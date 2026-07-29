@@ -94,6 +94,27 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+func TestMerge_ZeroMaxRetriesStillAttempts(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	db.maxTxnRetries = immutable.Some(0)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = db.Merge(ctx, event.Merge{
+		DocID:        "missing",
+		Cid:          blocks.NewBlock(nil).Cid(),
+		CollectionID: col.CollectionID(),
+	})
+	require.Error(t, err)
+}
+
 func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {
 	ctx := context.Background()
 
