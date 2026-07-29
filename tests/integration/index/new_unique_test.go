@@ -54,15 +54,32 @@ func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
+			// The unique backfill fails on the duplicate values. The failure is not returned from
+			// NewIndex; the action waits for the failed state, asserted via ListIndexes below.
 			&action.NewIndex{
-				CollectionID:  0,
-				FieldName:     "age",
-				Unique:        true,
-				ExpectedError: "can not index a doc's field(s) that violates unique index.",
+				CollectionID: 0,
+				FieldName:    "age",
+				Unique:       true,
 			},
 			&action.ListIndexes{
-				CollectionID:    0,
-				ExpectedIndexes: []client.IndexDescription{},
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "User_age_ASC",
+						ID:     1,
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "age"},
+						},
+					},
+				},
+				ExpectedStatuses: map[string]client.ActionExecution{
+					"User_age_ASC": {
+						Status: client.ErroredActionStatus,
+						Action: client.BackfillIndexAction,
+						Reason: "can not index",
+					},
+				},
 			},
 		},
 	}

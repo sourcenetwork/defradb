@@ -43,9 +43,9 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 	nameCreateCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		// Signed counter deltas are double-applied across peers.
-		// https://github.com/sourcenetwork/defradb/issues/4742
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		// Signing/encryption make each node's genesis block signer/key-specific, so creating the doc on
+		// every node yields distinct genesis commits and the commit-count assertions no longer hold.
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -133,18 +133,18 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 							"heads": []map[string]any{
 								{
-									"cid": collectionNode1Update2Cid,
+									"cid": collectionNode0Update1Cid,
 								},
 								{
-									"cid": collectionNode0Update1Cid,
+									"cid": collectionNode1Update2Cid,
 								},
 							},
 						},
 						{
-							"cid": gomega.And(collectionNode0Update1Cid, uniqueCid),
+							"cid": gomega.And(collectionNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": docNode0Update1Cid,
+									"cid": docNode1Update2Cid,
 								},
 							},
 							"heads": []map[string]any{
@@ -163,10 +163,10 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": gomega.And(collectionNode1Update2Cid, uniqueCid),
+							"cid": gomega.And(collectionNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": docNode1Update2Cid,
+									"cid": docNode0Update1Cid,
 								},
 							},
 							"heads": []map[string]any{
@@ -193,15 +193,15 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"links": []map[string]any{},
 							"heads": []map[string]any{
 								{
-									"cid": nameNode0Update1Cid,
+									"cid": nameNode1Update2Cid,
 								},
 								{
-									"cid": nameNode1Update2Cid,
+									"cid": nameNode0Update1Cid,
 								},
 							},
 						},
 						{
-							"cid":   gomega.And(nameNode1Update2Cid, uniqueCid),
+							"cid":   gomega.And(nameNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{
 								{
@@ -224,7 +224,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"heads": []map[string]any{},
 						},
 						{
-							"cid":   gomega.And(nameNode0Update1Cid, uniqueCid),
+							"cid":   gomega.And(nameNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{
 								{
@@ -241,18 +241,18 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 							"heads": []map[string]any{
 								{
-									"cid": docNode0Update1Cid,
+									"cid": docNode1Update2Cid,
 								},
 								{
-									"cid": docNode1Update2Cid,
+									"cid": docNode0Update1Cid,
 								},
 							},
 						},
 						{
-							"cid": gomega.And(docNode1Update2Cid, uniqueCid),
+							"cid": gomega.And(docNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": nameNode1Update2Cid,
+									"cid": nameNode0Update1Cid,
 								},
 							},
 							"heads": []map[string]any{
@@ -284,10 +284,10 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": gomega.And(docNode0Update1Cid, uniqueCid),
+							"cid": gomega.And(docNode1Update2Cid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": nameNode0Update1Cid,
+									"cid": nameNode1Update2Cid,
 								},
 							},
 							"heads": []map[string]any{

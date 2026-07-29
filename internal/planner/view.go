@@ -195,13 +195,13 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.def.CollectionID)
 	if err != nil {
 		return err
 	}
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
 	iter, err := txn.Datastore().Iterator(n.p.ctx, datastore.IterOptions{
-		Prefix: keys.NewViewCacheColPrefix(shortID),
+		Prefix: keys.NewViewCacheColPrefix(collectionShortID),
 	})
 	if err != nil {
 		return NewErrRefreshView(err)

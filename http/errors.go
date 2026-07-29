@@ -30,6 +30,7 @@ const (
 	errFailedToGetContext       string = "failed to get context"
 	errMissingRequiredParameter string = "required parameter %s is missing"
 	errCollectionNotFound       string = "collection not found"
+	errNoHostInURL              string = "could not derive a host from the url"
 )
 
 // Errors returnable from this package.
@@ -49,7 +50,7 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
-	ErrTransactionNotFound          = errors.New("transaction not found")
+	ErrInvalidTTL                   = errors.New("invalid ttl value")
 )
 
 type errorResponse struct {
@@ -58,6 +59,27 @@ type errorResponse struct {
 
 func (e errorResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{"error": e.Error.Error()})
+}
+
+// gqlErrorResponse is the GraphQL-over-HTTP compliant error envelope used by
+// ExecRequest handlers. Unlike errorResponse (which serialises to
+// {"error":"..."}), this marshals to
+//
+//	{"errors": [{"message": "..."}]}
+//
+// which is what GraphQL clients inspect when the request fails before the
+// resolver runs (e.g. bad JSON body, missing query field, subscription
+// framing mismatch). Without this, those clients see a non-GraphQL payload
+// and fall through to "unknown transport error" branches instead of
+// surfacing the actual cause to the user.
+type gqlErrorResponse struct {
+	Error error `json:"-"`
+}
+
+func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"errors": []map[string]any{{"message": e.Error.Error()}},
+	})
 }
 
 func (e *errorResponse) UnmarshalJSON(data []byte) error {
@@ -101,6 +123,13 @@ func NewErrCollectionNotFound(collectionName string) error {
 	)
 }
 
+func NewErrNoHostInURL(rawURL string) error {
+	return errors.New(
+		errNoHostInURL,
+		errors.NewKV("URL", rawURL),
+	)
+}
+
 // httpStatusFromError maps known error types to appropriate HTTP status codes.
 func httpStatusFromError(err error) int {
 	// 401 Unauthorized
@@ -119,13 +148,14 @@ func httpStatusFromError(err error) int {
 	// 404 Not Found
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) ||
 		errors.Is(err, client.ErrCollectionNotFound) ||
+		errors.Is(err, client.ErrTransactionNotFound) ||
 		errors.Is(err, db.ErrDocIDNotFound) ||
 		errors.Is(err, db.ErrIndexWithNameDoesNotExists) ||
 		errors.Is(err, db.ErrEncryptedIndexDoesNotExist) ||
 		errors.Is(err, db.ErrCollectionRootNotFound) ||
 		errors.Is(err, db.ErrLensCIDNotFound) ||
 		errors.Is(err, p2p.ErrReplicatorNotFound) ||
-		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExist) ||
 		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
 		return http.StatusNotFound
 	}

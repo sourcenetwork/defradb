@@ -62,6 +62,26 @@ type CollectionIndex interface {
 	Description() IndexDescription
 }
 
+// ListIndexesResult is a single entry returned by ListIndexes: an index's static description
+// together with its runtime lifecycle, kept as separate values rather than blended into one.
+//
+// Execution reports the lifecycle through the action system (Execution.Action and
+// Execution.Status):
+//   - building: InProgress + BackfillIndexAction
+//   - failed:   Errored    + BackfillIndexAction (Execution.Reason has the cause)
+//   - ready:    Completed  (no in-flight action; Execution.Action is unset)
+//
+// A whole-index drop is not reported here: the index is removed from the listing when the drop is
+// requested, so a dropping index is simply absent rather than shown with a status.
+type ListIndexesResult struct {
+	// CollectionName is the name of the collection the index belongs to.
+	CollectionName string
+	// Description is the static index specification.
+	Description IndexDescription
+	// Execution is the index's current (or most recent) lifecycle action.
+	Execution ActionExecution
+}
+
 // CollectIndexedFields returns all fields that are indexed by all collection indexes.
 func (col CollectionVersion) CollectIndexedFields() []CollectionFieldDescription {
 	fieldsMap := make(map[string]bool)

@@ -20,6 +20,9 @@ import (
 
 func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// See branchableCollectionCidExcludes (with_cid_branchable_test.go) — pending
+		// https://github.com/sourcenetwork/defradb/issues/4744.
+		MultiplierExcludes: branchableCollectionCidExcludes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -48,8 +51,8 @@ func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 				// Without the docID param both John and Fred should be returned.
 				Request: `query {
 					Users (
-							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4",
-							docID: "bae-235c64e3-abf7-549c-9aff-971c8afdfa3f"
+							cid: "{{.CollectionCID0_1}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 					}

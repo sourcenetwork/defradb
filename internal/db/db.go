@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -65,6 +66,14 @@ const (
 // DB is the main struct for DefraDB's storage layer.
 type DB struct {
 	glock sync.RWMutex
+
+	// recoveryWG tracks the background index build worker. Close waits on it before tearing down
+	// storage so the worker does not outlive the rootstore.
+	recoveryWG sync.WaitGroup
+
+	// indexBuildWorker drains pending index build/drop records in the background, on startup and on
+	// demand after NewIndex/DeleteIndex. See index_worker.go.
+	indexBuildWorker *indexBuildWorker
 
 	rootstore corekv.TxnStore
 
@@ -219,8 +228,29 @@ func newDB(
 		return nil, err
 	}
 
+	// Subscribe before the first drain so an event published meanwhile is buffered, not lost.
+	worker, err := db.newIndexBuildWorker()
+	if err != nil {
+		return nil, err
+	}
+	db.indexBuildWorker = worker
+	if suppressIndexWorkerRun {
+		// The run loop drains the subscription. With it suppressed, unsubscribe so the buffer
+		// cannot fill and block publishers; the test drives drainSync, which needs no event.
+		db.events.Unsubscribe(worker.sub)
+	} else {
+		db.recoveryWG.Go(func() {
+			worker.run(db.ctx)
+		})
+	}
+
 	return db, nil
 }
+
+// suppressIndexWorkerRun makes newDB construct the worker but not start its run loop, so a test can
+// drive draining via drainSync without the background loop racing its hand-seeded records. Test-only;
+// the db package runs its tests serially, so toggling it around one newDB call is safe.
+var suppressIndexWorkerRun bool
 
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
@@ -236,11 +266,30 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, collectionShortID, docID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
-		docID,
+		docShortID,
 	)
 	if err != nil {
 		return err
@@ -390,6 +439,10 @@ func (db *DB) Close() {
 	log.Info("Closing DefraDB process...")
 
 	db.ctxCancel()
+
+	// Wait for the background recovery goroutine to exit before tearing down storage.
+	// The goroutine observes cancellation via db.ctx and will stop promptly.
+	db.recoveryWG.Wait()
 
 	db.events.Close()
 

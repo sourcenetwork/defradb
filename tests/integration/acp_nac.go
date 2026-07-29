@@ -143,7 +143,7 @@ func addNACActorRelationship(
 		addActorRelationshipResult, err := node.AddNACActorRelationship(
 			s.Ctx,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			state.GetIdentityDID(s, action.TargetIdentity),
 			opt,
 		)
 
@@ -204,7 +204,7 @@ func deleteNACActorRelationship(
 		deleteActorRelationshipResult, err := node.DeleteNACActorRelationship(
 			s.Ctx,
 			action.Relation,
-			getIdentityDID(s, action.TargetIdentity),
+			state.GetIdentityDID(s, action.TargetIdentity),
 			opt,
 		)
 

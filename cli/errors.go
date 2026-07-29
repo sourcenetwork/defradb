@@ -37,13 +37,16 @@ var (
 	ErrViewAddMissingArgs               = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty       = errors.New("policy file argument can not be empty")
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")
+	ErrKeyringSecretMismatch            = errors.New("keyring secrets do not match")
 	ErrEmptyCollectionSDL               = errors.New(errEmptyCollectionSDL)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
+	ErrIncompleteTLSKeyPair             = errors.New("both TLS public and private key paths must be set to enable TLS")
 	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
 	ErrParsingSDL                       = errors.New("parsing SDL")
 	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
 		"really want to purge all data")
+	ErrMissingTTLTxn = errors.New("transaction ttl is not supported by this client")
 )
 
 func NewErrParsingArgument(argName string, inner error) error {

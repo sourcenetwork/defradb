@@ -25,13 +25,6 @@ import (
 
 // DocCompositeDelta represents a delta-state update made of sub-MerkleCRDTs.
 type DocCompositeDelta struct {
-	// This property is duplicated from field-level blocks.
-	//
-	// We could remove this without much hassle from the composite, however long-term
-	// the ideal solution would be to remove it from the field-level commits *excluding*
-	// the initial field level commit where it must exist in order to scope it to a particular
-	// document.  This would require a local index in order to handle field level commit-queries.
-	DocID    []byte
 	Priority uint64
 	// CollectionVersionID is the collection version datastore key at the time of commit.
 	//
@@ -56,7 +49,6 @@ var _ Delta = (*DocCompositeDelta)(nil)
 func (delta *DocCompositeDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type DocCompositeDelta struct {
-		docID     			Bytes
 		priority  			Int
 		collectionVersionID String
 		status          	Int
@@ -103,7 +95,6 @@ func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 // DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.key.DocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Deleted,
 	}
@@ -112,7 +103,6 @@ func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 // Delta the value of the composite CRDT to DAG.
 func (m *DocComposite) Delta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:               []byte(m.key.DocID),
 		CollectionVersionID: m.collectionVersionID,
 		Status:              client.Active,
 	}
@@ -130,19 +120,20 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	if dagDelta.Status.IsDeleted() {
 		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
-			return NewErrSetDocAsDeleted(err, m.key.DocID)
+			return NewErrSetDocAsDeleted(err)
 		}
 		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
 	}
 
+	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
-	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
-		return NewErrGetDocMarker(err, m.key.DocID)
+		return NewErrGetDocMarker(err)
 	}
 
 	if bytes.Equal(objectMarker, []byte{base.DeletedObjectMarker}) {
@@ -151,7 +142,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 
 	err = m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
 	if err != nil {
-		return NewErrSetDocVersion(err, m.key.DocID)
+		return NewErrSetDocVersion(err)
 	}
 
 	if !hasObjectMarker {
@@ -167,7 +158,7 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		Prefix: key,
 	})
 	if err != nil {
-		return NewErrCreateDeleteIter(err, m.key.DocID)
+		return NewErrCreateDeleteIter(err)
 	}
 
 	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
@@ -210,11 +201,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	for _, item := range kvArray {
 		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
-			return NewErrSetDeletedFlag(err, m.key.DocID, string(item.key.Bytes()))
+			return NewErrSetDeletedFlag(err)
 		}
 		err = m.store.Delete(ctx, item.key)
 		if err != nil {
-			return NewErrDeleteFieldValue(err, m.key.DocID, string(item.key.Bytes()))
+			return NewErrDeleteFieldValue(err)
 		}
 	}
 

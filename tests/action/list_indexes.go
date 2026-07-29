@@ -43,6 +43,17 @@ type ListIndexes struct {
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
 
+	// ExpectedCollectionName is the collection name expected on every returned result.
+	//
+	// Only asserted when set.
+	ExpectedCollectionName string
+
+	// ExpectedStatuses maps index name to the expected execution for that index.
+	// When set for a name, asserts Status, Action and Reason (partial match) instead of the
+	// default ready assertion.
+	// When not set for a name, asserts Status == CompletedActionStatus (ready).
+	ExpectedStatuses map[string]client.ActionExecution
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -61,11 +72,9 @@ func (a *ListIndexes) Execute() {
 		return
 	}
 
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
-		node := a.s.Nodes[index]
+	for _, nodeID := range nodeIDs {
+		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
@@ -78,7 +87,12 @@ func (a *ListIndexes) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections := MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
@@ -87,25 +101,26 @@ func (a *ListIndexes) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		actualIndexes, err := collection.ListIndexes(a.s.Ctx, opts)
+		actualStatuses, err := collection.ListIndexes(a.s.Ctx, opts)
 
-		if assertError(a.s.T, err, a.ExpectedError) {
-			expectedErrorRaised = true
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+		if err != nil {
 			continue
 		}
 
-		assertIndexesListsEqual(a.ExpectedIndexes, actualIndexes, a.s.T)
+		assertIndexesListsEqual(a.ExpectedIndexes, actualStatuses, a.s.T)
+		assertIndexStatuses(a.ExpectedStatuses, actualStatuses, a.s.T)
+		assertIndexCollectionNames(a.ExpectedCollectionName, actualStatuses, a.s.T)
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(
 	expectedIndexes []client.IndexDescription,
-	actualIndexes []client.IndexDescription,
+	actualResults []client.ListIndexesResult,
 	t require.TestingT,
 ) {
-	toNames := func(indexes []client.IndexDescription) []string {
+	toNamesFromExpected := func(indexes []client.IndexDescription) []string {
 		names := make([]string, len(indexes))
 		for i, index := range indexes {
 			names[i] = index.Name
@@ -113,20 +128,81 @@ func assertIndexesListsEqual(
 		return names
 	}
 
-	require.ElementsMatch(t, toNames(expectedIndexes), toNames(actualIndexes))
-
-	toMap := func(indexes []client.IndexDescription) map[string]client.IndexDescription {
-		resultMap := map[string]client.IndexDescription{}
-		for _, index := range indexes {
-			resultMap[index.Name] = index
+	toNamesFromActual := func(results []client.ListIndexesResult) []string {
+		names := make([]string, len(results))
+		for i, r := range results {
+			names[i] = r.Description.Name
 		}
-		return resultMap
+		return names
 	}
 
-	expectedMap := toMap(expectedIndexes)
-	actualMap := toMap(actualIndexes)
+	require.ElementsMatch(t, toNamesFromExpected(expectedIndexes), toNamesFromActual(actualResults))
+
+	actualMap := map[string]client.IndexDescription{}
+	for _, r := range actualResults {
+		actualMap[r.Description.Name] = r.Description
+	}
+
+	expectedMap := map[string]client.IndexDescription{}
+	for _, index := range expectedIndexes {
+		expectedMap[index.Name] = index
+	}
+
 	for key := range expectedMap {
 		assertIndexesEqual(expectedMap[key], actualMap[key], t)
+	}
+}
+
+// assertIndexStatuses checks Status, Action and Reason for each returned index.
+//
+// When expectedStatuses is nil, no status assertions are made.
+// When expectedStatuses is non-nil:
+//   - For names present in the map, asserts the given Status and Action, and that Reason
+//     contains the expected substring.
+//   - For all other names, asserts Status == CompletedActionStatus (ready).
+func assertIndexStatuses(
+	expectedStatuses map[string]client.ActionExecution,
+	actualResults []client.ListIndexesResult,
+	t require.TestingT,
+) {
+	if expectedStatuses == nil {
+		return
+	}
+	actualByName := make(map[string]struct{}, len(actualResults))
+	for _, actual := range actualResults {
+		name := actual.Description.Name
+		actualByName[name] = struct{}{}
+		if expected, ok := expectedStatuses[name]; ok {
+			assert.Equal(t, expected.Status, actual.Execution.Status, "index %s status mismatch", name)
+			assert.Equal(t, expected.Action, actual.Execution.Action, "index %s action mismatch", name)
+			if expected.Reason != "" {
+				assert.Contains(t, actual.Execution.Reason, expected.Reason, "index %s reason mismatch", name)
+			}
+		} else {
+			assert.Equal(t, client.CompletedActionStatus, actual.Execution.Status, "index %s expected ready status", name)
+		}
+	}
+	// Every configured expectation must match a returned index, so a misspelled or missing
+	// index name fails rather than silently passing.
+	for name := range expectedStatuses {
+		assert.Contains(t, actualByName, name, "expected status configured for missing index %s", name)
+	}
+}
+
+// assertIndexCollectionNames checks that every returned result names its owning collection.
+//
+// When expectedName is empty, no assertions are made.
+func assertIndexCollectionNames(
+	expectedName string,
+	actualResults []client.ListIndexesResult,
+	t require.TestingT,
+) {
+	if expectedName == "" {
+		return
+	}
+	for _, actual := range actualResults {
+		assert.Equal(t, expectedName, actual.CollectionName,
+			"index %s collection name mismatch", actual.Description.Name)
 	}
 }
 

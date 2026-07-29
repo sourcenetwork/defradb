@@ -72,6 +72,7 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -80,20 +81,22 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "User",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("User").Append(
 							Field{
 								"name": "_bossID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "boss",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -246,6 +249,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -254,36 +258,40 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "User",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("User").Append(
 							Field{
 								"name": "_hostsID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "hosts",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "Dog",
+									"kind":   "OBJECT",
+									"name":   "Dog",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "_walksID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "walks",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "Dog",
+									"kind":   "OBJECT",
+									"name":   "Dog",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -300,6 +308,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 									type {
 									name
 									kind
+									ofType { name kind }
 									}
 								}
 							}
@@ -308,36 +317,40 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Dog",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Dog").Append(
 							Field{
 								"name": "_hostID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "host",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "_walkerID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "walker",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),

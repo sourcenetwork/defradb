@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -52,6 +52,7 @@ extern Result AddP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t i
 extern Result DeleteP2PCollection(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PCollections(uintptr_t nodePtr, uintptr_t identity);
 extern Result ConnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
+extern Result DisconnectP2PPeers(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
 extern Result AddP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result DeleteP2PDocument(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result ListP2PDocuments(uintptr_t nodePtr, uintptr_t identity);
@@ -68,6 +69,7 @@ extern NewTxnResult CreateTransaction(uintptr_t nodePtr, int isReadOnly);
 extern Result GetVersion(int flagFull, int flagJSON);
 extern Result AddView(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
 extern Result RefreshView(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result ListActions(uintptr_t nodePtr, uintptr_t identityPtr);
 */
 import "C"
 
@@ -800,6 +802,28 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[
 	return nil
 }
 
+func (w *CWrapper) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.FreeIdentity(cIdentity)
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.ListActions(callHandle, cIdentity))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	info, err := unmarshalResult[[]client.ActionExecution](res.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
 func (w *CWrapper) SetMigration(
 	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
 ) (string, error) {
@@ -954,7 +978,7 @@ func (w *CWrapper) GetCollections(
 func (w *CWrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -977,7 +1001,7 @@ func (w *CWrapper) ListIndexes(
 		return nil, errors.New(res.Error)
 	}
 
-	resValue, err := unmarshalResult[map[client.CollectionName][]client.IndexDescription](res.Value)
+	resValue, err := unmarshalResult[map[client.CollectionName][]client.ListIndexesResult](res.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -1104,6 +1128,23 @@ func (w *CWrapper) Connect(
 	defer C.FreeIdentity(cIdentity)
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ConnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cPeerAddresses := C.CString(strings.Join(addresses, ","))
+	defer C.free(unsafe.Pointer(cPeerAddresses))
+	defer C.FreeIdentity(cIdentity)
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.DisconnectP2PPeers(callHandle, cPeerAddresses, cIdentity))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

@@ -43,6 +43,20 @@ type TestState struct {
 	// during the source phase, used to resolve {{.CollectionVersionIDN}}
 	// templates on the assert side against the values the source side produced.
 	CollectionVersions []string `json:"collectionVersions"`
+
+	// DocIDs is the ordered list of document IDs, by collection index, created
+	// during the source phase. Since a document's public DocID is derived from
+	// its genesis CID and is therefore only known after the document is saved,
+	// the assert phase cannot reconstruct it by re-parsing the source actions;
+	// it loads these authoritative values instead.
+	DocIDs [][]string `json:"docIDs"`
+
+	// CollectionComposites maps each branchable collection's CollectionID to the
+	// ordered collection-level composite commit CIDs the source phase produced,
+	// so {{.CollectionCIDN}} templates resolve on the assert side. These are
+	// recorded from update events at creation time and are not reconstructable
+	// from the persisted document data alone.
+	CollectionComposites map[string][]string `json:"collectionComposites"`
 }
 
 // stateFilePath returns the absolute path of the sidecar file for the given test.

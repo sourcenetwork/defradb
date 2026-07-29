@@ -56,6 +56,9 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 	return result, nil
 }
 
+// setMigration registers the migration and stages any resulting index rebuild on the transaction
+// bound to ctx. The returned function runs the rebuilds after that commit; it is a no-op when no
+// reindex is needed.
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, db.collectionRepository, cfg.DestinationCollectionVersionID)
@@ -127,8 +130,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	if shouldReindex {
-		err = db.reindexNewActiveVersion(ctx, activeCol)
-		if err != nil {
+		if err := db.reindexNewActiveVersion(ctx, activeCol); err != nil {
 			return "", err
 		}
 	}

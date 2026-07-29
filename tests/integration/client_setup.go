@@ -21,7 +21,6 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	cbindings "github.com/sourcenetwork/defradb/cbindings"
-	prodHttp "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -48,23 +47,7 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-//
-// The identity parameter is the identity used during Go node startup.
-// For the Rust FFI client, this is used to mirror NAC initialization
-// so the Rust node has the same access control state as the Go node.
-func setupClient(
-	s *state.State,
-	nodeObj *node.Node,
-	identity immutable.Option[acpIdentity.Identity],
-	nodeIndex int,
-	enableSigning bool,
-	dbPath string,
-) (clients.Client, error) {
-	// The test suite completely bypasses the way production consumes the node options,
-	// including the configuration of IsDevMode, so we have to hard code it here for now.
-	prodHttp.IsDevMode = true
-
-
+func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)

@@ -13,6 +13,8 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -20,15 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
-
-// CollectionIndex is an interface for collection indexes
-// It abstracts away common index functionality to be implemented
-// by different index types: non-unique, unique, and composite
-type CollectionIndex interface {
-	client.CollectionIndex
-	// RemoveAll removes all documents from the index
-	RemoveAll(context.Context) error
-}
 
 func isSupportedKind(kind client.FieldKind) bool {
 	if kind.IsObject() && !kind.IsArray() {
@@ -43,6 +36,7 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_BOOL_ARRAY,
 		client.FieldKind_FLOAT32_ARRAY,
 		client.FieldKind_FLOAT64_ARRAY,
+		client.FieldKind_DATETIME_ARRAY,
 		client.FieldKind_NILLABLE_JSON,
 		client.FieldKind_NILLABLE_STRING,
 		client.FieldKind_NILLABLE_INT,
@@ -55,45 +49,105 @@ func isSupportedKind(kind client.FieldKind) bool {
 		client.FieldKind_NILLABLE_INT_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT32_ARRAY,
 		client.FieldKind_NILLABLE_FLOAT64_ARRAY,
-		client.FieldKind_NILLABLE_STRING_ARRAY:
+		client.FieldKind_NILLABLE_STRING_ARRAY,
+		client.FieldKind_NILLABLE_DATETIME_ARRAY,
+		client.FieldKind_JSON,
+		client.FieldKind_STRING,
+		client.FieldKind_INT,
+		client.FieldKind_FLOAT32,
+		client.FieldKind_FLOAT64,
+		client.FieldKind_BOOL,
+		client.FieldKind_BLOB,
+		client.FieldKind_DATETIME:
 		return true
 	default:
 		return false
 	}
 }
 
-// NewCollectionIndex adds a new collection index
+// NewCollectionIndex adds a new collection index.
+//
+// While building is true the index is being backfilled: Save tolerates a unique-index entry
+// already written by a concurrent live write of the same document, and Delete tolerates a
+// missing entry for a document the backfill has not yet reached.
 func NewCollectionIndex(
+	ctx context.Context,
 	collection client.Collection,
 	desc client.IndexDescription,
-) (CollectionIndex, error) {
+	building bool,
+) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	// Read the epoch after validation so an invalid description fails the same way whether or not a
+	// transaction is on the context.
+	base.epoch, err = getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
+	if err != nil {
+		return nil, err
+	}
+	return wrapCollectionIndex(base), nil
+}
+
+// newCollectionIndexWithEpoch builds an index instance pinned to a caller-resolved epoch, rather
+// than re-reading the sequence. A backfill uses it so every batch writes the same epoch even if a
+// concurrent version switch advances the sequence mid-build; splitting one build across two epochs
+// would leave the live epoch missing the documents indexed before the advance. Live writes use
+// NewCollectionIndex, which always targets the current epoch.
+func newCollectionIndexWithEpoch(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+	epoch uint32,
+) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	base.epoch = epoch
+	return wrapCollectionIndex(base), nil
+}
+
+// buildIndexBase validates the description against the collection and assembles the shared index
+// base, leaving the epoch unset for the caller to resolve.
+func buildIndexBase(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+) (collectionBaseIndex, error) {
 	if len(desc.Fields) == 0 {
-		return nil, NewErrIndexDescHasNoFields(desc)
+		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
+		building:        building,
 		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
 	}
 	for i := range desc.Fields {
 		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
-			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
 		if !isSupportedKind(field.Kind) {
-			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
+			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
-			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
+			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
-	if desc.Unique {
-		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
+	return base, nil
+}
+
+// wrapCollectionIndex returns the unique or simple index implementation for the base.
+func wrapCollectionIndex(base collectionBaseIndex) client.CollectionIndex {
+	if base.desc.Unique {
+		return &collectionUniqueIndex{collectionBaseIndex: base}
 	}
-	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
+	return &collectionSimpleIndex{collectionBaseIndex: base}
 }
 
 // FieldIndexGenerator generates index entries for a single field
@@ -161,7 +215,7 @@ func getFieldGenerator(kind client.FieldKind) FieldIndexGenerator {
 	if kind.IsArray() {
 		return &ArrayFieldGenerator{}
 	}
-	if kind == client.FieldKind_NILLABLE_JSON {
+	if kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON {
 		return &JSONFieldGenerator{}
 	}
 	return &SimpleFieldGenerator{}
@@ -174,6 +228,13 @@ type collectionBaseIndex struct {
 	// If there is more than 1 field, the index is composite
 	fieldsDescs     []client.CollectionFieldDescription
 	fieldGenerators []FieldIndexGenerator
+	// building is true while the index is being backfilled. deleteIndexKey tolerates
+	// missing entries for documents not yet reached by the backfill.
+	building bool
+	// epoch is the namespace this instance reads and writes, resolved from the index's epoch
+	// sequence at construction. During a rebuild the sequence names the epoch being built, so
+	// live writes maintain it.
+	epoch uint32
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -200,7 +261,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 func (index *collectionBaseIndex) getDocumentsIndexKey(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 ) (keys.IndexDataStoreKey, error) {
 	fieldValues, err := index.getDocFieldValues(doc)
 	if err != nil {
@@ -213,18 +274,29 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 		fields[i].Descending = index.desc.Fields[i].Descending
 	}
 
-	if appendDocID {
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
-	}
-
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
+	var docShortID uint64
+	if appendDocShortID {
+		var found bool
+		docShortID, found, err = id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+		if err != nil {
+			return keys.IndexDataStoreKey{}, err
+		}
+		if !found {
+			return keys.IndexDataStoreKey{}, client.ErrDocumentNotFoundOrNotAuthorized
+		}
+	}
 
-	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
+	key := keys.NewIndexDataStoreKey(collectionShortID, index.desc.ID, index.epoch, fields)
+	key.DocShortID = docShortID
+	return key, nil
 }
 
+// deleteIndexKey removes a single index entry. While the index is building, a missing
+// entry is tolerated, since not every document has been backfilled yet.
 func (index *collectionBaseIndex) deleteIndexKey(
 	ctx context.Context,
 	key keys.IndexDataStoreKey,
@@ -236,65 +308,16 @@ func (index *collectionBaseIndex) deleteIndexKey(
 		return NewErrCheckIndexKeyExists(err, index.desc.Name)
 	}
 	if !exists {
+		// During backfill, documents not yet reached have no entry, so we skip silently.
+		if index.building {
+			return nil
+		}
 		return NewErrCorruptedIndex(index.desc.Name)
 	}
 	err = ds.Delete(ctx, &key)
 	if err != nil {
 		return NewErrDeleteIndexKey(err)
 	}
-	return nil
-}
-
-// RemoveAll remove all artifacts of the index from the storage, i.e. all index
-// field values for all documents.
-func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionShortID = shortID
-	prefixKey.IndexID = index.desc.ID
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   &prefixKey,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateDeleteIndexIterator(err)
-	}
-
-	keysToDelete := make([]keys.IndexDataStoreKey, 0)
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs)
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		keysToDelete = append(keysToDelete, key)
-	}
-	if err := iter.Close(); err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		err := txn.Datastore().Delete(ctx, &key)
-		if err != nil {
-			return NewCanNotDeleteIndexedField(err)
-		}
-	}
-
 	return nil
 }
 
@@ -313,11 +336,11 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 func (index *collectionBaseIndex) generateKeysAndProcess(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocShortID)
 	if err != nil {
 		return err
 	}
@@ -358,7 +381,7 @@ type collectionSimpleIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+var _ client.CollectionIndex = (*collectionSimpleIndex)(nil)
 
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
@@ -414,15 +437,61 @@ type collectionUniqueIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionUniqueIndex)(nil)
+var _ client.CollectionIndex = (*collectionUniqueIndex)(nil)
 
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		return addNewUniqueKey(ctx, doc, key, index.fieldsDescs)
+		return saveUniqueKey(ctx, doc, key, index.fieldsDescs, index.building)
 	})
+}
+
+// saveUniqueKey writes a unique index entry for doc.
+//
+// Keys whose value is empty embed the docID in the key itself, so they are already
+// doc-specific and are written unconditionally. For value-bearing keys, an entry that
+// already exists is a uniqueness violation, except while the index is building, where
+// an entry for the same doc means a concurrent live write got there first and is skipped.
+func saveUniqueKey(
+	ctx context.Context,
+	doc *client.Document,
+	key keys.IndexDataStoreKey,
+	fieldsDescs []client.CollectionFieldDescription,
+	tolerateSameDoc bool,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	docShortID, found, err := id.GetDocShortID(ctx, key.CollectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	key, val, err := makeUniqueKeyValueRecord(key, docShortID)
+	if err != nil {
+		return err
+	}
+
+	if len(val) != 0 {
+		existing, err := txn.Datastore().Get(ctx, &key)
+		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+			return NewErrCheckUniqueIndexConstraint(err)
+		}
+		if existing != nil {
+			if tolerateSameDoc && string(existing) == string(val) {
+				return nil
+			}
+			return newUniqueIndexError(doc, fieldsDescs)
+		}
+	}
+
+	if err := txn.Datastore().Set(ctx, &key, val); err != nil {
+		return NewErrFailedToStoreIndexedField(key.ToString(), err)
+	}
+	return nil
 }
 
 func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
@@ -445,58 +514,15 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	doc *client.Document,
+	docShortID uint64,
 ) (keys.IndexDataStoreKey, []byte, error) {
+	encodedDocShortID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
+		key.DocShortID = docShortID
 		return key, []byte{}, nil
 	} else {
-		return key, []byte(doc.ID().String()), nil
+		return key, encodedDocShortID, nil
 	}
-}
-
-func validateUniqueKeyValue(
-	ctx context.Context,
-	key keys.IndexDataStoreKey,
-	val []byte,
-	doc *client.Document,
-	fieldsDescs []client.CollectionFieldDescription,
-) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	if len(val) != 0 {
-		exists, err := txn.Datastore().Has(ctx, &key)
-		if err != nil {
-			return NewErrCheckUniqueIndexConstraint(err)
-		}
-		if exists {
-			return newUniqueIndexError(doc, fieldsDescs)
-		}
-	}
-	return nil
-}
-
-func addNewUniqueKey(
-	ctx context.Context,
-	doc *client.Document,
-	key keys.IndexDataStoreKey,
-	fieldsDescs []client.CollectionFieldDescription,
-) error {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
-	if err != nil {
-		return err
-	}
-	err = validateUniqueKeyValue(ctx, key, val, doc, fieldsDescs)
-	if err != nil {
-		return err
-	}
-	err = txn.Datastore().Set(ctx, &key, val)
-	if err != nil {
-		return NewErrFailedToStoreIndexedField(key.ToString(), err)
-	}
-	return nil
 }
 
 func (index *collectionUniqueIndex) Delete(
@@ -504,8 +530,19 @@ func (index *collectionUniqueIndex) Delete(
 	doc *client.Document,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		key, _, err := makeUniqueKeyValueRecord(key, doc)
+		key, _, err := makeUniqueKeyValueRecord(key, docShortID)
 		if err != nil {
 			return err
 		}
@@ -539,7 +576,7 @@ func (index *collectionUniqueIndex) Update(
 	return nil
 }
 
-func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
+func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
 	for _, indexedFields := range index.Description().Fields {
 		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
 		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)

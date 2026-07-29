@@ -35,6 +35,8 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 		testUtils.TestCase{
 			SupportedMutationTypes: test.SupportedMutationTypes,
 			SupportedClientTypes:   test.SupportedClientTypes,
+			MultiplierIncludes:     test.MultiplierIncludes,
+			MultiplierExcludes:     test.MultiplierExcludes,
 			Actions: append(
 				[]any{
 					&action.AddCollection{

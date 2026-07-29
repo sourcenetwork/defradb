@@ -12,7 +12,9 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -67,13 +69,17 @@ type parallelNode struct { // serialNode?
 	multiscan *multiScanNode
 }
 
+// applyToPlans runs `fn` on every child and joins any returned errors.
+// Every child is visited even after a failure so lifecycle calls
+// (Init / Start / Close) cannot strand resources on later siblings.
 func (p *parallelNode) applyToPlans(fn func(n planNode) error) error {
+	var errs []error
 	for _, plan := range p.children {
 		if err := fn(plan); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func (p *parallelNode) Kind() string {
@@ -181,11 +187,18 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	if key == "" {
 		return false, nil
 	}
+	docRef, found, err := id.GetDocRef(p.p.ctx, key)
+	if err != nil || !found {
+		return false, err
+	}
 
 	// pass the doc key as a reference through the prefixes interface
-	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
+	prefixes := []keys.Walkable{keys.DataStoreKey{
+		CollectionShortID: docRef.CollectionShortID,
+		DocShortID:        docRef.DocShortID,
+	}}
 	plan.Prefixes(prefixes)
-	err := plan.Init()
+	err = plan.Init()
 	if err != nil {
 		return false, err
 	}

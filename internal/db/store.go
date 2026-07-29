@@ -125,7 +125,7 @@ func (db *DB) GetCollections(
 func (db *DB) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -188,6 +188,10 @@ func (db *DB) AddCollection(
 		return nil, err
 	}
 
+	// Propagate the identity so that collection-level acp registration (for branchable
+	// permissioned collections) can record the creating identity as the object owner.
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -217,7 +221,6 @@ func (db *DB) AddCollection(
 // The collections (including the collection version ID) will only be updated if any changes have actually
 // been made, if the net result of the patch matches the current persisted description then no changes
 // will be applied.
-
 func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
@@ -240,11 +243,20 @@ func (db *DB) PatchCollection(
 
 	defer txn.Discard()
 
-	err = db.patchCollection(ctx, patchString, migration)
-	if err != nil {
+	if err := db.patchCollection(ctx, patchString, migration); err != nil {
 		return err
 	}
 
+	return commitImplicit(txn)
+}
+
+// commitImplicit commits an implicit transaction. An explicit (caller-provided) one is left for the
+// caller to commit. A collection patch or version switch that reindexes stages the builds on this
+// transaction; the background worker runs them once it commits, so nothing needs to run here.
+func commitImplicit(txn *Txn) error {
+	if txn.explicit {
+		return nil
+	}
 	return txn.Commit()
 }
 
@@ -269,15 +281,18 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	err = db.deleteCollection(ctx, names, opt.ActiveOnly)
-	if err != nil {
+	if err := db.deleteCollection(ctx, names, opt.ActiveOnly); err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitImplicit(txn)
 }
 
-func (db *DB) deleteCollection(ctx context.Context, names []string, activeOnly bool) error {
+func (db *DB) deleteCollection(
+	ctx context.Context,
+	names []string,
+	activeOnly bool,
+) error {
 	if len(names) == 0 {
 		return client.ErrCollectionNameRequired
 	}
@@ -336,12 +351,11 @@ func (db *DB) SetActiveCollectionVersion(
 
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
-	if err != nil {
+	if err := db.setActiveCollectionVersion(ctx, collectionVersionID); err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitImplicit(txn)
 }
 
 func (db *DB) SetMigration(
@@ -370,8 +384,7 @@ func (db *DB) SetMigration(
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
+	if err := commitImplicit(txn); err != nil {
 		return "", err
 	}
 

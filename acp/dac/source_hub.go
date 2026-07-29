@@ -194,6 +194,8 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
+	objectID = sourceHubObjectID(objectID)
+
 	// Check if the identity is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := ident.(identity.TokenIdentity)
 	if !ok {
@@ -235,6 +237,8 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
+	objectID = sourceHubObjectID(objectID)
+
 	resp, err := a.client.ACPQueryClient().ObjectOwner(
 		ctx,
 		&sourcehubTypes.QueryObjectOwnerRequest{
@@ -261,6 +265,8 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	checkDocResponse, err := a.client.ACPQueryClient().VerifyAccessRequest(
 		ctx,
 		&sourcehubTypes.QueryVerifyAccessRequestRequest{
@@ -303,6 +309,8 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
 	if !ok {
@@ -368,6 +376,8 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
+	objectID = sourceHubObjectID(objectID)
+
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
 	if !ok {

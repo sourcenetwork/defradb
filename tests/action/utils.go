@@ -12,6 +12,7 @@
 package action
 
 import (
+	"slices"
 	"strings"
 	"time"
 
@@ -58,7 +59,6 @@ func RefreshCollections(
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
-		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
@@ -67,57 +67,59 @@ func RefreshCollections(
 		allCollections, err := txn.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
 
-		for i, collectionName := range s.CollectionNames {
-			for _, collection := range allCollections {
-				if collection.Name() == collectionName {
-					if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
-						// If the root is not found here this is likely the first refreshCollections
-						// call of the test, we map it by root in case the collection is renamed -
-						// we still wish to preserve the original index so test maintainers can reference
-						// them in a convenient manner.
-						s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
-					}
-					break
-				}
-			}
-		}
-
-		for _, collection := range allCollections {
-			if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
-				node.Collections[index] = collection
-			}
-		}
+		node.Collections = orderCollectionsCanonically(s, allCollections)
 	}
 }
 
-// getCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
-// If one is not provided, it will default to running the GetCollections function on the node itself.
-// Importantly, this will use the same ordering as would be found in the node.Collections slice that
-// is refreshed by the RefreshCollections function.
-func getCanonicallyOrderedCollections(
+// orderCollectionsCanonically arranges the resolved collections into a slice indexed by their
+// canonical position (the order they were created). An absent collection leaves a nil slot.
+//
+// Each collection's ID is mapped to its index in s.CollectionIndexesByCollectionID on first
+// sighting and kept, so a later rename still resolves to the original index.
+func orderCollectionsCanonically(s *state.State, allCollections []client.Collection) []client.Collection {
+	for i, collectionName := range s.CollectionNames {
+		for _, collection := range allCollections {
+			if collection.Name() == collectionName {
+				if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
+					s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
+				}
+				break
+			}
+		}
+	}
+
+	ordered := make([]client.Collection, len(s.CollectionNames))
+	for _, collection := range allCollections {
+		if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
+			ordered[index] = collection
+		}
+	}
+	return ordered
+}
+
+// GetCollectionsCanonically resolves the collections as the given actor identity, using the same
+// canonical ordering as the node.Collections slice refreshed by [RefreshCollections].
+//
+// The given transaction is optional, if one is not provided the collections will be resolved
+// by running the GetCollections function on the node itself.
+//
+// It performs no identity substitution, so under node acp an unauthorized actor is denied while
+// resolving (on get-collection); the error is returned so callers can assert an expected
+// authorization failure. Use it for an operation whose authorization is under test.
+func GetCollectionsCanonically(
 	s *state.State,
 	node *state.NodeState,
 	txn immutable.Option[client.Txn],
+	actor immutable.Option[state.Identity],
 ) ([]client.Collection, error) {
 	var clientTxn client.Txn
 	if txn.HasValue() {
 		clientTxn = txn.Value()
 	}
 
-	// Find the nodeID for this node
-	nodeID := -1
-	for i, n := range s.Nodes {
-		if n == node {
-			nodeID = i
-			break
-		}
-	}
+	nodeID := slices.Index(s.Nodes, node)
 
-	nodeIdentity := NodeIdentity(nodeID)
-
-	newCollections := make([]client.Collection, len(s.CollectionNames))
-
-	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+	identOption := getIdentityForRequestSpecificToNode(s, actor, nodeID)
 	opts := options.GetCollections()
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
@@ -135,39 +137,7 @@ func getCanonicallyOrderedCollections(
 		return nil, err
 	}
 
-	for i, collectionName := range s.CollectionNames {
-		for _, collection := range allCollections {
-			if collection.Name() == collectionName {
-				if _, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; !ok {
-					s.CollectionIndexesByCollectionID[collection.Version().CollectionID] = i
-				}
-				break
-			}
-		}
-	}
-
-	for _, collection := range allCollections {
-		if index, ok := s.CollectionIndexesByCollectionID[collection.Version().CollectionID]; ok {
-			newCollections[index] = collection
-		}
-	}
-
-	return newCollections, nil
-}
-
-// MustGetCanonicallyOrderedCollections gets the collections inside of a transaction, if one is provided.
-// If one is not provided, it will default to running the GetCollections function on the node itself.
-// Importantly, this will use the same ordering as would be found in the node.Collections slice that
-// is refreshed by the RefreshCollections function.
-func MustGetCanonicallyOrderedCollections(
-	s *state.State,
-	node *state.NodeState,
-	txn immutable.Option[client.Txn],
-) []client.Collection {
-	cols, err := getCanonicallyOrderedCollections(s, node, txn)
-	require.NoError(s.T, err)
-
-	return cols
+	return orderCollectionsCanonically(s, allCollections), nil
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {

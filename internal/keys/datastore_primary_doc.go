@@ -11,9 +11,12 @@
 package keys
 
 import (
-	"fmt"
+	"bytes"
+	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
+
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 const (
@@ -22,21 +25,63 @@ const (
 
 type PrimaryDataStoreKey struct {
 	CollectionShortID uint32
-	DocID             string
+	DocShortID        uint64
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)
 var _ CollectionedKey = PrimaryDataStoreKey{}
 
+func NewPrimaryDataStoreKey(key string) (PrimaryDataStoreKey, error) {
+	data := []byte(key)
+	if len(data) == 0 || data[0] != '/' {
+		return PrimaryDataStoreKey{}, ErrInvalidKey
+	}
+	data = data[1:]
+
+	data, collectionShortID, err := DecodeCollectionShortIDPrefix(data)
+	if err != nil {
+		return PrimaryDataStoreKey{}, err
+	}
+	if !bytes.HasPrefix(data, []byte(PRIMARY_KEY)) {
+		return PrimaryDataStoreKey{}, ErrInvalidKey
+	}
+	data = data[len(PRIMARY_KEY):]
+
+	result := PrimaryDataStoreKey{CollectionShortID: collectionShortID}
+	if len(data) > 0 {
+		if data[0] != '/' {
+			return PrimaryDataStoreKey{}, ErrInvalidKey
+		}
+		data, docShortID, err := DecodeDocShortIDPrefix(data[1:])
+		if err != nil {
+			return PrimaryDataStoreKey{}, err
+		}
+		if len(data) != 0 {
+			return PrimaryDataStoreKey{}, ErrInvalidKey
+		}
+		result.DocShortID = docShortID
+	}
+	return result, nil
+}
+
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
 		CollectionShortID: k.CollectionShortID,
-		DocID:             k.DocID,
+		DocShortID:        k.DocShortID,
 	}
 }
 
 func (k PrimaryDataStoreKey) Bytes() []byte {
-	return []byte(k.ToString())
+	result := []byte{}
+	if k.CollectionShortID != 0 {
+		result = encoding.EncodeUvarintAscending([]byte{'/'}, uint64(k.CollectionShortID))
+	}
+	result = append(result, []byte(PRIMARY_KEY)...)
+	if k.DocShortID != 0 {
+		result = append(result, '/')
+		result = append(result, EncodeDocShortID(k.DocShortID)...)
+	}
+	return result
 }
 
 func (k PrimaryDataStoreKey) ToDS() ds.Key {
@@ -44,16 +89,18 @@ func (k PrimaryDataStoreKey) ToDS() ds.Key {
 }
 
 func (k PrimaryDataStoreKey) ToString() string {
-	result := ""
+	return string(k.Bytes())
+}
 
+func (k PrimaryDataStoreKey) PrettyPrint() string {
+	var result string
 	if k.CollectionShortID != 0 {
-		result = result + "/" + fmt.Sprint(k.CollectionShortID)
+		result += "/" + strconv.Itoa(int(k.CollectionShortID))
 	}
-	result = result + PRIMARY_KEY
-	if k.DocID != "" {
-		result = result + "/" + k.DocID
+	result += PRIMARY_KEY
+	if k.DocShortID != 0 {
+		result += "/" + strconv.FormatUint(k.DocShortID, 10)
 	}
-
 	return result
 }
 

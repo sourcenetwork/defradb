@@ -15,12 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -84,6 +84,27 @@ func (c *collection) get(
 	fields []client.CollectionFieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
+	return c.getDocument(ctx, primaryKey, fields, showDeleted, c.db.documentACP)
+}
+
+// getInternal fetches a doc without the document ACP read filter.
+// For system-internal callers that have already authorized the read.
+func (c *collection) getInternal(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+	fields []client.CollectionFieldDescription,
+	showDeleted bool,
+) (*client.Document, error) {
+	return c.getDocument(ctx, primaryKey, fields, showDeleted, immutable.None[dac.DocumentACP]())
+}
+
+func (c *collection) getDocument(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+	fields []client.CollectionFieldDescription,
+	showDeleted bool,
+	documentACP immutable.Option[dac.DocumentACP],
+) (*client.Document, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	// create a new document fetcher
 	df := c.newFetcher(ctx)
@@ -93,7 +114,7 @@ func (c *collection) get(
 		identity.FromContext(ctx),
 		txn,
 		c.db.nodeACP,
-		c.db.documentACP,
+		documentACP,
 		immutable.Option[client.IndexDescription]{},
 		c,
 		fields,
@@ -107,15 +128,15 @@ func (c *collection) get(
 		return nil, err
 	}
 
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	collectionShortID, err := c.collectionShortID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// construct target DS key from DocID.
+	// construct target datastore key from the resolved document short ID.
 	targetKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             primaryKey.DocID,
+		CollectionShortID: collectionShortID,
+		DocShortID:        primaryKey.DocShortID,
 	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)

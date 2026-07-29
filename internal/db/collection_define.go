@@ -21,6 +21,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -31,6 +32,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) addCollections(
@@ -75,6 +78,12 @@ func (db *DB) addCollections(
 	}
 
 	for _, def := range parseResults {
+		// Index epoch allocation needs the collection short ID, but SaveCollection only registers
+		// it after the indexes are built, so register it now. The call is idempotent.
+		if err := id.SetCollectionShortID(ctx, def.Definition.CollectionID); err != nil {
+			return nil, err
+		}
+
 		def.Definition.Indexes = make([]client.IndexDescription, 0, len(def.NewIndexes))
 		for _, newIndex := range def.NewIndexes {
 			desc, err := processNewIndexRequest(ctx, def.Definition, newIndex)
@@ -91,9 +100,18 @@ func (db *DB) addCollections(
 
 		txnOpt := datastore.CtxTryGetTxnOption(ctx)
 
-		col, err := db.newCollection(def.Definition, txnOpt)
+		col, err := db.newCollection(ctx, def.Definition, txnOpt)
 		if err != nil {
 			return nil, err
+		}
+
+		// Only branchable collections have a collection-level commit DAG, so only they need to be
+		// registered as an acp object (to gate access to that DAG). Registration is further a no-op
+		// unless the collection is permissioned and the request carries an identity.
+		if col.Version().IsBranchable {
+			if err := col.registerCollection(ctx); err != nil {
+				return nil, err
+			}
 		}
 
 		for _, index := range def.Definition.Indexes {
@@ -338,7 +356,7 @@ existingVersionLoop:
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
 				txnOpt := datastore.CtxTryGetTxnOption(ctx)
-				colObj, err := db.newCollection(col, txnOpt)
+				colObj, err := db.newCollection(ctx, col, txnOpt)
 				if err != nil {
 					return err
 				}
@@ -351,33 +369,22 @@ existingVersionLoop:
 			}
 		}
 
-		if colExists {
-			if existingCol.IsMaterialized && !col.IsMaterialized {
-				// If the collection is being de-materialized - delete any cached values.
-				// Leaving them around will not break anything, but it would be a waste of
-				// storage space.
-				err := db.clearViewCache(ctx, col)
-				if err != nil {
-					return err
-				}
-			}
-		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
-			_, err = db.setMigration(ctx, client.LensConfig{
+		if !colExists && col.PreviousVersion.HasValue() && migration.HasValue() {
+			if _, err := db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
 				Lens:                           migration.Value(),
-			})
-			if err != nil {
+			}); err != nil {
 				return err
 			}
 		}
 	}
 
-	// Reindex any collections that were upgraded from placeholders with migrations
+	// Reindex placeholder upgrades that carry a migration. The worker runs the rebuild in the
+	// background once this transaction commits.
 	for _, col := range placeholderReplacers {
 		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			err = db.reindexNewActiveVersion(ctx, col)
-			if err != nil {
+			if err := db.reindexNewActiveVersion(ctx, col); err != nil {
 				return err
 			}
 		}
@@ -537,17 +544,13 @@ func containsLetter(s string) bool {
 	return false
 }
 
-// SetActiveCollectionVersion activates all collection versions with the given collection version, and deactivates all
-// those without it (if they share the same collection root).
+// setActiveCollectionVersion activates the versions sharing the given collection version's root
+// and deactivates the rest, affecting every operation that does not name a version explicitly
+// (GQL queries, Collection operations). It errors if the version ID does not exist.
 //
-// This will affect all operations interacting with the collection where a collection version is not explicitly
-// provided.  This includes GQL queries and Collection operations.
-//
-// It will return an error if the provided collection version ID does not exist.
-func (db *DB) setActiveCollectionVersion(
-	ctx context.Context,
-	versionID string,
-) error {
+// Any resulting index rebuild is staged on the transaction bound to ctx; the returned function
+// runs it after that commit, and is a no-op when no reindex is needed.
+func (db *DB) setActiveCollectionVersion(ctx context.Context, versionID string) error {
 	if versionID == "" {
 		return ErrCollectionVersionIDEmpty
 	}
@@ -599,8 +602,7 @@ func (db *DB) setActiveCollectionVersion(
 		}
 
 		if shouldReindex {
-			err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
-			if err != nil {
+			if err := db.reindexNewActiveVersion(ctx, newActiveCol.Value()); err != nil {
 				return err
 			}
 		}
@@ -681,7 +683,7 @@ func (db *DB) deleteCollectionVersion(
 		return err
 	}
 
-	return nil
+	return deleteCollectionDefinitionHeads(ctx, version)
 }
 
 func (db *DB) validateCollectionDoesNotHaveHigherVersion(
@@ -740,6 +742,73 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// deleteCollectionDefinitionHeads removes the collection-definition and
+// field-definition CRDT heads owned by this exact version - one head per
+// field that has a FieldID, plus the collection-level head keyed by the
+// version's VersionID.
+//
+// We construct the keys directly from the version object rather than scanning
+// the headstore by collection name: the keys we want to remove are fully
+// determined by the data we already hold (CollectionName, FieldName, FieldID,
+// VersionID), so the query and the wider scan it implied are both avoidable.
+// A no-op delete - i.e. the head currently points at some other version's
+// CID because the version we're processing is not the current tip - is the
+// right outcome here: the surviving version still owns that head and we must
+// not touch it.
+func deleteCollectionDefinitionHeads(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	headstore := txn.Headstore()
+
+	for _, field := range version.Fields {
+		if field.FieldID == "" {
+			// Secondary / object-only fields have no backing block and so no head.
+			continue
+		}
+		fieldCid, err := cid.Parse(field.FieldID)
+		if err != nil {
+			return err
+		}
+		key := keys.HeadstoreFieldDefinition{
+			CollectionName: version.Name,
+			FieldName:      field.Name,
+			Cid:            fieldCid,
+		}
+		if err := deleteHeadIfPresent(ctx, headstore, key.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	versionCid, err := cid.Parse(version.VersionID)
+	if err != nil {
+		return err
+	}
+	colKey := keys.HeadstoreCollectionDefinition{
+		CollectionName: version.Name,
+		Cid:            versionCid,
+	}
+	return deleteHeadIfPresent(ctx, headstore, colKey.Bytes())
+}
+
+// deleteHeadIfPresent removes the head key if it exists.
+// Note: we gate on `Has` rather than rely on a silent no-op.
+func deleteHeadIfPresent(
+	ctx context.Context,
+	headstore corekv.ReaderWriter,
+	key []byte,
+) error {
+	has, err := headstore.Has(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return nil
+	}
+	return headstore.Delete(ctx, key)
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true

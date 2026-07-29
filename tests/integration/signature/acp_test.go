@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -48,7 +49,9 @@ resources:
 
 func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			state.GoClientType,
 			state.RustFFIClientType,
@@ -79,7 +82,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NodeIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreia5uzkhoqvhccljbpiiafrjyvperxphmun264ul6esvuosk6pnf5m",
+				Cid:            "{{.CID0_0_0}}",
 				ExpectedError:  db.ErrMissingPermission.Error(),
 			},
 		},
@@ -90,7 +93,9 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 
 func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// hardcoded block CID would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			state.GoClientType,
 			state.RustFFIClientType,
@@ -121,7 +126,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreia5uzkhoqvhccljbpiiafrjyvperxphmun264ul6esvuosk6pnf5m",
+				Cid:            "{{.CID0_0_0}}",
 			},
 		},
 	}

@@ -62,15 +62,22 @@ func TestQueryCommitsWithDocID(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
-						{"cid": uniqueCid},
+
+						{
+							"cid": uniqueCid,
+						},
+						{
+							"cid": uniqueCid,
+						},
+						{
+							"cid": uniqueCid,
+						},
 					},
 				},
 				NonOrderedResults: true,
@@ -85,6 +92,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 	ageCreateCid := testUtils.NewSameValue()
 	nameCreateCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -98,7 +106,7 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 							links {
 								cid
@@ -112,17 +120,20 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+
 							"cid":   gomega.And(ageCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
+
 							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": gomega.And(createCompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
 									"cid":       ageCreateCid,
@@ -167,18 +178,34 @@ func TestQueryCommitsWithDocIDAndUpdate(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(1)},
+
+						{
+							"cid":    uniqueCid,
+							"height": int64(2),
+						},
+						{
+							"cid":    uniqueCid,
+							"height": int64(1),
+						},
+						{
+							"cid":    uniqueCid,
+							"height": int64(1),
+						},
+						{
+							"cid":    uniqueCid,
+							"height": int64(2),
+						},
+						{
+							"cid":    uniqueCid,
+							"height": int64(1),
+						},
 					},
 				},
 				NonOrderedResults: true,
@@ -198,6 +225,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 	ageUpdateCid := testUtils.NewSameValue()
 	nameCreateCid := testUtils.NewSameValue()
 	createCompositeCid := testUtils.NewSameValue()
+	updateCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -218,7 +246,7 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 							links {
 								cid
@@ -232,10 +260,13 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
+
 							"cid":   gomega.And(ageUpdateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{
-								{"cid": ageCreateCid},
+								{
+									"cid": ageCreateCid,
+								},
 							},
 						},
 						{
@@ -244,12 +275,14 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 							"heads": []map[string]any{},
 						},
 						{
+
 							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
 							"heads": []map[string]any{},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": gomega.And(updateCompositeCid, uniqueCid),
 							"links": []map[string]any{
 								{
 									"cid":       ageUpdateCid,
@@ -257,7 +290,10 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 								},
 							},
 							"heads": []map[string]any{
-								{"cid": createCompositeCid},
+
+								{
+									"cid": createCompositeCid,
+								},
 							},
 						},
 						{
@@ -330,7 +366,7 @@ func TestQueryCommits_DocIDListOfOne(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: ["bae-0fcd42bc-f8ab-510b-9b71-f42b72d75d53"]) {
+						_commits(docID: ["{{.DocID0_0}}"]) {
 							cid
 						}
 					}`,
@@ -367,7 +403,7 @@ func TestQueryCommits_DocIDListOfMany(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: ["bae-0fcd42bc-f8ab-510b-9b71-f42b72d75d53", "bae-234fd13b-a9ea-59b5-9830-7e903a72bd24"]) {
+						_commits(docID: ["{{.DocID0_0}}", "{{.DocID0_1}}"]) {
 							cid
 						}
 					}`,

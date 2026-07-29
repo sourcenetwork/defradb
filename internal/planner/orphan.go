@@ -143,7 +143,16 @@ func (n *orphanNode) initStandaloneScan() error {
 		relationIDFieldName = n.subQueryRelIDFieldName
 	} else if n.join.parentSide.isPrimary() {
 		relIDFieldMapIndex := n.join.parentSide.relIDFieldMapIndex.Value()
-		orphanFilter = addNullFilterOnField(n.join.subFilter, relIDFieldMapIndex)
+		baseFilter := n.join.subFilter
+		// The parent scan may hold non-relation filter conditions (scalar, JSON, or
+		// inline-array fields, e.g. name _neq "X") that prepareScanNodeFilterForTypeJoin
+		// left there. These are not in subFilter (which captures the child's filter), so
+		// merge them to ensure the orphan scan respects all filter conditions on the parent.
+		parentScan := getNode[*scanNode](n.join.parentSide.plan)
+		if parentScan != nil && parentScan.filter != nil {
+			baseFilter = filter.Merge(baseFilter, parentScan.filter)
+		}
+		orphanFilter = addNullFilterOnField(baseFilter, relIDFieldMapIndex)
 		relationIDFieldName = request.ToFieldID(n.join.parentSide.relFieldDef.Value().Name)
 	} else {
 		return nil
@@ -191,6 +200,10 @@ func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, e
 // addFilterOnField returns a new filter with a condition that checks if the field equals the given value.
 // It does not mutate the input filter.
 func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {
+	return addFilterOnFieldAnyOf(f, propIndex, []any{value})
+}
+
+func addFilterOnFieldAnyOf(f *mapper.Filter, propIndex int, values []any) *mapper.Filter {
 	result := mapper.NewFilter()
 	if f != nil {
 		maps.Copy(result.Conditions, f.Conditions)
@@ -199,9 +212,17 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 	}
 
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
+	filterOp := mapper.FilterEqOp
+	var filterValue any
+	if len(values) == 1 {
+		filterValue = values[0]
+	} else {
+		filterOp = mapper.FilterInOp
+		filterValue = values
+	}
 	filterConditions := map[connor.FilterKey]any{
 		propertyIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: value,
+			filterOp: filterValue,
 		},
 	}
 

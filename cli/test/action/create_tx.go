@@ -16,12 +16,20 @@ import "github.com/stretchr/testify/require"
 // to state.Txns.
 type CreateTx struct {
 	stateful
+
+	TTL string
 }
 
 var _ Action = (*CreateTx)(nil)
 
 func (a *CreateTx) Execute() {
-	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections([]string{"client", "tx", "new"}))
+	cmdArgs := []string{"client", "tx", "new"}
+
+	if a.TTL != "" {
+		cmdArgs = append(cmdArgs, "--ttl", a.TTL)
+	}
+
+	result, err := executeJson[map[string]any](a.s.Ctx, a.AppendDirections(cmdArgs))
 	require.NoError(a.s.T, err)
 
 	txId, ok := result["id"].(float64)

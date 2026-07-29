@@ -22,11 +22,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
-	const docID = "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790"
 	const collectionVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
 
 	fieldVal, err := cbor.Marshal(value)
@@ -36,7 +37,6 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 
 	delta := &crdt.LWWDelta{
 		Data:                fieldVal,
-		DocID:               []byte(docID),
 		FieldName:           fieldName,
 		CollectionVersionID: collectionVersionID,
 		Priority:            1,
@@ -50,7 +50,9 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 	sameIdentity := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -108,6 +110,55 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 								"value":    gomega.Not(gomega.BeEmpty()),
 							},
 						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSignature_WithPerOpSigningDisabled_ShouldNotSignAnyCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		// Keep this focused on the signing override.
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
+		// The override is a collection-client option, not a GraphQL argument.
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+						age: Int
+					}`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+				EnableSigning: immutable.Some(false),
+			},
+			&action.Request{
+				Request: `
+					query {
+						_commits {
+							fieldName
+							signature {
+								type
+							}
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{"fieldName": "age", "signature": nil},
+						{"fieldName": "name", "signature": nil},
+						{"fieldName": "_C", "signature": nil},
 					},
 				},
 				NonOrderedResults: true,
@@ -280,7 +331,9 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
@@ -339,7 +392,6 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -428,7 +480,9 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 }
 func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 	test := testUtils.TestCase{
-		EnableSigning: true,
+		// signature is over the plaintext field block; encryption replaces it
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -486,7 +540,6 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}

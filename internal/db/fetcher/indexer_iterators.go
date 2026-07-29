@@ -76,7 +76,9 @@ type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.CollectionFieldDescription
-	execInfo      *ExecInfo
+	// epoch is the namespace this iterator scans, used to decode its keys back into their epoch.
+	epoch    uint32
+	execInfo *ExecInfo
 
 	// Iterator state
 	resultIter corekv.Iterator
@@ -157,6 +159,7 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 		iter.resultIter.Key(),
 		&iter.indexDesc,
 		iter.indexedFields,
+		iter.epoch,
 	)
 	if err != nil {
 		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
@@ -186,6 +189,7 @@ func (f *indexFetcher) newPrefixBaseMatchIterator(
 	return &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      execInfo,
 		prefixKey:     &indexKey,
 		matchers:      matchers,
@@ -389,7 +393,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 type memorizingIndexIterator struct {
 	inner indexIterator
 
-	fetchedDocs map[string]struct{}
+	fetchedDocs map[uint64]struct{}
 
 	ctx   context.Context
 	store datastore.Keyedstore
@@ -400,7 +404,7 @@ var _ indexIterator = (*memorizingIndexIterator)(nil)
 func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
-	iter.fetchedDocs = make(map[string]struct{})
+	iter.fetchedDocs = make(map[uint64]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
@@ -413,21 +417,22 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		if !res.foundKey {
 			return res, nil
 		}
-		var docID string
+		var docShortID uint64
 		if len(res.value) > 0 {
-			docID = string(res.value)
-		} else {
-			lastField := &res.key.Fields[len(res.key.Fields)-1]
-			var ok bool
-			docID, ok = lastField.Value.String()
-			if !ok {
-				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
+			docShortID, err = keys.DecodeDocShortID(res.value)
+			if err != nil {
+				return indexIterResult{}, err
 			}
+		} else {
+			docShortID = res.key.DocShortID
 		}
-		if _, ok := iter.fetchedDocs[docID]; ok {
+		if docShortID == 0 {
+			return indexIterResult{}, NewErrUnexpectedTypeValue[uint64](docShortID)
+		}
+		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue
 		}
-		iter.fetchedDocs[docID] = struct{}{}
+		iter.fetchedDocs[docShortID] = struct{}{}
 		return res, nil
 	}
 }
@@ -518,12 +523,12 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
+	return keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
@@ -533,12 +538,12 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 		fields[i].Descending = f.indexDesc.Fields[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
+	return keys.NewIndexDataStoreKey(collectionShortID, f.indexDesc.ID, f.epoch, fields), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.
@@ -657,6 +662,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	iter := &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      f.execInfo,
 		reverse:       false,
 		startKey:      startKey,
@@ -762,7 +768,8 @@ func doConditionsHaveArrayOrJSON(conditions []fieldFilterCond) bool {
 	hasArray := false
 	hasJSON := false
 	for i := range conditions {
-		hasJSON = hasJSON || conditions[i].kind == client.FieldKind_NILLABLE_JSON
+		isJSON := conditions[i].kind == client.FieldKind_NILLABLE_JSON || conditions[i].kind == client.FieldKind_JSON
+		hasJSON = hasJSON || isJSON
 		hasArray = hasArray || conditions[i].kind.IsArray()
 	}
 	return hasArray || hasJSON
@@ -905,7 +912,7 @@ func getNestedOperatorConditionIfJSON(
 	indexedField client.CollectionFieldDescription,
 	condMap map[connor.FilterKey]any,
 ) (map[connor.FilterKey]any, client.JSONPath) {
-	if indexedField.Kind != client.FieldKind_NILLABLE_JSON {
+	if indexedField.Kind != client.FieldKind_NILLABLE_JSON && indexedField.Kind != client.FieldKind_JSON {
 		return condMap, client.JSONPath{}
 	}
 	var jsonPath client.JSONPath
@@ -964,7 +971,7 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
 //     leaf values (scalars), not entire objects or arrays.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
-	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON
+	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
 
 	if filterVal == nil {
 		if op == opGe {
@@ -1037,7 +1044,8 @@ func isNumericFilterValue(filterVal any) bool {
 // If the filter value is nil and path is empty, it means we are filtering for null values
 // on the entire JSON field, which can be handled as a scalar nil value.
 func isJSONFilterCondition(kind client.FieldKind, jsonPath client.JSONPath, filterVal any) bool {
-	return kind == client.FieldKind_NILLABLE_JSON && (len(jsonPath) > 0 || filterVal != nil)
+	isJSON := kind == client.FieldKind_NILLABLE_JSON || kind == client.FieldKind_JSON
+	return isJSON && (len(jsonPath) > 0 || filterVal != nil)
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that

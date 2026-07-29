@@ -16,7 +16,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -50,9 +53,13 @@ func (c *Collection) AddDocument(
 	}
 
 	setDocEncryptionFlagIfNeeded(req, opt)
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
-	_, err = c.http.request(req)
-	if err != nil {
+	var docIDs []string
+	if err := c.http.requestJson(req, &docIDs); err != nil {
+		return err
+	}
+	if err := setDocumentIDs([]*client.Document{doc}, docIDs); err != nil {
 		return err
 	}
 	doc.Clean()
@@ -92,14 +99,31 @@ func (c *Collection) AddManyDocuments(
 	}
 
 	setDocEncryptionFlagIfNeeded(req, opt)
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
-	_, err = c.http.request(req)
-	if err != nil {
+	var docIDs []string
+	if err := c.http.requestJson(req, &docIDs); err != nil {
 		return err
 	}
-
+	if err := setDocumentIDs(docs, docIDs); err != nil {
+		return err
+	}
 	for _, doc := range docs {
 		doc.Clean()
+	}
+	return nil
+}
+
+func setDocumentIDs(docs []*client.Document, docIDs []string) error {
+	if len(docIDs) != len(docs) {
+		return client.NewErrUnexpectedType[[]string]("docIDs", docIDs)
+	}
+	for i, docIDString := range docIDs {
+		docID, err := client.NewDocIDFromString(docIDString)
+		if err != nil {
+			return err
+		}
+		client.ApplySavedDocumentID(docs[i], docID)
 	}
 	return nil
 }
@@ -115,6 +139,15 @@ func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.AddDocumentOpt
 	if len(q) > 0 {
 		req.URL.RawQuery = q.Encode()
 	}
+}
+
+func setDocSigningFlagIfNeeded(req *http.Request, enableSigning immutable.Option[bool]) {
+	if !enableSigning.HasValue() {
+		return
+	}
+	q := req.URL.Query()
+	q.Set(docEnableSigningParam, strconv.FormatBool(enableSigning.Value()))
+	req.URL.RawQuery = q.Encode()
 }
 
 func (c *Collection) UpdateDocument(
@@ -138,6 +171,7 @@ func (c *Collection) UpdateDocument(
 	if err != nil {
 		return err
 	}
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -156,6 +190,10 @@ func (c *Collection) SaveDocument(
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
 
+	if !doc.ID().IsValid() {
+		return c.AddDocument(ctx, doc, opts...)
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	getOpts := options.GetDocument()
@@ -168,18 +206,13 @@ func (c *Collection) SaveDocument(
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
+		if opt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		addOpts := options.AddDocument().
-			SetEncryptDoc(opt.EncryptDoc).
-			SetEncryptedFields(opt.EncryptedFields)
-
-		if opt.GetIdentity().HasValue() {
-			addOpts.SetIdentity(opt.GetIdentity().Value())
-		}
-
-		return c.AddDocument(ctx, doc, addOpts)
+		return c.AddDocument(ctx, doc, opts...)
 	}
 	return err
 }
@@ -201,6 +234,7 @@ func (c *Collection) DeleteDocument(
 	if err != nil {
 		return false, err
 	}
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -253,6 +287,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	if err != nil {
 		return nil, err
 	}
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
 	var result client.UpdateResult
 	if err := c.http.requestJson(req, &result); err != nil {
@@ -287,6 +322,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	if err != nil {
 		return nil, err
 	}
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
 
 	var result client.DeleteResult
 	if err := c.http.requestJson(req, &result); err != nil {

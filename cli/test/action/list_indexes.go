@@ -29,6 +29,12 @@ type ListIndexes struct {
 	// The expected indexes when listing for a specific collection.
 	ExpectedIndexes []client.IndexDescription
 
+	// ExpectedCollectionName is the collection name expected on every returned result.
+	//
+	// Only asserted when set, and only meaningful on the scoped (--collection) branch:
+	// the unscoped branch always asserts each result against its own map key.
+	ExpectedCollectionName string
+
 	// The expected indexes when listing all indexes (map of collection name to indexes).
 	ExpectedAllIndexes map[client.CollectionName][]client.IndexDescription
 
@@ -50,7 +56,7 @@ func (a *ListIndexes) Execute() {
 
 	if a.Collection != "" {
 		// Listing indexes for a specific collection
-		result, err := executeJson[[]client.IndexDescription](a.s.Ctx, args)
+		result, err := executeJson[[]client.ListIndexesResult](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)
@@ -64,7 +70,7 @@ func (a *ListIndexes) Execute() {
 			require.Equal(a.s.T, len(a.ExpectedIndexes), len(result))
 
 			for i, expected := range a.ExpectedIndexes {
-				actual := result[i]
+				actual := result[i].Description
 
 				if expected.ID != 0 {
 					require.Equal(a.s.T, expected.ID, actual.ID)
@@ -72,11 +78,16 @@ func (a *ListIndexes) Execute() {
 				require.Equal(a.s.T, expected.Name, actual.Name)
 				require.Equal(a.s.T, expected.Fields, actual.Fields)
 				require.Equal(a.s.T, expected.Unique, actual.Unique)
+
+				if a.ExpectedCollectionName != "" {
+					require.Equal(a.s.T, a.ExpectedCollectionName, result[i].CollectionName,
+						"index %s collection name mismatch", expected.Name)
+				}
 			}
 		}
 	} else {
 		// Listing all indexes
-		result, err := executeJson[map[client.CollectionName][]client.IndexDescription](a.s.Ctx, args)
+		result, err := executeJson[map[client.CollectionName][]client.ListIndexesResult](a.s.Ctx, args)
 
 		if a.ExpectError != "" {
 			require.Error(a.s.T, err)
@@ -95,7 +106,7 @@ func (a *ListIndexes) Execute() {
 				require.Equal(a.s.T, len(expectedIndexes), len(actualIndexes))
 
 				for i, expected := range expectedIndexes {
-					actual := actualIndexes[i]
+					actual := actualIndexes[i].Description
 
 					if expected.ID != 0 {
 						require.Equal(a.s.T, expected.ID, actual.ID)
@@ -103,6 +114,10 @@ func (a *ListIndexes) Execute() {
 					require.Equal(a.s.T, expected.Name, actual.Name)
 					require.Equal(a.s.T, expected.Fields, actual.Fields)
 					require.Equal(a.s.T, expected.Unique, actual.Unique)
+
+					// Each element must name its own collection, matching the key it was filed under.
+					require.Equal(a.s.T, collectionName, actualIndexes[i].CollectionName,
+						"index %s collection name mismatch", expected.Name)
 				}
 			}
 		}

@@ -29,11 +29,9 @@ func init() {
 // This multiplier verifies that every feature in the test suite behaves
 // correctly under signing.
 //
-// Unlike other multipliers, [signedDocs.Apply] is a no-op: the multiplier's
-// effect is a [TestCase]-level flag (EnableSigning), not an action
-// modification. The effect is applied by the harness in
-// tests/integration/utils.go:applyMultipliers via a lookup of the active
-// multiplier set. See issue https://github.com/sourcenetwork/defradb/issues/4453.
+// Unlike other multipliers, [signedDocs.Apply] is a no-op. The harness applies
+// this multiplier at TestCase level, enabling signing and keeping generated
+// create actions unsigned unless a test opted into signing itself.
 //
 // Tests that cannot cope with signing (e.g. hardcoded block CIDs in result
 // assertions) must opt out via
@@ -48,9 +46,8 @@ func (m *signedDocs) Name() Name {
 	return SignedDocs
 }
 
-// Apply is a no-op. The signed-docs multiplier's effect is applied at
-// [TestCase] level (by flipping [TestCase.EnableSigning] to true) via a
-// harness hook; there is no per-action transformation to perform.
+// Apply is a no-op. The signed-docs multiplier's effect is applied by the
+// integration harness because it needs access to TestCase-level settings.
 func (m *signedDocs) Apply(source action.Actions) action.Actions {
 	return source
 }
