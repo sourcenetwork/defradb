@@ -48,6 +48,10 @@ const maxTxnRetries = 5
 // to start answering health checks.
 const healthCheckTimeout = 30 * time.Second
 
+// startAttempts is how many times NewWrapper retries a start/health failure,
+// which can happen when the chosen API port is taken before the child binds.
+const startAttempts = 3
+
 // Wrapper runs a defradb binary as a child process and drives it over HTTP,
 // implementing the same client.TxnStore/client.P2P surface as the in-process
 // wrappers.
@@ -61,7 +65,6 @@ type Wrapper struct {
 	bus     event.Bus
 	rootDir string
 	apiURL  string
-	p2pAddr string
 	stderr  *ringBuffer
 	// logWG tracks the log-streaming goroutines, so Close can wait for them
 	// to finish before returning (they call t.Log, which panics if called
@@ -72,16 +75,28 @@ type Wrapper struct {
 // NewWrapper starts a defradb node from binaryPath as a child process, waits
 // for it to become ready, and returns a Wrapper driving it over HTTP.
 //
-// Free API and P2P ports and a temporary rootdir are chosen internally; use
-// Host and P2PAddress to discover them afterwards (e.g. for peer wiring).
+// A temporary rootdir and a free API port are chosen internally. The P2P
+// listener uses port 0 so the node picks a free port at bind time; read its
+// real address back with PeerInfo. Use Host for the API URL.
 func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
+	// The API port is chosen before start, so another process can grab it in the
+	// gap before the child binds. Retry a few times on a start/health failure.
+	var lastErr error
+	for range startAttempts {
+		w, err := startWrapper(ctx, t, binaryPath)
+		if err == nil {
+			return w, nil
+		}
+		lastErr = err
+	}
+	return nil, lastErr
+}
+
+// startWrapper makes one attempt to start and reach a node.
+func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
 	apiPort, err := freePort()
 	if err != nil {
 		return nil, errors.Wrap("failed to find free api port", err)
-	}
-	p2pPort, err := freePort()
-	if err != nil {
-		return nil, errors.Wrap("failed to find free p2p port", err)
 	}
 	rootDir, err := os.MkdirTemp("", "defradb-external-*")
 	if err != nil {
@@ -89,11 +104,10 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 	}
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
-	p2pAddr := fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", p2pPort)
 
 	cmd := exec.CommandContext(ctx, binaryPath, "start",
 		"--url", apiURL,
-		"--p2paddr", p2pAddr,
+		"--p2paddr", "/ip4/127.0.0.1/tcp/0",
 		"--store", "badger",
 		"--development",
 		"--no-keyring",
@@ -123,12 +137,14 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 	httpClient, err := http.NewClient("http://" + apiURL)
 	if err != nil {
 		killAndWait(cmd)
+		logWG.Wait()
 		removeAll(rootDir)
 		return nil, errors.Wrap("failed to create http client", err)
 	}
 
 	if err := waitForHealth(ctx, httpClient, healthCheckTimeout); err != nil {
 		killAndWait(cmd)
+		logWG.Wait()
 		removeAll(rootDir)
 		return nil, errors.Wrap(
 			"external node did not become healthy in time",
@@ -143,7 +159,6 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 		bus:     event.NewChannelBus(1, 1),
 		rootDir: rootDir,
 		apiURL:  "http://" + apiURL,
-		p2pAddr: p2pAddr,
 		stderr:  stderr,
 		logWG:   &logWG,
 	}, nil
@@ -225,12 +240,6 @@ func removeAll(dir string) {
 // Host returns the base URL the wrapper's HTTP client is talking to.
 func (w *Wrapper) Host() string {
 	return w.apiURL
-}
-
-// P2PAddress returns the multiaddr the external node's P2P host was started
-// with, for use when wiring up replicators/peers from other nodes.
-func (w *Wrapper) P2PAddress() string {
-	return w.p2pAddr
 }
 
 // Close kills the child process, waits for it to exit, and removes its
