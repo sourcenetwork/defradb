@@ -179,13 +179,13 @@ func TestBinaryPath_CacheMiss_Downloads(t *testing.T) {
 
 func TestBinaryPath_DownloadError_IsHardError(t *testing.T) {
 	p, fd := newTestProvider(t, "linux", "amd64")
-	fd.failWith = errors.New("gh: HTTP 404: Not Found")
+	fd.failWith = errors.New("unexpected status downloading release asset: 404 Not Found")
 
 	path, skip, err := p.BinaryPath(context.Background(), "v1.0.0")
 
 	require.Error(t, err)
 	assert.False(t, skip)
 	assert.Empty(t, path)
-	assert.ErrorContains(t, err, "HTTP 404: Not Found")
+	assert.ErrorContains(t, err, "404 Not Found")
 	assert.Equal(t, 1, fd.calls)
 }

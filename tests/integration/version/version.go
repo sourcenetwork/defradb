@@ -22,8 +22,9 @@ package version
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -41,7 +42,7 @@ const (
 )
 
 // downloader fetches the named release asset for the given tag into destDir.
-// It is a seam for testing; the default implementation shells out to `gh`.
+// It is a seam for testing; the default implementation is an HTTP download.
 type downloader func(ctx context.Context, tag string, asset string, destDir string) error
 
 // Provider resolves DefraDB version strings to executable binary paths,
@@ -56,18 +57,18 @@ type Provider struct {
 	goos   string
 	goarch string
 
-	// download fetches a release asset. Defaults to ghDownload.
+	// download fetches a release asset. Defaults to httpDownload.
 	download downloader
 }
 
 // NewProvider returns a Provider that caches binaries under the given
-// directory, using the current platform and downloading via the `gh` CLI.
+// directory, using the current platform and downloading over HTTP.
 func NewProvider(cacheDir string) *Provider {
 	return &Provider{
 		cacheDir: cacheDir,
 		goos:     runtime.GOOS,
 		goarch:   runtime.GOARCH,
-		download: ghDownload,
+		download: httpDownload,
 	}
 }
 
@@ -175,19 +176,47 @@ func isExecutable(path string) bool {
 	return !info.IsDir() && info.Mode()&0o111 != 0
 }
 
-// ghDownload downloads the named release asset for tag into destDir using the
-// `gh` CLI, which handles authentication and anonymous access to public
-// repositories.
-func ghDownload(ctx context.Context, tag string, asset string, destDir string) error {
-	cmd := exec.CommandContext(ctx, "gh", "release", "download", tag,
-		"--repo", repo,
-		"-p", asset,
-		"--dir", destDir,
-		"--clobber",
-	)
-	out, err := cmd.CombinedOutput()
+// httpDownload downloads the named release asset for tag into destDir. Release
+// assets of a public repo are served without authentication, so no token is
+// needed. The asset is streamed to a temp file and renamed on success, so a
+// failed download never leaves a partial file at the final path.
+func httpDownload(ctx context.Context, tag string, asset string, destDir string) error {
+	url := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", repo, tag, asset)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return fmt.Errorf("%w: %s", err, strings.TrimSpace(string(out)))
+		return err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close() //nolint:errcheck
+
+	if res.StatusCode != http.StatusOK {
+		return errors.New("unexpected status downloading release asset",
+			errors.NewKV("url", url), errors.NewKV("status", res.Status))
+	}
+
+	tmp, err := os.CreateTemp(destDir, asset+".*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+
+	if _, err := io.Copy(tmp, res.Body); err != nil {
+		tmp.Close()        //nolint:errcheck
+		os.Remove(tmpPath) //nolint:errcheck
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath) //nolint:errcheck
+		return err
+	}
+
+	if err := os.Rename(tmpPath, filepath.Join(destDir, asset)); err != nil {
+		os.Remove(tmpPath) //nolint:errcheck
+		return err
 	}
 	return nil
 }
