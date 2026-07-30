@@ -658,6 +658,72 @@ func (t *Transaction) Mutate(mutation string) (*QueryResult, error) {
 	return t.Query(mutation)
 }
 
+// DeleteCollections deletes collections within the transaction.
+func (t *Transaction) DeleteCollections(identityDID string, targets []string, activeOnly bool) error {
+	cTxnID := C.CString(t.id)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	targetsJSON, err := json.Marshal(targets)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal collection targets: %w", err)
+	}
+	cTargets := C.CString(string(targetsJSON))
+	defer C.free(unsafe.Pointer(cTargets))
+
+	result := C.delete_collections_in_txn(
+		t.node.ptr,
+		cTxnID,
+		cIdentityDID,
+		cTargets,
+		C.bool(activeOnly),
+	)
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return mapFFIError("delete_collections_in_txn", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
+// SetCollectionActive updates a collection version within the transaction.
+func (t *Transaction) SetCollectionActive(identityDID string, versionID string, isActive bool) error {
+	cTxnID := C.CString(t.id)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cVersionID := C.CString(versionID)
+	defer C.free(unsafe.Pointer(cVersionID))
+
+	result := C.set_collection_active_in_txn(
+		t.node.ptr,
+		cTxnID,
+		cIdentityDID,
+		cVersionID,
+		C.bool(isActive),
+	)
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return mapFFIError("set_collection_active_in_txn", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
 // ============================================================================
 // Collection Functions
 // ============================================================================
@@ -1147,6 +1213,12 @@ type IndexDescription struct {
 	Unique bool         `json:"Unique,omitempty"`
 }
 
+type IndexResult struct {
+	IndexDescription
+	CollectionName string                 `json:"CollectionName"`
+	Execution      client.ActionExecution `json:"Execution"`
+}
+
 // CreateIndex creates a new index on a collection.
 // Returns the created index description with assigned ID.
 func (n *Node) CreateIndex(identityDID string, collectionName string, indexName string, fields []IndexField, unique bool) (*IndexDescription, error) {
@@ -1221,7 +1293,7 @@ func (n *Node) DropIndex(identityDID string, collectionName string, indexName st
 }
 
 // GetIndexes returns all indexes for a collection.
-func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexDescription, error) {
+func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexResult, error) {
 	var cIdentityDID *C.char
 	if identityDID != "" {
 		cIdentityDID = C.CString(identityDID)
@@ -1242,7 +1314,7 @@ func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexDes
 	value := C.GoString(result.value)
 	C.defra_free_string(result.value)
 
-	var indexes []IndexDescription
+	var indexes []IndexResult
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
 		return nil, fmt.Errorf("ffi: failed to parse indexes: %w", err)
 	}
@@ -1251,7 +1323,7 @@ func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexDes
 }
 
 // GetAllIndexes returns all indexes across all collections.
-func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexDescription, error) {
+func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexResult, error) {
 	var cIdentityDID *C.char
 	if identityDID != "" {
 		cIdentityDID = C.CString(identityDID)
@@ -1269,7 +1341,7 @@ func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexDescription,
 	value := C.GoString(result.value)
 	C.defra_free_string(result.value)
 
-	var indexes map[string][]IndexDescription
+	var indexes map[string][]IndexResult
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
 		return nil, fmt.Errorf("ffi: failed to parse indexes: %w", err)
 	}

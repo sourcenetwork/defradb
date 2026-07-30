@@ -118,12 +118,12 @@ typedef struct NodeInitOptions {
   int enable_signing;
   /*
    Optional: signing key type string (e.g. "secp256k1", "secp256r1", "ed25519").
-   Null to auto-generate secp256k1.
+   Only used when signing_private_key is provided.
    */
   const char *signing_key_type;
   /*
-   Optional: raw private key bytes for signing.
-   Null to auto-generate.
+   Optional: raw private key bytes used for the node identity.
+   Block signing remains controlled by enable_signing.
    */
   const uint8_t *signing_private_key;
   /*
@@ -588,6 +588,15 @@ struct FfiResult delete_nac_actor_relationship(uintptr_t node_ptr,
                                                const char *target_did);
 
 /*
+ List actions that are in progress or ended with an error.
+
+ # Safety
+
+ `identity_did` must be null or a valid null-terminated UTF-8 string.
+ */
+struct FfiResult list_actions(uintptr_t node_ptr, const char *identity_did);
+
+/*
  Export the database to a JSON file.
 
  The config_json parameter is a JSON string matching Go's BackupConfig:
@@ -1015,6 +1024,31 @@ struct FfiResult gc_downsample_histories(uintptr_t node_ptr, const char *options
 struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
 
 /*
+ Delete one or more collections by name.
+
+ # Safety
+
+ `names_json` must be a valid null-terminated UTF-8 JSON array of strings.
+ */
+struct FfiResult delete_collections(uintptr_t node_ptr,
+                                    const char *identity_did,
+                                    const char *names_json,
+                                    bool active_only);
+
+/*
+ Delete collections or collection versions within an existing transaction.
+
+ # Safety
+
+ `txn_id` and `targets_json` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult delete_collections_in_txn(uintptr_t node_ptr,
+                                           const char *txn_id,
+                                           const char *identity_did,
+                                           const char *targets_json,
+                                           bool active_only);
+
+/*
  Set the active collection version.
 
  This activates the collection with the given version ID and deactivates
@@ -1037,6 +1071,19 @@ struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did,
 struct FfiResult set_active_collection_version(uintptr_t node_ptr,
                                                const char *identity_did,
                                                const char *version_id);
+
+/*
+ Set a collection version's active state within an existing transaction.
+
+ # Safety
+
+ `txn_id` and `version_id` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult set_collection_active_in_txn(uintptr_t node_ptr,
+                                              const char *txn_id,
+                                              const char *identity_did,
+                                              const char *version_id,
+                                              bool is_active);
 
 /*
  Patch a collection's schema using JSON patch operations.
@@ -1693,6 +1740,24 @@ struct FfiResult exec_request(uintptr_t node_ptr,
                               const char *batch_session_id);
 
 /*
+ Execute a GraphQL query or mutation with a request-scoped signing override.
+
+ `signing_override` accepts `-1` for the node default, `0` to disable signing,
+ and `1` to enable signing.
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult exec_request_with_signing(uintptr_t node_ptr,
+                                           const char *identity_did,
+                                           const char *request_query,
+                                           const char *operation_name,
+                                           const char *variables,
+                                           const char *batch_session_id,
+                                           int signing_override);
+
+/*
  Add a schema to the database.
 
  The schema should be a GraphQL SDL string defining types.
@@ -1884,6 +1949,25 @@ struct FfiResult exec_request_in_txn(uintptr_t node_ptr,
                                      const char *operation_name,
                                      const char *variables,
                                      const char *batch_session_id);
+
+/*
+ Execute a GraphQL query or mutation within a transaction with a signing override.
+
+ `signing_override` accepts `-1` for the node default, `0` to disable signing,
+ and `1` to enable signing.
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult exec_request_in_txn_with_signing(uintptr_t node_ptr,
+                                                  const char *txn_id,
+                                                  const char *identity_did,
+                                                  const char *request_query,
+                                                  const char *operation_name,
+                                                  const char *variables,
+                                                  const char *batch_session_id,
+                                                  int signing_override);
 
 /*
  Begin a new transaction.
