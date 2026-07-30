@@ -34,7 +34,14 @@ func newErrUnsupportedMetric(m client.DistanceMetric) error {
 }
 
 // newErrVectorIndexStore returns a new error indicating that a vector index store operation
-// (against its datastore-backed node/meta keyspace) failed.
-func newErrVectorIndexStore(inner error) error {
-	return errors.Wrap(errVectorIndexStore, inner)
+// (against its datastore-backed node/meta keyspace) failed. The keyspace coordinates are attached so
+// the failure names its index when a backfill runs many at once.
+func newErrVectorIndexStore(inner error, collectionShortID, indexID, epoch uint32) error {
+	return errors.Wrap(
+		errVectorIndexStore,
+		inner,
+		errors.NewKV("CollectionShortID", collectionShortID),
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("Epoch", epoch),
+	)
 }

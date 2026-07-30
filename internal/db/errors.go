@@ -142,6 +142,7 @@ const (
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
+	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -541,6 +542,16 @@ func NewErrCorruptedIndex(indexName string) error {
 	return errors.New(
 		errCorruptedIndex,
 		errors.NewKV("Name", indexName),
+	)
+}
+
+// NewErrCorruptedVectorIndex is NewErrCorruptedIndex plus the id of the document that exposed the
+// drift, so the bad record can be found.
+func NewErrCorruptedVectorIndex(indexName, docID string) error {
+	return errors.New(
+		errCorruptedIndex,
+		errors.NewKV("Name", indexName),
+		errors.NewKV("DocID", docID),
 	)
 }
 
@@ -1228,20 +1239,35 @@ func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
 }
 
 // NewErrVectorIndexFieldNotFloat32Array returns a new error indicating that a vector index's
-// indexed field held a value that could not be read as a float32 array.
-func NewErrVectorIndexFieldNotFloat32Array(fieldName string) error {
+// indexed field held a value that could not be read as a float32 array. The doc id is attached so
+// the bad record can be found during a large async backfill.
+func NewErrVectorIndexFieldNotFloat32Array(fieldName, docID string) error {
 	return errors.New(
 		errVectorIndexFieldNotFloat32Array,
 		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
 	)
 }
 
 // NewErrVectorDimensionMismatch returns a new error indicating that a vector's length did not
-// match the dimensions configured on the vector index.
-func NewErrVectorDimensionMismatch(expected, actual int) error {
+// match the dimensions configured on the vector index. The doc id is attached so the bad record
+// can be found during a large async backfill.
+func NewErrVectorDimensionMismatch(expected, actual int, docID string) error {
 	return errors.New(
 		errVectorDimensionMismatch,
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexParamOutOfRange returns a new error indicating that an HNSW parameter on a
+// vector index request exceeded its allowed maximum.
+func NewErrVectorIndexParamOutOfRange(param string, value, max uint32) error {
+	return errors.New(
+		errVectorIndexParamOutOfRange,
+		errors.NewKV("Param", param),
+		errors.NewKV("Value", value),
+		errors.NewKV("Max", max),
 	)
 }

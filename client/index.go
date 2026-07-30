@@ -78,6 +78,13 @@ const (
 	// DefaultHNSWEfSearch is the default query-time exploration factor. Higher values improve recall
 	// at the cost of query latency; it may be overridden per query.
 	DefaultHNSWEfSearch uint32 = 64
+
+	// Upper bounds, checked at index creation. Build cost grows with these, and any client can set
+	// them when Node-ACP is off (the default), so an unbounded value makes one write do unbounded
+	// work. Set well above any useful value.
+	MaxHNSWM              uint32 = 512
+	MaxHNSWEfConstruction uint32 = 4096
+	MaxHNSWEfSearch       uint32 = 4096
 )
 
 // VectorIndexDescription holds config specific to vector (ANN) indexes.

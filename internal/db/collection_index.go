@@ -525,6 +525,10 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
 	}
 
+	if err := validateHNSWParams(desc.Vector.HNSW); err != nil {
+		return err
+	}
+
 	if desc.Vector.Dimensions > 0 {
 		return nil
 	}
@@ -538,6 +542,24 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	}
 
 	return NewErrVectorIndexMissingDimensions(fieldName)
+}
+
+// validateHNSWParams rejects HNSW parameters above their allowed maximum. See the Max* constants in
+// the client package for why the caps exist. A nil params is a non-HNSW request and passes.
+func validateHNSWParams(params *client.HNSWParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.M > client.MaxHNSWM {
+		return NewErrVectorIndexParamOutOfRange("M", params.M, client.MaxHNSWM)
+	}
+	if params.EfConstruction > client.MaxHNSWEfConstruction {
+		return NewErrVectorIndexParamOutOfRange("efConstruction", params.EfConstruction, client.MaxHNSWEfConstruction)
+	}
+	if params.EfSearch > client.MaxHNSWEfSearch {
+		return NewErrVectorIndexParamOutOfRange("efSearch", params.EfSearch, client.MaxHNSWEfSearch)
+	}
+	return nil
 }
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.

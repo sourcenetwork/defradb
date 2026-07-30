@@ -187,6 +187,34 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// A query vector whose length differs from the index dimensions would be scored on only its shared
+// leading elements, giving wrong results. Both the routed and full-scan paths must error on this.
+func TestQuerySimple_WithSimilarityOnVectorIndex_WrongLengthQueryErrors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 1){
+						name
+						sim: SIMILARITY(vector: {vector: [1, 0]})
+					}
+				}`,
+				ExpectedError: "source and vector must be of the same length",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // Without an order clause, a _similarity + limit query asks for any k documents, not the k nearest,
 // so it must not route (routing would wrongly return the nearest). Explain asserts no index fetch.
 // (docFetches cannot show this: a limit reads only k documents whether or not it routed.)

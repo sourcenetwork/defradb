@@ -502,7 +502,7 @@ func (index *collectionVectorIndex) nodeAndVector(
 
 	vec, ok := fieldVal.NormalValue().Float32Array()
 	if !ok {
-		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name)
+		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
 	}
 
 	return docShortID, vec, true, nil
@@ -529,8 +529,14 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 		return nil
 	}
 
+	// Vectors of different lengths in one graph make distances meaningless. Dimensions is set for a
+	// directly-written field, so check against it. It is 0 only for an @embedding field, where the
+	// model fixes the length, so the only guard left is against an empty vector.
 	if index.desc.Vector.Dimensions > 0 && len(vec) != int(index.desc.Vector.Dimensions) {
-		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), len(vec))
+		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), len(vec), doc.ID().String())
+	}
+	if len(vec) == 0 {
+		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), 0, doc.ID().String())
 	}
 
 	return idx.Insert(nodeID, vec)
@@ -563,7 +569,7 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 		if index.building {
 			return nil
 		}
-		return NewErrCorruptedIndex(index.desc.Name)
+		return NewErrCorruptedVectorIndex(index.desc.Name, doc.ID().String())
 	}
 
 	return idx.Delete(nodeID)

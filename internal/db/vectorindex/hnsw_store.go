@@ -33,6 +33,11 @@ type nodeStore struct {
 
 var _ hnsw.NodeStore = (*nodeStore)(nil)
 
+// wrapErr wraps a store failure with this store's keyspace coordinates.
+func (s *nodeStore) wrapErr(inner error) error {
+	return newErrVectorIndexStore(inner, s.collectionShortID, s.indexID, s.epoch)
+}
+
 // newNodeStore returns a nodeStore scoped to the given (collection, index, epoch) keyspace.
 func newNodeStore(ctx context.Context, collectionShortID, indexID, epoch uint32) *nodeStore {
 	return &nodeStore{
@@ -53,12 +58,12 @@ func (s *nodeStore) GetNode(id hnsw.NodeID) (hnsw.Node, bool, error) {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return hnsw.Node{}, false, nil
 		}
-		return hnsw.Node{}, false, newErrVectorIndexStore(err)
+		return hnsw.Node{}, false, s.wrapErr(err)
 	}
 
 	node, err := hnsw.UnmarshalNode(val)
 	if err != nil {
-		return hnsw.Node{}, false, newErrVectorIndexStore(err)
+		return hnsw.Node{}, false, s.wrapErr(err)
 	}
 	return node, true, nil
 }
@@ -70,11 +75,11 @@ func (s *nodeStore) PutNode(n hnsw.Node) error {
 
 	val, err := hnsw.MarshalNode(n)
 	if err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 
 	if err := txn.Datastore().Set(s.ctx, &key, val); err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 	return nil
 }
@@ -90,12 +95,12 @@ func (s *nodeStore) GetMeta() (hnsw.Meta, error) {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return hnsw.Meta{Empty: true}, nil
 		}
-		return hnsw.Meta{}, newErrVectorIndexStore(err)
+		return hnsw.Meta{}, s.wrapErr(err)
 	}
 
 	meta, err := hnsw.UnmarshalMeta(val)
 	if err != nil {
-		return hnsw.Meta{}, newErrVectorIndexStore(err)
+		return hnsw.Meta{}, s.wrapErr(err)
 	}
 	return meta, nil
 }
@@ -107,11 +112,11 @@ func (s *nodeStore) PutMeta(m hnsw.Meta) error {
 
 	val, err := hnsw.MarshalMeta(m)
 	if err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 
 	if err := txn.Datastore().Set(s.ctx, &key, val); err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 	return nil
 }
@@ -125,13 +130,13 @@ func (s *nodeStore) IterateNodes(fn func(hnsw.Node) error) error {
 
 	iter, err := txn.Datastore().Iterator(s.ctx, datastore.IterOptions{Prefix: &prefix})
 	if err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
-			return newErrVectorIndexStore(errors.Join(err, iter.Close()))
+			return s.wrapErr(errors.Join(err, iter.Close()))
 		}
 		if !hasNext {
 			break
@@ -139,12 +144,12 @@ func (s *nodeStore) IterateNodes(fn func(hnsw.Node) error) error {
 
 		val, err := iter.Value()
 		if err != nil {
-			return newErrVectorIndexStore(errors.Join(err, iter.Close()))
+			return s.wrapErr(errors.Join(err, iter.Close()))
 		}
 
 		node, err := hnsw.UnmarshalNode(val)
 		if err != nil {
-			return newErrVectorIndexStore(errors.Join(err, iter.Close()))
+			return s.wrapErr(errors.Join(err, iter.Close()))
 		}
 		if node.Deleted {
 			continue
@@ -156,7 +161,7 @@ func (s *nodeStore) IterateNodes(fn func(hnsw.Node) error) error {
 	}
 
 	if err := iter.Close(); err != nil {
-		return newErrVectorIndexStore(err)
+		return s.wrapErr(err)
 	}
 	return nil
 }

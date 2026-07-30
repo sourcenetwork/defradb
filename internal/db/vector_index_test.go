@@ -156,3 +156,29 @@ func TestCollectionVectorIndex_Save_DimensionMismatch_ReturnsTypedError(t *testi
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "vector dimension mismatch")
 }
+
+// Deleting a document the graph never held, from a built index, means the index has drifted from the
+// data and must error. While the index is still building an absent document is expected instead, so
+// that case is not tested here.
+func TestCollectionVectorIndex_Delete_MissingNodeOnBuiltIndex_ReturnsCorruptedError(t *testing.T) {
+	ctx, db, col := newVectorIndexTestDB(t, 3)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	t.Cleanup(txn.Discard)
+	txnCtx := InitContext(ctx, txn)
+
+	desc := col.Version().Indexes[0]
+	// building is false, so a missing node is treated as drift rather than a pending backfill.
+	index, err := NewCollectionIndex(txnCtx, col, desc, false)
+	require.NoError(t, err)
+
+	// A document that was never saved has no short id, so the index cannot find its node.
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "ghost", "embedding": [1, 0, 0]}`), col.Version())
+	require.NoError(t, err)
+
+	err = index.Delete(txnCtx, doc)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "corrupted index")
+	assert.ErrorContains(t, err, doc.ID().String())
+}

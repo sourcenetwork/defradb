@@ -53,6 +53,12 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 		return nil
 	}
 
+	// A wrong-length query would be scored on only its shared leading elements, giving wrong results.
+	// The full-scan path errors on this; do the same here.
+	if dims := int(index.Vector.Dimensions); dims > 0 && len(query) != dims {
+		return NewErrMismatchLengthOnSimilarity(dims, len(query))
+	}
+
 	prefixes, err := n.vectorSearchPrefixes(index, query, int(n.selectReq.Limit.Limit))
 	if err != nil {
 		return err
