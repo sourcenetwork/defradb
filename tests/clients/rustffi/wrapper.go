@@ -879,65 +879,6 @@ func (w *Wrapper) ExecRequest(
 	return &client.RequestResult{GQL: gqlResult}
 }
 
-// emitMutationEvents parses GQL mutation results and publishes update events
-// for each affected document.
-func (w *Wrapper) emitMutationEvents(ctx context.Context, data any) {
-	dataMap, ok := data.(map[string]any)
-	if !ok {
-		return
-	}
-	for key, value := range dataMap {
-		var collectionName string
-		if strings.HasPrefix(key, "create_") {
-			collectionName = strings.TrimPrefix(key, "create_")
-		} else if strings.HasPrefix(key, "update_") {
-			collectionName = strings.TrimPrefix(key, "update_")
-		} else if strings.HasPrefix(key, "delete_") {
-			collectionName = strings.TrimPrefix(key, "delete_")
-		} else {
-			continue
-		}
-
-		col, err := w.GetCollectionByName(ctx, collectionName)
-		if err != nil {
-			continue
-		}
-		cw, ok := col.(*CollectionWrapper)
-		if !ok {
-			continue
-		}
-
-		docs, ok := value.([]any)
-		if !ok {
-			continue
-		}
-		for _, d := range docs {
-			doc, ok := d.(map[string]any)
-			if !ok {
-				continue
-			}
-			docID, _ := doc["_docID"].(string)
-			if docID == "" {
-				continue
-			}
-			compositeCid := cw.getLatestCompositeCID(ctx, docID)
-			w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-				DocID:        docID,
-				CollectionID: cw.version.CollectionID,
-				Cid:          compositeCid,
-			}))
-
-			if cw.version.IsBranchable {
-				w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-					DocID:        "",
-					CollectionID: cw.version.CollectionID,
-					Cid:          compositeCid,
-				}))
-			}
-		}
-	}
-}
-
 // pollGraphQLSubscription polls a GraphQL subscription and sends results to the channel.
 func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID string, ch chan client.GQLResult) {
 	defer close(ch)
@@ -1658,8 +1599,6 @@ func (w *Wrapper) ListIndexes(
 		return nil, err
 	}
 
-	// Rust completes index creation synchronously, so returned indexes are
-	// immediately ready.
 	indexes := make(map[client.CollectionName][]client.ListIndexesResult)
 	for name, descs := range result {
 		converted := make([]client.ListIndexesResult, len(descs))
@@ -2989,15 +2928,15 @@ func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Documen
 		}
 		params += ", encryptFields: [" + strings.Join(quoted, ", ") + "]"
 	}
-	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
+	mutation := fmt.Sprintf(`mutation { add_%s(%s) { _docID } }`, c.version.Name, params)
 	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
 
-	// Extract docID from the response and publish update events
+	// Replace the provisional Go ID with the ID calculated by Rust.
 	if data, ok := result.GQL.Data.(map[string]any); ok {
-		mutationKey := "create_" + c.version.Name
+		mutationKey := "add_" + c.version.Name
 		if mutResult, ok := data[mutationKey].([]any); ok && len(mutResult) > 0 {
 			if docData, ok := mutResult[0].(map[string]any); ok {
 				if docID, ok := docData["_docID"].(string); ok {
@@ -3181,35 +3120,9 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	// Validate filter (mirrors Go's collection_update.go makeSelectionPlan validation)
-	var gqlFilter string
-	switch f := filter.(type) {
-	case string:
-		if f == "" {
-			return nil, fmt.Errorf("filter cannot be empty")
-		}
-		// String filters may be in relaxed JSON/GQL format (unquoted keys).
-		// Try parsing as JSON first; if that fails, use as-is (GQL format).
-		var parsed map[string]any
-		if err := json.Unmarshal([]byte(f), &parsed); err != nil {
-			// Not valid JSON - could be relaxed GQL format like {name: {_eq: "John"}}.
-			// Validate by attempting to parse with fastjson-compatible check.
-			if !isRelaxedJSONObject(f) {
-				return nil, fmt.Errorf("cannot parse JSON: cannot parse object")
-			}
-			gqlFilter = f
-		} else {
-			filterJSON, _ := json.Marshal(parsed)
-			gqlFilter = jsonToGraphQLInput(string(filterJSON))
-		}
-	case map[string]any:
-		filterJSON, err := json.Marshal(f)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal filter: %w", err)
-		}
-		gqlFilter = jsonToGraphQLInput(string(filterJSON))
-	default:
-		return nil, fmt.Errorf("invalid filter")
+	gqlFilter, err := mutationFilterToGraphQLInput(filter)
+	if err != nil {
+		return nil, err
 	}
 
 	// Validate updater (mirrors Go's collection_update.go fastjson.Parse validation)
@@ -3253,6 +3166,37 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 		}
 	}
 	return updateResult, nil
+}
+
+func mutationFilterToGraphQLInput(filter any) (string, error) {
+	switch value := filter.(type) {
+	case string:
+		if value == "" {
+			return "", fmt.Errorf("filter cannot be empty")
+		}
+
+		var parsed map[string]any
+		if err := json.Unmarshal([]byte(value), &parsed); err != nil {
+			if !isRelaxedJSONObject(value) {
+				return "", fmt.Errorf("cannot parse JSON: cannot parse object")
+			}
+			return value, nil
+		}
+
+		filterJSON, err := json.Marshal(parsed)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal filter: %w", err)
+		}
+		return jsonToGraphQLInput(string(filterJSON)), nil
+	case map[string]any:
+		filterJSON, err := json.Marshal(value)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal filter: %w", err)
+		}
+		return jsonToGraphQLInput(string(filterJSON)), nil
+	default:
+		return "", fmt.Errorf("invalid filter")
+	}
 }
 
 // isRelaxedJSONObject checks if a string looks like a JSON/GQL object (starts with { and ends with }).
@@ -3347,11 +3291,13 @@ func normalizeResponseDateTimes(
 	switch value := v.(type) {
 	case map[string]any:
 		for key, child := range value {
-			name := key
-			if separator := strings.LastIndexByte(key, '_'); separator >= 0 {
-				name = key[separator+1:]
+			version, ok := versions[key]
+			if !ok {
+				if separator := strings.LastIndexByte(key, '_'); separator >= 0 {
+					version, ok = versions[key[separator+1:]]
+				}
 			}
-			if version, ok := versions[name]; ok {
+			if ok {
 				value[key] = normalizeCollectionDateTimes(child, version)
 			} else {
 				value[key] = normalizeResponseDateTimes(child, versions)
@@ -3376,15 +3322,27 @@ func normalizeCollectionDateTimes(v any, version client.CollectionVersion) any {
 			if field.Kind.String() != "[DateTime]" {
 				continue
 			}
-			times, ok := value[field.Name].([]time.Time)
+			items, ok := value[field.Name].([]any)
 			if !ok {
 				continue
 			}
-			nullable := make([]immutable.Option[time.Time], len(times))
-			for i, item := range times {
-				nullable[i] = immutable.Some(item)
+			nullable := make([]immutable.Option[time.Time], len(items))
+			valid := true
+			for i, item := range items {
+				if item == nil {
+					nullable[i] = immutable.None[time.Time]()
+					continue
+				}
+				dateTime, ok := item.(time.Time)
+				if !ok {
+					valid = false
+					break
+				}
+				nullable[i] = immutable.Some(dateTime)
 			}
-			value[field.Name] = nullable
+			if valid {
+				value[field.Name] = nullable
+			}
 		}
 	}
 	return v
@@ -3492,13 +3450,11 @@ func decodeBase64Deltas(v any) any {
 
 func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
-	filterJSON, err := json.Marshal(filter)
+	gqlFilter, err := mutationFilterToGraphQLInput(filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal filter: %w", err)
+		return nil, err
 	}
 
-	// Convert JSON to GraphQL input format (unquoted keys)
-	gqlFilter := jsonToGraphQLInput(string(filterJSON))
 	mutation := fmt.Sprintf(`mutation { delete_%s(filter: %s) { _docID } }`, c.version.Name, gqlFilter)
 	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {

@@ -588,6 +588,15 @@ struct FfiResult delete_nac_actor_relationship(uintptr_t node_ptr,
                                                const char *target_did);
 
 /*
+ List actions that are in progress or ended with an error.
+
+ # Safety
+
+ `identity_did` must be null or a valid null-terminated UTF-8 string.
+ */
+struct FfiResult list_actions(uintptr_t node_ptr, const char *identity_did);
+
+/*
  Export the database to a JSON file.
 
  The config_json parameter is a JSON string matching Go's BackupConfig:
@@ -1731,6 +1740,24 @@ struct FfiResult exec_request(uintptr_t node_ptr,
                               const char *batch_session_id);
 
 /*
+ Execute a GraphQL query or mutation with a request-scoped signing override.
+
+ `signing_override` accepts `-1` for the node default, `0` to disable signing,
+ and `1` to enable signing.
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult exec_request_with_signing(uintptr_t node_ptr,
+                                           const char *identity_did,
+                                           const char *request_query,
+                                           const char *operation_name,
+                                           const char *variables,
+                                           const char *batch_session_id,
+                                           int signing_override);
+
+/*
  Add a schema to the database.
 
  The schema should be a GraphQL SDL string defining types.
@@ -1922,6 +1949,25 @@ struct FfiResult exec_request_in_txn(uintptr_t node_ptr,
                                      const char *operation_name,
                                      const char *variables,
                                      const char *batch_session_id);
+
+/*
+ Execute a GraphQL query or mutation within a transaction with a signing override.
+
+ `signing_override` accepts `-1` for the node default, `0` to disable signing,
+ and `1` to enable signing.
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult exec_request_in_txn_with_signing(uintptr_t node_ptr,
+                                                  const char *txn_id,
+                                                  const char *identity_did,
+                                                  const char *request_query,
+                                                  const char *operation_name,
+                                                  const char *variables,
+                                                  const char *batch_session_id,
+                                                  int signing_override);
 
 /*
  Begin a new transaction.
