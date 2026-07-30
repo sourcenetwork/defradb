@@ -138,6 +138,8 @@ type Wrapper struct {
 	stopSEForwarder chan struct{}
 	goNodeCloser    func()                      // Called during Close() to release Go node resources (e.g. badger lock)
 	nodeIdentityRaw *identity.PublicRawIdentity // Cached node identity (with PublicKey) for GetNodeIdentity
+	collectionsMu   sync.RWMutex
+	collections     map[string]client.CollectionVersion
 }
 
 type rustFFIP2PRegistryEntry struct {
@@ -438,6 +440,7 @@ func NewWrapper(
 		node:            node,
 		events:          eb,
 		stopMergePoller: stopCh,
+		collections:     make(map[string]client.CollectionVersion),
 	}
 	if nodeIdentity != nil {
 		raw := nodeIdentity.ToPublicRawIdentity()
@@ -593,6 +596,7 @@ func NewWrapperWithP2P(
 		node:            node,
 		events:          eb,
 		stopMergePoller: stopCh,
+		collections:     make(map[string]client.CollectionVersion),
 	}
 	if nodeIdentity != nil {
 		raw := nodeIdentity.ToPublicRawIdentity()
@@ -860,7 +864,7 @@ func (w *Wrapper) ExecRequest(
 	// Post-process: convert DateTime strings to time.Time objects so test
 	// assertions can compare them with MustParseTime/CurrentTimestamp values.
 	if gqlResult.Data != nil {
-		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+		gqlResult.Data = w.convertResponseValues(gqlResult.Data)
 		gqlResult.Data = decodeBase64Deltas(gqlResult.Data)
 		if isExplainResult(gqlResult.Data) {
 			gqlResult.Data = normalizeExplainTypes(gqlResult.Data)
@@ -973,7 +977,7 @@ func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID st
 
 			// Post-process: convert DateTime strings and base64 deltas
 			if gqlResult.Data != nil {
-				gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+				gqlResult.Data = w.convertResponseValues(gqlResult.Data)
 				gqlResult.Data = decodeBase64Deltas(gqlResult.Data)
 			}
 
@@ -1002,6 +1006,7 @@ func (w *Wrapper) AddCollection(ctx context.Context, sdl string, opts ...options
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse schema response: %w", err)
 	}
+	w.cacheCollectionVersions(versions)
 
 	return versions, nil
 }
@@ -1075,6 +1080,7 @@ func (w *Wrapper) GetCollections(
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse collections: %w", err)
 	}
+	w.cacheCollectionVersions(versions)
 
 	// Apply filters
 	includeInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
@@ -1666,16 +1672,14 @@ func (w *Wrapper) ListIndexes(
 				}
 			}
 			converted[i] = client.ListIndexesResult{
-				CollectionName: string(name),
+				CollectionName: d.CollectionName,
 				Description: client.IndexDescription{
 					Name:   d.Name,
 					ID:     d.ID,
 					Fields: fields,
 					Unique: d.Unique,
 				},
-				Execution: client.ActionExecution{
-					Status: client.CompletedActionStatus,
-				},
+				Execution: d.Execution,
 			}
 		}
 		indexes[name] = converted
@@ -1889,6 +1893,7 @@ func (w *Wrapper) AddView(
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse view response: %w", err)
 	}
+	w.cacheCollectionVersions(versions)
 
 	return versions, nil
 }
@@ -2274,23 +2279,16 @@ type TxnWrapper struct {
 	readOnly                bool
 	startTS                 time.Time
 	stagedPatchCollections  []stagedPatchCollection
-	stagedSetActiveVersions []stagedSetActiveVersion
 	stagedViews             []stagedViewAdd
 	stagedRefreshes         []stagedRefreshViews
 	stagedIndexOps          []stagedIndexOp
 	stagedEncryptedIndexOps []stagedEncryptedIndexOp
-	stagedInactiveVersions  map[string]struct{}
 }
 
 type stagedPatchCollection struct {
 	identityDID string
 	patch       string
 	migration   immutable.Option[lensmodel.Lens]
-}
-
-type stagedSetActiveVersion struct {
-	identityDID string
-	versionID   string
 }
 
 type stagedViewAdd struct {
@@ -2336,12 +2334,6 @@ func (t *TxnWrapper) Commit() error {
 
 	for _, op := range t.stagedPatchCollections {
 		if err := t.wrapper.patchCollection(op.identityDID, op.patch, op.migration); err != nil {
-			return err
-		}
-	}
-
-	for _, op := range t.stagedSetActiveVersions {
-		if err := t.wrapper.setActiveCollectionVersion(op.identityDID, op.versionID); err != nil {
 			return err
 		}
 	}
@@ -2440,7 +2432,7 @@ func (t *TxnWrapper) ExecRequest(
 	}
 
 	if gqlResult.Data != nil {
-		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+		gqlResult.Data = t.wrapper.convertResponseValues(gqlResult.Data)
 		if isExplainResult(gqlResult.Data) {
 			gqlResult.Data = normalizeExplainTypes(gqlResult.Data)
 		}
@@ -2463,6 +2455,7 @@ func (t *TxnWrapper) AddCollection(ctx context.Context, sdl string, opts ...opti
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse schema response: %w", err)
 	}
+	t.wrapper.cacheCollectionVersions(versions)
 
 	return versions, nil
 }
@@ -2494,7 +2487,7 @@ func (t *TxnWrapper) GetCollections(
 	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
 		return nil, fmt.Errorf("failed to parse collections: %w", err)
 	}
-	t.applyStagedCollectionState(versions)
+	t.wrapper.cacheCollectionVersions(versions)
 
 	// Apply filters
 	includeInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
@@ -2526,11 +2519,7 @@ func (t *TxnWrapper) GetCollections(
 
 func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]) error {
 	opt := utils.NewOptions(opts...)
-	t.stagedSetActiveVersions = append(t.stagedSetActiveVersions, stagedSetActiveVersion{
-		identityDID: identityDIDFromOption(opt.GetIdentity()),
-		versionID:   versionID,
-	})
-	return nil
+	return t.txn.SetCollectionActive(identityDIDFromOption(opt.GetIdentity()), versionID, true)
 }
 
 func (t *TxnWrapper) PatchCollection(
@@ -2541,13 +2530,53 @@ func (t *TxnWrapper) PatchCollection(
 ) error {
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
-	if err := t.validateImmediatePatchCollection(ctx, identityDID, patch); err != nil {
-		return err
+
+	var operations []json.RawMessage
+	if err := json.Unmarshal([]byte(patch), &operations); err != nil {
+		return fmt.Errorf("failed to parse patch JSON: %w", err)
 	}
-	t.recordStagedCollectionState(identityDID, patch)
+
+	var remaining []json.RawMessage
+	for _, raw := range operations {
+		var operation struct {
+			Op    string          `json:"op"`
+			Path  string          `json:"path"`
+			Value json.RawMessage `json:"value"`
+		}
+		if err := json.Unmarshal(raw, &operation); err != nil {
+			return fmt.Errorf("failed to parse patch operation: %w", err)
+		}
+		path := strings.TrimPrefix(operation.Path, "/")
+		parts := strings.Split(path, "/")
+		switch {
+		case operation.Op == "remove" && len(parts) == 1:
+			if err := t.txn.DeleteCollections(identityDID, parts, false); err != nil {
+				return err
+			}
+		case (operation.Op == "add" || operation.Op == "replace") &&
+			len(parts) == 2 && parts[1] == "IsActive":
+			var isActive bool
+			if err := json.Unmarshal(operation.Value, &isActive); err != nil {
+				return fmt.Errorf("failed to parse IsActive value: %w", err)
+			}
+			if err := t.txn.SetCollectionActive(identityDID, parts[0], isActive); err != nil {
+				return err
+			}
+		default:
+			remaining = append(remaining, raw)
+		}
+	}
+
+	if len(remaining) == 0 {
+		return nil
+	}
+	remainingPatch, err := json.Marshal(remaining)
+	if err != nil {
+		return fmt.Errorf("failed to marshal patch operations: %w", err)
+	}
 	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
 		identityDID: identityDID,
-		patch:       patch,
+		patch:       string(remainingPatch),
 		migration:   migration,
 	})
 	return nil
@@ -2559,190 +2588,11 @@ func (t *TxnWrapper) DeleteCollection(
 	opts ...options.Enumerable[options.DeleteCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ident := opt.GetIdentity()
-
-	patch, err := buildDeleteCollectionPatch(
+	return t.txn.DeleteCollections(
+		identityDIDFromOption(opt.GetIdentity()),
 		names,
 		opt.ActiveOnly,
-		func(name string) (client.Collection, error) {
-			getOpts := options.GetCollectionByName()
-			if ident.HasValue() {
-				getOpts.SetIdentity(ident.Value())
-			}
-			return t.GetCollectionByName(ctx, client.CollectionName(name), getOpts)
-		},
-		func(collectionID string) ([]client.Collection, error) {
-			getOpts := options.GetCollections().
-				SetCollectionID(collectionID).
-				SetGetInactive(true)
-			if ident.HasValue() {
-				getOpts.SetIdentity(ident.Value())
-			}
-			return t.GetCollections(ctx, getOpts)
-		},
 	)
-	if err != nil {
-		return err
-	}
-
-	t.stagedPatchCollections = append(t.stagedPatchCollections, stagedPatchCollection{
-		identityDID: identityDIDFromOption(ident),
-		patch:       patch,
-		migration:   immutable.None[lensmodel.Lens](),
-	})
-	return nil
-}
-
-func (t *TxnWrapper) rawCollectionsInTxn(identityDID string) ([]client.CollectionVersion, error) {
-	responseJSON, err := t.wrapper.node.GetCollectionsInTxn(t.txn.id, identityDID)
-	if err != nil {
-		return nil, err
-	}
-
-	var versions []client.CollectionVersion
-	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
-		return nil, fmt.Errorf("failed to parse collections: %w", err)
-	}
-	return versions, nil
-}
-
-func (t *TxnWrapper) applyStagedCollectionState(versions []client.CollectionVersion) {
-	if len(t.stagedInactiveVersions) == 0 {
-		return
-	}
-	for i := range versions {
-		if _, ok := t.stagedInactiveVersions[versions[i].VersionID]; ok {
-			versions[i].IsActive = false
-		}
-	}
-}
-
-func (t *TxnWrapper) recordStagedCollectionState(identityDID string, patch string) {
-	type patchOp struct {
-		Op    string          `json:"op"`
-		Path  string          `json:"path"`
-		Value json.RawMessage `json:"value"`
-	}
-
-	var ops []patchOp
-	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
-		return
-	}
-
-	var txnVersions []client.CollectionVersion
-	for _, op := range ops {
-		if op.Op != "replace" || !strings.HasSuffix(op.Path, "/IsActive") {
-			continue
-		}
-		var isActive bool
-		if err := json.Unmarshal(op.Value, &isActive); err != nil || isActive {
-			continue
-		}
-		if txnVersions == nil {
-			var err error
-			txnVersions, err = t.rawCollectionsInTxn(identityDID)
-			if err != nil {
-				return
-			}
-		}
-		target := strings.TrimPrefix(strings.TrimSuffix(op.Path, "/IsActive"), "/")
-		version, ok := findCollectionVersion(txnVersions, target)
-		if !ok {
-			continue
-		}
-		if t.stagedInactiveVersions == nil {
-			t.stagedInactiveVersions = make(map[string]struct{})
-		}
-		t.stagedInactiveVersions[version.VersionID] = struct{}{}
-	}
-}
-
-func (t *TxnWrapper) validateImmediatePatchCollection(
-	ctx context.Context,
-	identityDID string,
-	patch string,
-) error {
-	removeTargets, err := collectionLevelRemoveTargets(patch)
-	if err != nil || len(removeTargets) == 0 {
-		return err
-	}
-
-	txnVersions, err := t.rawCollectionsInTxn(identityDID)
-	if err != nil {
-		return err
-	}
-
-	for _, target := range removeTargets {
-		version, ok := findCollectionVersion(txnVersions, target)
-		if !ok {
-			continue
-		}
-		hasDocs, err := t.collectionHasDocumentsInTxn(ctx, version.Name)
-		if err != nil {
-			continue
-		}
-		if hasDocs {
-			return fmt.Errorf("cannot delete a collection that has documents")
-		}
-	}
-
-	return nil
-}
-
-func (t *TxnWrapper) collectionHasDocumentsInTxn(ctx context.Context, collectionName string) (bool, error) {
-	result := t.ExecRequest(ctx, fmt.Sprintf("query { %s { _docID } }", collectionName))
-	if len(result.GQL.Errors) > 0 {
-		return false, result.GQL.Errors[0]
-	}
-
-	data, ok := result.GQL.Data.(map[string]any)
-	if !ok {
-		return false, nil
-	}
-	items, ok := data[collectionName].([]any)
-	return ok && len(items) > 0, nil
-}
-
-func collectionLevelRemoveTargets(patch string) ([]string, error) {
-	type patchOp struct {
-		Op   string `json:"op"`
-		Path string `json:"path"`
-	}
-
-	var ops []patchOp
-	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
-		return nil, err
-	}
-
-	targets := make([]string, 0)
-	for _, op := range ops {
-		if op.Op != "remove" {
-			continue
-		}
-		target := strings.TrimPrefix(op.Path, "/")
-		if target == "" || strings.Contains(target, "/") {
-			continue
-		}
-		targets = append(targets, target)
-	}
-	return targets, nil
-}
-
-func findCollectionVersion(
-	versions []client.CollectionVersion,
-	nameOrVersionID string,
-) (client.CollectionVersion, bool) {
-	for _, version := range versions {
-		if version.VersionID == nameOrVersionID {
-			return version, true
-		}
-	}
-	for _, version := range versions {
-		if version.Name == nameOrVersionID && version.IsActive {
-			return version, true
-		}
-	}
-	return client.CollectionVersion{}, false
 }
 
 func (t *TxnWrapper) ListIndexes(
@@ -3467,6 +3317,79 @@ func convertDateTimeStrings(v any) any {
 	}
 }
 
+func (w *Wrapper) cacheCollectionVersions(versions []client.CollectionVersion) {
+	w.collectionsMu.Lock()
+	defer w.collectionsMu.Unlock()
+	for _, version := range versions {
+		if version.IsActive {
+			w.collections[version.Name] = version
+		}
+	}
+}
+
+func (w *Wrapper) convertResponseValues(v any) any {
+	converted := convertDateTimeStrings(v)
+
+	w.collectionsMu.RLock()
+	versions := make(map[string]client.CollectionVersion, len(w.collections))
+	for name, version := range w.collections {
+		versions[name] = version
+	}
+	w.collectionsMu.RUnlock()
+
+	return normalizeResponseDateTimes(converted, versions)
+}
+
+func normalizeResponseDateTimes(
+	v any,
+	versions map[string]client.CollectionVersion,
+) any {
+	switch value := v.(type) {
+	case map[string]any:
+		for key, child := range value {
+			name := key
+			if separator := strings.LastIndexByte(key, '_'); separator >= 0 {
+				name = key[separator+1:]
+			}
+			if version, ok := versions[name]; ok {
+				value[key] = normalizeCollectionDateTimes(child, version)
+			} else {
+				value[key] = normalizeResponseDateTimes(child, versions)
+			}
+		}
+	case []any:
+		for i, child := range value {
+			value[i] = normalizeResponseDateTimes(child, versions)
+		}
+	}
+	return v
+}
+
+func normalizeCollectionDateTimes(v any, version client.CollectionVersion) any {
+	switch value := v.(type) {
+	case []any:
+		for i, child := range value {
+			value[i] = normalizeCollectionDateTimes(child, version)
+		}
+	case map[string]any:
+		for _, field := range version.Fields {
+			if field.Kind.String() != "[DateTime]" {
+				continue
+			}
+			times, ok := value[field.Name].([]time.Time)
+			if !ok {
+				continue
+			}
+			nullable := make([]immutable.Option[time.Time], len(times))
+			for i, item := range times {
+				nullable[i] = immutable.Some(item)
+			}
+			value[field.Name] = nullable
+		}
+	}
+	return v
+}
+
 // normalizeExplainTypes fixes type mismatches in explain results returned by the Rust FFI.
 // Go's native query planner produces uint64 for execution metrics and typed slices
 // ([]string, []map[string]any) for arrays. JSON decoding via convertDateTimeStrings
@@ -3635,7 +3558,10 @@ func (c *CollectionWrapper) GetDocument(ctx context.Context, docID client.DocID,
 	}
 
 	// Convert JSON types (json.Number -> int64/float64, datetime strings -> time.Time)
-	converted, ok := convertDateTimeStrings(docData).(map[string]any)
+	converted, ok := normalizeCollectionDateTimes(
+		convertDateTimeStrings(docData),
+		c.version,
+	).(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("unexpected type after date conversion")
 	}
@@ -3798,13 +3724,7 @@ func (c *CollectionWrapper) ListIndexes(
 		}
 		result := make([]client.ListIndexesResult, len(indexes))
 		for i, index := range indexes {
-			result[i] = client.ListIndexesResult{
-				CollectionName: c.version.Name,
-				Description:    index,
-				Execution: client.ActionExecution{
-					Status: client.CompletedActionStatus,
-				},
-			}
+			result[i] = completedIndex(c.version.Name, c.version.CollectionID, index)
 		}
 		return result, nil
 	}
@@ -3827,19 +3747,33 @@ func (c *CollectionWrapper) ListIndexes(
 			}
 		}
 		result[i] = client.ListIndexesResult{
-			CollectionName: c.version.Name,
+			CollectionName: idx.CollectionName,
 			Description: client.IndexDescription{
 				Name:   idx.Name,
 				ID:     idx.ID,
 				Fields: fields,
 				Unique: idx.Unique,
 			},
-			Execution: client.ActionExecution{
-				Status: client.CompletedActionStatus,
-			},
+			Execution: idx.Execution,
 		}
 	}
 	return result, nil
+}
+
+func completedIndex(
+	collectionName string,
+	collectionID string,
+	description client.IndexDescription,
+) client.ListIndexesResult {
+	return client.ListIndexesResult{
+		CollectionName: collectionName,
+		Description:    description,
+		Execution: client.ActionExecution{
+			CollectionID: collectionID,
+			Subject:      fmt.Sprint(description.ID),
+			Status:       client.CompletedActionStatus,
+		},
+	}
 }
 
 func (c *CollectionWrapper) NewEncryptedIndex(

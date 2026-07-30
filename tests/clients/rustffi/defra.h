@@ -118,12 +118,12 @@ typedef struct NodeInitOptions {
   int enable_signing;
   /*
    Optional: signing key type string (e.g. "secp256k1", "secp256r1", "ed25519").
-   Null to auto-generate secp256k1.
+   Only used when signing_private_key is provided.
    */
   const char *signing_key_type;
   /*
-   Optional: raw private key bytes for signing.
-   Null to auto-generate.
+   Optional: raw private key bytes used for the node identity.
+   Block signing remains controlled by enable_signing.
    */
   const uint8_t *signing_private_key;
   /*
@@ -1015,6 +1015,31 @@ struct FfiResult gc_downsample_histories(uintptr_t node_ptr, const char *options
 struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
 
 /*
+ Delete one or more collections by name.
+
+ # Safety
+
+ `names_json` must be a valid null-terminated UTF-8 JSON array of strings.
+ */
+struct FfiResult delete_collections(uintptr_t node_ptr,
+                                    const char *identity_did,
+                                    const char *names_json,
+                                    bool active_only);
+
+/*
+ Delete collections or collection versions within an existing transaction.
+
+ # Safety
+
+ `txn_id` and `targets_json` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult delete_collections_in_txn(uintptr_t node_ptr,
+                                           const char *txn_id,
+                                           const char *identity_did,
+                                           const char *targets_json,
+                                           bool active_only);
+
+/*
  Set the active collection version.
 
  This activates the collection with the given version ID and deactivates
@@ -1037,6 +1062,19 @@ struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did,
 struct FfiResult set_active_collection_version(uintptr_t node_ptr,
                                                const char *identity_did,
                                                const char *version_id);
+
+/*
+ Set a collection version's active state within an existing transaction.
+
+ # Safety
+
+ `txn_id` and `version_id` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult set_collection_active_in_txn(uintptr_t node_ptr,
+                                              const char *txn_id,
+                                              const char *identity_did,
+                                              const char *version_id,
+                                              bool is_active);
 
 /*
  Patch a collection's schema using JSON patch operations.
