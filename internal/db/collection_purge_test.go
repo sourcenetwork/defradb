@@ -201,6 +201,24 @@ func TestPurgeByDocIDsUsesCallerTransaction(t *testing.T) {
 	require.False(t, found)
 }
 
+func TestPurgeByDocIDsPrunesBlocksCreatedInCallerTransaction(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	txnCtx := InitContext(ctx, txn)
+
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice"}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(txnCtx, doc))
+	require.NoError(t, col.PurgeByDocIDs(txnCtx, []client.DocID{doc.ID()}, true))
+	require.NoError(t, txn.Commit())
+
+	blockstore := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+	requireBlockPresent(t, ctx, blockstore, doc.Head(), false)
+}
+
 // addSharedFieldDocs adds two User documents with the same name, so they share the name field
 // block, and different ages, so their age field and composite blocks differ.
 func addSharedFieldDocs(t *testing.T, ctx context.Context, col client.Collection) (*client.Document, *client.Document) {

@@ -503,6 +503,30 @@ func (c *collection) deleteBlocks(
 	defer readTxn.Discard()
 	readCtx := InitContext(ctx, readTxn)
 
+	hasCallerTxn := false
+	if ctxTxn, ok := datastore.CtxTryGetTxn(ctx); ok {
+		if txn, ok := ctxTxn.(*Txn); ok {
+			hasCallerTxn = txn.explicit
+		}
+	}
+
+	getBlockForDelete := func(blockCID cid.Cid) (*coreblock.Block, bool, error) {
+		block, found, err := getBlock(readCtx, blockstore, blockCID)
+		if err != nil || found || !hasCallerTxn || systemstore == nil || docID == "" {
+			return block, found, err
+		}
+
+		ownerKey := keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes()
+		hasCommittedOwner, err := systemstore.Has(readCtx, ownerKey)
+		if err != nil || hasCommittedOwner {
+			return nil, false, err
+		}
+
+		// An absent committed owner edge identifies a block created earlier in this
+		// caller transaction, which the snapshot cannot see.
+		return getBlock(ctx, blockstore, blockCID)
+	}
+
 	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
 		if systemstore == nil || docID == "" {
 			return true, nil
@@ -518,7 +542,9 @@ func (c *collection) deleteBlocks(
 		ownerCtx := ctx
 		if prunedOwners != nil {
 			prunedOwners[string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())] = struct{}{}
-			ownerCtx = readCtx
+			if !hasCallerTxn {
+				ownerCtx = readCtx
+			}
 		}
 
 		hasOwners, err := id.BlockHasOwnersExcept(ownerCtx, systemstore, blockCID, prunedOwners)
@@ -544,7 +570,7 @@ func (c *collection) deleteBlocks(
 		block *coreblock.Block
 	}
 
-	coreBlock, isFound, err := getBlock(readCtx, blockstore, currentCid)
+	coreBlock, isFound, err := getBlockForDelete(currentCid)
 	if err != nil {
 		return err
 	}
@@ -590,7 +616,7 @@ func (c *collection) deleteBlocks(
 		currentBlock := toDelete[i]
 
 		if currentBlock.block == nil {
-			coreBlock, isFound, err := getBlock(readCtx, blockstore, currentBlock.id)
+			coreBlock, isFound, err := getBlockForDelete(currentBlock.id)
 			if err != nil {
 				return err
 			}

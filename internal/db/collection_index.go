@@ -372,10 +372,10 @@ func (c *collection) deleteIndexedDocWithID(
 		}
 	}
 
-	// we need to fetch the document to delete it from the indexes, because in order to do so
-	// we need to know the values of the fields that are indexed. Fields come from the resolved
-	// indexes so a stale handle still fetches a concurrently-created index's field.
-	doc, err := c.get(
+	// Index cleanup runs after the caller has authorized the delete or purge, so it must not
+	// apply the document read filter again. Fields come from the resolved indexes so a stale
+	// handle still fetches a concurrently-created index's field.
+	doc, err := c.getInternal(
 		ctx,
 		primaryKey,
 		c.collectIndexedFields(indexes),
@@ -385,9 +385,6 @@ func (c *collection) deleteIndexedDocWithID(
 		return err
 	}
 	if doc == nil {
-		// If the document cannot be fetched (e.g., due to ACP restrictions),
-		// skip index deletion. The caller (Delete) will handle the authorization
-		// error in applyDelete.
 		return nil
 	}
 	return c.deleteFromIndexes(ctx, indexes, doc)

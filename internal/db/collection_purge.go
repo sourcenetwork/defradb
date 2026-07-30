@@ -31,8 +31,8 @@ import (
 const purgeChunkSize = 100
 
 // PurgeByDocIDs permanently removes all state for the given documents from this node:
-// datastore values, headstore entries, and, when pruneHistory is true, every blockstore
-// block reachable from each document's head CIDs. Unlike DeleteDocument, this is a hard,
+// datastore values, headstore entries, and, when pruneHistory is true, reachable blockstore
+// blocks no longer owned by another document. Unlike DeleteDocument, this is a hard,
 // irreversible removal rather than a soft-delete CRDT operation.
 //
 // Without a caller-provided transaction the documents are purged in chunks, each committed

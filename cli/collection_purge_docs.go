@@ -28,8 +28,8 @@ func MakeCollectionPurgeDocsCommand(ctx context.Context) *cobra.Command {
 		Use:   "purge-docs",
 		Short: "Permanently remove documents by DocID from the local node",
 		Long: `Permanently remove a set of documents by DocID from the local node, including all
-datastore values, headstore entries, and, when --prune-history is set, all blockstore
-blocks reachable from the documents' head CIDs.
+datastore values and headstore entries. When --prune-history is set, it also removes
+reachable blockstore blocks that are no longer owned by another document.
 
 Unlike the soft-delete performed by the delete command, this operation is irreversible and
 does not propagate to other nodes in the peer network.`,
@@ -57,7 +57,7 @@ does not propagate to other nodes in the peer network.`,
 	setCollectionSelectorFlags(cmd)
 	cmd.Flags().StringArrayVar(&docIDStrs, "docID", nil, "DocID of a document to purge (may be repeated)")
 	cmd.Flags().BoolVar(&pruneHistory, "prune-history", false,
-		"Also delete all blockstore blocks reachable from the documents' head CIDs")
+		"Also delete reachable blockstore blocks no longer owned by another document")
 
 	return cmd
 }
