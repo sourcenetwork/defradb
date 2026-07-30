@@ -205,7 +205,6 @@ func TestIndexList_WithCollectionFlag_ShouldReportCollectionName(t *testing.T) {
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name", Descending: false},
 						},
-						Unique: false,
 					},
 				},
 				ExpectedCollectionName: "User",
