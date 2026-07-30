@@ -187,6 +187,42 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// With an offset, the graph must return Limit+Offset neighbours so the offset can skip the nearest
+// ones and still leave a full page. Requesting only Limit would let the offset skip the whole page
+// and return too few. Here offset 1 drops the nearest ("x"), so the page is the 2nd and 3rd nearest.
+func TestQuerySimple_WithSimilarityOnVectorIndex_RespectsOffset(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "a", "vector": []float32{0.9, 0.4, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "b", "vector": []float32{0.6, 0.8, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "c", "vector": []float32{0, 1, 0}}},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 2, offset: 1){
+						name
+						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "a", "sim": testUtils.CosineSimilarity([]float64{0.9, 0.4, 0}, []float64{1, 0, 0})},
+						{"name": "b", "sim": testUtils.CosineSimilarity([]float64{0.6, 0.8, 0}, []float64{1, 0, 0})},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // A query vector whose length differs from the index dimensions would be scored on only its shared
 // leading elements, giving wrong results. Both the routed and full-scan paths must error on this.
 func TestQuerySimple_WithSimilarityOnVectorIndex_WrongLengthQueryErrors(t *testing.T) {

@@ -536,7 +536,7 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), len(vec), doc.ID().String())
 	}
 	if len(vec) == 0 {
-		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), 0, doc.ID().String())
+		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
 	}
 
 	return idx.Insert(nodeID, vec)
@@ -561,7 +561,10 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 		return err
 	}
 
-	nodeID, _, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
+	// Delete needs only the node id, not the vector, so resolve the short id directly. Going through
+	// nodeAndVector would also re-decode the field value and fail if it cannot, blocking the delete of
+	// a document whose vector became undecodable.
+	nodeID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
 	if err != nil {
 		return err
 	}

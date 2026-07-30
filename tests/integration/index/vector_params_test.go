@@ -14,6 +14,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -29,6 +30,35 @@ func TestVectorIndex_CreateWithOversizedM_IsRejected(t *testing.T) {
 					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE, M: 100000})
 				}`,
 				ExpectedError: "vector index parameter is out of range",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Uniqueness has no meaning for a vector index. The programmatic index API can request it (the SDL
+// directive cannot), so it must be rejected rather than silently dropped.
+func TestVectorIndex_CreateAsUnique_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!]
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				FieldName:    "vector",
+				Unique:       true,
+				Vector: &client.VectorIndexDescription{
+					Algorithm:  client.VectorAlgorithmHNSW,
+					Metric:     client.DistanceMetricCosine,
+					Dimensions: 3,
+					HNSW:       &client.HNSWParams{},
+				},
+				ExpectedError: "vector index cannot be unique",
 			},
 		},
 	}

@@ -148,6 +148,18 @@ func (g *Graph) Insert(id NodeID, vector []float32) error {
 		meta.EntryPoint = id
 		meta.TopLayer = topLevel
 	}
+
+	// If every node reachable from the entry point is tombstoned (e.g. all documents were deleted and
+	// new ones inserted), the search above returns no live neighbours and this node links to nothing.
+	// It would then be unreachable from the entry point. Promote it to entry point so search can find
+	// it and later inserts can attach to it.
+	if len(newLayers[0]) == 0 {
+		meta.EntryPoint = id
+		if topLevel > meta.TopLayer {
+			meta.TopLayer = topLevel
+		}
+	}
+
 	return g.store.PutMeta(meta)
 }
 

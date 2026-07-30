@@ -143,6 +143,9 @@ const (
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
 	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
+	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
+	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
+	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -1257,6 +1260,35 @@ func NewErrVectorDimensionMismatch(expected, actual int, docID string) error {
 		errVectorDimensionMismatch,
 		errors.NewKV("Expected", expected),
 		errors.NewKV("Actual", actual),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexRequiresSingleField returns a new error indicating that a vector index request
+// named a number of fields other than one. Only the first field would be indexed, so extra fields
+// are rejected rather than silently stored.
+func NewErrVectorIndexRequiresSingleField(fieldCount int) error {
+	return errors.New(
+		errVectorIndexRequiresSingleField,
+		errors.NewKV("FieldCount", fieldCount),
+	)
+}
+
+// NewErrVectorIndexCannotBeUnique returns a new error indicating that a vector index request asked
+// for uniqueness, which vector indexes do not support. Without this the flag is silently dropped.
+func NewErrVectorIndexCannotBeUnique(fieldName string) error {
+	return errors.New(
+		errVectorIndexCannotBeUnique,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexEmptyVector returns a new error indicating that a document's vector field held an
+// empty vector, which cannot be indexed. The doc id is attached so the bad record can be found.
+func NewErrVectorIndexEmptyVector(fieldName, docID string) error {
+	return errors.New(
+		errVectorIndexEmptyVector,
+		errors.NewKV("Field", fieldName),
 		errors.NewKV("DocID", docID),
 	)
 }

@@ -185,6 +185,38 @@ func TestGraph_DeletedNodes_ExcludedFromResults(t *testing.T) {
 	assert.GreaterOrEqual(t, avgRecall, 0.85, "recall degraded too much after deletions")
 }
 
+// After deleting every node and inserting new ones, the new nodes must be searchable. The entry
+// point still refers to a tombstoned node, so the first new insert links to nothing; it has to
+// become the entry point itself or the whole collection stays invisible.
+func TestGraph_InsertAfterAllDeleted_NewNodesAreSearchable(t *testing.T) {
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(16), 1)
+
+	// A first generation of nodes, then delete all of them.
+	first := []NodeID{1, 2, 3, 4, 5}
+	for _, id := range first {
+		require.NoError(t, g.Insert(id, randomVector(rand.New(rand.NewSource(int64(id))), 8)))
+	}
+	for _, id := range first {
+		require.NoError(t, g.Delete(id))
+	}
+
+	// A second generation inserted into the now fully-tombstoned graph.
+	target := []float32{1, 0, 0, 0, 0, 0, 0, 0}
+	require.NoError(t, g.Insert(100, target))
+	require.NoError(t, g.Insert(101, []float32{0, 1, 0, 0, 0, 0, 0, 0}))
+
+	result, err := g.Search(target, 2, 64)
+	require.NoError(t, err)
+
+	found := make(map[NodeID]struct{}, len(result))
+	for _, id := range result {
+		found[id] = struct{}{}
+	}
+	assert.Contains(t, found, NodeID(100), "new node unreachable after deleting all prior nodes")
+	assert.Contains(t, found, NodeID(101), "new node unreachable after deleting all prior nodes")
+}
+
 func TestGraph_KExceedsNodeCount_ReturnsAll(t *testing.T) {
 	store := NewMemStore()
 	g := New(store, Cosine, DefaultParams(8), 3)

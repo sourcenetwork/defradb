@@ -59,7 +59,10 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 		return NewErrMismatchLengthOnSimilarity(dims, len(query))
 	}
 
-	prefixes, err := n.vectorSearchPrefixes(index, query, int(n.selectReq.Limit.Limit))
+	// Offset skips the first documents of the result, so the graph must return them too, not just the
+	// Limit that remains after skipping. Ask for Limit+Offset; the limit node applies the offset.
+	k := int(n.selectReq.Limit.Limit) + int(n.selectReq.Limit.Offset)
+	prefixes, err := n.vectorSearchPrefixes(index, query, k)
 	if err != nil {
 		return err
 	}

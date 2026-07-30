@@ -44,9 +44,16 @@ func openHNSW(
 		return nil, err
 	}
 
+	// DefaultParams sets sane defaults (and guards M). Only override them when the descriptor gives a
+	// positive value, so a descriptor missing EfConstruction/EfSearch stays usable instead of getting
+	// a zero candidate list.
 	params := hnsw.DefaultParams(int(desc.HNSW.M))
-	params.EfConstruction = int(desc.HNSW.EfConstruction)
-	params.EfSearch = int(desc.HNSW.EfSearch)
+	if desc.HNSW.EfConstruction > 0 {
+		params.EfConstruction = int(desc.HNSW.EfConstruction)
+	}
+	if desc.HNSW.EfSearch > 0 {
+		params.EfSearch = int(desc.HNSW.EfSearch)
+	}
 
 	store := newNodeStore(ctx, collectionShortID, indexID, epoch)
 	return &hnswIndex{

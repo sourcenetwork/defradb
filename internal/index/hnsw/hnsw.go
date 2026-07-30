@@ -58,7 +58,9 @@ type Params struct {
 // bidirectional links created per node per layer), following the
 // recommendations in the HNSW paper.
 func DefaultParams(m int) Params {
-	if m <= 0 {
+	// m == 1 gives ML = 1/ln(1) = +Inf, so randomLevel returns garbage and a node tries to allocate a
+	// huge number of layers. The HNSW math needs m >= 2.
+	if m <= 1 {
 		m = 16
 	}
 	return Params{

@@ -148,6 +148,11 @@ func UnmarshalNode(b []byte) (Node, error) {
 
 	var layers [][]NodeID
 	if numLayers > 0 {
+		// Each layer needs at least its count prefix. Check before allocating so a corrupt numLayers
+		// cannot request a huge slice.
+		if uint64(off)+uint64(numLayers)*countWidth > uint64(len(b)) {
+			return Node{}, ErrInvalidNodeEncoding
+		}
 		layers = make([][]NodeID, numLayers)
 		for i := range layers {
 			if len(b) < off+countWidth {
