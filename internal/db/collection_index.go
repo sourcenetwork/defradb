@@ -512,8 +512,8 @@ func processNewIndexRequest(
 }
 
 // validateVectorIndexDescription checks the parts of an index request specific to a vector index:
-// the field must hold a float32 array, and the dimensions must be set, or come from an @embedding
-// on the same field.
+// the field must hold a float32 array, and the dimensions must be set, unless the field is an
+// @embedding, whose model fixes the vector length.
 //
 // The field is guaranteed to exist here because validateIndexDescription and
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.

@@ -93,7 +93,8 @@ type VectorIndexDescription struct {
 	Algorithm VectorAlgorithm
 	// Metric is the distance metric used to compare vectors.
 	Metric DistanceMetric
-	// Dimensions is the number of dimensions of the vectors being indexed.
+	// Dimensions is the length of the vectors being indexed. It must be set, except on an @embedding
+	// field, where the embedding model fixes the length and Dimensions may be left 0.
 	Dimensions uint32
 	// HNSW holds HNSW-specific parameters. Non-nil when Algorithm == VectorAlgorithmHNSW.
 	HNSW *HNSWParams
@@ -101,9 +102,10 @@ type VectorIndexDescription struct {
 
 // IndexDescription describes an index.
 //
-// Exactly one of [Secondary] or [Vector] is non-nil; the non-nil one determines the index
-// kind (see [IndexDescription.Kind]). A descriptor with neither set is treated as a secondary
-// index for backward compatibility with descriptors persisted before this distinction existed.
+// Name, ID and Fields are common to every index kind. Kind-specific config lives under [Secondary]
+// or [Vector]: exactly one is non-nil, and the non-nil one determines the kind (see
+// [IndexDescription.Kind]). A descriptor with neither set is treated as a secondary index for
+// backward compatibility with descriptors persisted before this distinction existed.
 type IndexDescription struct {
 	// Name contains the name of the index.
 	Name string
