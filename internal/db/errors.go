@@ -62,7 +62,7 @@ const (
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
 	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
-	errVectorIndexMissingDimensions              string = "vector index requires dimensions unless the field is an embedding"
+	errVectorIndexMissingDimensions              string = "vector index requires dimensions unless field is an embedding"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
