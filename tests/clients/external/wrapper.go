@@ -83,6 +83,9 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 	// gap before the child binds. Retry a few times on a start/health failure.
 	var lastErr error
 	for range startAttempts {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		w, err := startWrapper(ctx, t, binaryPath)
 		if err == nil {
 			return w, nil
@@ -166,7 +169,7 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrappe
 }
 
 // waitForHealth polls the client's health-check endpoint until it responds
-// successfully or the timeout elapses.
+// successfully, the timeout elapses, or ctx is cancelled.
 func waitForHealth(ctx context.Context, c *http.Client, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	var lastErr error
@@ -178,7 +181,12 @@ func waitForHealth(ctx context.Context, c *http.Client, timeout time.Duration) e
 			return nil
 		}
 		lastErr = err
-		time.Sleep(500 * time.Millisecond)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+		}
 	}
 	return lastErr
 }
@@ -209,10 +217,8 @@ func streamLogs(
 	buf *ringBuffer,
 	prefix string,
 ) {
-	wg.Add(1)
-	scanner := bufio.NewScanner(r)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
+		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			line := scanner.Text()
 			buf.WriteString(prefix + line + "\n")
@@ -220,7 +226,7 @@ func streamLogs(
 				t.Log(prefix + line)
 			}
 		}
-	}()
+	})
 }
 
 // killAndWait terminates the child process and waits for it to exit,

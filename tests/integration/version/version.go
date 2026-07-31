@@ -41,6 +41,11 @@ const (
 	cacheDirName = "defradb-crossversion"
 )
 
+// releaseBaseURL is the base URL that release assets are downloaded from.
+// It is a var, not a const, so tests can override it to point httpDownload
+// at a local httptest.Server instead of GitHub.
+var releaseBaseURL = "https://github.com"
+
 // downloader fetches the named release asset for the given tag into destDir.
 // It is a seam for testing; the default implementation is an HTTP download.
 type downloader func(ctx context.Context, tag string, asset string, destDir string) error
@@ -181,7 +186,7 @@ func isExecutable(path string) bool {
 // needed. The asset is streamed to a temp file and renamed on success, so a
 // failed download never leaves a partial file at the final path.
 func httpDownload(ctx context.Context, tag string, asset string, destDir string) error {
-	url := fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", repo, tag, asset)
+	url := fmt.Sprintf("%s/%s/releases/download/%s/%s", releaseBaseURL, repo, tag, asset)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
