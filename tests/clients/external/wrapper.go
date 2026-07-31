@@ -130,6 +130,7 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrappe
 	streamLogs(&logWG, t, stderrPipe, stderr, "[external stderr] ")
 
 	if err := cmd.Start(); err != nil {
+		logWG.Wait()
 		removeAll(rootDir)
 		return nil, errors.Wrap("failed to start process", err)
 	}

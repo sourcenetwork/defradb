@@ -33,7 +33,9 @@ var _ clients.Client = (*Wrapper)(nil)
 // end-to-end over HTTP through the Wrapper, proving the wrapper works
 // against a real external node.
 func TestExternalWrapper(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	// Generous budget: a cold cache downloads the release binary, and
+	// NewWrapper may retry start/health a few times before succeeding.
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 
 	path, skip, err := version.BinaryPath(ctx, "v1.0.0")
