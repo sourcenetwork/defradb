@@ -25,21 +25,14 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// purgeChunkSize is the number of documents purged per transaction when no caller
-// transaction is supplied. It keeps each commit well under the store's per-transaction
-// size limit.
+// Keep implicit purge transactions below the store's size limit.
 const purgeChunkSize = 100
 
-// PurgeByDocIDs permanently removes all state for the given documents from this node:
-// datastore values, headstore entries, and, when pruneHistory is true, reachable blockstore
-// blocks no longer owned by another document. Unlike DeleteDocument, this is a hard,
-// irreversible removal rather than a soft-delete CRDT operation.
+// PurgeByDocIDs permanently removes local state for the given documents.
+// When pruneHistory is true, it also removes reachable blocks with no other owner.
 //
-// Without a caller-provided transaction the documents are purged in chunks, each committed
-// in its own transaction, so no single transaction exceeds the store's size limit. The
-// collection lock is therefore held per chunk, and other transactions on the collection can
-// proceed between chunks. With a caller-provided transaction the whole purge runs inside it,
-// so a set too large for one transaction must be purged without a caller transaction.
+// Without a caller transaction, each chunk commits independently. With one, the caller owns
+// the commit and the full purge must fit in that transaction.
 func (c *collection) PurgeByDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
@@ -71,8 +64,6 @@ func (c *collection) PurgeByDocIDs(
 	return nil
 }
 
-// purgeChunk purges the given documents within a single transaction. When the context
-// already carries a transaction it is reused and committing it is left to the owner.
 func (c *collection) purgeChunk(
 	ctx context.Context,
 	docIDs []client.DocID,
@@ -91,9 +82,7 @@ func (c *collection) purgeChunk(
 
 	c.db.lockSet.CollectionLock(txn, shortID)
 
-	// Tracks owner edges this chunk deletes but has not yet committed. deleteBlocks checks
-	// ownership against a read-only snapshot that cannot see those uncommitted deletions, and a
-	// block may be owned by several documents in the chunk, so the set is chunk-wide.
+	// Hide staged owner-edge deletions from snapshot-based ownership checks.
 	var prunedOwners map[string]struct{}
 	if pruneHistory {
 		prunedOwners = make(map[string]struct{})
@@ -156,8 +145,6 @@ func (c *collection) purgeOneDoc(
 	return id.DeleteDocIDMappings(ctx, systemstore, docShortID)
 }
 
-// hardDeleteHeadstoreForDoc deletes all headstore entries for the given document
-// without deleting the referenced blocks.
 func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID uint64) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 

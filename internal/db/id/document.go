@@ -189,23 +189,16 @@ func GetDocIDsForBlockFromStore(
 	return docIDs, nil
 }
 
-// blockOwnersPrefix is the key prefix under which every owner DocID of blockCID is stored.
 func blockOwnersPrefix(blockCID cid.Cid) []byte {
 	return append(keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes(), '/')
 }
 
-// BlockHasOwners reports whether any document still owns blockCID. Prefer this over
-// GetDocIDsForBlockFromStore when only the presence of an owner matters: it stops at the
-// first match rather than materializing the whole owner set.
+// BlockHasOwners reports whether any document owns blockCID.
 func BlockHasOwners(ctx context.Context, store corekv.Reader, blockCID cid.Cid) (bool, error) {
 	return BlockHasOwnersExcept(ctx, store, blockCID, nil)
 }
 
-// BlockHasOwnersExcept reports whether any document owns blockCID, ignoring owner edges whose keys
-// are in excluded. It lets a caller read ownership from a read-only snapshot while treating edges
-// it deleted in a separate, uncommitted transaction as already gone. Excluded keys are
-// BlockCIDToDocIDKey bytes, as yielded by the owner-edge iterator; a nil set makes this a plain
-// ownership scan. It stops at the first surviving owner.
+// BlockHasOwnersExcept ignores encoded BlockCIDToDocID keys in excluded.
 func BlockHasOwnersExcept(
 	ctx context.Context,
 	store corekv.Reader,
@@ -236,8 +229,10 @@ func BlockHasOwnersExcept(
 		if len(bytes.TrimPrefix(iter.Key(), prefix)) == 0 {
 			continue
 		}
-		if _, isExcluded := excluded[string(iter.Key())]; isExcluded {
-			continue
+		if len(excluded) != 0 {
+			if _, isExcluded := excluded[string(iter.Key())]; isExcluded {
+				continue
+			}
 		}
 		return true, iter.Close()
 	}

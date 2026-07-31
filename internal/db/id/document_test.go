@@ -225,9 +225,6 @@ func TestBlockHasOwners(t *testing.T) {
 	require.False(t, has)
 }
 
-// TestBlockHasOwnersStopsAtFirstOwner checks BlockHasOwners reports ownership after reading a
-// single key regardless of how many documents own the block, unlike GetDocIDsForBlockFromStore
-// which reads every owner.
 func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -253,14 +250,10 @@ func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
 	require.Greater(t, listReads, owners, "GetDocIDsForBlockFromStore reads every owner")
 }
 
-// blockOwnerKey builds the owner-edge key for (blockCID, docID) in the form BlockHasOwnersExcept
-// expects its excluded set to hold: the same bytes the owner-edge iterator yields.
 func blockOwnerKey(blockCID cid.Cid, docID string) string {
 	return string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())
 }
 
-// TestBlockHasOwnersExceptExcludedSoleOwner checks that a block whose only owner edge is in the
-// excluded set reports no owner, while the same block reports an owner when nothing is excluded.
 func TestBlockHasOwnersExceptExcludedSoleOwner(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -280,8 +273,6 @@ func TestBlockHasOwnersExceptExcludedSoleOwner(t *testing.T) {
 	require.False(t, has, "excluding the only owner edge reports no owner")
 }
 
-// TestBlockHasOwnersExceptKeepsUnexcludedOwner checks that a block shared by two documents still
-// reports an owner while any of its edges is unexcluded, and reports none only once all are.
 func TestBlockHasOwnersExceptKeepsUnexcludedOwner(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -303,8 +294,6 @@ func TestBlockHasOwnersExceptKeepsUnexcludedOwner(t *testing.T) {
 	require.False(t, has, "both owners excluded: no owner remains")
 }
 
-// TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner checks the scan skips excluded owners but
-// stops at the first owner that is not excluded, rather than reading the whole owner set.
 func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -317,8 +306,7 @@ func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
 		require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, fmt.Sprintf("bae-doc-%03d", i)))
 	}
 
-	// Owner edges iterate in key order, so excluding the first makes the scan skip it and stop at
-	// the second: two advances, not one and not the whole set.
+	// Owner edges are ordered, so the first unexcluded owner is the second key.
 	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-000"): {}}
 	var reads int
 	has, err := BlockHasOwnersExcept(ctx, countingReader{txn.Systemstore(), &reads}, fieldCID, excluded)
@@ -327,8 +315,7 @@ func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
 	require.Equal(t, 2, reads, "scan skips the excluded owner and stops at the next")
 }
 
-// countingReader wraps a corekv.Reader and tallies iterator advances so a test can assert
-// how much of a key range a function scans.
+// countingReader counts iterator advances.
 type countingReader struct {
 	corekv.Reader
 	nextCalls *int

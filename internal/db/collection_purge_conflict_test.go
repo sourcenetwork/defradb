@@ -24,10 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-// setupPrunedFieldBlock creates a document, then removes one of its field blocks from the
-// blockstore while leaving the composite's link to it in place. It returns the now-absent
-// block's CID and content so a test can store it back from a concurrent transaction, standing
-// in for a DAG sync that recreates a block the purge walk is reading.
+// setupPrunedFieldBlock leaves a composite pointing to an absent field block.
 func setupPrunedFieldBlock(
 	t *testing.T,
 	ctx context.Context,
@@ -58,8 +55,6 @@ func setupPrunedFieldBlock(
 	return db, col, doc.ID(), blockCID, block
 }
 
-// storeBlockInNewTxn stores block in its own committed transaction, standing in for a
-// concurrent DAG sync that recreates a block.
 func storeBlockInNewTxn(t *testing.T, ctx context.Context, db *DB, block blocks.Block) {
 	t.Helper()
 
@@ -70,11 +65,6 @@ func storeBlockInNewTxn(t *testing.T, ctx context.Context, db *DB, block blocks.
 	require.NoError(t, txn.Commit())
 }
 
-// TestPurgeByDocIDsPruneHistoryReadsBlocksOutsideConflictSet checks that pruning a document's
-// block history reads block content outside the purge transaction's conflict set, so a
-// concurrent store of a block the walk visits does not abort the purge. The control subtest
-// confirms the same store does abort a transaction that read the block itself, so the fix
-// subtest is not passing vacuously.
 func TestPurgeByDocIDsPruneHistoryReadsBlocksOutsideConflictSet(t *testing.T) {
 	t.Run("reading the block through the write transaction conflicts", func(t *testing.T) {
 		ctx := context.Background()
@@ -88,8 +78,7 @@ func TestPurgeByDocIDsPruneHistoryReadsBlocksOutsideConflictSet(t *testing.T) {
 		tctx := InitContext(ctx, txn)
 		_, _, err = getBlock(tctx, blockstore, blockCID)
 		require.NoError(t, err)
-		// badger only checks for conflicts when the transaction has a pending write; the real
-		// purge deletes as it walks, so delete the block here too.
+		// Badger only checks read conflicts on transactions with pending writes.
 		require.NoError(t, blockstore.DeleteBlock(tctx, blockCID))
 
 		storeBlockInNewTxn(t, ctx, db, block)

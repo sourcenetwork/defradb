@@ -451,11 +451,8 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			// A nil systemstore and empty docID make deleteBlocks delete every reached block
-			// unconditionally, without touching block->docID owner edges. This is safe only because
-			// the document blocks and their owner edges are deleted earlier in truncate (see the
-			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
-			// re-encounters already-deleted document composites.
+			// Document blocks and owner edges were deleted in hardDeleteDocKeysAndHeadstore,
+			// so this remaining collection DAG can be removed unconditionally.
 			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
@@ -491,11 +488,7 @@ func (c *collection) deleteBlocks(
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
-	// Block content is immutable and content-addressed; the walk only reads it to find child
-	// links. Reading it through the purge's write transaction adds every visited CID to that
-	// transaction's conflict set, so a concurrent write of any of them aborts the purge for a
-	// read whose value never changed. Read it through a read-only transaction instead; ownership
-	// checks and deletions stay on the write transaction, so the keep/delete decision is unchanged.
+	// Keep immutable DAG reads out of the purge transaction's conflict set.
 	readTxn, err := c.db.NewTxn(true)
 	if err != nil {
 		return err
@@ -522,8 +515,7 @@ func (c *collection) deleteBlocks(
 			return nil, false, err
 		}
 
-		// An absent committed owner edge identifies a block created earlier in this
-		// caller transaction, which the snapshot cannot see.
+		// The caller may have created this block after the snapshot.
 		return getBlock(ctx, blockstore, blockCID)
 	}
 
@@ -535,10 +527,8 @@ func (c *collection) deleteBlocks(
 			return false, err
 		}
 
-		// Reading ownership from the purge's write transaction re-sorts its entire pending-write
-		// set on every block, which is quadratic over a chunk. When prunedOwners is set, read the
-		// read-only snapshot and exclude this chunk's uncommitted edge deletions instead. Truncate
-		// has no transaction here, so it reads ownership directly.
+		// Implicit purges use the snapshot to avoid repeatedly sorting pending writes.
+		// prunedOwners hides edge deletions staged earlier in the chunk.
 		ownerCtx := ctx
 		if prunedOwners != nil {
 			prunedOwners[string(keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes())] = struct{}{}

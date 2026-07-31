@@ -27,13 +27,9 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
-// newBadgerDBWithMemTableSize builds an in-memory test DB with a reduced memtable. Badger's
-// per-transaction size limit is a fixed fraction of the memtable, so shrinking it lets a
-// purge exceed one transaction with a modest number of documents.
+// Badger derives its transaction limit from the memtable size.
 func newBadgerDBWithMemTableSize(ctx context.Context, memTableSize int64) (*DB, error) {
-	// The value threshold must sit below the memtable-derived max batch size (badger
-	// validates this on open) yet above the largest value the store holds inline, since an
-	// in-memory badger has no value log to offload larger values to.
+	// In-memory Badger has no value log for values above this threshold.
 	rootstore, err := badger.NewDatastore(
 		"",
 		badgerds.DefaultOptions("").
@@ -53,10 +49,6 @@ func newBadgerDBWithMemTableSize(ctx context.Context, memTableSize int64) (*DB, 
 	return newDB(ctx, rootstore, adminInfo)
 }
 
-// TestPurgeByDocIDsChunksPurgeOverTransactionLimit verifies that a purge too large for a
-// single transaction succeeds by committing in chunks. The guard first confirms the set
-// really does exceed one transaction, so the success below is meaningful rather than a set
-// that would have fit anyway.
 func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDBWithMemTableSize(ctx, 1<<21)
@@ -81,8 +73,7 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 		docIDs = append(docIDs, doc.ID())
 	}
 
-	// Guard: run the purge inside a caller transaction, which cannot chunk, to confirm the
-	// document set really does exceed badger's per-transaction limit at this memtable size.
+	// Confirm the same document set cannot fit in one transaction.
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	dbTxn, ok := txn.(*Txn)
@@ -91,7 +82,6 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 	require.ErrorContains(t, guardErr, "Txn is too big")
 	txn.Discard()
 
-	// Without a caller transaction the purge commits per chunk and completes.
 	require.NoError(t, col.PurgeByDocIDs(ctx, docIDs, false))
 
 	readTxn, err := db.NewTxn(true)
@@ -110,9 +100,6 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 	}
 }
 
-// TestPurgeByDocIDsRemovesIndexEntries verifies a purge removes the pruned document's
-// secondary-index entries, so re-indexing the same document later does not collide with a
-// stale unique entry.
 func TestPurgeByDocIDsRemovesIndexEntries(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
@@ -219,8 +206,34 @@ func TestPurgeByDocIDsPrunesBlocksCreatedInCallerTransaction(t *testing.T) {
 	requireBlockPresent(t, ctx, blockstore, doc.Head(), false)
 }
 
-// addSharedFieldDocs adds two User documents with the same name, so they share the name field
-// block, and different ages, so their age field and composite blocks differ.
+func TestPurgeByDocIDsKeepsSharedBlockCreatedInCallerTransaction(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	txnCtx := InitContext(ctx, txn)
+
+	docA, docB := addSharedFieldDocs(t, txnCtx, col)
+	headA := documentHead(t, txnCtx, col, docA.ID())
+	headB := documentHead(t, txnCtx, col, docB.ID())
+	shared := sharedFieldBlock(t, txnCtx, db, headA, headB)
+
+	require.NoError(t, col.PurgeByDocIDs(txnCtx, []client.DocID{docA.ID()}, true))
+	require.NoError(t, txn.Commit())
+
+	blockstore := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+	requireBlockPresent(t, ctx, blockstore, shared, true)
+}
+
+// addSharedFieldDocs creates one shared field block and distinct composite blocks.
 func addSharedFieldDocs(t *testing.T, ctx context.Context, col client.Collection) (*client.Document, *client.Document) {
 	t.Helper()
 
@@ -235,10 +248,25 @@ func addSharedFieldDocs(t *testing.T, ctx context.Context, col client.Collection
 	return docA, docB
 }
 
-// sharedFieldBlock returns the one field block that the documents with composite heads headA and
-// headB have in common, failing if they do not share exactly one. Field blocks are
-// content-addressed and carry no document identity, so an identical field value yields a shared
-// block owned by both documents.
+func documentHead(
+	t *testing.T,
+	ctx context.Context,
+	col client.Collection,
+	docID client.DocID,
+) cid.Cid {
+	t.Helper()
+
+	dbCol, ok := col.(*collection)
+	require.True(t, ok)
+	key, found, err := getDocHeadstoreKey(ctx, dbCol, docID.String())
+	require.NoError(t, err)
+	require.True(t, found)
+	heads, err := getHeads(ctx, key)
+	require.NoError(t, err)
+	require.Len(t, heads, 1)
+	return heads[0]
+}
+
 func sharedFieldBlock(t *testing.T, ctx context.Context, db *DB, headA, headB cid.Cid) cid.Cid {
 	t.Helper()
 
@@ -264,10 +292,6 @@ func requireBlockPresent(t *testing.T, ctx context.Context, bs datastore.Blockst
 	require.Equal(t, want, found)
 }
 
-// TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc checks that pruning one document's
-// history keeps a field block a second document still owns, and removes it once the second
-// document is pruned too. The two purges run in separate transactions, so the second reads the
-// first's edge deletion from committed state.
 func TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
@@ -292,10 +316,6 @@ func TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
 	requireBlockPresent(t, ctx, bs, shared, false)
 }
 
-// TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether checks the same block is
-// removed when both owners are purged in one chunk. Here the first document's edge deletion is
-// still uncommitted when the second is checked, so the per-chunk owner tracking is what lets the
-// shared block be recognised as unowned rather than leaked.
 func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
