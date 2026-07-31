@@ -232,7 +232,7 @@ func (p *P2P) syncCollectionAndMerge(
 		CollectionID: collectionID,
 	}
 
-	return p.db.Merge(ctx, evt)
+	return p.merge(ctx, evt)
 }
 
 // syncCollectionDAG synchronizes the DAG for a specific branchable collection CID.
