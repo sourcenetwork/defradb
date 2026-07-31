@@ -39,7 +39,10 @@ func minHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "minHeap",
 		new:  func() heap.Interface { return &minHeap{} },
-		root: func(h heap.Interface) float32 { return (*h.(*minHeap))[0].dist },
+		root: func(h heap.Interface) float32 {
+			mh, _ := h.(*minHeap)
+			return (*mh)[0].dist
+		},
 		popOrder: func(sorted []float32) []float32 {
 			out := append([]float32(nil), sorted...) // sorted is ascending → min pops ascending
 			return out
@@ -60,7 +63,10 @@ func maxHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "maxHeap",
 		new:  func() heap.Interface { return &maxHeap{} },
-		root: func(h heap.Interface) float32 { return (*h.(*maxHeap))[0].dist },
+		root: func(h heap.Interface) float32 {
+			mh, _ := h.(*maxHeap)
+			return (*mh)[0].dist
+		},
 		popOrder: func(sorted []float32) []float32 {
 			out := make([]float32, len(sorted)) // sorted is ascending → max pops descending
 			for i, v := range sorted {
@@ -80,10 +86,19 @@ func maxHeapUT() heapUnderTest {
 	}
 }
 
-func popAllDists(h heap.Interface) []float32 {
+// popCandidate pops the root and asserts it is a candidate, failing the test if not.
+func popCandidate(t *testing.T, h heap.Interface) candidate {
+	t.Helper()
+	c, ok := heap.Pop(h).(candidate)
+	require.True(t, ok, "heap held a non-candidate value")
+	return c
+}
+
+func popAllDists(t *testing.T, h heap.Interface) []float32 {
+	t.Helper()
 	out := make([]float32, 0, h.Len())
 	for h.Len() > 0 {
-		out = append(out, heap.Pop(h).(candidate).dist)
+		out = append(out, popCandidate(t, h).dist)
 	}
 	return out
 }
@@ -109,7 +124,7 @@ func TestHeap_PushThenPopAll_YieldsOrderedDistances(t *testing.T) {
 				}
 				require.Equal(t, len(in), h.Len())
 
-				got := popAllDists(h)
+				got := popAllDists(t, h)
 				want := ut.popOrder(ascendingSorted(in))
 				assert.Equal(t, want, got)
 				assert.Equal(t, 0, h.Len(), "heap must be empty after popping everything")
@@ -150,7 +165,7 @@ func TestHeap_InterleavedPushPop_ReturnsCurrentExtreme(t *testing.T) {
 			}
 			popAndCheck := func() {
 				want := ut.extreme(model)
-				got := heap.Pop(h).(candidate).dist
+				got := popCandidate(t, h).dist
 				assert.Equal(t, want, got)
 				model = removeFirst(model, got)
 			}
@@ -173,7 +188,7 @@ func TestHeap_PreservesCandidatePayload(t *testing.T) {
 	// neighbour-selection heuristic relies on the carried vector.
 	h := &minHeap{}
 	heap.Push(h, candidate{id: 9, dist: 0.5, vector: []float32{1, 2, 3}})
-	got := heap.Pop(h).(candidate)
+	got := popCandidate(t, h)
 	assert.Equal(t, NodeID(9), got.id)
 	assert.Equal(t, []float32{1, 2, 3}, got.vector)
 }

@@ -66,7 +66,7 @@ func TestCollectionVersion_VectorIndexOnFloat32ArrayWithoutDimensionsOrEmbedding
 						embedding: [Float32!] @vectorIndex
 					}
 				`,
-				ExpectedError: "vector index requires dimensions when the field is not a generated embedding",
+				ExpectedError: "vector index requires dimensions unless the field is an embedding",
 			},
 		},
 	}
