@@ -12,7 +12,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 )
 
 // IndexFieldDescription describes how a field is being indexed.
@@ -22,16 +21,6 @@ type IndexedFieldDescription struct {
 	// Descending indicates whether the field is indexed in descending order.
 	Descending bool
 }
-
-// IndexKind identifies the kind of an index.
-type IndexKind uint8
-
-const (
-	// IndexKindSecondary identifies a secondary (scalar/unique/JSON) index.
-	IndexKindSecondary IndexKind = iota
-	// IndexKindVector identifies a vector (ANN) index.
-	IndexKindVector
-)
 
 // VectorAlgorithm identifies the algorithm used to build/search a vector index.
 type VectorAlgorithm uint8
@@ -48,12 +37,6 @@ const (
 	// DistanceMetricCosine identifies the cosine distance metric.
 	DistanceMetricCosine DistanceMetric = iota
 )
-
-// SecondaryIndexDescription holds config specific to secondary (scalar/unique/JSON) indexes.
-type SecondaryIndexDescription struct {
-	// Unique indicates whether the index enforces uniqueness.
-	Unique bool
-}
 
 // HNSWParams holds HNSW-specific build/search parameters.
 type HNSWParams struct {
@@ -101,11 +84,6 @@ type VectorIndexDescription struct {
 }
 
 // IndexDescription describes an index.
-//
-// Name, ID and Fields are common to every index kind. Kind-specific config lives under [Secondary]
-// or [Vector]: exactly one is non-nil, and the non-nil one determines the kind (see
-// [IndexDescription.Kind]). A descriptor with neither set is treated as a secondary index for
-// backward compatibility with descriptors persisted before this distinction existed.
 type IndexDescription struct {
 	// Name contains the name of the index.
 	Name string
@@ -113,71 +91,16 @@ type IndexDescription struct {
 	ID uint32
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
-	// Secondary holds config specific to secondary (scalar/unique/JSON) indexes. Non-nil iff
-	// this is a secondary index.
-	Secondary *SecondaryIndexDescription
-	// Vector holds config specific to vector (ANN) indexes. Non-nil iff this is a vector index.
+	// Unique indicates whether the index is unique.
+	Unique bool
+	// Vector holds config specific to vector (ANN) indexes. It is nil for a normal (non-vector)
+	// index; a non-nil value marks this as a vector index.
 	Vector *VectorIndexDescription
 }
 
-// Kind returns the index kind, derived from which sub-struct is set. A descriptor with
-// neither [Secondary] nor [Vector] set is treated as [IndexKindSecondary] (legacy descriptors).
-func (d IndexDescription) Kind() IndexKind {
-	if d.Vector != nil {
-		return IndexKindVector
-	}
-	return IndexKindSecondary
-}
-
-// indexDescription is a private type used to facilitate the marshalling and unmarshalling
-// of json to/from an [IndexDescription].
-//
-// Existing persisted descriptors store `Unique` at the top level (no nested `Secondary`
-// struct), so [UnmarshalJSON] detects and migrates that legacy shape.
-type indexDescription struct {
-	Name      string
-	ID        uint32
-	Fields    []IndexedFieldDescription
-	Secondary *SecondaryIndexDescription
-	Vector    *VectorIndexDescription
-
-	// Unique is the legacy top-level location of the secondary index's uniqueness flag. It is
-	// only ever read here; new descriptors are marshalled with `Unique` nested under `Secondary`.
-	Unique *bool
-}
-
-func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
-	var descMap indexDescription
-	err := json.Unmarshal(bytes, &descMap)
-	if err != nil {
-		return err
-	}
-
-	d.Name = descMap.Name
-	d.ID = descMap.ID
-	d.Fields = descMap.Fields
-	d.Vector = descMap.Vector
-
-	switch {
-	case descMap.Secondary != nil:
-		d.Secondary = descMap.Secondary
-	case descMap.Unique != nil:
-		d.Secondary = &SecondaryIndexDescription{Unique: *descMap.Unique}
-	case descMap.Vector == nil:
-		d.Secondary = &SecondaryIndexDescription{}
-	}
-
-	return nil
-}
-
-func (d IndexDescription) MarshalJSON() ([]byte, error) {
-	return json.Marshal(indexDescription{
-		Name:      d.Name,
-		ID:        d.ID,
-		Fields:    d.Fields,
-		Secondary: d.Secondary,
-		Vector:    d.Vector,
-	})
+// IsVector returns true if this is a vector index.
+func (d IndexDescription) IsVector() bool {
+	return d.Vector != nil
 }
 
 // NewIndexRequest describes an index creation request.

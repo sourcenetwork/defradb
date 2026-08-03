@@ -500,12 +500,8 @@ func processNewIndexRequest(
 		Name:   indexName,
 		ID:     uint32(indexID),
 		Fields: desc.Fields,
-	}
-
-	if desc.Vector != nil {
-		res.Vector = desc.Vector
-	} else {
-		res.Secondary = &client.SecondaryIndexDescription{Unique: desc.Unique}
+		Unique: desc.Unique,
+		Vector: desc.Vector,
 	}
 
 	return res, nil

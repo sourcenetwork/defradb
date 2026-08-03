@@ -130,12 +130,12 @@ func TestCollectIndexesOnField(t *testing.T) {
 	}
 }
 
-func TestIndexDescription_NewUniqueSecondary_RoundTrips(t *testing.T) {
+func TestIndexDescription_UniqueIndex_RoundTrips(t *testing.T) {
 	original := IndexDescription{
-		Name:      "some_index",
-		ID:        1,
-		Fields:    []IndexedFieldDescription{{Name: "name"}},
-		Secondary: &SecondaryIndexDescription{Unique: true},
+		Name:   "some_index",
+		ID:     1,
+		Fields: []IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
 	}
 
 	bytes, err := json.Marshal(original)
@@ -145,49 +145,24 @@ func TestIndexDescription_NewUniqueSecondary_RoundTrips(t *testing.T) {
 	err = json.Unmarshal(bytes, &actual)
 	require.NoError(t, err)
 
-	require.NotNil(t, actual.Secondary)
-	assert.True(t, actual.Secondary.Unique)
+	assert.True(t, actual.Unique)
 	assert.Nil(t, actual.Vector)
-	assert.Equal(t, IndexKindSecondary, actual.Kind())
+	assert.False(t, actual.IsVector())
 	assert.Equal(t, original, actual)
 }
 
-func TestIndexDescription_LegacyTopLevelUniqueTrue_MigratesToSecondary(t *testing.T) {
-	legacyJSON := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
+// A descriptor persisted before vector indexes existed has only the top-level Unique and no Vector.
+// It must still load, so the new Vector field is a safe additive change.
+func TestIndexDescription_PreVectorDescriptor_StillLoads(t *testing.T) {
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
 
 	var actual IndexDescription
-	err := json.Unmarshal([]byte(legacyJSON), &actual)
+	err := json.Unmarshal([]byte(json1), &actual)
 	require.NoError(t, err)
 
-	require.NotNil(t, actual.Secondary)
-	assert.True(t, actual.Secondary.Unique)
+	assert.True(t, actual.Unique)
 	assert.Nil(t, actual.Vector)
-	assert.Equal(t, IndexKindSecondary, actual.Kind())
-}
-
-func TestIndexDescription_LegacyTopLevelUniqueFalse_MigratesToSecondary(t *testing.T) {
-	legacyJSON := `{"Unique":false}`
-
-	var actual IndexDescription
-	err := json.Unmarshal([]byte(legacyJSON), &actual)
-	require.NoError(t, err)
-
-	require.NotNil(t, actual.Secondary)
-	assert.False(t, actual.Secondary.Unique)
-	assert.Nil(t, actual.Vector)
-}
-
-func TestIndexDescription_NoUniqueOrKindFields_DefaultsToSecondary(t *testing.T) {
-	legacyJSON := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}]}`
-
-	var actual IndexDescription
-	err := json.Unmarshal([]byte(legacyJSON), &actual)
-	require.NoError(t, err)
-
-	require.NotNil(t, actual.Secondary)
-	assert.False(t, actual.Secondary.Unique)
-	assert.Nil(t, actual.Vector)
-	assert.Equal(t, IndexKindSecondary, actual.Kind())
+	assert.False(t, actual.IsVector())
 }
 
 func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
@@ -215,7 +190,6 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, actual.Vector)
-	assert.Nil(t, actual.Secondary)
-	assert.Equal(t, IndexKindVector, actual.Kind())
+	assert.True(t, actual.IsVector())
 	assert.Equal(t, original, actual)
 }

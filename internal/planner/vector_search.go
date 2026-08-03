@@ -109,7 +109,7 @@ func (n *selectNode) isOrderedBySimilarityDesc(sim *mapper.Similarity) bool {
 // already excluded indexes that are still building or have failed, so a returned index is usable.
 func (n *selectNode) readyVectorIndexOnField(fieldName string) (client.IndexDescription, bool) {
 	for _, idx := range queryableIndexesOnField(n.collection, fieldName) {
-		if idx.Kind() == client.IndexKindVector {
+		if idx.IsVector() {
 			return idx, true
 		}
 	}

@@ -100,10 +100,10 @@ func TestIndexStatus_ReadyAndFailedInOneCollection_EachReportsOwnStatus(t *testi
 						Fields: []client.IndexedFieldDescription{{Name: "name"}},
 					},
 					{
-						Name:      "User_age_ASC",
-						ID:        2,
-						Secondary: &client.SecondaryIndexDescription{Unique: true},
-						Fields:    []client.IndexedFieldDescription{{Name: "age"}},
+						Name:   "User_age_ASC",
+						ID:     2,
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{{Name: "age"}},
 					},
 				},
 				ExpectedStatuses: map[string]client.ActionExecution{

@@ -97,14 +97,6 @@ func (a *NewIndex) Execute() {
 			require.Equal(a.s.T, expected.Name, result.Name)
 		}
 		require.Equal(a.s.T, expected.Fields, result.Fields)
-		expectedUnique := false
-		if expected.Secondary != nil {
-			expectedUnique = expected.Secondary.Unique
-		}
-		resultUnique := false
-		if result.Secondary != nil {
-			resultUnique = result.Secondary.Unique
-		}
-		require.Equal(a.s.T, expectedUnique, resultUnique)
+		require.Equal(a.s.T, expected.Unique, result.Unique)
 	}
 }

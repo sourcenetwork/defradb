@@ -93,7 +93,7 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 		Fields: newIndex.Fields,
 		Vector: newIndex.Vector,
 	}
-	assert.Equal(t, client.IndexKindVector, desc.Kind())
+	assert.True(t, desc.IsVector())
 	assert.Equal(t, client.VectorAlgorithmHNSW, desc.Vector.Algorithm)
 	assert.Equal(t, client.DistanceMetricCosine, desc.Vector.Metric)
 	assert.Equal(t, uint32(3), desc.Vector.Dimensions)

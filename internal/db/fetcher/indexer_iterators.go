@@ -1122,7 +1122,7 @@ func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath clien
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
 	// we need to check length of conditions because full key fetch is only possible
 	// if all fields of the index are specified in the filter
-	res := indexDesc.Secondary != nil && indexDesc.Secondary.Unique && len(conditions) == len(indexDesc.Fields)
+	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
 
 	// first condition is not required to be _eq, but if is, val must be not nil
 	res = res && (conditions[0].op != opEq || !conditions[0].val.IsNil())

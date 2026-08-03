@@ -69,14 +69,14 @@ func TestIndexList_WithSingleCollection_ShouldReturnAllCollectionIndexes(t *test
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name", Descending: false},
 						},
-						Secondary: &client.SecondaryIndexDescription{Unique: false},
+						Unique: false,
 					},
 					{
 						Name: "UsersByAge",
 						Fields: []client.IndexedFieldDescription{
 							{Name: "age", Descending: true},
 						},
-						Secondary: &client.SecondaryIndexDescription{Unique: false},
+						Unique: false,
 					},
 				},
 			},
@@ -134,14 +134,14 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 							Fields: []client.IndexedFieldDescription{
 								{Name: "name", Descending: false},
 							},
-							Secondary: &client.SecondaryIndexDescription{Unique: false},
+							Unique: false,
 						},
 						{
 							Name: "UsersByAge",
 							Fields: []client.IndexedFieldDescription{
 								{Name: "age", Descending: false},
 							},
-							Secondary: &client.SecondaryIndexDescription{Unique: false},
+							Unique: false,
 						},
 					},
 					"Product": {
@@ -150,14 +150,14 @@ func TestIndexList_WithoutCollectionFlag_ShouldReturnAllIndexes(t *testing.T) {
 							Fields: []client.IndexedFieldDescription{
 								{Name: "title", Descending: false},
 							},
-							Secondary: &client.SecondaryIndexDescription{Unique: false},
+							Unique: false,
 						},
 						{
 							Name: "ProductsByPrice",
 							Fields: []client.IndexedFieldDescription{
 								{Name: "price", Descending: true},
 							},
-							Secondary: &client.SecondaryIndexDescription{Unique: true},
+							Unique: true,
 						},
 					},
 				},

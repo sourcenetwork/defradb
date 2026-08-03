@@ -44,9 +44,9 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:      "Users_name_ASC",
-						ID:        1,
-						Secondary: &client.SecondaryIndexDescription{Unique: false},
+						Name:   "Users_name_ASC",
+						ID:     1,
+						Unique: false,
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "name",
@@ -66,9 +66,9 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 						}),
 						Indexes: []client.IndexDescription{
 							{
-								Name:      "Users_name_ASC",
-								ID:        1,
-								Secondary: &client.SecondaryIndexDescription{Unique: false},
+								Name:   "Users_name_ASC",
+								ID:     1,
+								Unique: false,
 								Fields: []client.IndexedFieldDescription{
 									{
 										Name: "name",
@@ -145,9 +145,9 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:      "Users_name_ASC",
-						ID:        1,
-						Secondary: &client.SecondaryIndexDescription{Unique: false},
+						Name:   "Users_name_ASC",
+						ID:     1,
+						Unique: false,
 						Fields: []client.IndexedFieldDescription{
 							{
 								Name: "name",
@@ -167,9 +167,9 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 						}),
 						Indexes: []client.IndexDescription{
 							{
-								Name:      "Users_name_ASC",
-								ID:        1,
-								Secondary: &client.SecondaryIndexDescription{Unique: false},
+								Name:   "Users_name_ASC",
+								ID:     1,
+								Unique: false,
 								Fields: []client.IndexedFieldDescription{
 									{
 										Name: "name",

@@ -209,15 +209,7 @@ func assertIndexCollectionNames(
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t require.TestingT) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
 	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
-	expectedUnique := false
-	if expectedIndex.Secondary != nil {
-		expectedUnique = expectedIndex.Secondary.Unique
-	}
-	actualUnique := false
-	if actualIndex.Secondary != nil {
-		actualUnique = actualIndex.Secondary.Unique
-	}
-	assert.Equal(t, expectedUnique, actualUnique, "index unique mismatch")
+	assert.Equal(t, expectedIndex.Unique, actualIndex.Unique, "index unique mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))

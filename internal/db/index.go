@@ -145,15 +145,13 @@ func buildIndexBase(
 
 // wrapCollectionIndex returns the concrete index implementation for the base, dispatched by kind.
 func wrapCollectionIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
-	switch base.desc.Kind() {
-	case client.IndexKindVector:
+	if base.desc.IsVector() {
 		return newCollectionVectorIndex(base)
-	default:
-		if base.desc.Secondary.Unique {
-			return &collectionUniqueIndex{collectionBaseIndex: base}, nil
-		}
-		return &collectionSimpleIndex{collectionBaseIndex: base}, nil
 	}
+	if base.desc.Unique {
+		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
+	}
+	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
 }
 
 // FieldIndexGenerator generates index entries for a single field
