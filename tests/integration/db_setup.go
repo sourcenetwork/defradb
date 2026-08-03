@@ -187,7 +187,7 @@ func newNodeState(s *state.State, c clients.Client, path string, isExternal bool
 		IsExternal: isExternal,
 	}
 
-	addresses, err := discoverPeerAddresses(s, c)
+	addresses, err := discoverPeerAddresses(s, c, isExternal)
 	if err != nil {
 		return nil, err
 	}
@@ -199,18 +199,20 @@ func newNodeState(s *state.State, c clients.Client, path string, isExternal bool
 // discoverPeerAddresses reads the node's listen addresses via PeerInfo and
 // strips the trailing /p2p/<peerID> so they can be reused as listen addresses
 // on restart.
-func discoverPeerAddresses(s *state.State, c clients.Client) ([]string, error) {
+func discoverPeerAddresses(s *state.State, c clients.Client, isExternal bool) ([]string, error) {
 	// Inject node identity so PeerInfo works when NAC is enabled.
 	//
-	// Only attach it when the token is non-empty. This runs before the node is on
-	// s.Nodes, so no audience exists yet and no bearer token is generated. An empty
-	// "Bearer " header is ignored by a current node but rejected by some older
-	// released servers.
+	// This runs before the node is on s.Nodes, so no audience exists yet and no
+	// bearer token is generated. A native node needs the identity regardless. An
+	// empty "Bearer " header is ignored by a current node but rejected by some
+	// older released servers, so for an external node we skip it when the token
+	// is empty.
 	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
 	peerInfoOpts := options.PeerInfo()
 	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
 	if identOption.HasValue() {
-		if tokenIdent, ok := identOption.Value().(acpIdentity.TokenIdentity); !ok || tokenIdent.BearerToken() != "" {
+		tokenIdent, ok := identOption.Value().(acpIdentity.TokenIdentity)
+		if !isExternal || !ok || tokenIdent.BearerToken() != "" {
 			peerInfoOpts.SetIdentity(identOption.Value())
 		}
 	}

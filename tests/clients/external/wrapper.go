@@ -84,6 +84,11 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 	var lastErr error
 	for range startAttempts {
 		if err := ctx.Err(); err != nil {
+			// Prefer the last attempt's error, which carries the child's
+			// stderr; fall back to the bare ctx error before any attempt.
+			if lastErr != nil {
+				return nil, lastErr
+			}
 			return nil, err
 		}
 		w, err := startWrapper(ctx, t, binaryPath)
