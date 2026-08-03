@@ -79,9 +79,8 @@ func reachableFrom(roots []reflect.Type) []reflect.Type {
 		if hasIPLDSchema(t) {
 			return
 		}
-		// Only struct fields are walked. A named type carried by an interface
-		// method is not reached here; today no wire interface method carries one.
-		if t.Kind() == reflect.Struct {
+		switch t.Kind() {
+		case reflect.Struct:
 			for i := range t.NumField() {
 				// Only exported fields are encoded, so only they are part of the
 				// wire shape. Skipping the rest also avoids descending into a
@@ -90,6 +89,13 @@ func reachableFrom(roots []reflect.Type) []reflect.Type {
 					visit(f.Type)
 				}
 			}
+		case reflect.Slice, reflect.Array, reflect.Pointer:
+			// A named container (type Items []Item) still carries its element's
+			// shape on the wire, so descend to record that element type.
+			visit(t.Elem())
+		case reflect.Map:
+			visit(t.Key())
+			visit(t.Elem())
 		}
 	}
 	for _, t := range roots {
@@ -115,21 +121,8 @@ func writeType(b *strings.Builder, t reflect.Type) {
 	}
 	switch t.Kind() {
 	case reflect.Struct:
-		fmt.Fprintf(b, "%s struct\n", typePath(t))
-		for i := range t.NumField() {
-			f := t.Field(i)
-			if !f.IsExported() {
-				continue
-			}
-			key, opts, skip := cborField(f)
-			if skip {
-				continue
-			}
-			// The encoded key, not the Go field name, is the wire contract: the
-			// encoder honors a cbor or json tag. Options (omitempty, toarray,
-			// keyasint) are recorded too since they change the encoding.
-			fmt.Fprintf(b, "\t%s %s%s\n", key, typeName(f.Type), opts)
-		}
+		fmt.Fprintf(b, "%s struct%s\n", typePath(t), structOptions(t))
+		writeStructFields(b, t)
 	case reflect.Interface:
 		fmt.Fprintf(b, "%s interface\n", typePath(t))
 		for _, m := range sortedMethods(t) {
@@ -167,6 +160,61 @@ func ipldSchema(t reflect.Type) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// writeStructFields renders a struct's exported fields as wire lines. An
+// embedded struct with no renaming tag is flattened by the encoder, so its own
+// fields are rendered inline rather than as a nested field.
+func writeStructFields(b *strings.Builder, t reflect.Type) {
+	for i := range t.NumField() {
+		f := t.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		key, opts, skip := cborField(f)
+		if skip {
+			continue
+		}
+		if f.Anonymous && opts == "" && !hasNameTag(f) && derefType(f.Type).Kind() == reflect.Struct {
+			writeStructFields(b, derefType(f.Type))
+			continue
+		}
+		// The encoded key, not the Go field name, is the wire contract: the encoder
+		// honors a cbor or json tag. Options (omitempty, keyasint) are recorded too
+		// since they change the encoding.
+		fmt.Fprintf(b, "\t%s %s%s\n", key, typeName(f.Type), opts)
+	}
+}
+
+// structOptions returns a struct-level encoding marker (e.g. toarray) declared by
+// a blank field tag, or empty. Such a field flips the whole struct between map
+// and positional-array encoding, so it is part of the wire shape.
+func structOptions(t reflect.Type) string {
+	if t.Kind() != reflect.Struct {
+		return ""
+	}
+	for i := range t.NumField() {
+		f := t.Field(i)
+		if f.Name != "_" {
+			continue
+		}
+		if _, rest, _ := strings.Cut(f.Tag.Get("cbor"), ","); rest != "" {
+			return " [" + rest + "]"
+		}
+	}
+	return ""
+}
+
+// hasNameTag reports whether a field's cbor or json tag renames it (a leading
+// name before any comma). An embedded field with such a tag is nested, not
+// flattened.
+func hasNameTag(f reflect.StructField) bool {
+	tag := f.Tag.Get("cbor")
+	if tag == "" {
+		tag = f.Tag.Get("json")
+	}
+	name, _, _ := strings.Cut(tag, ",")
+	return name != "" && name != "-"
 }
 
 // collapseUnquoted trims a line and collapses runs of whitespace to a single

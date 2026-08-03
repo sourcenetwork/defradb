@@ -17,7 +17,7 @@ import (
 
 // The IPLD blocks exchanged between nodes are wire types. Their shape is the IPLD
 // schema each one declares, not the Go struct, so the snapshot records that
-// schema. Registering them here puts them under the same drift check as the CBOR
+// schema. Registering them here puts them under the same wire changes check as the CBOR
 // message types.
 func init() {
 	wire.Register[Block]()

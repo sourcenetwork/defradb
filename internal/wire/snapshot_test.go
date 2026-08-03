@@ -74,11 +74,42 @@ type twoRefs struct {
 type tagged struct {
 	Renamed  string `cbor:"wire_name"`
 	FromJSON string `json:"json_name"`
+	Both     string `cbor:"cbor_wins" json:"json_loses"` // cbor tag takes precedence
 	Opt      string `cbor:"opt,omitempty"`
 	Skipped  string `cbor:"-"`
 	DashName string `cbor:"-,omitempty"` // literal key "-", not skipped
 	Plain    string
 }
+
+// embedder embeds Meta with no tag: CBOR flattens Meta's fields into it. The
+// nested variant instead nests because the cbor tag renames the embed.
+type Meta struct {
+	M1 string
+	M2 string
+}
+
+type embedder struct {
+	Meta
+	Own string
+}
+
+type nestedEmbedder struct {
+	Meta `cbor:"meta"`
+	Own  string
+}
+
+// arrayEncoded flips to positional-array encoding via a blank toarray marker.
+type arrayEncoded struct {
+	_ struct{} `cbor:",toarray"`
+	X string
+	Y string
+}
+
+// namedElem is a named container whose element is a struct; the element's fields
+// must still be recorded.
+type namedElem []elem
+type elem struct{ Value string }
+type holdsNamedElem struct{ E namedElem }
 
 // namedList is a named container: a change to its element type must still show.
 type namedList [][]byte
@@ -186,11 +217,42 @@ func TestSnapshot_EncoderTags(t *testing.T) {
 	out := snap(reflect.TypeFor[tagged]())
 	assert.Contains(t, out, "wire_name string")
 	assert.Contains(t, out, "json_name string")
+	assert.Contains(t, out, "cbor_wins string", "cbor tag wins over json when both are present")
+	assert.NotContains(t, out, "json_loses", "the json tag must not win over the cbor tag")
 	assert.Contains(t, out, "opt string [omitempty]")
 	assert.Contains(t, out, "Plain string")
 	assert.Contains(t, out, "- string [omitempty]", `"-,omitempty" is a literal key, not a skip`)
 	assert.NotContains(t, out, "Renamed", "the Go name must not appear once tagged")
 	assert.NotContains(t, out, "Skipped", "a - tag drops the field")
+}
+
+// TestSnapshot_EmbeddedFlatten renders an untagged embedded struct's fields
+// inline (as CBOR flattens them), but a tag-renamed embed as a nested field, so
+// switching between the two is detected.
+func TestSnapshot_EmbeddedFlatten(t *testing.T) {
+	flat := snap(reflect.TypeFor[embedder]())
+	assert.Contains(t, flat, "M1 string")
+	assert.Contains(t, flat, "M2 string")
+	assert.Contains(t, flat, "Own string")
+
+	nested := snap(reflect.TypeFor[nestedEmbedder]())
+	assert.Contains(t, nested, "meta "+typePath(reflect.TypeFor[Meta]()),
+		"a tag-renamed embed is a nested field, not flattened")
+}
+
+// TestSnapshot_ToArray records a struct-level toarray marker even though it lives
+// on an unexported blank field, since it changes map vs array encoding.
+func TestSnapshot_ToArray(t *testing.T) {
+	out := snap(reflect.TypeFor[arrayEncoded]())
+	assert.Contains(t, out, "struct [toarray]")
+}
+
+// TestSnapshot_NamedContainerElement records the fields of a struct reached only
+// through a named container, so a change to that element is detected.
+func TestSnapshot_NamedContainerElement(t *testing.T) {
+	out := snap(reflect.TypeFor[holdsNamedElem]())
+	assert.Contains(t, out, typePath(reflect.TypeFor[elem]())+" struct")
+	assert.Contains(t, out, "Value string")
 }
 
 // TestSnapshot_NamedContainer renders a named container's underlying shape, so a

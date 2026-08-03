@@ -116,15 +116,35 @@ github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData struct
 	Signature []uint8 [omitempty]
 	ErrMessage string [omitempty]
 github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityRequest struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	PeerID string
 github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityResponse struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	IdentityToken []uint8
 github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogReply struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogRequest struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	DocID string
 	CID []uint8
 	CollectionID string
@@ -141,16 +161,36 @@ github.com/sourcenetwork/defradb/internal/kms.fetchEncryptionKeyRequest struct
 	EphemeralPublicKey []uint8
 	RequestID []uint8
 github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsReply struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsRequest struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	CollectionID string
 	Artifacts []github.com/sourcenetwork/defradb/internal/se.SEArtifact
 github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsReply struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	DocIDs []string
 github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsRequest struct
-	MetaData github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
 	CollectionID string
 	Queries []github.com/sourcenetwork/defradb/internal/se.SEFieldQuery
 github.com/sourcenetwork/defradb/internal/se.SEArtifact struct
