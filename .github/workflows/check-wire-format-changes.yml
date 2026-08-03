@@ -8,13 +8,15 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Check Wire Format Drift Workflow
+name: Check Wire Format Changes Workflow
 
 # Pull requests only: this checks that a wire format change carries a note, which
 # is a change-versus-base concern. Golden freshness (the snapshot matches the
-# code) is covered by the normal test suite on every push.
+# code) is covered by the normal test suite on every push. edited is included so
+# the check reruns when a PR is retargeted to a different base branch.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches:
       - master
       - develop
@@ -31,8 +33,8 @@ permissions:
   contents: read
 
 jobs:
-  check-wire-format-drift:
-    name: Check wire format drift job
+  check-wire-format-changes:
+    name: Check wire format changes job
 
     runs-on: ubuntu-latest
 
@@ -50,7 +52,7 @@ jobs:
       # docs/wire_format_changes. The test checks for the note against the base
       # branch, so full history is needed (fetch-depth: 0 above). On a PR, diff
       # against the actual target branch; otherwise the test falls back to develop.
-      - name: Run wire format drift detection
+      - name: Run wire format changes detection
         env:
           DEFRA_CHANGE_DETECTOR_SOURCE_BRANCH: ${{ github.base_ref || 'develop' }}
         run: make test:wire-snapshot
