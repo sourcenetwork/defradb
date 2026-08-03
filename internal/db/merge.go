@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"sync/atomic"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -74,6 +75,36 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	return nil
 }
 
+// mergeInstr accumulates counters for diagnosing the pushlog merge cost: the
+// batch size passed to MergeBatchWithTxn and, per document, whether the merge
+// did work or was a no-op because the block was already merged. A snapshot is
+// logged every logMergeInstrEvery batches. Temporary diagnostic.
+var mergeInstr struct {
+	batches    atomic.Int64
+	maxN       atomic.Int64
+	productive atomic.Int64
+	noop       atomic.Int64
+}
+
+const logMergeInstrEvery = 200
+
+func recordMergeBatch(n int) {
+	for {
+		cur := mergeInstr.maxN.Load()
+		if int64(n) <= cur || mergeInstr.maxN.CompareAndSwap(cur, int64(n)) {
+			break
+		}
+	}
+	if mergeInstr.batches.Add(1)%logMergeInstrEvery == 0 {
+		log.Info("merge instrumentation",
+			corelog.Int64("batches", mergeInstr.batches.Load()),
+			corelog.Int64("max_N", mergeInstr.maxN.Load()),
+			corelog.Int64("productive", mergeInstr.productive.Load()),
+			corelog.Int64("noop", mergeInstr.noop.Load()),
+		)
+	}
+}
+
 // MergeBatchWithTxn merges multiple events in a single shared transaction.
 // All per-key locks are acquired upfront and held for the lifetime of the call.
 // On transaction conflict the entire batch is retried, so callers should ensure
@@ -82,6 +113,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
 	if len(merges) == 0 {
 		return nil
 	}
+	recordMergeBatch(len(merges))
 
 	type mergeEntry struct {
 		evt event.Merge
@@ -233,6 +265,12 @@ func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Me
 
 	if err = mp.mergeComposites(ctx); err != nil {
 		return NewErrMergeComposites(err, dagMerge.DocID)
+	}
+
+	if len(mp.docIDs) == 0 {
+		mergeInstr.noop.Add(1)
+	} else {
+		mergeInstr.productive.Add(1)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
