@@ -206,7 +206,7 @@ func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 		return docShortID, nil
 	}
 
-	docShortID, err = id.NextDocShortID(ctx)
+	docShortID, err = mp.db.reserveDocShortID(ctx)
 	if err != nil {
 		return 0, err
 	}

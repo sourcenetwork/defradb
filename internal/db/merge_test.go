@@ -12,6 +12,8 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -92,6 +94,58 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	}
 
 	require.Equal(t, expectedDocMap, docMap)
+}
+
+func TestMerge_ConcurrentNewDocuments(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	const docCount = 24
+	events := make([]event.Merge, docCount)
+	docIDs := make([]client.DocID, docCount)
+	for i := range docCount {
+		state := map[string]any{"name": fmt.Sprintf("user-%d", i), "age": i}
+		builder, _ := newDagBuilder(ctx, col, state)
+		composite, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+		require.NoError(t, err)
+		docIDs[i] = client.NewDocIDV0(composite.link.Cid)
+		events[i] = event.Merge{
+			DocID:        docIDs[i].String(),
+			Cid:          composite.link.Cid,
+			CollectionID: col.CollectionID(),
+		}
+	}
+
+	start := make(chan struct{})
+	errs := make(chan error, docCount)
+	var group sync.WaitGroup
+	for _, mergeEvent := range events {
+		group.Go(func() {
+			<-start
+			errs <- db.Merge(ctx, mergeEvent)
+		})
+	}
+	close(start)
+	group.Wait()
+	close(errs)
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	for _, docID := range docIDs {
+		_, err := col.GetDocument(ctx, docID)
+		require.NoError(t, err)
+	}
 }
 
 func TestMerge_ZeroMaxRetriesStillAttempts(t *testing.T) {

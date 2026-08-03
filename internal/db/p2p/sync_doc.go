@@ -256,7 +256,7 @@ func (p *P2P) syncDocumentAndMerge(
 		CollectionID: collectionID,
 	}
 
-	return p.merge(ctx, evt)
+	return p.db.Merge(ctx, evt)
 }
 
 // syncDocumentDAG synchronizes the DAG for a specific document CID.
