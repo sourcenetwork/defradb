@@ -1,0 +1,65 @@
+# Copyright 2026 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Build and Test Java Client
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-test-java-client:
+    name: Build defradb.jar and run integration tests against the Java client
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Clones defradb-java-sdk into .javaclient/, builds libdefradb.so from this checkout, compiles
+      # nativewrapper.c against it into libnativewrapper.so, and packages both plus the Java sources
+      # into build/libs/defradb.jar. See tools/scripts/build-java-client.sh for details.
+      - name: Build defradb.jar
+        run: |
+          chmod +x tools/scripts/build-java-client.sh
+          make build-java-client
+
+      # DEFRA_JAVA_JAR is left unset - it defaults to the exact jar path the previous step just
+      # produced (see defaultJarPath in tests/clients/java/jvm.go). CGO_CFLAGS must be set here
+      # (not in the job/step env:) since $JAVA_HOME isn't resolved until setup-java has run.
+      - name: Run integration tests against the Java client
+        env:
+          DEFRA_CLIENT_JAVA: "true"
+        run: |
+          export CGO_CFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
+          go test -tags javaclient ./tests/integration/... 2>&1 | grep -v "for signal chaining was deprecated"
