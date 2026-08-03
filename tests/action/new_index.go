@@ -85,19 +85,18 @@ func (a *NewIndex) Execute() {
 		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
-		var err error
-		var txn client.Txn
-		var collections []client.Collection
+		txnOption := immutable.None[client.Txn]()
 		if a.TransactionID.HasValue() {
-			txn, err = a.s.GetTransaction(node, a.TransactionID)
+			txn, err := a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-			collections, err = txn.GetCollections(a.s.Ctx, options.GetCollections())
-		} else {
-			collections, err = node.GetCollections(a.s.Ctx, options.GetCollections())
+			txnOption = immutable.Some(txn)
 		}
 
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
-			return
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
 		}
 
 		collection := collections[a.CollectionID]
@@ -132,9 +131,7 @@ func (a *NewIndex) Execute() {
 		desc, err := collection.NewIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
-		if expectedErrorRaised {
-			return
-		}
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the building window, wait for the build so a following
 		// query sees a built index. With an explicit transaction the record is not committed until
@@ -143,8 +140,6 @@ func (a *NewIndex) Execute() {
 			waitForIndexBuilt(a.s, collection, desc.ID, listIndexesOptions(a.s, node))
 		}
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, false)
 }
 
 // indexBuildTimeout bounds the wait for a background build or drop to finish. The poll returns as
