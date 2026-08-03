@@ -2051,6 +2051,9 @@ func (w *Wrapper) Disconnect(
 	addresses []string,
 	opts ...options.Enumerable[options.DisconnectOptions],
 ) error {
+	if len(addresses) == 0 {
+		return fmt.Errorf("addresses cannot be empty")
+	}
 	opt := utils.NewOptions(opts...)
 	identityDID := identityDIDFromOption(opt.GetIdentity())
 
