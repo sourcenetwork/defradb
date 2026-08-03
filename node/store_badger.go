@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 func init() {
@@ -81,17 +82,28 @@ const (
 	// valueLogGCDiscardRatio is the fraction of a value log file that must be
 	// reclaimable before badger rewrites it.
 	valueLogGCDiscardRatio = 0.1
+
+	// orphanBlockGCInterval is how often the orphan block sweep runs.
+	orphanBlockGCInterval = 5 * time.Minute
+	// orphanBlockTTL is how long a fetched-but-unmerged block is kept before the
+	// sweep reclaims it. A merge clears the marker atomically, so this only needs to
+	// outlast an in-flight merge; anything older is an abandoned fetch.
+	orphanBlockTTL = 30 * time.Minute
+	// orphanBlockGCScanLimit bounds how many markers the sweep examines per run, so a
+	// large backlog is worked down over several runs rather than one long pass.
+	orphanBlockGCScanLimit = 100_000
 )
 
-// badgerStore wraps a persistent badger datastore and periodically runs value log
-// GC. Badger does not reclaim the value log space of deleted or overwritten
-// entries on its own, so the GC keeps the on-disk store bounded.
+// badgerStore wraps a persistent badger datastore and runs its periodic background
+// maintenance: value log GC, which reclaims the space of deleted or overwritten
+// entries badger does not reclaim on its own, and an orphan block sweep, which
+// deletes blocks fetched during sync whose merge never completed.
 type badgerStore struct {
 	*badger.Datastore
 
 	db       *badgerds.DB
 	stop     chan struct{}
-	done     chan struct{}
+	wg       sync.WaitGroup
 	stopOnce sync.Once
 }
 
@@ -109,24 +121,25 @@ func newBadgerStore(path string, opts badgerds.Options) (*badgerStore, error) {
 		Datastore: badger.NewDatastoreFrom(db),
 		db:        db,
 		stop:      make(chan struct{}),
-		done:      make(chan struct{}),
 	}
+	store.wg.Add(2)
 	go store.runValueLogGC()
+	go store.runOrphanBlockGC()
 	return store, nil
 }
 
-// Close stops value log GC and closes the underlying store.
+// Close stops the background maintenance and closes the underlying store.
 func (s *badgerStore) Close() error {
 	s.stopOnce.Do(func() {
 		close(s.stop)
-		<-s.done
+		s.wg.Wait()
 	})
 	return s.Datastore.Close()
 }
 
 // runValueLogGC reclaims value log space on a fixed interval until the store closes.
 func (s *badgerStore) runValueLogGC() {
-	defer close(s.done)
+	defer s.wg.Done()
 
 	ticker := time.NewTicker(valueLogGCInterval)
 	defer ticker.Stop()
@@ -167,4 +180,45 @@ func (s *badgerStore) reclaimValueLog() {
 			corelog.Int("files", reclaimed),
 			corelog.Duration("duration", time.Since(start)))
 	}
+}
+
+// runOrphanBlockGC sweeps the blockstore for orphaned blocks on a fixed interval
+// until the store closes. It carries a cursor across runs so the whole marker index
+// is worked through over time, restarting from the beginning after each full pass.
+func (s *badgerStore) runOrphanBlockGC() {
+	defer s.wg.Done()
+
+	ticker := time.NewTicker(orphanBlockGCInterval)
+	defer ticker.Stop()
+
+	var cursor []byte
+	for {
+		select {
+		case <-s.stop:
+			return
+		case <-ticker.C:
+			cursor = s.reclaimOrphanBlocks(cursor)
+		}
+	}
+}
+
+// reclaimOrphanBlocks runs one sweep step from cursor and returns the cursor to
+// resume from. On error it logs and returns nil, restarting from the beginning next
+// run.
+func (s *badgerStore) reclaimOrphanBlocks(cursor []byte) []byte {
+	start := time.Now()
+	cutoff := start.Add(-orphanBlockTTL)
+	next, reclaimed, scanned, err := datastore.ReclaimOrphanBlocks(
+		context.Background(), s, cutoff, cursor, orphanBlockGCScanLimit)
+	if err != nil {
+		log.ErrorE("Orphan block sweep failed", err)
+		return nil
+	}
+	if scanned > 0 {
+		log.Info("Swept orphan blocks",
+			corelog.Int("reclaimed", reclaimed),
+			corelog.Int("scanned", scanned),
+			corelog.Duration("duration", time.Since(start)))
+	}
+	return next
 }

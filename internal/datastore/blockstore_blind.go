@@ -12,6 +12,7 @@ package datastore
 
 import (
 	"context"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 
@@ -36,7 +37,7 @@ func BlindWriteP2PBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immuta
 }
 
 func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) error {
-	if err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker}); err != nil {
+	if err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), newToMergeValue(time.Now())); err != nil {
 		return NewErrStoreBlock(err)
 	}
 	if err := bs.store.Set(ctx, block.Cid().Bytes(), block.RawData()); err != nil {
@@ -47,7 +48,7 @@ func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) err
 
 func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blks []blocks.Block) error {
 	for _, b := range blks {
-		if err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker}); err != nil {
+		if err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), newToMergeValue(time.Now())); err != nil {
 			return NewErrStoreBlock(err)
 		}
 		if err := bs.store.Set(ctx, b.Cid().Bytes(), b.RawData()); err != nil {

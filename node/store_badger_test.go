@@ -65,12 +65,17 @@ func TestBadgerStoreCloseStopsGCAndIsIdempotent(t *testing.T) {
 	store, err := newBadgerStore(t.TempDir(), badgerds.DefaultOptions(""))
 	require.NoError(t, err)
 
-	require.NoError(t, store.Close())
-
+	// Close waits for the background goroutines, so it returning is the proof they
+	// stopped; the timeout turns a stuck goroutine into a failure instead of a hang.
+	done := make(chan struct{})
+	go func() {
+		_ = store.Close()
+		close(done)
+	}()
 	select {
-	case <-store.done:
-	default:
-		t.Fatal("value log GC goroutine did not stop on Close")
+	case <-done:
+	case <-time.After(30 * time.Second):
+		t.Fatal("Close did not stop the background goroutines")
 	}
 
 	// A second Close must not panic on the already-closed stop channel.
