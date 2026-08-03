@@ -116,6 +116,13 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not make a new index for a collection that has a policy.
+	//
+	// The index is built in the background: this returns once the index is recorded, before existing
+	// documents are indexed. The index starts in a "building" state and becomes "ready" once the
+	// backfill completes, or "failed" if it cannot. While building, queries that would use it instead
+	// full-scan and still return correct results. A build failure is therefore not returned here;
+	// check the index's status via ListIndexes to learn the outcome. A failed index must be deleted
+	// before it can be recreated.
 	NewIndex(
 		context.Context,
 		NewIndexRequest,
@@ -123,6 +130,9 @@ type Collection interface {
 	) (IndexDescription, error)
 
 	// DeleteIndex deletes an index from the collection.
+	//
+	// The index's entries are removed in the background: this returns once the deletion is recorded,
+	// before all entries are removed. The index stops being used for queries immediately.
 	DeleteIndex(
 		ctx context.Context,
 		indexName string,
@@ -130,6 +140,8 @@ type Collection interface {
 	) error
 
 	// ListIndexes returns all the indexes that exist on the collection.
+	// Each result's Execution reports the index's build status (building, ready, or failed),
+	// which is how the outcome of an asynchronous NewIndex is observed.
 	ListIndexes(
 		ctx context.Context,
 		opts ...options.Enumerable[options.ListCollectionIndexesOptions],

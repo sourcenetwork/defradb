@@ -181,6 +181,41 @@ func TestIndexList_WithEmptyDatabase_ShouldReturnEmptyMap(t *testing.T) {
 	test.Execute(t)
 }
 
+func TestIndexList_WithCollectionFlag_ShouldReportCollectionName(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.AddCollection{
+				InlineSDL: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.NewIndex{
+				Collection: "User",
+				Name:       "UsersByName",
+				Fields:     []string{"name"},
+			},
+			&action.ListIndexes{
+				Collection: "User",
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "UsersByName",
+						Fields: []client.IndexedFieldDescription{
+							{Name: "name", Descending: false},
+						},
+						Unique: false,
+					},
+				},
+				ExpectedCollectionName: "User",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
 func TestIndexList_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{

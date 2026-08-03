@@ -486,7 +486,7 @@ func (c *collection) save(
 		doc.Clean()
 	})
 
-	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+	collectionShortID, err := c.collectionShortID(ctx)
 	if err != nil {
 		return err
 	}
@@ -651,7 +651,7 @@ func (c *collection) save(
 	})
 
 	if c.def.IsBranchable {
-		collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+		collectionShortID, err := c.collectionShortID(ctx)
 		if err != nil {
 			return err
 		}
@@ -836,7 +836,7 @@ func (c *collection) getPrimaryKeyFromDocIDString(
 	ctx context.Context,
 	docID string,
 ) (keys.PrimaryDataStoreKey, error) {
-	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+	collectionShortID, err := c.collectionShortID(ctx)
 	if err != nil {
 		return keys.PrimaryDataStoreKey{}, NewErrGetCollectionShortIDForDoc(err, c.Version().CollectionID)
 	}
