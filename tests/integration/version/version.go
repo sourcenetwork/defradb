@@ -39,6 +39,12 @@ const (
 	// cacheDirName is the subdirectory of the user cache dir that downloaded
 	// binaries are stored under.
 	cacheDirName = "defradb-crossversion"
+
+	// osWindows is the GOOS value that needs a .exe asset suffix.
+	osWindows = "windows"
+
+	// archARM64 is the GOARCH value whose release-asset arch name matches it.
+	archARM64 = "arm64"
 )
 
 // releaseBaseURL is the base URL that release assets are downloaded from.
@@ -147,7 +153,7 @@ func (p *Provider) BinaryPath(ctx context.Context, version string) (path string,
 func assetName(version, goos, goarch string) (name string, ok bool) {
 	var osName string
 	switch goos {
-	case "linux", "darwin", "windows":
+	case "linux", "darwin", osWindows:
 		osName = goos
 	default:
 		return "", false
@@ -157,15 +163,15 @@ func assetName(version, goos, goarch string) (name string, ok bool) {
 	switch goarch {
 	case "amd64":
 		archName = "x86_64"
-	case "arm64":
-		archName = "arm64"
+	case archARM64:
+		archName = archARM64
 	default:
 		return "", false
 	}
 
 	ver := strings.TrimPrefix(version, "v")
 	name = fmt.Sprintf("defradb_%s_%s_%s", ver, osName, archName)
-	if goos == "windows" {
+	if goos == osWindows {
 		name += ".exe"
 	}
 	return name, true

@@ -199,11 +199,14 @@ func freePort() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	port := l.Addr().(*net.TCPAddr).Port
+	addr, ok := l.Addr().(*net.TCPAddr)
+	if !ok {
+		return 0, errors.Join(errors.New("listener address is not TCP"), l.Close())
+	}
 	if err := l.Close(); err != nil {
 		return 0, err
 	}
-	return port, nil
+	return addr.Port, nil
 }
 
 // streamLogs starts a goroutine that copies lines from r to both t.Log (with
@@ -250,12 +253,11 @@ func (w *Wrapper) Host() string {
 }
 
 // Close kills the child process, waits for it to exit, and removes its
-// rootdir. Errors are logged rather than returned, since Close cannot fail.
+// rootdir. Errors are ignored, since Close cannot fail and these are
+// best-effort cleanups of a process being killed and a temp dir.
 func (w *Wrapper) Close() {
 	if w.cmd.Process != nil {
-		if err := w.cmd.Process.Kill(); err != nil {
-			fmt.Printf("external.Wrapper.Close: failed to kill process: %v\n", err)
-		}
+		_ = w.cmd.Process.Kill()
 	}
 	// Wait's error is expected here since the process was just killed above.
 	_ = w.cmd.Wait()
@@ -263,9 +265,7 @@ func (w *Wrapper) Close() {
 	// goroutines may still be draining them; wait before returning to avoid
 	// a t.Log call racing past the end of the test.
 	w.logWG.Wait()
-	if err := os.RemoveAll(w.rootDir); err != nil {
-		fmt.Printf("external.Wrapper.Close: failed to remove rootdir: %v\n", err)
-	}
+	_ = os.RemoveAll(w.rootDir)
 	w.bus.Close()
 }
 

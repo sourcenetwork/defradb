@@ -131,7 +131,7 @@ func TestHttpDownload_BodyCopyFailure_CleansUpTempFile(t *testing.T) {
 		require.True(t, ok)
 		conn, _, err := hj.Hijack()
 		require.NoError(t, err)
-		conn.Close() //nolint:errcheck
+		_ = conn.Close()
 	}))
 	defer server.Close()
 	withReleaseBaseURL(t, server)
