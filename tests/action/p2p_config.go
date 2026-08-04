@@ -11,7 +11,7 @@
 
 //go:build !js
 
-package tests
+package action
 
 import (
 	"net"
@@ -19,8 +19,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func RandomNetworkingConfig() NodeConfig {
-	return NodeConfig{
+func RandomNetworkingConfig() *NodeConfig {
+	return &NodeConfig{
 		Network: func() options.NodeP2POptions {
 			return options.NodeP2POptions{
 				ListenAddresses:           []string{"/ip4/" + getIPString() + "/tcp/0"},
@@ -55,10 +55,10 @@ func getIPString() string {
 	return localAddr.IP.String()
 }
 
-func withPrivateKey(p2pOpts *options.NodeP2POptions, key []byte) {
+func WithPrivateKey(p2pOpts *options.NodeP2POptions, key []byte) {
 	p2pOpts.PrivateKey = key
 }
 
-func withListenAddresses(p2pOpts *options.NodeP2POptions, addresses ...string) {
+func WithListenAddresses(p2pOpts *options.NodeP2POptions, addresses ...string) {
 	p2pOpts.ListenAddresses = addresses
 }

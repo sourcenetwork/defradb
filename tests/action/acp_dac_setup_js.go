@@ -9,13 +9,14 @@
 //
 // See tests/LICENSE for details.
 
-package tests
+package action
 
 import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func setupSourceHub(s *state.State) (*options.NodeDocumentACPOptions, error) {
+// isDocumentACPTest is unused: the js build has no SourceHub container to gate on.
+func setupSourceHub(s *state.State, isDocumentACPTest bool) (*options.NodeDocumentACPOptions, error) {
 	return s.DocumentACPOptions, nil
 }

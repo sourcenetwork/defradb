@@ -39,7 +39,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -85,9 +84,6 @@ var (
 const (
 	// subscriptionTimeout is the maximum time to wait for subscription results to be returned.
 	subscriptionTimeout = 1 * time.Second
-	// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
-	// so we explicitly set it to a low value.
-	lensPoolSize = 2
 )
 
 const testJSONFile = "/test.json"
@@ -178,16 +174,16 @@ func ExecuteTestCase(
 	}
 
 	var databases []state.DatabaseType
-	if badgerInMemory {
+	if action.BadgerInMemory {
 		databases = append(databases, BadgerIMType)
 	}
-	if badgerFile {
+	if action.BadgerFile {
 		databases = append(databases, BadgerFileType)
 	}
-	if inMemoryStore {
+	if action.InMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
-	if levelStore {
+	if action.LevelStore {
 		databases = append(databases, LevelStoreType)
 	}
 
@@ -226,7 +222,7 @@ func ExecuteTestCase(
 						kms,
 						dbt,
 						ct,
-						documentACPType,
+						action.DocumentACPType,
 					)
 				}
 
@@ -260,8 +256,8 @@ func executeTestCase(
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", state.ActiveMutationType),
-		corelog.String("databaseDir", databaseDir),
-		corelog.Bool("badgerEncryption", badgerEncryption),
+		corelog.String("databaseDir", action.DatabaseDir),
+		corelog.Bool("badgerEncryption", action.BadgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
@@ -360,10 +356,8 @@ func performAction(
 
 	switch action := act.(type) {
 	case action.Action:
+		// [action.NodeConfig] is an action, so node setup runs from here too.
 		action.Execute()
-
-	case NodeConfig:
-		configureNode(s, testCase, action)
 
 	case Restart:
 		restartNodes(s, testCase)
@@ -835,7 +829,7 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
 		switch a.(type) {
-		case NodeConfig:
+		case *action.NodeConfig:
 			nodeCount++
 		}
 	}
@@ -994,15 +988,19 @@ func actionTransactionID(a any) (int, bool) {
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `NodeConfig` action then no new
+// If a node(s) has been explicitly configured via a [action.NodeConfig] action then no new
 // nodes will be added.
 func setStartingNodes(
 	s *state.State,
 	testCase TestCase,
 ) {
-	for _, action := range testCase.Actions {
-		switch action.(type) {
-		case NodeConfig:
+	setupConfig := testCase.nodeSetupConfig()
+	for _, a := range testCase.Actions {
+		switch cfg := a.(type) {
+		case *action.NodeConfig:
+			// Node setup needs a few test-level settings that the action cannot
+			// reach on its own.
+			cfg.SetupConfig = setupConfig
 			s.IsNetworkEnabled = true
 		}
 	}
@@ -1010,12 +1008,12 @@ func setStartingNodes(
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
 		s.CurrentSetupNodeID = 0
-		nodeBuilder := defaultNodeOpts()
+		nodeBuilder := action.DefaultNodeOpts()
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		st, err := setupNode(
+		st, err := action.SetupNode(
 			s,
 			acpIdentity.None,
-			testCase,
+			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
 		)
@@ -1025,40 +1023,40 @@ func setStartingNodes(
 	}
 }
 
-func startNodes(s *state.State, testCase TestCase, action Start) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+func startNodes(s *state.State, testCase TestCase, start Start) {
+	nodeIDs, nodes := getNodesWithIDs(start.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for index := len(nodes) - 1; index >= 0; index-- {
 		nodeID := nodeIDs[index]
-		originalPath := databaseDir
-		databaseDir = s.Nodes[nodeID].DbPath
+		originalPath := action.DatabaseDir
+		action.DatabaseDir = s.Nodes[nodeID].DbPath
 
 		s.CurrentSetupNodeID = nodeID
 		p2pOpts := s.Nodes[nodeID].P2POpts
-		withListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
-		opts := defaultNodeOpts()
+		action.WithListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
+		opts := action.DefaultNodeOpts()
 		opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		opts.P2P().SetAll(p2pOpts)
-		opts.NodeACP().SetEnabled(action.EnableNAC)
-		node, err := setupNode(
+		opts.NodeACP().SetEnabled(start.EnableNAC)
+		node, err := action.SetupNode(
 			s,
-			getIdentityOption(s, action.Identity),
-			testCase,
+			getIdentityOption(s, start.Identity),
+			testCase.nodeSetupConfig(),
 			opts,
 			s.Nodes[nodeID].Version,
 		)
 
-		databaseDir = originalPath
+		action.DatabaseDir = originalPath
 
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, start.ExpectedError)
+		assertExpectedErrorRaised(s.T, start.ExpectedError, expectedErrorRaised)
 		if expectedErrorRaised {
 			// If we are testing for failure on start of a node, there will be panics if we don't return
 			// when there are errors, so we exit here to assert errors on start.
 			return
 		}
 
-		require.Equal(s.T, action.ExpectedError, "")
+		require.Equal(s.T, start.ExpectedError, "")
 		node.P2P = s.Nodes[nodeID].P2P
 		s.Nodes[nodeID] = node
 	}
@@ -1246,50 +1244,6 @@ func refreshCollections(
 			}
 		}
 	}
-}
-
-// configureNode configures and starts a new Defra node using the provided configuration.
-//
-// Any errors generated during configuration will result in a test failure.
-func configureNode(
-	s *state.State,
-	testCase TestCase,
-	cfg NodeConfig,
-) {
-	if changeDetector.Enabled {
-		// We do not yet support the change detector for tests running across multiple nodes.
-		s.T.SkipNow()
-		return
-	}
-
-	p2pOpts := cfg.P2POptions()
-	s.CurrentSetupNodeID = len(s.Nodes)
-
-	// Versioned nodes run in a separate process from a release binary that configures
-	// itself, so in-process options do not apply to them.
-	var opts *options.NodeOptionsBuilder
-	if cfg.Version == "" {
-		privateKey, err := crypto.GenerateEd25519()
-		require.NoError(s.T, err)
-		withPrivateKey(&p2pOpts, privateKey)
-
-		opts = defaultNodeOpts()
-		opts.DB().
-			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
-			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		opts.P2P().SetAll(p2pOpts)
-	}
-
-	node, err := setupNode(s, acpIdentity.None, testCase, opts, cfg.Version)
-	require.NoError(s.T, err)
-	if node == nil {
-		// setupNode already skipped the test (no release asset for this platform).
-		return
-	}
-
-	node.P2POpts = p2pOpts
-	node.Version = cfg.Version
-	s.Nodes = append(s.Nodes, node)
 }
 
 func refreshDocuments(
@@ -2339,14 +2293,14 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == documentACPType {
+			if supportedType == action.DocumentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
+			t.Skipf("test does not support given acp type. Type: %s", action.DocumentACPType)
 		}
 	}
 }
@@ -2382,7 +2336,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case NodeConfig:
+		case *action.NodeConfig:
 			hasNetworkAction = true
 		}
 	}

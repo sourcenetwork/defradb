@@ -11,7 +11,7 @@
 
 //go:build !js
 
-package tests
+package action
 
 import (
 	"context"
@@ -37,7 +37,7 @@ import (
 )
 
 func createBadgerEncryptionKey() error {
-	if !badgerEncryption {
+	if !BadgerEncryption {
 		return nil
 	}
 	encryptionKeyOnce.Do(func() {
@@ -57,10 +57,10 @@ func createBadgerEncryptionKey() error {
 // Note: If the signature of this function is updated, don't forget to
 // also update the function in [tests/integration/db_setup_js.go] otherwise
 // the js client build may fail (the failure might not be obvious to find).
-func setupNode(
+func SetupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
-	testCase TestCase,
+	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
 ) (*state.NodeState, error) {
@@ -69,11 +69,11 @@ func setupNode(
 	}
 
 	if opts == nil {
-		opts = defaultNodeOpts()
+		opts = DefaultNodeOpts()
 	}
-	opts.DB().SetEnableSigning(testCase.EnableSigning)
-	if testCase.HTTP.HasValue() {
-		applyHTTPOptions(opts, testCase.HTTP.Value())
+	opts.DB().SetEnableSigning(cfg.EnableSigning)
+	if cfg.HTTP.HasValue() {
+		applyHTTPOptions(opts, cfg.HTTP.Value())
 	}
 
 	if s.EnableSearchableEncryption {
@@ -88,7 +88,7 @@ func setupNode(
 	if err != nil {
 		return nil, err
 	}
-	if badgerEncryption && encryptionKey != nil {
+	if BadgerEncryption && encryptionKey != nil {
 		opts.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
@@ -98,7 +98,7 @@ func setupNode(
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
-			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
+			s.DocumentACPOptions, err = setupSourceHub(s, cfg.IsDocumentACPTest)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
@@ -109,9 +109,9 @@ func setupNode(
 
 	var path string
 	if s.DbType == BadgerFileType || s.DbType == LevelStoreType {
-		if databaseDir != "" {
+		if DatabaseDir != "" {
 			// restarting database
-			path = databaseDir
+			path = DatabaseDir
 		} else if changeDetector.Enabled {
 			// change detector
 			path = changeDetector.DatabaseDir(s.T)
