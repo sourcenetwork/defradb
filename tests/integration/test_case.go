@@ -121,7 +121,11 @@ type KMS struct {
 // the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
-// ConfigureNode allows the explicit configuration of new Defra nodes.
+// ConfigureNode returns the P2P options for a new Defra node.
+type ConfigureNode func() options.NodeP2POptions
+
+// NodeConfig allows the explicit configuration of new Defra nodes. The zero value
+// is a native, current-build node with default networking.
 //
 // If no nodes are explicitly configured, a default one will be setup.  There is no
 // upper limit to the number that can be configured.
@@ -129,24 +133,34 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() options.NodeP2POptions
-
-// NodeVersion configures a new node that runs as an external process from a
-// published release binary of the given version, instead of natively in-process.
-// It carries the same networking config a ConfigureNode would.
 //
-// Version is plain data (not a closure) so a future multiplier can rewrite it to
-// run existing tests against other versions.
+// Configuration is held as plain data wherever possible so a future multiplier can
+// rewrite it to run existing tests under other node configurations.
 //
-// This lives here beside ConfigureNode rather than in the tests/action package
-// because node creation is entangled with this package's setup path, which
-// tests/action cannot import. When ConfigureNode migrates to tests/action, this
-// should move with it.
-type NodeVersion struct {
-	// Version names a published release, e.g. "v1.0.0".
+// This lives here rather than in the tests/action package because node creation is
+// entangled with this package's setup path, which tests/action cannot import.
+type NodeConfig struct {
+	// Version, when set (e.g. "v1.0.0"), runs the node as an external process from
+	// that published release binary instead of natively in-process.
 	Version string
-	// Config supplies the same networking config as a ConfigureNode.
-	Config ConfigureNode
+	// Network returns the node's P2P options. Nil means default networking.
+	Network ConfigureNode
+}
+
+// P2POptions returns the configured P2P options, or the defaults if no networking
+// config was supplied.
+func (cfg NodeConfig) P2POptions() options.NodeP2POptions {
+	if cfg.Network == nil {
+		return options.NodeP2POptions{}
+	}
+	return cfg.Network()
+}
+
+// WithVersion returns a copy of the config that runs the node as an external process
+// from the given published release, e.g. "v1.0.0".
+func (cfg NodeConfig) WithVersion(version string) NodeConfig {
+	cfg.Version = version
+	return cfg
 }
 
 func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
