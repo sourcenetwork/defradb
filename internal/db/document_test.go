@@ -13,6 +13,8 @@ package db
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -88,6 +90,61 @@ func TestDocumentAdd_DerivesDocIDFromCompositeCID(t *testing.T) {
 	docID, err := c.getDocIDFromPrimaryKey(txnCtx, primaryKey)
 	require.NoError(t, err)
 	require.Equal(t, doc.ID().String(), docID)
+}
+
+func TestDocumentAdd_ConcurrentUsesUniqueShortIDs(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	const docCount = 24
+	docs := make([]*client.Document, docCount)
+	for i := range docCount {
+		docs[i], err = client.NewDocFromJSON(
+			ctx,
+			[]byte(fmt.Sprintf(`{"name":"user-%d","age":%d}`, i, i)),
+			col.Version(),
+		)
+		require.NoError(t, err)
+	}
+
+	start := make(chan struct{})
+	errs := make(chan error, docCount)
+	var group sync.WaitGroup
+	for _, doc := range docs {
+		group.Go(func() {
+			<-start
+			errs <- col.AddDocument(ctx, doc)
+		})
+	}
+	close(start)
+	group.Wait()
+	close(errs)
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	txn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	txnCtx := InitContext(ctx, txn)
+	collectionShortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	shortIDs := make(map[uint64]struct{}, docCount)
+	for _, doc := range docs {
+		docShortID, found, err := id.GetDocShortID(txnCtx, collectionShortID, doc.ID().String())
+		require.NoError(t, err)
+		require.True(t, found)
+		require.NotContains(t, shortIDs, docShortID)
+		shortIDs[docShortID] = struct{}{}
+	}
 }
 
 func TestUnsignedGenesisProducesEqualCIDAcrossNodes(t *testing.T) {
