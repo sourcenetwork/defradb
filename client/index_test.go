@@ -151,8 +151,9 @@ func TestIndexDescription_UniqueIndex_RoundTrips(t *testing.T) {
 	assert.Equal(t, original, actual)
 }
 
-// A descriptor persisted before vector indexes existed has only the top-level Unique and no Vector.
-// It must still load, so the new Vector field is a safe additive change.
+// A descriptor persisted before the Kind and Vector fields existed has only the top-level Unique. It
+// must still load, with Kind defaulting to the ordered (zero) value, so both fields are safe
+// additive changes.
 func TestIndexDescription_PreVectorDescriptor_StillLoads(t *testing.T) {
 	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
 
@@ -162,6 +163,7 @@ func TestIndexDescription_PreVectorDescriptor_StillLoads(t *testing.T) {
 
 	assert.True(t, actual.Unique)
 	assert.Nil(t, actual.Vector)
+	assert.Equal(t, IndexKindOrdered, actual.Kind)
 	assert.False(t, actual.IsVector())
 }
 
@@ -169,6 +171,7 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 	original := IndexDescription{
 		Name:   "some_vector_index",
 		ID:     2,
+		Kind:   IndexKindVector,
 		Fields: []IndexedFieldDescription{{Name: "embedding"}},
 		Vector: &VectorIndexDescription{
 			Algorithm:  VectorAlgorithmHNSW,

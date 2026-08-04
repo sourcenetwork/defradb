@@ -22,6 +22,22 @@ type IndexedFieldDescription struct {
 	Descending bool
 }
 
+// IndexKind identifies the kind of an index. It is the single authority on what kind an
+// [IndexDescription] is: it is a stored field, not derived from which sub-descriptor is set, so
+// there is no way for two sub-descriptors to disagree about the kind. The zero value is
+// [IndexKindOrdered], so a descriptor persisted before this field existed reads back as an
+// ordered index.
+type IndexKind uint8
+
+const (
+	// IndexKindOrdered identifies an ordered index: one that stores field values as order-preserving
+	// keys (the scalar/unique/JSON indexes). This is the zero value so that legacy descriptors, which
+	// predate the kind distinction, default to it.
+	IndexKindOrdered IndexKind = iota
+	// IndexKindVector identifies a vector (ANN) index.
+	IndexKindVector
+)
+
 // VectorAlgorithm identifies the algorithm used to build/search a vector index.
 type VectorAlgorithm uint8
 
@@ -84,6 +100,10 @@ type VectorIndexDescription struct {
 }
 
 // IndexDescription describes an index.
+//
+// Kind is the authority on the index kind. The kind-specific sub-descriptor (e.g. [Vector]) is set
+// alongside it, but Kind is what callers switch on, so adding a new kind cannot introduce an
+// ambiguous "two sub-descriptors set" state.
 type IndexDescription struct {
 	// Name contains the name of the index.
 	Name string
@@ -91,16 +111,18 @@ type IndexDescription struct {
 	ID uint32
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
-	// Unique indicates whether the index is unique.
+	// Kind is the kind of this index. It is the single authority on the kind; the zero value is
+	// [IndexKindOrdered], so descriptors persisted before this field existed read back as ordered.
+	Kind IndexKind
+	// Unique indicates whether the index is unique. It only applies to ordered indexes.
 	Unique bool
-	// Vector holds config specific to vector (ANN) indexes. It is nil for a normal (non-vector)
-	// index; a non-nil value marks this as a vector index.
+	// Vector holds config specific to vector (ANN) indexes. Non-nil when Kind is [IndexKindVector].
 	Vector *VectorIndexDescription
 }
 
 // IsVector returns true if this is a vector index.
 func (d IndexDescription) IsVector() bool {
-	return d.Vector != nil
+	return d.Kind == IndexKindVector
 }
 
 // NewIndexRequest describes an index creation request.

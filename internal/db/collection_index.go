@@ -496,10 +496,18 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	// Derive the stored Kind from the request intent here, at the one construction point, so every
+	// downstream reader can trust Kind as the authority rather than re-inferring it from Vector.
+	kind := client.IndexKindOrdered
+	if desc.Vector != nil {
+		kind = client.IndexKindVector
+	}
+
 	res := client.IndexDescription{
 		Name:   indexName,
 		ID:     uint32(indexID),
 		Fields: desc.Fields,
+		Kind:   kind,
 		Unique: desc.Unique,
 		Vector: desc.Vector,
 	}

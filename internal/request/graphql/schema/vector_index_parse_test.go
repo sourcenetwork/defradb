@@ -88,9 +88,11 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 	newIndex := parseResult[0].NewIndexes[0]
 	require.NotNil(t, newIndex.Vector)
 
-	// Simulate turning the request into a descriptor, as processNewIndexRequest would.
+	// Simulate turning the request into a descriptor, as processNewIndexRequest would: a request with
+	// a Vector becomes a descriptor with Kind == IndexKindVector.
 	desc := client.IndexDescription{
 		Fields: newIndex.Fields,
+		Kind:   client.IndexKindVector,
 		Vector: newIndex.Vector,
 	}
 	assert.True(t, desc.IsVector())
