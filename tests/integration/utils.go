@@ -301,6 +301,7 @@ func executeTestCase(
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(s, Close{})
+	defer discardTransactions(s)
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -694,6 +695,14 @@ func getCollectionNamesFromSDL(result map[string]int, sdl string, nextIndex int)
 		nextIndex++
 	}
 	return nextIndex
+}
+
+func discardTransactions(s *state.State) {
+	for _, txn := range s.Txns {
+		if txn != nil {
+			txn.Discard()
+		}
+	}
 }
 
 // closeNodes closes all the given nodes, ensuring that resources are properly released.
