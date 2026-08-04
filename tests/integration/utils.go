@@ -365,6 +365,9 @@ func performAction(
 	case ConfigureNode:
 		configureNode(s, testCase, action)
 
+	case NodeVersion:
+		configureNodeVersion(s, testCase, action)
+
 	case Restart:
 		restartNodes(s, testCase)
 
@@ -834,7 +837,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
-		if _, ok := a.(ConfigureNode); ok {
+		switch a.(type) {
+		case ConfigureNode, NodeVersion:
 			nodeCount++
 		}
 	}
@@ -1001,7 +1005,7 @@ func setStartingNodes(
 ) {
 	for _, action := range testCase.Actions {
 		switch action.(type) {
-		case ConfigureNode:
+		case ConfigureNode, NodeVersion:
 			s.IsNetworkEnabled = true
 		}
 	}
@@ -1016,6 +1020,7 @@ func setStartingNodes(
 			acpIdentity.None,
 			testCase,
 			nodeBuilder,
+			"",
 		)
 
 		require.Nil(s.T, err)
@@ -1043,6 +1048,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			getIdentityOption(s, action.Identity),
 			testCase,
 			opts,
+			s.Nodes[nodeID].Version,
 		)
 
 		databaseDir = originalPath
@@ -1273,10 +1279,40 @@ func configureNode(
 		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 	opts.P2P().SetAll(p2pOpts)
 
-	node, err := setupNode(s, acpIdentity.None, testCase, opts)
+	node, err := setupNode(s, acpIdentity.None, testCase, opts, "")
 	require.NoError(s.T, err)
 
 	node.P2POpts = p2pOpts
+	s.Nodes = append(s.Nodes, node)
+}
+
+// configureNodeVersion configures and starts a new Defra node that runs as
+// an external process from a downloaded release binary of the given version,
+// instead of natively in-process.
+func configureNodeVersion(
+	s *state.State,
+	testCase TestCase,
+	action NodeVersion,
+) {
+	if changeDetector.Enabled {
+		// We do not yet support the change detector for tests running across multiple nodes.
+		s.T.SkipNow()
+		return
+	}
+
+	p2pOpts := action.Config()
+
+	s.CurrentSetupNodeID = len(s.Nodes)
+
+	node, err := setupNode(s, acpIdentity.None, testCase, nil, action.Version)
+	require.NoError(s.T, err)
+	if node == nil {
+		// setupNode already skipped the test (no release asset for this platform).
+		return
+	}
+
+	node.P2POpts = p2pOpts
+	node.Version = action.Version
 	s.Nodes = append(s.Nodes, node)
 }
 
@@ -2370,7 +2406,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case ConfigureNode:
+		case ConfigureNode, NodeVersion:
 			hasNetworkAction = true
 		}
 	}

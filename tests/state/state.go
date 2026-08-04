@@ -241,6 +241,16 @@ type NodeState struct {
 	CompositesLock sync.RWMutex
 	// Map of docIDs to their field-level CIDs by field name.
 	FieldCIDs map[string]map[string][]cid.Cid
+	// IsExternal indicates this node runs as a separate process (an older
+	// released version driven black-box), rather than natively in-process.
+	// Its event bus lives in that other process and cannot be observed here,
+	// so event-based waits must skip it. The replicator/merge/update/SE waits
+	// already do; WaitForPeersEvents, Wait{Action} and node restart do not yet
+	// handle external nodes, so avoid them with an external node for now.
+	IsExternal bool
+	// Version is the released version this node runs, e.g. "v1.0.0", cached
+	// for restarts. Empty for native in-process nodes.
+	Version string
 }
 
 // State contains all testing State.
