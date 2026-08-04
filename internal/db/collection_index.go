@@ -112,14 +112,14 @@ func (c *collection) currentIndexes(ctx context.Context) ([]client.CollectionInd
 // collectionShortID returns the collection's short ID, resolving it once and caching it. The short ID
 // is stable for the collection's life, so the write path reads it from storage only on the first call.
 func (c *collection) collectionShortID(ctx context.Context) (uint32, error) {
-	if c.shortID != 0 {
-		return c.shortID, nil
+	if shortID := c.shortID.Load(); shortID != 0 {
+		return shortID, nil
 	}
 	shortID, err := id.GetCollectionShortID(ctx, c.def.CollectionID)
 	if err != nil {
 		return 0, err
 	}
-	c.shortID = shortID
+	c.shortID.Store(shortID)
 	return shortID, nil
 }
 
