@@ -113,6 +113,7 @@ type DB struct {
 
 	docMergeQueue *mergeQueue
 	colMergeQueue *mergeQueue
+	docShortIDMu  sync.Mutex
 
 	p2p *p2p.P2P
 	// Retry intervals when a replicator failure occurs.
@@ -243,6 +244,30 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
+}
+
+// reserveDocShortID commits the node-wide sequence separately from document writes so concurrent
+// document transactions do not contend on the sequence key. Failed document transactions may leave
+// gaps; short IDs only need to be unique. The lock spans transaction creation through commit so each
+// transaction sees the last committed reservation.
+func (db *DB) reserveDocShortID(ctx context.Context) (uint64, error) {
+	db.docShortIDMu.Lock()
+	defer db.docShortIDMu.Unlock()
+
+	txn, err := db.NewTxn(false)
+	if err != nil {
+		return 0, err
+	}
+	defer txn.Discard()
+
+	docShortID, err := id.NextDocShortID(InitContext(ctx, txn))
+	if err != nil {
+		return 0, err
+	}
+	if err := txn.Commit(); err != nil {
+		return 0, err
+	}
+	return docShortID, nil
 }
 
 // publishDocUpdateEvent publishes an update event for a document.
