@@ -258,9 +258,9 @@ func TestGraph_SameSeed_Deterministic(t *testing.T) {
 	g1, _ := buildGraph(123)
 	g2, _ := buildGraph(123)
 
-	meta1, err := g1.store.GetMeta()
+	meta1, _, err := g1.store.GetMeta()
 	require.NoError(t, err)
-	meta2, err := g2.store.GetMeta()
+	meta2, _, err := g2.store.GetMeta()
 	require.NoError(t, err)
 	assert.Equal(t, meta1, meta2)
 

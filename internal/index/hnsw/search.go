@@ -59,11 +59,11 @@ func (g *HNSWIndex) search(query []float32, k, efSearch int) ([]candidate, error
 		efSearch = k
 	}
 
-	meta, err := g.store.GetMeta()
+	meta, found, err := g.store.GetMeta()
 	if err != nil {
 		return nil, err
 	}
-	if meta.Empty {
+	if !found {
 		return nil, nil
 	}
 

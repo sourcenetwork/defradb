@@ -87,18 +87,20 @@ func TestNodeStore_PutMetaThenGetMeta_RoundTripsMeta(t *testing.T) {
 	err := store.PutMeta(meta)
 	require.NoError(t, err)
 
-	got, err := store.GetMeta()
+	got, found, err := store.GetMeta()
 	require.NoError(t, err)
+	assert.True(t, found)
 	assert.Equal(t, meta, got)
 }
 
-func TestNodeStore_GetMeta_IfEmptyKeyspace_ReturnsEmptyMeta(t *testing.T) {
+func TestNodeStore_GetMeta_IfEmptyKeyspace_ReturnsNotFound(t *testing.T) {
 	ctx := newStoreTestCtx(t)
 	store := newNodeStore(ctx, 1, 1, 1)
 
-	got, err := store.GetMeta()
+	got, found, err := store.GetMeta()
 	require.NoError(t, err)
-	assert.Equal(t, hnsw.Meta{Empty: true}, got)
+	assert.False(t, found)
+	assert.Equal(t, hnsw.Meta{}, got)
 }
 
 func TestNodeStore_IterateNodes_VisitsAllNodesAndSkipsDeleted(t *testing.T) {
@@ -151,7 +153,8 @@ func TestNodeStore_DifferentEpochs_AreIsolated(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ok)
 
-	meta, err := store2.GetMeta()
+	meta, found, err := store2.GetMeta()
 	require.NoError(t, err)
-	assert.Equal(t, hnsw.Meta{Empty: true}, meta)
+	assert.False(t, found)
+	assert.Equal(t, hnsw.Meta{}, meta)
 }

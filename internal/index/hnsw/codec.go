@@ -34,7 +34,7 @@ const (
 	float32Width   = 4 // a single float32 vector element
 	nodeIDWidth    = 8 // a NodeID (uint64): node ID, neighbour ID, entry point
 	topLayerWidth  = 4 // Meta.TopLayer (int32)
-	metaEncodedLen = versionWidth + nodeIDWidth + topLayerWidth + flagWidth
+	metaEncodedLen = versionWidth + nodeIDWidth + topLayerWidth
 	// nodeHeaderLen is the smallest valid encoded node: version + ID + Deleted + vector-length +
 	// layer-count, before any vector elements or layers.
 	nodeHeaderLen = versionWidth + nodeIDWidth + flagWidth + countWidth + countWidth
@@ -192,7 +192,9 @@ func UnmarshalNode(b []byte) (Node, error) {
 //	1 byte  version (metaEncodingVersion)
 //	8 bytes EntryPoint (uint64)
 //	4 bytes TopLayer (int32)
-//	1 byte  Empty (0 or 1)
+//
+// A stored Meta always describes a real graph, so there is nothing to encode for the "no graph yet"
+// case: that is signalled by the absence of the meta key, which GetMeta reports via found == false.
 func MarshalMeta(m Meta) ([]byte, error) {
 	buf := make([]byte, metaEncodedLen)
 	off := 0
@@ -204,13 +206,6 @@ func MarshalMeta(m Meta) ([]byte, error) {
 	off += nodeIDWidth
 
 	binary.LittleEndian.PutUint32(buf[off:], uint32(int32(m.TopLayer)))
-	off += topLayerWidth
-
-	if m.Empty {
-		buf[off] = 1
-	} else {
-		buf[off] = 0
-	}
 
 	return buf, nil
 }
@@ -234,13 +229,9 @@ func UnmarshalMeta(b []byte) (Meta, error) {
 	off += nodeIDWidth
 
 	topLayer := int(int32(binary.LittleEndian.Uint32(b[off:])))
-	off += topLayerWidth
-
-	empty := b[off] != 0
 
 	return Meta{
 		EntryPoint: entryPoint,
 		TopLayer:   topLayer,
-		Empty:      empty,
 	}, nil
 }

@@ -84,25 +84,25 @@ func (s *nodeStore) PutNode(n hnsw.Node) error {
 	return nil
 }
 
-// GetMeta returns the graph's meta singleton, or a zero-value Meta with Empty set to true if no
-// graph has been built yet.
-func (s *nodeStore) GetMeta() (hnsw.Meta, error) {
+// GetMeta returns the graph's meta singleton, or found == false if no graph has been built yet (the
+// meta key is absent).
+func (s *nodeStore) GetMeta() (hnsw.Meta, bool, error) {
 	txn := datastore.CtxMustGetTxn(s.ctx)
 	key := keys.NewVectorMetaKey(s.collectionShortID, s.indexID, s.epoch)
 
 	val, err := txn.Datastore().Get(s.ctx, &key)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
-			return hnsw.Meta{Empty: true}, nil
+			return hnsw.Meta{}, false, nil
 		}
-		return hnsw.Meta{}, s.wrapErr(err)
+		return hnsw.Meta{}, false, s.wrapErr(err)
 	}
 
 	meta, err := hnsw.UnmarshalMeta(val)
 	if err != nil {
-		return hnsw.Meta{}, s.wrapErr(err)
+		return hnsw.Meta{}, false, s.wrapErr(err)
 	}
-	return meta, nil
+	return meta, true, nil
 }
 
 // PutMeta stores m as the graph's meta singleton, replacing any previously stored value.

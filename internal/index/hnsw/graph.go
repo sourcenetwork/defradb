@@ -71,12 +71,12 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 	v := normalize(vector)
 	topLevel := g.randomLevel()
 
-	meta, err := g.store.GetMeta()
+	meta, found, err := g.store.GetMeta()
 	if err != nil {
 		return err
 	}
 
-	if meta.Empty {
+	if !found {
 		layers := make([][]NodeID, topLevel+1)
 		for i := range layers {
 			layers[i] = []NodeID{}
@@ -84,7 +84,7 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		if err := g.store.PutNode(Node{ID: id, Vector: v, Layers: layers}); err != nil {
 			return err
 		}
-		return g.store.PutMeta(Meta{EntryPoint: id, TopLayer: topLevel, Empty: false})
+		return g.store.PutMeta(Meta{EntryPoint: id, TopLayer: topLevel})
 	}
 
 	// Descent: greedily walk down from the entry point at the top layer

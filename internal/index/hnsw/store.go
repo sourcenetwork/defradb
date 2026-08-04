@@ -21,20 +21,25 @@ type Node struct {
 	Deleted bool       // tombstone
 }
 
-// Meta is the graph's global state.
+// Meta is the graph's global state: which node to start a search from, and the top layer.
 type Meta struct {
 	EntryPoint NodeID
 	TopLayer   int
-	Empty      bool // true when no entry point has been set yet
 }
 
 // NodeStore is the persistence port. The engine never imports a concrete
 // store; implementations may back this interface with any storage medium
 // (in-memory, a KV store, etc).
 type NodeStore interface {
-	GetNode(id NodeID) (Node, bool, error)
+	// GetNode returns the node with the given id. found is false when no such node has been stored,
+	// in which case Node is the zero value.
+	GetNode(id NodeID) (n Node, found bool, err error)
+	// PutNode stores n, replacing any previously stored node with the same id.
 	PutNode(n Node) error
-	GetMeta() (Meta, error)
+	// GetMeta returns the graph's meta singleton. found is false when no graph has been built yet
+	// (nothing stored), in which case Meta is the zero value and there is no entry point to start from.
+	GetMeta() (m Meta, found bool, err error)
+	// PutMeta stores m as the graph's meta singleton, replacing any previously stored value.
 	PutMeta(m Meta) error
 	// IterateNodes iterates over all non-deleted node ids (used for
 	// brute-force baselines / rebuilds). Order is unspecified. Iteration
@@ -46,16 +51,16 @@ type NodeStore interface {
 // memStore is an in-memory NodeStore implementation, safe for concurrent
 // use. It is useful for tests and for standalone/in-RAM use of the graph.
 type memStore struct {
-	mu    sync.Mutex
-	nodes map[NodeID]Node
-	meta  Meta
+	mu      sync.Mutex
+	nodes   map[NodeID]Node
+	meta    Meta
+	metaSet bool // false until the first PutMeta; mirrors "no graph built yet"
 }
 
 // NewMemStore returns a new in-memory NodeStore.
 func NewMemStore() NodeStore {
 	return &memStore{
 		nodes: make(map[NodeID]Node),
-		meta:  Meta{Empty: true},
 	}
 }
 
@@ -76,16 +81,17 @@ func (s *memStore) PutNode(n Node) error {
 	return nil
 }
 
-func (s *memStore) GetMeta() (Meta, error) {
+func (s *memStore) GetMeta() (Meta, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.meta, nil
+	return s.meta, s.metaSet, nil
 }
 
 func (s *memStore) PutMeta(m Meta) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.meta = m
+	s.metaSet = true
 	return nil
 }
 

@@ -127,10 +127,10 @@ func TestUnmarshalNode_TruncatedAtEveryBoundary_ReturnsError(t *testing.T) {
 
 func TestMarshalMeta_RepresentativeValues_RoundTrip(t *testing.T) {
 	cases := map[string]Meta{
-		"populated":          {EntryPoint: 99, TopLayer: 4, Empty: false},
-		"empty graph":        {EntryPoint: 0, TopLayer: 0, Empty: true},
-		"negative top layer": {EntryPoint: 123456789, TopLayer: -1, Empty: false},
-		"large entry point":  {EntryPoint: 1 << 40, TopLayer: 7, Empty: false},
+		"populated":          {EntryPoint: 99, TopLayer: 4},
+		"zero value":         {EntryPoint: 0, TopLayer: 0},
+		"negative top layer": {EntryPoint: 123456789, TopLayer: -1},
+		"large entry point":  {EntryPoint: 1 << 40, TopLayer: 7},
 	}
 	for name, m := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestMarshalMeta_RepresentativeValues_RoundTrip(t *testing.T) {
 }
 
 func TestMarshalMeta_Deterministic_SameBytes(t *testing.T) {
-	m := Meta{EntryPoint: 77, TopLayer: 3, Empty: false}
+	m := Meta{EntryPoint: 77, TopLayer: 3}
 
 	b1, err := MarshalMeta(m)
 	require.NoError(t, err)
@@ -228,7 +228,7 @@ func TestCodec_EngineProducedGraph_RoundTripsThroughBytes(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, sawMultiLayer, "engine should produce at least one multi-layer node to exercise layer encoding")
 
-	meta, err := store.GetMeta()
+	meta, _, err := store.GetMeta()
 	require.NoError(t, err)
 	b, err := MarshalMeta(meta)
 	require.NoError(t, err)

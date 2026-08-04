@@ -47,10 +47,10 @@ func (s *errFaultStore) PutNode(n Node) error {
 	return s.NodeStore.PutNode(n)
 }
 
-func (s *errFaultStore) GetMeta() (Meta, error) {
+func (s *errFaultStore) GetMeta() (Meta, bool, error) {
 	if s.failGetMeta {
 		s.failGetMeta = false
-		return Meta{}, s.err
+		return Meta{}, false, s.err
 	}
 	return s.NodeStore.GetMeta()
 }
@@ -70,13 +70,15 @@ func reloadThroughCodec(t *testing.T, src NodeStore) NodeStore {
 		return dst.PutNode(decoded)
 	}))
 
-	meta, err := src.GetMeta()
+	meta, found, err := src.GetMeta()
 	require.NoError(t, err)
-	mb, err := MarshalMeta(meta)
-	require.NoError(t, err)
-	decodedMeta, err := UnmarshalMeta(mb)
-	require.NoError(t, err)
-	require.NoError(t, dst.PutMeta(decodedMeta))
+	if found {
+		mb, err := MarshalMeta(meta)
+		require.NoError(t, err)
+		decodedMeta, err := UnmarshalMeta(mb)
+		require.NoError(t, err)
+		require.NoError(t, dst.PutMeta(decodedMeta))
+	}
 
 	return dst
 }
@@ -162,7 +164,7 @@ func TestGraph_DeleteEntryPoint_StillSearchesRemaining(t *testing.T) {
 		truth[id] = normalize(v)
 	}
 
-	meta, err := store.GetMeta()
+	meta, _, err := store.GetMeta()
 	require.NoError(t, err)
 	entryPoint := meta.EntryPoint
 	require.NoError(t, g.Delete(entryPoint))
@@ -208,7 +210,7 @@ func TestGraph_TraversesThroughTombstoneToReachLiveNode(t *testing.T) {
 	require.NoError(t, g.Insert(3, []float32{0, 1}))     // far
 
 	// Delete whatever the entry point is (id 1, the first insert).
-	meta, err := store.GetMeta()
+	meta, _, err := store.GetMeta()
 	require.NoError(t, err)
 	require.NoError(t, g.Delete(meta.EntryPoint))
 
