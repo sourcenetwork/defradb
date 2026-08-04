@@ -382,6 +382,16 @@ test\:coverage-js:
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
 
+# Fails if a node-to-node wire type changed shape without the golden being updated.
+.PHONY: test\:wire-snapshot
+test\:wire-snapshot:
+	go test ./internal/wire/snapshottest/...
+
+# Regenerate the wire snapshot golden after an intentional wire-format change.
+.PHONY: test\:wire-snapshot-update
+test\:wire-snapshot-update:
+	WIRE_SNAPSHOT_UPDATE=1 go test ./internal/wire/snapshottest/...
+
 .PHONY: test\:js
 test\:js:
 	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
