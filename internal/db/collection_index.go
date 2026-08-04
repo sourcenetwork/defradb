@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"maps"
@@ -28,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -363,7 +365,7 @@ func (c *collection) deleteIndexedDocWithID(
 		return err
 	}
 	if includeDeleted {
-		_, isDeleted, err := c.exists(ctx, primaryKey)
+		isDeleted, err := c.isDocumentDeleted(ctx, primaryKey)
 		if err != nil {
 			return err
 		}
@@ -388,6 +390,24 @@ func (c *collection) deleteIndexedDocWithID(
 		return nil
 	}
 	return c.deleteFromIndexes(ctx, indexes, doc)
+}
+
+func (c *collection) isDocumentDeleted(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+) (bool, error) {
+	if primaryKey.DocShortID == 0 {
+		return false, nil
+	}
+
+	value, err := datastore.CtxMustGetTxn(ctx).Datastore().Get(ctx, primaryKey)
+	if errors.Is(err, corekv.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(value, []byte{base.DeletedObjectMarker}), nil
 }
 
 // NewIndex makes a new index on the collection.

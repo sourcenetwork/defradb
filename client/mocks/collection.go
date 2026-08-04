@@ -1060,7 +1060,7 @@ func (_c *Collection_NewIndex_Call) RunAndReturn(run func(context1 context.Conte
 }
 
 // PurgeByDocIDs provides a mock function for the type Collection
-func (_mock *Collection) PurgeByDocIDs(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
+func (_mock *Collection) PurgeByDocIDs(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeByDocIDsOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, docIDs, pruneHistory, opts)
@@ -1074,7 +1074,7 @@ func (_mock *Collection) PurgeByDocIDs(ctx context.Context, docIDs []client.DocI
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []client.DocID, bool, ...options.Enumerable[options.TruncateCollectionOptions]) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []client.DocID, bool, ...options.Enumerable[options.PurgeByDocIDsOptions]) error); ok {
 		r0 = returnFunc(ctx, docIDs, pruneHistory, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -1091,13 +1091,13 @@ type Collection_PurgeByDocIDs_Call struct {
 //   - ctx context.Context
 //   - docIDs []client.DocID
 //   - pruneHistory bool
-//   - opts ...options.Enumerable[options.TruncateCollectionOptions]
+//   - opts ...options.Enumerable[options.PurgeByDocIDsOptions]
 func (_e *Collection_Expecter) PurgeByDocIDs(ctx interface{}, docIDs interface{}, pruneHistory interface{}, opts ...interface{}) *Collection_PurgeByDocIDs_Call {
 	return &Collection_PurgeByDocIDs_Call{Call: _e.mock.On("PurgeByDocIDs",
 		append([]interface{}{ctx, docIDs, pruneHistory}, opts...)...)}
 }
 
-func (_c *Collection_PurgeByDocIDs_Call) Run(run func(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.TruncateCollectionOptions])) *Collection_PurgeByDocIDs_Call {
+func (_c *Collection_PurgeByDocIDs_Call) Run(run func(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeByDocIDsOptions])) *Collection_PurgeByDocIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1111,10 +1111,10 @@ func (_c *Collection_PurgeByDocIDs_Call) Run(run func(ctx context.Context, docID
 		if args[2] != nil {
 			arg2 = args[2].(bool)
 		}
-		var arg3 []options.Enumerable[options.TruncateCollectionOptions]
-		var variadicArgs []options.Enumerable[options.TruncateCollectionOptions]
+		var arg3 []options.Enumerable[options.PurgeByDocIDsOptions]
+		var variadicArgs []options.Enumerable[options.PurgeByDocIDsOptions]
 		if len(args) > 3 {
-			variadicArgs = args[3].([]options.Enumerable[options.TruncateCollectionOptions])
+			variadicArgs = args[3].([]options.Enumerable[options.PurgeByDocIDsOptions])
 		}
 		arg3 = variadicArgs
 		run(
@@ -1132,7 +1132,7 @@ func (_c *Collection_PurgeByDocIDs_Call) Return(err error) *Collection_PurgeByDo
 	return _c
 }
 
-func (_c *Collection_PurgeByDocIDs_Call) RunAndReturn(run func(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.TruncateCollectionOptions]) error) *Collection_PurgeByDocIDs_Call {
+func (_c *Collection_PurgeByDocIDs_Call) RunAndReturn(run func(ctx context.Context, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeByDocIDsOptions]) error) *Collection_PurgeByDocIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

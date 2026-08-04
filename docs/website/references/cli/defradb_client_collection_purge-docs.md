@@ -6,7 +6,10 @@ Permanently remove documents by DocID from the local node
 
 Permanently remove a set of documents by DocID from the local node, including all
 datastore values and headstore entries. When --prune-history is set, it also removes
-reachable blockstore blocks that are no longer owned by another document.
+reachable blockstore blocks that are no longer owned by another document. Shared blocks
+are retained until their final owning document is purged.
+
+History pruning is not supported for branchable collections.
 
 Unlike the soft-delete performed by the delete command, this operation is irreversible and
 does not propagate to other nodes in the peer network.
@@ -23,7 +26,7 @@ defradb client collection purge-docs [flags]
       --docID stringArray        DocID of a document to purge (may be repeated)
       --get-inactive             Get inactive collections as well as active
   -h, --help                     help for purge-docs
-      --prune-history            Also delete reachable blockstore blocks no longer owned by another document
+      --prune-history            Also delete reachable blockstore blocks after their final owner is purged
       --version-id string        Collection version ID
 ```
 

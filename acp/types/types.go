@@ -122,6 +122,7 @@ const (
 	NodeRefreshViewPerm
 	NodeAddViewPerm
 	NodeSetMigrationPerm
+	NodePurgeDocumentPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -178,6 +179,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"refresh-view",
 	"add-view",
 	"set-migration",
+	"purge-document",
 }
 
 const NodeACPObject = "NodeObject"
@@ -225,6 +227,8 @@ resources:
   - name: get-collection
     expr: admin
   - name: truncate-collection
+    expr: admin
+  - name: purge-document
     expr: admin
 
   - name: read-document

@@ -161,7 +161,7 @@ func (c *Collection) PurgeByDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
 	pruneHistory bool,
-	opts ...options.Enumerable[options.TruncateCollectionOptions],
+	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
 ) error {
 	rawIDs := make([]string, len(docIDs))
 	for i, id := range docIDs {

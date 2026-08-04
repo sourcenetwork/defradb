@@ -72,7 +72,7 @@ func PurgeDocuments(
 		ctx,
 		docIDs,
 		pruneHistory != 0,
-		options.WithIdentity(options.TruncateCollection(), ident),
+		options.WithIdentity(options.PurgeByDocIDs(), ident),
 	)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

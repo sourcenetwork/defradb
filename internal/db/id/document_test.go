@@ -265,12 +265,12 @@ func TestBlockHasOwnersExceptExcludedSoleOwner(t *testing.T) {
 
 	has, err := BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
 	require.NoError(t, err)
-	require.True(t, has, "with nothing excluded the block has an owner")
+	require.True(t, has)
 
 	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-one"): {}}
 	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
 	require.NoError(t, err)
-	require.False(t, has, "excluding the only owner edge reports no owner")
+	require.False(t, has)
 }
 
 func TestBlockHasOwnersExceptKeepsUnexcludedOwner(t *testing.T) {
@@ -286,12 +286,12 @@ func TestBlockHasOwnersExceptKeepsUnexcludedOwner(t *testing.T) {
 	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-one"): {}}
 	has, err := BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
 	require.NoError(t, err)
-	require.True(t, has, "one of two owners excluded: the block is still owned")
+	require.True(t, has)
 
 	excluded[blockOwnerKey(fieldCID, "bae-doc-two")] = struct{}{}
 	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, excluded)
 	require.NoError(t, err)
-	require.False(t, has, "both owners excluded: no owner remains")
+	require.False(t, has)
 }
 
 func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
@@ -306,13 +306,12 @@ func TestBlockHasOwnersExceptStopsAtFirstUnexcludedOwner(t *testing.T) {
 		require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, fmt.Sprintf("bae-doc-%03d", i)))
 	}
 
-	// Owner edges are ordered, so the first unexcluded owner is the second key.
 	excluded := map[string]struct{}{blockOwnerKey(fieldCID, "bae-doc-000"): {}}
 	var reads int
 	has, err := BlockHasOwnersExcept(ctx, countingReader{txn.Systemstore(), &reads}, fieldCID, excluded)
 	require.NoError(t, err)
 	require.True(t, has)
-	require.Equal(t, 2, reads, "scan skips the excluded owner and stops at the next")
+	require.Equal(t, 2, reads)
 }
 
 // countingReader counts iterator advances.
@@ -357,8 +356,11 @@ func TestDeleteDocRefMappings(t *testing.T) {
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, docID))
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, otherDocShortID, otherDocID))
+	aliases, err := GetDocIDAliasesFromStore(ctx, txn.Systemstore(), docShortID)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{docID, legacyDocID}, aliases)
 
-	err := DeleteDocRefMappings(ctx, txn.Systemstore(), docShortID)
+	err = DeleteDocRefMappings(ctx, txn.Systemstore(), docShortID)
 	require.NoError(t, err)
 
 	_, found, err := GetDocRef(ctx, docID)

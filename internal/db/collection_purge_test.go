@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"crypto/ed25519"
 	"fmt"
 	"testing"
 
@@ -21,10 +22,14 @@ import (
 
 	"github.com/sourcenetwork/corekv/badger"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	defraCrypto "github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // Badger derives its transaction limit from the memtable size.
@@ -98,6 +103,252 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, found)
 	}
+}
+
+func TestPurgeByDocIDsPrunesSingleDocumentOverTransactionLimit(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDBWithMemTableSize(ctx, 1<<21)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	doc := addUserDoc(t, ctx, col, "alice")
+	for i := range 3000 {
+		require.NoError(t, doc.Set(ctx, "age", i))
+		require.NoError(t, col.UpdateDocument(ctx, doc))
+	}
+	latestHead := doc.Head()
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	err = col.PurgeByDocIDs(InitContext(ctx, txn), []client.DocID{doc.ID()}, true)
+	if err == nil {
+		err = txn.Commit()
+	} else {
+		txn.Discard()
+	}
+	require.ErrorContains(t, err, "Txn is too big")
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true))
+	requireBlockPresent(
+		t,
+		ctx,
+		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
+		latestHead,
+		false,
+	)
+	readTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer readTxn.Discard()
+	readCtx := InitContext(ctx, readTxn)
+	shortID, err := id.GetCollectionShortID(readCtx, col.CollectionID())
+	require.NoError(t, err)
+	_, found, err := id.GetDocShortID(readCtx, shortID, doc.ID().String())
+	require.NoError(t, err)
+	require.False(t, found)
+}
+
+func TestPurgeByDocIDsRejectsBranchableHistoryPruning(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, `type User @branchable { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	doc := addUserDoc(t, ctx, col, "alice")
+
+	err = col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true)
+	require.ErrorIs(t, err, ErrCannotPruneBranchableCollection)
+
+	stored, err := col.GetDocument(ctx, doc.ID())
+	require.NoError(t, err)
+	name, err := stored.Get("name")
+	require.NoError(t, err)
+	require.Equal(t, "alice", name)
+	requireBlockPresent(
+		t,
+		ctx,
+		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
+		doc.Head(),
+		true,
+	)
+}
+
+func TestPurgeByDocIDsRemovesPrimaryMarker(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	doc := addUserDoc(t, ctx, col, "alice")
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, false))
+	require.NoError(t, db.DeleteCollection(ctx, []string{"User"}))
+}
+
+func TestPurgeByDocIDsRemovesSearchableEncryptionArtifactsForAllAliases(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	docA := addUserDoc(t, ctx, col, "alice")
+	docB := addUserDoc(t, ctx, col, "bob")
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, txn)
+	shortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+	docShortID, found, err := id.GetDocShortID(txnCtx, shortID, docA.ID().String())
+	require.NoError(t, err)
+	require.True(t, found)
+
+	const alias = "bae-alice-alias"
+	require.NoError(t, id.SetDocIDToDocRefMapping(txnCtx, shortID, docShortID, alias))
+	keysToStore := []keys.DatastoreSE{
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{1}, DocID: docA.ID().String()},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{2}, DocID: alias},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{3}, DocID: docB.ID().String()},
+	}
+	for i := range keysToStore {
+		require.NoError(t, dbTxn.Datastore().Set(txnCtx, &keysToStore[i], nil))
+	}
+	require.NoError(t, txn.Commit())
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID()}, false))
+
+	readTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer readTxn.Discard()
+	readDBTxn, ok := readTxn.(*Txn)
+	require.True(t, ok)
+	readCtx := InitContext(ctx, readTxn)
+	for i := range keysToStore {
+		has, err := readDBTxn.Datastore().Has(readCtx, &keysToStore[i])
+		require.NoError(t, err)
+		require.Equal(t, i == 2, has)
+	}
+}
+
+func TestPurgeByDocIDsRemovesEncryptionBlocks(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice"}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc, options.AddDocument().SetEncryptedFields([]string{"name"})))
+
+	_, encryptionCID := encryptedFieldCIDs(t, ctx, db, doc.Head())
+	encstore := datastore.EncstoreFrom(db.rootstore)
+	has, err := encstore.Has(ctx, encryptionCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true))
+	has, err = encstore.Has(ctx, encryptionCID)
+	require.NoError(t, err)
+	require.False(t, has)
+}
+
+func TestPurgeByDocIDsReleasesSharedEncryptionOwnership(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice"}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc, options.AddDocument().SetEncryptedFields([]string{"name"})))
+	fieldCID, encryptionCID := encryptedFieldCIDs(t, ctx, db, doc.Head())
+
+	const otherDocID = "bae-shared-owner"
+	setupTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	setupCtx := InitContext(ctx, setupTxn)
+	require.NoError(t, id.SetBlockDocIDMapping(setupCtx, fieldCID, otherDocID))
+	require.NoError(t, id.SetBlockDocIDMapping(setupCtx, encryptionCID, otherDocID))
+	require.NoError(t, setupTxn.Commit())
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true))
+	readTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	readDBTxn, ok := readTxn.(*Txn)
+	require.True(t, ok)
+	readCtx := InitContext(ctx, readTxn)
+	owners, err := id.GetDocIDsForBlockFromStore(
+		readCtx,
+		readDBTxn.Systemstore(),
+		encryptionCID,
+	)
+	require.NoError(t, err)
+	require.Equal(t, []string{otherDocID}, owners)
+	readTxn.Discard()
+	requireBlockPresent(t, ctx, datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize), fieldCID, true)
+	encstore := datastore.EncstoreFrom(db.rootstore)
+	has, err := encstore.Has(ctx, encryptionCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	deleteTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	dbCol := col.(*collection) //nolint:forcetypeassert
+	deleteCtx := InitContext(ctx, deleteTxn)
+	require.NoError(t, dbCol.deleteBlocks(
+		deleteCtx,
+		deleteTxn.(*Txn).Systemstore(), //nolint:forcetypeassert
+		otherDocID,
+		fieldCID,
+		make(map[string]struct{}),
+	))
+	require.NoError(t, deleteTxn.Commit())
+	requireBlockPresent(t, ctx, datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize), fieldCID, false)
+	has, err = encstore.Has(ctx, encryptionCID)
+	require.NoError(t, err)
+	require.False(t, has)
+}
+
+func TestPurgeByDocIDsKeepsSharedSignatureWithParentBlock(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	_, privateKey, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+	ident, err := acpIdentity.FromPrivateKey(defraCrypto.NewPrivateKey(privateKey))
+	require.NoError(t, err)
+	addOpts := options.AddDocument().SetIdentity(ident).SetEnableSigning(true)
+
+	docA, err := client.NewDocFromJSON(ctx, []byte(`{"name":"shared","age":1}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docA, addOpts))
+	docB, err := client.NewDocFromJSON(ctx, []byte(`{"name":"shared","age":2}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, docB, addOpts))
+
+	shared := sharedFieldBlock(t, ctx, db, docA.Head(), docB.Head())
+	sharedBlock := loadTestBlock(t, ctx, db, shared)
+	require.NotNil(t, sharedBlock.Signature)
+	signatureCID := sharedBlock.Signature.Cid
+	blockstore := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID()}, true))
+	requireBlockPresent(t, ctx, blockstore, shared, true)
+	has, err := blockstore.Has(ctx, signatureCID)
+	require.NoError(t, err)
+	require.True(t, has)
+	require.NoError(t, db.VerifySignature(ctx, shared.String(), ident.PublicKey()))
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docB.ID()}, true))
+	requireBlockPresent(t, ctx, blockstore, shared, false)
+	has, err = blockstore.Has(ctx, signatureCID)
+	require.NoError(t, err)
+	require.False(t, has)
 }
 
 func TestPurgeByDocIDsRemovesIndexEntries(t *testing.T) {
@@ -285,6 +536,18 @@ func sharedFieldBlock(t *testing.T, ctx context.Context, db *DB, headA, headB ci
 	return shared[0]
 }
 
+func encryptedFieldCIDs(t *testing.T, ctx context.Context, db *DB, head cid.Cid) (cid.Cid, cid.Cid) {
+	t.Helper()
+	for _, link := range loadTestBlock(t, ctx, db, head).Links {
+		fieldBlock := loadTestBlock(t, ctx, db, link.Cid)
+		if fieldBlock.Encryption != nil {
+			return link.Cid, fieldBlock.Encryption.Cid
+		}
+	}
+	require.FailNow(t, "encrypted field block not found")
+	return cid.Undef, cid.Undef
+}
+
 func requireBlockPresent(t *testing.T, ctx context.Context, bs datastore.Blockstore, blockCID cid.Cid, want bool) {
 	t.Helper()
 	_, found, err := getBlock(ctx, bs, blockCID)
@@ -316,7 +579,7 @@ func TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
 	requireBlockPresent(t, ctx, bs, shared, false)
 }
 
-func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *testing.T) {
+func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedInCallerTransaction(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -333,6 +596,13 @@ func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *tes
 	bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
 	requireBlockPresent(t, ctx, bs, shared, true)
 
-	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), docB.ID()}, true))
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	require.NoError(t, col.PurgeByDocIDs(
+		InitContext(ctx, txn),
+		[]client.DocID{docA.ID(), docB.ID()},
+		true,
+	))
+	require.NoError(t, txn.Commit())
 	requireBlockPresent(t, ctx, bs, shared, false)
 }

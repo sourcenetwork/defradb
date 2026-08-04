@@ -23,13 +23,14 @@ import (
 type PurgeDocs struct {
 	stateful
 
-	NodeID          immutable.Option[int]
-	Identity        immutable.Option[state.Identity]
-	CollectionIndex int
-	DocIndexes      []int
-	PruneHistory    bool
-	ExpectedError   string
-	TransactionID   immutable.Option[int]
+	NodeID             immutable.Option[int]
+	Identity           immutable.Option[state.Identity]
+	CollectionIdentity immutable.Option[state.Identity]
+	CollectionIndex    int
+	DocIndexes         []int
+	PruneHistory       bool
+	ExpectedError      string
+	TransactionID      immutable.Option[int]
 }
 
 var _ Action = (*PurgeDocs)(nil)
@@ -45,7 +46,11 @@ func (a *PurgeDocs) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
+		lookupIdentity := a.Identity
+		if a.CollectionIdentity.HasValue() {
+			lookupIdentity = a.CollectionIdentity
+		}
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, lookupIdentity)
 		if err != nil {
 			expected := assertError(a.s.T, err, a.ExpectedError)
 			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expected)
@@ -59,7 +64,7 @@ func (a *PurgeDocs) Execute() {
 		}
 		a.s.DocIDsLock.RUnlock()
 
-		opts := options.TruncateCollection()
+		opts := options.PurgeByDocIDs()
 		identity := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIDs[index])
 		if identity.HasValue() {
 			opts.SetIdentity(identity.Value())

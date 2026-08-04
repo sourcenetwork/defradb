@@ -4,7 +4,7 @@ Interact with a collection.
 
 ### Synopsis
 
-Add, describe, patch, set-active, delete, and truncate collections.
+Add, describe, patch, set-active, delete, purge-docs, and truncate collections.
 
 ### Options
 

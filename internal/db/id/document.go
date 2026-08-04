@@ -229,10 +229,8 @@ func BlockHasOwnersExcept(
 		if len(bytes.TrimPrefix(iter.Key(), prefix)) == 0 {
 			continue
 		}
-		if len(excluded) != 0 {
-			if _, isExcluded := excluded[string(iter.Key())]; isExcluded {
-				continue
-			}
+		if _, ok := excluded[string(iter.Key())]; ok {
+			continue
 		}
 		return true, iter.Close()
 	}
@@ -266,6 +264,66 @@ func DeleteDocIDMappings(
 	return DeleteDocRefMappings(ctx, store, docShortID)
 }
 
+type docRefMapping struct {
+	docID string
+	key   []byte
+}
+
+func getDocRefMappings(
+	ctx context.Context,
+	store corekv.Reader,
+	docShortID uint64,
+) ([]docRefMapping, error) {
+	prefix := keys.NewDocShortIDToDocIDAliasKey(docShortID, "").ToString() + "/"
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
+	if err != nil {
+		return nil, err
+	}
+
+	var mappings []docRefMapping
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		value, err := iter.Value()
+		if err != nil {
+			return nil, stderrors.Join(err, iter.Close())
+		}
+		mappings = append(mappings, docRefMapping{
+			docID: string(value),
+			key:   append([]byte(nil), iter.Key()...),
+		})
+	}
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+	return mappings, nil
+}
+
+// GetDocIDAliasesFromStore returns every DocID mapped to docShortID.
+func GetDocIDAliasesFromStore(
+	ctx context.Context,
+	store corekv.Reader,
+	docShortID uint64,
+) ([]string, error) {
+	mappings, err := getDocRefMappings(ctx, store, docShortID)
+	if err != nil {
+		return nil, err
+	}
+
+	docIDs := make([]string, 0, len(mappings))
+	for _, mapping := range mappings {
+		if mapping.docID != "" {
+			docIDs = append(docIDs, mapping.docID)
+		}
+	}
+	return docIDs, nil
+}
+
 func DeleteDocRefMappings(
 	ctx context.Context,
 	store corekv.ReaderWriter,
@@ -275,35 +333,8 @@ func DeleteDocRefMappings(
 		return nil
 	}
 
-	prefix := keys.NewDocShortIDToDocIDAliasKey(docShortID, "").ToString() + "/"
-	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: []byte(prefix)})
+	mappings, err := getDocRefMappings(ctx, store, docShortID)
 	if err != nil {
-		return err
-	}
-
-	type docRefMapping struct {
-		docID string
-		key   []byte
-	}
-	var mappings []docRefMapping
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return stderrors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-		value, err := iter.Value()
-		if err != nil {
-			return stderrors.Join(err, iter.Close())
-		}
-		mappings = append(mappings, docRefMapping{
-			docID: string(value),
-			key:   append([]byte(nil), iter.Key()...),
-		})
-	}
-	if err := iter.Close(); err != nil {
 		return err
 	}
 

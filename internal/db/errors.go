@@ -106,6 +106,7 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errCannotPruneBranchableCollection     string = "cannot prune document history in a branchable collection"
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
@@ -241,6 +242,7 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
+	ErrCannotPruneBranchableCollection           = errors.New(errCannotPruneBranchableCollection)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                        = errors.New(errGetDocForEmbedding)

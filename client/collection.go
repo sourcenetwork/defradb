@@ -190,14 +190,17 @@ type Collection interface {
 	// Unlike DeleteDocument, this is a local hard delete and does not replicate over P2P.
 	// When pruneHistory is true, unshared history blocks are removed as well.
 	//
-	// Without a caller transaction, documents are committed in bounded chunks and an error
-	// may leave earlier chunks applied. A peer may reintroduce purged data unless a replicated
-	// soft delete has already propagated.
+	// History pruning is not supported for branchable collections because their collection DAG
+	// retains links to document blocks. Without a caller transaction, history is pruned under the
+	// collection lock and logical cleanup is committed in bounded chunks, so an error may leave a
+	// partial purge that can be resumed by retrying. With a caller transaction, the full purge must
+	// fit in that transaction and takes effect when the caller commits. A peer may reintroduce purged
+	// data unless a replicated soft delete has already propagated.
 	PurgeByDocIDs(
 		ctx context.Context,
 		docIDs []DocID,
 		pruneHistory bool,
-		opts ...options.Enumerable[options.TruncateCollectionOptions],
+		opts ...options.Enumerable[options.PurgeByDocIDsOptions],
 	) error
 }
 

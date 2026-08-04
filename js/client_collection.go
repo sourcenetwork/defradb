@@ -185,7 +185,7 @@ func (c *clientCollection) purgeByDocIDs(this js.Value, args []js.Value) (js.Val
 	}
 
 	optsVal := optionsValue(args, 1)
-	var opt options.TruncateCollectionOptions
+	var opt options.PurgeByDocIDsOptions
 	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}

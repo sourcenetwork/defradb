@@ -272,9 +272,9 @@ func (h *collectionHandler) PurgeDocuments(rw http.ResponseWriter, req *http.Req
 		docIDs = append(docIDs, docID)
 	}
 
-	truncateOpt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(ctx))
+	purgeOpt := options.WithIdentity(options.PurgeByDocIDs(), identity.FromContext(ctx))
 
-	err := col.PurgeByDocIDs(ctx, docIDs, body.PruneHistory, truncateOpt)
+	err := col.PurgeByDocIDs(ctx, docIDs, body.PruneHistory, purgeOpt)
 	if err != nil {
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return

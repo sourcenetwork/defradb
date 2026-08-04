@@ -336,7 +336,7 @@ func (c *Collection) PurgeByDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
 	pruneHistory bool,
-	opts ...options.Enumerable[options.TruncateCollectionOptions],
+	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
 ) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
 

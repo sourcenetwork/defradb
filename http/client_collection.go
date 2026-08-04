@@ -225,7 +225,7 @@ func (c *Collection) PurgeByDocIDs(
 	ctx context.Context,
 	docIDs []client.DocID,
 	pruneHistory bool,
-	opts ...options.Enumerable[options.TruncateCollectionOptions],
+	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
 ) error {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())

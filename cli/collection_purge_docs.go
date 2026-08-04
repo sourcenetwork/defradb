@@ -29,7 +29,10 @@ func MakeCollectionPurgeDocsCommand(ctx context.Context) *cobra.Command {
 		Short: "Permanently remove documents by DocID from the local node",
 		Long: `Permanently remove a set of documents by DocID from the local node, including all
 datastore values and headstore entries. When --prune-history is set, it also removes
-reachable blockstore blocks that are no longer owned by another document.
+reachable blockstore blocks that are no longer owned by another document. Shared blocks
+are retained until their final owning document is purged.
+
+History pruning is not supported for branchable collections.
 
 Unlike the soft-delete performed by the delete command, this operation is irreversible and
 does not propagate to other nodes in the peer network.`,
@@ -49,7 +52,7 @@ does not propagate to other nodes in the peer network.`,
 				docIDs = append(docIDs, docID)
 			}
 
-			opt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(cmd.Context()))
+			opt := options.WithIdentity(options.PurgeByDocIDs(), identity.FromContext(cmd.Context()))
 			return col.PurgeByDocIDs(cmd.Context(), docIDs, pruneHistory, opt)
 		},
 	}
@@ -57,7 +60,7 @@ does not propagate to other nodes in the peer network.`,
 	setCollectionSelectorFlags(cmd)
 	cmd.Flags().StringArrayVar(&docIDStrs, "docID", nil, "DocID of a document to purge (may be repeated)")
 	cmd.Flags().BoolVar(&pruneHistory, "prune-history", false,
-		"Also delete reachable blockstore blocks no longer owned by another document")
+		"Also delete reachable blockstore blocks after their final owner is purged")
 
 	return cmd
 }
