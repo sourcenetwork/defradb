@@ -265,7 +265,8 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 
 // reserveDocShortID commits the node-wide sequence separately from document writes so concurrent
 // document transactions do not contend on the sequence key. Failed document transactions may leave
-// gaps; short IDs only need to be unique.
+// gaps; short IDs only need to be unique. The lock spans transaction creation through commit so each
+// transaction sees the last committed reservation.
 func (db *DB) reserveDocShortID(ctx context.Context) (uint64, error) {
 	db.docShortIDMu.Lock()
 	defer db.docShortIDMu.Unlock()
