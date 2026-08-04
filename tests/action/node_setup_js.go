@@ -23,7 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// setupNode returns the database implementation for the current
+// SetupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 //

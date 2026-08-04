@@ -46,7 +46,7 @@ func createBadgerEncryptionKey() error {
 	return encryptionKeyErr
 }
 
-// setupNode returns the database implementation for the current
+// SetupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 //
@@ -55,7 +55,7 @@ func createBadgerEncryptionKey() error {
 // ignored in that case (the external process gets its own flags).
 //
 // Note: If the signature of this function is updated, don't forget to
-// also update the function in [tests/integration/db_setup_js.go] otherwise
+// also update the function in [tests/action/node_setup_js.go] otherwise
 // the js client build may fail (the failure might not be obvious to find).
 func SetupNode(
 	s *state.State,

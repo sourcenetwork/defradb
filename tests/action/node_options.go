@@ -110,8 +110,8 @@ var (
 	// set by the harness around restart actions.
 	DatabaseDir string
 
-	// LensType is the lens runtime under test.
-	LensType options.NodeLensRuntimeType
+	// lensType is the lens runtime under test.
+	lensType options.NodeLensRuntimeType
 
 	// BadgerEncryption reports whether the badger store is encrypted.
 	BadgerEncryption bool
@@ -131,7 +131,7 @@ func init() {
 	InMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
 	LevelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
 	BadgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
-	LensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
+	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
@@ -160,7 +160,7 @@ func DefaultNodeOpts() *options.NodeOptionsBuilder {
 
 	opt.DB().
 		SetLensPoolSize(lensPoolSize).
-		SetLensRuntime(LensType).
+		SetLensRuntime(lensType).
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
 		SetP2PBlockSyncTimeout(1 * time.Second)
