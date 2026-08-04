@@ -102,8 +102,9 @@ func (a *DeleteIndex) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the dropping window, wait for the drop record to clear
-		// so a following raw-entry assertion sees them gone.
-		if err == nil && !a.Async && hadIndex {
+		// so a following raw-entry assertion sees them gone. With an explicit transaction the record
+		// is not committed until the caller commits, so there is nothing to wait for yet.
+		if err == nil && !a.Async && !a.TransactionID.HasValue() && hadIndex {
 			waitForIndexDropped(a.s, node, collection.Version().CollectionID, indexID)
 		}
 	}
