@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	_ "github.com/sourcenetwork/corekv/chunk"
+	"github.com/sourcenetwork/corekv/leveldb"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	lensNode "github.com/sourcenetwork/lens/host-go/node"
@@ -263,13 +264,15 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	return wrapDatastoreTxn(txn, db), nil
 }
 
-// reserveDocShortID commits the node-wide sequence separately from document writes so concurrent
-// document transactions do not contend on the sequence key. Failed document transactions may leave
-// gaps; short IDs only need to be unique. The lock spans transaction creation through commit so each
-// transaction sees the last committed reservation.
+// reserveDocShortID commits the node-wide sequence separately from document writes where the store
+// supports concurrent transactions. LevelDB can only hold one transaction, so it uses the caller's.
 func (db *DB) reserveDocShortID(ctx context.Context) (uint64, error) {
 	db.docShortIDMu.Lock()
 	defer db.docShortIDMu.Unlock()
+
+	if _, ok := db.rootstore.(*leveldb.Datastore); ok {
+		return id.NextDocShortID(ctx)
+	}
 
 	txn, err := db.NewTxn(false)
 	if err != nil {

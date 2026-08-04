@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/corekv/leveldb"
 
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
@@ -69,4 +70,25 @@ func TestNewDB(t *testing.T) {
 
 	_, err = NewDB(ctx, rootstore, adminInfo)
 	require.NoError(t, err)
+}
+
+func TestReserveDocShortID_LevelDBUsesCurrentTxn(t *testing.T) {
+	ctx := context.Background()
+	rootstore, err := leveldb.NewDatastore(t.TempDir(), nil)
+	require.NoError(t, err)
+
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := newDB(ctx, rootstore, adminInfo)
+	require.NoError(t, err)
+	t.Cleanup(db.Close)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txn.Discard()
+
+	docShortID, err := db.reserveDocShortID(InitContext(ctx, txn))
+	require.NoError(t, err)
+	require.NotZero(t, docShortID)
+	require.NoError(t, txn.Commit())
 }
