@@ -38,10 +38,10 @@ type heapUnderTest struct {
 func minHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "minHeap",
-		new:  func() heap.Interface { return &minHeap{} },
+		new:  func() heap.Interface { return newMinHeap() },
 		root: func(h heap.Interface) float32 {
-			mh, _ := h.(*minHeap)
-			return (*mh)[0].dist
+			mh, _ := h.(*candidateHeap)
+			return mh.items[0].dist
 		},
 		popOrder: func(sorted []float32) []float32 {
 			out := append([]float32(nil), sorted...) // sorted is ascending → min pops ascending
@@ -62,10 +62,10 @@ func minHeapUT() heapUnderTest {
 func maxHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "maxHeap",
-		new:  func() heap.Interface { return &maxHeap{} },
+		new:  func() heap.Interface { return newMaxHeap() },
 		root: func(h heap.Interface) float32 {
-			mh, _ := h.(*maxHeap)
-			return (*mh)[0].dist
+			mh, _ := h.(*candidateHeap)
+			return mh.items[0].dist
 		},
 		popOrder: func(sorted []float32) []float32 {
 			out := make([]float32, len(sorted)) // sorted is ascending → max pops descending
@@ -186,7 +186,7 @@ func TestHeap_InterleavedPushPop_ReturnsCurrentExtreme(t *testing.T) {
 func TestHeap_PreservesCandidatePayload(t *testing.T) {
 	// Popping must return the whole candidate (id + vector), not just the distance, since the
 	// neighbour-selection heuristic relies on the carried vector.
-	h := &minHeap{}
+	h := newMinHeap()
 	heap.Push(h, candidate{id: 9, dist: 0.5, vector: []float32{1, 2, 3}})
 	got := popCandidate(t, h)
 	assert.Equal(t, NodeID(9), got.id)

@@ -82,7 +82,7 @@ func reloadThroughCodec(t *testing.T, src NodeStore) NodeStore {
 }
 
 // TestGraph_PersistReloadSearch_MatchesOriginal is the full-stack round trip: build a graph, persist
-// every node + meta through the codec into a fresh store, wrap a new Graph around that store, and
+// every node + meta through the codec into a fresh store, wrap a new HNSWIndex around that store, and
 // confirm searches return identical results to the original in-memory graph. This proves the
 // algorithm's on-disk representation is complete — search survives a cold reload.
 func TestGraph_PersistReloadSearch_MatchesOriginal(t *testing.T) {

@@ -23,7 +23,7 @@ type Neighbor struct {
 //
 // If the graph is empty, Search returns an empty (nil) slice and no
 // error.
-func (g *Graph) Search(query []float32, k, efSearch int) ([]NodeID, error) {
+func (g *HNSWIndex) Search(query []float32, k, efSearch int) ([]NodeID, error) {
 	w, err := g.search(query, k, efSearch)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (g *Graph) Search(query []float32, k, efSearch int) ([]NodeID, error) {
 
 // SearchWithDistance is Search but each hit also carries its distance to the query. The caller uses
 // the distance to rank or score results (e.g. to fill a similarity field) without recomputing it.
-func (g *Graph) SearchWithDistance(query []float32, k, efSearch int) ([]Neighbor, error) {
+func (g *HNSWIndex) SearchWithDistance(query []float32, k, efSearch int) ([]Neighbor, error) {
 	w, err := g.search(query, k, efSearch)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (g *Graph) SearchWithDistance(query []float32, k, efSearch int) ([]Neighbor
 
 // search runs the K-NN-SEARCH traversal and returns the top-k candidates (with distances),
 // nearest-first. Both Search and SearchWithDistance are thin wrappers over this.
-func (g *Graph) search(query []float32, k, efSearch int) ([]candidate, error) {
+func (g *HNSWIndex) search(query []float32, k, efSearch int) ([]candidate, error) {
 	if k <= 0 {
 		return nil, nil
 	}
@@ -104,7 +104,7 @@ func (g *Graph) search(query []float32, k, efSearch int) ([]candidate, error) {
 // from Search results. Links are left intact deliberately, even when the entry point is deleted,
 // because traversal still passes through tombstones. Physically unlinking them and promoting a new
 // entry point needs a reclaim pass that is not yet built.
-func (g *Graph) Delete(id NodeID) error {
+func (g *HNSWIndex) Delete(id NodeID) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 

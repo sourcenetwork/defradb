@@ -18,14 +18,12 @@ import (
 	"sync"
 )
 
-// Graph is a Hierarchical Navigable Small World approximate-nearest-
-// neighbour index. It is safe for concurrent use: mutations (Insert,
-// Delete) are serialized via an internal mutex (single-writer
-// discipline), while Search may run concurrently with mutations as long
-// as the underlying NodeStore provides safe/consistent concurrent reads
-// (the provided in-memory store guards all access with its own mutex; a
-// real KV-backed store would typically offer snapshot reads).
-type Graph struct {
+// HNSWIndex is a Hierarchical Navigable Small World approximate-nearest-neighbour index. It is safe
+// for concurrent use: mutations (Insert, Delete) are serialized via an internal mutex (single-writer
+// discipline), while Search may run concurrently with mutations as long as the underlying NodeStore
+// provides safe/consistent concurrent reads (the provided in-memory store guards all access with its
+// own mutex; a real KV-backed store would typically offer snapshot reads).
+type HNSWIndex struct {
 	store  NodeStore
 	params Params
 	metric Metric
@@ -34,12 +32,12 @@ type Graph struct {
 	mu  sync.Mutex // serializes Insert/Delete (single-writer)
 }
 
-// New creates a new Graph backed by the given store, using the given
+// New creates a new HNSWIndex backed by the given store, using the given
 // distance metric and construction/search parameters. seed makes level
 // generation deterministic for a given sequence of inserts, which is
 // useful for tests and reproducibility.
-func New(store NodeStore, metric Metric, params Params, seed int64) *Graph {
-	return &Graph{
+func New(store NodeStore, metric Metric, params Params, seed int64) *HNSWIndex {
+	return &HNSWIndex{
 		store:  store,
 		params: params,
 		metric: metric,
@@ -47,10 +45,14 @@ func New(store NodeStore, metric Metric, params Params, seed int64) *Graph {
 	}
 }
 
-// randomLevel draws a random top layer for a new node, following the
-// exponential-decay level distribution from the HNSW paper:
-// l = floor(-ln(unif(0,1)) * ML).
-func (g *Graph) randomLevel() int {
+// randomLevel draws a random top layer for a new node, following the exponential-decay level
+// distribution from the HNSW paper: l = floor(-ln(unif(0,1)) * ML).
+//
+// The decay is what makes the graph a hierarchy: almost every node lands on the bottom layer, and
+// each layer up holds exponentially fewer nodes. Search starts at the sparse top and drops down, so
+// it can cover a lot of ground in a few steps before doing the fine-grained search at the bottom.
+// ML controls how fast the layers thin out.
+func (g *HNSWIndex) randomLevel() int {
 	// rng.Float64 returns a value in [0, 1); guard against exactly 0 to
 	// avoid taking ln(0).
 	r := g.rng.Float64()
@@ -62,7 +64,7 @@ func (g *Graph) randomLevel() int {
 
 // Insert adds a new vector under the given node id, following Algorithm 1
 // of the HNSW paper (INSERT).
-func (g *Graph) Insert(id NodeID, vector []float32) error {
+func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -167,7 +169,7 @@ func (g *Graph) Insert(id NodeID, vector []float32) error {
 // layer: it appends "to" to from's neighbour list at that layer, then, if
 // from's degree at that layer now exceeds mmax, re-runs the neighbour
 // selection heuristic over from's neighbours and prunes to the cap.
-func (g *Graph) addLink(from, to NodeID, layer, mmax int) error {
+func (g *HNSWIndex) addLink(from, to NodeID, layer, mmax int) error {
 	node, ok, err := g.store.GetNode(from)
 	if err != nil {
 		return err
@@ -196,7 +198,7 @@ func (g *Graph) addLink(from, to NodeID, layer, mmax int) error {
 
 // candidatesFromIDs loads the nodes for the given ids and computes their
 // distance to q, returning them as candidates (unsorted).
-func (g *Graph) candidatesFromIDs(q []float32, ids []NodeID) ([]candidate, error) {
+func (g *HNSWIndex) candidatesFromIDs(q []float32, ids []NodeID) ([]candidate, error) {
 	out := make([]candidate, 0, len(ids))
 	for _, id := range ids {
 		n, ok, err := g.store.GetNode(id)
@@ -223,7 +225,7 @@ func idsOf(cands []candidate) []NodeID {
 // searchGreedy runs the ef=1 descent step of SEARCH-LAYER (Algorithm 2) from a single entry point:
 // it returns the single closest node reachable in the given layer. This is the per-layer step used
 // when descending from the top layer toward the insertion/query layer.
-func (g *Graph) searchGreedy(query []float32, entry NodeID, layer int) ([]candidate, error) {
+func (g *HNSWIndex) searchGreedy(query []float32, entry NodeID, layer int) ([]candidate, error) {
 	return g.searchLayerMulti(query, []candidate{{id: entry}}, 1, layer)
 }
 
@@ -236,10 +238,10 @@ func (g *Graph) searchGreedy(query []float32, entry NodeID, layer int) ([]candid
 // result set W, per the package's tombstone-deletion strategy.
 //
 // The returned candidates are sorted nearest-first.
-func (g *Graph) searchLayerMulti(query []float32, entryPoints []candidate, ef, layer int) ([]candidate, error) {
+func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, ef, layer int) ([]candidate, error) {
 	visited := make(map[NodeID]struct{})
-	var candidatesHeap minHeap
-	var results maxHeap
+	candidatesHeap := newMinHeap()
+	results := newMaxHeap()
 
 	for _, ep := range entryPoints {
 		n, ok, err := g.store.GetNode(ep.id)
@@ -256,21 +258,21 @@ func (g *Graph) searchLayerMulti(query []float32, entryPoints []candidate, ef, l
 
 		d := distance(g.metric, query, n.Vector)
 		c := candidate{id: ep.id, dist: d, vector: n.Vector}
-		candidatesHeap = append(candidatesHeap, c)
+		candidatesHeap.items = append(candidatesHeap.items, c)
 		if !n.Deleted {
-			results = append(results, c)
+			results.items = append(results.items, c)
 		}
 	}
-	heap.Init(&candidatesHeap)
-	heap.Init(&results)
+	heap.Init(candidatesHeap)
+	heap.Init(results)
 
 	for candidatesHeap.Len() > 0 {
-		nearest := candidatesHeap[0]
+		nearest := candidatesHeap.items[0]
 
-		if results.Len() >= ef && nearest.dist > results[0].dist {
+		if results.Len() >= ef && nearest.dist > results.items[0].dist {
 			break
 		}
-		heap.Pop(&candidatesHeap)
+		heap.Pop(candidatesHeap)
 
 		node, ok, err := g.store.GetNode(nearest.id)
 		if err != nil {
@@ -301,20 +303,20 @@ func (g *Graph) searchLayerMulti(query []float32, entryPoints []candidate, ef, l
 
 			d := distance(g.metric, query, nbNode.Vector)
 
-			if results.Len() < ef || d < results[0].dist {
-				heap.Push(&candidatesHeap, candidate{id: nb, dist: d, vector: nbNode.Vector})
+			if results.Len() < ef || d < results.items[0].dist {
+				heap.Push(candidatesHeap, candidate{id: nb, dist: d, vector: nbNode.Vector})
 				if !nbNode.Deleted {
-					heap.Push(&results, candidate{id: nb, dist: d, vector: nbNode.Vector})
+					heap.Push(results, candidate{id: nb, dist: d, vector: nbNode.Vector})
 					if results.Len() > ef {
-						heap.Pop(&results)
+						heap.Pop(results)
 					}
 				}
 			}
 		}
 	}
 
-	out := make([]candidate, len(results))
-	copy(out, results)
+	out := make([]candidate, len(results.items))
+	copy(out, results.items)
 	sort.Slice(out, func(i, j int) bool { return out[i].dist < out[j].dist })
 	return out, nil
 }

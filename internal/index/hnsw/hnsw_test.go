@@ -242,7 +242,7 @@ func TestGraph_KExceedsNodeCount_ReturnsAll(t *testing.T) {
 }
 
 func TestGraph_SameSeed_Deterministic(t *testing.T) {
-	buildGraph := func(seed int64) (*Graph, []NodeID) {
+	buildGraph := func(seed int64) (*HNSWIndex, []NodeID) {
 		store := NewMemStore()
 		g := New(store, Cosine, DefaultParams(8), seed)
 		rng := rand.New(rand.NewSource(99))

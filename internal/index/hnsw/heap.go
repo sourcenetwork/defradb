@@ -22,49 +22,37 @@ type candidate struct {
 	vector []float32
 }
 
-// minHeap is a min-heap of candidates ordered by ascending distance
-// (nearest first out). Used as the candidate frontier "C" in SEARCH-LAYER.
-type minHeap []candidate
+// candidateHeap is a heap of candidates whose ordering is set by nearestFirst. Both orderings the
+// search needs are the same heap with a flipped comparison, so one type covers both:
+//   - nearestFirst true: nearest pops first (the candidate frontier "C" in SEARCH-LAYER).
+//   - nearestFirst false: farthest pops first, so the farthest can be evicted cheaply once the
+//     result set "W" exceeds ef.
+type candidateHeap struct {
+	items        []candidate
+	nearestFirst bool
+}
 
-func (h minHeap) Len() int           { return len(h) }
-func (h minHeap) Less(i, j int) bool { return h[i].dist < h[j].dist }
-func (h minHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *minHeap) Push(x any) {
+func newMinHeap() *candidateHeap { return &candidateHeap{nearestFirst: true} }
+func newMaxHeap() *candidateHeap { return &candidateHeap{nearestFirst: false} }
+
+func (h candidateHeap) Len() int { return len(h.items) }
+func (h candidateHeap) Less(i, j int) bool {
+	if h.nearestFirst {
+		return h.items[i].dist < h.items[j].dist
+	}
+	return h.items[i].dist > h.items[j].dist
+}
+func (h candidateHeap) Swap(i, j int) { h.items[i], h.items[j] = h.items[j], h.items[i] }
+func (h *candidateHeap) Push(x any) {
 	if c, ok := x.(candidate); ok {
-		*h = append(*h, c)
+		h.items = append(h.items, c)
 	}
 }
-func (h *minHeap) Pop() any {
-	old := *h
-	n := len(old)
-	item := old[n-1]
-	*h = old[:n-1]
+func (h *candidateHeap) Pop() any {
+	n := len(h.items)
+	item := h.items[n-1]
+	h.items = h.items[:n-1]
 	return item
 }
 
-// maxHeap is a max-heap of candidates ordered by descending distance
-// (farthest first out). Used as the dynamic result set "W" in
-// SEARCH-LAYER, so that the farthest element can be evicted cheaply once
-// the set exceeds ef.
-type maxHeap []candidate
-
-func (h maxHeap) Len() int           { return len(h) }
-func (h maxHeap) Less(i, j int) bool { return h[i].dist > h[j].dist }
-func (h maxHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *maxHeap) Push(x any) {
-	if c, ok := x.(candidate); ok {
-		*h = append(*h, c)
-	}
-}
-func (h *maxHeap) Pop() any {
-	old := *h
-	n := len(old)
-	item := old[n-1]
-	*h = old[:n-1]
-	return item
-}
-
-var (
-	_ heap.Interface = (*minHeap)(nil)
-	_ heap.Interface = (*maxHeap)(nil)
-)
+var _ heap.Interface = (*candidateHeap)(nil)

@@ -21,7 +21,7 @@ import (
 // transaction on ctx. It is the only type here that touches the engine, so if the engine is ever
 // extracted this and hnsw_store.go are the whole seam.
 type hnswIndex struct {
-	graph    *hnsw.Graph
+	graph    *hnsw.HNSWIndex
 	efSearch int
 }
 

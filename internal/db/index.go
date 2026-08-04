@@ -550,9 +550,13 @@ func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *
 	return index.Save(ctx, newDoc)
 }
 
-// Delete removes doc from the index. While the index is still building, the backfill may not have
-// reached this document yet, so a missing short id is expected and Delete does nothing. Once the
-// index is built, a missing short id means the index is out of step with the data.
+// Delete removes doc from the search results. It is a soft delete: the node is marked deleted but
+// kept in the graph so other nodes can still reach their neighbours through it. Search never returns
+// a deleted node, and a later pass cleans up the leftover links.
+//
+// While the index is still building, the backfill may not have reached this document yet, so a
+// missing short id is expected and Delete does nothing. Once built, a missing short id means the
+// index is out of step with the data.
 func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Document) error {
 	idx, collectionShortID, err := index.openIndex(ctx)
 	if err != nil {

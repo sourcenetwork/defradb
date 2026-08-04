@@ -38,11 +38,11 @@ type VectorIndexKey struct {
 	Epoch uint32
 	// IsMeta is true for the graph's meta singleton key, false for a node entry key.
 	IsMeta bool
-	// NodeID is the node this key addresses. Only meaningful when IsMeta is false.
+	// NodeID is the node this key addresses. Only meaningful when IsMeta is false. Node ids come from
+	// a sequence that starts at 1, so a zero NodeID never addresses a node: it marks a node-prefix key
+	// (`.../n`) that scans every node of the index, as opposed to a full node key (`.../n/<id>`). This
+	// matches how the other keys use a zero component as their prefix.
 	NodeID uint64
-	// hasNodeID distinguishes a node key (NodeID set) from a node-prefix key (no NodeID; used to
-	// iterate over every node entry of the index).
-	hasNodeID bool
 	// offset controls how many times bytesPrefixEnd is applied during encoding; see
 	// IndexDataStoreKey.Offset for the same mechanism.
 	offset uint64
@@ -69,20 +69,18 @@ func NewVectorNodeKey(collShortID, indexID, epoch uint32, nodeID uint64) VectorI
 		Epoch:             epoch,
 		IsMeta:            false,
 		NodeID:            nodeID,
-		hasNodeID:         true,
 	}
 }
 
-// NewVectorNodePrefix returns a key with no NodeID component, whose bytes form the common prefix
-// of every node entry of the given (collection, index, epoch). It is intended for prefix
-// iteration, not for a Get/Set/Delete of a single entry.
+// NewVectorNodePrefix returns a key with no NodeID component (a zero NodeID), whose bytes form the
+// common prefix of every node entry of the given (collection, index, epoch). It is intended for
+// prefix iteration, not for a Get/Set/Delete of a single entry.
 func NewVectorNodePrefix(collShortID, indexID, epoch uint32) VectorIndexKey {
 	return VectorIndexKey{
 		CollectionShortID: collShortID,
 		IndexID:           indexID,
 		Epoch:             epoch,
 		IsMeta:            false,
-		hasNodeID:         false,
 	}
 }
 
@@ -107,7 +105,7 @@ func (k *VectorIndexKey) Bytes() []byte {
 		b = append(b, vectorIndexMetaDiscriminator)
 	} else {
 		b = append(b, vectorIndexNodeDiscriminator)
-		if k.hasNodeID {
+		if k.NodeID != 0 {
 			b = append(b, '/')
 			b = encoding.EncodeUvarintAscending(b, k.NodeID)
 		}
@@ -144,7 +142,6 @@ func (k *VectorIndexKey) PrefixEnd() Walkable {
 		Epoch:             k.Epoch,
 		IsMeta:            k.IsMeta,
 		NodeID:            k.NodeID,
-		hasNodeID:         k.hasNodeID,
 		offset:            k.offset + 1,
 	}
 }
