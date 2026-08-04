@@ -2418,7 +2418,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 }
 
 // skipIfBackupTest removes any client type that doesn't support the Backup API from clients, if the
-// given actions contain backup actions. Skips the test entirely if no client type remains. 
+// given actions contain backup actions. Skips the test entirely if no client type remains.
 func skipIfBackupTest(t testing.TB, clients []state.ClientType, actions []any) []state.ClientType {
 	hasBackupAction := false
 	for _, act := range actions {
