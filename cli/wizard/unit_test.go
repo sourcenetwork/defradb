@@ -247,10 +247,12 @@ func Test_GenerateIndividualKeyrings_SystemKeyring(t *testing.T) {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
 	}
 
+	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation": {1},
 		},
+		RootDir: tmpDir,
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
@@ -277,9 +279,12 @@ func Test_GenerateIndividualKeyrings_SystemKeyring(t *testing.T) {
 
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
+	t.Cleanup(func() {
+		_ = openKeyring.Delete("node-identity-key")
+		_ = openKeyring.Delete("peer-key")
+		_ = openKeyring.Delete("encryption-key")
+		_ = openKeyring.Delete("searchable-encryption-key")
+	})
 
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, "")
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, "")
@@ -421,12 +426,14 @@ func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 
 	dummyKey_secp256r1 := "75f22540e27d2f47680982acc22fc7b7976b92cddcf1a7846518482d4f463139"
 
+	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation":     {1},
 			"stepQueryAddingIdentityKeyType": {2},
 			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256r1},
 		},
+		RootDir: tmpDir,
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
@@ -442,9 +449,7 @@ func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256r1", 32, dummyKey_secp256r1)
 }
 
@@ -493,12 +498,14 @@ func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 
 	dummyKey_secp256k1 := "1cf0c5b2af63ade9020b0f1d38e927ae2f384e1b635e601f18f281e53b981a22"
 
+	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation":     {1},
-			"stepQueryAddingIdentityKeyType": {2},
+			"stepQueryAddingIdentityKeyType": {1},
 			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256k1},
 		},
+		RootDir: tmpDir,
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
@@ -514,9 +521,7 @@ func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, dummyKey_secp256k1)
 }
 
@@ -567,12 +572,14 @@ func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	dummyKey_ed25519 := "f0a804f0ab5d6bd49c6e55f27b433a8b28d23f1290a930fb1f16f6e433710" +
 		"0b5638f8e118d2c2c3d21a0c5e56b78756de96ca96f0ae0e54e7055ea67f93d84c2"
 
+	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation":     {1},
-			"stepQueryAddingIdentityKeyType": {2},
+			"stepQueryAddingIdentityKeyType": {0},
 			"stepGettingIdentityKeyForAdd":   {dummyKey_ed25519},
 		},
+		RootDir: tmpDir,
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
@@ -588,9 +595,7 @@ func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	// Then, check that the key was added correctly
 	// Open the keyring and check that the keys were generated and stored
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "ed25519", 64, dummyKey_ed25519)
 }
 
@@ -653,13 +658,8 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
 	}
 
-	testSecretValue := "test-secret"
-
 	// Set up a clean test environment
-	unsetEnvForTest(t, "DEFRA_KEYRING_SECRET")
-	os.Setenv("DEFRA_KEYRING_SECRET", testSecretValue)
 	tmpDir := setupWorkingDirectoryForTest(t)
-	keyringDir := tmpDir + "/keys"
 
 	dummyKey_peer := "ecce81a027d6dc6bddef226aa719719453ef315c5d991860d8f4763df564" +
 		"c8bc78b95ea264b812ba1b99e3572d4be0344f6c27876767308df8ead1be0e5659cd"
@@ -668,14 +668,13 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":               {0},
+			"stepKeyringStorageLocation":               {1},
 			"stepGettingPeerKeyForAdd":                 {dummyKey_peer},
 			"stepGettingEncryptionKeyForAdd":           {dummyKey_encryption},
 			"stepGettingSearchableEncryptionKeyForAdd": {dummyKey_searchableEncryption},
 		},
 		RootDir: tmpDir,
 	}
-	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
@@ -697,9 +696,11 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 
 	// Then, check that the keys were added correctly
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
+	t.Cleanup(func() {
+		_ = openKeyring.Delete("peer-key")
+		_ = openKeyring.Delete("encryption-key")
+		_ = openKeyring.Delete("searchable-encryption-key")
+	})
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, dummyKey_peer)
 	requireKeyInKeyring(t, openKeyring, "encryption-key", "", 32, dummyKey_encryption)
 	requireKeyInKeyring(t, openKeyring, "searchable-encryption-key", "", 32, dummyKey_searchableEncryption)
