@@ -56,11 +56,10 @@ func TestNAC_GatesPurgeDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 			Doc:          `{"name":"alice"}`,
 		},
 		&action.PurgeDocs{
-			Identity:           testUtils.NoIdentity(),
-			CollectionIdentity: testUtils.ClientIdentity(1),
-			CollectionIndex:    0,
-			DocIndexes:         []int{0},
-			ExpectedError:      testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePurgeDocumentPerm),
+			Identity:        testUtils.NoIdentity(),
+			CollectionIndex: 0,
+			DocIndexes:      []int{0},
+			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 		},
 	}}
 
@@ -81,11 +80,10 @@ func TestNAC_GatesPurgeDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			Doc:          `{"name":"alice"}`,
 		},
 		&action.PurgeDocs{
-			Identity:           testUtils.ClientIdentity(2),
-			CollectionIdentity: testUtils.ClientIdentity(1),
-			CollectionIndex:    0,
-			DocIndexes:         []int{0},
-			ExpectedError:      testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePurgeDocumentPerm),
+			Identity:        testUtils.ClientIdentity(2),
+			CollectionIndex: 0,
+			DocIndexes:      []int{0},
+			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 		},
 	}}
 

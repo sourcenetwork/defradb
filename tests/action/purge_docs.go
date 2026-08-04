@@ -23,14 +23,13 @@ import (
 type PurgeDocs struct {
 	stateful
 
-	NodeID             immutable.Option[int]
-	Identity           immutable.Option[state.Identity]
-	CollectionIdentity immutable.Option[state.Identity]
-	CollectionIndex    int
-	DocIndexes         []int
-	PruneHistory       bool
-	ExpectedError      string
-	TransactionID      immutable.Option[int]
+	NodeID          immutable.Option[int]
+	Identity        immutable.Option[state.Identity]
+	CollectionIndex int
+	DocIndexes      []int
+	PruneHistory    bool
+	ExpectedError   string
+	TransactionID   immutable.Option[int]
 }
 
 var _ Action = (*PurgeDocs)(nil)
@@ -46,11 +45,7 @@ func (a *PurgeDocs) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		lookupIdentity := a.Identity
-		if a.CollectionIdentity.HasValue() {
-			lookupIdentity = a.CollectionIdentity
-		}
-		collections, err := GetCollectionsCanonically(a.s, node, txnOption, lookupIdentity)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
 			expected := assertError(a.s.T, err, a.ExpectedError)
 			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expected)

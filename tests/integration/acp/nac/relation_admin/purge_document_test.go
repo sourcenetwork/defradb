@@ -33,11 +33,10 @@ func TestNAC_AdminRelation_CanPurgeDocument(t *testing.T) {
 			Doc:          `{"name":"alice"}`,
 		},
 		&action.PurgeDocs{
-			Identity:           testUtils.ClientIdentity(2),
-			CollectionIdentity: testUtils.ClientIdentity(1),
-			CollectionIndex:    0,
-			DocIndexes:         []int{0},
-			ExpectedError:      testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePurgeDocumentPerm),
+			Identity:        testUtils.ClientIdentity(2),
+			CollectionIndex: 0,
+			DocIndexes:      []int{0},
+			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 		},
 		testUtils.AddNACActorRelationship{
 			RequestorIdentity: testUtils.ClientIdentity(1),

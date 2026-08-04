@@ -374,15 +374,14 @@ func (c *collection) deleteIndexedDocWithID(
 		}
 	}
 
-	// Index cleanup runs after the caller has authorized the delete or purge, so it must not
-	// apply the document read filter again. Fields come from the resolved indexes so a stale
-	// handle still fetches a concurrently-created index's field.
-	doc, err := c.getInternal(
-		ctx,
-		primaryKey,
-		c.collectIndexedFields(indexes),
-		includeDeleted,
-	)
+	fields := c.collectIndexedFields(indexes)
+	var doc *client.Document
+	if includeDeleted {
+		// Purge is authorized at the node level and must not apply the document read filter.
+		doc, err = c.getInternal(ctx, primaryKey, fields, true)
+	} else {
+		doc, err = c.get(ctx, primaryKey, fields, false)
+	}
 	if err != nil {
 		return err
 	}
