@@ -272,14 +272,8 @@
                                 "Name": {
                                     "type": "string"
                                 },
-                                "Secondary": {
-                                    "nullable": true,
-                                    "properties": {
-                                        "Unique": {
-                                            "type": "boolean"
-                                        }
-                                    },
-                                    "type": "object"
+                                "Unique": {
+                                    "type": "boolean"
                                 },
                                 "Vector": {
                                     "nullable": true,
@@ -543,14 +537,8 @@
                     "Name": {
                         "type": "string"
                     },
-                    "Secondary": {
-                        "nullable": true,
-                        "properties": {
-                            "Unique": {
-                                "type": "boolean"
-                            }
-                        },
-                        "type": "object"
+                    "Unique": {
+                        "type": "boolean"
                     },
                     "Vector": {
                         "nullable": true,
