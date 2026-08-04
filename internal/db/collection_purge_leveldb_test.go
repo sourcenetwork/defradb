@@ -48,8 +48,8 @@ func requireLevelDBOperationCompletes(t *testing.T, db *DB, operation func() err
 
 	select {
 	case err := <-done:
-		require.NoError(t, err)
 		db.Close()
+		require.NoError(t, err)
 	case <-time.After(5 * time.Second):
 		t.Fatal("operation blocked while opening a nested LevelDB transaction")
 	}

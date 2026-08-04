@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
@@ -190,7 +191,7 @@ func TestPurgeByDocIDsRemovesPrimaryMarker(t *testing.T) {
 	require.NoError(t, db.DeleteCollection(ctx, []string{"User"}))
 }
 
-func TestPurgeByDocIDsRemovesSearchableEncryptionArtifactsForAllAliases(t *testing.T) {
+func TestPurgeByDocIDsRemovesSearchableEncryptionArtifactsForAliasesAndUnknownDocuments(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 	docA := addUserDoc(t, ctx, col, "alice")
@@ -208,18 +209,20 @@ func TestPurgeByDocIDsRemovesSearchableEncryptionArtifactsForAllAliases(t *testi
 	require.True(t, found)
 
 	const alias = "bae-alice-alias"
+	unknownDocID := client.NewDocIDV0(blocks.NewBlock([]byte("unknown document")).Cid())
 	require.NoError(t, id.SetDocIDToDocRefMapping(txnCtx, shortID, docShortID, alias))
 	keysToStore := []keys.DatastoreSE{
 		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{1}, DocID: docA.ID().String()},
 		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{2}, DocID: alias},
 		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{3}, DocID: docB.ID().String()},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{4}, DocID: unknownDocID.String()},
 	}
 	for i := range keysToStore {
 		require.NoError(t, dbTxn.Datastore().Set(txnCtx, &keysToStore[i], nil))
 	}
 	require.NoError(t, txn.Commit())
 
-	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID()}, false))
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), unknownDocID}, false))
 
 	readTxn, err := db.NewTxn(true)
 	require.NoError(t, err)

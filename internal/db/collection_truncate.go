@@ -467,10 +467,8 @@ func (c *collection) hardDeleteCollectionBlocks(
 	return nil
 }
 
-// deleteBlocks deletes the block of the given cid and all the blocks it links to, if
-// a block with this cid is found.
-//
-// If the block is not found, it will not error.
+// deleteBlocks releases docID's ownership across the reachable DAG and deletes ownerless blocks.
+// A nil systemstore deletes the DAG unconditionally. Missing blocks are ignored.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,

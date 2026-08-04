@@ -183,6 +183,7 @@ func (c *collection) resolvePurgeTargets(
 	seen := make(map[uint64]struct{}, len(docIDs))
 
 	for _, docID := range docIDs {
+		aliases[docID.String()] = struct{}{}
 		docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, shortID, docID.String())
 		if err != nil {
 			return nil, nil, err
@@ -200,7 +201,6 @@ func (c *collection) resolvePurgeTargets(
 		if err != nil {
 			return nil, nil, err
 		}
-		aliases[docID.String()] = struct{}{}
 		for _, alias := range docAliases {
 			aliases[alias] = struct{}{}
 		}

@@ -561,10 +561,11 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	purgeDocuments.Description = "Permanently remove documents from the local node"
 	purgeDocuments.Tags = []string{"document"}
 	purgeDocuments.AddParameter(collectionNamePathParam)
+	const docIDsProperty = "docIDs"
 	purgeDocumentsSchema := openapi3.NewObjectSchema().
-		WithProperty("docIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
+		WithProperty(docIDsProperty, openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 		WithProperty("pruneHistory", openapi3.NewBoolSchema())
-	purgeDocumentsSchema.Required = []string{"docIDs"}
+	purgeDocumentsSchema.Required = []string{docIDsProperty}
 	purgeDocuments.RequestBody = &openapi3.RequestBodyRef{
 		Value: openapi3.NewRequestBody().
 			WithRequired(true).
