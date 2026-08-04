@@ -14,6 +14,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/multiformats/go-multiaddr"
@@ -165,17 +166,32 @@ func setupNode(
 	c, err := setupClient(s, nodeObj)
 	require.Nil(s.T, err)
 
-	st, err := newNodeState(s, c, path, false)
+	// A native node discovers its addresses through the in-process DB, which
+	// bypasses the HTTP auth middleware. Routing this through the client would
+	// send an unauthenticated request that NAC rejects.
+	st, err := newNodeState(s, c, nodeObj.DB, path, false)
 	if err != nil {
 		return nil, err
 	}
 	return st, nil
 }
 
+// peerInfoProvider reads a node's listen addresses. It is satisfied by both the
+// in-process DB (native nodes) and the HTTP client (external nodes).
+type peerInfoProvider interface {
+	PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error)
+}
+
 // newNodeState builds a NodeState around a set-up client: it subscribes to the
-// client's events and discovers the node's cached peer addresses. It is shared
-// by the native and external node setup paths.
-func newNodeState(s *state.State, c clients.Client, path string, isExternal bool) (*state.NodeState, error) {
+// client's events and discovers the node's cached peer addresses via peers. It
+// is shared by the native and external node setup paths.
+func newNodeState(
+	s *state.State,
+	c clients.Client,
+	peers peerInfoProvider,
+	path string,
+	isExternal bool,
+) (*state.NodeState, error) {
 	eventState, err := state.NewEventState(c.Events())
 	require.NoError(s.T, err)
 
@@ -187,7 +203,7 @@ func newNodeState(s *state.State, c clients.Client, path string, isExternal bool
 		IsExternal: isExternal,
 	}
 
-	addresses, err := discoverPeerAddresses(s, c, isExternal)
+	addresses, err := discoverPeerAddresses(s, peers, isExternal)
 	if err != nil {
 		return nil, err
 	}
@@ -199,14 +215,15 @@ func newNodeState(s *state.State, c clients.Client, path string, isExternal bool
 // discoverPeerAddresses reads the node's listen addresses via PeerInfo and
 // strips the trailing /p2p/<peerID> so they can be reused as listen addresses
 // on restart.
-func discoverPeerAddresses(s *state.State, c clients.Client, isExternal bool) ([]string, error) {
-	// Inject node identity so PeerInfo works when NAC is enabled.
+func discoverPeerAddresses(s *state.State, peers peerInfoProvider, isExternal bool) ([]string, error) {
+	// Inject node identity to bypass NAC in order to be able to call PeerInfo,
+	// otherwise when NAC is enabled we get an authorization error.
 	//
-	// This runs before the node is on s.Nodes, so no audience exists yet and no
-	// bearer token is generated. A native node needs the identity regardless. An
-	// empty "Bearer " header is ignored by a current node but rejected by some
-	// older released servers, so for an external node we skip it when the token
-	// is empty.
+	// A native node reads through the in-process DB, so it always gets the
+	// identity. An external node reads over HTTP, and this runs before the node
+	// is on s.Nodes so no bearer token is generated yet. An empty "Bearer "
+	// header is rejected by some older released servers, so skip it for an
+	// external node when the token is empty.
 	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
 	peerInfoOpts := options.PeerInfo()
 	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
@@ -217,7 +234,7 @@ func discoverPeerAddresses(s *state.State, c clients.Client, isExternal bool) ([
 		}
 	}
 
-	addresses, err := c.PeerInfo(s.Ctx, peerInfoOpts)
+	addresses, err := peers.PeerInfo(s.Ctx, peerInfoOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +266,9 @@ func setupExternalNode(s *state.State, ver string) (*state.NodeState, error) {
 		return nil, err
 	}
 
-	return newNodeState(s, w, "", true)
+	// An external node has no in-process DB, so it discovers its addresses over
+	// the HTTP client.
+	return newNodeState(s, w, w, "", true)
 }
 
 func removePeerIDFromAddr(addr []string) ([]string, error) {
