@@ -263,6 +263,16 @@ func (m *cosineSimilarity) expected() float64 {
 }
 
 func (m *cosineSimilarity) Match(actual any) (bool, error) {
+	// The HTTP, CLI and C clients decode the result through JSON, so the similarity value arrives as a
+	// json.Number rather than a float64. gomega.BeNumerically only accepts native numeric types, so
+	// unwrap it first, the same way the rest of the result-matching does.
+	if jsonNum, ok := actual.(json.Number); ok {
+		f, err := jsonNum.Float64()
+		if err != nil {
+			return false, err
+		}
+		actual = f
+	}
 	return gomega.BeNumerically("~", m.expected(), cosineSimilarityTolerance).Match(actual)
 }
 
