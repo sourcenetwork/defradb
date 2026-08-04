@@ -103,6 +103,45 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// Deleting a document removes it from the index: after deleting the nearest doc "x", the same query
+// returns the next-nearest "xy" instead. The delete is a soft delete in the graph (the node is
+// tombstoned, not unlinked), but search skips tombstoned nodes, so from a query's point of view the
+// document is gone immediately. Exercises the delete path end to end through the planner.
+func TestQuerySimple_WithSimilarityOnVectorIndex_ExcludesDeletedDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+				}`,
+			},
+			// x is nearest to the query [1,0,0], xy is second nearest.
+			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
+			// Delete the nearest doc "x" (added first, so DocID 0).
+			testUtils.DeleteDoc{CollectionID: 0, DocID: 0},
+			// The query must now skip the deleted "x" and return "xy" as nearest.
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 1){
+						name
+						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "xy", "sim": testUtils.CosineSimilarity([]float64{0.9, 0.4, 0}, []float64{1, 0, 0})},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // Cosine ignores magnitude: "long" [10,0,0] ties "unit" [1,0,0] at similarity 1, both ahead of the
 // off-axis "off". Guards the normalization fix — the old raw dot product ranked "long" far above
 // "unit".
