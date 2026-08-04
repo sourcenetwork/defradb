@@ -110,10 +110,11 @@ NodeInitOptions convertJavaNodeInitOptions(JNIEnv* env, jobject optionsObj) {
     jstring replicatorRetryIntervalsStr = (jstring)(*env)->GetObjectField(env, optionsObj, fid_replicatorRetryIntervals);
     jstring peersStr = (jstring)(*env)->GetObjectField(env, optionsObj, fid_peers);
 
-    opts.dbPath = (*env)->GetStringUTFChars(env, dbPathStr, 0);
-    opts.listeningAddresses = (*env)->GetStringUTFChars(env, listeningAddressesStr, 0);
-    opts.replicatorRetryIntervals = (*env)->GetStringUTFChars(env, replicatorRetryIntervalsStr, 0);
-    opts.peers = (*env)->GetStringUTFChars(env, peersStr, 0);
+    opts.dbPath = dbPathStr ? (*env)->GetStringUTFChars(env, dbPathStr, 0) : NULL;
+    opts.listeningAddresses = listeningAddressesStr ? (*env)->GetStringUTFChars(env, listeningAddressesStr, 0) : NULL;
+    opts.replicatorRetryIntervals =
+        replicatorRetryIntervalsStr ? (*env)->GetStringUTFChars(env, replicatorRetryIntervalsStr, 0) : NULL;
+    opts.peers = peersStr ? (*env)->GetStringUTFChars(env, peersStr, 0) : NULL;
 
     // Core booleans/ints
     jfieldID fid_inMemory = (*env)->GetFieldID(env, cls, "inMemory", "Z");
@@ -293,10 +294,22 @@ void releaseJavaNodeInitOptions(JNIEnv* env, jobject optionsObj, NodeInitOptions
     jfieldID fid_replicatorRetryIntervals = (*env)->GetFieldID(env, cls, "replicatorRetryIntervals", "Ljava/lang/String;");
     jfieldID fid_peers = (*env)->GetFieldID(env, cls, "peers", "Ljava/lang/String;");
 
-    (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_dbPath), opts.dbPath);
-    (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_listeningAddresses), opts.listeningAddresses);
-    (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_replicatorRetryIntervals), opts.replicatorRetryIntervals);
-    (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_peers), opts.peers);
+    if (opts.dbPath) {
+        (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_dbPath), opts.dbPath);
+    }
+    if (opts.listeningAddresses) {
+        (*env)->ReleaseStringUTFChars(
+            env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_listeningAddresses), opts.listeningAddresses);
+    }
+    if (opts.replicatorRetryIntervals) {
+        (*env)->ReleaseStringUTFChars(
+            env,
+            (jstring)(*env)->GetObjectField(env, optionsObj, fid_replicatorRetryIntervals),
+            opts.replicatorRetryIntervals);
+    }
+    if (opts.peers) {
+        (*env)->ReleaseStringUTFChars(env, (jstring)(*env)->GetObjectField(env, optionsObj, fid_peers), opts.peers);
+    }
 
     // Store options
     jfieldID fid_storeType = (*env)->GetFieldID(env, cls, "storeType", "Ljava/lang/String;");

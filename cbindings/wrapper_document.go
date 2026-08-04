@@ -126,7 +126,7 @@ func (c *Collection) AddManyDocuments(
 	copts.getInactive = 0
 	setCCollectionSigningOption(&copts, addOpts.EnableSigning)
 
-	var jsonDocs []json.RawMessage
+	jsonDocs := make([]json.RawMessage, 0, len(docs))
 	for _, doc := range docs {
 		b, err := doc.MarshalJSON()
 		if err != nil {

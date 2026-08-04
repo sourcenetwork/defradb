@@ -85,7 +85,7 @@ func unmarshalResult[T any](value string) (T, error) {
 	var result T
 	if err := json.Unmarshal([]byte(value), &result); err != nil {
 		var zero T
-		return zero, fmt.Errorf(errFmtUnmarshalResult, result, err)
+		return zero, fmt.Errorf(errFmtUnmarshalResult, value, err)
 	}
 	return result, nil
 }
@@ -350,6 +350,10 @@ func (w *Wrapper) AddCollection(
 		if !ok {
 			return nil, errors.New(errCastClientTxnFailed)
 		}
+		// Discard is a no-op if Commit already finalized the transaction below - this just
+		// guarantees the transaction (and its cgo handle and JNI global ref) is released on
+		// every return path, not only the success path.
+		defer txn.Discard()
 	}
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -370,8 +374,9 @@ func (w *Wrapper) AddCollection(
 	}
 
 	if !hadTxn {
-		defer txn.Discard()
-		_ = txn.Commit()
+		if err := txn.Commit(); err != nil {
+			return nil, err
+		}
 	}
 
 	return collectionVersions, nil
@@ -836,7 +841,13 @@ func (w *Wrapper) ExecRequest(
 	return retval
 }
 
-// wrapSubscriptionAsChannel mirrors cbindings' helper of the same name, polling the subscription via 
+// subscriptionPollInterval is how long wrapSubscriptionAsChannel waits between polls once it finds
+// nothing to deliver. Unlike cbindings' identical polling loop, each poll here also attaches to the
+// JVM, which is heavy enough (and adds to the same OS-thread churn covered in doc.go's signal-chaining
+// notes) that busy-spinning isn't free the way it is for a plain cgo call.
+const subscriptionPollInterval = 15 * time.Millisecond
+
+// wrapSubscriptionAsChannel mirrors cbindings' helper of the same name, polling the subscription via
 // PollSubscriptionNative in a loop until ctx is done. PollSubscriptionNative is an instance method on
 // DefraNode, so it's invoked on this Wrapper's cached nodeObj.
 func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.GQLResult {
@@ -851,20 +862,23 @@ func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <
 			}
 
 			res, err := callNodeNoHandle(w.nodeObj, "PollSubscriptionNative", newArgs().argStr(subID))
-			if err != nil {
-				continue
-			}
-
-			if res.Status == 0 && res.Value != "" {
-				var gql client.GQLResult
-				if err := json.Unmarshal([]byte(res.Value), &gql); err != nil {
-					gql.Errors = append(gql.Errors, err)
-				}
+			if err != nil || res.Status != 0 || res.Value == "" {
 				select {
-				case ch <- gql:
+				case <-time.After(subscriptionPollInterval):
 				case <-ctx.Done():
 					return
 				}
+				continue
+			}
+
+			var gql client.GQLResult
+			if err := json.Unmarshal([]byte(res.Value), &gql); err != nil {
+				gql.Errors = append(gql.Errors, err)
+			}
+			select {
+			case ch <- gql:
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()

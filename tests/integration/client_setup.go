@@ -36,8 +36,6 @@ func init() {
 	}
 	if javaClient {
 		skipNetworkTests = false
-		// BasicImport/BasicExport are not implemented by this client (see
-		// tests/clients/java/wrapper.go), mirroring the C client.
 		skipBackupTests = true
 	}
 }

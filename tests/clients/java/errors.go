@@ -36,7 +36,7 @@ const (
 	errFmtCreateTransactionFailed          = "java client: creating DefraTransaction: %s"
 
 	// Wrapper-level helpers (wrapper.go, wrapper_collection.go)
-	errFmtUnmarshalResult      = "failed to unmarshal JSON into %T: %w"
+	errFmtUnmarshalResult      = "failed to unmarshal JSON %q: %w"
 	errCastClientTxnFailed     = "failed to cast clientTxn to datastore.Txn"
 	errFmtListLensesUnmarshal  = "%w (value len=%d, snippet=%q)"
 	errFmtCollectionNotFound   = "collection with name %q not found"

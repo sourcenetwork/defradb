@@ -236,7 +236,7 @@ func (c *Collection) AddManyDocuments(
 		encryptedFields = strings.Join(addOpts.EncryptedFields, ",")
 	}
 
-	var jsonDocs []json.RawMessage
+	jsonDocs := make([]json.RawMessage, 0, len(docs))
 	for _, doc := range docs {
 		b, err := doc.MarshalJSON()
 		if err != nil {
@@ -370,7 +370,8 @@ func (c *Collection) ExistsDocument(
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "GetDocumentNative",
-		newArgs().argStr(docID.String()).argBool(false).collOpts("", "", "", false, immutable.None[bool]()).argLong(idH))
+		newArgs().argStr(docID.String()).argBool(false).
+			collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return false, err
 	}
