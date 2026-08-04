@@ -76,7 +76,7 @@ func TestP2PCrossVersion_HeadToV1_DocSyncs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(), // node 0 = HEAD
-			testUtils.NodeVersion{Version: crossVersion, Config: testUtils.RandomNetworkingConfig()}, // node 1 = v1.0.0
+			testUtils.RandomNetworkingConfig().WithVersion(crossVersion), // node 1 = v1.0.0
 			&action.AddCollection{
 				SDL: `
 					type User {
@@ -114,7 +114,7 @@ func TestP2PCrossVersion_V1ToHead_DocSyncs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(), // node 0 = HEAD
-			testUtils.NodeVersion{Version: crossVersion, Config: testUtils.RandomNetworkingConfig()}, // node 1 = v1.0.0
+			testUtils.RandomNetworkingConfig().WithVersion(crossVersion), // node 1 = v1.0.0
 			&action.AddCollection{
 				SDL: `
 					type User {
