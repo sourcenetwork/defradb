@@ -258,6 +258,13 @@ func Test_GenerateIndividualKeyrings_SystemKeyring(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() {
+		_ = openKeyring.Delete("node-identity-key")
+		_ = openKeyring.Delete("peer-key")
+		_ = openKeyring.Delete("encryption-key")
+		_ = openKeyring.Delete("searchable-encryption-key")
+	})
 
 	// Execute the actual functions, then the first check will be that it didn't error
 	err := callback_GenerateIdentityKey(nil, ctx)
@@ -277,15 +284,7 @@ func Test_GenerateIndividualKeyrings_SystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Open the keyring and check that the keys were generated and stored
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	t.Cleanup(func() {
-		_ = openKeyring.Delete("node-identity-key")
-		_ = openKeyring.Delete("peer-key")
-		_ = openKeyring.Delete("encryption-key")
-		_ = openKeyring.Delete("searchable-encryption-key")
-	})
-
+	// Check that the keys were generated and stored.
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, "")
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, "")
 	requireKeyInKeyring(t, openKeyring, "encryption-key", "", 32, "")
@@ -314,6 +313,8 @@ func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 
 	// Execute the callback, then the first check will be that it didn't error
 	err := callback_GenerateKeysInSystemKeyring(nil, ctx)
@@ -321,8 +322,7 @@ func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Open the keyring and check that the node identity key was generated and stored
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	// Check that the node identity key was generated and stored.
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, "")
 
 	// Then, check that none of the other keys were generated
@@ -332,9 +332,6 @@ func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 			t.Fatalf("expected %s to not exist, but it does", keyname)
 		}
 	}
-
-	// Finally, cleanup the entry in the keyring we made for this test
-	_ = openKeyring.Delete("node-identity-key")
 }
 
 // This will test the callback_GenerateKeysInSystemKeyring function.
@@ -358,6 +355,13 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() {
+		_ = openKeyring.Delete("node-identity-key")
+		_ = openKeyring.Delete("peer-key")
+		_ = openKeyring.Delete("encryption-key")
+		_ = openKeyring.Delete("searchable-encryption-key")
+	})
 
 	// Execute the callback, then the first check will be that it didn't error
 	err := callback_GenerateKeysInSystemKeyring(nil, ctx)
@@ -365,20 +369,11 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Open the keyring
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-
 	// Check each key separately
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, "")
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, "")
 	requireKeyInKeyring(t, openKeyring, "encryption-key", "", 32, "")
 	requireKeyInKeyring(t, openKeyring, "searchable-encryption-key", "", 32, "")
-
-	// Finally, cleanup the entries in the keyring we made for this test
-	_ = openKeyring.Delete("node-identity-key")
-	_ = openKeyring.Delete("peer-key")
-	_ = openKeyring.Delete("encryption-key")
-	_ = openKeyring.Delete("searchable-encryption-key")
 }
 
 // This will test the callback_AddIdentityKey function using the file keyring, and a secp256r1 key.
@@ -439,6 +434,8 @@ func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 
 	// Execute the callback, then the first check will be that it didn't error
 	err := callback_AddIdentityKey(nil, ctx)
@@ -446,10 +443,7 @@ func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was added correctly
-	// Open the keyring and check that the keys were generated and stored
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
+	// Check that the key was added correctly.
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256r1", 32, dummyKey_secp256r1)
 }
 
@@ -511,6 +505,8 @@ func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 
 	// Execute the callback, then the first check will be that it didn't error
 	err := callback_AddIdentityKey(nil, ctx)
@@ -518,10 +514,7 @@ func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was added correctly
-	// Open the keyring and check that the keys were generated and stored
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
+	// Check that the key was added correctly.
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, dummyKey_secp256k1)
 }
 
@@ -585,6 +578,8 @@ func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
 
 	// Execute the callback, then the first check will be that it didn't error
 	err := callback_AddIdentityKey(nil, ctx)
@@ -592,10 +587,7 @@ func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Then, check that the key was added correctly
-	// Open the keyring and check that the keys were generated and stored
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	t.Cleanup(func() { _ = openKeyring.Delete("node-identity-key") })
+	// Check that the key was added correctly.
 	requireKeyInKeyring(t, openKeyring, "node-identity-key", "ed25519", 64, dummyKey_ed25519)
 }
 
@@ -679,6 +671,12 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
 	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	t.Cleanup(func() {
+		_ = openKeyring.Delete("peer-key")
+		_ = openKeyring.Delete("encryption-key")
+		_ = openKeyring.Delete("searchable-encryption-key")
+	})
 
 	// Execute the callbacks, then the first check will be that they didn't error
 	err := callback_AddPeerKey(nil, ctx)
@@ -694,13 +692,7 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Then, check that the keys were added correctly
-	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
-	t.Cleanup(func() {
-		_ = openKeyring.Delete("peer-key")
-		_ = openKeyring.Delete("encryption-key")
-		_ = openKeyring.Delete("searchable-encryption-key")
-	})
+	// Check that the keys were added correctly.
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, dummyKey_peer)
 	requireKeyInKeyring(t, openKeyring, "encryption-key", "", 32, dummyKey_encryption)
 	requireKeyInKeyring(t, openKeyring, "searchable-encryption-key", "", 32, dummyKey_searchableEncryption)
