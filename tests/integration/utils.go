@@ -362,11 +362,8 @@ func performAction(
 	case action.Action:
 		action.Execute()
 
-	case ConfigureNode:
+	case NodeConfig:
 		configureNode(s, testCase, action)
-
-	case NodeVersion:
-		configureNodeVersion(s, testCase, action)
 
 	case Restart:
 		restartNodes(s, testCase)
@@ -838,7 +835,7 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
 		switch a.(type) {
-		case ConfigureNode, NodeVersion:
+		case NodeConfig:
 			nodeCount++
 		}
 	}
@@ -997,7 +994,7 @@ func actionTransactionID(a any) (int, bool) {
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
+// If a node(s) has been explicitly configured via a `NodeConfig` action then no new
 // nodes will be added.
 func setStartingNodes(
 	s *state.State,
@@ -1005,7 +1002,7 @@ func setStartingNodes(
 ) {
 	for _, action := range testCase.Actions {
 		switch action.(type) {
-		case ConfigureNode, NodeVersion:
+		case NodeConfig:
 			s.IsNetworkEnabled = true
 		}
 	}
@@ -1253,12 +1250,11 @@ func refreshCollections(
 
 // configureNode configures and starts a new Defra node using the provided configuration.
 //
-// It returns the new node, and its peer address. Any errors generated during configuration
-// will result in a test failure.
+// Any errors generated during configuration will result in a test failure.
 func configureNode(
 	s *state.State,
 	testCase TestCase,
-	action ConfigureNode,
+	cfg NodeConfig,
 ) {
 	if changeDetector.Enabled {
 		// We do not yet support the change detector for tests running across multiple nodes.
@@ -1266,45 +1262,25 @@ func configureNode(
 		return
 	}
 
-	privateKey, err := crypto.GenerateEd25519()
-	require.NoError(s.T, err)
-
-	p2pOpts := action()
-	withPrivateKey(&p2pOpts, privateKey)
-
+	p2pOpts := cfg.P2POptions()
 	s.CurrentSetupNodeID = len(s.Nodes)
-	opts := defaultNodeOpts()
-	opts.DB().
-		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
-		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-	opts.P2P().SetAll(p2pOpts)
 
-	node, err := setupNode(s, acpIdentity.None, testCase, opts, "")
-	require.NoError(s.T, err)
+	// Versioned nodes run in a separate process from a release binary that configures
+	// itself, so in-process options do not apply to them.
+	var opts *options.NodeOptionsBuilder
+	if cfg.Version == "" {
+		privateKey, err := crypto.GenerateEd25519()
+		require.NoError(s.T, err)
+		withPrivateKey(&p2pOpts, privateKey)
 
-	node.P2POpts = p2pOpts
-	s.Nodes = append(s.Nodes, node)
-}
-
-// configureNodeVersion configures and starts a new Defra node that runs as
-// an external process from a downloaded release binary of the given version,
-// instead of natively in-process.
-func configureNodeVersion(
-	s *state.State,
-	testCase TestCase,
-	action NodeVersion,
-) {
-	if changeDetector.Enabled {
-		// We do not yet support the change detector for tests running across multiple nodes.
-		s.T.SkipNow()
-		return
+		opts = defaultNodeOpts()
+		opts.DB().
+			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
+			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+		opts.P2P().SetAll(p2pOpts)
 	}
 
-	p2pOpts := action.Config()
-
-	s.CurrentSetupNodeID = len(s.Nodes)
-
-	node, err := setupNode(s, acpIdentity.None, testCase, nil, action.Version)
+	node, err := setupNode(s, acpIdentity.None, testCase, opts, cfg.Version)
 	require.NoError(s.T, err)
 	if node == nil {
 		// setupNode already skipped the test (no release asset for this platform).
@@ -1312,7 +1288,7 @@ func configureNodeVersion(
 	}
 
 	node.P2POpts = p2pOpts
-	node.Version = action.Version
+	node.Version = cfg.Version
 	s.Nodes = append(s.Nodes, node)
 }
 
@@ -2406,7 +2382,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case ConfigureNode, NodeVersion:
+		case NodeConfig:
 			hasNetworkAction = true
 		}
 	}
