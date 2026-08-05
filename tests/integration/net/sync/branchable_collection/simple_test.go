@@ -53,6 +53,18 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0},
+				},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
 			},
@@ -125,6 +137,18 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0},
+				},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
 			},
@@ -169,6 +193,18 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0},
+				},
 			},
 			&action.AddDoc{
 				NodeID: immutable.Some(0),
