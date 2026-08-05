@@ -35,6 +35,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -838,7 +839,7 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 	// path only when it is unambiguous; otherwise determine the DocID from the block itself:
 	// a genesis composite's CID is the DocID, an update inherits it from the genesis reached
 	// through its heads.
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,
@@ -880,7 +881,7 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	// A composite block is owned by exactly one document. Use the recorded owner as a fast
 	// path only when it is unambiguous; otherwise load the block and determine the DocID from
 	// the composite itself.
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,
