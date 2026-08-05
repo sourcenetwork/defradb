@@ -269,6 +269,11 @@
                                     "minimum": 0,
                                     "type": "integer"
                                 },
+                                "Kind": {
+                                    "maximum": 255,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                },
                                 "Name": {
                                     "type": "string"
                                 },
@@ -279,9 +284,7 @@
                                     "nullable": true,
                                     "properties": {
                                         "Algorithm": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
+                                            "type": "string"
                                         },
                                         "Dimensions": {
                                             "maximum": 4294967295,
@@ -310,9 +313,7 @@
                                             "type": "object"
                                         },
                                         "Metric": {
-                                            "maximum": 255,
-                                            "minimum": 0,
-                                            "type": "integer"
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -534,6 +535,11 @@
                         "minimum": 0,
                         "type": "integer"
                     },
+                    "Kind": {
+                        "maximum": 255,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
                     "Name": {
                         "type": "string"
                     },
@@ -544,9 +550,7 @@
                         "nullable": true,
                         "properties": {
                             "Algorithm": {
-                                "maximum": 255,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             },
                             "Dimensions": {
                                 "maximum": 4294967295,
@@ -575,9 +579,7 @@
                                 "type": "object"
                             },
                             "Metric": {
-                                "maximum": 255,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             }
                         },
                         "type": "object"
@@ -651,9 +653,7 @@
                         "nullable": true,
                         "properties": {
                             "Algorithm": {
-                                "maximum": 255,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             },
                             "Dimensions": {
                                 "maximum": 4294967295,
@@ -682,9 +682,7 @@
                                 "type": "object"
                             },
                             "Metric": {
-                                "maximum": 255,
-                                "minimum": 0,
-                                "type": "integer"
+                                "type": "string"
                             }
                         },
                         "type": "object"
