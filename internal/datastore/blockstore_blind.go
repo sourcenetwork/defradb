@@ -12,6 +12,7 @@ package datastore
 
 import (
 	"context"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 
@@ -22,6 +23,10 @@ import (
 // blindWriteBlockstore is identical to p2pBlockStore but skips the Has() pre-check
 // on Put/PutMany. Use it for write-only import paths (e.g. importCAR) where blocks
 // are known to be new and the extra read round-trip adds no value.
+//
+// Because it does not read first, a block that has already merged can be given a fresh
+// to-merge marker here. The orphan sweep checks document ownership rather than trusting
+// the marker for that reason.
 type blindWriteBlockstore struct {
 	*bstore
 }
@@ -36,7 +41,7 @@ func BlindWriteP2PBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immuta
 }
 
 func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) error {
-	if err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker}); err != nil {
+	if err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), newToMergeValue(time.Now())); err != nil {
 		return NewErrStoreBlock(err)
 	}
 	if err := bs.store.Set(ctx, block.Cid().Bytes(), block.RawData()); err != nil {
@@ -47,7 +52,7 @@ func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) err
 
 func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blks []blocks.Block) error {
 	for _, b := range blks {
-		if err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker}); err != nil {
+		if err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), newToMergeValue(time.Now())); err != nil {
 			return NewErrStoreBlock(err)
 		}
 		if err := bs.store.Set(ctx, b.Cid().Bytes(), b.RawData()); err != nil {
