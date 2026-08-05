@@ -37,14 +37,21 @@ const eventTimeout = 1 * time.Second
 //
 // Expected document heads will be updated for the targeted node.
 func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
-	select {
-	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
-		if !ok {
-			require.Fail(s.T, "subscription closed waiting for replicator event")
-		}
+	// An external node runs in another process, so its completion event fires on a
+	// bus we cannot observe. Skip the wait. The event is published asynchronously
+	// after commit anyway, so skipping it means the follow-up head push may still be
+	// in flight here. Cross-version tests account for this by polling the target
+	// with a query instead of relying on this wait.
+	if !s.Nodes[cfg.SourceNodeID].IsExternal {
+		select {
+		case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
+			if !ok {
+				require.Fail(s.T, "subscription closed waiting for replicator event")
+			}
 
-	case <-time.After(eventTimeout):
-		require.Fail(s.T, "timeout waiting for replicator event")
+		case <-time.After(eventTimeout):
+			require.Fail(s.T, "timeout waiting for replicator event")
+		}
 	}
 
 	// all previous documents should be merged on the subscriber node
@@ -64,14 +71,19 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 // waitForReplicatorDeleteEvent waits for a node to publish a
 // replicator completed event on the local event bus.
 func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
-	select {
-	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
-		if !ok {
-			require.Fail(s.T, "subscription closed waiting for replicator event")
-		}
+	// An external node runs in another process, so its completion event fires on a
+	// bus we cannot observe. Skip the wait; the event is published asynchronously
+	// after commit and the bookkeeping below does not depend on it.
+	if !s.Nodes[cfg.SourceNodeID].IsExternal {
+		select {
+		case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
+			if !ok {
+				require.Fail(s.T, "subscription closed waiting for replicator event")
+			}
 
-	case <-time.After(eventTimeout):
-		require.Fail(s.T, "timeout waiting for replicator event")
+		case <-time.After(eventTimeout):
+			require.Fail(s.T, "timeout waiting for replicator event")
+		}
 	}
 
 	delete(s.Nodes[cfg.TargetNodeID].P2P.Connections, cfg.SourceNodeID)
@@ -148,6 +160,9 @@ func waitForUpdateEvents(
 		node := s.Nodes[i]
 		if node.Closed {
 			continue // node is closed
+		}
+		if node.IsExternal {
+			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
@@ -242,6 +257,9 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		node := s.Nodes[nodeID]
 		if node.Closed {
 			continue // node is closed
+		}
+		if node.IsExternal {
+			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
 		}
 
 		// Build pending set keeping only the latest CID per (key, source) pair.
@@ -344,6 +362,9 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 		node := s.Nodes[nodeID]
 		if node.Closed {
 			continue // node is closed
+		}
+		if node.IsExternal {
+			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
 		}
 
 		expectedSyncs := make(map[string]struct{}, len(docIDsToWait))

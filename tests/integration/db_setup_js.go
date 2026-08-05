@@ -26,11 +26,14 @@ import (
 // setupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
+//
+// ver is unused: external (cross-version) nodes are not supported under js.
 func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
 	opts *options.NodeOptionsBuilder,
+	ver string,
 ) (*state.NodeState, error) {
 	if opts == nil {
 		opts = defaultNodeOpts()

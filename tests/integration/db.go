@@ -84,7 +84,7 @@ func defaultNodeOpts() *options.NodeOptionsBuilder {
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.TxnStore].
 		SetDisableAPI(true).
-		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+		// The p2p is configured in the tests by [NodeConfig] actions, we disable it here
 		// to keep the tests as lightweight as possible.
 		SetDisableP2P(true)
 

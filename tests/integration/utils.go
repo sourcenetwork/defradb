@@ -76,8 +76,10 @@ var (
 	viewType state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
-	// skipBackupTests will skip any tests that involve backup actions
-	skipBackupTests = false
+	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
+	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
+	// suitable for browser environments).
+	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -156,7 +158,6 @@ func ExecuteTestCase(
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
-	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
@@ -212,6 +213,7 @@ func ExecuteTestCase(
 
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
+	clients = skipIfBackupTest(t, clients, testCase.Actions)
 
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -365,7 +367,7 @@ func performAction(
 	case action.Action:
 		action.Execute()
 
-	case ConfigureNode:
+	case NodeConfig:
 		configureNode(s, testCase, action)
 
 	case Restart:
@@ -837,7 +839,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
-		if _, ok := a.(ConfigureNode); ok {
+		switch a.(type) {
+		case NodeConfig:
 			nodeCount++
 		}
 	}
@@ -996,7 +999,7 @@ func actionTransactionID(a any) (int, bool) {
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
+// If a node(s) has been explicitly configured via a `NodeConfig` action then no new
 // nodes will be added.
 func setStartingNodes(
 	s *state.State,
@@ -1004,7 +1007,7 @@ func setStartingNodes(
 ) {
 	for _, action := range testCase.Actions {
 		switch action.(type) {
-		case ConfigureNode:
+		case NodeConfig:
 			s.IsNetworkEnabled = true
 		}
 	}
@@ -1019,6 +1022,7 @@ func setStartingNodes(
 			acpIdentity.None,
 			testCase,
 			nodeBuilder,
+			"",
 		)
 
 		require.Nil(s.T, err)
@@ -1046,6 +1050,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			getIdentityOption(s, action.Identity),
 			testCase,
 			opts,
+			s.Nodes[nodeID].Version,
 		)
 
 		databaseDir = originalPath
@@ -1250,12 +1255,11 @@ func refreshCollections(
 
 // configureNode configures and starts a new Defra node using the provided configuration.
 //
-// It returns the new node, and its peer address. Any errors generated during configuration
-// will result in a test failure.
+// Any errors generated during configuration will result in a test failure.
 func configureNode(
 	s *state.State,
 	testCase TestCase,
-	action ConfigureNode,
+	cfg NodeConfig,
 ) {
 	if changeDetector.Enabled {
 		// We do not yet support the change detector for tests running across multiple nodes.
@@ -1263,23 +1267,33 @@ func configureNode(
 		return
 	}
 
-	privateKey, err := crypto.GenerateEd25519()
-	require.NoError(s.T, err)
-
-	p2pOpts := action()
-	withPrivateKey(&p2pOpts, privateKey)
-
+	p2pOpts := cfg.P2POptions()
 	s.CurrentSetupNodeID = len(s.Nodes)
-	opts := defaultNodeOpts()
-	opts.DB().
-		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
-		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-	opts.P2P().SetAll(p2pOpts)
 
-	node, err := setupNode(s, acpIdentity.None, testCase, opts)
+	// Versioned nodes run in a separate process from a release binary that configures
+	// itself, so in-process options do not apply to them.
+	var opts *options.NodeOptionsBuilder
+	if cfg.Version == "" {
+		privateKey, err := crypto.GenerateEd25519()
+		require.NoError(s.T, err)
+		withPrivateKey(&p2pOpts, privateKey)
+
+		opts = defaultNodeOpts()
+		opts.DB().
+			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
+			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+		opts.P2P().SetAll(p2pOpts)
+	}
+
+	node, err := setupNode(s, acpIdentity.None, testCase, opts, cfg.Version)
 	require.NoError(s.T, err)
+	if node == nil {
+		// setupNode already skipped the test (no release asset for this platform).
+		return
+	}
 
 	node.P2POpts = p2pOpts
+	node.Version = cfg.Version
 	s.Nodes = append(s.Nodes, node)
 }
 
@@ -2373,7 +2387,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case ConfigureNode:
+		case NodeConfig:
 			hasNetworkAction = true
 		}
 	}
@@ -2382,9 +2396,9 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-// skipIfBackupTest skips the current test if the given actions
-// contain backup actions and skipBackupTests is true.
-func skipIfBackupTest(t testing.TB, actions []any) {
+// skipIfBackupTest removes any client type that doesn't support the Backup API from clients, if the
+// given actions contain backup actions. Skips the test entirely if no client type remains.
+func skipIfBackupTest(t testing.TB, clients []state.ClientType, actions []any) []state.ClientType {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
@@ -2394,9 +2408,20 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 			hasBackupAction = true
 		}
 	}
-	if skipBackupTests && hasBackupAction {
-		t.Skip("test involves backup actions")
+	if !hasBackupAction {
+		return clients
 	}
+
+	filteredClients := make([]state.ClientType, 0, len(clients))
+	for _, ct := range clients {
+		if !slices.Contains(backupUnsupportedClientTypes, ct) {
+			filteredClients = append(filteredClients, ct)
+		}
+	}
+	if len(filteredClients) == 0 {
+		t.Skip("test involves backup actions, but no selected client type supports them")
+	}
+	return filteredClients
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions

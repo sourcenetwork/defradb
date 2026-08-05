@@ -26,8 +26,6 @@ func init() {
 	jsClient = true
 	// JavaScript networking stack is managed externally
 	skipNetworkTests = true
-	// Backup API is not suitable for browser environments
-	skipBackupTests = true
 }
 
 // setupClient returns the client implementation for the current
