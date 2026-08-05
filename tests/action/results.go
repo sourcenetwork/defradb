@@ -145,6 +145,17 @@ func assertCollectionVersions(
 	}
 }
 
+// clientTypeForNode returns the client type used to talk to the given node.
+//
+// An external node runs in another process and is always reached over HTTP, so
+// its results need the relaxed comparison whatever client the run selected.
+func clientTypeForNode(s *state.State, nodeID int) state.ClientType {
+	if nodeID >= 0 && nodeID < len(s.Nodes) && s.Nodes[nodeID].IsExternal {
+		return state.HTTPClientType
+	}
+	return s.ClientType
+}
+
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.

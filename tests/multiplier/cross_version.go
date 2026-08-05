@@ -1,0 +1,142 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
+package multiplier
+
+import (
+	"github.com/sourcenetwork/testo/multiplier"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+)
+
+func init() {
+	multiplier.Register(&crossVersion{name: CrossVersionOldSource, oldNodeFirst: true})
+	multiplier.Register(&crossVersion{name: CrossVersionNewSource, oldNodeFirst: false})
+}
+
+// CrossVersionTargetVersion is the older release run against the current build.
+// v1.0.0 is the only post-1.0 release, so it is the only pair for now.
+const CrossVersionTargetVersion = "v1.0.0"
+
+// CrossVersionOldSource runs the first node on the older release, so data starts
+// on the old node.
+//
+// Tests needing behaviour the older release lacks opt out with MultiplierExcludes.
+// A version-aware gate is tracked in
+// https://github.com/sourcenetwork/defradb/issues/5121
+const CrossVersionOldSource Name = "cross-version-old-source"
+
+// CrossVersionNewSource runs the last node on the older release, so data starts
+// on the current build.
+const CrossVersionNewSource Name = "cross-version-new-source"
+
+// crossVersion runs one node of a networked test on an older release, so the
+// existing P2P suite also checks compatibility with that release.
+//
+// Both directions are worth running because they fail differently: a new node
+// sending to an old one relies on the old node ignoring fields it does not know,
+// and an old node sending to a new one relies on the new node reading a missing
+// field as a zero value. Each direction is registered separately because a
+// multiplier applies one transformation per run.
+type crossVersion struct {
+	name Name
+	// oldNodeFirst picks which node carries the older version. Node 0 is the
+	// source in most of the suite, so this sets the direction.
+	oldNodeFirst bool
+}
+
+var _ Multiplier = (*crossVersion)(nil)
+var _ multiplier.ActionAwareSkipper = (*crossVersion)(nil)
+
+func (m *crossVersion) Name() Name {
+	return m.name
+}
+
+// ShouldSkip implements [multiplier.ActionAwareSkipper].
+//
+// A test with one node has nothing to check compatibility against, and a test
+// that already sets a version is checking something specific that this would
+// overwrite.
+func (m *crossVersion) ShouldSkip(actions action.Actions) bool {
+	nodes := nodeConfigs(actions)
+	if len(nodes) < 2 {
+		return true
+	}
+
+	for _, node := range nodes {
+		if node.Version != "" {
+			return true
+		}
+	}
+
+	// A test that changes the schema on one node and then asserts against it is
+	// checking how the two schemas behave, not how the two versions talk. Running
+	// it against a released binary asks a different question than it was written
+	// for.
+	return patchesCollectionOn(actions, m.versionedNodeID(len(nodes)))
+}
+
+// versionedNodeID returns the index of the node that will carry the older version.
+func (m *crossVersion) versionedNodeID(nodeCount int) int {
+	if m.oldNodeFirst {
+		return 0
+	}
+	return nodeCount - 1
+}
+
+// patchesCollectionOn reports whether the actions patch a collection on the
+// given node. A patch with no node set applies to every node.
+func patchesCollectionOn(actions action.Actions, nodeID int) bool {
+	for _, a := range actions {
+		patch, ok := a.(*action.PatchCollection)
+		if !ok {
+			continue
+		}
+		if !patch.NodeID.HasValue() || patch.NodeID.Value() == nodeID {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *crossVersion) Apply(source action.Actions) action.Actions {
+	nodes := nodeConfigs(source)
+	if len(nodes) < 2 {
+		return source
+	}
+
+	target := nodes[len(nodes)-1]
+	if m.oldNodeFirst {
+		target = nodes[0]
+	}
+
+	result := make(action.Actions, len(source))
+	for i, a := range source {
+		if cfg, ok := a.(*action.NodeConfig); ok && cfg == target {
+			result[i] = cfg.WithVersion(CrossVersionTargetVersion)
+			continue
+		}
+		result[i] = a
+	}
+
+	return result
+}
+
+// nodeConfigs returns the node configurations in the action set, in order.
+func nodeConfigs(actions action.Actions) []*action.NodeConfig {
+	var configs []*action.NodeConfig
+	for _, a := range actions {
+		if cfg, ok := a.(*action.NodeConfig); ok {
+			configs = append(configs, cfg)
+		}
+	}
+	return configs
+}

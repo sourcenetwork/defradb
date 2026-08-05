@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -258,9 +259,6 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		if node.Closed {
 			continue // node is closed
 		}
-		if node.IsExternal {
-			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
-		}
 
 		// Build pending set keeping only the latest CID per (key, source) pair.
 		// Heads are appended in order, so the last head from each source is the latest.
@@ -299,6 +297,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			totalPending += len(cidSet)
 		}
 
+		// An external node runs in another process, so its event bus cannot be
+		// read from here. Poll it for the same CIDs instead.
+		if node.IsExternal {
+			waitForCommitsOnNode(s, node, pending)
+			continue
+		}
+
 		for totalPending > 0 {
 			var evt event.MergeComplete
 			select {
@@ -335,6 +340,79 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				delete(pending, key)
 			}
 		}
+	}
+}
+
+// errCommitCIDNotFound is returned when querying a CID the node does not hold.
+const errCommitCIDNotFound = "cid either does not exist or belong to document"
+
+// waitForCommitsOnNode waits until every pending CID is present on the node.
+//
+// It queries the node instead of reading its event bus, so it works for a node
+// running in another process. pending maps a doc ID or collection ID to the CIDs
+// still expected to arrive.
+func waitForCommitsOnNode(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) {
+	remaining := 0
+	for _, cidSet := range pending {
+		remaining += len(cidSet)
+	}
+	if remaining == 0 {
+		return
+	}
+
+	deadline := time.Now().Add(30 * eventTimeout)
+	for {
+		missing := false
+		for key, cidSet := range pending {
+			for c := range cidSet {
+				if !hasCommit(s, node, c) {
+					missing = true
+					continue
+				}
+				delete(cidSet, c)
+				node.P2P.ActualDAGHeads[key] = state.DocHeadState{CID: c}
+			}
+		}
+		if !missing {
+			return
+		}
+		if time.Now().After(deadline) {
+			require.Fail(s.T, "timeout waiting for commits to sync to external node",
+				"node still missing: %v", pending)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
+// hasCommit reports whether the node holds the block for the given CID.
+//
+// Querying a CID the node does not have yet is an error rather than an empty
+// result, so that case reports false and the caller keeps waiting. Any other
+// error is a real problem and fails the test.
+func hasCommit(s *state.State, node *state.NodeState, target cid.Cid) bool {
+	result := node.ExecRequest(
+		s.Ctx,
+		fmt.Sprintf(`query { _commits(cid: %q) { cid } }`, target.String()),
+	)
+	for _, err := range result.GQL.Errors {
+		if strings.Contains(err.Error(), errCommitCIDNotFound) {
+			return false
+		}
+		require.NoError(s.T, err, "commit query failed on node")
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	switch commits := data["_commits"].(type) {
+	case []any:
+		return len(commits) > 0
+	case []map[string]any:
+		return len(commits) > 0
+	default:
+		return false
 	}
 }
 
