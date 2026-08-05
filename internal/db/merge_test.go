@@ -30,6 +30,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
@@ -158,7 +159,7 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T)
 	require.True(t, found)
 	require.NotEqual(t, sourceDoc.ID().String(), docShortID)
 
-	blockDocIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
+	blockDocIDs, err := blockowner.DocIDs(txnCtx, dbTxn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{sourceDoc.ID().String()}, blockDocIDs)
 }
