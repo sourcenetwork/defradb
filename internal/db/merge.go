@@ -554,6 +554,13 @@ func (mp *mergeProcessor) processBlock(
 					return err
 				}
 			}
+			// A signature block is not in AllLinks, so its to-merge marker is never
+			// cleared. The owner edge is what keeps the orphan sweep from reclaiming it.
+			if dagBlock.Signature != nil {
+				if err := mp.setBlockDocIDMapping(ctx, docRef.docID, dagBlock.Signature.Cid); err != nil {
+					return err
+				}
+			}
 		}
 		if block.Delta.IsComposite() && docRef.docID != "" {
 			if err := mp.setLinkedBlockDocIDMappings(ctx, docRef.docID, dagBlock.Links); err != nil {
