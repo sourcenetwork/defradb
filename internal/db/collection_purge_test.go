@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/badger"
+	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -30,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -85,7 +87,7 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 	dbTxn, ok := txn.(*Txn)
 	require.True(t, ok)
 	guardErr := col.PurgeByDocIDs(InitContext(ctx, dbTxn), docIDs, false)
-	require.ErrorContains(t, guardErr, "Txn is too big")
+	require.ErrorIs(t, guardErr, badgerds.ErrTxnTooBig)
 	txn.Discard()
 
 	require.NoError(t, col.PurgeByDocIDs(ctx, docIDs, false))
@@ -104,6 +106,54 @@ func TestPurgeByDocIDsChunksPurgeOverTransactionLimit(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, found)
 	}
+}
+
+func TestPurgeByDocIDsChecksDedicatedNACPermission(t *testing.T) {
+	ctx := context.Background()
+	owner, err := acpIdentity.Generate(defraCrypto.KeyTypeEd25519)
+	require.NoError(t, err)
+	requestor, err := acpIdentity.Generate(defraCrypto.KeyTypeEd25519)
+	require.NoError(t, err)
+
+	ctx = iIdentity.WithContext(ctx, immutable.Some[acpIdentity.Identity](owner))
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
+	nacInfo, err := acpDB.NewNACInfo(ctx, "", true)
+	require.NoError(t, err)
+	db, err := newDB(ctx, rootstore, nacInfo)
+	require.NoError(t, err)
+	t.Cleanup(db.Close)
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema, options.AddCollection().SetIdentity(owner))
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User", options.GetCollectionByName().SetIdentity(owner))
+	require.NoError(t, err)
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice"}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc, options.AddDocument().SetIdentity(owner)))
+
+	err = col.PurgeByDocIDs(
+		ctx,
+		[]client.DocID{doc.ID()},
+		false,
+		options.PurgeByDocIDs().SetIdentity(requestor),
+	)
+	require.ErrorIs(t, err, client.ErrNotAuthorizedToPerformOperation)
+	require.ErrorContains(t, err, "Permission: purge-document")
+
+	_, err = db.AddNACActorRelationship(
+		ctx,
+		"admin",
+		requestor.DID(),
+		options.AddNACActorRelationship().SetIdentity(owner),
+	)
+	require.NoError(t, err)
+	require.NoError(t, col.PurgeByDocIDs(
+		ctx,
+		[]client.DocID{doc.ID()},
+		false,
+		options.PurgeByDocIDs().SetIdentity(requestor),
+	))
 }
 
 func TestPurgeByDocIDsPrunesSingleDocumentOverTransactionLimit(t *testing.T) {
@@ -132,7 +182,7 @@ func TestPurgeByDocIDsPrunesSingleDocumentOverTransactionLimit(t *testing.T) {
 	} else {
 		txn.Discard()
 	}
-	require.ErrorContains(t, err, "Txn is too big")
+	require.ErrorIs(t, err, badgerds.ErrTxnTooBig)
 
 	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true))
 	requireBlockPresent(
@@ -234,6 +284,57 @@ func TestPurgeByDocIDsRemovesSearchableEncryptionArtifactsForAliasesAndUnknownDo
 		has, err := readDBTxn.Datastore().Has(readCtx, &keysToStore[i])
 		require.NoError(t, err)
 		require.Equal(t, i == 2, has)
+	}
+}
+
+func TestHardDeleteSearchableEncryptionResumesAfterChunk(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	dbCol, ok := col.(*collection)
+	require.True(t, ok)
+
+	txn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, txn)
+	shortID, err := id.GetCollectionShortID(txnCtx, col.CollectionID())
+	require.NoError(t, err)
+
+	const targetDocID = "target"
+	keysToStore := []keys.DatastoreSE{
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{1}, DocID: targetDocID},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{2}, DocID: "keep"},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{3}, DocID: targetDocID},
+		{CollectionShortID: shortID, IndexID: "name", SearchTag: []byte{4}, DocID: targetDocID},
+	}
+	for i := range keysToStore {
+		require.NoError(t, dbTxn.Datastore().Set(txnCtx, &keysToStore[i], nil))
+	}
+	require.NoError(t, txn.Commit())
+
+	deleteCtx, lockTxn, err := ensureContextTxnShim(ctx, db)
+	require.NoError(t, err)
+	defer lockTxn.Discard()
+	db.lockSet.CollectionLock(lockTxn, shortID)
+	require.NoError(t, dbCol.hardDeleteSearchableEncryptionInChunks(
+		deleteCtx,
+		shortID,
+		map[string]struct{}{targetDocID: {}},
+		2,
+	))
+	require.NoError(t, lockTxn.Commit())
+
+	readTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer readTxn.Discard()
+	readDBTxn, ok := readTxn.(*Txn)
+	require.True(t, ok)
+	readCtx := InitContext(ctx, readTxn)
+	for i := range keysToStore {
+		has, err := readDBTxn.Datastore().Has(readCtx, &keysToStore[i])
+		require.NoError(t, err)
+		require.Equal(t, i == 1, has)
 	}
 }
 

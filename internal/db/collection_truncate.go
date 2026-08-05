@@ -569,7 +569,7 @@ func (c *collection) deleteBlocks(
 	}
 
 	for _, encryptionCID := range encryptionToDelete {
-		if err := encstore.DeleteBlock(ctx, encryptionCID); err != nil {
+		if err := deleteBlockIfPresent(ctx, encstore, encryptionCID); err != nil {
 			return err
 		}
 	}
@@ -579,16 +579,24 @@ func (c *collection) deleteBlocks(
 		}
 		// Signature blocks inherit their parent block's ownership.
 		if currentBlock.block.Signature != nil {
-			if err := blockstore.DeleteBlock(ctx, currentBlock.block.Signature.Cid); err != nil {
+			if err := deleteBlockIfPresent(ctx, blockstore, currentBlock.block.Signature.Cid); err != nil {
 				return err
 			}
 		}
-		if err := blockstore.DeleteBlock(ctx, currentBlock.id); err != nil {
+		if err := deleteBlockIfPresent(ctx, blockstore, currentBlock.id); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func deleteBlockIfPresent(ctx context.Context, blockstore datastore.Blockstore, blockID cid.Cid) error {
+	err := blockstore.DeleteBlock(ctx, blockID)
+	if errors.Is(err, corekv.ErrNotFound) || errors.Is(err, ipld.ErrNotFound{}) {
+		return nil
+	}
+	return err
 }
 
 func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {

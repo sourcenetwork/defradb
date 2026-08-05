@@ -266,22 +266,38 @@ func (c *collection) hardDeleteSearchableEncryption(
 	shortID uint32,
 	wanted map[string]struct{},
 ) error {
+	return c.hardDeleteSearchableEncryptionInChunks(ctx, shortID, wanted, hardDeleteChunkSize)
+}
+
+func (c *collection) hardDeleteSearchableEncryptionInChunks(
+	ctx context.Context,
+	shortID uint32,
+	wanted map[string]struct{},
+	chunkSize int,
+) error {
 	if len(wanted) == 0 {
 		return nil
 	}
 
 	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 	_, transactional := corekv.TryGetCtxTxn(ctx)
+	prefix := keys.DatastoreSE{CollectionShortID: shortID}
+	var resumeAt *keys.DatastoreSE
 	for {
-		iter, err := ds.Iterator(ctx, datastore.IterOptions{
-			Prefix:   keys.DatastoreSE{CollectionShortID: shortID},
-			KeysOnly: true,
-		})
+		iterOpts := datastore.IterOptions{Prefix: &prefix, KeysOnly: true}
+		if resumeAt != nil {
+			iterOpts = datastore.IterOptions{
+				Start:    resumeAt,
+				End:      prefix.PrefixEnd(),
+				KeysOnly: true,
+			}
+		}
+		iter, err := ds.Iterator(ctx, iterOpts)
 		if err != nil {
 			return err
 		}
 
-		keysToDelete := make([]keys.DatastoreSE, 0, hardDeleteChunkSize)
+		keysToDelete := make([]keys.DatastoreSE, 0, chunkSize)
 		hasMore := false
 		for {
 			hasNext, err := iter.Next()
@@ -297,7 +313,7 @@ func (c *collection) hardDeleteSearchableEncryption(
 			}
 			if _, ok := wanted[key.DocID]; ok {
 				keysToDelete = append(keysToDelete, key)
-				if !transactional && len(keysToDelete) == hardDeleteChunkSize {
+				if !transactional && len(keysToDelete) == chunkSize {
 					hasMore = true
 					break
 				}
@@ -315,6 +331,8 @@ func (c *collection) hardDeleteSearchableEncryption(
 		if !hasMore {
 			return nil
 		}
+		resume := keysToDelete[len(keysToDelete)-1]
+		resumeAt = &resume
 	}
 }
 

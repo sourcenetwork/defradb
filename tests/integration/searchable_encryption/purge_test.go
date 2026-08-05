@@ -65,6 +65,7 @@ func TestPurgeRemovesSearchableEncryptionArtifacts(t *testing.T) {
 				DocIndexes:      []int{0},
 			},
 			&action.Request{
+				// Node 0 forwards this query to its replicator on node 1, where the artifacts are stored.
 				NodeID: immutable.Some(0),
 				Request: `query {
 					encrypted_User(filter: {name: {_eq: "alice"}}) {

@@ -35,10 +35,11 @@ func newLevelDBForPurgeTest(t *testing.T, ctx context.Context) *DB {
 	require.NoError(t, err)
 	db, err := newDB(ctx, rootstore, adminInfo)
 	require.NoError(t, err)
+	t.Cleanup(db.Close)
 	return db
 }
 
-func requireLevelDBOperationCompletes(t *testing.T, db *DB, operation func() error) {
+func requireLevelDBOperationCompletes(t *testing.T, operation func() error) {
 	t.Helper()
 
 	done := make(chan error, 1)
@@ -48,7 +49,6 @@ func requireLevelDBOperationCompletes(t *testing.T, db *DB, operation func() err
 
 	select {
 	case err := <-done:
-		db.Close()
 		require.NoError(t, err)
 	case <-time.After(5 * time.Second):
 		t.Fatal("operation blocked while opening a nested LevelDB transaction")
@@ -107,7 +107,7 @@ func TestPurgeAndTruncateDoNotOpenNestedLevelDBTransactions(t *testing.T) {
 		db := newLevelDBForPurgeTest(t, ctx)
 		col, docID := seedLevelDBPurgeDocument(t, ctx, db)
 
-		requireLevelDBOperationCompletes(t, db, func() error {
+		requireLevelDBOperationCompletes(t, func() error {
 			return col.PurgeByDocIDs(ctx, []client.DocID{docID}, true)
 		})
 	})
@@ -117,7 +117,7 @@ func TestPurgeAndTruncateDoNotOpenNestedLevelDBTransactions(t *testing.T) {
 		db := newLevelDBForPurgeTest(t, ctx)
 		col, _ := seedLevelDBPurgeDocument(t, ctx, db)
 
-		requireLevelDBOperationCompletes(t, db, func() error {
+		requireLevelDBOperationCompletes(t, func() error {
 			return col.Truncate(ctx)
 		})
 	})
