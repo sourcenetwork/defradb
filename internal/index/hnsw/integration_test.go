@@ -130,6 +130,17 @@ func TestGraph_DeleteNonExistentID_IsNoOpWithoutError(t *testing.T) {
 	assert.Equal(t, []NodeID{1}, res)
 }
 
+func TestGraph_InsertWithMissingEntryPoint_ReturnsError(t *testing.T) {
+	// A torn graph: meta names an entry point node the store does not have. Insert must fail rather
+	// than descend from a zero-value node.
+	store := NewMemStore()
+	require.NoError(t, store.PutMeta(Meta{EntryPoint: 42, TopLayer: 0}))
+
+	g := New(store, Cosine, DefaultParams(8), 1)
+	err := g.Insert(1, []float32{1, 0})
+	require.ErrorIs(t, err, ErrEntryPointNotFound)
+}
+
 func TestGraph_DeleteAlreadyDeletedID_IsIdempotent(t *testing.T) {
 	g := New(NewMemStore(), Cosine, DefaultParams(8), 1)
 	require.NoError(t, g.Insert(1, []float32{1, 0}))

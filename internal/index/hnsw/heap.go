@@ -32,6 +32,8 @@ type candidateHeap struct {
 	nearestFirst bool
 }
 
+var _ heap.Interface = (*candidateHeap)(nil)
+
 func newMinHeap() *candidateHeap { return &candidateHeap{nearestFirst: true} }
 func newMaxHeap() *candidateHeap { return &candidateHeap{nearestFirst: false} }
 
@@ -54,5 +56,3 @@ func (h *candidateHeap) Pop() any {
 	h.items = h.items[:n-1]
 	return item
 }
-
-var _ heap.Interface = (*candidateHeap)(nil)

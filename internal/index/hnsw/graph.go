@@ -12,11 +12,16 @@ package hnsw
 
 import (
 	"container/heap"
+	"errors"
 	"math"
 	"math/rand"
 	"sort"
 	"sync"
 )
+
+// ErrEntryPointNotFound is returned when the graph's meta points at an entry-point node that the
+// store does not have. The graph is torn: meta and the node entries disagree.
+var ErrEntryPointNotFound = errors.New("hnsw: entry point node not found")
 
 // HNSWIndex is a Hierarchical Navigable Small World approximate-nearest-neighbour index. It is safe
 // for concurrent use: mutations (Insert, Delete) are serialized via an internal mutex (single-writer
@@ -90,9 +95,14 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 	// Descent: greedily walk down from the entry point at the top layer
 	// to layer topLevel+1, keeping only the single closest node found so
 	// far (ef=1 search at each layer).
-	entry, _, err := g.store.GetNode(meta.EntryPoint)
+	entry, found, err := g.store.GetNode(meta.EntryPoint)
 	if err != nil {
 		return err
+	}
+	if !found {
+		// meta references a node the store does not have, so the graph is torn. Insert cannot descend
+		// from a missing entry point, so fail rather than build links from a zero-value node.
+		return ErrEntryPointNotFound
 	}
 	curBest := candidate{id: entry.ID, dist: distance(g.metric, v, entry.Vector), vector: entry.Vector}
 
@@ -175,9 +185,14 @@ func (g *HNSWIndex) addLink(from, to NodeID, layer, mmax int) error {
 		return err
 	}
 	if !ok {
+		// A backlink can name a node that a later reclaim pass removed. Skip the missing node rather
+		// than error: it just means one fewer back-edge, which search tolerates.
 		return nil
 	}
 
+	// A node's top layer is chosen at random on insert, so "from" may have been created with fewer
+	// layers than the one we are linking at. Grow it with empty neighbour lists up to that layer; the
+	// empty lists are valid (no neighbours yet), and the link is added on the last one below.
 	for len(node.Layers) <= layer {
 		node.Layers = append(node.Layers, []NodeID{})
 	}
@@ -206,6 +221,7 @@ func (g *HNSWIndex) candidatesFromIDs(q []float32, ids []NodeID) ([]candidate, e
 			return nil, err
 		}
 		if !ok {
+			// ids come from a neighbour list, which can name a node a reclaim pass removed. Skip it.
 			continue
 		}
 		out = append(out, candidate{id: id, dist: distance(g.metric, q, n.Vector), vector: n.Vector})
@@ -249,6 +265,7 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 			return nil, err
 		}
 		if !ok {
+			// An entry point can name a node a reclaim pass removed. Skip it and try the next.
 			continue
 		}
 		if _, seen := visited[ep.id]; seen {
@@ -279,6 +296,7 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 			return nil, err
 		}
 		if !ok {
+			// The frontier can hold an id a reclaim pass removed since it was queued. Skip it.
 			continue
 		}
 
@@ -298,6 +316,7 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 				return nil, err
 			}
 			if !ok {
+				// A neighbour list can name a node a reclaim pass removed. Skip it.
 				continue
 			}
 
@@ -315,6 +334,8 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 		}
 	}
 
+	// results is a heap, so only items[0] is ordered; the rest of the slice is not. Sort it to return
+	// the candidates nearest-first.
 	out := make([]candidate, len(results.items))
 	copy(out, results.items)
 	sort.Slice(out, func(i, j int) bool { return out[i].dist < out[j].dist })
