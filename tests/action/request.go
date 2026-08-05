@@ -133,6 +133,14 @@ nodeLoop:
 		var result *client.RequestResult
 		if hadTxn {
 			result = txn.ExecRequest(a.s.Ctx, request, reqOption)
+		} else if a.ExpectedError == "" {
+			_ = withRetryOnNode(node, func() error {
+				result = node.ExecRequest(a.s.Ctx, request, reqOption)
+				if len(result.GQL.Errors) > 0 {
+					return result.GQL.Errors[0]
+				}
+				return nil
+			})
 		} else {
 			result = node.ExecRequest(a.s.Ctx, request, reqOption)
 		}

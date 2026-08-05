@@ -150,26 +150,24 @@ func appendCollectionVersion(s *state.State, versionID string) {
 	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
-// withRetryOnNode attempts to perform the given action, retrying up to a DB-defined
-// maximum attempt count if a transaction conflict error is returned.
-//
-// If a P2P-sync commit for the given document is already in progress this
-// Save call can fail as the transaction will conflict. We dont want to worry
-// about this in our tests so we just retry a few times until it works (or the
-// retry limit is breached - important incase this is a different error)
+// withRetryOnNode retries transient transaction conflicts up to the node's configured limit.
 func withRetryOnNode(
 	node clients.Client,
 	action func() error,
 ) error {
-	for i := 0; i < node.MaxTxnRetries(); i++ {
-		err := action()
+	attempts := max(node.MaxTxnRetries(), 1)
+	var err error
+	for i := 0; i < attempts; i++ {
+		err = action()
 		// Check the contents of the error instead of the type, because it may have
 		// lost its type while passing through the C binding layer.
 		if err != nil && strings.Contains(err.Error(), corekv.ErrTxnConflict.Error()) {
-			time.Sleep(100 * time.Millisecond)
+			if i+1 < attempts {
+				time.Sleep(100 * time.Millisecond)
+			}
 			continue
 		}
 		return err
 	}
-	return nil
+	return err
 }
