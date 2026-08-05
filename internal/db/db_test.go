@@ -83,12 +83,27 @@ func TestReserveDocShortID_LevelDBUsesCurrentTxn(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(db.Close)
 
-	txn, err := db.NewTxn(false)
+	committedTxn, err := db.NewTxn(false)
 	require.NoError(t, err)
-	defer txn.Discard()
+	defer committedTxn.Discard()
 
-	docShortID, err := db.reserveDocShortID(InitContext(ctx, txn))
+	docShortID, err := db.reserveDocShortID(InitContext(ctx, committedTxn))
 	require.NoError(t, err)
-	require.NotZero(t, docShortID)
-	require.NoError(t, txn.Commit())
+	require.Equal(t, uint64(1), docShortID)
+	require.NoError(t, committedTxn.Commit())
+
+	discardedTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	docShortID, err = db.reserveDocShortID(InitContext(ctx, discardedTxn))
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), docShortID)
+	discardedTxn.Discard()
+
+	nextTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer nextTxn.Discard()
+	docShortID, err = db.reserveDocShortID(InitContext(ctx, nextTxn))
+	require.NoError(t, err)
+	require.Equal(t, uint64(2), docShortID)
+	require.NoError(t, nextTxn.Commit())
 }
