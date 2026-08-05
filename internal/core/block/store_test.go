@@ -16,7 +16,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -108,4 +110,39 @@ func TestAddDelta_WithoutBatchCollector_SignsBlock(t *testing.T) {
 	block, err := GetFromBytes(rawBlock)
 	require.NoError(t, err)
 	require.NotNil(t, block.Signature)
+}
+
+// A signature block is not among a block's links, so its marker has to be cleared
+// alongside the block's own. Left marked, it stays eligible for the sweep for the life
+// of the store.
+func TestProcessBlock_ClearsSignatureMarker(t *testing.T) {
+	ctx := context.Background()
+	store := memory.NewDatastore(ctx)
+
+	// Store the signature block the way an inbound one arrives. The P2P blockstore is what
+	// stamps the to-merge marker; a locally written block never carries one.
+	sigBlock := blocks.NewBlock([]byte("signature"))
+	p2pStore := datastore.P2PBlockstoreFrom(store, immutable.None[int]())
+	require.NoError(t, p2pStore.Put(ctx, sigBlock))
+
+	merged, err := p2pStore.IsMerged(ctx, sigBlock.Cid())
+	require.NoError(t, err)
+	require.False(t, merged, "guard: the signature block must start out marked to-merge")
+
+	txn := datastore.NewTxnFrom(store, lock.NewLockSet(), 1, false, immutable.None[int]())
+	txnCtx := datastore.CtxSetTxn(ctx, txn)
+
+	collectionCRDT := crdt.NewCollection("collection-version", keys.NewHeadstoreColKey(1))
+	block := New(crdt.NewCRDT(collectionCRDT.Delta()), nil)
+	block.Signature = &cidlink.Link{Cid: sigBlock.Cid()}
+
+	link, err := block.GenerateLink()
+	require.NoError(t, err)
+
+	require.NoError(t, ProcessBlock(txnCtx, collectionCRDT, block, link))
+	require.NoError(t, txn.Commit())
+
+	merged, err = p2pStore.IsMerged(ctx, sigBlock.Cid())
+	require.NoError(t, err)
+	require.True(t, merged, "merging a signed block must clear its signature block's marker")
 }
