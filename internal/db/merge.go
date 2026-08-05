@@ -642,6 +642,16 @@ func (mp *mergeProcessor) processBlock(
 			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
+		// A signature block is not in AllLinks, so nothing else records who owns it. This runs
+		// ahead of the guards below: a block that is skipped rather than merged keeps its
+		// to-merge marker and is still reachable from its parent's link, which leaves the
+		// owner edge as the only thing separating it from an orphan.
+		if dagBlock.Signature != nil {
+			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, dagBlock.Signature.Cid); err != nil {
+				return err
+			}
+		}
+
 		// If the CRDT is nil, it means the field is not part
 		// of the collection definition and we can safely ignore it.
 		if crdt == nil {
@@ -795,8 +805,10 @@ func (mp *mergeProcessor) initCRDTForType(
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the collection definition, we can safely ignore it.
-			return nil, resolvedDocRef{}, nil
+			// The field is not part of the collection definition, so there is no delta to
+			// merge. The document is still returned: the block belongs to it either way, and
+			// the caller records that ownership.
+			return nil, docRef, nil
 		}
 
 		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
