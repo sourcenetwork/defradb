@@ -36,7 +36,7 @@ func TestBuildPool_CapsLiveWorkers(t *testing.T) {
 	// Gate: park every build in the gate at once so concurrency is observable, tracking the peak
 	// number of builds parked together. release lets them all proceed once the peak is sampled.
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var inGate atomic.Int32
