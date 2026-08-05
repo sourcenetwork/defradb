@@ -24,7 +24,8 @@ import (
 
 type SimpleMockHost struct {
 	client.Host
-	activePeers []string
+	activePeers    []string
+	activePeersErr error
 }
 
 func (m *SimpleMockHost) ID() string {
@@ -32,7 +33,7 @@ func (m *SimpleMockHost) ID() string {
 }
 
 func (m *SimpleMockHost) ActivePeers() ([]string, error) {
-	return m.activePeers, nil
+	return m.activePeers, m.activePeersErr
 }
 
 func TestActivePeerIDs(t *testing.T) {
@@ -48,6 +49,24 @@ func TestActivePeerIDs(t *testing.T) {
 	actual, err := p.activePeerIDs(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, map[string]struct{}{peerID: {}}, actual)
+}
+
+func TestActivePeerIDsReturnsHostError(t *testing.T) {
+	p := &P2P{
+		host: &SimpleMockHost{activePeersErr: assert.AnError},
+	}
+
+	_, err := p.activePeerIDs(context.Background())
+	require.ErrorIs(t, err, assert.AnError)
+}
+
+func TestActivePeerIDsRejectsInvalidAddress(t *testing.T) {
+	p := &P2P{
+		host: &SimpleMockHost{activePeers: []string{"invalid-address"}},
+	}
+
+	_, err := p.activePeerIDs(context.Background())
+	require.Error(t, err)
 }
 
 func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
