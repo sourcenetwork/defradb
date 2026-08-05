@@ -35,7 +35,6 @@ func init() {
 	}
 	if javaClient {
 		skipNetworkTests = false
-		skipBackupTests = true
 	}
 }
 
