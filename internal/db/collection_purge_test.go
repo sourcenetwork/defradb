@@ -140,6 +140,9 @@ func TestPurgeByDocIDsChecksDedicatedNACPermission(t *testing.T) {
 	)
 	require.ErrorIs(t, err, client.ErrNotAuthorizedToPerformOperation)
 	require.ErrorContains(t, err, "Permission: purge-document")
+	exists, err := col.ExistsDocument(ctx, doc.ID(), options.ExistsDocument().SetIdentity(owner))
+	require.NoError(t, err)
+	require.True(t, exists)
 
 	_, err = db.AddNACActorRelationship(
 		ctx,
