@@ -256,10 +256,6 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 					}
 				`,
 			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
 			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
@@ -267,6 +263,22 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {1},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {0},
+				},
 			},
 			&action.AddDoc{
 				NodeID: immutable.Some(0),
