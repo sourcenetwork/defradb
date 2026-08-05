@@ -32,7 +32,10 @@ import (
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -40,12 +43,19 @@ import (
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const userSchema = `
 type User {
 	name: String
 	age: Int
+}
+`
+
+const userSchemaWithoutAge = `
+type User {
+	name: String
 }
 `
 
@@ -394,6 +404,76 @@ func TestMergeBatch_ExhaustedRetries_ReportsNothingMerged(t *testing.T) {
 	require.Error(t, err, "the report must be truthful: nothing was stored")
 }
 
+// A node whose collection does not define a field skips that field's block without merging it.
+// The block survives on the owner edge its parent composite writes, but the signature hanging
+// off it is in no parent's links, so nothing else records who owns it and the orphan sweep is
+// free to delete a block the document still references.
+func TestMerge_FieldNotInCollection_StillOwnsSignatureBlock(t *testing.T) {
+	ident, err := identity.Generate(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	ctx := coreblock.ContextWithEnabledSigning(
+		acpIdentity.WithContext(context.Background(), immutable.Some[identity.Identity](ident)),
+	)
+
+	sourceDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer sourceDB.Close()
+	targetDB, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer targetDB.Close()
+
+	// The target does not define "age", which is the schema skew a rolling upgrade produces.
+	_, err = sourceDB.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	_, err = targetDB.AddCollection(ctx, userSchemaWithoutAge)
+	require.NoError(t, err)
+
+	sourceCol, err := sourceDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	targetCol, err := targetDB.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	sourceDoc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"John","age":30}`), sourceCol.Version())
+	require.NoError(t, err)
+	require.NoError(t, sourceCol.AddDocument(ctx, sourceDoc,
+		options.WithIdentity(options.AddDocument(), immutable.Some[identity.Identity](ident))))
+
+	composite := loadTestBlock(t, ctx, sourceDB, sourceDoc.Head())
+	var ageBlock *coreblock.Block
+	for _, link := range composite.Links {
+		if link.Name == "age" {
+			ageBlock = loadTestBlock(t, ctx, sourceDB, link.Cid)
+		}
+	}
+	require.NotNil(t, ageBlock, "the source must produce a block for the undefined field")
+	require.NotNil(t, ageBlock.Signature, "the block must be signed for this to test anything")
+
+	copyDAGBlocks(t, ctx, sourceDB, targetDB, sourceDoc.Head())
+
+	require.NoError(t, targetDB.executeMerge(ctx, targetCol.(*collection), event.Merge{
+		DocID:        sourceDoc.ID().String(),
+		Cid:          sourceDoc.Head(),
+		CollectionID: targetCol.CollectionID(),
+	}))
+
+	txn, err := targetDB.NewTxn(true)
+	require.NoError(t, err)
+	defer txn.Discard()
+	dbTxn, ok := txn.(*Txn)
+	require.True(t, ok)
+	txnCtx := InitContext(ctx, dbTxn)
+
+	owners, err := blockowner.DocIDs(txnCtx, dbTxn.Systemstore(), ageBlock.Signature.Cid)
+	require.NoError(t, err)
+	require.Equal(t, []string{sourceDoc.ID().String()}, owners,
+		"the signature of a skipped field block has no other owner to fall back on")
+
+	merged, err := dbTxn.Blockstore().IsMerged(txnCtx, ageBlock.Signature.Cid)
+	require.NoError(t, err)
+	require.True(t, merged,
+		"a block the merge took ownership of must not still be marked to-merge")
+}
+
 func TestMergeResolveBlockDocID(t *testing.T) {
 	ctx := context.Background()
 
@@ -494,11 +574,14 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.Equal(t, expectedDocMap, docMap)
 }
 
+// copyDAGBlocks moves a document's DAG between two databases the way a peer delivers it,
+// through the p2p blockstore, so the copied blocks carry the to-merge marker a real sync
+// leaves behind.
 func copyDAGBlocks(t *testing.T, ctx context.Context, sourceDB *DB, targetDB *DB, root cid.Cid) {
 	t.Helper()
 
 	sourceStore := datastore.BlockstoreFrom(sourceDB.rootstore, sourceDB.blockStoreChunkSize)
-	targetStore := datastore.BlockstoreFrom(targetDB.rootstore, targetDB.blockStoreChunkSize)
+	targetStore := datastore.P2PBlockstoreFrom(targetDB.rootstore, targetDB.blockStoreChunkSize)
 	seen := make(map[cid.Cid]struct{})
 
 	var copyBlock func(cid.Cid)
@@ -517,6 +600,13 @@ func copyDAGBlocks(t *testing.T, ctx context.Context, sourceDB *DB, targetDB *DB
 		require.NoError(t, err)
 		for _, link := range block.AllLinks() {
 			copyBlock(link.Cid)
+		}
+		// AllLinks omits the signature, which a peer still sends with the rest of the DAG.
+		// It carries no links of its own, so it is copied rather than walked.
+		if block.Signature != nil {
+			sigBlock, err := sourceStore.Get(ctx, block.Signature.Cid)
+			require.NoError(t, err)
+			require.NoError(t, targetStore.Put(ctx, sigBlock))
 		}
 	}
 

@@ -12,6 +12,8 @@ package datastore
 
 import (
 	"context"
+	"encoding/binary"
+	"time"
 
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
@@ -49,8 +51,10 @@ type bstore struct {
 var _ Blockstore = (*bstore)(nil)
 
 const (
-	objectMarker       = byte(0xff)
 	toMergeIndexPrefix = byte('m')
+	// toMergeValueLen is the length of a current-format marker value: an 8-byte
+	// big-endian unix timestamp of when the block was fetched.
+	toMergeValueLen = 8
 )
 
 func newToMergeKey(cid []byte) []byte {
@@ -59,6 +63,24 @@ func newToMergeKey(cid []byte) []byte {
 	copy(key[1:], cid)
 	key[0] = toMergeIndexPrefix
 	return key
+}
+
+// newToMergeValue encodes the time a block was fetched. Only the orphan sweep reads
+// this value, to tell a fetch still in flight from an abandoned one; IsMerged checks
+// the marker's presence, not its contents.
+func newToMergeValue(t time.Time) []byte {
+	v := make([]byte, toMergeValueLen)
+	binary.BigEndian.PutUint64(v, uint64(t.Unix()))
+	return v
+}
+
+// toMergeTime decodes a marker value. A value that is not a full timestamp (an older
+// single-byte marker) decodes as (zero, false), and the sweep leaves those alone.
+func toMergeTime(v []byte) (time.Time, bool) {
+	if len(v) != toMergeValueLen {
+		return time.Time{}, false
+	}
+	return time.Unix(int64(binary.BigEndian.Uint64(v)), 0), true
 }
 
 // IsMerged reports whether the block is stored and carries no to-merge marker. Callers
@@ -108,7 +130,7 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	if err == nil && exists {
 		return nil // already stored.
 	}
-	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), newToMergeValue(time.Now()))
 	if err != nil {
 		return NewErrStoreBlock(err)
 	}
@@ -126,7 +148,7 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 		if err == nil && exists {
 			continue
 		}
-		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), newToMergeValue(time.Now()))
 		if err != nil {
 			return NewErrStoreBlock(err)
 		}
