@@ -55,8 +55,8 @@ type NewIndex struct {
 	Unique bool
 
 	// Vector, when set, creates a vector (ANN) index instead of a secondary index. It carries the
-	// algorithm, metric, dimensions and params. Used to create a @vectorIndex programmatically on a
-	// collection that already holds documents, so the async backfill builds the graph.
+	// algorithm, metric, dimensions and params. Used to create a vector index through the index API on
+	// a collection that already holds documents, so the async backfill builds the graph.
 	Vector *client.VectorIndexDescription
 
 	// Async, when true, returns without waiting for the backfill. The index stays building until

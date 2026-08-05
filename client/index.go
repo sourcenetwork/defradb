@@ -38,20 +38,24 @@ const (
 	IndexKindVector
 )
 
-// VectorAlgorithm identifies the algorithm used to build/search a vector index.
-type VectorAlgorithm uint8
+// VectorAlgorithm identifies the algorithm used to build/search a vector index. It is a string so it
+// serializes as a readable name (e.g. in a stored descriptor or the CLI's --vector JSON) rather than
+// an opaque number.
+type VectorAlgorithm string
 
 const (
 	// VectorAlgorithmHNSW identifies the HNSW (Hierarchical Navigable Small World) algorithm.
-	VectorAlgorithmHNSW VectorAlgorithm = iota
+	VectorAlgorithmHNSW VectorAlgorithm = "HNSW"
 )
 
-// DistanceMetric identifies the distance metric used to compare vectors.
-type DistanceMetric uint8
+// DistanceMetric identifies the distance metric used to compare vectors. It is a string so it
+// serializes as a readable name (e.g. in a stored descriptor or the CLI's --vector JSON) rather than
+// an opaque number.
+type DistanceMetric string
 
 const (
 	// DistanceMetricCosine identifies the cosine distance metric.
-	DistanceMetricCosine DistanceMetric = iota
+	DistanceMetricCosine DistanceMetric = "COSINE"
 )
 
 // HNSWParams holds HNSW-specific build/search parameters.

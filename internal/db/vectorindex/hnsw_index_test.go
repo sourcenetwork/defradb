@@ -74,7 +74,7 @@ func TestIndex_DeleteAndUnsupportedMetric(t *testing.T) {
 	}
 
 	bad := testDesc()
-	bad.Metric = client.DistanceMetric(99)
+	bad.Metric = client.DistanceMetric("NOT_A_METRIC")
 	_, err = Open(ctx, 1, 1, 1, bad)
 	require.Error(t, err)
 }

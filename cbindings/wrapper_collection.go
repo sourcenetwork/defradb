@@ -16,7 +16,7 @@ package cbindings
 #include "defra_structs.h"
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-CollectionOptions options, uintptr_t identityPtr);
+char* vectorJSON, CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
@@ -29,6 +29,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"unsafe"
@@ -104,12 +105,25 @@ func (c *Collection) NewIndex(
 		cUnique = 1
 	}
 
+	// An empty string means no vector index; a non-empty one is the VectorIndexDescription as JSON.
+	vectorJSON := ""
+	if indexDesc.Vector != nil {
+		b, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		vectorJSON = string(b)
+	}
+	cVectorJSON := C.CString(vectorJSON)
+	defer C.free(unsafe.Pointer(cVectorJSON))
+
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
 		callHandle,
 		cIndexDescName,
 		fields,
 		cUnique,
+		cVectorJSON,
 		copts,
 		cIdentity,
 	))

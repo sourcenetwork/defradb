@@ -515,9 +515,11 @@ func processNewIndexRequest(
 	return res, nil
 }
 
-// validateVectorIndexDescription checks the parts of an index request specific to a vector index:
-// the field must hold a float32 array, and the dimensions must be set, unless the field is an
-// @embedding, whose model fixes the vector length.
+// validateVectorIndexDescription checks and fills in the vector-specific parts of an index request.
+// The field must hold a float32 array, and dimensions must be set unless the field is an @embedding,
+// whose model fixes the vector length. It also defaults the algorithm, metric, and any missing
+// params (mutating desc.Vector), so a request made through the index API works the same as one from
+// the @vectorIndex directive.
 //
 // The field is guaranteed to exist here because validateIndexDescription and
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
@@ -537,6 +539,26 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 
 	if !client.IsVectorEmbeddingCompatible(field.Kind) {
 		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
+	}
+
+	// The config object present is what picks the algorithm, so the caller never sets one directly.
+	// Fill in the algorithm, metric, and any missing params with defaults. A nil config means an empty
+	// one, so a caller can leave it out and still get a working HNSW index.
+	if desc.Vector.HNSW == nil {
+		desc.Vector.HNSW = &client.HNSWParams{}
+	}
+	desc.Vector.Algorithm = client.VectorAlgorithmHNSW
+	if desc.Vector.Metric == "" {
+		desc.Vector.Metric = client.DistanceMetricCosine
+	}
+	if desc.Vector.HNSW.M == 0 {
+		desc.Vector.HNSW.M = client.DefaultHNSWM
+	}
+	if desc.Vector.HNSW.EfConstruction == 0 {
+		desc.Vector.HNSW.EfConstruction = client.DefaultHNSWEfConstruction
+	}
+	if desc.Vector.HNSW.EfSearch == 0 {
+		desc.Vector.HNSW.EfSearch = client.DefaultHNSWEfSearch
 	}
 
 	if err := validateHNSWParams(desc.Vector.HNSW); err != nil {
