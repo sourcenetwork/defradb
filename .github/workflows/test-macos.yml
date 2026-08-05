@@ -76,4 +76,10 @@ jobs:
         uses: ./.github/composites/setup-defradb
 
       - name: Run integration tests
+        # Work around https://github.com/golang/go/issues/80292 without suppressing data races.
+        env:
+          GOTESTSUM_FLAGS: >-
+            --rerun-fails=2
+            --rerun-fails-max-failures=1
+            --rerun-fails-abort-on-data-race
         run: make test:names

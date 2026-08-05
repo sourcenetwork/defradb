@@ -21,6 +21,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corekv"
@@ -281,6 +282,24 @@ func (p *P2P) PeerInfo() ([]string, error) {
 
 func (p *P2P) ActivePeers(ctx context.Context) ([]string, error) {
 	return p.host.ActivePeers()
+}
+
+func (p *P2P) activePeerIDs(ctx context.Context) (map[string]struct{}, error) {
+	activePeers, err := p.ActivePeers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	peerIDs := make(map[string]struct{}, len(activePeers))
+	for _, address := range activePeers {
+		peerInfo, err := peer.AddrInfoFromString(address)
+		if err != nil {
+			return nil, err
+		}
+		peerIDs[peerInfo.ID.String()] = struct{}{}
+	}
+
+	return peerIDs, nil
 }
 
 // Connect initiates a connection to the peer with the given addresses.

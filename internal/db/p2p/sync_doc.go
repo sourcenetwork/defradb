@@ -94,18 +94,13 @@ func (p *P2P) syncDocuments(
 	collectionID string,
 	docIDs []string,
 ) (map[string][]cid.Cid, error) {
-	activePeers, err := p.ActivePeers(ctx)
+	pendingPeers, err := p.activePeerIDs(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(activePeers) == 0 {
+	if len(pendingPeers) == 0 {
 		return nil, ErrTimeoutDocSync
-	}
-
-	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
 	}
 
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}

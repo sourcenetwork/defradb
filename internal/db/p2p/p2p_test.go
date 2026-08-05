@@ -16,6 +16,7 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
@@ -23,10 +24,30 @@ import (
 
 type SimpleMockHost struct {
 	client.Host
+	activePeers []string
 }
 
 func (m *SimpleMockHost) ID() string {
 	return "peerID"
+}
+
+func (m *SimpleMockHost) ActivePeers() ([]string, error) {
+	return m.activePeers, nil
+}
+
+func TestActivePeerIDs(t *testing.T) {
+	const peerID = "12D3KooWGj2wWqxSKB2Lqg6K6ye7N7W4YcpoeNpdXakHkgGjUqHC"
+
+	p := &P2P{
+		host: &SimpleMockHost{activePeers: []string{
+			"/ip4/127.0.0.1/tcp/9000/p2p/" + peerID,
+			"/ip4/127.0.0.1/tcp/9001/p2p/" + peerID,
+		}},
+	}
+
+	actual, err := p.activePeerIDs(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, map[string]struct{}{peerID: {}}, actual)
 }
 
 func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {

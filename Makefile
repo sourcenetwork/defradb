@@ -68,6 +68,7 @@ BUILD_FLAGS+=-tags $(BUILD_TAGS)
 endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
+GOTESTSUM_FLAGS?=
 
 JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
@@ -323,7 +324,7 @@ test\:c:
 
 .PHONY: test\:names
 test\:names:
-	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	gotestsum $(GOTESTSUM_FLAGS) --format testname --packages="$(DEFAULT_TEST_DIRECTORIES)" -- $(TEST_FLAGS)
 
 .PHONY: test\:verbose
 test\:verbose:

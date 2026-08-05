@@ -51,6 +51,12 @@ func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {0},
+				},
+			},
 			testUtils.SyncDocs{
 				NodeID:       1,
 				CollectionID: 0,
@@ -120,6 +126,12 @@ func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 2,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {0, 1},
+				},
 			},
 			testUtils.SyncDocs{
 				NodeID:      2,
@@ -194,6 +206,12 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 2,
 				TargetNodeID: 3,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 3,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {0, 1, 2},
+				},
 			},
 			testUtils.SyncDocs{
 				NodeID:      3,
@@ -355,6 +373,12 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {0},
+				},
 			},
 			testUtils.SyncDocs{
 				NodeID:       1,

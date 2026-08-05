@@ -12,12 +12,20 @@
 package action
 
 import (
+	"time"
+
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+)
+
+const (
+	activePeersTimeout      = 5 * time.Second
+	activePeersPollInterval = 10 * time.Millisecond
 )
 
 // ActivePeers is an action that will get the active peers from the given node(s)
@@ -62,18 +70,19 @@ func (a *ActivePeers) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		actual, err := node.ActivePeers(a.s.Ctx, opts)
-
-		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
-		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
-
-		if expectedErrorRaised {
+		if a.ExpectedError != "" {
+			_, err := node.ActivePeers(a.s.Ctx, opts)
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 			continue
 		}
 
 		expected := cloneAndReplacePeerInfos(a.s, nodeID, a.Expected)
-
-		require.ElementsMatch(a.s.T, expected, actual)
+		require.EventuallyWithT(a.s.T, func(collect *assert.CollectT) {
+			actual, err := node.ActivePeers(a.s.Ctx, opts)
+			require.NoError(collect, err)
+			require.ElementsMatch(collect, expected, actual)
+		}, activePeersTimeout, activePeersPollInterval, "active peers did not converge on node %d", nodeID)
 	}
 }
 

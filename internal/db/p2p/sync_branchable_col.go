@@ -90,18 +90,13 @@ func (p *P2P) syncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
 ) error {
-	activePeers, err := p.ActivePeers(ctx)
+	pendingPeers, err := p.activePeerIDs(ctx)
 	if err != nil {
 		return err
 	}
 
-	if len(activePeers) == 0 {
+	if len(pendingPeers) == 0 {
 		return ErrTimeoutCollectionSync
-	}
-
-	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
 	}
 
 	pubsubReq := &syncBranchableCollectionRequest{CollectionID: collectionID}

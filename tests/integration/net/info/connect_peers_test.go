@@ -13,7 +13,6 @@ package info
 
 import (
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -98,10 +97,6 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 					"{{.Peer1_Address0}}",
 					"{{.Peer2_Address0}}",
 				},
-			},
-			&action.Wait{
-				// Wait for the connections to propagate
-				Duration: immutable.Some(time.Millisecond * 50),
 			},
 			&action.ActivePeers{
 				NodeID: 1,

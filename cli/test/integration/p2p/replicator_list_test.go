@@ -12,6 +12,7 @@ package p2p
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/cli/test/action"
 	"github.com/sourcenetwork/defradb/cli/test/integration"
@@ -131,6 +132,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldRet
 
 func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
+		Timeout: 5 * time.Second,
 		Actions: []action.Action{
 			&action.AddCollection{
 				InlineSDL: `
