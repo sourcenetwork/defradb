@@ -20,6 +20,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+const docSyncTopic = "doc-sync"
+
 func TestP2PAddDoesNotSync(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -310,6 +312,30 @@ func TestP2PAdd_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *
 			testUtils.ConnectPeers{
 				SourceNodeID: 4,
 				TargetNodeID: 3,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {1},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {2},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 2,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {3},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 3,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {4},
+				},
 			},
 			testUtils.AddCollectionSubscription{
 				NodeID:        4,
