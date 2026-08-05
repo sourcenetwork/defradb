@@ -111,6 +111,18 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0},
+				},
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1},
+				},
+			},
 			&action.SyncBranchableCollection{
 				NodeID:       1,
 				CollectionID: 0,
