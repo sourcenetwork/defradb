@@ -476,18 +476,101 @@ func TestMergeBatch_OneEventCannotMerge_OthersStillLand(t *testing.T) {
 
 	// The unmergeable event is listed first so that an all-or-nothing batch would
 	// abort before ever reaching the one that can merge.
-	err = db.MergeBatchWithTxn(ctx, []event.Merge{
+	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{
 		{DocID: badDocID.String(), Cid: badInfo.link.Cid, CollectionID: col.CollectionID()},
 		{DocID: goodDocID.String(), Cid: goodInfo.link.Cid, CollectionID: col.CollectionID()},
 	})
 	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
 	require.ErrorContains(t, err, badDocID.String())
+	require.Equal(t, []bool{false, true}, merged)
 
 	doc, err := col.GetDocument(ctx, goodDocID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
 	require.Equal(t, map[string]any{"_docID": goodDocID.String(), "name": "John"}, docMap)
+}
+
+// The result slice is indexed by the caller's event order, which chunking has to
+// preserve on both the committed and the isolated path. Only a chunk at a non-zero
+// offset distinguishes that from an index taken relative to the chunk, so the batch
+// spans three: one clean, one holding the bad event, and one clean after it.
+func TestMergeBatch_FailureInLaterChunk_ReportsFailureAgainstTheRightEvent(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	// Sized off the chunk size so the bad event lands in the second chunk and a third
+	// chunk still commits whole.
+	count := 2*mergeChunkSize + 2
+	badIndex := mergeChunkSize + 1
+
+	names := make([]string, count)
+	events := make([]event.Merge, count)
+	docIDs := make([]client.DocID, count)
+	var missingLink cidlink.Link
+
+	for i := range names {
+		name := fmt.Sprintf("user%d", i)
+		names[i] = name
+		state := map[string]any{"name": name}
+		builder, _ := newDagBuilder(ctx, col, state)
+		genesis, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+		require.NoError(t, err)
+		docIDs[i] = client.NewDocIDV0(genesis.link.Cid)
+
+		info := genesis
+		if i == badIndex {
+			// Parent it on a composite that was never stored, so it cannot merge.
+			missingBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
+			missingLink, err = coreblock.GetLinkFromNode(missingBlock.GenerateNode())
+			require.NoError(t, err)
+
+			info, err = builder.generateCompositeUpdate(
+				&lsys,
+				map[string]any{"name": name + "ita"},
+				compositeInfo{link: missingLink, height: 2},
+			)
+			require.NoError(t, err)
+		}
+		events[i] = event.Merge{
+			DocID:        docIDs[i].String(),
+			Cid:          info.link.Cid,
+			CollectionID: col.CollectionID(),
+		}
+	}
+
+	merged, err := db.MergeBatchWithTxn(ctx, events)
+	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
+
+	expected := make([]bool, count)
+	for i := range expected {
+		expected[i] = i != badIndex
+	}
+	require.Equal(t, expected, merged)
+
+	// The result slice has to agree with what is actually readable from the store.
+	for i, docID := range docIDs {
+		doc, err := col.GetDocument(ctx, docID)
+		if i == badIndex {
+			require.Error(t, err)
+			continue
+		}
+		require.NoError(t, err)
+		docMap, err := doc.ToMap()
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{"_docID": docID.String(), "name": names[i]}, docMap)
+	}
 }
 
 type dagBuilder struct {
