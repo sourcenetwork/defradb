@@ -144,6 +144,7 @@ const (
 	errGetMergeTargetHeads          string = "failed to get merge target heads"
 	errLoadComposites               string = "failed to load composites for merge"
 	errMergeComposites              string = "failed to merge composites"
+	errMergeEventDropped            string = "merge event dropped"
 	errSyncIndexedDoc               string = "failed to sync indexed document after merge"
 	errLoadBlockForMerge            string = "failed to load block for merge"
 	errDecodeBlockForMerge          string = "failed to decode block for merge"
@@ -987,6 +988,11 @@ func NewErrLoadComposites(inner error, cid string, docID string) error {
 
 func NewErrMergeComposites(inner error, docID string) error {
 	return errors.Wrap(errMergeComposites, inner, errors.NewKV("DocID", docID))
+}
+
+func NewErrMergeEventDropped(inner error, docID string, cid string) error {
+	return errors.Wrap(errMergeEventDropped, inner,
+		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
 func NewErrSyncIndexedDoc(inner error, docID string) error {

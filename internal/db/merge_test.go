@@ -160,12 +160,38 @@ func TestMerge_ZeroMaxRetriesStillAttempts(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
+	// The block cannot be loaded, so an attempt fails there. Asserting that specific
+	// failure is what distinguishes one attempt from none: skipping the loop entirely
+	// reports exhausted retries and never touches the block.
 	err = db.Merge(ctx, event.Merge{
 		DocID:        "missing",
 		Cid:          blocks.NewBlock(nil).Cid(),
 		CollectionID: col.CollectionID(),
 	})
-	require.Error(t, err)
+	require.ErrorContains(t, err, "failed to load block for merge")
+}
+
+// The batch path has its own retry loop, so it needs the same floor as the single-document
+// one or a zero budget drops every event in the batch without trying.
+func TestMergeBatch_ZeroMaxRetriesStillAttempts(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	db.maxTxnRetries = immutable.Some(0)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	err = db.MergeBatchWithTxn(ctx, []event.Merge{{
+		DocID:        "missing",
+		Cid:          blocks.NewBlock(nil).Cid(),
+		CollectionID: col.CollectionID(),
+	}})
+	require.ErrorContains(t, err, "failed to load block for merge")
 }
 
 func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {
@@ -432,6 +458,61 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	}
 
 	require.Equal(t, expectedDocMap, docMap)
+}
+
+func TestMergeBatch_OneEventCannotMerge_OthersStillLand(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	goodState := map[string]any{"name": "John"}
+	goodBuilder, _ := newDagBuilder(ctx, col, goodState)
+	goodInfo, err := goodBuilder.generateCompositeUpdate(&lsys, goodState, compositeInfo{})
+	require.NoError(t, err)
+	goodDocID := client.NewDocIDV0(goodInfo.link.Cid)
+
+	// A second document whose parent composite was never stored, so it cannot merge.
+	badState := map[string]any{"name": "Jane"}
+	badBuilder, _ := newDagBuilder(ctx, col, badState)
+	badGenesis, err := badBuilder.generateCompositeUpdate(&lsys, badState, compositeInfo{})
+	require.NoError(t, err)
+	badDocID := client.NewDocIDV0(badGenesis.link.Cid)
+
+	missingBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
+	missingLink, err := coreblock.GetLinkFromNode(missingBlock.GenerateNode())
+	require.NoError(t, err)
+
+	badInfo, err := badBuilder.generateCompositeUpdate(
+		&lsys,
+		map[string]any{"name": "Janet"},
+		compositeInfo{link: missingLink, height: 2},
+	)
+	require.NoError(t, err)
+
+	// The unmergeable event is listed first so that an all-or-nothing batch would
+	// abort before ever reaching the one that can merge.
+	err = db.MergeBatchWithTxn(ctx, []event.Merge{
+		{DocID: badDocID.String(), Cid: badInfo.link.Cid, CollectionID: col.CollectionID()},
+		{DocID: goodDocID.String(), Cid: goodInfo.link.Cid, CollectionID: col.CollectionID()},
+	})
+	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
+	require.ErrorContains(t, err, badDocID.String())
+
+	doc, err := col.GetDocument(ctx, goodDocID)
+	require.NoError(t, err)
+	docMap, err := doc.ToMap()
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"_docID": goodDocID.String(), "name": "John"}, docMap)
 }
 
 type dagBuilder struct {
