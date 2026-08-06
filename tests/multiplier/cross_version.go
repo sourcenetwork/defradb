@@ -77,33 +77,6 @@ func (m *crossVersion) ShouldSkip(actions action.Actions) bool {
 		}
 	}
 
-	// A test that changes the schema on one node and then asserts against it is
-	// checking how the two schemas behave, not how the two versions talk. Running
-	// it against a released binary asks a different question than it was written
-	// for.
-	return patchesCollectionOn(actions, m.versionedNodeID(len(nodes)))
-}
-
-// versionedNodeID returns the index of the node that will carry the older version.
-func (m *crossVersion) versionedNodeID(nodeCount int) int {
-	if m.oldNodeFirst {
-		return 0
-	}
-	return nodeCount - 1
-}
-
-// patchesCollectionOn reports whether the actions patch a collection on the
-// given node. A patch with no node set applies to every node.
-func patchesCollectionOn(actions action.Actions, nodeID int) bool {
-	for _, a := range actions {
-		patch, ok := a.(*action.PatchCollection)
-		if !ok {
-			continue
-		}
-		if !patch.NodeID.HasValue() || patch.NodeID.Value() == nodeID {
-			return true
-		}
-	}
 	return false
 }
 

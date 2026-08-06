@@ -178,29 +178,41 @@ func TestCrossVersionShouldSkip_WithTwoNodes_DoesNotSkip(t *testing.T) {
 	assert.False(t, newSource().ShouldSkip(actions))
 }
 
-func TestCrossVersionShouldSkip_WhenPatchingTheVersionedNode_Skips(t *testing.T) {
-	// Node 0 is patched, and old-source is the direction that versions node 0.
+func TestCrossVersionShouldSkip_WithDocAddedToAllNodes_Skips(t *testing.T) {
+	// A write with no node set lands on the external node too, which the harness
+	// cannot observe.
 	actions := action.Actions{
 		action.RandomNetworkingConfig(),
 		action.RandomNetworkingConfig(),
-		&action.PatchCollection{NodeID: immutable.Some(0)},
-	}
-
-	assert.True(t, oldSource().ShouldSkip(actions))
-	assert.False(t, newSource().ShouldSkip(actions), "the other direction leaves node 0 native")
-}
-
-func TestCrossVersionShouldSkip_WhenPatchingAllNodes_Skips(t *testing.T) {
-	// A patch with no node set applies everywhere, so it always hits the
-	// versioned node.
-	actions := action.Actions{
-		action.RandomNetworkingConfig(),
-		action.RandomNetworkingConfig(),
-		&action.PatchCollection{},
+		&action.AddDoc{Doc: `{"Name": "John"}`},
 	}
 
 	assert.True(t, oldSource().ShouldSkip(actions))
 	assert.True(t, newSource().ShouldSkip(actions))
+}
+
+func TestCrossVersionShouldSkip_WithDocUpdatedOnAllNodes_Skips(t *testing.T) {
+	actions := action.Actions{
+		action.RandomNetworkingConfig(),
+		action.RandomNetworkingConfig(),
+		&action.AddDoc{NodeID: immutable.Some(0), Doc: `{"Name": "John"}`},
+		&action.UpdateDoc{Doc: `{"Name": "Fred"}`},
+	}
+
+	assert.True(t, oldSource().ShouldSkip(actions))
+}
+
+func TestCrossVersionShouldSkip_WithWritesNamingTheirNode_DoesNotSkip(t *testing.T) {
+	// The case the multiplier can handle: every write says where it goes.
+	actions := action.Actions{
+		action.RandomNetworkingConfig(),
+		action.RandomNetworkingConfig(),
+		&action.AddDoc{NodeID: immutable.Some(0), Doc: `{"Name": "John"}`},
+		&action.UpdateDoc{NodeID: immutable.Some(0), Doc: `{"Name": "Fred"}`},
+	}
+
+	assert.False(t, oldSource().ShouldSkip(actions))
+	assert.False(t, newSource().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithVersionAlreadySet_Skips(t *testing.T) {
