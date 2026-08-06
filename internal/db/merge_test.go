@@ -14,9 +14,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
@@ -24,6 +26,8 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/badger"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/immutable"
 
@@ -32,6 +36,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
@@ -236,6 +241,120 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T)
 	blockDocIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), fieldCID)
 	require.NoError(t, err)
 	require.Equal(t, []string{sourceDoc.ID().String()}, blockDocIDs)
+}
+
+// conflictingStore fails every write transaction with a conflict once armed. Arming it is the
+// only way to drive a merge through its whole retry budget on demand: a real conflict needs a
+// second writer committing inside the window between this transaction's first read and its commit.
+type conflictingStore struct {
+	corekv.TxnStore
+	armed *atomic.Bool
+}
+
+func (s conflictingStore) NewTxn(readonly bool) corekv.Txn {
+	txn := s.TxnStore.NewTxn(readonly)
+	if readonly || !s.armed.Load() {
+		return txn
+	}
+	return conflictingTxn{Txn: txn}
+}
+
+type conflictingTxn struct {
+	corekv.Txn
+}
+
+func (t conflictingTxn) Commit() error {
+	return corekv.ErrTxnConflict
+}
+
+// newConflictingBadgerDB returns a database whose write commits can be made to conflict, and the
+// switch that does it. Setup runs with the switch off so collections can still be created.
+func newConflictingBadgerDB(ctx context.Context) (*DB, *atomic.Bool, error) {
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	if err != nil {
+		return nil, nil, err
+	}
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
+	if err != nil {
+		return nil, nil, err
+	}
+	armed := &atomic.Bool{}
+	db, err := newDB(ctx, conflictingStore{TxnStore: rootstore, armed: armed}, adminInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+	return db, armed, nil
+}
+
+// stageUnmergedDoc writes a document's blocks to the store without merging them, and returns the
+// event that would merge it.
+func stageUnmergedDoc(t *testing.T, ctx context.Context, db *DB, col client.Collection) (client.DocID, event.Merge) {
+	t.Helper()
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	state := map[string]any{"name": "John"}
+	builder, _ := newDagBuilder(ctx, col, state)
+	composite, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+	require.NoError(t, err)
+
+	docID := client.NewDocIDV0(composite.link.Cid)
+	return docID, event.Merge{
+		DocID:        docID.String(),
+		Cid:          composite.link.Cid,
+		CollectionID: col.CollectionID(),
+	}
+}
+
+// Every attempt conflicting means nothing was written. Returning nil here would tell the caller
+// the document merged, and the caller relays and acknowledges on that basis.
+func TestMerge_ExhaustedRetries_ReportsFailure(t *testing.T) {
+	ctx := context.Background()
+
+	db, conflict, err := newConflictingBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docID, mergeEvent := stageUnmergedDoc(t, ctx, db, col)
+
+	conflict.Store(true)
+	err = db.Merge(ctx, mergeEvent)
+	require.Error(t, err, "a merge that committed nothing must not report success")
+	require.ErrorContains(t, err, "maximum transaction")
+
+	_, err = col.GetDocument(ctx, docID)
+	require.Error(t, err, "the error must be truthful: nothing was stored")
+}
+
+// The batch path has its own retry loop, so it needs its own case: the parallel slice is what
+// callers read to decide which events to relay.
+func TestMergeBatch_ExhaustedRetries_ReportsNothingMerged(t *testing.T) {
+	ctx := context.Background()
+
+	db, conflict, err := newConflictingBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	docID, mergeEvent := stageUnmergedDoc(t, ctx, db, col)
+
+	conflict.Store(true)
+	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{mergeEvent})
+	require.Error(t, err)
+	require.Equal(t, []bool{false}, merged, "an event that committed nothing must not be reported as merged")
+
+	_, err = col.GetDocument(ctx, docID)
+	require.Error(t, err, "the report must be truthful: nothing was stored")
 }
 
 func TestMergeResolveBlockDocID(t *testing.T) {
@@ -475,18 +594,101 @@ func TestMergeBatch_OneEventCannotMerge_OthersStillLand(t *testing.T) {
 
 	// The unmergeable event is listed first so that an all-or-nothing batch would
 	// abort before ever reaching the one that can merge.
-	err = db.MergeBatchWithTxn(ctx, []event.Merge{
+	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{
 		{DocID: badDocID.String(), Cid: badInfo.link.Cid, CollectionID: col.CollectionID()},
 		{DocID: goodDocID.String(), Cid: goodInfo.link.Cid, CollectionID: col.CollectionID()},
 	})
 	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
 	require.ErrorContains(t, err, badDocID.String())
+	require.Equal(t, []bool{false, true}, merged)
 
 	doc, err := col.GetDocument(ctx, goodDocID)
 	require.NoError(t, err)
 	docMap, err := doc.ToMap()
 	require.NoError(t, err)
 	require.Equal(t, map[string]any{"_docID": goodDocID.String(), "name": "John"}, docMap)
+}
+
+// The result slice is indexed by the caller's event order, which chunking has to
+// preserve on both the committed and the isolated path. Only a chunk at a non-zero
+// offset distinguishes that from an index taken relative to the chunk, so the batch
+// spans three: one clean, one holding the bad event, and one clean after it.
+func TestMergeBatch_FailureInLaterChunk_ReportsFailureAgainstTheRightEvent(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	// Sized off the chunk size so the bad event lands in the second chunk and a third
+	// chunk still commits whole.
+	count := 2*mergeChunkSize + 2
+	badIndex := mergeChunkSize + 1
+
+	names := make([]string, count)
+	events := make([]event.Merge, count)
+	docIDs := make([]client.DocID, count)
+	var missingLink cidlink.Link
+
+	for i := range names {
+		name := fmt.Sprintf("user%d", i)
+		names[i] = name
+		state := map[string]any{"name": name}
+		builder, _ := newDagBuilder(ctx, col, state)
+		genesis, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+		require.NoError(t, err)
+		docIDs[i] = client.NewDocIDV0(genesis.link.Cid)
+
+		info := genesis
+		if i == badIndex {
+			// Parent it on a composite that was never stored, so it cannot merge.
+			missingBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
+			missingLink, err = coreblock.GetLinkFromNode(missingBlock.GenerateNode())
+			require.NoError(t, err)
+
+			info, err = builder.generateCompositeUpdate(
+				&lsys,
+				map[string]any{"name": name + "ita"},
+				compositeInfo{link: missingLink, height: 2},
+			)
+			require.NoError(t, err)
+		}
+		events[i] = event.Merge{
+			DocID:        docIDs[i].String(),
+			Cid:          info.link.Cid,
+			CollectionID: col.CollectionID(),
+		}
+	}
+
+	merged, err := db.MergeBatchWithTxn(ctx, events)
+	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
+
+	expected := make([]bool, count)
+	for i := range expected {
+		expected[i] = i != badIndex
+	}
+	require.Equal(t, expected, merged)
+
+	// The result slice has to agree with what is actually readable from the store.
+	for i, docID := range docIDs {
+		doc, err := col.GetDocument(ctx, docID)
+		if i == badIndex {
+			require.Error(t, err)
+			continue
+		}
+		require.NoError(t, err)
+		docMap, err := doc.ToMap()
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{"_docID": docID.String(), "name": names[i]}, docMap)
+	}
 }
 
 type dagBuilder struct {
