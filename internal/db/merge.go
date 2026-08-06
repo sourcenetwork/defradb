@@ -75,18 +75,27 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	return client.NewErrMaxTxnRetries(err)
 }
 
-// MergeBatchWithTxn merges multiple events in a single shared transaction.
-// All per-key locks are acquired upfront and held for the lifetime of the call.
-// On transaction conflict the entire batch is retried, so callers should ensure
-// all merges in a batch are independent (different docIDs and collectionIDs).
+// mergeChunkSize bounds how many events share a transaction. Badger re-sorts the
+// whole pending-writes set on every iterator open, and each merged document opens
+// several, so a transaction's cost grows with the square of the events in it.
+const mergeChunkSize = 8
+
+type mergeEntry struct {
+	evt event.Merge
+	col *collection
+}
+
+// MergeBatchWithTxn merges events in chunks of at most mergeChunkSize. All per-key
+// locks are acquired upfront and held for the lifetime of the call, so callers must
+// ensure the merges are independent (different docIDs and collectionIDs).
+//
+// A chunk that fails is re-run one event at a time. A deterministic failure then drops
+// only the event that caused it, and a chunk that exhausted its retry budget is retried
+// over a write set small enough to conflict less often. Dropped events are
+// named in the returned error and must not be relayed onward as merged.
 func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error {
 	if len(merges) == 0 {
 		return nil
-	}
-
-	type mergeEntry struct {
-		evt event.Merge
-		col *collection
 	}
 
 	entries := make([]mergeEntry, 0, len(merges))
@@ -149,6 +158,32 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
 		}
 	}()
 
+	var errs []error
+	for start := 0; start < len(entries); start += mergeChunkSize {
+		end := min(start+mergeChunkSize, len(entries))
+		chunk := entries[start:end]
+
+		if err := db.mergeChunk(ctx, chunk); err == nil {
+			db.publishMergeComplete(chunk)
+			continue
+		}
+
+		// Isolate the failure so the events that can merge still land.
+		for i := range chunk {
+			if err := db.mergeChunk(ctx, chunk[i:i+1]); err != nil {
+				errs = append(errs, NewErrMergeEventDropped(err, chunk[i].evt.DocID, chunk[i].evt.Cid.String()))
+				continue
+			}
+			db.publishMergeComplete(chunk[i : i+1])
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// mergeChunk merges every event of the chunk inside one transaction, retrying the
+// whole chunk on transaction conflict. Isolating a failing event is the caller's job.
+func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		txn, err := db.NewTxn(false)
 		if err != nil {
@@ -179,12 +214,17 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
 			return err
 		}
 
-		for _, e := range entries {
-			db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: e.evt}))
-		}
 		return nil
 	}
-	return nil
+
+	// Nothing was committed, so callers must not treat the events as merged.
+	return ErrMergeTxnRetriesExhausted
+}
+
+func (db *DB) publishMergeComplete(entries []mergeEntry) {
+	for _, e := range entries {
+		db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: e.evt}))
+	}
 }
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
