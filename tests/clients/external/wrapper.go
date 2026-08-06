@@ -78,7 +78,7 @@ type Wrapper struct {
 // A temporary rootdir and a free API port are chosen internally. The P2P
 // listener uses port 0 so the node picks a free port at bind time; read its
 // real address back with PeerInfo. Use Host for the API URL.
-func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
+func NewWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags []string) (*Wrapper, error) {
 	// The API port is chosen before start, so another process can grab it in the
 	// gap before the child binds. Retry a few times on a start/health failure.
 	var lastErr error
@@ -91,7 +91,7 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 			}
 			return nil, err
 		}
-		w, err := startWrapper(ctx, t, binaryPath)
+		w, err := startWrapper(ctx, t, binaryPath, extraFlags)
 		if err == nil {
 			return w, nil
 		}
@@ -101,7 +101,7 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 }
 
 // startWrapper makes one attempt to start and reach a node.
-func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
+func startWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags []string) (*Wrapper, error) {
 	apiPort, err := freePort()
 	if err != nil {
 		return nil, errors.Wrap("failed to find free api port", err)
@@ -113,14 +113,19 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrappe
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
 
-	cmd := exec.CommandContext(ctx, binaryPath, "start",
+	// The address and rootdir are chosen here because the wrapper needs to know
+	// them. Everything else about the node comes from the caller, so it can
+	// match the configuration a native node would be given.
+	args := []string{"start",
 		"--url", apiURL,
 		"--p2paddr", "/ip4/127.0.0.1/tcp/0",
-		"--store", "badger",
 		"--development",
 		"--no-keyring",
 		"--rootdir", rootDir,
-	)
+	}
+	args = append(args, extraFlags...)
+
+	cmd := exec.CommandContext(ctx, binaryPath, args...)
 
 	stderr := newRingBuffer(64 * 1024)
 	stdoutPipe, err := cmd.StdoutPipe()
