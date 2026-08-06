@@ -551,12 +551,11 @@ func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *
 }
 
 // Delete removes doc from the search results. It is a soft delete: the node is marked deleted but
-// kept in the graph so other nodes can still reach their neighbours through it. Search never returns
-// a deleted node, so from a query's point of view the document is gone immediately, in this same
-// transaction. This is deliberate: physically unlinking a node means repairing every neighbour's
-// links in the write path, which is the part of vector deletes that is most error-prone, so we
-// tombstone instead. The leftover links only lower recall over time (not correctness); a periodic
-// reclaim pass to remove tombstones and rebuild those neighbourhoods is planned separately.
+// kept in the graph, so other nodes still reach their neighbours through it. Search never returns a
+// deleted node, so from a query's point of view the document is gone right away, in this same
+// transaction. This is on purpose: removing a node outright means fixing up every neighbour's links
+// in the write path, which is the most error-prone part of a vector delete. The leftover links only
+// lower recall over time, not correctness; a background pass to clean up tombstones is planned.
 //
 // While the index is still building, the backfill may not have reached this document yet, so a
 // missing short id is expected and Delete does nothing. Once built, a missing short id means the

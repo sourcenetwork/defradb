@@ -95,8 +95,8 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		return err
 	}
 	if !found {
-		// meta references a node the store does not have, so the graph is torn. Insert cannot descend
-		// from a missing entry point, so fail rather than build links from a zero-value node.
+		// The entry point in meta points at a node the store does not have. Fail instead of starting
+		// the insert from an empty node.
 		return ErrEntryPointNotFound
 	}
 	curBest := candidate{id: entry.ID, dist: distance(g.metric, v, entry.Vector), vector: entry.Vector}
@@ -142,8 +142,10 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 			}
 		}
 
-		// Start the next layer down from every neighbour found here, not just the closest. A node
-		// exists on every layer up to its own height, so these are all valid entry points below.
+		// Feed all the neighbours found here into the next layer down, not just the closest one. Giving
+		// the next layer a wider starting frontier lets it find better neighbours (higher recall)
+		// instead of narrowing to a single point too early. They all exist on the next layer, since a
+		// node is present on every layer up to its height.
 		entryPoints = w
 	}
 
@@ -180,14 +182,12 @@ func (g *HNSWIndex) addLink(from, to NodeID, layer, mmax int) error {
 		return err
 	}
 	if !ok {
-		// A backlink can name a node that a later reclaim pass removed. Skip the missing node rather
-		// than error: it just means one fewer back-edge, which search tolerates.
+		// A link can point at a node the reclaim pass removed. Skip it; one fewer link is fine.
 		return nil
 	}
 
-	// A node's top layer is chosen at random on insert, so "from" may have been created with fewer
-	// layers than the one we are linking at. Grow it with empty neighbour lists up to that layer; the
-	// empty lists are valid (no neighbours yet), and the link is added on the last one below.
+	// "from" may have fewer layers than the one we are linking at (its top layer was random). Add
+	// empty layers up to it, then add the link below.
 	for len(node.Layers) <= layer {
 		node.Layers = append(node.Layers, []NodeID{})
 	}
@@ -216,7 +216,7 @@ func (g *HNSWIndex) candidatesFromIDs(q []float32, ids []NodeID) ([]candidate, e
 			return nil, err
 		}
 		if !ok {
-			// ids come from a neighbour list, which can name a node a reclaim pass removed. Skip it.
+			// The reclaim pass may have removed this node. Skip it.
 			continue
 		}
 		out = append(out, candidate{id: id, dist: distance(g.metric, q, n.Vector), vector: n.Vector})
@@ -233,22 +233,17 @@ func idsOf(cands []candidate) []NodeID {
 	return ids
 }
 
-// searchGreedy runs the ef=1 descent step of SEARCH-LAYER (Algorithm 2) from a single entry point:
-// it returns the single closest node reachable in the given layer. This is the per-layer step used
-// when descending from the top layer toward the insertion/query layer.
+// searchGreedy returns the single closest node reachable in the given layer from one entry point
+// (ef=1). Used to descend from the top layer toward the layer where the query or insert happens.
 func (g *HNSWIndex) searchGreedy(query []float32, entry NodeID, layer int) ([]candidate, error) {
 	return g.searchLayerMulti(query, []candidate{{id: entry}}, 1, layer)
 }
 
-// searchLayerMulti runs SEARCH-LAYER (Algorithm 2), the ef-bounded greedy search of a single layer,
-// starting from a set of entry points. It takes a set, not one point, because Insert seeds each layer
-// with all the neighbours found on the layer above; the descent step passes a single point.
-// Distances on the supplied entryPoints are recomputed against query as needed.
+// searchLayerMulti is the ef-bounded greedy search of a single layer (paper Alg. 2). It takes a set
+// of entry points, not one: Insert seeds each layer with all the neighbours found on the layer above,
+// while the descent step passes a single point.
 //
-// Deleted (tombstoned) nodes are traversed (their neighbours are still
-// explored, keeping the graph connected) but are never added to the
-// result set W, per the package's tombstone-deletion strategy.
-//
+// Deleted nodes are still walked through (so the graph stays connected) but never returned.
 // The returned candidates are sorted nearest-first.
 func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, ef, layer int) ([]candidate, error) {
 	visited := make(map[NodeID]struct{})
@@ -261,11 +256,11 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 			return nil, err
 		}
 		if !ok {
-			// An entry point can name a node a reclaim pass removed. Skip it and try the next.
+			// The reclaim pass may have removed this node. Skip it and try the next.
 			continue
 		}
-		// Today's callers pass unique entry points, so this never fires. It is a cheap guard that keeps
-		// the walk correct for any input: a duplicate entry point would otherwise be counted twice.
+		// Today's callers pass unique entry points, so this never fires. It is a cheap guard so a
+		// duplicate entry point would not be counted twice.
 		if _, seen := visited[ep.id]; seen {
 			continue
 		}
@@ -281,14 +276,15 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 	heap.Init(candidatesHeap)
 	heap.Init(results)
 
-	// Greedy walk from the entry points: follow edges outward, never scanning the whole layer. The
-	// entry points decide where the walk starts and which part of the graph it reaches, so better ones
-	// give better results.
+	// Walk outward from the entry points. We only reach nodes linked to the frontier, not the whole
+	// layer, but for each node we pop we check all its neighbours (up to M). So the cost is
+	// (nodes reached x M), not N.
 	for candidatesHeap.Len() > 0 {
 		nearest := candidatesHeap.items[0]
 
-		// Stop once the results are full and the nearest unexplored candidate is farther than the
-		// current worst result: nothing closer can be reached from here.
+		// Stop here, on the outer loop: once the results are full and the nearest node left to explore
+		// is farther than the worst result, nothing reachable can beat it. The inner neighbour loop has
+		// no break on purpose: neighbours are unordered, so a closer one can come after a farther one.
 		if results.Len() >= ef && nearest.dist > results.items[0].dist {
 			break
 		}
@@ -299,7 +295,7 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 			return nil, err
 		}
 		if !ok {
-			// The frontier can hold an id a reclaim pass removed since it was queued. Skip it.
+			// The reclaim pass may have removed this node since it was queued. Skip it.
 			continue
 		}
 
@@ -319,12 +315,15 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 				return nil, err
 			}
 			if !ok {
-				// A neighbour list can name a node a reclaim pass removed. Skip it.
+				// The reclaim pass may have removed this node. Skip it.
 				continue
 			}
 
 			d := distance(g.metric, query, nbNode.Vector)
 
+			// Add this neighbour to the frontier only if it could still matter: results not full yet,
+			// or it beats the worst result. This limits how far the walk spreads. It filters what to
+			// explore; it does not stop the loop.
 			if results.Len() < ef || d < results.items[0].dist {
 				heap.Push(candidatesHeap, candidate{id: nb, dist: d, vector: nbNode.Vector})
 				if !nbNode.Deleted {
@@ -358,6 +357,8 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 // keepPrunedConnections behaviours; they are not implemented here for
 // simplicity (MVP), but could be added later if desired.
 func selectNeighborsHeuristic(metric Metric, candidates []candidate, m int) []candidate {
+	// Sort so we can consider candidates nearest-first below. This is a plain slice, not a heap, so
+	// it is not already ordered.
 	sorted := make([]candidate, len(candidates))
 	copy(sorted, candidates)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].dist < sorted[j].dist })

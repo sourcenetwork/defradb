@@ -22,11 +22,11 @@ type candidate struct {
 	vector []float32
 }
 
-// candidateHeap is a heap of candidates whose ordering is set by nearestFirst. Both orderings the
-// search needs are the same heap with a flipped comparison, so one type covers both:
-//   - nearestFirst true: nearest pops first (the candidate frontier "C" in SEARCH-LAYER).
-//   - nearestFirst false: farthest pops first, so the farthest can be evicted cheaply once the
-//     result set "W" exceeds ef.
+// candidateHeap is a heap of candidates, ordered by nearestFirst. The search needs both orderings,
+// which are the same heap with a flipped comparison, so one type covers both:
+//   - nearestFirst true: nearest pops first (the frontier of nodes still to explore).
+//   - nearestFirst false: farthest pops first, so the farthest result is cheap to drop once there
+//     are more than ef results.
 type candidateHeap struct {
 	items        []candidate
 	nearestFirst bool

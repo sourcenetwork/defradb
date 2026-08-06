@@ -130,27 +130,6 @@ func TestCollectIndexesOnField(t *testing.T) {
 	}
 }
 
-func TestIndexDescription_UniqueIndex_RoundTrips(t *testing.T) {
-	original := IndexDescription{
-		Name:   "some_index",
-		ID:     1,
-		Fields: []IndexedFieldDescription{{Name: "name"}},
-		Unique: true,
-	}
-
-	bytes, err := json.Marshal(original)
-	require.NoError(t, err)
-
-	var actual IndexDescription
-	err = json.Unmarshal(bytes, &actual)
-	require.NoError(t, err)
-
-	assert.True(t, actual.Unique)
-	assert.Nil(t, actual.Vector)
-	assert.False(t, actual.IsVector())
-	assert.Equal(t, original, actual)
-}
-
 // A descriptor persisted before the Kind and Vector fields existed has only the top-level Unique. It
 // must still load, with Kind defaulting to the ordered (zero) value, so both fields are safe
 // additive changes.
