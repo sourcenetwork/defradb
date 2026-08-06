@@ -144,7 +144,6 @@ const (
 	errGetMergeTargetHeads          string = "failed to get merge target heads"
 	errLoadComposites               string = "failed to load composites for merge"
 	errMergeComposites              string = "failed to merge composites"
-	errMergeTxnRetriesExhausted     string = "merge transaction retries exhausted"
 	errMergeEventDropped            string = "merge event dropped"
 	errSyncIndexedDoc               string = "failed to sync indexed document after merge"
 	errLoadBlockForMerge            string = "failed to load block for merge"
@@ -202,7 +201,6 @@ const (
 
 var (
 	ErrFailedToGetCollection                     = errors.New(errFailedToGetCollection)
-	ErrMergeTxnRetriesExhausted                  = errors.New(errMergeTxnRetriesExhausted)
 	ErrSubscriptionsNotAllowed                   = errors.New("server does not accept subscriptions")
 	ErrEmptyFilter                               = errors.New(errEmptyFilter)
 	ErrUnsupportedFilterType                     = errors.New(errUnsupportedFilterType)
