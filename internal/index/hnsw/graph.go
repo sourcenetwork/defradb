@@ -264,6 +264,8 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 			// An entry point can name a node a reclaim pass removed. Skip it and try the next.
 			continue
 		}
+		// Today's callers pass unique entry points, so this never fires. It is a cheap guard that keeps
+		// the walk correct for any input: a duplicate entry point would otherwise be counted twice.
 		if _, seen := visited[ep.id]; seen {
 			continue
 		}
@@ -279,9 +281,14 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 	heap.Init(candidatesHeap)
 	heap.Init(results)
 
+	// Greedy walk from the entry points: follow edges outward, never scanning the whole layer. The
+	// entry points decide where the walk starts and which part of the graph it reaches, so better ones
+	// give better results.
 	for candidatesHeap.Len() > 0 {
 		nearest := candidatesHeap.items[0]
 
+		// Stop once the results are full and the nearest unexplored candidate is farther than the
+		// current worst result: nothing closer can be reached from here.
 		if results.Len() >= ef && nearest.dist > results.items[0].dist {
 			break
 		}
