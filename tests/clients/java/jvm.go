@@ -48,9 +48,10 @@ import (
 // the functions to create nodes and transactions inside it.
 
 const (
-	javaHomeEnvName    = "JAVA_HOME"           // Path to the Java JDK
-	javaJarEnvName     = "DEFRA_JAVA_JAR"      // Path to the Defra Java SDK Jar file
-	javaJVMOptsEnvName = "DEFRA_JAVA_JVM_OPTS" // Optional command-line JVM options, split on whitespace
+	javaHomeEnvName       = "JAVA_HOME"               // Path to the Java JDK
+	javaJarEnvName        = "DEFRA_JAVA_JAR"          // Path to the Defra Java SDK Jar file
+	javaJVMOptsEnvName    = "DEFRA_JAVA_JVM_OPTS"     // Optional command-line JVM options, split on whitespace
+	javaWrapperDirEnvName = "DEFRA_JAVA_WRAPPER_DIR"  // Overrides where defaultJarPath looks for the built jar; must match tools/scripts/build-java-client.sh's own WRAPPER_DIR
 )
 
 var (
@@ -273,7 +274,19 @@ func jvmLibraryPath(javaHome string) (string, error) {
 
 // defaultJarPath returns the jar path produced by `make build-java-client` if it exists.
 // Returns "" if no such repo root or no jar file can be found.
+//
+// If DEFRA_JAVA_WRAPPER_DIR is set, the jar is looked for under that directory instead of the
+// standard .javaclient/DefraJavaWrapper - this must match tools/scripts/build-java-client.sh's
+// own WRAPPER_DIR default, since that script is what produces the jar in the first place.
 func defaultJarPath() string {
+	if wrapperDir := os.Getenv(javaWrapperDirEnvName); wrapperDir != "" {
+		jar := filepath.Join(wrapperDir, "build", "libs", "defradb.jar")
+		if _, err := os.Stat(jar); err == nil {
+			return jar
+		}
+		return ""
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		return ""
