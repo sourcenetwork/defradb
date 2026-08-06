@@ -93,7 +93,8 @@ type DB interface {
 	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
-	// MergeBatchWithTxn merges multiple events in a single shared transaction.
+	// MergeBatchWithTxn merges events in bounded chunks. The returned error names
+	// any events that were dropped; those must not be relayed onward as merged.
 	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
 	// Events returns the event bus for the database.
 	Events() event.Bus
@@ -643,7 +644,9 @@ func (p *P2P) processMessageWorker() {
 				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
 				continue
 			}
-			log.Info("Failed to process pushlog request", corelog.Any("Error", err))
+			// A failed pushlog is a document this node did not store, so it needs to
+			// be visible at the error level deployments typically run with.
+			log.ErrorE("Failed to process pushlog request", err)
 		}
 	}
 }
