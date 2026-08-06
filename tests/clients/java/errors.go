@@ -24,7 +24,7 @@ const (
 	errFmtTransactionCommitFailed  = "java client: TransactionCommitNative: %s"
 
 	// JVM setup and lifecycle (jvm.go)
-	errFmtJavaHomeNotSet = "java client: %s must be set to a JDK 8+ installation"
+	errFmtJavaHomeNotSet = "java client: %s must be set to a validJDK installation"
 	errFmtJarNotSet      = "java client: %s must be set to a defradb.jar built from defradb-java-sdk " +
 		"(or run `make build-java-client` first)"
 	errFmtStartJVMFailed                   = "java client: starting embedded JVM (lib=%s): %s"

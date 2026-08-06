@@ -48,10 +48,10 @@ import (
 // the functions to create nodes and transactions inside it.
 
 const (
-	javaHomeEnvName       = "JAVA_HOME"               // Path to the Java JDK
-	javaJarEnvName        = "DEFRA_JAVA_JAR"          // Path to the Defra Java SDK Jar file
-	javaJVMOptsEnvName    = "DEFRA_JAVA_JVM_OPTS"     // Optional command-line JVM options, split on whitespace
-	javaWrapperDirEnvName = "DEFRA_JAVA_WRAPPER_DIR"  // Overrides where defaultJarPath looks for the built jar; must match tools/scripts/build-java-client.sh's own WRAPPER_DIR
+	javaHomeEnvName       = "JAVA_HOME"              // Path to the Java JDK
+	javaJarEnvName        = "DEFRA_JAVA_JAR"         // Path to the Defra Java SDK Jar file
+	javaJVMOptsEnvName    = "DEFRA_JAVA_JVM_OPTS"    // Optional command-line JVM options, split on whitespace
+	javaWrapperDirEnvName = "DEFRA_JAVA_WRAPPER_DIR" // Overrides where defaultJarPath looks for the built jar; must match tools/scripts/build-java-client.sh's own WRAPPER_DIR
 )
 
 var (
@@ -258,17 +258,58 @@ func setupJVM() error {
 	return nil
 }
 
-// jvmLibraryPath gets the JVM library file with the appropriate name, based on the OS
+// jvmLibraryPath gets the JVM library file with the appropriate name, based on the OS.
+//
+// JDK 9 (JEP 220) flattened the jre/ subdirectory out of the JDK image; JDK 8 and earlier still
+// nest the JVM library under jre/, and on Linux additionally nest an arch-named directory under
+// jre/lib/. The JDK 9+ layout is tried first, falling back to the JDK 8 layout if it doesn't exist.
 func jvmLibraryPath(javaHome string) (string, error) {
+	var primary, fallback string
 	switch runtime.GOOS {
 	case "windows":
-		return filepath.Join(javaHome, "bin", "server", "jvm.dll"), nil
+		primary = filepath.Join(javaHome, "bin", "server", "jvm.dll")
+		fallback = filepath.Join(javaHome, "jre", "bin", "server", "jvm.dll")
 	case "darwin":
-		return filepath.Join(javaHome, "lib", "server", "libjvm.dylib"), nil
+		primary = filepath.Join(javaHome, "lib", "server", "libjvm.dylib")
+		fallback = filepath.Join(javaHome, "jre", "lib", "server", "libjvm.dylib")
 	case "linux":
-		return filepath.Join(javaHome, "lib", "server", "libjvm.so"), nil
+		primary = filepath.Join(javaHome, "lib", "server", "libjvm.so")
+		fallback = filepath.Join(javaHome, "jre", "lib", jdk8LinuxArch(), "server", "libjvm.so")
 	default:
 		return "", fmt.Errorf(errFmtUnsupportedGOOS, runtime.GOOS)
+	}
+
+	if fileExists(primary) {
+		return primary, nil
+	}
+	if fileExists(fallback) {
+		return fallback, nil
+	}
+	// If neither exists, there will be a dlopen failure downstream. But it may make more sense
+	// to use the modern path rather than the legacy one.
+	return primary, nil
+}
+
+// fileExists reports whether path can be stat'd - used by jvmLibraryPath to probe for the JVM
+// library without distinguishing why a candidate might be missing (permissions, not-a-JDK, etc.);
+// any of those should fall through to the next candidate, or the final default, the same way.
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// jdk8LinuxArch maps runtime.GOARCH to the directory name thatJDK 8's Linux layout places libjvm.so:
+// jre/lib/<arch>/server/a
+func jdk8LinuxArch() string {
+	switch runtime.GOARCH {
+	case "amd64":
+		return "amd64"
+	case "386":
+		return "i386"
+	case "arm64":
+		return "aarch64"
+	default:
+		return runtime.GOARCH
 	}
 }
 
@@ -276,7 +317,7 @@ func jvmLibraryPath(javaHome string) (string, error) {
 // Returns "" if no such repo root or no jar file can be found.
 //
 // If DEFRA_JAVA_WRAPPER_DIR is set, the jar is looked for under that directory instead of the
-// standard .javaclient/DefraJavaWrapper - this must match tools/scripts/build-java-client.sh's
+// standard .javaclient/defradb-java-sdk - this must match tools/scripts/build-java-client.sh's
 // own WRAPPER_DIR default, since that script is what produces the jar in the first place.
 func defaultJarPath() string {
 	if wrapperDir := os.Getenv(javaWrapperDirEnvName); wrapperDir != "" {
@@ -293,7 +334,7 @@ func defaultJarPath() string {
 	}
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			jar := filepath.Join(dir, ".javaclient", "DefraJavaWrapper", "build", "libs", "defradb.jar")
+			jar := filepath.Join(dir, ".javaclient", "defradb-java-sdk", "build", "libs", "defradb.jar")
 			if _, err := os.Stat(jar); err == nil {
 				return jar
 			}

@@ -16,11 +16,11 @@ set -euo pipefail
 # Requires: git, make, go, gcc, and a JDK (for Gradle) on PATH.
 
 DEFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WRAPPER_DIR="${DEFRA_JAVA_WRAPPER_DIR:-$DEFRA_DIR/.javaclient/DefraJavaWrapper}"
-WRAPPER_REPO="${DEFRA_JAVA_WRAPPER_REPO:-https://github.com/sourcenetwork/DefraJavaWrapper.git}"
+WRAPPER_DIR="${DEFRA_JAVA_WRAPPER_DIR:-$DEFRA_DIR/.javaclient/defrradb-java-sdk}"
+WRAPPER_REPO="${DEFRA_JAVA_WRAPPER_REPO:-https://github.com/sourcenetwork/defradb-java-sdk.git}"
 
 if [ ! -d "$WRAPPER_DIR/.git" ]; then
-  echo "Cloning DefraJavaWrapper into $WRAPPER_DIR..."
+  echo "Cloning defradb-java-sdk repo into $WRAPPER_DIR..."
   git clone "$WRAPPER_REPO" "$WRAPPER_DIR"
 else
   echo "Updating existing DefraJavaWrapper checkout at $WRAPPER_DIR..."
