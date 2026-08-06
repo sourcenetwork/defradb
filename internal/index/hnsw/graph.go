@@ -12,16 +12,11 @@ package hnsw
 
 import (
 	"container/heap"
-	"errors"
 	"math"
 	"math/rand"
 	"sort"
 	"sync"
 )
-
-// ErrEntryPointNotFound is returned when the graph's meta points at an entry-point node that the
-// store does not have. The graph is torn: meta and the node entries disagree.
-var ErrEntryPointNotFound = errors.New("hnsw: entry point node not found")
 
 // HNSWIndex is a Hierarchical Navigable Small World approximate-nearest-neighbour index. It is safe
 // for concurrent use: mutations (Insert, Delete) are serialized via an internal mutex (single-writer
@@ -147,8 +142,8 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 			}
 		}
 
-		// Candidates for the next (lower) layer's entry points are the
-		// full candidate set found at this layer.
+		// Start the next layer down from every neighbour found here, not just the closest. A node
+		// exists on every layer up to its own height, so these are all valid entry points below.
 		entryPoints = w
 	}
 
@@ -245,9 +240,10 @@ func (g *HNSWIndex) searchGreedy(query []float32, entry NodeID, layer int) ([]ca
 	return g.searchLayerMulti(query, []candidate{{id: entry}}, 1, layer)
 }
 
-// searchLayerMulti runs SEARCH-LAYER (Algorithm 2), the ef-bounded greedy
-// search of a single layer, starting from a set of entry points. Distances
-// on the supplied entryPoints are recomputed against query as needed.
+// searchLayerMulti runs SEARCH-LAYER (Algorithm 2), the ef-bounded greedy search of a single layer,
+// starting from a set of entry points. It takes a set, not one point, because Insert seeds each layer
+// with all the neighbours found on the layer above; the descent step passes a single point.
+// Distances on the supplied entryPoints are recomputed against query as needed.
 //
 // Deleted (tombstoned) nodes are traversed (their neighbours are still
 // explored, keeping the graph connected) but are never added to the

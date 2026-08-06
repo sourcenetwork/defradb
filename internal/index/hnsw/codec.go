@@ -12,7 +12,6 @@ package hnsw
 
 import (
 	"encoding/binary"
-	"errors"
 	"math"
 )
 
@@ -39,14 +38,6 @@ const (
 	// layer-count, before any vector elements or layers.
 	nodeHeaderLen = versionWidth + nodeIDWidth + flagWidth + countWidth + countWidth
 )
-
-// ErrInvalidNodeEncoding is returned by UnmarshalNode when the input bytes
-// are truncated, corrupt, or use an unsupported encoding version.
-var ErrInvalidNodeEncoding = errors.New("hnsw: invalid node encoding")
-
-// ErrInvalidMetaEncoding is returned by UnmarshalMeta when the input bytes
-// are truncated, corrupt, or use an unsupported encoding version.
-var ErrInvalidMetaEncoding = errors.New("hnsw: invalid meta encoding")
 
 // MarshalNode encodes n into a compact, deterministic byte representation
 // suitable for storage as a single KV value.
