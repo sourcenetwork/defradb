@@ -204,6 +204,18 @@ int defra_register_natives(JNIEnv* env, jclass cls, JNINativeMethod* methods, in
     return 0;
 }
 
+// checked_field_id looks up a field ID and, on failure, clears the resulting pending exception
+// and records a fixed error message instead. Letting the caller chain another JNI call onto that pending exception
+// isn't documented-safe, and -Xcheck:jni aborts on it.
+static jfieldID checked_field_id(JNIEnv* env, jclass cls, const char* name, const char* sig, char* errbuf, int errbufLen) {
+    jfieldID fid = (*env)->GetFieldID(env, cls, name, sig);
+    if (fid == NULL) {
+        (*env)->ExceptionClear(env);
+        defra_set_err(errbuf, errbufLen, ERR_COLLECTION_OPTIONS_FIELDS_NOT_FOUND);
+    }
+    return fid;
+}
+
 // build_collection_options constructs a DefrraCollectionOptions Java object from a DefraArg struct
 static jobject build_collection_options(JNIEnv* env, const DefraArg* arg, char* errbuf, int errbufLen) {
     // First, try to get the object's class...
@@ -232,20 +244,20 @@ static jobject build_collection_options(JNIEnv* env, const DefraArg* arg, char* 
         return NULL;
     }
 
-    // Try to get all of the field IDs from the created object
-    jfieldID fName = (*env)->GetFieldID(env, cls, "name", "Ljava/lang/String;");
-    jfieldID fVersion = (*env)->GetFieldID(env, cls, "version", "Ljava/lang/String;");
-    jfieldID fCollectionID = (*env)->GetFieldID(env, cls, "collectionID", "Ljava/lang/String;");
-    jfieldID fGetInactive = (*env)->GetFieldID(env, cls, "getInactive", "Z");
-    jfieldID fEnableSigning = (*env)->GetFieldID(env, cls, "enableSigning", "Ljava/lang/Boolean;");
-    if (fName == NULL || fVersion == NULL || fCollectionID == NULL || fGetInactive == NULL || fEnableSigning == NULL) {
-        // This probably shouuld also never fail in the case of an appropriate Defra Jar being used.
-        (*env)->ExceptionClear(env);
-        defra_set_err(errbuf, errbufLen, ERR_COLLECTION_OPTIONS_FIELDS_NOT_FOUND);
-        return NULL;
-    }
+    // Try to get all of the field IDs from the created object, checking each one before making the
+    // next lookup.
+    jfieldID fName = checked_field_id(env, cls, "name", "Ljava/lang/String;", errbuf, errbufLen);
+    if (fName == NULL) return NULL;
+    jfieldID fVersion = checked_field_id(env, cls, "version", "Ljava/lang/String;", errbuf, errbufLen);
+    if (fVersion == NULL) return NULL;
+    jfieldID fCollectionID = checked_field_id(env, cls, "collectionID", "Ljava/lang/String;", errbuf, errbufLen);
+    if (fCollectionID == NULL) return NULL;
+    jfieldID fGetInactive = checked_field_id(env, cls, "getInactive", "Z", errbuf, errbufLen);
+    if (fGetInactive == NULL) return NULL;
+    jfieldID fEnableSigning = checked_field_id(env, cls, "enableSigning", "Ljava/lang/Boolean;", errbuf, errbufLen);
+    if (fEnableSigning == NULL) return NULL;
 
-    // If we obtained all the field IDs, we can assign the values and retuurn
+    // Now that we have all the field IDs, we can assign the values and return
     jstring name = arg->str ? (*env)->NewStringUTF(env, arg->str) : (*env)->NewStringUTF(env, "");
     jstring version = arg->coVersion ? (*env)->NewStringUTF(env, arg->coVersion) : (*env)->NewStringUTF(env, "");
     jstring collectionID = arg->coCollectionID ? (*env)->NewStringUTF(env, arg->coCollectionID) : (*env)->NewStringUTF(env, "");
@@ -258,9 +270,21 @@ static jobject build_collection_options(JNIEnv* env, const DefraArg* arg, char* 
     // for true/false, boxed via Boolean.valueOf so the field's tri-state survives the call.
     if (arg->coEnableSigning != 0) {
         jclass booleanCls = (*env)->FindClass(env, "java/lang/Boolean");
+        if (booleanCls == NULL) {
+            check_pending_exception(env, errbuf, errbufLen);
+            return NULL;
+        }
         jmethodID valueOfMid = (*env)->GetStaticMethodID(env, booleanCls, "valueOf", "(Z)Ljava/lang/Boolean;");
+        if (valueOfMid == NULL) {
+            check_pending_exception(env, errbuf, errbufLen);
+            return NULL;
+        }
         jobject boxedEnableSigning = (*env)->CallStaticObjectMethod(
             env, booleanCls, valueOfMid, arg->coEnableSigning > 0 ? JNI_TRUE : JNI_FALSE);
+        if (boxedEnableSigning == NULL) {
+            check_pending_exception(env, errbuf, errbufLen);
+            return NULL;
+        }
         (*env)->SetObjectField(env, opts, fEnableSigning, boxedEnableSigning);
     }
 
