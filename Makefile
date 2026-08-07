@@ -333,9 +333,10 @@ ifeq ($(JAVA_HOME),)
 	$(error JAVA_HOME must be set to a JDK 9+ installation)
 endif
 	@$(MAKE) build-java-client
+	CGO_ENABLED=1 \
 	CGO_CFLAGS="-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux" \
 	DEFRA_CLIENT_JAVA=true \
-	DEFRA_JAVA_JAR="$(or $(DEFRA_JAVA_WRAPPER_DIR),$(CURDIR)/.javaclient/DefraJavaWrapper)/build/libs/defradb.jar" \
+	DEFRA_JAVA_JAR="$(or $(DEFRA_JAVA_WRAPPER_DIR),$(CURDIR)/.javaclient/defradb-java-sdk)/build/libs/defradb.jar" \
 	go test -tags javaclient ./tests/integration/... $(TEST_FLAGS)
 
 .PHONY: test\:names
