@@ -297,7 +297,7 @@ const char* defra_node_native_method_signature(int i) {
     return nodeNativeMethods[i].signature;
 }
 
-// transactionNativeMethods is the single source of truth for the subset of DefraTransaction's native methods 
+// transactionNativeMethods is the single source of truth for the subset of DefraTransaction's native methods
 // that this client registers.
 static JNINativeMethod transactionNativeMethods[] = {
     {"TransactionCommitNative", "(J)Lsource/defra/DefraResult;",
@@ -384,7 +384,7 @@ static const int transactionNativeMethodsCount =
     (int)(sizeof(transactionNativeMethods) / sizeof(transactionNativeMethods[0]));
 
 // defra_register_transaction_natives passes the transaction native methods table (and the given class, cls) into
-// defra_register_natives inside jnicall.c, resulting in JNI binding each entry to a C function pointer. 
+// defra_register_natives inside jnicall.c, resulting in JNI binding each entry to a C function pointer.
 int defra_register_transaction_natives(JNIEnv* env, jclass cls, char* errbuf, int errbufLen) {
     return defra_register_natives(env, cls, transactionNativeMethods, transactionNativeMethodsCount, errbuf, errbufLen);
 }

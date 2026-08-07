@@ -89,7 +89,7 @@ static int check_pending_exception(JNIEnv* env, char* buf, int bufLen) {
 }
 
 // defra_attach_thread attaches the current thread to the JVM, which is necessary to allow us to make calls to any JNI
-// methods using it. For more information, see the attach() function inside jvm.go, from which this function is called. 
+// methods using it. For more information, see the attach() function inside jvm.go, from which this function is called.
 // This returns 0 if it was successful, and 1 if it was unsuccessful, printing any error into the passed-in buffer.
 int defra_attach_thread(JavaVM* vm, JNIEnv** outEnv, char* errbuf, int errbufLen) {
     jint retcode = (*vm)->AttachCurrentThread(vm, (void**)outEnv, NULL);
@@ -108,7 +108,7 @@ void defra_detach_thread(JavaVM* vm) {
     (*vm)->DetachCurrentThread(vm);
 }
 
-// defra_find_global_class looks up a Java class by name and returns a reference to it that stays valid 
+// defra_find_global_class looks up a Java class by name and returns a reference to it that stays valid
 // across future attach/detach cycles, and across different OS threads.
 // See the setupJVM() function of jvm.go, which makes calls to this function, caching the results for
 // the DefraNode, DefraResult, and DefraTransactionResult classes.
