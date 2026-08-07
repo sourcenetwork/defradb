@@ -12,6 +12,8 @@ package p2p
 
 import (
 	"context"
+	"math"
+	"runtime/debug"
 	"testing"
 
 	"github.com/fxamacker/cbor/v2"
@@ -54,6 +56,68 @@ func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
 	// Expectation: No error returned (suppressed), resp is nil
 	assert.NoError(t, err)
 	assert.Nil(t, resp)
+}
+
+// The budget is claimed before the decode, so an over-budget message never reaches
+// cbor. Undecodable bytes distinguish the two orderings: decoding first surfaces an
+// error, claiming first drops the message silently.
+func TestPubSubMessageHandler_OverBudgetDropsBeforeDecode(t *testing.T) {
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 4),
+		msgQueueMaxBytes: 4,
+	}
+
+	undecodable := []byte{0xff, 0xff, 0xff, 0xff, 0xff}
+	resp, err := p.pubSubMessageHandler("sender", "topic", undecodable)
+
+	assert.NoError(t, err)
+	assert.Nil(t, resp)
+	assert.Empty(t, p.msgQueue)
+	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+}
+
+func TestPubSubMessageHandler_ByteBudgetReleasedAfterProcessing(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	// Sized so exactly one message fits, making the second one's fate depend entirely
+	// on whether the first was released.
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 4),
+		msgQueueMaxBytes: int64(len(msg)),
+	}
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1)
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1, "second message should be dropped while the budget is held")
+
+	// Stand in for a worker finishing with the message.
+	queued := <-p.msgQueue
+	p.releaseQueueBytes(queued.size)
+	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1, "budget should be available again once released")
+}
+
+func TestQueueByteBudget_DerivesFromMemoryLimit(t *testing.T) {
+	original := debug.SetMemoryLimit(-1)
+	t.Cleanup(func() { debug.SetMemoryLimit(original) })
+
+	debug.SetMemoryLimit(8 << 30)
+	assert.Equal(t, int64(8<<30)/msgQueueMemDivisor, queueByteBudget())
+
+	debug.SetMemoryLimit(math.MaxInt64)
+	assert.Equal(t, int64(msgQueueFallbackMaxBytes), queueByteBudget())
 }
 
 func TestPubSubMessageHandler_ContextTimeout(t *testing.T) {
