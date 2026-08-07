@@ -12,7 +12,10 @@ package p2p
 
 import (
 	"context"
+	"math"
+	"runtime/debug"
 	"testing"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
@@ -54,6 +57,103 @@ func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {
 	// Expectation: No error returned (suppressed), resp is nil
 	assert.NoError(t, err)
 	assert.Nil(t, resp)
+}
+
+// The budget is claimed before the decode, so an over-budget message never reaches
+// cbor. Undecodable bytes distinguish the two orderings: decoding first surfaces an
+// error, claiming first drops the message silently.
+func TestPubSubMessageHandler_OverBudgetDropsBeforeDecode(t *testing.T) {
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 4),
+		msgQueueMaxBytes: 4,
+	}
+
+	undecodable := []byte{0xff, 0xff, 0xff, 0xff, 0xff}
+	resp, err := p.pubSubMessageHandler("sender", "topic", undecodable)
+
+	assert.NoError(t, err)
+	assert.Nil(t, resp)
+	assert.Empty(t, p.msgQueue)
+	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+}
+
+func TestPubSubMessageHandler_ByteBudgetReleasedAfterProcessing(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	// Sized so exactly one message fits, making the second one's fate depend entirely
+	// on whether the first was released.
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 4),
+		msgQueueMaxBytes: int64(len(msg)),
+	}
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1)
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1, "second message should be dropped while the budget is held")
+
+	// Stand in for a worker finishing with the message.
+	queued := <-p.msgQueue
+	p.releaseQueueBytes(queued.size)
+	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Len(t, p.msgQueue, 1, "budget should be available again once released")
+}
+
+// The handler reserves the budget and the worker is what gives it back. Without the release the
+// counter only ever climbs, and once enough traffic has passed through, the node drops every
+// message from then on while its queue sits empty.
+func TestProcessMessageWorker_ReleasesByteBudget(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	p := &P2P{
+		ctx:              ctx,
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 1),
+		msgQueueMaxBytes: int64(len(msg)),
+	}
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len(msg)), p.msgQueueBytes.Load(), "the handler reserves on enqueue")
+
+	// Cancelling returns processPushlogRequest at its first check, so no database is needed and
+	// the release is the only part of the worker left under test. The worker is left parked on
+	// the empty queue rather than stopped, which keeps this independent of how shutdown is
+	// signalled.
+	cancel()
+	p.msgWorkers.Add(1)
+	go p.processMessageWorker()
+
+	assert.Eventually(t, func() bool { return p.msgQueueBytes.Load() == 0 },
+		5*time.Second, 5*time.Millisecond,
+		"the worker must return the budget the handler reserved")
+}
+
+func TestQueueByteBudget_DerivesFromMemoryLimit(t *testing.T) {
+	original := debug.SetMemoryLimit(-1)
+	t.Cleanup(func() { debug.SetMemoryLimit(original) })
+
+	// Written out rather than derived from the constants: the point of the assertion is that
+	// the budget is a small fraction of the limit, and restating the formula would let the
+	// queue grow to the whole limit without failing here.
+	debug.SetMemoryLimit(8 << 30)
+	assert.Equal(t, int64(2<<30), queueByteBudget(), "a quarter of an 8 GiB limit")
+
+	debug.SetMemoryLimit(math.MaxInt64)
+	assert.Equal(t, int64(1<<30), queueByteBudget(), "the fallback when no limit is set")
 }
 
 func TestPubSubMessageHandler_ContextTimeout(t *testing.T) {
