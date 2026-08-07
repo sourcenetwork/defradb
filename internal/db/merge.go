@@ -14,7 +14,9 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"log/slog"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -192,11 +194,25 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 	return merged, errors.Join(errs...)
 }
 
+// namedDocs renders the documents a transaction touched, as collection/docID. Badger
+// reports conflicts without naming the contended key, so this is the only lead available
+// for working out which documents contend with each other.
+func namedDocs(entries []mergeEntry) string {
+	docIDs := make([]string, len(entries))
+	for i, e := range entries {
+		docIDs[i] = e.col.Name() + "/" + e.evt.DocID
+	}
+	return strings.Join(docIDs, ",")
+}
+
 // mergeChunk merges every event of the chunk inside one transaction, retrying the
 // whole chunk on transaction conflict. Isolating a failing event is the caller's job.
 func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
-	// Held so that exhausting the retry budget can report the conflict that caused it.
+	// Held so that exhausting the retry budget can report the conflict that caused it,
+	// along with where the last one was raised and which event raised it.
 	var conflictErr error
+	var blamed mergeEntry
+	var phase string
 	for i := 0; i < db.MaxTxnRetries(); i++ {
 		txn, err := db.NewTxn(false)
 		if err != nil {
@@ -207,6 +223,7 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		var mergeErr error
 		for _, e := range entries {
 			if mergeErr = db.mergeInTxn(txnCtx, e.col, e.evt); mergeErr != nil {
+				blamed, phase = e, "read"
 				break
 			}
 		}
@@ -224,6 +241,9 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(err, corekv.ErrTxnConflict) {
 				conflictErr = err
+				// A commit conflict belongs to the whole transaction and cannot be
+				// attributed to one event.
+				blamed, phase = mergeEntry{}, "commit"
 				continue
 			}
 			return err
@@ -232,7 +252,20 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		return nil
 	}
 
-	// Nothing was committed, so callers must not treat the events as merged.
+	// Nothing was committed, so callers must not treat the events as merged. This is the
+	// one place a conflict becomes data loss, so it is reported even though the retries
+	// leading to it are not.
+	fields := []slog.Attr{
+		corelog.Int("attempts", db.MaxTxnRetries()),
+		corelog.String("phase", phase),
+		corelog.String("docIDs", namedDocs(entries)),
+	}
+	// Only a read conflict has a single event to blame; at commit it would just repeat
+	// the chunk, and these lines are already long.
+	if phase == "read" {
+		fields = append(fields, corelog.String("blamed", namedDocs([]mergeEntry{blamed})))
+	}
+	log.InfoContext(ctx, "merge chunk exhausted its retries", fields...)
 	return client.NewErrMaxTxnRetries(conflictErr)
 }
 

@@ -76,6 +76,8 @@ func TestPubSubMessageHandler_OverBudgetDropsBeforeDecode(t *testing.T) {
 	assert.Nil(t, resp)
 	assert.Empty(t, p.msgQueue)
 	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+	assert.Equal(t, int64(1), p.statDroppedBudget.Load())
+	assert.Equal(t, int64(0), p.statDroppedFull.Load())
 }
 
 func TestPubSubMessageHandler_ByteBudgetReleasedAfterProcessing(t *testing.T) {
@@ -107,6 +109,31 @@ func TestPubSubMessageHandler_ByteBudgetReleasedAfterProcessing(t *testing.T) {
 	_, err = p.pubSubMessageHandler("sender", "topic", msg)
 	assert.NoError(t, err)
 	assert.Len(t, p.msgQueue, 1, "budget should be available again once released")
+}
+
+// A full queue and an exhausted budget are separate drop reasons, and the stats line is
+// only useful if a drop is attributed to the one that caused it.
+func TestPubSubMessageHandler_QueueFullCountedSeparately(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	// Budget large enough to stay out of the way, so only the slot count can reject.
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 1),
+		msgQueueMaxBytes: 1 << 20,
+	}
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+
+	assert.Equal(t, int64(1), p.statDroppedFull.Load())
+	assert.Equal(t, int64(0), p.statDroppedBudget.Load())
+	// The dropped message must not keep holding its reservation.
+	assert.Equal(t, int64(len(msg)), p.msgQueueBytes.Load())
 }
 
 func TestQueueByteBudget_DerivesFromMemoryLimit(t *testing.T) {
