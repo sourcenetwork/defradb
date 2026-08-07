@@ -213,6 +213,9 @@ func (s *badgerStore) runValueLogGC(ctx context.Context) {
 // reclaim, an error occurs, or the store starts closing. Each successful call
 // rewrites one file; ErrNoRewrite means no file was eligible and ends the loop.
 // Any other error is logged, since it means GC could not make progress.
+//
+// The on-disk size is reported on every pass, reclaimed or not, so whether the store is
+// bounded can be read from the log without shell access to the volume.
 func (s *badgerStore) reclaimValueLog(ctx context.Context) {
 	start := time.Now()
 	reclaimed := 0
@@ -228,11 +231,12 @@ func (s *badgerStore) reclaimValueLog(ctx context.Context) {
 		}
 		reclaimed++
 	}
-	if reclaimed > 0 {
-		log.Info("Reclaimed badger value log files",
-			corelog.Int("files", reclaimed),
-			corelog.Duration("duration", time.Since(start)))
-	}
+	lsm, vlog := s.db.Size()
+	log.Info("Badger value log GC",
+		corelog.Int("files", reclaimed),
+		corelog.Int64("lsmBytes", lsm),
+		corelog.Int64("vlogBytes", vlog),
+		corelog.Duration("duration", time.Since(start)))
 }
 
 // runOrphanBlockGC sweeps the blockstore for orphaned blocks on a fixed interval
