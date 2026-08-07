@@ -27,8 +27,11 @@ import (
 const mergedCacheSize = 100_000
 
 // globalMergedCache is a process-wide LRU cache of CIDs known to be merged.
-// A cache hit in IsMerged avoids 2 KV reads per CID — significant under sustained
+// A cache hit in IsMerged avoids 2 KV reads per CID, which matters under sustained
 // P2P or batch write load where the same CID chains are traversed repeatedly.
+//
+// Only IsMerged writes to it, and only from committed state. An entry added inside a
+// transaction would survive a rollback and report a block that was never stored.
 var globalMergedCache = mustNewMergedCache(mergedCacheSize)
 
 func mustNewMergedCache(size int) *lru.Cache[string, struct{}] {
@@ -126,7 +129,6 @@ func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
 	if err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes())); err != nil {
 		return NewErrMarkBlockAsMerged(err)
 	}
-	globalMergedCache.Add(cid.String(), struct{}{})
 	return nil
 }
 
@@ -135,7 +137,6 @@ func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
 		if err := bs.store.Delete(ctx, newToMergeKey(c.Bytes())); err != nil {
 			return NewErrMarkBlockAsMerged(err)
 		}
-		globalMergedCache.Add(c.String(), struct{}{})
 	}
 	return nil
 }
