@@ -82,6 +82,11 @@ const (
 	// msgQueueFallbackMaxBytes is the byte budget used when the process has no memory
 	// limit set, where a fraction of it would be meaningless.
 	msgQueueFallbackMaxBytes = 1 << 30
+
+	// statsInterval is how often queue depth and merge counters are reported. Rates are
+	// reported per interval rather than per event, which keeps the ingest path quiet
+	// under load where per-event logging would dominate the output.
+	statsInterval = 30 * time.Second
 )
 
 // queuedMessage is a decoded request paired with its wire size, so the queue's byte
@@ -206,6 +211,19 @@ type P2P struct {
 	msgQueueBytes atomic.Int64
 	// msgQueueMaxBytes caps msgQueueBytes. Zero or less disables the byte bound.
 	msgQueueMaxBytes int64
+
+	// stopStats ends the stats reporter. The context outlives Close, so the reporter
+	// needs a signal of its own.
+	stopStats chan struct{}
+
+	// Counters reported by reportStats and reset on each report, so each line carries
+	// the rate for that interval rather than a running total.
+	statDroppedBudget atomic.Int64
+	statDroppedFull   atomic.Int64
+	statMergedDocs    atomic.Int64
+	statDroppedDocs   atomic.Int64
+	statBatches       atomic.Int64
+	statBatchFailures atomic.Int64
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -263,12 +281,14 @@ func New(
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
+		stopStats:            make(chan struct{}),
 	}
 
 	for i := 0; i < dagSyncWorkers; i++ {
 		p.msgWorkers.Add(1)
 		go p.processMessageWorker()
 	}
+	go p.reportStats()
 
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 	p.batcher = newPubsubBatcher(host.ID(), func(topic string, data []byte) error {
@@ -661,6 +681,7 @@ func (p *P2P) docIDsForBlockCID(
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
 	size := int64(len(msg))
 	if !p.claimQueueBytes(size) {
+		p.statDroppedBudget.Add(1)
 		log.Info("pubsub message queue over byte budget, dropping message",
 			corelog.Any("topic", topic),
 			corelog.Int64("bytes", size),
@@ -681,6 +702,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 		p.releaseQueueBytes(size)
 	default:
 		p.releaseQueueBytes(size)
+		p.statDroppedFull.Add(1)
 		log.Info("pubsub message queue full, dropping message", corelog.Any("topic", topic))
 	}
 	return nil, nil
@@ -705,6 +727,35 @@ func (p *P2P) releaseQueueBytes(size int64) {
 		return
 	}
 	p.msgQueueBytes.Add(-size)
+}
+
+// reportStats periodically logs queue occupancy and merge outcomes. Queue depth and the
+// split between merged and dropped documents are otherwise only visible from a heap
+// profile, which is too invasive to take routinely.
+func (p *P2P) reportStats() {
+	ticker := time.NewTicker(statsInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-p.ctx.Done():
+			return
+		case <-p.stopStats:
+			return
+		case <-ticker.C:
+			log.Info("p2p stats",
+				corelog.Int("queueDepth", len(p.msgQueue)),
+				corelog.Int("queueSlots", msgQueueSize),
+				corelog.Int64("queueBytes", p.msgQueueBytes.Load()),
+				corelog.Int64("queueBudget", p.msgQueueMaxBytes),
+				corelog.Int64("droppedOverBudget", p.statDroppedBudget.Swap(0)),
+				corelog.Int64("droppedQueueFull", p.statDroppedFull.Swap(0)),
+				corelog.Int64("batches", p.statBatches.Swap(0)),
+				corelog.Int64("batchFailures", p.statBatchFailures.Swap(0)),
+				corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
+				corelog.Int64("docsDropped", p.statDroppedDocs.Swap(0)),
+			)
+		}
+	}
 }
 
 // processMessageWorker is a long-lived goroutine that drains p.msgQueue and
@@ -772,7 +823,16 @@ func (p *P2P) processPushlogRequest(
 			merges[i] = r.merge
 		}
 		merged, err := p.db.MergeBatchWithTxn(ctx, merges)
+		p.statBatches.Add(1)
+		for _, ok := range merged {
+			if ok {
+				p.statMergedDocs.Add(1)
+			} else {
+				p.statDroppedDocs.Add(1)
+			}
+		}
 		if err != nil {
+			p.statBatchFailures.Add(1)
 			log.ErrorE("Failed to merge documents in batch", err,
 				corelog.String("PeerID", req.SenderID),
 				corelog.Int("Documents", len(merges)))
@@ -877,8 +937,10 @@ func (p *P2P) processPushlogRequest(
 			CollectionID: req.CollectionID,
 		}
 		if err = p.db.Merge(ctx, mergeEvt); err != nil {
+			p.statDroppedDocs.Add(1)
 			return err
 		}
+		p.statMergedDocs.Add(1)
 
 		// Notify bus subscribers and the network of peers that we have a new document available.
 		updateEvt := event.Update{
@@ -1144,6 +1206,7 @@ func (pq *processQueue) close() {
 // and waits for all worker goroutines to exit.
 // It should be called once when the P2P subsystem is shutting down.
 func (p *P2P) Close() {
+	close(p.stopStats)
 	close(p.msgQueue)
 	done := make(chan struct{})
 	go func() {
