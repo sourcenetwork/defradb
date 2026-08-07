@@ -330,7 +330,7 @@ test\:c:
 .PHONY: test\:java
 test\:java:
 ifeq ($(JAVA_HOME),)
-	$(error JAVA_HOME must be set to a JDK 9+ installation)
+	$(error JAVA_HOME must be set to a JDKa installation)
 endif
 	@$(MAKE) build-java-client
 	CGO_ENABLED=1 \

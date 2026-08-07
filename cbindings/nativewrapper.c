@@ -16,7 +16,7 @@
 #include <string.h>
 
 // This is the canonical, ground-truth JNI native implementation for the DefraDB Java SDK. It lives here, in the
-// cbindings, instead of in the separate defradb-java-sdk repo for important logistics reasons. This file is necessary 
+// cbindings, instead of in the separate defradb-java-sdk repo for important logistics reasons. This file is necessary
 // to build the Java test client. This would mean that two versions of the file need to be maintained and kept in
 // sync with one another. Instead of that, we keep one version here, and the Java SDK project's build script retrieves
 // a copy of it dynamically during build (because building the Java SDK requires that a path to the defra directory)
@@ -66,12 +66,36 @@ jobject returnDefraResult(JNIEnv* env, Result res) {
     return resultObj;
 }
 
+// discardOrphanedNode releases a Node handle that was successfully created on the Go side but
+// can no longer be returned to Java (because constructing its Java wrapper object failed.)
+static void discardOrphanedNode(uintptr_t nodePtr) {
+    if (nodePtr == 0) return;
+    Result closeRes = CloseNode(nodePtr);
+    if (closeRes.error) free(closeRes.error);
+    if (closeRes.value) free(closeRes.value);
+}
+
+// discardOrphanedIdentity is discardOrphanedNode's counterpart for identity handles.
+static void discardOrphanedIdentity(uintptr_t identityPtr) {
+    if (identityPtr == 0) return;
+    FreeIdentity(identityPtr);
+}
+
+// discardOrphanedTransaction is discardOrphanedNode's counterpart for transaction handles.
+static void discardOrphanedTransaction(uintptr_t txnPtr) {
+    if (txnPtr == 0) return;
+    DiscardTransaction(txnPtr);
+}
+
 jobject returnDefraNewNodeResult(JNIEnv* env, NewNodeResult res) {
     jstring errorStr = res.error ? (*env)->NewStringUTF(env, res.error) : NULL;
     if (res.error) free(res.error);
     jclass cls = (*env)->FindClass(env, "source/defra/DefraNewNodeResult");
-    jmethodID ctor = (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V");
-    jobject resultObj = (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.nodePtr);
+    jmethodID ctor = cls ? (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V") : NULL;
+    jobject resultObj = ctor ? (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.nodePtr) : NULL;
+    if (resultObj == NULL) {
+        discardOrphanedNode((uintptr_t)res.nodePtr);
+    }
     return resultObj;
 }
 
@@ -79,8 +103,11 @@ jobject returnDefraIdentityResult(JNIEnv* env, NewIdentityResult res) {
     jstring errorStr = res.error ? (*env)->NewStringUTF(env, res.error) : NULL;
     if (res.error) free(res.error);
     jclass cls = (*env)->FindClass(env, "source/defra/DefraIdentityResult");
-    jmethodID ctor = (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V");
-    jobject resultObj = (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.identityPtr);
+    jmethodID ctor = cls ? (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V") : NULL;
+    jobject resultObj = ctor ? (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.identityPtr) : NULL;
+    if (resultObj == NULL) {
+        discardOrphanedIdentity((uintptr_t)res.identityPtr);
+    }
     return resultObj;
 }
 
@@ -88,8 +115,11 @@ jobject returnDefraTransactionResult(JNIEnv* env, NewTxnResult res) {
     jstring errorStr = res.error ? (*env)->NewStringUTF(env, res.error) : NULL;
     if (res.error) free(res.error);
     jclass cls = (*env)->FindClass(env, "source/defra/DefraTransactionResult");
-    jmethodID ctor = (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V");
-    jobject resultObj = (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.txnPtr);
+    jmethodID ctor = cls ? (*env)->GetMethodID(env, cls, "<init>", "(ILjava/lang/String;J)V") : NULL;
+    jobject resultObj = ctor ? (*env)->NewObject(env, cls, ctor, (jint)res.status, errorStr, (jlong)res.txnPtr) : NULL;
+    if (resultObj == NULL) {
+        discardOrphanedTransaction((uintptr_t)res.txnPtr);
+    }
     return resultObj;
 }
 

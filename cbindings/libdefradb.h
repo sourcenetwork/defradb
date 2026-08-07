@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-// Prototypes for every cgo-exported ("//export") Go function in this package. Each individual file  only needs this 
+// Prototypes for every cgo-exported ("//export") Go function in this package. Each individual file  only needs this
 // header included in its own cgo preamble to see the prototypes of whichever other exported functions it calls,
 // preventing the need from duplicating declarations.
 
