@@ -24,12 +24,13 @@ import (
 )
 
 // Transaction conflicts are reported by the store without naming the contended key, so
-// the key has to be identified indirectly: a conflict requires one transaction to read a
-// key another wrote, and writes here are read-modify-write, so a key written by many
-// concurrent transactions is the shared state to look at.
+// the key has to be identified indirectly. Conflicts are detected on the read set: a
+// transaction fails if a key it read was written by a transaction that committed first.
+// Reads and writes are therefore counted separately, and a key that is both widely read
+// and widely written is the contended one.
 //
-// Off unless DEFRA_TRACE_CONFLICT_KEYS is set. It records every write, so it is a
-// diagnostic aid rather than something to leave enabled.
+// Off unless DEFRA_TRACE_CONFLICT_KEYS is set. It records every read and write, so it is
+// a diagnostic aid rather than something to leave enabled.
 
 var log = corelog.NewLogger("datastore")
 
@@ -50,18 +51,23 @@ type keyTracer struct {
 	enabled bool
 
 	mu      sync.Mutex
-	keys    map[string]*keyStat
+	writes  map[string]*keyStat
+	reads   map[string]*keyStat
 	dropped int
 	started bool
 }
 
 func newKeyTracer(enabled bool) *keyTracer {
-	return &keyTracer{enabled: enabled, keys: make(map[string]*keyStat)}
+	return &keyTracer{
+		enabled: enabled,
+		writes:  make(map[string]*keyStat),
+		reads:   make(map[string]*keyStat),
+	}
 }
 
-// record notes that txnID wrote key. The first call starts the reporter, so a build with
-// tracing off never spawns it.
-func (t *keyTracer) record(txnID uint64, key []byte) {
+// record notes that txnID touched key. The first call starts the reporter, so a build
+// with tracing off never spawns it.
+func (t *keyTracer) record(txnID uint64, key []byte, write bool) {
 	if !t.enabled {
 		return
 	}
@@ -72,58 +78,74 @@ func (t *keyTracer) record(txnID uint64, key []byte) {
 		go t.report()
 	}
 
-	stat, ok := t.keys[string(key)]
+	set := t.reads
+	if write {
+		set = t.writes
+	}
+	stat, ok := set[string(key)]
 	if !ok {
-		if len(t.keys) >= traceKeyLimit {
+		if len(set) >= traceKeyLimit {
 			t.dropped++
 			return
 		}
 		stat = &keyStat{txns: make(map[uint64]struct{})}
-		t.keys[string(key)] = stat
+		set[string(key)] = stat
 	}
 	stat.writes++
 	stat.txns[txnID] = struct{}{}
 }
 
 type traceEntry struct {
-	key    string
-	txns   int
-	writes int
+	key        string
+	readers    int
+	writers    int
+	readCount  int
+	writeCount int
 }
 
-// snapshot returns the window's keys ordered by how many distinct transactions wrote
-// each, and clears the window.
+// snapshot returns the window's keys and clears it. A key conflicts only if it is read
+// by one transaction and written by another, so entries are ordered by the smaller of
+// the two counts: a key that is only read, or only written, cannot cause one.
 func (t *keyTracer) snapshot() ([]traceEntry, int) {
 	t.mu.Lock()
-	entries := make([]traceEntry, 0, len(t.keys))
-	for k, s := range t.keys {
-		entries = append(entries, traceEntry{key: k, txns: len(s.txns), writes: s.writes})
+	entries := make([]traceEntry, 0, len(t.reads))
+	for k, r := range t.reads {
+		e := traceEntry{key: k, readers: len(r.txns), readCount: r.writes}
+		if w, ok := t.writes[k]; ok {
+			e.writers, e.writeCount = len(w.txns), w.writes
+		}
+		entries = append(entries, e)
 	}
 	dropped := t.dropped
-	t.keys = make(map[string]*keyStat)
+	t.reads = make(map[string]*keyStat)
+	t.writes = make(map[string]*keyStat)
 	t.dropped = 0
 	t.mu.Unlock()
 
-	sort.Slice(entries, func(i, j int) bool { return entries[i].txns > entries[j].txns })
+	sort.Slice(entries, func(i, j int) bool {
+		return min(entries[i].readers, entries[i].writers) > min(entries[j].readers, entries[j].writers)
+	})
 	return entries, dropped
 }
 
-// report logs the keys written by the most distinct transactions, so each line describes
-// contention over one interval rather than since startup.
+// report logs the most contended keys, so each line describes one interval rather than
+// everything since startup.
 func (t *keyTracer) report() {
 	for range time.Tick(traceReportInterval) {
 		entries, dropped := t.snapshot()
 		log.Info("conflict trace window",
-			corelog.Int("distinctKeys", len(entries)),
+			corelog.Int("readKeys", len(entries)),
 			corelog.Int("untracked", dropped))
 		for i, e := range entries {
-			if i >= 10 || e.txns < 2 {
+			if i >= 10 || e.readers < 1 || e.writers < 1 {
 				break
 			}
 			log.Info("contended key",
 				corelog.Int("rank", i+1),
-				corelog.Int("distinctTxns", e.txns),
-				corelog.Int("writes", e.writes),
+				corelog.Int("readerTxns", e.readers),
+				corelog.Int("writerTxns", e.writers),
+				corelog.Int("reads", e.readCount),
+				corelog.Int("writes", e.writeCount),
 				corelog.String("store", storeName(e.key)),
 				corelog.String("key", describeKey(e.key)))
 		}
@@ -177,22 +199,63 @@ func describeKey(key string) string {
 	return out
 }
 
-// tracedStore records the keys a transaction writes. Reads are not recorded: a conflict
-// needs a read of a key another transaction wrote, and these writes are all
-// read-modify-write, so the write set already covers the shared keys.
+// tracedStore records the keys a transaction reads and writes, including keys reached by
+// scanning: the store adds those to the read set too, so leaving them out would hide a
+// whole class of conflict.
 type tracedStore struct {
 	corekv.ReaderWriter
 	txnID uint64
 }
 
 func (s *tracedStore) Set(ctx context.Context, key, value []byte) error {
-	conflictTracer.record(s.txnID, key)
+	conflictTracer.record(s.txnID, key, true)
 	return s.ReaderWriter.Set(ctx, key, value)
 }
 
 func (s *tracedStore) Delete(ctx context.Context, key []byte) error {
-	conflictTracer.record(s.txnID, key)
+	conflictTracer.record(s.txnID, key, true)
 	return s.ReaderWriter.Delete(ctx, key)
+}
+
+func (s *tracedStore) Get(ctx context.Context, key []byte) ([]byte, error) {
+	conflictTracer.record(s.txnID, key, false)
+	return s.ReaderWriter.Get(ctx, key)
+}
+
+func (s *tracedStore) Has(ctx context.Context, key []byte) (bool, error) {
+	conflictTracer.record(s.txnID, key, false)
+	return s.ReaderWriter.Has(ctx, key)
+}
+
+func (s *tracedStore) Iterator(ctx context.Context, opts corekv.IterOptions) (corekv.Iterator, error) {
+	iter, err := s.ReaderWriter.Iterator(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &tracedIterator{Iterator: iter, txnID: s.txnID}, nil
+}
+
+// tracedIterator records each key the iterator lands on. Next and Seek are the only ways
+// to reach a new position, so recording there covers every key visited.
+type tracedIterator struct {
+	corekv.Iterator
+	txnID uint64
+}
+
+func (i *tracedIterator) Next() (bool, error) {
+	ok, err := i.Iterator.Next()
+	if ok {
+		conflictTracer.record(i.txnID, i.Iterator.Key(), false)
+	}
+	return ok, err
+}
+
+func (i *tracedIterator) Seek(key []byte) (bool, error) {
+	ok, err := i.Iterator.Seek(key)
+	if ok {
+		conflictTracer.record(i.txnID, i.Iterator.Key(), false)
+	}
+	return ok, err
 }
 
 // traceWrites wraps store so its writes are recorded, or returns it unchanged when
