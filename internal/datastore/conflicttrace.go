@@ -14,142 +14,188 @@ import (
 	"context"
 	"encoding/hex"
 	"os"
-	"sort"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 )
 
-// Transaction conflicts are reported by the store without naming the contended key, so
-// the key has to be identified indirectly. Conflicts are detected on the read set: a
-// transaction fails if a key it read was written by a transaction that committed first.
-// Reads and writes are therefore counted separately, and a key that is both widely read
-// and widely written is the contended one.
+// The store reports a conflict without naming the contended key. This records what each
+// open transaction reads and writes, and on a rejected commit reports the keys that
+// transaction read which another wrote and committed after it started.
 //
-// Off unless DEFRA_TRACE_CONFLICT_KEYS is set. It records every read and write, so it is
-// a diagnostic aid rather than something to leave enabled.
+// Counting how many transactions touch a key does not work as a substitute: retries and
+// lock-serialized access both inflate that count without the transactions overlapping.
+//
+// Off unless DEFRA_TRACE_CONFLICT_KEYS is set.
 
 var log = corelog.NewLogger("datastore")
 
-const traceReportInterval = 30 * time.Second
+const (
+	// traceMaxKeysPerTxn bounds what is held for one transaction. A merge reads far more
+	// keys than are needed to identify a conflict, so the cap keeps a large transaction
+	// from dominating memory.
+	traceMaxKeysPerTxn = 20_000
 
-// traceKeyLimit bounds the tracked key count so a run cannot grow without limit between
-// reports. Keys past the limit are counted but not tracked individually.
-const traceKeyLimit = 200_000
+	// traceHistory is how many committed transactions are kept to compare against. A
+	// conflicting transaction is normally beaten by a recent commit, so a short history
+	// is enough and keeps the comparison cheap.
+	traceHistory = 256
 
-var conflictTracer = newKeyTracer(os.Getenv("DEFRA_TRACE_CONFLICT_KEYS") != "")
+	// traceMaxReported caps the keys named per conflict, since one is usually enough to
+	// identify the contended structure.
+	traceMaxReported = 5
+)
 
-type keyStat struct {
-	txns   map[uint64]struct{}
-	writes int
+var conflictTracer = newTracer(os.Getenv("DEFRA_TRACE_CONFLICT_KEYS") != "")
+
+// openTxn is the state held for a transaction between its creation and its commit or
+// discard.
+type openTxn struct {
+	reads     map[string]struct{}
+	writes    map[string]struct{}
+	startedAt uint64
+	truncated bool
 }
 
-type keyTracer struct {
+// commitRecord is what one committed transaction wrote, kept so a later conflict can be
+// attributed to it.
+type commitRecord struct {
+	seq    uint64
+	writes map[string]struct{}
+}
+
+type tracer struct {
 	enabled bool
 
 	mu      sync.Mutex
-	writes  map[string]*keyStat
-	reads   map[string]*keyStat
-	dropped int
-	started bool
+	open    map[uint64]*openTxn
+	history []commitRecord
+	seq     uint64
 }
 
-func newKeyTracer(enabled bool) *keyTracer {
-	return &keyTracer{
-		enabled: enabled,
-		writes:  make(map[string]*keyStat),
-		reads:   make(map[string]*keyStat),
+func newTracer(enabled bool) *tracer {
+	return &tracer{enabled: enabled, open: make(map[uint64]*openTxn)}
+}
+
+// begin starts tracking a transaction. Read-only transactions are skipped because they
+// cannot be rejected for conflict. Recording where a transaction started means a later
+// conflict is only compared against commits that could have beaten it.
+func (t *tracer) begin(txnID uint64, readonly bool) {
+	if !t.enabled || readonly {
+		return
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.open[txnID] = &openTxn{
+		reads:     make(map[string]struct{}),
+		writes:    make(map[string]struct{}),
+		startedAt: t.seq,
 	}
 }
 
-// record notes that txnID touched key. The first call starts the reporter, so a build
-// with tracing off never spawns it.
-func (t *keyTracer) record(txnID uint64, key []byte, write bool) {
+func (t *tracer) record(txnID uint64, key []byte, write bool) {
 	if !t.enabled {
 		return
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if !t.started {
-		t.started = true
-		go t.report()
-	}
-
-	set := t.reads
-	if write {
-		set = t.writes
-	}
-	stat, ok := set[string(key)]
+	txn, ok := t.open[txnID]
 	if !ok {
-		if len(set) >= traceKeyLimit {
-			t.dropped++
-			return
-		}
-		stat = &keyStat{txns: make(map[uint64]struct{})}
-		set[string(key)] = stat
+		return
 	}
-	stat.writes++
-	stat.txns[txnID] = struct{}{}
+	set := txn.reads
+	if write {
+		set = txn.writes
+	}
+	if len(set) >= traceMaxKeysPerTxn {
+		txn.truncated = true
+		return
+	}
+	set[string(key)] = struct{}{}
 }
 
-type traceEntry struct {
-	key        string
-	readers    int
-	writers    int
-	readCount  int
-	writeCount int
-}
-
-// snapshot returns the window's keys and clears it. A key conflicts only if it is read
-// by one transaction and written by another, so entries are ordered by the smaller of
-// the two counts: a key that is only read, or only written, cannot cause one.
-func (t *keyTracer) snapshot() ([]traceEntry, int) {
+// commit records the outcome. On success the transaction's writes join the history so a
+// later conflict can be attributed to them; on conflict its reads are compared against
+// everything committed since it started.
+func (t *tracer) commit(txnID uint64, conflicted bool) {
+	if !t.enabled {
+		return
+	}
 	t.mu.Lock()
-	entries := make([]traceEntry, 0, len(t.reads))
-	for k, r := range t.reads {
-		e := traceEntry{key: k, readers: len(r.txns), readCount: r.writes}
-		if w, ok := t.writes[k]; ok {
-			e.writers, e.writeCount = len(w.txns), w.writes
-		}
-		entries = append(entries, e)
+	txn, ok := t.open[txnID]
+	if !ok {
+		t.mu.Unlock()
+		return
 	}
-	dropped := t.dropped
-	t.reads = make(map[string]*keyStat)
-	t.writes = make(map[string]*keyStat)
-	t.dropped = 0
+	delete(t.open, txnID)
+
+	if !conflicted {
+		t.seq++
+		t.history = append(t.history, commitRecord{seq: t.seq, writes: txn.writes})
+		if len(t.history) > traceHistory {
+			t.history = t.history[len(t.history)-traceHistory:]
+		}
+		t.mu.Unlock()
+		return
+	}
+
+	blamed, checked := t.blameLocked(txn)
+	truncated := txn.truncated
+	reads := len(txn.reads)
 	t.mu.Unlock()
 
-	sort.Slice(entries, func(i, j int) bool {
-		return min(entries[i].readers, entries[i].writers) > min(entries[j].readers, entries[j].writers)
-	})
-	return entries, dropped
+	if len(blamed) == 0 {
+		// Either the commit that beat this transaction has aged out of the history, or
+		// the contended key was reached in a way this does not record.
+		log.Info("commit conflict, contended key not identified",
+			corelog.Uint64("txn", txnID),
+			corelog.Int("reads", reads),
+			corelog.Int("commitsChecked", checked),
+			corelog.Bool("readsTruncated", truncated))
+		return
+	}
+	for _, key := range blamed {
+		log.Info("commit conflict",
+			corelog.Uint64("txn", txnID),
+			corelog.Int("reads", reads),
+			corelog.String("store", storeName(key)),
+			corelog.String("contendedKey", describeKey(key)))
+	}
 }
 
-// report logs the most contended keys, so each line describes one interval rather than
-// everything since startup.
-func (t *keyTracer) report() {
-	for range time.Tick(traceReportInterval) {
-		entries, dropped := t.snapshot()
-		log.Info("conflict trace window",
-			corelog.Int("readKeys", len(entries)),
-			corelog.Int("untracked", dropped))
-		for i, e := range entries {
-			if i >= 10 || e.readers < 1 || e.writers < 1 {
-				break
+// blameLocked returns the keys txn read that a later commit wrote, and how many commits
+// were considered. The caller must hold the lock.
+func (t *tracer) blameLocked(txn *openTxn) ([]string, int) {
+	blamed := make([]string, 0, traceMaxReported)
+	checked := 0
+	for _, c := range t.history {
+		if c.seq <= txn.startedAt {
+			continue
+		}
+		checked++
+		for key := range c.writes {
+			if _, read := txn.reads[key]; read {
+				blamed = append(blamed, key)
+				if len(blamed) >= traceMaxReported {
+					return blamed, checked
+				}
 			}
-			log.Info("contended key",
-				corelog.Int("rank", i+1),
-				corelog.Int("readerTxns", e.readers),
-				corelog.Int("writerTxns", e.writers),
-				corelog.Int("reads", e.readCount),
-				corelog.Int("writes", e.writeCount),
-				corelog.String("store", storeName(e.key)),
-				corelog.String("key", describeKey(e.key)))
 		}
 	}
+	return blamed, checked
+}
+
+// discard drops a transaction's state. Without it an abandoned transaction would be held
+// until the process exits.
+func (t *tracer) discard(txnID uint64) {
+	if !t.enabled {
+		return
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.open, txnID)
 }
 
 // storeName maps the leading namespace byte to the store it belongs to.
@@ -258,10 +304,10 @@ func (i *tracedIterator) Seek(key []byte) (bool, error) {
 	return ok, err
 }
 
-// traceWrites wraps store so its writes are recorded, or returns it unchanged when
-// tracing is off.
-func traceWrites(store corekv.ReaderWriter, txnID uint64) corekv.ReaderWriter {
-	if !conflictTracer.enabled {
+// traceKeys wraps store so the transaction's keys are recorded, or returns it unchanged
+// when there is nothing to record.
+func traceKeys(store corekv.ReaderWriter, txnID uint64, readonly bool) corekv.ReaderWriter {
+	if !conflictTracer.enabled || readonly {
 		return store
 	}
 	return &tracedStore{ReaderWriter: store, txnID: txnID}

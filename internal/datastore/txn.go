@@ -12,6 +12,7 @@ package datastore
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -110,9 +111,10 @@ func NewTxnFrom(
 	chunkSize immutable.Option[int],
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
+	conflictTracer.begin(id, readonly)
 	// Only the stores are wrapped. underlyingTxn has to stay the concrete type corekv
 	// casts to when it pulls the transaction back out of a context.
-	multistore := NewMultistore(traceWrites(rootTxn, id), lockSet, chunkSize)
+	multistore := NewMultistore(traceKeys(rootTxn, id, readonly), lockSet, chunkSize)
 
 	return &BasicTxn{
 		Multistore:    multistore,
@@ -143,6 +145,7 @@ func (t *BasicTxn) Commit() error {
 	var asyncFns []func()
 
 	err := t.underlyingTxn.Commit()
+	conflictTracer.commit(t.id, errors.Is(err, corekv.ErrTxnConflict))
 	if err != nil {
 		fns = t.errorFns
 		asyncFns = t.errorAsyncFns
@@ -162,6 +165,7 @@ func (t *BasicTxn) Commit() error {
 
 func (t *BasicTxn) Discard() {
 	t.underlyingTxn.Discard()
+	conflictTracer.discard(t.id)
 
 	for _, fn := range t.discardAsyncFns {
 		go fn()
