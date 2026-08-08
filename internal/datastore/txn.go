@@ -110,7 +110,9 @@ func NewTxnFrom(
 	chunkSize immutable.Option[int],
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
-	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
+	// Only the stores are wrapped. underlyingTxn has to stay the concrete type corekv
+	// casts to when it pulls the transaction back out of a context.
+	multistore := NewMultistore(traceWrites(rootTxn, id), lockSet, chunkSize)
 
 	return &BasicTxn{
 		Multistore:    multistore,
