@@ -21,59 +21,89 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
-
-// Keep logical document cleanup below the store's transaction size limit.
-const purgeChunkSize = 100
 
 type purgeTarget struct {
 	docID      client.DocID
 	docShortID uint64
 }
 
-// PurgeByDocIDs permanently removes local state for the given documents.
+// PurgeDocuments permanently removes local state for the given documents.
 // When pruneHistory is true, it also removes reachable blocks with no other owner.
 //
-// Without a caller transaction, the operation is resumable and commits logical cleanup in chunks.
+// Without a caller transaction, the operation is resumable and commits one document at a time.
 // With one, the caller owns the commit and the full purge must fit in that transaction.
-func (c *collection) PurgeByDocIDs(
+func (db *DB) PurgeDocuments(
 	ctx context.Context,
+	collectionName client.CollectionName,
 	docIDs []client.DocID,
 	pruneHistory bool,
-	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
 ) error {
-	ctx, _, hasCallerTxn := getTxnAndSetCtxForCollection(ctx, c)
-
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePurgeDocumentPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodePurgeDocumentPerm); err != nil {
 		return err
 	}
-	if pruneHistory && c.def.IsBranchable {
+	if opt.Identity.HasValue() {
+		ctx = identity.WithContext(ctx, opt.Identity)
+	}
+
+	_, hasCallerTxn := datastore.CtxTryGetTxn(ctx)
+	if hasCallerTxn {
+		ctx, txn, err := ensureContextTxn(ctx, db, false)
+		if err != nil {
+			return err
+		}
+		defer txn.Discard()
+
+		col, err := db.getCollectionByName(ctx, collectionName)
+		if err != nil {
+			return err
+		}
+		if pruneHistory && col.Version().IsBranchable {
+			return ErrCannotPruneBranchableCollection
+		}
+		return col.(*collection).purgeInCallerTxn(ctx, txn, docIDs, pruneHistory) //nolint:forcetypeassert
+	}
+
+	lookupCtx, lookupTxn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return err
+	}
+	col, err := db.getCollectionByName(lookupCtx, collectionName)
+	lookupTxn.Discard()
+	if err != nil {
+		return err
+	}
+	if pruneHistory && col.Version().IsBranchable {
 		return ErrCannotPruneBranchableCollection
 	}
 
-	if hasCallerTxn {
-		return c.purgeChunk(ctx, docIDs, pruneHistory)
-	}
-	return c.purgeWithoutCallerTxn(ctx, docIDs, pruneHistory)
-}
-
-func (c *collection) purgeWithoutCallerTxn(
-	ctx context.Context,
-	docIDs []client.DocID,
-	pruneHistory bool,
-) error {
-	ctx, lockTxn, err := ensureContextTxnShim(ctx, c.db)
+	ctx, lockTxn, err := ensureContextTxnShim(ctx, db)
 	if err != nil {
 		return err
 	}
 	defer lockTxn.Discard()
+	return col.(*collection).purgeWithoutCallerTxn( //nolint:forcetypeassert
+		ctx,
+		lockTxn,
+		docIDs,
+		pruneHistory,
+	)
+}
 
+func (c *collection) purgeWithoutCallerTxn(
+	ctx context.Context,
+	lockTxn datastore.Txn,
+	docIDs []client.DocID,
+	pruneHistory bool,
+) error {
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 	systemstore := multistore.Systemstore()
 	shortID, err := id.GetUncachedCollectionShortID(ctx, c.def.CollectionID, systemstore)
@@ -90,19 +120,22 @@ func (c *collection) purgeWithoutCallerTxn(
 		return err
 	}
 
-	// History can exceed a backend transaction limit for a single document. Prune it directly
-	// under the collection lock, then remove the bounded logical state transactionally.
-	if pruneHistory {
-		for _, target := range targets {
-			if err := c.hardDeleteDocumentBlocks(ctx, systemstore, target.docShortID, nil); err != nil {
-				return err
-			}
+	// History can exceed a backend transaction limit for a single document. Process it directly
+	// under the collection lock, then remove each document's logical state transactionally.
+	for _, target := range targets {
+		if err := c.removeDocumentHeads(
+			ctx,
+			systemstore,
+			target.docShortID,
+			pruneHistory,
+			nil,
+		); err != nil {
+			return err
 		}
 	}
 
-	for i := 0; i < len(targets); i += purgeChunkSize {
-		end := min(i+purgeChunkSize, len(targets))
-		if err := c.purgeLogicalChunk(ctx, lockTxn.ID(), shortID, targets[i:end]); err != nil {
+	for _, target := range targets {
+		if err := c.purgeLogicalDocument(ctx, lockTxn.ID(), shortID, target); err != nil {
 			return err
 		}
 	}
@@ -110,11 +143,11 @@ func (c *collection) purgeWithoutCallerTxn(
 	return lockTxn.Commit()
 }
 
-func (c *collection) purgeLogicalChunk(
+func (c *collection) purgeLogicalDocument(
 	ctx context.Context,
 	txnID uint64,
 	shortID uint32,
-	targets []purgeTarget,
+	target purgeTarget,
 ) error {
 	basicTxn := datastore.NewTxnFrom(
 		c.db.rootstore,
@@ -127,25 +160,18 @@ func (c *collection) purgeLogicalChunk(
 	ctx = InitContext(ctx, txn)
 	defer txn.Discard()
 
-	for _, target := range targets {
-		if err := c.purgeOneDoc(ctx, shortID, target, false, nil); err != nil {
-			return err
-		}
+	if err := c.purgeOneDoc(ctx, shortID, target); err != nil {
+		return err
 	}
 	return txn.Commit()
 }
 
-func (c *collection) purgeChunk(
+func (c *collection) purgeInCallerTxn(
 	ctx context.Context,
+	txn *Txn,
 	docIDs []client.DocID,
 	pruneHistory bool,
 ) error {
-	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
 	shortID, err := id.GetCollectionShortID(ctx, c.def.CollectionID)
 	if err != nil {
 		return err
@@ -160,12 +186,21 @@ func (c *collection) purgeChunk(
 		return err
 	}
 
-	var prunedOwners map[string]struct{}
+	var removedOwnerKeys map[string]struct{}
 	if pruneHistory {
-		prunedOwners = make(map[string]struct{})
+		removedOwnerKeys = make(map[string]struct{})
 	}
 	for _, target := range targets {
-		if err := c.purgeOneDoc(ctx, shortID, target, pruneHistory, prunedOwners); err != nil {
+		if err := c.removeDocumentHeads(
+			ctx,
+			txn.Systemstore(),
+			target.docShortID,
+			pruneHistory,
+			removedOwnerKeys,
+		); err != nil {
+			return err
+		}
+		if err := c.purgeOneDoc(ctx, shortID, target); err != nil {
 			return err
 		}
 	}
@@ -213,11 +248,9 @@ func (c *collection) purgeOneDoc(
 	ctx context.Context,
 	shortID uint32,
 	target purgeTarget,
-	pruneHistory bool,
-	prunedOwners map[string]struct{},
 ) error {
 	// Index entries depend on field values, so remove them before document data.
-	if err := c.deleteIndexedDocWithID(ctx, target.docID, true); err != nil {
+	if err := c.purgeIndexedDocWithID(ctx, target.docID); err != nil {
 		return err
 	}
 
@@ -237,16 +270,6 @@ func (c *collection) purgeOneDoc(
 			DocShortID:        target.docShortID,
 		}
 		if err := c.hardDeleteDatastorePrefix(ctx, prefix); err != nil {
-			return err
-		}
-	}
-
-	if pruneHistory {
-		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, target.docShortID, prunedOwners); err != nil {
-			return err
-		}
-	} else {
-		if err := c.hardDeleteHeadstoreForDoc(ctx, target.docShortID); err != nil {
 			return err
 		}
 	}
@@ -334,43 +357,4 @@ func (c *collection) hardDeleteSearchableEncryptionInChunks(
 		resume := keysToDelete[len(keysToDelete)-1]
 		resumeAt = &resume
 	}
-}
-
-func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID uint64) error {
-	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
-
-	hasMore := true
-	for hasMore {
-		prefix := keys.HeadstoreDocKey{DocShortID: docShortID}
-		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
-			Prefix:   prefix.Bytes(),
-			KeysOnly: true,
-		})
-		if err != nil {
-			return NewErrCreateTruncateIterator(err)
-		}
-
-		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
-		for range hardDeleteChunkSize {
-			hasNext, err := iter.Next()
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-			if !hasNext {
-				hasMore = false
-				break
-			}
-			keysToDelete = append(keysToDelete, append([]byte(nil), iter.Key()...))
-		}
-
-		if err := iter.Close(); err != nil {
-			return err
-		}
-		for _, key := range keysToDelete {
-			if err := headstore.Delete(ctx, key); err != nil {
-				return NewErrTruncateHeadstoreKey(err, string(key))
-			}
-		}
-	}
-	return nil
 }

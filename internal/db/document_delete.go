@@ -170,7 +170,7 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	if err := c.deleteIndexedDocWithID(ctx, parsedDocID, false); err != nil {
+	if err := c.deleteIndexedDocWithID(ctx, parsedDocID); err != nil {
 		return err
 	}
 

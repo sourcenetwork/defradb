@@ -350,7 +350,21 @@ func (c *collection) deleteFromIndexes(
 func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
-	includeDeleted bool,
+) error {
+	return c.deleteIndexedDocByID(ctx, docID, false)
+}
+
+func (c *collection) purgeIndexedDocWithID(
+	ctx context.Context,
+	docID client.DocID,
+) error {
+	return c.deleteIndexedDocByID(ctx, docID, true)
+}
+
+func (c *collection) deleteIndexedDocByID(
+	ctx context.Context,
+	docID client.DocID,
+	forPurge bool,
 ) error {
 	indexes, err := c.currentIndexes(ctx)
 	if err != nil {
@@ -364,7 +378,7 @@ func (c *collection) deleteIndexedDocWithID(
 	if err != nil {
 		return err
 	}
-	if includeDeleted {
+	if forPurge {
 		isDeleted, err := c.isDocumentDeleted(ctx, primaryKey)
 		if err != nil {
 			return err
@@ -376,8 +390,8 @@ func (c *collection) deleteIndexedDocWithID(
 
 	fields := c.collectIndexedFields(indexes)
 	var doc *client.Document
-	if includeDeleted {
-		// Purge is authorized at the node level and must not apply the document read filter.
+	if forPurge {
+		// PurgeDocuments already checked purge-document; index cleanup must not require read-document.
 		doc, err = c.getInternal(ctx, primaryKey, fields, true)
 	} else {
 		doc, err = c.get(ctx, primaryKey, fields, false)

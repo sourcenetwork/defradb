@@ -59,12 +59,10 @@ type Collection interface {
 	// will be created.
 	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
-	// DeleteDocument will attempt to delete a document by DocID.
+	// DeleteDocument soft-deletes a document by DocID and publishes the deletion for replication.
 	//
-	// Will return true if a deletion is successful, and return false along with an error
-	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
-	// This operation will hard-delete all state relating to the given DocID.
-	// This includes data, block, and head storage.
+	// The document data and commit history remain available locally. If the document does not exist,
+	// this returns false and an ErrDocumentNotFound error.
 	DeleteDocument(
 		ctx context.Context,
 		docID DocID,
@@ -184,24 +182,6 @@ type Collection interface {
 	// User-managed transactions are not supported by this function if the backing store does not support
 	// concurrent open transactions, such as LevelDB.
 	Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error
-
-	// PurgeByDocIDs permanently removes the selected documents from this node.
-	//
-	// Unlike DeleteDocument, this is a local hard delete and does not replicate over P2P.
-	// When pruneHistory is true, unshared history blocks are removed as well.
-	//
-	// History pruning is not supported for branchable collections because their collection DAG
-	// retains links to document blocks. Without a caller transaction, history is pruned under the
-	// collection lock and logical cleanup is committed in bounded chunks, so an error may leave a
-	// partial purge that can be resumed by retrying. With a caller transaction, the full purge must
-	// fit in that transaction and takes effect when the caller commits. A peer may reintroduce purged
-	// data unless a replicated soft delete has already propagated.
-	PurgeByDocIDs(
-		ctx context.Context,
-		docIDs []DocID,
-		pruneHistory bool,
-		opts ...options.Enumerable[options.PurgeByDocIDsOptions],
-	) error
 }
 
 // UpdateResult wraps the result of an update call.

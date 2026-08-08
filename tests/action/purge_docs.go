@@ -38,18 +38,11 @@ var _ Stateful = (*PurgeDocs)(nil)
 func (a *PurgeDocs) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
-		txnOption := immutable.None[client.Txn]()
+		var store client.Store = node
 		if a.TransactionID.HasValue() {
 			txn, err := a.s.GetTransaction(node, a.TransactionID)
 			require.NoError(a.s.T, err)
-			txnOption = immutable.Some(txn)
-		}
-
-		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
-		if err != nil {
-			expected := assertError(a.s.T, err, a.ExpectedError)
-			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expected)
-			continue
+			store = txn
 		}
 
 		docIDs := make([]client.DocID, len(a.DocIndexes))
@@ -59,14 +52,15 @@ func (a *PurgeDocs) Execute() {
 		}
 		a.s.DocIDsLock.RUnlock()
 
-		opts := options.PurgeByDocIDs()
+		opts := options.PurgeDocuments()
 		identity := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIDs[index])
 		if identity.HasValue() {
 			opts.SetIdentity(identity.Value())
 		}
 
-		err = collections[a.CollectionIndex].PurgeByDocIDs(
+		err := store.PurgeDocuments(
 			a.s.Ctx,
+			a.s.CollectionNames[a.CollectionIndex],
 			docIDs,
 			a.PruneHistory,
 			opts,

@@ -16,10 +16,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const purgeCommandName = "purge"
+
 func MakePurgeCommand(ctx context.Context) *cobra.Command {
 	var force bool
 	var cmd = &cobra.Command{
-		Use:   "purge",
+		Use:   purgeCommandName,
 		Short: "Delete all persisted data and restart",
 		Long: `Delete all persisted data and restart.
 WARNING this operation cannot be reversed.`,

@@ -22,7 +22,7 @@ func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "document",
 		Short: "Interact with documents.",
-		Long:  `Add, read, update, and delete documents within a collection.`,
+		Long:  `Add, read, update, delete, and purge documents within a collection.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// cobra does not chain pre run calls so we have to run them again here
 			if err := setContextRootDir(cmd); err != nil {
@@ -39,6 +39,9 @@ func MakeDocumentCommand(ctx context.Context) *cobra.Command {
 			}
 			if err := setContextClient(cmd); err != nil {
 				return err
+			}
+			if cmd.Name() == purgeCommandName {
+				return nil
 			}
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := getCollectionSelectorOptions(cmd)

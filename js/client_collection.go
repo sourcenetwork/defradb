@@ -50,7 +50,6 @@ func newCollection(col client.Collection) js.Value {
 		"newEncryptedIndex":         goji.Async(c.newEncryptedIndex),
 		"deleteEncryptedIndex":      goji.Async(c.deleteEncryptedIndex),
 		"listEncryptedIndexes":      goji.Async(c.listEncryptedIndexes),
-		"purgeByDocIDs":             goji.Async(c.purgeByDocIDs),
 		"truncate":                  goji.Async(c.truncate),
 	})
 }
@@ -164,36 +163,4 @@ func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, e
 		return js.Undefined(), err
 	}
 	return js.Undefined(), c.col.Truncate(context.Background(), asOpts(opt))
-}
-
-func (c *clientCollection) purgeByDocIDs(this js.Value, args []js.Value) (js.Value, error) {
-	var request struct {
-		DocIDs       []string `json:"docIDs"`
-		PruneHistory bool     `json:"pruneHistory"`
-	}
-	if err := structArg(args, 0, "request", &request); err != nil {
-		return js.Undefined(), err
-	}
-
-	docIDs := make([]client.DocID, len(request.DocIDs))
-	for i, rawID := range request.DocIDs {
-		docID, err := client.NewDocIDFromString(rawID)
-		if err != nil {
-			return js.Undefined(), err
-		}
-		docIDs[i] = docID
-	}
-
-	optsVal := optionsValue(args, 1)
-	var opt options.PurgeByDocIDsOptions
-	if err := parseOptions(optsVal, &opt); err != nil {
-		return js.Undefined(), err
-	}
-
-	return js.Undefined(), c.col.PurgeByDocIDs(
-		context.Background(),
-		docIDs,
-		request.PruneHistory,
-		asOpts(opt),
-	)
 }

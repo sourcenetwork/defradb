@@ -1628,7 +1628,7 @@
         },
         "/collections/{name}/documents/purge": {
             "delete": {
-                "description": "Permanently remove documents from the local node",
+                "description": "Permanently remove documents from the local node. History pruning is not supported for branchable collections. Requires the node-level purge-document permission.",
                 "operationId": "purge_documents",
                 "parameters": [
                     {

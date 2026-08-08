@@ -2905,6 +2905,90 @@ func (_c *Txn_PrintDump_Call) RunAndReturn(run func(ctx context.Context) error) 
 	return _c
 }
 
+// PurgeDocuments provides a mock function for the type Txn
+func (_mock *Txn) PurgeDocuments(ctx context.Context, collectionName client.CollectionName, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeDocumentsOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionName, docIDs, pruneHistory, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, collectionName, docIDs, pruneHistory)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for PurgeDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionName, []client.DocID, bool, ...options.Enumerable[options.PurgeDocumentsOptions]) error); ok {
+		r0 = returnFunc(ctx, collectionName, docIDs, pruneHistory, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_PurgeDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PurgeDocuments'
+type Txn_PurgeDocuments_Call struct {
+	*mock.Call
+}
+
+// PurgeDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionName client.CollectionName
+//   - docIDs []client.DocID
+//   - pruneHistory bool
+//   - opts ...options.Enumerable[options.PurgeDocumentsOptions]
+func (_e *Txn_Expecter) PurgeDocuments(ctx interface{}, collectionName interface{}, docIDs interface{}, pruneHistory interface{}, opts ...interface{}) *Txn_PurgeDocuments_Call {
+	return &Txn_PurgeDocuments_Call{Call: _e.mock.On("PurgeDocuments",
+		append([]interface{}{ctx, collectionName, docIDs, pruneHistory}, opts...)...)}
+}
+
+func (_c *Txn_PurgeDocuments_Call) Run(run func(ctx context.Context, collectionName client.CollectionName, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeDocumentsOptions])) *Txn_PurgeDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 client.CollectionName
+		if args[1] != nil {
+			arg1 = args[1].(client.CollectionName)
+		}
+		var arg2 []client.DocID
+		if args[2] != nil {
+			arg2 = args[2].([]client.DocID)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		var arg4 []options.Enumerable[options.PurgeDocumentsOptions]
+		var variadicArgs []options.Enumerable[options.PurgeDocumentsOptions]
+		if len(args) > 4 {
+			variadicArgs = args[4].([]options.Enumerable[options.PurgeDocumentsOptions])
+		}
+		arg4 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_PurgeDocuments_Call) Return(err error) *Txn_PurgeDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_PurgeDocuments_Call) RunAndReturn(run func(ctx context.Context, collectionName client.CollectionName, docIDs []client.DocID, pruneHistory bool, opts ...options.Enumerable[options.PurgeDocumentsOptions]) error) *Txn_PurgeDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReEnableNAC provides a mock function for the type Txn
 func (_mock *Txn) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	var tmpRet mock.Arguments

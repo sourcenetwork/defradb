@@ -4,7 +4,7 @@ Interact with documents.
 
 ### Synopsis
 
-Add, read, update, and delete documents within a collection.
+Add, read, update, delete, and purge documents within a collection.
 
 ### Options
 
@@ -36,5 +36,6 @@ Add, read, update, and delete documents within a collection.
 * [defradb client document add](defradb_client_document_add.md)	 - Add a new document.
 * [defradb client document delete](defradb_client_document_delete.md)	 - Delete documents by docID or filter.
 * [defradb client document get](defradb_client_document_get.md)	 - View document fields.
+* [defradb client document purge](defradb_client_document_purge.md)	 - Permanently remove documents by DocID from the local node
 * [defradb client document update](defradb_client_document_update.md)	 - Update documents by docID or filter.
 

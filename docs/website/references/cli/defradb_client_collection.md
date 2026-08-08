@@ -4,7 +4,7 @@ Interact with a collection.
 
 ### Synopsis
 
-Add, describe, patch, set-active, delete, purge-docs, and truncate collections.
+Add, describe, patch, set-active, delete, and truncate collections.
 
 ### Options
 
@@ -37,7 +37,6 @@ Add, describe, patch, set-active, delete, purge-docs, and truncate collections.
 * [defradb client collection delete](defradb_client_collection_delete.md)	 - Delete collections
 * [defradb client collection describe](defradb_client_collection_describe.md)	 - View collection version.
 * [defradb client collection patch](defradb_client_collection_patch.md)	 - Patch existing collection versions
-* [defradb client collection purge-docs](defradb_client_collection_purge-docs.md)	 - Permanently remove documents by DocID from the local node
 * [defradb client collection set-active](defradb_client_collection_set-active.md)	 - Set the active collection version
 * [defradb client collection truncate](defradb_client_collection_truncate.md)	 - Truncate the given collection
 

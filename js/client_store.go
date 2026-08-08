@@ -256,6 +256,50 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 	return js.ValueOf(wrappers), nil
 }
 
+func (c *Client) purgeDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	optsVal := optionsValue(args, 2)
+	store, err := optionsStore(c.node.DB, optsVal, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return purgeDocuments(store, args)
+}
+
+func purgeDocuments(store client.Store, args []js.Value) (js.Value, error) {
+	collectionName, err := stringArg(args, 0, "collectionName")
+	if err != nil {
+		return js.Undefined(), err
+	}
+	var request struct {
+		DocIDs       []string `json:"docIDs"`
+		PruneHistory bool     `json:"pruneHistory"`
+	}
+	if err := structArg(args, 1, "request", &request); err != nil {
+		return js.Undefined(), err
+	}
+
+	docIDs := make([]client.DocID, len(request.DocIDs))
+	for i, rawID := range request.DocIDs {
+		docID, err := client.NewDocIDFromString(rawID)
+		if err != nil {
+			return js.Undefined(), err
+		}
+		docIDs[i] = docID
+	}
+
+	var opt options.PurgeDocumentsOptions
+	if err := parseOptions(optionsValue(args, 2), &opt); err != nil {
+		return js.Undefined(), err
+	}
+	return js.Undefined(), store.PurgeDocuments(
+		context.Background(),
+		collectionName,
+		docIDs,
+		request.PruneHistory,
+		asOpts(opt),
+	)
+}
+
 func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	optsVal := optionsValue(args, 0)
 	store, err := optionsStore(c.node.DB, optsVal, c.txns)

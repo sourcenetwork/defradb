@@ -680,6 +680,32 @@ func (w *Wrapper) GetCollections(
 	return cols, err
 }
 
+func (w *Wrapper) PurgeDocuments(
+	ctx context.Context,
+	collectionName client.CollectionName,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
+) error {
+	args := []string{"client", "document", "purge"}
+	args = append(args, "--collection-name", collectionName)
+	for _, docID := range docIDs {
+		args = append(args, "--docID", docID.String())
+	}
+	if pruneHistory {
+		args = append(args, "--prune-history")
+	}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+	if txn, ok := datastore.CtxTryGetClientTxn(ctx); ok {
+		args = append(args, "--tx", strconv.FormatUint(txn.ID(), 10))
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],

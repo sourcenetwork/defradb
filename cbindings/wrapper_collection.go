@@ -23,15 +23,12 @@ extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* f
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result PurgeDocuments(uintptr_t nodePtr, CollectionOptions options, char* docIDsJSON,
-int pruneHistory, uintptr_t identityPtr);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"unsafe"
@@ -322,62 +319,6 @@ func (c *Collection) Truncate(
 		C.TruncateCollection(
 			callHandle,
 			copts,
-			cIdentity,
-		),
-	)
-	if res.Status != 0 {
-		return errors.New(res.Error)
-	}
-
-	return nil
-}
-
-func (c *Collection) PurgeByDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	pruneHistory bool,
-	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
-) error {
-	ctx = setCtxTxnFromCollection(ctx, c)
-
-	rawIDs := make([]string, len(docIDs))
-	for i, docID := range docIDs {
-		rawIDs[i] = docID.String()
-	}
-	encodedIDs, err := json.Marshal(rawIDs)
-	if err != nil {
-		return err
-	}
-
-	cName := C.CString(c.def.Name)
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cDocIDs := C.CString(string(encodedIDs))
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
-	cPruneHistory := C.int(0)
-	if pruneHistory {
-		cPruneHistory = 1
-	}
-
-	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cDocIDs))
-	defer C.FreeIdentity(cIdentity)
-
-	var copts C.CollectionOptions
-	copts.version = cVersion
-	copts.collectionID = cCollectionID
-	copts.name = cName
-	copts.getInactive = 0
-
-	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(
-		C.PurgeDocuments(
-			callHandle,
-			copts,
-			cDocIDs,
-			cPruneHistory,
 			cIdentity,
 		),
 	)

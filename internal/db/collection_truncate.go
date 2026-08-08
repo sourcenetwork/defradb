@@ -226,7 +226,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID, nil)
+						err = c.removeDocumentHeads(ctx, systemstore, key.DocShortID, true, nil)
 						if err != nil {
 							return err
 						}
@@ -298,7 +298,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 		datastore, ok := ds.(unsafestore)
 		if !ok {
 			return NewErrTruncateDatastoreKey(
-				errors.New("datastore does not expose unsafe writer"),
+				errors.New(errUnsafeDatastoreWriter),
 				prefix.ToString(),
 			)
 		}
@@ -317,14 +317,17 @@ func (c *collection) hardDeleteDatastorePrefix(
 	return nil
 }
 
-func (c *collection) hardDeleteDocumentBlocks(
+// removeDocumentHeads removes document head entries and block ownership edges.
+// When pruneBlocks is true, blocks without another owner are deleted as well.
+func (c *collection) removeDocumentHeads(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docShortID uint64,
-	prunedOwners map[string]struct{},
+	pruneBlocks bool,
+	removedOwnerKeys map[string]struct{},
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
-	docID, _, err := id.GetDocIDFromStore(ctx, systemstore, docShortID)
+	docIDs, err := id.GetDocIDAliasesFromStore(ctx, systemstore, docShortID)
 	if err != nil {
 		return err
 	}
@@ -372,7 +375,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners)
+			err = c.deleteBlocks(ctx, systemstore, docIDs, key.Cid, pruneBlocks, removedOwnerKeys)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -445,7 +448,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		for _, key := range keysToDelete {
 			// Document blocks and owner edges were deleted in hardDeleteDocKeysAndHeadstore,
 			// so this remaining collection DAG can be removed unconditionally.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
+			err = c.deleteBlocks(ctx, nil, nil, key.Cid, true, nil)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -467,31 +470,34 @@ func (c *collection) hardDeleteCollectionBlocks(
 	return nil
 }
 
-// deleteBlocks releases docID's ownership across the reachable DAG and deletes ownerless blocks.
+// deleteBlocks releases the document owners across the reachable DAG and deletes ownerless blocks.
 // A nil systemstore deletes the DAG unconditionally. Missing blocks are ignored.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
-	docID string,
+	docIDs []string,
 	currentCid cid.Cid,
-	prunedOwners map[string]struct{},
+	pruneBlocks bool,
+	removedOwnerKeys map[string]struct{},
 ) error {
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 	blockstore := multistore.Blockstore()
 	encstore := multistore.Encstore()
 
 	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
-		if systemstore == nil || docID == "" {
+		if systemstore == nil {
 			return true, nil
 		}
-		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
-			return false, err
+		for _, docID := range docIDs {
+			if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
+				return false, err
+			}
+			if removedOwnerKeys != nil {
+				key := keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes()
+				removedOwnerKeys[string(key)] = struct{}{}
+			}
 		}
-		if prunedOwners != nil {
-			key := keys.NewBlockCIDToDocIDKey(blockCID.String(), docID).Bytes()
-			prunedOwners[string(key)] = struct{}{}
-		}
-		hasOwners, err := id.BlockHasOwnersExcept(ctx, systemstore, blockCID, prunedOwners)
+		hasOwners, err := id.BlockHasOwnersExcept(ctx, systemstore, blockCID, removedOwnerKeys)
 		if err != nil {
 			return false, err
 		}
@@ -566,6 +572,10 @@ func (c *collection) deleteBlocks(
 		for i := len(links) - 1; i >= 0; i-- {
 			stack = append(stack, visit{id: links[i].Cid})
 		}
+	}
+
+	if !pruneBlocks {
+		return nil
 	}
 
 	for _, encryptionCID := range encryptionToDelete {

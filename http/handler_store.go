@@ -1103,6 +1103,28 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	listEncryptedIndexes.AddResponse(200, listEncryptedIndexesResponse)
 	listEncryptedIndexes.Responses.Set("400", errorResponse)
 
+	purgeDocuments := openapi3.NewOperation()
+	purgeDocuments.OperationID = "purge_documents"
+	purgeDocuments.Description = "Permanently remove documents from the local node. History pruning " +
+		"is not supported for branchable collections. Requires the node-level purge-document permission."
+	purgeDocuments.Tags = []string{documentTag}
+	purgeDocuments.AddParameter(openapi3.NewPathParameter("name").
+		WithDescription("Collection name").
+		WithRequired(true).
+		WithSchema(openapi3.NewStringSchema()))
+	purgeDocumentsSchema := openapi3.NewObjectSchema().
+		WithProperty(purgeDocIDsProperty, openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
+		WithProperty("pruneHistory", openapi3.NewBoolSchema())
+	purgeDocumentsSchema.Required = []string{purgeDocIDsProperty}
+	purgeDocuments.RequestBody = &openapi3.RequestBodyRef{
+		Value: openapi3.NewRequestBody().
+			WithRequired(true).
+			WithContent(openapi3.NewContentWithJSONSchema(purgeDocumentsSchema)),
+	}
+	purgeDocuments.Responses = openapi3.NewResponses()
+	purgeDocuments.Responses.Set("200", successResponse)
+	purgeDocuments.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, exportBackup, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, importBackup, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, describeCollection, h.GetCollection)
@@ -1118,6 +1140,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/graphql", http.MethodPost, postGraphQL, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/collections", http.MethodPost, addCollection, h.AddCollection)
+	router.AddRoute("/collections/{name}/documents/purge", http.MethodDelete, purgeDocuments, h.PurgeDocuments)
 	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)

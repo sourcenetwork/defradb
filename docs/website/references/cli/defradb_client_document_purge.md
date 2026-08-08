@@ -1,4 +1,4 @@
-## defradb client collection purge-docs
+## defradb client document purge
 
 Permanently remove documents by DocID from the local node
 
@@ -11,23 +11,35 @@ are retained until their final owning document is purged.
 
 History pruning is not supported for branchable collections.
 
+Without --tx, logical cleanup commits one document at a time and can be resumed by
+retrying. Each document must fit in one backend transaction. With --tx, the entire purge
+must fit in the transaction.
+
 Unlike the soft-delete performed by the delete command, this operation is irreversible and
-does not propagate to other nodes in the peer network.
+does not propagate to other nodes in the peer network. It requires the node-level
+purge-document permission and does not require collection or document read access.
 
 ```
-defradb client collection purge-docs [flags]
+defradb client document purge [flags]
+```
+
+### Examples
+
+```
+purge a document from the local node:  
+  defradb client document purge --collection-name Users --docID bae-123
+
+purge documents and their unshared history:  
+  defradb client document purge --collection-name Users --docID bae-123 --docID bae-456 --prune-history
 ```
 
 ### Options
 
 ```
-      --collection-id string     Collection ID
       --collection-name string   Collection name
       --docID stringArray        DocID of a document to purge (may be repeated)
-      --get-inactive             Get inactive collections as well as active
-  -h, --help                     help for purge-docs
+  -h, --help                     help for purge
       --prune-history            Also delete reachable blockstore blocks after their final owner is purged
-      --version-id string        Collection version ID
 ```
 
 ### Options inherited from parent commands
@@ -50,5 +62,5 @@ defradb client collection purge-docs [flags]
 
 ### SEE ALSO
 
-* [defradb client collection](defradb_client_collection.md)	 - Interact with a collection.
+* [defradb client document](defradb_client_document.md)	 - Interact with documents.
 

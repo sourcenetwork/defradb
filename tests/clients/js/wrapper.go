@@ -496,6 +496,32 @@ func (w *Wrapper) GetCollections(
 	return out, nil
 }
 
+func (w *Wrapper) PurgeDocuments(
+	ctx context.Context,
+	collectionName client.CollectionName,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
+) error {
+	rawIDs := make([]string, len(docIDs))
+	for i, docID := range docIDs {
+		rawIDs[i] = docID.String()
+	}
+	request := map[string]any{
+		"docIDs":       rawIDs,
+		"pruneHistory": pruneHistory,
+	}
+	_, err := execute(
+		ctx,
+		w.value,
+		"purgeDocuments",
+		collectionName,
+		goji.MustMarshalJS(request),
+		jsOpts(opts),
+	)
+	return err
+}
+
 func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],

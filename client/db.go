@@ -338,6 +338,27 @@ type Store interface {
 	// made via the returned [Collection]s will respect that transaction.
 	GetCollections(ctx context.Context, opts ...options.Enumerable[options.GetCollectionsOptions]) ([]Collection, error)
 
+	// PurgeDocuments permanently removes selected documents from the local node.
+	//
+	// Unlike DeleteDocument, this does not replicate over P2P. History heads and ownership
+	// metadata are always removed. When pruneHistory is true, unshared history blocks are also
+	// removed. A peer may reintroduce data unless a replicated soft delete has already propagated.
+	//
+	// This operation requires the node-level purge-document permission and does not require
+	// collection or document read access. History pruning is not supported for branchable
+	// collections because their collection DAG retains links to document blocks.
+	//
+	// Without a caller transaction, logical cleanup commits one document at a time and can be
+	// resumed by retrying. Each document's logical cleanup must fit in one backend transaction.
+	// With a caller transaction, the full purge must fit and takes effect when the caller commits.
+	PurgeDocuments(
+		ctx context.Context,
+		collectionName CollectionName,
+		docIDs []DocID,
+		pruneHistory bool,
+		opts ...options.Enumerable[options.PurgeDocumentsOptions],
+	) error
+
 	// ListIndexes returns all the indexes that currently exist within this [Store].
 	ListIndexes(
 		ctx context.Context,

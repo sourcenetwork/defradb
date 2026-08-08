@@ -193,11 +193,6 @@ func blockOwnersPrefix(blockCID cid.Cid) []byte {
 	return append(keys.NewBlockCIDToDocIDKey(blockCID.String(), "").Bytes(), '/')
 }
 
-// BlockHasOwners reports whether any document owns blockCID.
-func BlockHasOwners(ctx context.Context, store corekv.Reader, blockCID cid.Cid) (bool, error) {
-	return BlockHasOwnersExcept(ctx, store, blockCID, nil)
-}
-
 // BlockHasOwnersExcept ignores encoded BlockCIDToDocID keys in excluded.
 func BlockHasOwnersExcept(
 	ctx context.Context,
@@ -315,10 +310,23 @@ func GetDocIDAliasesFromStore(
 		return nil, err
 	}
 
-	docIDs := make([]string, 0, len(mappings))
+	docIDs := make([]string, 0, len(mappings)+1)
+	seen := make(map[string]struct{}, len(mappings)+1)
+	primary, found, err := GetDocIDFromStore(ctx, store, docShortID)
+	if err != nil {
+		return nil, err
+	}
+	if found && primary != "" {
+		docIDs = append(docIDs, primary)
+		seen[primary] = struct{}{}
+	}
 	for _, mapping := range mappings {
-		if mapping.docID != "" {
+		if mapping.docID == "" {
+			continue
+		}
+		if _, ok := seen[mapping.docID]; !ok {
 			docIDs = append(docIDs, mapping.docID)
+			seen[mapping.docID] = struct{}{}
 		}
 	}
 	return docIDs, nil

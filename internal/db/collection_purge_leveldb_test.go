@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func newLevelDBForPurgeTest(t *testing.T, ctx context.Context) *DB {
+func newLevelDBForHistoryCleanupTest(t *testing.T, ctx context.Context) *DB {
 	t.Helper()
 
 	rootstore, err := leveldb.NewDatastore(t.TempDir(), nil)
@@ -55,7 +55,7 @@ func requireLevelDBOperationCompletes(t *testing.T, operation func() error) {
 	}
 }
 
-func seedLevelDBPurgeDocument(
+func seedLevelDBHistoryDocument(
 	t *testing.T,
 	ctx context.Context,
 	db *DB,
@@ -101,24 +101,22 @@ func seedLevelDBPurgeDocument(
 	return col, docID
 }
 
-func TestPurgeAndTruncateDoNotOpenNestedLevelDBTransactions(t *testing.T) {
-	t.Run("targeted purge", func(t *testing.T) {
-		ctx := context.Background()
-		db := newLevelDBForPurgeTest(t, ctx)
-		col, docID := seedLevelDBPurgeDocument(t, ctx, db)
+func TestPurgeDocumentsDoesNotOpenNestedLevelDBTransaction(t *testing.T) {
+	ctx := context.Background()
+	db := newLevelDBForHistoryCleanupTest(t, ctx)
+	_, docID := seedLevelDBHistoryDocument(t, ctx, db)
 
-		requireLevelDBOperationCompletes(t, func() error {
-			return col.PurgeByDocIDs(ctx, []client.DocID{docID}, true)
-		})
+	requireLevelDBOperationCompletes(t, func() error {
+		return db.PurgeDocuments(ctx, "User", []client.DocID{docID}, true)
 	})
+}
 
-	t.Run("truncate", func(t *testing.T) {
-		ctx := context.Background()
-		db := newLevelDBForPurgeTest(t, ctx)
-		col, _ := seedLevelDBPurgeDocument(t, ctx, db)
+func TestTruncateDoesNotOpenNestedLevelDBTransaction(t *testing.T) {
+	ctx := context.Background()
+	db := newLevelDBForHistoryCleanupTest(t, ctx)
+	col, _ := seedLevelDBHistoryDocument(t, ctx, db)
 
-		requireLevelDBOperationCompletes(t, func() error {
-			return col.Truncate(ctx)
-		})
+	requireLevelDBOperationCompletes(t, func() error {
+		return col.Truncate(ctx)
 	})
 }

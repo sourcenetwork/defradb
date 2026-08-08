@@ -42,7 +42,7 @@ func TestNAC_GatesPurgeDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesPurgeDocument_NoIdentity_CollectionLookupDenied(t *testing.T) {
+func TestNAC_GatesPurgeDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{Actions: []any{
 		testUtils.Close{},
 		testUtils.Start{Identity: testUtils.ClientIdentity(1), EnableNAC: true},
@@ -59,14 +59,14 @@ func TestNAC_GatesPurgeDocument_NoIdentity_CollectionLookupDenied(t *testing.T) 
 			Identity:        testUtils.NoIdentity(),
 			CollectionIndex: 0,
 			DocIndexes:      []int{0},
-			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
+			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePurgeDocumentPerm),
 		},
 	}}
 
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesPurgeDocument_WrongIdentity_CollectionLookupDenied(t *testing.T) {
+func TestNAC_GatesPurgeDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{Actions: []any{
 		testUtils.Close{},
 		testUtils.Start{Identity: testUtils.ClientIdentity(1), EnableNAC: true},
@@ -83,7 +83,7 @@ func TestNAC_GatesPurgeDocument_WrongIdentity_CollectionLookupDenied(t *testing.
 			Identity:        testUtils.ClientIdentity(2),
 			CollectionIndex: 0,
 			DocIndexes:      []int{0},
-			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
+			ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodePurgeDocumentPerm),
 		},
 	}}
 

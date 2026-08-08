@@ -18,6 +18,35 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
+// PurgeDocumentsOptions contains options for PurgeDocuments.
+type PurgeDocumentsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *PurgeDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// PurgeDocumentsOptionsBuilder builds PurgeDocumentsOptions.
+type PurgeDocumentsOptionsBuilder struct {
+	enumerableBuilder[PurgeDocumentsOptions]
+}
+
+// PurgeDocuments creates a PurgeDocumentsOptionsBuilder.
+func PurgeDocuments() *PurgeDocumentsOptionsBuilder {
+	return &PurgeDocumentsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *PurgeDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *PurgeDocumentsOptionsBuilder {
+	b.append(func(opts *PurgeDocumentsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // AddDACPolicyOptions contains options for AddDACPolicy operation.
 type AddDACPolicyOptions struct {
 	// Identity is the identity of the actor performing the operation.

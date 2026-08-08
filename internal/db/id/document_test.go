@@ -190,7 +190,7 @@ func TestBlockDocIDMappings(t *testing.T) {
 	require.Empty(t, docIDs)
 }
 
-func TestBlockHasOwners(t *testing.T) {
+func TestBlockHasOwnersExcept(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -198,34 +198,34 @@ func TestBlockHasOwners(t *testing.T) {
 
 	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
 
-	has, err := BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	has, err := BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
 	require.NoError(t, err)
 	require.False(t, has, "a block with no recorded owners has none")
 
-	has, err = BlockHasOwners(ctx, txn.Systemstore(), cid.Undef)
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), cid.Undef, nil)
 	require.NoError(t, err)
 	require.False(t, has, "an undefined CID has no owners")
 
 	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-one"))
 	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-two"))
 
-	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
 	require.NoError(t, err)
 	require.True(t, has)
 
 	// One of two owners removed: the block is still owned.
 	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-one"))
-	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
 	require.NoError(t, err)
 	require.True(t, has)
 
 	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-two"))
-	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	has, err = BlockHasOwnersExcept(ctx, txn.Systemstore(), fieldCID, nil)
 	require.NoError(t, err)
 	require.False(t, has)
 }
 
-func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
+func TestBlockHasOwnersExceptStopsAtFirstOwner(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
 	defer txn.Discard()
@@ -238,7 +238,7 @@ func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
 	}
 
 	var hasReads int
-	has, err := BlockHasOwners(ctx, countingReader{txn.Systemstore(), &hasReads}, fieldCID)
+	has, err := BlockHasOwnersExcept(ctx, countingReader{txn.Systemstore(), &hasReads}, fieldCID, nil)
 	require.NoError(t, err)
 	require.True(t, has)
 	require.Equal(t, 1, hasReads, "BlockHasOwners must stop at the first owner")
@@ -375,4 +375,23 @@ func TestDeleteDocRefMappings(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, collectionShortID, gotDocRef.CollectionShortID)
 	require.Equal(t, otherDocShortID, gotDocRef.DocShortID)
+}
+
+func TestGetDocIDAliasesFromStoreIncludesPrimaryWithoutAliasMapping(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	const docShortID = uint64(1)
+	const docID = "bae-primary"
+	require.NoError(t, txn.Systemstore().Set(
+		ctx,
+		keys.NewDocShortIDToDocIDKey(docShortID).Bytes(),
+		[]byte(docID),
+	))
+
+	docIDs, err := GetDocIDAliasesFromStore(ctx, txn.Systemstore(), docShortID)
+	require.NoError(t, err)
+	require.Equal(t, []string{docID}, docIDs)
 }

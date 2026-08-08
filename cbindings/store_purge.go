@@ -28,7 +28,7 @@ import (
 //export PurgeDocuments
 func PurgeDocuments(
 	nodePtr C.uintptr_t,
-	opts C.CollectionOptions,
+	collectionName *C.char,
 	docIDsJSON *C.char,
 	pruneHistory C.int,
 	identityPtr C.uintptr_t,
@@ -51,28 +51,19 @@ func PurgeDocuments(
 		}
 	}
 
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 	ident := acpIdentity.FromContext(ctx)
-	if ident.HasValue() {
-		colOptions.SetIdentity(ident.Value())
-	}
-
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
 	ctx = attachTxnFromPointer(nodePtr, ctx)
-	col, err := getCollection(store, ctx, colOptions)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
-	}
-
-	err = col.PurgeByDocIDs(
+	err = store.PurgeDocuments(
 		ctx,
+		C.GoString(collectionName),
 		docIDs,
 		pruneHistory != 0,
-		options.WithIdentity(options.PurgeByDocIDs(), ident),
+		options.WithIdentity(options.PurgeDocuments(), ident),
 	)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

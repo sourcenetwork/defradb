@@ -468,6 +468,38 @@ func (c *Client) GetCollections(
 	return collections, nil
 }
 
+func (c *Client) PurgeDocuments(
+	ctx context.Context,
+	collectionName client.CollectionName,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	rawIDs := make([]string, len(docIDs))
+	for i, docID := range docIDs {
+		rawIDs[i] = docID.String()
+	}
+	body, err := json.Marshal(purgeDocIDsRequest{
+		DocIDs:       rawIDs,
+		PruneHistory: pruneHistory,
+	})
+	if err != nil {
+		return err
+	}
+
+	methodURL := c.http.apiURL.JoinPath("collections", collectionName, "documents", "purge")
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
 func (c *Client) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],

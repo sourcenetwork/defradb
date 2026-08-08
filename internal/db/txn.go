@@ -565,6 +565,25 @@ func (txn *Txn) GetCollections(
 	return cols, nil
 }
 
+func (txn *Txn) PurgeDocuments(
+	ctx context.Context,
+	collectionName client.CollectionName,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
+) error {
+	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.ErrTransactionNotFound
+	}
+
+	return txn.db.PurgeDocuments(ctx, collectionName, docIDs, pruneHistory, opts...)
+}
+
 func (txn *Txn) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],

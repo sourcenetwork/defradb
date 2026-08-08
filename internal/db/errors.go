@@ -180,6 +180,7 @@ const (
 	errTruncateDatastoreKey       string = "failed to delete key during truncate"
 	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
 	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errUnsafeDatastoreWriter      string = "datastore does not expose unsafe writer"
 	errDeleteViewCacheItem        string = "failed to delete view cache item"
 	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"

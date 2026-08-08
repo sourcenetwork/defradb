@@ -50,6 +50,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"listLenses":                 goji.Async(wrapper.listLenses),
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
+		"purgeDocuments":             goji.Async(wrapper.purgeDocuments),
 		"listIndexes":                goji.Async(wrapper.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(wrapper.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(wrapper.execRequest),
@@ -263,6 +264,10 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 		wrappers[i] = newCollection(col)
 	}
 	return js.ValueOf(wrappers), nil
+}
+
+func (t *transaction) purgeDocuments(this js.Value, args []js.Value) (js.Value, error) {
+	return purgeDocuments(t.txn, args)
 }
 
 func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, error) {

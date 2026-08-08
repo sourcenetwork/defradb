@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-func TestPurgeByDocIDsPruneHistoryTracksCallerTransactionConflicts(t *testing.T) {
+func TestPurgeDocumentsPruneHistoryTracksCallerTransactionConflicts(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestPurgeByDocIDsPruneHistoryTracksCallerTransactionConflicts(t *testing.T)
 	purgeTxn, err := db.NewTxn(false)
 	require.NoError(t, err)
 	purgeCtx := InitContext(ctx, purgeTxn)
-	require.NoError(t, col.PurgeByDocIDs(purgeCtx, []client.DocID{doc.ID()}, true))
+	require.NoError(t, db.PurgeDocuments(purgeCtx, "User", []client.DocID{doc.ID()}, true))
 
 	writeTxn, err := db.NewTxn(false)
 	require.NoError(t, err)

@@ -199,6 +199,17 @@ func (txn *Transaction) GetCollections(
 	return txn.Wrapper.GetCollections(ctx, opts...)
 }
 
+func (txn *Transaction) PurgeDocuments(
+	ctx context.Context,
+	collectionName client.CollectionName,
+	docIDs []client.DocID,
+	pruneHistory bool,
+	opts ...options.Enumerable[options.PurgeDocumentsOptions],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PurgeDocuments(ctx, collectionName, docIDs, pruneHistory, opts...)
+}
+
 func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],

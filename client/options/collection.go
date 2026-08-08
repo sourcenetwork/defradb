@@ -435,35 +435,6 @@ func (b *TruncateCollectionOptionsBuilder) SetIdentity(id identity.Identity) *Tr
 	return b
 }
 
-// PurgeByDocIDsOptions contains options for PurgeByDocIDs.
-type PurgeByDocIDsOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-}
-
-// GetIdentity returns the identity for the operation.
-func (o *PurgeByDocIDsOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
-}
-
-// PurgeByDocIDsOptionsBuilder builds PurgeByDocIDsOptions.
-type PurgeByDocIDsOptionsBuilder struct {
-	enumerableBuilder[PurgeByDocIDsOptions]
-}
-
-// PurgeByDocIDs creates a PurgeByDocIDsOptionsBuilder.
-func PurgeByDocIDs() *PurgeByDocIDsOptionsBuilder {
-	return &PurgeByDocIDsOptionsBuilder{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (b *PurgeByDocIDsOptionsBuilder) SetIdentity(id identity.Identity) *PurgeByDocIDsOptionsBuilder {
-	b.append(func(opts *PurgeByDocIDsOptions) {
-		opts.Identity = immutable.Some(id)
-	})
-	return b
-}
-
 // NewEncryptedIndexOptions contains options for NewEncryptedIndex operation.
 type NewEncryptedIndexOptions struct {
 	Identity immutable.Option[identity.Identity]

@@ -237,28 +237,3 @@ func (c *Collection) Truncate(
 	_, err := c.cmd.execute(ctx, args)
 	return err
 }
-
-func (c *Collection) PurgeByDocIDs(
-	ctx context.Context,
-	docIDs []client.DocID,
-	pruneHistory bool,
-	opts ...options.Enumerable[options.PurgeByDocIDsOptions],
-) error {
-	args := []string{"client", "collection", "purge-docs"}
-	args = append(args, "--collection-name", c.Version().Name)
-
-	for _, id := range docIDs {
-		args = append(args, "--docID", id.String())
-	}
-
-	if pruneHistory {
-		args = append(args, "--prune-history")
-	}
-
-	opt := utils.NewOptions(opts...)
-	args = appendIdentityArg(args, opt.GetIdentity())
-	args = appendTxnArg(args, c.txn)
-
-	_, err := c.cmd.execute(ctx, args)
-	return err
-}
