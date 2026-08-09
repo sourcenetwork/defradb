@@ -82,6 +82,48 @@ func TestIsMerged_DeletedBlockIsNotMerged(t *testing.T) {
 	require.False(t, merged)
 }
 
+// A CAR import re-puts blocks the node already holds. Storing one unconditionally stamps a fresh
+// to-merge marker over a block that already merged, which reads as an abandoned fetch and leaves
+// the orphan sweep free to delete a block a live document still links to.
+func TestIsMerged_ReputtingAMergedBlockLeavesItMerged(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		put  func(context.Context, Blockstore, blocks.Block) error
+	}{
+		{
+			name: "Put",
+			put:  func(ctx context.Context, bs Blockstore, b blocks.Block) error { return bs.Put(ctx, b) },
+		},
+		{
+			name: "PutMany",
+			put: func(ctx context.Context, bs Blockstore, b blocks.Block) error {
+				return bs.PutMany(ctx, []blocks.Block{b})
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			rootstore := memory.NewDatastore(ctx)
+
+			blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
+			block := putMarkedBlock(t, ctx, blockNS, []byte("merged then re-imported"),
+				[]byte{objectMarker})
+
+			blockstore := BlockstoreFrom(rootstore, immutable.None[int]())
+			require.NoError(t, blockstore.MarkAsMerged(ctx, block.Cid()))
+			merged, err := blockstore.IsMerged(ctx, block.Cid())
+			require.NoError(t, err)
+			require.True(t, merged)
+
+			require.NoError(t, tc.put(ctx, P2PBlockstoreFrom(rootstore, immutable.None[int]()), block))
+
+			merged, err = blockstore.IsMerged(ctx, block.Cid())
+			require.NoError(t, err)
+			require.True(t, merged, "storing a block the node already holds must not unmerge it")
+		})
+	}
+}
+
 func TestIsMerged_UnmergedAndAbsentBlocks(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
