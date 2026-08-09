@@ -224,7 +224,11 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 		return nil, p.carImportFailure(reasonNoRoots, written, ErrEmptyCARRoots)
 	}
 
-	bstore := datastore.BlindWriteP2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	// A CAR carries whole document DAGs, and content-addressed field blocks recur across
+	// documents sharing a field value, so a CAR routinely contains blocks already stored.
+	// The guarded store skips those instead of rewriting the block and re-stamping a
+	// to-merge marker on one that already merged.
+	bstore := datastore.P2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
 	var rootBlock *coreblock.Block
 
