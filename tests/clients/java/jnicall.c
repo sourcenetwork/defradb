@@ -12,6 +12,7 @@
 #include "jnicall.h"
 #include "defra_errbuf.h"
 #include "errors.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,6 +20,109 @@
 // This file contains the generic JNI marshaling layer for the Java test client. It wraps low-level JNI
 // operations with helpful error-reporting, and contains the call dispatchers for actually invoking native
 // methods. Every native method call made by the client will utilize the functions here to do so.
+
+// jstring_to_utf8 builds a malloc'd, NUL-terminated, genuine standard-UTF-8 C string from a Java
+// String, by reading its real UTF-16 content via GetStringChars (not GetStringUTFChars) and
+// hand-encoding it as UTF-8, combining surrogate pairs into 4-byte sequences. GetStringUTFChars
+// returns "modified UTF-8" instead, which represents any supplementary-plane character (emoji, some
+// CJK, ...) as a pair of 3-byte surrogate sequences rather than one 4-byte one - fine between two
+// modified-UTF-8-aware JNI calls, but corrupted the moment it reaches Go, which treats the bytes as
+// standard UTF-8. Mirrors cbindings/nativewrapper.c's function of the same name (kept in sync by
+// hand - see that file's own header comment on why it can't simply be shared between the two).
+//
+// Returns NULL if s is NULL or a JNI/allocation call fails (leaving any resulting exception
+// pending); the caller owns the returned buffer and must free() it - free(NULL) is always safe, so
+// callers don't need to null-check before releasing it either.
+static char* jstring_to_utf8(JNIEnv* env, jstring s) {
+    if (s == NULL) {
+        return NULL;
+    }
+    jsize len = (*env)->GetStringLength(env, s);
+    const jchar* units = (*env)->GetStringChars(env, s, NULL);
+    if (units == NULL) {
+        return NULL; // Out of memory - exception left pending.
+    }
+
+    // Every UTF-16 code unit needs at most 3 UTF-8 bytes on its own (anything up to U+FFFF); a
+    // surrogate pair consumes two code units to produce one 4-byte sequence, which is less than
+    // the 3+3 bytes budgeted for them individually. So len*3+1 always has enough room.
+    size_t cap = (size_t)len * 3 + 1;
+    unsigned char* out = (unsigned char*)malloc(cap);
+    if (out == NULL) {
+        (*env)->ReleaseStringChars(env, s, units);
+        return NULL;
+    }
+
+    size_t n = 0;
+    for (jsize i = 0; i < len; i++) {
+        uint32_t cp = units[i];
+        if (cp >= 0xD800 && cp <= 0xDBFF && i + 1 < len) {
+            uint32_t low = units[i + 1];
+            if (low >= 0xDC00 && low <= 0xDFFF) {
+                cp = 0x10000 + ((cp - 0xD800) << 10) + (low - 0xDC00);
+                i++;
+            }
+        }
+        if (cp <= 0x7F) {
+            out[n++] = (unsigned char)cp;
+        } else if (cp <= 0x7FF) {
+            out[n++] = (unsigned char)(0xC0 | (cp >> 6));
+            out[n++] = (unsigned char)(0x80 | (cp & 0x3F));
+        } else if (cp <= 0xFFFF) {
+            out[n++] = (unsigned char)(0xE0 | (cp >> 12));
+            out[n++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+            out[n++] = (unsigned char)(0x80 | (cp & 0x3F));
+        } else {
+            out[n++] = (unsigned char)(0xF0 | (cp >> 18));
+            out[n++] = (unsigned char)(0x80 | ((cp >> 12) & 0x3F));
+            out[n++] = (unsigned char)(0x80 | ((cp >> 6) & 0x3F));
+            out[n++] = (unsigned char)(0x80 | (cp & 0x3F));
+        }
+    }
+    out[n] = '\0';
+
+    (*env)->ReleaseStringChars(env, s, units);
+    return (char*)out;
+}
+
+// jstring_from_utf8 is jstring_to_utf8's counterpart for the opposite direction: it builds a Java
+// String from a NUL-terminated, genuine standard-UTF-8 C string, via new String(byte[], "UTF-8")
+// rather than NewStringUTF (used elsewhere for pure-ASCII literals, where there's no encoding gap).
+// NewStringUTF expects "modified UTF-8" on the way in too, so feeding it a real 4-byte UTF-8
+// sequence (e.g. a Go test string containing an emoji) silently corrupts it the same way described
+// above in reverse. Mirrors cbindings/nativewrapper.c's jstring_from_utf8_bytes.
+//
+// Returns NULL if utf8 is NULL or a JNI call fails (leaving any resulting exception pending).
+static jstring jstring_from_utf8(JNIEnv* env, const char* utf8) {
+    if (utf8 == NULL) {
+        return NULL;
+    }
+    size_t len = strlen(utf8);
+    jbyteArray bytes = (*env)->NewByteArray(env, (jsize)len);
+    if (bytes == NULL) {
+        return NULL;
+    }
+    (*env)->SetByteArrayRegion(env, bytes, 0, (jsize)len, (const jbyte*)utf8);
+    jclass stringCls = (*env)->FindClass(env, "java/lang/String");
+    if (stringCls == NULL) {
+        (*env)->DeleteLocalRef(env, bytes);
+        return NULL;
+    }
+    jmethodID ctor = (*env)->GetMethodID(env, stringCls, "<init>", "([BLjava/lang/String;)V");
+    if (ctor == NULL) {
+        (*env)->DeleteLocalRef(env, bytes);
+        return NULL;
+    }
+    jstring charsetName = (*env)->NewStringUTF(env, "UTF-8"); // Pure ASCII - no encoding gap here.
+    if (charsetName == NULL) {
+        (*env)->DeleteLocalRef(env, bytes);
+        return NULL;
+    }
+    jstring result = (jstring)(*env)->NewObject(env, stringCls, ctor, bytes, charsetName);
+    (*env)->DeleteLocalRef(env, bytes);
+    (*env)->DeleteLocalRef(env, charsetName);
+    return result;
+}
 
 // check_pending_exception checks whether an exception has occurred, and returns 0 for false or 1 for true
 // If a buffer is passed in, the error message (if present) will be copied to it.
@@ -73,11 +177,11 @@ static int check_pending_exception(JNIEnv* env, char* buf, int bufLen) {
 
     // Making it this far means we got a real error message, which we can try to copy to the buffer for return.
     // This can technically fail, for example, if the JVM lacks the memory to allocate a string.
-    const char* chars = (*env)->GetStringUTFChars(env, msg, NULL);
+    char* chars = jstring_to_utf8(env, msg);
     if (chars != NULL) {
-        // If it did NOT fail, then we copy it into the buffer, and then release it.
+        // If it did NOT fail, then we copy it into the buffer, and then free it.
         snprintf(buf, (size_t)bufLen, "%s", chars);
-        (*env)->ReleaseStringUTFChars(env, msg, chars);
+        free(chars);
     } else {
         // If it did fail, we will have to clear the exception.
         (*env)->ExceptionClear(env);
@@ -258,9 +362,21 @@ static jobject build_collection_options(JNIEnv* env, const DefraArg* arg, char* 
     if (fEnableSigning == NULL) return NULL;
 
     // Now that we have all the field IDs, we can assign the values and return
-    jstring name = arg->str ? (*env)->NewStringUTF(env, arg->str) : (*env)->NewStringUTF(env, "");
-    jstring version = arg->coVersion ? (*env)->NewStringUTF(env, arg->coVersion) : (*env)->NewStringUTF(env, "");
-    jstring collectionID = arg->coCollectionID ? (*env)->NewStringUTF(env, arg->coCollectionID) : (*env)->NewStringUTF(env, "");
+    jstring name = jstring_from_utf8(env, arg->str ? arg->str : "");
+    if (name == NULL) {
+        check_pending_exception(env, errbuf, errbufLen);
+        return NULL;
+    }
+    jstring version = jstring_from_utf8(env, arg->coVersion ? arg->coVersion : "");
+    if (version == NULL) {
+        check_pending_exception(env, errbuf, errbufLen);
+        return NULL;
+    }
+    jstring collectionID = jstring_from_utf8(env, arg->coCollectionID ? arg->coCollectionID : "");
+    if (collectionID == NULL) {
+        check_pending_exception(env, errbuf, errbufLen);
+        return NULL;
+    }
     (*env)->SetObjectField(env, opts, fName, name);
     (*env)->SetObjectField(env, opts, fVersion, version);
     (*env)->SetObjectField(env, opts, fCollectionID, collectionID);
@@ -303,7 +419,13 @@ static int build_jvalue_array(JNIEnv* env, DefraArg* args, int nargs, jvalue* ar
                 argv[i].j = a->j;
                 break;
             case DEFRA_ARG_STRING:
-                argv[i].l = a->str ? (*env)->NewStringUTF(env, a->str) : NULL;
+                // jstring_from_utf8 already returns NULL for a NULL a->str (a legitimate Java null
+                // argument) - only a non-NULL a->str coming back NULL is a real conversion failure.
+                argv[i].l = jstring_from_utf8(env, a->str);
+                if (a->str != NULL && argv[i].l == NULL) {
+                    check_pending_exception(env, errbuf, errbufLen);
+                    return 1;
+                }
                 break;
             case DEFRA_ARG_BOOL:
                 argv[i].z = a->i ? JNI_TRUE : JNI_FALSE;
@@ -440,14 +562,5 @@ jlong defra_get_long_field(JNIEnv* env, jobject obj, jfieldID fid) {
 // The returned string will be freshly malloc'd heap memory that the caller is responsible for freeing.
 char* defra_get_string_field_copy(JNIEnv* env, jobject obj, jfieldID fid) {
     jstring s = (jstring)(*env)->GetObjectField(env, obj, fid);
-    if (s == NULL) {
-        return NULL;
-    }
-    const char* chars = (*env)->GetStringUTFChars(env, s, NULL);
-    if (chars == NULL) {
-        return NULL;
-    }
-    char* copy = strdup(chars); // Allocates memory
-    (*env)->ReleaseStringUTFChars(env, s, chars);
-    return copy;
+    return jstring_to_utf8(env, s);
 }
