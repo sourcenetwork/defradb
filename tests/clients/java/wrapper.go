@@ -706,7 +706,7 @@ func (w *Wrapper) GetCollectionByName(
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, fmt.Errorf(errFmtCollectionNotFound, name)
+		return nil, client.ErrCollectionNotFound
 	}
 	return cols[0], nil
 }
@@ -832,7 +832,7 @@ func (w *Wrapper) ExecRequest(
 
 	retval := &client.RequestResult{}
 	if res.Status != 0 {
-		retval.GQL.Errors = append(retval.GQL.Errors, errors.New(res.Error))
+		retval.GQL.Errors = append(retval.GQL.Errors, client.ReviveError(res.Error))
 		return retval
 	}
 	if err := json.Unmarshal([]byte(res.Value), &retval.GQL); err != nil {

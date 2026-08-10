@@ -30,6 +30,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
@@ -267,12 +268,13 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 	return callNode(w.nodeObj, name, handle, b)
 }
 
-// asError converts a defraResult with a non-zero status into a Go error.
+// asError converts a defraResult with a non-zero status into a Go error, reviving
+// well-known DefraDB sentinel errors so callers can use errors.Is against them.
 func (r defraResult) asError() error {
 	if r.Status == 0 {
 		return nil
 	}
-	return errors.New(r.Error)
+	return client.ReviveError(r.Error)
 }
 
 // createTransactionWithHandle creates a new txn using the native method, retuurning the new txn's cgo.Handle value.
@@ -311,7 +313,7 @@ func createTransactionWithHandle(nodeObj C.jobject, nodePtr uintptr, isReadOnly 
 	// Examine the status, and if it worked return the pointer, otherwise return 0 and an error
 	status := int(C.defra_get_int_field(env, obj, txnResultStatusField))
 	if status != 0 {
-		return 0, errors.New(goStringField(env, obj, txnResultErrorField))
+		return 0, client.ReviveError(goStringField(env, obj, txnResultErrorField))
 	}
 	ptr := uintptr(C.defra_get_long_field(env, obj, txnResultPtrField))
 	return ptr, nil
@@ -338,7 +340,7 @@ func commitTransaction(txnObj C.jobject, txnPtr uintptr) error {
 	}
 	if status := int(C.defra_get_int_field(env, obj, resultStatusField)); status != 0 {
 		// In this case, there was not a Java exception, but the function call returned an error
-		return errors.New(goStringField(env, obj, resultErrorField))
+		return client.ReviveError(goStringField(env, obj, resultErrorField))
 	}
 	return nil
 }

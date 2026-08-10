@@ -16,6 +16,7 @@ package java
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -335,7 +336,7 @@ func (c *Collection) SaveDocument(
 		}
 		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
-	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
+	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return c.AddDocument(ctx, doc, opts...)
 	}
 	return err
