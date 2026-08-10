@@ -126,16 +126,10 @@ func (h *collectionHandler) NewIndex(rw http.ResponseWriter, req *http.Request) 
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
-	var indexDesc client.IndexDescription
-	if err := requestJSON(req, &indexDesc); err != nil {
+	var descWithoutID client.NewIndexRequest
+	if err := requestJSON(req, &descWithoutID); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
-	}
-	descWithoutID := client.NewIndexRequest{
-		Name:   indexDesc.Name,
-		Fields: indexDesc.Fields,
-		Unique: indexDesc.Unique,
-		Vector: indexDesc.Vector,
 	}
 
 	newIndexOpt := options.WithIdentity(options.NewCollectionIndex(), identity.FromContext(ctx))

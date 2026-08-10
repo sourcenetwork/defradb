@@ -66,11 +66,13 @@ func vectorIndexSearch(
 	indexes := col.Version().Indexes
 	require.Len(t, indexes, 1)
 	desc := indexes[0]
+	vectorDesc, ok := desc.GetVector()
+	require.True(t, ok)
 
 	epoch, err := getIndexEpoch(readCtx, col.Version().CollectionID, desc.ID)
 	require.NoError(t, err)
 
-	results, err := vectorindex.Search(readCtx, collectionShortID, desc.ID, epoch, *desc.Vector, query, k)
+	results, err := vectorindex.Search(readCtx, collectionShortID, desc.ID, epoch, *vectorDesc, query, k)
 	require.NoError(t, err)
 
 	docIDs := make([]string, len(results))

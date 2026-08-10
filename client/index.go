@@ -12,6 +12,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 )
 
 // IndexFieldDescription describes how a field is being indexed.
@@ -22,21 +23,16 @@ type IndexedFieldDescription struct {
 	Descending bool
 }
 
-// IndexKind identifies the kind of an index. It is the single authority on what kind an
-// [IndexDescription] is: it is a stored field, not derived from which sub-descriptor is set, so
-// there is no way for two sub-descriptors to disagree about the kind. The zero value is
-// [IndexKindOrdered], so a descriptor persisted before this field existed reads back as an
-// ordered index.
-type IndexKind uint8
+// IndexKind is the config for one kind of index. The value is either an [*OrderedIndexDescription]
+// or a [*VectorIndexDescription], and the concrete type IS the kind, so an index can never be in an
+// invalid "kind says one thing, config says another" state. This mirrors [FieldKind].
+type IndexKind interface {
+	// String returns the name of the kind.
+	String() string
 
-const (
-	// IndexKindOrdered identifies an ordered index: one that stores field values as order-preserving
-	// keys (the scalar/unique/JSON indexes). This is the zero value so that legacy descriptors, which
-	// predate the kind distinction, default to it.
-	IndexKindOrdered IndexKind = iota
-	// IndexKindVector identifies a vector (ANN) index.
-	IndexKindVector
-)
+	// isIndexKind is unexported so only types in this package can be an IndexKind.
+	isIndexKind()
+}
 
 // VectorAlgorithm identifies the algorithm used to build/search a vector index. It is a string so it
 // serializes as a readable name (e.g. in a stored descriptor or the CLI's --vector JSON) rather than
@@ -90,7 +86,19 @@ const (
 	MaxHNSWEfSearch       uint32 = 4096
 )
 
-// VectorIndexDescription holds config specific to vector (ANN) indexes.
+// OrderedIndexDescription is the config for an ordered index: one that stores field values as
+// order-preserving keys (the scalar/unique/JSON indexes).
+type OrderedIndexDescription struct {
+	// Unique indicates whether the index enforces uniqueness.
+	Unique bool
+}
+
+func (OrderedIndexDescription) String() string { return "Ordered" }
+func (*OrderedIndexDescription) isIndexKind()  {}
+
+var _ IndexKind = (*OrderedIndexDescription)(nil)
+
+// VectorIndexDescription is the config for a vector (ANN) index.
 type VectorIndexDescription struct {
 	// Algorithm is the algorithm used to build/search the index.
 	Algorithm VectorAlgorithm
@@ -103,11 +111,12 @@ type VectorIndexDescription struct {
 	HNSW *HNSWParams
 }
 
+func (VectorIndexDescription) String() string { return "Vector" }
+func (*VectorIndexDescription) isIndexKind()  {}
+
+var _ IndexKind = (*VectorIndexDescription)(nil)
+
 // IndexDescription describes an index.
-//
-// Kind is the authority on the index kind. The kind-specific sub-descriptor (e.g. [Vector]) is set
-// alongside it, but Kind is what callers switch on, so adding a new kind cannot introduce an
-// ambiguous "two sub-descriptors set" state.
 type IndexDescription struct {
 	// Name contains the name of the index.
 	Name string
@@ -115,18 +124,140 @@ type IndexDescription struct {
 	ID uint32
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
-	// Kind is the kind of this index. It is the single authority on the kind; the zero value is
-	// [IndexKindOrdered], so descriptors persisted before this field existed read back as ordered.
-	Kind IndexKind
-	// Unique indicates whether the index is unique. It only applies to ordered indexes.
+
+	// Unique indicates whether the index enforces uniqueness. It only applies to ordered indexes.
+	//
+	// It is kept for backward compatibility with callers of the embedded API that predate [Kind]:
+	// they still set and read this field directly. It mirrors the ordered [Kind]'s uniqueness and is
+	// kept in sync at the (un)marshalling and construction boundaries. Prefer [GetUnique] in new code.
 	Unique bool
-	// Vector holds config specific to vector (ANN) indexes. Non-nil when Kind is [IndexKindVector].
-	Vector *VectorIndexDescription
+
+	// Kind is the kind-specific config: either an [*OrderedIndexDescription] or a
+	// [*VectorIndexDescription]. The concrete type is the kind, so it cannot disagree with itself, and
+	// it is the authority the rest of the system dispatches on (via [IsVector]/[GetVector]/[GetUnique]).
+	Kind IndexKind
 }
 
 // IsVector returns true if this is a vector index.
 func (d IndexDescription) IsVector() bool {
-	return d.Kind == IndexKindVector
+	_, ok := d.Kind.(*VectorIndexDescription)
+	return ok
+}
+
+// GetVector returns the vector config and true if this is a vector index, otherwise nil and false.
+func (d IndexDescription) GetVector() (*VectorIndexDescription, bool) {
+	v, ok := d.Kind.(*VectorIndexDescription)
+	return v, ok
+}
+
+// GetUnique returns whether the index is unique. Only ordered indexes can be unique.
+func (d IndexDescription) GetUnique() bool {
+	if o, ok := d.Kind.(*OrderedIndexDescription); ok {
+		return o.Unique
+	}
+	// Kind not yet resolved (a caller built the struct with only the legacy Unique field): fall back
+	// to it. A vector index never sets Unique, so this stays correct.
+	return d.Unique
+}
+
+// Normalize returns a copy with Kind and the compat Unique field consistent: a nil Kind is filled
+// from Unique (an ordered index), and Unique is set from the resolved Kind. Use it to compare two
+// descriptors that may have been built in different styles (only Unique, or only Kind).
+func (d IndexDescription) Normalize() IndexDescription {
+	if d.Kind == nil {
+		d.Kind = &OrderedIndexDescription{Unique: d.Unique}
+	}
+	d.Unique = d.GetUnique()
+	return d
+}
+
+// indexDescription mirrors [IndexDescription] for unmarshalling: Kind is read as raw JSON and
+// resolved to a concrete type by [parseIndexKind].
+type indexDescription struct {
+	Name   string
+	ID     uint32
+	Fields []IndexedFieldDescription
+	// Kind is unmarshalled with custom logic in [UnmarshalJSON].
+	Kind json.RawMessage
+	// Unique is read only for backward compatibility: descriptors written before the interface
+	// existed stored Unique at the top level. See [parseIndexKind].
+	Unique bool
+}
+
+func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
+	var mirror indexDescription
+	if err := json.Unmarshal(bytes, &mirror); err != nil {
+		return err
+	}
+	d.Name = mirror.Name
+	d.ID = mirror.ID
+	d.Fields = mirror.Fields
+	kind, err := parseIndexKind(mirror.Kind, mirror.Unique)
+	if err != nil {
+		return err
+	}
+	d.Kind = kind
+	// Keep the compat Unique field in sync with the resolved kind so old readers see it.
+	d.Unique = d.GetUnique()
+	return nil
+}
+
+// MarshalJSON writes both the compat top-level Unique (so a reader that predates [Kind] still gets
+// the uniqueness) and the Kind object (for readers that use it). They are always emitted consistently.
+func (d IndexDescription) MarshalJSON() ([]byte, error) {
+	kind := d.Kind
+	if kind == nil {
+		// The struct was built with only the legacy Unique field; derive the kind from it.
+		kind = &OrderedIndexDescription{Unique: d.Unique}
+	}
+	unique := false
+	if o, ok := kind.(*OrderedIndexDescription); ok {
+		unique = o.Unique
+	}
+	return json.Marshal(indexDescription{
+		Name:   d.Name,
+		ID:     d.ID,
+		Fields: d.Fields,
+		Kind:   mustMarshalKind(kind),
+		Unique: unique,
+	})
+}
+
+func mustMarshalKind(kind IndexKind) json.RawMessage {
+	// A concrete kind is a plain struct; its Marshal cannot fail. Ignore the error to keep the
+	// signature clean, the same way the concrete kinds are trivially serialisable.
+	b, _ := json.Marshal(kind)
+	return b
+}
+
+// parseIndexKind resolves the raw Kind JSON to a concrete [IndexKind]. A missing Kind is a legacy
+// descriptor (written before the interface): it is an ordered index, and any top-level Unique it had
+// is carried into the ordered config. A present Kind is recognised by its shape — a vector config has
+// an Algorithm/Metric/Dimensions, an ordered config does not.
+func parseIndexKind(raw json.RawMessage, legacyUnique bool) (IndexKind, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return &OrderedIndexDescription{Unique: legacyUnique}, nil
+	}
+	// Sniff for a vector config: it has a Dimensions field, which the ordered config does not.
+	var probe struct {
+		Algorithm  *VectorAlgorithm
+		Dimensions *uint32
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil, err
+	}
+	if probe.Algorithm != nil || probe.Dimensions != nil {
+		var v VectorIndexDescription
+		if err := json.Unmarshal(raw, &v); err != nil {
+			return nil, err
+		}
+		return &v, nil
+	}
+	var o OrderedIndexDescription
+	if err := json.Unmarshal(raw, &o); err != nil {
+		return nil, err
+	}
+	return &o, nil
 }
 
 // NewIndexRequest describes an index creation request.

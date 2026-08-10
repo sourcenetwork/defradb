@@ -89,20 +89,20 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 	require.NotNil(t, newIndex.Vector)
 
 	// Simulate turning the request into a descriptor, as processNewIndexRequest would: a request with
-	// a Vector becomes a descriptor with Kind == IndexKindVector.
+	// a Vector becomes a descriptor whose kind is the vector config.
 	desc := client.IndexDescription{
 		Fields: newIndex.Fields,
-		Kind:   client.IndexKindVector,
-		Vector: newIndex.Vector,
+		Kind:   newIndex.Vector,
 	}
-	assert.True(t, desc.IsVector())
-	assert.Equal(t, client.VectorAlgorithmHNSW, desc.Vector.Algorithm)
-	assert.Equal(t, client.DistanceMetricCosine, desc.Vector.Metric)
-	assert.Equal(t, uint32(3), desc.Vector.Dimensions)
-	require.NotNil(t, desc.Vector.HNSW)
-	assert.Equal(t, uint32(16), desc.Vector.HNSW.M)
-	assert.Equal(t, uint32(128), desc.Vector.HNSW.EfConstruction)
-	assert.Equal(t, uint32(64), desc.Vector.HNSW.EfSearch)
+	require.True(t, desc.IsVector())
+	vec, _ := desc.GetVector()
+	assert.Equal(t, client.VectorAlgorithmHNSW, vec.Algorithm)
+	assert.Equal(t, client.DistanceMetricCosine, vec.Metric)
+	assert.Equal(t, uint32(3), vec.Dimensions)
+	require.NotNil(t, vec.HNSW)
+	assert.Equal(t, uint32(16), vec.HNSW.M)
+	assert.Equal(t, uint32(128), vec.HNSW.EfConstruction)
+	assert.Equal(t, uint32(64), vec.HNSW.EfSearch)
 }
 
 func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {

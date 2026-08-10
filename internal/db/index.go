@@ -148,7 +148,7 @@ func wrapCollectionIndex(base collectionBaseIndex) (client.CollectionIndex, erro
 	if base.desc.IsVector() {
 		return newCollectionVectorIndex(base)
 	}
-	if base.desc.Unique {
+	if base.desc.GetUnique() {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	}
 	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
@@ -435,6 +435,10 @@ func (index *collectionSimpleIndex) Delete(
 type collectionVectorIndex struct {
 	collectionBaseIndex
 
+	// vectorDesc is the index's vector config, resolved once at construction (this type is only built
+	// for a vector-kind index).
+	vectorDesc *client.VectorIndexDescription
+
 	collectionShortID uint32
 	shortIDResolved   bool
 }
@@ -442,7 +446,11 @@ type collectionVectorIndex struct {
 var _ client.CollectionIndex = (*collectionVectorIndex)(nil)
 
 func newCollectionVectorIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
-	return &collectionVectorIndex{collectionBaseIndex: base}, nil
+	vectorDesc, ok := base.desc.GetVector()
+	if !ok {
+		return nil, NewErrCorruptedVectorIndex(base.desc.Name, "")
+	}
+	return &collectionVectorIndex{collectionBaseIndex: base, vectorDesc: vectorDesc}, nil
 }
 
 // resolveCollectionShortID returns the collection short id, reading it from the store on the first
@@ -469,7 +477,7 @@ func (index *collectionVectorIndex) openIndex(ctx context.Context) (vectorindex.
 		return nil, 0, err
 	}
 
-	idx, err := vectorindex.Open(ctx, collectionShortID, index.desc.ID, index.epoch, *index.desc.Vector)
+	idx, err := vectorindex.Open(ctx, collectionShortID, index.desc.ID, index.epoch, *index.vectorDesc)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -530,8 +538,8 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 	// Vectors of different lengths in one graph make distances meaningless. Dimensions is set for a
 	// directly-written field, so check against it. It is 0 only for an @embedding field, where the
 	// model fixes the length, so the only guard left is against an empty vector.
-	if index.desc.Vector.Dimensions > 0 && len(vec) != int(index.desc.Vector.Dimensions) {
-		return NewErrVectorDimensionMismatch(int(index.desc.Vector.Dimensions), len(vec), doc.ID().String())
+	if index.vectorDesc.Dimensions > 0 && len(vec) != int(index.vectorDesc.Dimensions) {
+		return NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
 	}
 	if len(vec) == 0 {
 		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())

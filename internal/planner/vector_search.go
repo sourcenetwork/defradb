@@ -47,6 +47,8 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 	if !ok {
 		return nil
 	}
+	// readyVectorIndexOnField only returns a vector index, so GetVector always succeeds here.
+	vectorDesc, _ := index.GetVector()
 
 	query, ok := similarityQueryVector(sim.Vector)
 	if !ok {
@@ -55,7 +57,7 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 
 	// A wrong-length query would be scored on only its shared leading elements, giving wrong results.
 	// The full-scan path errors on this; do the same here.
-	if dims := int(index.Vector.Dimensions); dims > 0 && len(query) != dims {
+	if dims := int(vectorDesc.Dimensions); dims > 0 && len(query) != dims {
 		return NewErrMismatchLengthOnSimilarity(dims, len(query))
 	}
 
@@ -122,6 +124,9 @@ func (n *selectNode) vectorSearchPrefixes(
 	query []float32,
 	k int,
 ) ([]keys.Walkable, error) {
+	// This is only reached for a vector index (the caller already checked), so GetVector always succeeds.
+	vectorDesc, _ := index.GetVector()
+
 	collectionShortID, err := id.GetCollectionShortID(n.planner.ctx, n.collection.Version().CollectionID)
 	if err != nil {
 		return nil, err
@@ -138,7 +143,7 @@ func (n *selectNode) vectorSearchPrefixes(
 	}
 
 	results, err := vectorindex.Search(
-		n.planner.ctx, collectionShortID, index.ID, epoch, *index.Vector, query, k,
+		n.planner.ctx, collectionShortID, index.ID, epoch, *vectorDesc, query, k,
 	)
 	if err != nil {
 		return nil, err

@@ -39,11 +39,10 @@ func TestCollectionVersion_VectorIndexOnRawFloat32Array_ShouldSucceed(t *testing
 					{
 						Name: "Users_embedding_ASC",
 						ID:   1,
-						Kind: client.IndexKindVector,
 						Fields: []client.IndexedFieldDescription{
 							{Name: "embedding"},
 						},
-						Vector: &client.VectorIndexDescription{
+						Kind: &client.VectorIndexDescription{
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     client.DistanceMetricCosine,
 							Dimensions: 3,
