@@ -27,8 +27,10 @@ import (
 
 // purgeChunkSize is the number of documents purged per transaction when no caller
 // transaction is supplied. It keeps each commit well under the store's per-transaction
-// size limit.
-const purgeChunkSize = 100
+// size limit, and it sets the cost of the purge: every document opens several iterators,
+// badger re-sorts the transaction's whole pending-write set on each one, so a chunk costs
+// roughly the square of its size. BenchmarkPurgeByDocIDsChunkSize measures the curve.
+const purgeChunkSize = 8
 
 // PurgeByDocIDs permanently removes all state for the given documents from this node:
 // datastore values, headstore entries, and, when pruneHistory is true, every blockstore
