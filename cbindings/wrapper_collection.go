@@ -19,7 +19,8 @@ extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int 
 CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, char* indexType,
+uintptr_t identity);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -212,8 +213,10 @@ func (c *Collection) NewEncryptedIndex(
 
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
+	indexType := C.CString(string(req.Type))
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(fieldName))
+	defer C.free(unsafe.Pointer(indexType))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
@@ -223,6 +226,7 @@ func (c *Collection) NewEncryptedIndex(
 		callHandle,
 		name,
 		fieldName,
+		indexType,
 		cIdentity,
 	))
 
