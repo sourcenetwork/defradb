@@ -370,3 +370,38 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	require.True(t, errors.Is(commitErr, corekv.ErrTxnConflict),
 		"expected ErrTxnConflict but got: %v", commitErr)
 }
+
+// A unique violation names the document that lost. Naming the one that already holds the
+// value is what lets the two be compared, which is the only way to tell a genuine duplicate
+// from two documents that disagree on a field they do not share an index on.
+func TestSaveUniqueKey_ErrorNamesTheDocumentHoldingTheValue(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	_, err = col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
+	})
+	require.NoError(t, err)
+
+	incumbent, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":1}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, incumbent))
+
+	// Same indexed value, different age, so a different document that cannot have the slot.
+	duplicate, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":2}`), col.Version())
+	require.NoError(t, err)
+	require.NotEqual(t, incumbent.ID().String(), duplicate.ID().String())
+
+	err = col.AddDocument(ctx, duplicate)
+	require.ErrorContains(t, err, "violates unique index")
+	require.ErrorContains(t, err, incumbent.ID().String())
+}
