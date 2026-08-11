@@ -23,6 +23,7 @@ func init() {
 	httpClient = false
 	cliClient = false
 	cClient = false
+	javaClient = false
 	jsClient = true
 	// JavaScript networking stack is managed externally
 	skipNetworkTests = true
