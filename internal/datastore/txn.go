@@ -90,6 +90,10 @@ type BasicTxn struct {
 	id            uint64
 	ts            time.Time // timestamp
 
+	// readKinds records which classes of key this transaction's read set holds, so a
+	// commit conflict can be attributed to a class of key rather than reported bare.
+	readKinds ReadKinds
+
 	successFns []func()
 	errorFns   []func()
 	discardFns []func()
@@ -110,14 +114,26 @@ func NewTxnFrom(
 	chunkSize immutable.Option[int],
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
-	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
 
-	return &BasicTxn{
-		Multistore:    multistore,
+	txn := &BasicTxn{
 		underlyingTxn: rootTxn,
 		id:            id,
 		ts:            time.Now(),
 	}
+	// The child stores read through the recorder; underlyingTxn stays unwrapped because
+	// corekv casts it to its own concrete type when it is fetched from a context.
+	txn.Multistore = NewMultistore(
+		&readRecorder{store: rootTxn, kinds: &txn.readKinds},
+		lockSet,
+		chunkSize,
+	)
+
+	return txn
+}
+
+// ReadKinds returns the classes of key this transaction has read so far.
+func (t *BasicTxn) ReadKinds() *ReadKinds {
+	return &t.readKinds
 }
 
 // The raw underlying txn.
