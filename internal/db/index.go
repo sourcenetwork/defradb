@@ -86,6 +86,7 @@ func NewCollectionIndex(
 		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
 	}
+	base.stats = statsFor(collection)
 	for i := range desc.Fields {
 		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
@@ -197,6 +198,9 @@ type collectionBaseIndex struct {
 	// sequence at construction. During a rebuild the sequence names the epoch being built, so
 	// live writes maintain it.
 	epoch uint32
+	// stats counts unique-index existence checks. Nil when the index was built for a
+	// collection this package did not construct.
+	stats *mergeStats
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -265,6 +269,9 @@ func (index *collectionBaseIndex) deleteIndexKey(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 	ds := txn.Datastore()
+	// An index entry is a datastore key and encodes like a document key, so the store
+	// cannot tell them apart. Mark it here, where the type is known.
+	datastore.ReadKindsOf(txn).Mark(datastore.ReadIndex)
 	exists, err := ds.Has(ctx, &key)
 	if err != nil {
 		return NewErrCheckIndexKeyExists(err, index.desc.Name)
@@ -406,7 +413,7 @@ func (index *collectionUniqueIndex) Save(
 	doc *client.Document,
 ) error {
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		return saveUniqueKey(ctx, doc, key, index.fieldsDescs, index.building)
+		return saveUniqueKey(ctx, doc, key, index.fieldsDescs, index.building, index.stats)
 	})
 }
 
@@ -422,6 +429,7 @@ func saveUniqueKey(
 	key keys.IndexDataStoreKey,
 	fieldsDescs []client.CollectionFieldDescription,
 	tolerateSameDoc bool,
+	stats *mergeStats,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
@@ -438,10 +446,14 @@ func saveUniqueKey(
 	}
 
 	if len(val) != 0 {
+		// This read puts the unique key in the transaction's read set, so two transactions
+		// writing the same index value conflict at commit rather than at this check.
+		datastore.ReadKindsOf(txn).Mark(datastore.ReadUniqueIndex)
 		existing, err := txn.Datastore().Get(ctx, &key)
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return NewErrCheckUniqueIndexConstraint(err)
 		}
+		stats.markUniqueIndexCheck(existing != nil)
 		if existing != nil {
 			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
