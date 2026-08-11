@@ -20,6 +20,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <wchar.h>
 typedef HMODULE defra_lib_t;
 #else
 #include <dlfcn.h>
@@ -31,7 +32,49 @@ typedef jint (JNICALL *CreateJavaVMFunc)(JavaVM**, void**, void*);
 
 static defra_lib_t defra_dlopen(const char* path) {
 #ifdef _WIN32
-    return LoadLibraryA(path);
+    // LoadLibraryA decodes its argument using the process's active ANSI code page,
+    // not UTF-8. The path built on the Go side (jvm.go) is a Go string, which is
+    // always UTF-8, so a JAVA_HOME containing non-ASCII characters (a non-English
+    // username, for example) would be misdecoded and fail to load. Transcode to
+    // UTF-16 and use the wide-character loader instead.
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+    if (wlen <= 0) {
+        return NULL;
+    }
+    wchar_t* wpath = (wchar_t*)malloc((size_t)wlen * sizeof(wchar_t));
+    if (wpath == NULL) {
+        return NULL;
+    }
+    MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, wlen);
+
+    // jvm.dll depends on other DLLs (jli.dll and friends) that live in JAVA_HOME's
+    // bin directory, one level up from jvm.dll's own "server" subdirectory (true
+    // for both the JDK 9+ layout and the legacy JDK 8 jre/ layout - see
+    // jvmLibraryPath in jvm.go). The standard DLL search order does not include
+    // that directory unless it's already on PATH, so add it explicitly rather
+    // than relying on the caller's PATH to happen to contain it.
+    wchar_t* binDir = (wchar_t*)malloc((wcslen(wpath) + 1) * sizeof(wchar_t));
+    if (binDir != NULL) {
+        wcscpy(binDir, wpath);
+        wchar_t* slash = wcsrchr(binDir, L'\\'); // strips "\jvm.dll"
+        if (slash != NULL) {
+            *slash = L'\0';
+            slash = wcsrchr(binDir, L'\\'); // strips "\server"
+            if (slash != NULL) {
+                *slash = L'\0';
+                SetDllDirectoryW(binDir);
+            }
+        }
+    }
+
+    HMODULE lib = LoadLibraryExW(wpath, NULL, 0);
+
+    // Restore the default search order so this doesn't leak into any other
+    // LoadLibrary call made later in the process.
+    SetDllDirectoryW(NULL);
+    free(binDir);
+    free(wpath);
+    return lib;
 #else
     return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 #endif

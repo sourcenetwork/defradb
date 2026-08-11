@@ -30,7 +30,7 @@
 //
 // Running tests against this client additionally requires, at runtime:
 //
-//   - JAVA_HOME set to a JDK 8+ installation
+//   - JAVA_HOME set to a JDK installation (support for JDK 17+ is guaranteed, but older versions may work)
 //
 //   - DEFRA_CLIENT_JAVA=true
 //
