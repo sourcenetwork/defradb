@@ -276,6 +276,15 @@ func updateHeads(
 		return NewErrMarkingAsMerged(blockLink.Cid, err)
 	}
 
+	// A signature block is not in AllLinks, so nothing below clears its marker. Clearing it
+	// here also puts the key in this transaction, so a sweep that holds the same marker
+	// conflicts rather than reclaiming a block this merge is taking ownership of.
+	if block.Signature != nil {
+		if err := txn.Blockstore().MarkAsMerged(ctx, block.Signature.Cid); err != nil {
+			return NewErrMarkingAsMerged(block.Signature.Cid, err)
+		}
+	}
+
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
 		isHead, err := headset.IsHead(ctx, linkCid)
@@ -287,7 +296,7 @@ func updateHeads(
 		// else needs to be done for that block.
 		err = txn.Blockstore().MarkAsMerged(ctx, linkCid)
 		if err != nil {
-			return NewErrMarkingAsMerged(blockLink.Cid, err)
+			return NewErrMarkingAsMerged(linkCid, err)
 		}
 
 		if isHead {
