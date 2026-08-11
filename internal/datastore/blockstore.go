@@ -13,7 +13,6 @@ package datastore
 import (
 	"context"
 
-	lru "github.com/hashicorp/golang-lru/v2"
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
@@ -21,21 +20,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 )
-
-const mergedCacheSize = 100_000
-
-// globalMergedCache is a process-wide LRU cache of CIDs known to be merged.
-// A cache hit in IsMerged avoids 2 KV reads per CID — significant under sustained
-// P2P or batch write load where the same CID chains are traversed repeatedly.
-var globalMergedCache = mustNewMergedCache(mergedCacheSize)
-
-func mustNewMergedCache(size int) *lru.Cache[string, struct{}] {
-	cache, err := lru.New[string, struct{}](size)
-	if err != nil {
-		panic(err)
-	}
-	return cache
-}
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
@@ -77,11 +61,10 @@ func newToMergeKey(cid []byte) []byte {
 	return key
 }
 
+// IsMerged reports whether the block is stored and carries no to-merge marker. Callers
+// use it to decide whether to skip fetching, and history prune can delete a block at
+// any time, so it is answered from the store rather than remembered.
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
-	cidStr := cid.String()
-	if _, ok := globalMergedCache.Get(cidStr); ok {
-		return true, nil
-	}
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
 		return false, NewErrCheckBlockExists(err)
@@ -93,18 +76,13 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	if err != nil {
 		return false, NewErrCheckBlockMergeStatus(err)
 	}
-	merged := !notMerged
-	if merged {
-		globalMergedCache.Add(cidStr, struct{}{})
-	}
-	return merged, nil
+	return !notMerged, nil
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
 	if err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes())); err != nil {
 		return NewErrMarkBlockAsMerged(err)
 	}
-	globalMergedCache.Add(cid.String(), struct{}{})
 	return nil
 }
 
@@ -113,7 +91,6 @@ func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
 		if err := bs.store.Delete(ctx, newToMergeKey(c.Bytes())); err != nil {
 			return NewErrMarkBlockAsMerged(err)
 		}
-		globalMergedCache.Add(c.String(), struct{}{})
 	}
 	return nil
 }
