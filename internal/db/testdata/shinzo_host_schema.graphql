@@ -1,0 +1,111 @@
+type Ethereum__Mainnet__Block {
+    hash: String @index(unique: true)
+    number: Int @index
+    timestamp: String
+    parentHash: String
+    difficulty: String
+    totalDifficulty: String
+    gasUsed: String
+    gasLimit: String
+    baseFeePerGas: String
+    nonce: String
+    miner: String
+    size: String
+    stateRoot: String
+    sha3Uncles: String
+    transactionsRoot: String
+    receiptsRoot: String
+    logsBloom: String
+    extraData: String
+    mixHash: String
+    uncles: [String]
+    # Relationships
+    transactions: [Ethereum__Mainnet__Transaction] @relation(name: "block_transactions")
+}
+
+# BlockSignature covers all documents in a block (txs, logs, ALEs, and the block itself)
+type Ethereum__Mainnet__BlockSignature {
+    blockNumber: Int @index
+    blockHash: String
+    merkleRoot: String
+    cidCount: Int
+    cids: [String]
+    signatureType: String
+    signatureIdentity: String
+    signatureValue: String
+    createdAt: String
+}
+
+# SnapshotSignature seals a snapshot file with a Merkle root over per-block
+# signature Merkle roots. Used for cross-indexer attestation and snapshot exchange.
+type Ethereum__Mainnet__SnapshotSignature {
+    startBlock: Int
+    endBlock: Int
+    merkleRoot: String
+    blockCount: Int
+    signatureType: String
+    signatureIdentity: String
+    signatureValue: String
+    snapshotFile: String
+    createdAt: String
+    blockSigMerkleRoots: [String]
+}
+
+type Ethereum__Mainnet__Transaction {
+    hash: String @index(unique: true)
+    blockHash: String
+    blockNumber: Int @index
+    from: String
+    to: String
+    value: String
+    gas: String
+    gasPrice: String
+    gasUsed: String
+    maxFeePerGas: String
+    maxPriorityFeePerGas: String
+    input: String
+    nonce: String
+    transactionIndex: Int
+    type: String
+    chainId: String
+    v: String
+    r: String
+    s: String
+    status: Boolean
+    cumulativeGasUsed: String
+    effectiveGasPrice: String
+    # Relationships
+    block: Ethereum__Mainnet__Block @index @relation(name: "block_transactions")
+    logs: [Ethereum__Mainnet__Log] @relation(name: "transaction_logs")
+    accessList: [Ethereum__Mainnet__AccessListEntry] @relation(name: "transaction_accessList")
+}
+
+type Ethereum__Mainnet__AccessListEntry {
+    address: String
+    blockNumber: Int @index
+    storageKeys: [String]
+    transaction: Ethereum__Mainnet__Transaction @index @relation(name: "transaction_accessList")
+}
+
+type Ethereum__Mainnet__Log {
+    address: String @index
+    topics: [String]
+    data: String
+    transactionHash: String
+    blockHash: String
+    blockNumber: Int @index
+    transactionIndex: Int
+    logIndex: Int
+    removed: String
+    # Relationships
+    block: Ethereum__Mainnet__Block @index @relation(name: "block_logs")
+    transaction: Ethereum__Mainnet__Transaction @index @relation(name: "transaction_logs")
+}
+
+type Ethereum__Mainnet__AttestationRecord {
+    attested_doc: String @index
+    source_doc: [String]
+    CIDs: [String]
+    doc_type: String @index
+    vote_count: Int @crdt(type: pcounter)
+}

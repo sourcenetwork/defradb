@@ -114,6 +114,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 		if err != nil {
 			errs = append(errs, NewErrMergeEventDropped(err, evt.DocID, evt.Cid.String()))
+			db.stats.markDropped(dropCollection)
 			continue
 		}
 		entries = append(entries, mergeEntry{evt: evt, col: col, index: i})
@@ -186,6 +187,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		for i := range chunk {
 			if err := db.mergeChunk(ctx, chunk[i:i+1]); err != nil {
 				errs = append(errs, NewErrMergeEventDropped(err, chunk[i].evt.DocID, chunk[i].evt.Cid.String()))
+				db.stats.markDropped(mergeDropReason(err))
 				continue
 			}
 			db.publishMergeComplete(chunk[i : i+1])
@@ -224,12 +226,16 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 	var conflictErr error
 	var blamed mergeEntry
 	var phase string
+	// The classes of key the last conflicting attempt had read. The underlying store does
+	// not name the contended key, so this is the only lead on what the conflict was over.
+	var conflictKinds datastore.ReadKind
 	for i := 0; i < db.txnAttempts(); i++ {
 		txn, err := db.NewTxn(false)
 		if err != nil {
 			return err
 		}
 		txnCtx := InitContext(ctx, txn)
+		readKinds := datastore.ReadKindsOf(txn)
 
 		var mergeErr error
 		for _, e := range entries {
@@ -243,6 +249,8 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(mergeErr, corekv.ErrTxnConflict) {
 				conflictErr = mergeErr
+				conflictKinds = readKinds.Kinds()
+				db.stats.chunkConflicts.Add(1)
 				continue
 			}
 			return mergeErr
@@ -252,6 +260,8 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(err, corekv.ErrTxnConflict) {
 				conflictErr = err
+				conflictKinds = readKinds.Kinds()
+				db.stats.chunkConflicts.Add(1)
 				// A commit conflict belongs to the whole transaction and cannot be
 				// attributed to one event.
 				blamed, phase = mergeEntry{}, phaseCommit
@@ -263,12 +273,15 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		return nil
 	}
 
-	// Nothing was committed, so callers must not treat the events as merged. This is the
-	// one place a conflict becomes data loss, so it is reported even though the retries
-	// leading to it are not.
+	// The chunk used its whole retry budget without committing. The caller then re-runs it
+	// one event at a time and most events usually land on that pass, so this counts
+	// conflict pressure, not loss. What was actually lost is named in the caller's error.
+	db.stats.markExhausted(phase == phaseCommit, conflictKinds)
+
 	fields := []slog.Attr{
-		corelog.Int("attempts", db.MaxTxnRetries()),
+		corelog.Int("attempts", db.txnAttempts()),
 		corelog.String("phase", phase),
+		corelog.String("readKinds", conflictKinds.String()),
 		corelog.String("docIDs", namedDocs(entries)),
 	}
 	// Only a read conflict has a single event to blame; at commit it would just repeat
@@ -322,7 +335,12 @@ func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Me
 		}
 	}
 
-	mp, err := db.newMergeProcessor(ctx, col, len(mt.heads) == 0)
+	// No local heads means the merge is creating the document rather than updating one
+	// that already exists here.
+	newDocCreateMode := len(mt.heads) == 0
+	db.stats.markCreateOrUpdate(newDocCreateMode)
+
+	mp, err := db.newMergeProcessor(ctx, col, newDocCreateMode)
 	if err != nil {
 		return err
 	}

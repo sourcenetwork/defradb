@@ -222,8 +222,52 @@ type P2P struct {
 	statDroppedFull   atomic.Int64
 	statMergedDocs    atomic.Int64
 	statDroppedDocs   atomic.Int64
+	// statSkippedDocs counts documents deliberately not merged: already held, or
+	// excluded by access or the replication filter. Not a loss, so kept apart.
+	statSkippedDocs   atomic.Int64
 	statBatches       atomic.Int64
 	statBatchFailures atomic.Int64
+	// statRelayed counts documents the network accepted from us, and statRelayFailed the
+	// ones the send rejected. Counted after SendUpdate returns, so the pair says whether
+	// forwarding works rather than restating the merge count.
+	// Compared against statMergedDocs it shows how much of what this node stores it also
+	// forwards.
+	statRelayed     atomic.Int64
+	statRelayFailed atomic.Int64
+
+	// The inbound CAR path: imports attempted, imports abandoned, and the blocks an
+	// abandoned import had already written. Every document this node stores arrives this
+	// way, so the generation counters below say nothing about it.
+	statCARImported      atomic.Int64
+	statCARImportFailed  atomic.Int64
+	statCARImportOrphans atomic.Int64
+
+	// CAR generation counters. A CAR that carries only the root block gives its receiver
+	// nothing to import, so the receiver falls back to a per-link BitSwap walk.
+	statCARBuilt           atomic.Int64
+	statCARFailed          atomic.Int64
+	statCARBlocks          atomic.Int64
+	statCARMissing         atomic.Int64
+	statCARBareTip         atomic.Int64
+	carFailureReason       failureReasons
+	carImportFailureReason failureReasons
+
+	// syncDAG counters. statSyncDAGAbandoned is the number of blocks already written to
+	// the blockstore by walks that then failed, which is the rate at which this node
+	// creates blocks no document references.
+	statSyncDAGCalls     atomic.Int64
+	statSyncDAGFailed    atomic.Int64
+	statSyncDAGBlocks    atomic.Int64
+	statSyncDAGAbandoned atomic.Int64
+	syncDAGFailureReason failureReasons
+
+	// docDropReason names why an inbound document never reached the merge. The set is
+	// fixed: a reason taken from an error string would let a peer grow the map.
+	docDropReason failureReasons
+
+	// dedup measures how much of the inbound stream is the same message arriving more
+	// than once, which sizes what a dedup at the door would save.
+	dedup *wireDedup
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -282,6 +326,7 @@ func New(
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
 		stopStats:            make(chan struct{}),
+		dedup:                newWireDedup(),
 	}
 
 	for i := 0; i < dagSyncWorkers; i++ {
@@ -680,6 +725,9 @@ func (p *P2P) docIDsForBlockCID(
 // not pay for a decode it will not use.
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
 	size := int64(len(msg))
+	// Observed before the budget check so the count covers dropped messages too; they are
+	// the majority of the inbound stream and the reason the question is worth asking.
+	p.dedup.observe(msg)
 	if !p.claimQueueBytes(size) {
 		p.statDroppedBudget.Add(1)
 		log.Info("pubsub message queue over byte budget, dropping message",
@@ -742,6 +790,7 @@ func (p *P2P) reportStats() {
 		case <-p.stopStats:
 			return
 		case <-ticker.C:
+			msgsIn, msgsDistinct, dedupTruncated := p.dedup.drain()
 			log.Info("p2p stats",
 				corelog.Int("queueDepth", len(p.msgQueue)),
 				corelog.Int("queueSlots", msgQueueSize),
@@ -753,9 +802,45 @@ func (p *P2P) reportStats() {
 				corelog.Int64("batchFailures", p.statBatchFailures.Swap(0)),
 				corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
 				corelog.Int64("docsDropped", p.statDroppedDocs.Swap(0)),
+				corelog.Int64("docsSkipped", p.statSkippedDocs.Swap(0)),
+				corelog.Int64("docsRelayed", p.statRelayed.Swap(0)),
+				corelog.Int64("relayFailed", p.statRelayFailed.Swap(0)),
+				corelog.Int64("msgsIn", msgsIn),
+				corelog.Int64("msgsDistinct", msgsDistinct),
+				corelog.Bool("msgsDistinctTruncated", dedupTruncated),
+				corelog.Int64("carImported", p.statCARImported.Swap(0)),
+				corelog.Int64("carImportFailed", p.statCARImportFailed.Swap(0)),
+				corelog.Int64("carImportOrphans", p.statCARImportOrphans.Swap(0)),
+				corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
+				corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
+				corelog.Int64("carBlocks", p.statCARBlocks.Swap(0)),
+				corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
+				corelog.Int64("carBareTip", p.statCARBareTip.Swap(0)),
+				corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
+				corelog.Int64("syncDAGFailed", p.statSyncDAGFailed.Swap(0)),
+				corelog.Int64("syncDAGBlocks", p.statSyncDAGBlocks.Swap(0)),
+				corelog.Int64("syncDAGAbandoned", p.statSyncDAGAbandoned.Swap(0)),
 			)
+			reportFailureReasons("car failures", p.carFailureReason.drain())
+			reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
+			reportFailureReasons("document drops", p.docDropReason.drain())
+			reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
 		}
 	}
+}
+
+// reportFailureReasons logs one line naming every reason that occurred in the interval,
+// or nothing when there were none. Reasons come from a fixed set, so the line has a
+// bounded width.
+func reportFailureReasons(msg string, counts []reasonCount) {
+	if len(counts) == 0 {
+		return
+	}
+	fields := make([]slog.Attr, 0, len(counts))
+	for _, c := range counts {
+		fields = append(fields, corelog.Int64(c.reason, c.count))
+	}
+	log.Info(msg, fields...)
 }
 
 // processMessageWorker is a long-lived goroutine that drains p.msgQueue and
@@ -828,7 +913,7 @@ func (p *P2P) processPushlogRequest(
 			if ok {
 				p.statMergedDocs.Add(1)
 			} else {
-				p.statDroppedDocs.Add(1)
+				p.dropDoc("mergeFailed")
 			}
 		}
 		if err != nil {
@@ -852,10 +937,13 @@ func (p *P2P) processPushlogRequest(
 			}
 			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
 			if err := p.SendUpdate(updateEvt); err != nil {
+				p.statRelayFailed.Add(1)
 				log.ErrorE("Failed to send update after batch sync", err,
 					slog.String("DocID", r.merge.DocID),
 					slog.Any("PeerID", p.host.ID()),
 				)
+			} else {
+				p.statRelayed.Add(1)
 			}
 		}
 		return nil
@@ -937,7 +1025,7 @@ func (p *P2P) processPushlogRequest(
 			CollectionID: req.CollectionID,
 		}
 		if err = p.db.Merge(ctx, mergeEvt); err != nil {
-			p.statDroppedDocs.Add(1)
+			p.dropDoc("mergeFailed")
 			return err
 		}
 		p.statMergedDocs.Add(1)
@@ -954,7 +1042,10 @@ func (p *P2P) processPushlogRequest(
 		if err := p.SendUpdate(updateEvt); err != nil {
 			// We don't need to return the error for this side-effect-function call.
 			// It's a bonus action that shouldn't affect the caller of `processPushlogRequest`.
+			p.statRelayFailed.Add(1)
 			log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
+		} else {
+			p.statRelayed.Add(1)
 		}
 
 		return nil
@@ -985,15 +1076,18 @@ func (p *P2P) processBatchedDocuments(
 				slog.String("DocID", doc.DocID),
 				slog.String("CollectionID", req.CollectionID),
 			)
+			p.dropDoc("invalidCID")
 			continue
 		}
 
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
 			log.ErrorE("Batch: IsMerged check failed", err, slog.String("DocID", doc.DocID))
+			p.dropDoc("isMergedError")
 			continue
 		}
 		if isMerged {
+			p.skipDoc("alreadyMerged")
 			continue
 		}
 
@@ -1005,16 +1099,19 @@ func (p *P2P) processBatchedDocuments(
 		}
 		if err != nil {
 			log.ErrorE("Batch: block decode failed", err, slog.String("DocID", doc.DocID))
+			p.dropDoc("blockDecode")
 			continue
 		}
 
 		blockLink, err := block.GenerateLink()
 		if err != nil {
 			log.ErrorE("Batch: GenerateLink failed", err, slog.String("DocID", doc.DocID))
+			p.dropDoc("generateLink")
 			continue
 		}
 		if blockLink.Cid != headCID {
 			log.Error("Batch: CID mismatch", slog.String("DocID", doc.DocID))
+			p.dropDoc("cidMismatch")
 			continue
 		}
 
@@ -1022,25 +1119,30 @@ func (p *P2P) processBatchedDocuments(
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, doc.DocID)
 			if err != nil {
 				log.ErrorE("Batch: access check failed", err, slog.String("DocID", doc.DocID))
+				p.dropDoc("accessError")
 				continue
 			}
 			if !mightHaveAccess {
+				p.skipDoc("noAccess")
 				continue
 			}
 		}
 
 		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
+			p.skipDoc("filtered")
 			continue
 		}
 
 		if len(doc.CAR) > 0 {
 			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
 				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
+				p.dropDoc("importCAR")
 				continue
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
 				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
+				p.dropDoc("syncDAG")
 				continue
 			}
 		}

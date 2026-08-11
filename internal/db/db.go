@@ -125,6 +125,9 @@ type DB struct {
 	lockSet *lock.LockSet
 
 	collectionRepository *description.CollectionRepository
+
+	// stats are the merge-path counters reported on an interval by reportMergeStats.
+	stats *mergeStats
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -176,6 +179,7 @@ func newDB(
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
 		lockSet:                 lockSet,
 		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
+		stats:                   &mergeStats{},
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
@@ -232,6 +236,8 @@ func newDB(
 			log.ErrorE("index state recovery failed", err)
 		}
 	})
+
+	go db.reportMergeStats(db.ctx)
 
 	return db, nil
 }
