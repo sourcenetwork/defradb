@@ -212,6 +212,12 @@ type P2P struct {
 	// msgQueueMaxBytes caps msgQueueBytes. Zero or less disables the byte bound.
 	msgQueueMaxBytes int64
 
+	// stopAccepting ends the worker pool. The queue itself is never closed: the pubsub
+	// dispatcher keeps calling the handler until libp2p tears the subscription down, and a
+	// send on a closed channel is a ready case in a select, so closing it would panic the
+	// dispatcher rather than fall through to the default arm.
+	stopAccepting chan struct{}
+
 	// stopStats ends the stats reporter. The context outlives Close, so the reporter
 	// needs a signal of its own.
 	stopStats chan struct{}
@@ -325,6 +331,7 @@ func New(
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
+		stopAccepting:        make(chan struct{}),
 		stopStats:            make(chan struct{}),
 		dedup:                newWireDedup(),
 	}
@@ -746,6 +753,8 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 
 	select {
 	case p.msgQueue <- queuedMessage{req: req, size: size}:
+	case <-p.stopAccepting:
+		p.releaseQueueBytes(size)
 	case <-p.ctx.Done():
 		p.releaseQueueBytes(size)
 	default:
@@ -848,7 +857,14 @@ func reportFailureReasons(msg string, counts []reasonCount) {
 // concurrently, bounding the goroutine count regardless of inbound message rate.
 func (p *P2P) processMessageWorker() {
 	defer p.msgWorkers.Done()
-	for m := range p.msgQueue {
+	for {
+		var m queuedMessage
+		select {
+		case <-p.stopAccepting:
+			return
+		case m = <-p.msgQueue:
+		}
+
 		err := p.processPushlogRequest(p.ctx, m.req, false)
 		// Released here rather than deferred so the budget frees up per message, not
 		// when the worker exits.
@@ -1309,7 +1325,7 @@ func (pq *processQueue) close() {
 // It should be called once when the P2P subsystem is shutting down.
 func (p *P2P) Close() {
 	close(p.stopStats)
-	close(p.msgQueue)
+	close(p.stopAccepting)
 	done := make(chan struct{})
 	go func() {
 		p.msgWorkers.Wait()
