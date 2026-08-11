@@ -170,6 +170,54 @@ func TestPubSubMessageHandler_QueueFullCountedSeparately(t *testing.T) {
 	assert.Equal(t, int64(len(msg)), p.msgQueueBytes.Load())
 }
 
+// The stats line carrying the drop counts is at info, so on a node running at error level the
+// sampled topic is the only thing that surfaces a drop at all. A quiet interval must stay quiet.
+func TestPubSubMessageHandler_DropRecordsSampleTopic(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	newP2P := func(maxBytes int64) *P2P {
+		return &P2P{
+			ctx:              context.Background(),
+			host:             &SimpleMockHost{},
+			msgQueue:         make(chan queuedMessage, 1),
+			msgQueueMaxBytes: maxBytes,
+		}
+	}
+
+	t.Run("over budget", func(t *testing.T) {
+		p := newP2P(1) // smaller than any message, so nothing can be admitted
+		_, err := p.pubSubMessageHandler("sender", "over-budget-topic", msg)
+		assert.NoError(t, err)
+
+		assert.Equal(t, int64(1), p.statDroppedBudget.Load())
+		if sample := p.dropSample.Load(); assert.NotNil(t, sample) {
+			assert.Equal(t, "over-budget-topic", *sample)
+		}
+	})
+
+	t.Run("queue full", func(t *testing.T) {
+		p := newP2P(1 << 20) // budget out of the way, so only the slot count can reject
+		_, err := p.pubSubMessageHandler("sender", "accepted-topic", msg)
+		assert.NoError(t, err)
+		_, err = p.pubSubMessageHandler("sender", "queue-full-topic", msg)
+		assert.NoError(t, err)
+
+		assert.Equal(t, int64(1), p.statDroppedFull.Load())
+		if sample := p.dropSample.Load(); assert.NotNil(t, sample) {
+			assert.Equal(t, "queue-full-topic", *sample)
+		}
+	})
+
+	t.Run("nothing dropped", func(t *testing.T) {
+		p := newP2P(1 << 20)
+		_, err := p.pubSubMessageHandler("sender", "topic", msg)
+		assert.NoError(t, err)
+
+		assert.Nil(t, p.dropSample.Load(), "an interval with no drops must not raise an error line")
+	})
+}
+
 func TestQueueByteBudget_DerivesFromMemoryLimit(t *testing.T) {
 	original := debug.SetMemoryLimit(-1)
 	t.Cleanup(func() { debug.SetMemoryLimit(original) })

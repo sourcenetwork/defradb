@@ -220,8 +220,11 @@ type P2P struct {
 	// the rate for that interval rather than a running total.
 	statDroppedBudget atomic.Int64
 	statDroppedFull   atomic.Int64
-	statMergedDocs    atomic.Int64
-	statDroppedDocs   atomic.Int64
+	// dropSample holds a topic from the interval's drops, so the line reporting them can
+	// name something to go and look at without logging every dropped message.
+	dropSample      atomic.Pointer[string]
+	statMergedDocs  atomic.Int64
+	statDroppedDocs atomic.Int64
 	// statSkippedDocs counts documents deliberately not merged: already held, or
 	// excluded by access or the replication filter. Not a loss, so kept apart.
 	statSkippedDocs   atomic.Int64
@@ -730,10 +733,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	p.dedup.observe(msg)
 	if !p.claimQueueBytes(size) {
 		p.statDroppedBudget.Add(1)
-		log.Info("pubsub message queue over byte budget, dropping message",
-			corelog.Any("topic", topic),
-			corelog.Int64("bytes", size),
-			corelog.Int64("budget", p.msgQueueMaxBytes))
+		p.dropSample.Store(&topic)
 		return nil, nil
 	}
 
@@ -751,7 +751,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	default:
 		p.releaseQueueBytes(size)
 		p.statDroppedFull.Add(1)
-		log.Info("pubsub message queue full, dropping message", corelog.Any("topic", topic))
+		p.dropSample.Store(&topic)
 	}
 	return nil, nil
 }
@@ -791,13 +791,15 @@ func (p *P2P) reportStats() {
 			return
 		case <-ticker.C:
 			msgsIn, msgsDistinct, dedupTruncated := p.dedup.drain()
+			droppedOverBudget := p.statDroppedBudget.Swap(0)
+			droppedQueueFull := p.statDroppedFull.Swap(0)
 			log.Info("p2p stats",
 				corelog.Int("queueDepth", len(p.msgQueue)),
 				corelog.Int("queueSlots", msgQueueSize),
 				corelog.Int64("queueBytes", p.msgQueueBytes.Load()),
 				corelog.Int64("queueBudget", p.msgQueueMaxBytes),
-				corelog.Int64("droppedOverBudget", p.statDroppedBudget.Swap(0)),
-				corelog.Int64("droppedQueueFull", p.statDroppedFull.Swap(0)),
+				corelog.Int64("droppedOverBudget", droppedOverBudget),
+				corelog.Int64("droppedQueueFull", droppedQueueFull),
 				corelog.Int64("batches", p.statBatches.Swap(0)),
 				corelog.Int64("batchFailures", p.statBatchFailures.Swap(0)),
 				corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
@@ -821,6 +823,17 @@ func (p *P2P) reportStats() {
 				corelog.Int64("syncDAGBlocks", p.statSyncDAGBlocks.Swap(0)),
 				corelog.Int64("syncDAGAbandoned", p.statSyncDAGAbandoned.Swap(0)),
 			)
+			// A drop at the door is data this node will not hold. The stats line above is at
+			// info and corelog has no level between info and error, so a node running at error
+			// level only sees this. It carries a sampled topic rather than a line per message,
+			// which on a saturated node is tens per second.
+			if sample := p.dropSample.Swap(nil); sample != nil {
+				log.Error("dropped inbound pubsub messages",
+					corelog.Int64("overBudget", droppedOverBudget),
+					corelog.Int64("queueFull", droppedQueueFull),
+					corelog.String("sampleTopic", *sample))
+			}
+
 			reportFailureReasons("car failures", p.carFailureReason.drain())
 			reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
 			reportFailureReasons("document drops", p.docDropReason.drain())
