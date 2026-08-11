@@ -165,12 +165,39 @@ func TestMerge_ZeroMaxRetriesStillAttempts(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
+	// The block cannot be loaded, so an attempt fails there. Asserting that specific
+	// failure is what distinguishes one attempt from none: skipping the loop entirely
+	// reports exhausted retries and never touches the block.
 	err = db.Merge(ctx, event.Merge{
 		DocID:        "missing",
 		Cid:          blocks.NewBlock(nil).Cid(),
 		CollectionID: col.CollectionID(),
 	})
-	require.Error(t, err)
+	require.ErrorContains(t, err, "failed to load block for merge")
+}
+
+// The batch path has its own retry loop, so it needs the same floor as the single-document
+// one or a zero budget drops every event in the batch without trying.
+func TestMergeBatch_ZeroMaxRetriesStillAttempts(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	db.maxTxnRetries = immutable.Some(0)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{{
+		DocID:        "missing",
+		Cid:          blocks.NewBlock(nil).Cid(),
+		CollectionID: col.CollectionID(),
+	}})
+	require.ErrorContains(t, err, "failed to load block for merge")
+	require.Equal(t, []bool{false}, merged)
 }
 
 func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {

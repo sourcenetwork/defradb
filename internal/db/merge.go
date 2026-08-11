@@ -58,11 +58,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	}
 
 	// Conflicts occur when a user updates a document while a merge is in progress.
-	max := db.MaxTxnRetries()
-	if max < 1 {
-		max = 1
-	}
-	for i := 0; i < max; i++ {
+	for i := 0; i < db.txnAttempts(); i++ {
 		err = db.executeMerge(ctx, col, evt)
 		if errors.Is(err, corekv.ErrTxnConflict) {
 			continue
@@ -192,12 +188,21 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 	return merged, errors.Join(errs...)
 }
 
+// txnAttempts is how many times to try a transaction before giving up, never fewer than
+// once so a zero retry budget still makes an attempt.
+func (db *DB) txnAttempts() int {
+	if max := db.MaxTxnRetries(); max > 1 {
+		return max
+	}
+	return 1
+}
+
 // mergeChunk merges every event of the chunk inside one transaction, retrying the
 // whole chunk on transaction conflict. Isolating a failing event is the caller's job.
 func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 	// Held so that exhausting the retry budget can report the conflict that caused it.
 	var conflictErr error
-	for i := 0; i < db.MaxTxnRetries(); i++ {
+	for i := 0; i < db.txnAttempts(); i++ {
 		txn, err := db.NewTxn(false)
 		if err != nil {
 			return err
