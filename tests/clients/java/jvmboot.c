@@ -167,6 +167,13 @@ int defra_start_jvm(
     vmArgs.nOptions = nOptions;
     vmArgs.ignoreUnrecognized = JNI_TRUE;
 
+#ifndef _WIN32
+    // Capture Go's own SIGPIPE handler before JNI_CreateJavaVM runs, so it can be
+    // restored afterward instead of being replaced outright.
+    struct sigaction preJvmSigpipe;
+    sigaction(SIGPIPE, NULL, &preJvmSigpipe);
+#endif
+
     // Star by nulling the JavaVM and JNIEnv values, then try to create the JVM
     JavaVM* vm = NULL;
     JNIEnv* env = NULL;
@@ -183,11 +190,11 @@ int defra_start_jvm(
     }
 
 #ifndef _WIN32
-    // The JVM installs its own SIGPIPE handler without SA_ONSTACK, which can
-    // crash the process (not just print the usual deprecation warning) when
-    // a real SIGPIPE arrives. Re-asserting SIG_IGN here overrides it, which
-    // matches Go's own default SIGPIPE handling anyway.
-    signal(SIGPIPE, SIG_IGN);
+    // The JVM installs its own SIGPIPE handler without SA_ONSTACK, which can crash
+    // the process (not just print the usual deprecation warning) when a real
+    // SIGPIPE arrives. Restore the exact handler Go's runtime had installed before
+    // JNI_CreateJavaVM ran.
+    sigaction(SIGPIPE, &preJvmSigpipe, NULL);
 #endif
 
     *outVM = vm;
