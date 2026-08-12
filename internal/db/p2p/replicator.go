@@ -210,12 +210,17 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		}
 	}()
 
+	var stale int
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
 			return NewErrIterateReplicatorDocs(err)
 		}
 		if !hasNext {
+			if stale > 0 {
+				log.Info("Skipped primary keys with no document during head backfill",
+					corelog.Int("count", stale), corelog.String("collectionID", col.CollectionID()))
+			}
 			return nil
 		}
 		primaryKey, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
@@ -231,7 +236,10 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 			return err
 		}
 		if !found {
-			return client.ErrDocumentNotFoundOrNotAuthorized
+			// A primary key whose document is gone. Skipping it keeps one stale key from
+			// stopping the backfill for every document behind it.
+			stale++
+			continue
 		}
 
 		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
