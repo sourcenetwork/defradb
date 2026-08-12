@@ -531,7 +531,6 @@ func (mp *mergeProcessor) initCRDTForType(
 		}
 
 		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
-			txn.Datastore(),
 			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,

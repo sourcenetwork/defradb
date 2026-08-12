@@ -539,7 +539,6 @@ func (c *collection) save(
 			val.SetType(fieldDescription.Typ)
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				txn.Datastore(),
 				c.VersionID(),
 				val.Type(),
 				fieldDescription.Kind,

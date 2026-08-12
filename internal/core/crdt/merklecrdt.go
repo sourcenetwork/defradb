@@ -27,7 +27,6 @@ type FieldLevelCRDT interface {
 }
 
 func FieldLevelCRDTWithStore(
-	store datastore.Keyedstore,
 	collectionVersionID string,
 	cType client.CType,
 	kind client.FieldKind,
@@ -43,7 +42,6 @@ func FieldLevelCRDTWithStore(
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
-			store,
 			collectionVersionID,
 			key,
 			fieldName,

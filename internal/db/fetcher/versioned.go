@@ -451,7 +451,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			}
 
 			mcrdt, err = crdt.FieldLevelCRDTWithStore(
-				vf.store.Datastore(),
 				block.Delta.GetCollectionVersionID(),
 				field.Typ,
 				field.Kind,
