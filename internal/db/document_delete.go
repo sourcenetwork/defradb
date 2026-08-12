@@ -180,14 +180,13 @@ func (c *collection) applyDelete(
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
-		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
 	link, b, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
 		merkleCRDT,
-		merkleCRDT.DeleteDelta(),
+		merkleCRDT.DeleteDelta(c.Version().VersionID),
 		coreblock.AddDeltaOptions{
 			EncryptionDocKey: keys.EncodeDocRef(primaryKey.CollectionShortID, primaryKey.DocShortID),
 		},

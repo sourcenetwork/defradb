@@ -487,7 +487,6 @@ func (mp *mergeProcessor) initCRDTForType(
 		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
-			mp.col.Version().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
@@ -531,7 +530,6 @@ func (mp *mergeProcessor) initCRDTForType(
 		}
 
 		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
-			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,
 			keys.DataStoreKey{

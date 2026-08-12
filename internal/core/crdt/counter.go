@@ -75,11 +75,10 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
-	key                 keys.DataStoreKey
-	collectionVersionID string
-	fieldName           string
-	allowDecrement      bool
-	kind                client.ScalarKind
+	key            keys.DataStoreKey
+	fieldName      string
+	allowDecrement bool
+	kind           client.ScalarKind
 }
 
 var _ FieldLevelCRDT = (*Counter)(nil)
@@ -88,18 +87,16 @@ var _ ReplicatedData = (*Counter)(nil)
 // NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
 func NewCounter(
-	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *Counter {
 	return &Counter{
-		key:                 key,
-		collectionVersionID: collectionVersionID,
-		fieldName:           fieldName,
-		allowDecrement:      allowDecrement,
-		kind:                kind,
+		key:            key,
+		fieldName:      fieldName,
+		allowDecrement: allowDecrement,
+		kind:           kind,
 	}
 }
 
@@ -112,7 +109,12 @@ func (c *Counter) HeadstorePrefix() keys.HeadstoreKey {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (c *Counter) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error) {
+func (c *Counter) Delta(
+	ctx context.Context,
+	collectionVersionID string,
+	data *DocField,
+	isAdd bool,
+) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -133,7 +135,7 @@ func (c *Counter) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta,
 	return &CounterDelta{
 		FieldName:           c.fieldName,
 		Data:                bytes,
-		CollectionVersionID: c.collectionVersionID,
+		CollectionVersionID: collectionVersionID,
 		Nonce:               nonce,
 	}, nil
 }

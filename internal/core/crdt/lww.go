@@ -62,9 +62,8 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	key                 keys.DataStoreKey
-	collectionVersionID string
-	fieldName           string
+	key       keys.DataStoreKey
+	fieldName string
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
@@ -73,14 +72,12 @@ var _ ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *LWW {
 	return &LWW{
-		key:                 key,
-		collectionVersionID: collectionVersionID,
-		fieldName:           fieldName,
+		key:       key,
+		fieldName: fieldName,
 	}
 }
 
@@ -89,7 +86,12 @@ func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
 }
 
 // Save the value of the register to the DAG.
-func (l *LWW) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error) {
+func (l *LWW) Delta(
+	ctx context.Context,
+	collectionVersionID string,
+	data *DocField,
+	isAdd bool,
+) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, NewErrSerializeLWWValue(err, l.fieldName)
@@ -98,7 +100,7 @@ func (l *LWW) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, err
 	return &LWWDelta{
 		Data:                bytes,
 		FieldName:           l.fieldName,
-		CollectionVersionID: l.collectionVersionID,
+		CollectionVersionID: collectionVersionID,
 	}, nil
 }
 

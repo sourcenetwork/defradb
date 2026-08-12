@@ -431,7 +431,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 		case block.Delta.IsComposite():
 			mcrdt = crdt.NewDocComposite(
 				vf.store.Datastore(),
-				block.Delta.GetCollectionVersionID(),
 				keys.DataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        blockDocShortID,
@@ -451,7 +450,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			}
 
 			mcrdt, err = crdt.FieldLevelCRDTWithStore(
-				block.Delta.GetCollectionVersionID(),
 				field.Typ,
 				field.Kind,
 				keys.DataStoreKey{

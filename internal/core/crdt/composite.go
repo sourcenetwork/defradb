@@ -67,9 +67,8 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct {
-	store               datastore.Keyedstore
-	key                 keys.DataStoreKey
-	collectionVersionID string
+	store datastore.Keyedstore
+	key   keys.DataStoreKey
 }
 
 var _ ReplicatedData = (*DocComposite)(nil)
@@ -78,13 +77,11 @@ var _ ReplicatedData = (*DocComposite)(nil)
 // backed by a CompositeDAG CRDT.
 func NewDocComposite(
 	store datastore.Keyedstore,
-	collectionVersionID string,
 	key keys.DataStoreKey,
 ) *DocComposite {
 	return &DocComposite{
-		store:               store,
-		key:                 key,
-		collectionVersionID: collectionVersionID,
+		store: store,
+		key:   key,
 	}
 }
 
@@ -93,17 +90,17 @@ func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 }
 
 // DeleteDelta sets the values of CompositeDAG for a delete.
-func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
+func (m *DocComposite) DeleteDelta(collectionVersionID string) *DocCompositeDelta {
 	return &DocCompositeDelta{
-		CollectionVersionID: m.collectionVersionID,
+		CollectionVersionID: collectionVersionID,
 		Status:              client.Deleted,
 	}
 }
 
 // Delta the value of the composite CRDT to DAG.
-func (m *DocComposite) Delta() *DocCompositeDelta {
+func (m *DocComposite) Delta(collectionVersionID string) *DocCompositeDelta {
 	return &DocCompositeDelta{
-		CollectionVersionID: m.collectionVersionID,
+		CollectionVersionID: collectionVersionID,
 		Status:              client.Active,
 	}
 }

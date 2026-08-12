@@ -539,7 +539,6 @@ func (c *collection) save(
 			val.SetType(fieldDescription.Typ)
 
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				c.VersionID(),
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
@@ -548,7 +547,7 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val), isAdd)
+			delta, err := merkleCRDT.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd)
 			if err != nil {
 				return err
 			}
@@ -573,13 +572,12 @@ func (c *collection) save(
 
 	merkleCRDT := crdt.NewDocComposite(
 		txn.Datastore(),
-		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 	link, headNode, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
 		merkleCRDT,
-		merkleCRDT.Delta(),
+		merkleCRDT.Delta(c.Version().VersionID),
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 		links...,
 	)

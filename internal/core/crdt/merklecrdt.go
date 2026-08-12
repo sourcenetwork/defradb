@@ -17,17 +17,20 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type FieldLevelCRDT interface {
 	ReplicatedData
-	Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error)
+	Delta(
+		ctx context.Context,
+		collectionVersionID string,
+		data *DocField,
+		isAdd bool,
+	) (Delta, error)
 }
 
 func FieldLevelCRDTWithStore(
-	collectionVersionID string,
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
@@ -36,13 +39,11 @@ func FieldLevelCRDTWithStore(
 	switch cType {
 	case client.LWW_REGISTER:
 		return NewLWW(
-			collectionVersionID,
 			key,
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
-			collectionVersionID,
 			key,
 			fieldName,
 			cType == client.PN_COUNTER,
