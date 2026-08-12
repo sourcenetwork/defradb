@@ -75,11 +75,7 @@ type collectionFieldDescription struct {
 	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
 	Kind json.RawMessage
 
-	// DefaultValue is deferred (rather than `any`) so it can be decoded according to
-	// Kind once Kind is known, instead of falling through encoding/json's generic
-	// any-decode rules - which collapse every JSON number to float64 and every JSON
-	// string to string, losing the distinction between e.g. an Int default and a
-	// Float default, or a DateTime default and a plain String default.
+	// DefaultValue is deferred so it can be decoded according to Kind once Kind is known.
 	DefaultValue json.RawMessage
 }
 
@@ -113,10 +109,7 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 }
 
 // parseDefaultValue decodes a field's raw JSON default value into the concrete Go
-// type that matches how it was originally produced (see defaultFromAST in
-// internal/request/graphql/schema/collection.go), rather than encoding/json's
-// generic any-decode rules. Only Int, Float32, and DateTime need special-casing -
-// every other supported kind already round-trips correctly through a generic decode.
+// type that matches how it was originally produced.
 func parseDefaultValue(raw json.RawMessage, kind FieldKind) (any, error) {
 	if len(raw) == 0 || string(raw) == "null" {
 		return nil, nil
@@ -142,9 +135,7 @@ func parseDefaultValue(raw json.RawMessage, kind FieldKind) (any, error) {
 		if err := json.Unmarshal(raw, &s); err != nil {
 			return nil, err
 		}
-		// UTC_NOW is a literal sentinel string, not an RFC3339 timestamp - it must be
-		// preserved as-is. See client.UTCNOW / setDefaultValues in document.go, which
-		// depend on being able to tell the two apart.
+		// UTC_NOW is a literal sentinel string, and must be preserved.
 		if s == UTCNOW {
 			return s, nil
 		}
@@ -156,7 +147,7 @@ func parseDefaultValue(raw json.RawMessage, kind FieldKind) (any, error) {
 
 	default:
 		// Bool, Float64, String, Blob, JSON (and no-default/nil) already decode to
-		// their correct native type via the generic path.
+		// their correct types.
 		var v any
 		if err := json.Unmarshal(raw, &v); err != nil {
 			return nil, err
