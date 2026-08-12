@@ -19,6 +19,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -133,6 +134,6 @@ func (c *CollectionDefinition) Delta(
 	}, true, nil
 }
 
-func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {
+func (c *CollectionDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
 	return nil
 }

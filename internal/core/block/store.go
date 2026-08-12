@@ -128,7 +128,7 @@ func addDelta(
 	}
 
 	// merge the delta and update the state
-	err = ProcessBlock(ctx, crdtData, block, link)
+	err = ProcessBlock(ctx, txn.Datastore(), crdtData, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -227,11 +227,12 @@ func encryptBlock(
 // ProcessBlock merges the delta CRDT and updates the state accordingly.
 func ProcessBlock(
 	ctx context.Context,
+	store datastore.Keyedstore,
 	crdtData crdt.ReplicatedData,
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
-	if err := crdtData.Merge(ctx, block.Delta.GetDelta()); err != nil {
+	if err := crdtData.Merge(ctx, store, block.Delta.GetDelta()); err != nil {
 		return NewErrMergingDelta(blockLink.Cid, err)
 	}
 

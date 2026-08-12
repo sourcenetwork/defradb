@@ -469,6 +469,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 
 		err = coreblock.ProcessBlock(
 			vf.ctx,
+			vf.store.Datastore(),
 			mcrdt,
 			block,
 			cidlink.Link{

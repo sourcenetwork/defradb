@@ -13,6 +13,7 @@ package crdt
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -61,6 +62,6 @@ func (c *CollectionSetDefinition) Delta() *CollectionSetDelta {
 	return &CollectionSetDelta{}
 }
 
-func (c *CollectionSetDefinition) Merge(ctx context.Context, other Delta) error {
+func (c *CollectionSetDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
 	return nil
 }

@@ -383,7 +383,8 @@ func (mp *mergeProcessor) processBlock(
 			}()
 		}
 
-		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
+		txn := datastore.CtxMustGetTxn(ctx)
+		err = coreblock.ProcessBlock(ctx, txn.Datastore(), crdt, block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}

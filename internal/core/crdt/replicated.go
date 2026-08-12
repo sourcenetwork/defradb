@@ -13,13 +13,14 @@ package crdt
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // ReplicatedData is a data type that allows concurrent writers to deterministically merge other
 // replicated data so as to converge on the same state.
 type ReplicatedData interface {
-	Merge(ctx context.Context, other Delta) error
+	Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error
 	// HeadstorePrefix returns the prefix in the headstore within which all head elements of this
 	// data will be cached.
 	HeadstorePrefix() keys.HeadstoreKey

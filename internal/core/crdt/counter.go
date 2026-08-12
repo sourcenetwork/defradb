@@ -143,7 +143,7 @@ func (c *Counter) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta,
 
 // Merge implements ReplicatedData interface.
 // It merges two CounterRegisty by adding the values together.
-func (c *Counter) Merge(ctx context.Context, delta Delta) error {
+func (c *Counter) Merge(ctx context.Context, store datastore.Keyedstore, delta Delta) error {
 	d, ok := delta.(*CounterDelta)
 	if !ok {
 		return ErrMismatchedMergeType

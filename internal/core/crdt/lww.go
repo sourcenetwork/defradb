@@ -109,16 +109,16 @@ func (l *LWW) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, err
 // Merge two LWWRegisty based on the order of the timestamp (ts),
 // if they are equal, compare IDs
 // MUTATE STATE
-func (l *LWW) Merge(ctx context.Context, delta Delta) error {
+func (l *LWW) Merge(ctx context.Context, store datastore.Keyedstore, delta Delta) error {
 	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return l.setValue(ctx, d.Data, d.GetPriority())
+	return l.setValue(ctx, store, d.Data, d.GetPriority())
 }
 
-func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
+func (l *LWW) setValue(ctx context.Context, store datastore.Keyedstore, val []byte, priority uint64) error {
 	key := l.key.WithValueFlag()
 
 	curPrio, err := getPriority(ctx, l.store, l.key)

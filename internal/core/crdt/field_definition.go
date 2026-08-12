@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -126,7 +127,7 @@ func (f *FieldDefinition) Delta(
 	}, true, nil
 }
 
-func (f *FieldDefinition) Merge(ctx context.Context, other Delta) error {
+func (f *FieldDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
 	// WARNING: This is okay for now, as we dont (yet) support the merging of divergant heads,
 	// (this is not *really* a CRDT) however, if we do want to support that at somepoint, this function
 	// will need to be implemented.

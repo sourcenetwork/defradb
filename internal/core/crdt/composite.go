@@ -111,7 +111,7 @@ func (m *DocComposite) Delta() *DocCompositeDelta {
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
+func (m *DocComposite) Merge(ctx context.Context, store datastore.Keyedstore, delta Delta) error {
 	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
