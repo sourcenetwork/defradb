@@ -40,6 +40,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	lwwDelta, err := lww.Delta(
 		ctx,
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
+		true,
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
@@ -48,6 +49,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	counterDelta, err := counter.Delta(
 		ctx,
 		NewDocField("age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
+		false,
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert

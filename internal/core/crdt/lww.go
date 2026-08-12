@@ -92,7 +92,7 @@ func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
 }
 
 // Save the value of the register to the DAG.
-func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
+func (l *LWW) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, NewErrSerializeLWWValue(err, l.fieldName)

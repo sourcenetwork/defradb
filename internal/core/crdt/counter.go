@@ -115,7 +115,7 @@ func (c *Counter) HeadstorePrefix() keys.HeadstoreKey {
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
+func (c *Counter) Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err
@@ -124,13 +124,8 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the
 	// initial dag block of a document can be reproducible.
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey())
-	if err != nil {
-		return nil, NewErrCheckCounterExists(err, c.fieldName)
-	}
-
 	var nonce int64
-	if exists {
+	if !isAdd {
 		r, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 		if err != nil {
 			return nil, NewErrGenerateCounterNonce(err)

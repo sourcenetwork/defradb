@@ -23,7 +23,7 @@ import (
 
 type FieldLevelCRDT interface {
 	ReplicatedData
-	Delta(ctx context.Context, data *DocField) (Delta, error)
+	Delta(ctx context.Context, data *DocField, isAdd bool) (Delta, error)
 }
 
 func FieldLevelCRDTWithStore(

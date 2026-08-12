@@ -549,7 +549,7 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val))
+			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val), isAdd)
 			if err != nil {
 				return err
 			}
