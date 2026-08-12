@@ -22,9 +22,11 @@ import (
 	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // newBadgerDBWithMemTableSize builds an in-memory test DB with a reduced memtable. Badger's
@@ -230,4 +232,50 @@ func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *tes
 
 	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), docB.ID()}, true))
 	requireBlockPresent(t, ctx, bs, shared, false)
+}
+
+// countPrimaryKeys returns how many primary keys the collection holds. A primary key marks
+// that a document exists, so one left behind after a purge is a document that no longer
+// does.
+func countPrimaryKeys(t *testing.T, ctx context.Context, db *DB, shortID uint32) int {
+	t.Helper()
+	rawTxn, err := db.NewTxn(true)
+	require.NoError(t, err)
+	defer rawTxn.Discard()
+	txnCtx := InitContext(ctx, rawTxn)
+	txn := datastore.CtxMustGetTxn(txnCtx)
+
+	iter, err := txn.Datastore().Iterator(txnCtx, datastore.IterOptions{
+		Prefix:   &keys.PrimaryDataStoreKey{CollectionShortID: shortID},
+		KeysOnly: true,
+	})
+	require.NoError(t, err)
+
+	var count int
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			require.NoError(t, errors.Join(err, iter.Close()))
+		}
+		if !hasNext {
+			break
+		}
+		count++
+	}
+	require.NoError(t, iter.Close())
+	return count
+}
+
+func TestPurgeByDocIDsRemovesPrimaryKey(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	doc := addUserDoc(t, ctx, col, "alice")
+	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
+	require.Equal(t, 1, countPrimaryKeys(t, ctx, db, shortID))
+
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, false))
+
+	require.Equal(t, 0, countPrimaryKeys(t, ctx, db, shortID),
+		"purge must delete the document's primary key")
 }
