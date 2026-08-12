@@ -69,10 +69,10 @@ func newDocumentFetcher(
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	iterOptions := datastore.IterOptions{
-		Start: prefix,
-		End:   prefix.PrefixEnd(),
-	}
+	// A prefix iterator bounds the scan in the store. A start/end range leaves it unbounded
+	// and checks the end in Go, which reads the first key past the document and puts another
+	// document's key in this transaction's read set.
+	iterOptions := datastore.IterOptions{Prefix: prefix}
 
 	keysOnly := len(fieldsByID) == 0
 	if keysOnly {
