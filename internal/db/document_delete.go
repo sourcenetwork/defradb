@@ -174,12 +174,9 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	signingCtx := c.contextForSigning(ctx)
 
 	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
@@ -214,6 +211,7 @@ func (c *collection) applyDelete(
 		CollectionID: c.Version().CollectionID,
 		Block:        b,
 	}
+	txn := datastore.CtxMustGetTxn(ctx)
 	txn.OnSuccess(func() {
 		c.db.sendUpdate(updateEvent)
 	})

@@ -571,7 +571,6 @@ func (c *collection) save(
 	}
 
 	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 	link, headNode, err := coreblock.AddDeltaWithOptions(

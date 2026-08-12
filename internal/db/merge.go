@@ -458,7 +458,6 @@ func (mp *mergeProcessor) initCRDTForType(
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) (crdt.ReplicatedData, resolvedDocRef, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
 	crdtUnion := block.Delta
 
 	collectionShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
@@ -486,7 +485,6 @@ func (mp *mergeProcessor) initCRDTForType(
 			return nil, resolvedDocRef{}, err
 		}
 		return crdt.NewDocComposite(
-			txn.Datastore(),
 			keys.DataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,

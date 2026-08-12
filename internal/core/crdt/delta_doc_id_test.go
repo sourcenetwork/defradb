@@ -28,7 +28,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	ctx := context.Background()
 	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
 	ctx = datastore.CtxSetTxn(ctx, txn)
-	store := txn.Datastore()
 
 	key := keys.DataStoreKey{
 		CollectionShortID: 1,
@@ -56,6 +55,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
-	composite := NewDocComposite(store, key)
+	composite := NewDocComposite(key)
 	require.NotContains(t, string(composite.Delta("collection-version").IPLDSchemaBytes()), "docID")
 }
