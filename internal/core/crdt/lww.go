@@ -62,7 +62,6 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store               datastore.Keyedstore
 	key                 keys.DataStoreKey
 	collectionVersionID string
 	fieldName           string
@@ -74,14 +73,12 @@ var _ ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	store datastore.Keyedstore,
 	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *LWW {
 	return &LWW{
 		key:                 key,
-		store:               store,
 		collectionVersionID: collectionVersionID,
 		fieldName:           fieldName,
 	}
@@ -121,12 +118,12 @@ func (l *LWW) Merge(ctx context.Context, store datastore.Keyedstore, delta Delta
 func (l *LWW) setValue(ctx context.Context, store datastore.Keyedstore, val []byte, priority uint64) error {
 	key := l.key.WithValueFlag()
 
-	curPrio, err := getPriority(ctx, l.store, l.key)
+	curPrio, err := getPriority(ctx, store, l.key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)
 	}
 
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
+	marker, err := store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return NewErrGetRegisterStatus(err, l.fieldName)
 	}
@@ -136,7 +133,7 @@ func (l *LWW) setValue(ctx context.Context, store datastore.Keyedstore, val []by
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key)
+		curValue, err := store.Get(ctx, key)
 		if err != nil {
 			return NewErrGetRegisterValue(err, l.fieldName)
 		}
@@ -151,14 +148,14 @@ func (l *LWW) setValue(ctx context.Context, store datastore.Keyedstore, val []by
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		if err := l.store.Delete(ctx, key); err != nil {
+		if err := store.Delete(ctx, key); err != nil {
 			return NewErrDeleteRegisterValue(err, l.fieldName)
 		}
 	} else {
-		if err := l.store.Set(ctx, key, val); err != nil {
+		if err := store.Set(ctx, key, val); err != nil {
 			return NewErrFailedToStoreValue(err)
 		}
 	}
 
-	return setPriority(ctx, l.store, l.key, priority)
+	return setPriority(ctx, store, l.key, priority)
 }

@@ -37,7 +37,6 @@ func FieldLevelCRDTWithStore(
 	switch cType {
 	case client.LWW_REGISTER:
 		return NewLWW(
-			store,
 			collectionVersionID,
 			key,
 			fieldName,

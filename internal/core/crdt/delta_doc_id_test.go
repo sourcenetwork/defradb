@@ -36,7 +36,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		FieldID:           "1",
 	}
 
-	lww := NewLWW(store, "collection-version", key, "name")
+	lww := NewLWW("collection-version", key, "name")
 	lwwDelta, err := lww.Delta(
 		ctx,
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
