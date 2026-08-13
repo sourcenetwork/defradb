@@ -463,15 +463,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			}
 		}
 
-		err = coreblock.ProcessBlock(
-			vf.ctx,
-			vf.store.Datastore(),
-			mcrdt,
-			block,
-			cidlink.Link{
-				Cid: current.cid,
-			},
-		)
+		// Merge the block without worrying about updating the headstore - they are not used
+		// by this store/fetcher.
+		err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
 		if err != nil {
 			return err
 		}
