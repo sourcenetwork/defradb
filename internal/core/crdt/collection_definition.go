@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type CollectionDefinitionDelta struct {
@@ -51,26 +50,12 @@ func (d *CollectionDefinitionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
 }
 
-type CollectionDefinition struct {
-	headstorePrefix keys.HeadstoreCollectionDefinition
-}
+type CollectionDefinition struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
 
-func NewCollectionDefinition(
-	name string,
-) *CollectionDefinition {
-	return &CollectionDefinition{
-		// WARNING: This prefix will need to be rebuilt if/when we allow the mutation of collection
-		// name.
-		headstorePrefix: keys.HeadstoreCollectionDefinition{
-			CollectionName: name,
-		},
-	}
-}
-
-func (c *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return c.headstorePrefix
+func NewCollectionDefinition() *CollectionDefinition {
+	return &CollectionDefinition{}
 }
 
 func (c *CollectionDefinition) Delta(

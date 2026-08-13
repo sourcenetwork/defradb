@@ -425,7 +425,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 		case block.Delta.IsCollection():
 			mcrdt = crdt.NewCollection(
 				vf.col.Version().VersionID,
-				keys.NewHeadstoreColKey(collectionShortID),
 			)
 
 		case block.Delta.IsComposite():

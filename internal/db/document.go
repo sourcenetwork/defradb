@@ -554,6 +554,7 @@ func (c *collection) save(
 
 			link, rawBlock, err := coreblock.AddDeltaWithOptions(
 				signingCtx,
+				fieldKey.ToHeadStoreKey(),
 				merkleCRDT,
 				delta,
 				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
@@ -575,6 +576,7 @@ func (c *collection) save(
 	)
 	link, headNode, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 		merkleCRDT,
 		merkleCRDT.Delta(c.Version().VersionID),
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
@@ -653,11 +655,11 @@ func (c *collection) save(
 		}
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
+			keys.NewHeadstoreColKey(collectionShortID),
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,

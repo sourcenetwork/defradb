@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type CollectionDelta struct {
@@ -41,7 +40,6 @@ func (d *CollectionDelta) SetPriority(priority uint64) {
 }
 
 type Collection struct {
-	headstorePrefix     keys.HeadstoreKey
 	collectionVersionID string
 }
 
@@ -49,16 +47,10 @@ var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollection(
 	collectionVersionID string,
-	key keys.HeadstoreColKey,
 ) *Collection {
 	return &Collection{
 		collectionVersionID: collectionVersionID,
-		headstorePrefix:     key,
 	}
-}
-
-func (c *Collection) HeadstorePrefix() keys.HeadstoreKey {
-	return c.headstorePrefix
 }
 
 func (c *Collection) Delta() *CollectionDelta {

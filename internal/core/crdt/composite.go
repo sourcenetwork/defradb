@@ -82,10 +82,6 @@ func NewDocComposite(
 	}
 }
 
-func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
-	return m.key.ToHeadStoreKey()
-}
-
 // DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta(collectionVersionID string) *DocCompositeDelta {
 	return &DocCompositeDelta{

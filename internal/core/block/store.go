@@ -56,26 +56,29 @@ type AddDeltaOptions struct {
 // It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
 func AddDelta(
 	ctx context.Context,
+	headstorePrefix keys.HeadstoreKey,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return AddDeltaWithOptions(ctx, crdtData, delta, AddDeltaOptions{}, links...)
+	return AddDeltaWithOptions(ctx, headstorePrefix, crdtData, delta, AddDeltaOptions{}, links...)
 }
 
 // AddDeltaWithOptions adds a delta with explicit storage behavior options.
 func AddDeltaWithOptions(
 	ctx context.Context,
+	headstorePrefix keys.HeadstoreKey,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, crdtData, delta, options, links...)
+	return addDelta(ctx, headstorePrefix, crdtData, delta, options, links...)
 }
 
 func addDelta(
 	ctx context.Context,
+	headstorePrefix keys.HeadstoreKey,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
@@ -83,7 +86,7 @@ func addDelta(
 ) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	headset := NewHeadSet(txn.Headstore(), crdtData.HeadstorePrefix())
+	headset := NewHeadSet(txn.Headstore(), headstorePrefix)
 
 	heads, height, err := headset.List(ctx)
 	if err != nil {
@@ -133,7 +136,7 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(link.Cid, err))
 	}
 
-	err = UpdateHeads(ctx, crdtData.HeadstorePrefix(), block, link)
+	err = UpdateHeads(ctx, headstorePrefix, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}

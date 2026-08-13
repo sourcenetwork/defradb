@@ -182,6 +182,7 @@ func (c *collection) applyDelete(
 
 	link, b, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
+		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 		merkleCRDT,
 		merkleCRDT.DeleteDelta(c.Version().VersionID),
 		coreblock.AddDeltaOptions{
@@ -224,11 +225,11 @@ func (c *collection) applyDelete(
 
 		collectionCRDT := crdt.NewCollection(
 			c.Version().VersionID,
-			keys.NewHeadstoreColKey(collectionShortID),
 		)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
+			keys.NewHeadstoreColKey(collectionShortID),
 			collectionCRDT,
 			collectionCRDT.Delta(),
 			[]coreblock.DAGLink{{Link: link}}...,

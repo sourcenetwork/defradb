@@ -81,10 +81,6 @@ func NewLWW(
 	}
 }
 
-func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
-	return l.key.ToHeadStoreKey()
-}
-
 // Save the value of the register to the DAG.
 func (l *LWW) Delta(
 	ctx context.Context,

@@ -100,10 +100,6 @@ func NewCounter(
 	}
 }
 
-func (c *Counter) HeadstorePrefix() keys.HeadstoreKey {
-	return c.key.ToHeadStoreKey()
-}
-
 // Save the value of the  Counter to the DAG.
 //
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value

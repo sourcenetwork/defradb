@@ -25,6 +25,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // setCollectionIDs saves the given collections to the blockstore and sets the resultant ids on given
@@ -438,7 +439,7 @@ func saveBlocks(
 		var hasFieldsChanged bool
 		newFieldLevelCIDs := []coreblock.DAGLink{}
 		for i, newField := range collection.Fields {
-			fieldCRDT := crdt.NewFieldDefinition(collection.Name, newField.Name)
+			fieldCRDT := crdt.NewFieldDefinition()
 			delta, hasFieldChanged, err := fieldCRDT.Delta(
 				newField,
 				// We cheat here for now, as users cannot yet mutate fields.  When they can,
@@ -454,7 +455,15 @@ func saveBlocks(
 			}
 			hasFieldsChanged = true
 
-			cid, _, err := coreblock.AddDelta(ctx, fieldCRDT, delta)
+			cid, _, err := coreblock.AddDelta(
+				ctx,
+				keys.HeadstoreFieldDefinition{
+					CollectionName: collection.Name,
+					FieldName:      newField.Name,
+				},
+				fieldCRDT,
+				delta,
+			)
 			if err != nil {
 				return err
 			}
@@ -463,7 +472,7 @@ func saveBlocks(
 			newFieldLevelCIDs = append(newFieldLevelCIDs, coreblock.DAGLink{Link: cid})
 		}
 
-		colCRDT := crdt.NewCollectionDefinition(collection.Name)
+		colCRDT := crdt.NewCollectionDefinition()
 		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol)
 		if err != nil {
 			return err
@@ -476,7 +485,15 @@ func saveBlocks(
 		}
 		hasSetUpdated = true
 
-		cid, _, err := coreblock.AddDelta(ctx, colCRDT, delta, newFieldLevelCIDs...)
+		cid, _, err := coreblock.AddDelta(
+			ctx,
+			keys.HeadstoreCollectionDefinition{
+				CollectionName: collection.Name,
+			},
+			colCRDT,
+			delta,
+			newFieldLevelCIDs...,
+		)
 		if err != nil {
 			return err
 		}
@@ -506,7 +523,7 @@ func saveBlocks(
 	}
 
 	if hasSetUpdated && len(collectionSet) > 1 {
-		colSetCRDT := crdt.NewCollectionSet(collectionSet[0].CollectionID)
+		colSetCRDT := crdt.NewCollectionSet()
 		delta := colSetCRDT.Delta()
 
 		links := make([]coreblock.DAGLink, 0, len(colIds))
@@ -514,7 +531,15 @@ func saveBlocks(
 			links = append(links, coreblock.DAGLink{Link: colId})
 		}
 
-		cid, _, err := coreblock.AddDelta(ctx, colSetCRDT, delta, links...)
+		cid, _, err := coreblock.AddDelta(
+			ctx,
+			keys.HeadstoreCollectionSetDefinition{
+				FirstCollectionID: collectionSet[0].CollectionID,
+			},
+			colSetCRDT,
+			delta,
+			links...,
+		)
 		if err != nil {
 			return err
 		}

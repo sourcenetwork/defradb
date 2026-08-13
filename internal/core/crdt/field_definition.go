@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // FieldDefinitionDelta contains the properties changed between two different field versions.
@@ -55,32 +54,12 @@ func (d *FieldDefinitionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
 }
 
-type FieldDefinition struct {
-	headstorePrefix keys.HeadstoreFieldDefinition
-}
+type FieldDefinition struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
 
-func NewFieldDefinition(
-	collectionName string,
-	fieldName string,
-) *FieldDefinition {
-	return &FieldDefinition{
-		// WARNING: This prefix will need to be rebuilt if/when we allow the mutation of collection
-		// and/or field names.
-		//
-		// Whilst the field blocks are not collection specific, the heads are - a patch may update
-		// a field definition on one collection but not the other - in which case the headstore
-		// should differ.
-		headstorePrefix: keys.HeadstoreFieldDefinition{
-			CollectionName: collectionName,
-			FieldName:      fieldName,
-		},
-	}
-}
-
-func (f *FieldDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return f.headstorePrefix
+func NewFieldDefinition() *FieldDefinition {
+	return &FieldDefinition{}
 }
 
 func (f *FieldDefinition) Delta(
