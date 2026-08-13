@@ -91,8 +91,9 @@ func defaultNodeOpts() *options.NodeOptionsBuilder {
 	opt.DB().
 		SetLensPoolSize(lensPoolSize).
 		SetLensRuntime(lensType).
-		// The default is 5 and that is never going to be needed in a testing scenario where all the
-		// nodes are on the same machine with no network latency.
+		// The production default (30s) is never going to be needed in a testing scenario where all
+		// the nodes are on the same machine with no network latency; a short timeout keeps tests
+		// that exercise the timeout path fast.
 		SetP2PBlockSyncTimeout(1 * time.Second)
 
 	return opt

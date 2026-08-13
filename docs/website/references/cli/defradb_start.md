@@ -33,6 +33,7 @@ defradb start [flags]
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
       --node-acp-enable                   Enable the node access control system.
+      --p2p-block-sync-timeout int        Timeout in seconds for fetching each block during P2P DAG sync (default 30)
       --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls

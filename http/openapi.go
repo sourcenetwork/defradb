@@ -41,6 +41,7 @@ var openApiSchemas = map[string]any{
 	"replicator":                               &client.Replicator{},
 	"add_replicator_params":                    &AddReplicatorParams{},
 	"delete_replicator_params":                 &DeleteReplicatorParams{},
+	"sync_documents_params":                    &SyncDocumentsParams{},
 	"ccip_request":                             &CCIPRequest{},
 	"ccip_response":                            &CCIPResponse{},
 	"patch_collection_request":                 &patchCollectionRequest{},

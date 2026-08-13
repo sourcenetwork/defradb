@@ -12,6 +12,7 @@ package p2p
 
 import (
 	"context"
+	"time"
 
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -19,10 +20,30 @@ import (
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
+
+// blockSyncTimeoutCtxKey is the context key under which a per-request per-block sync timeout
+// override is carried down to loadBlockLinks.
+type blockSyncTimeoutCtxKey struct{}
+
+// WithBlockSyncTimeout returns a context carrying a per-block sync timeout override that takes
+// precedence over the node default for the DAG sync it drives.
+func WithBlockSyncTimeout(ctx context.Context, timeout time.Duration) context.Context {
+	return context.WithValue(ctx, blockSyncTimeoutCtxKey{}, timeout)
+}
+
+// blockSyncTimeout returns the per-block fetch timeout to use: the per-request override carried
+// on ctx if one was set (and positive), otherwise the node default.
+func (p *P2P) blockSyncTimeout(ctx context.Context) time.Duration {
+	if v, ok := ctx.Value(blockSyncTimeoutCtxKey{}).(time.Duration); ok && v > 0 {
+		return v
+	}
+	return p.syncBlockLinkTimeout
+}
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 	linkSys := cidlink.DefaultLinkSystem()
@@ -99,11 +120,17 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 			return ctx.Err()
 		}
 
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, p.blockSyncTimeout(ctx))
 		nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
 		cancel()
 
 		if err != nil {
+			// Distinguish "the peer did not serve this block in time" from other load failures.
+			// Only the per-block timeout is attributed here; a deadline on the parent ctx is a
+			// caller-level cancellation and is reported as-is.
+			if errors.Is(err, context.DeadlineExceeded) && ctx.Err() == nil {
+				return NewErrBlockSyncTimeout(err, lnk.String())
+			}
 			return NewErrLoadLinkedBlock(err)
 		}
 

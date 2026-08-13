@@ -627,6 +627,26 @@
                 },
                 "type": "object"
             },
+            "sync_documents_params": {
+                "properties": {
+                    "blockSyncTimeout": {
+                        "type": "string"
+                    },
+                    "collectionName": {
+                        "type": "string"
+                    },
+                    "docIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "timeout": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "update_collection": {
                 "properties": {
                     "filter": {},
@@ -2539,21 +2559,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "collectionName": {
-                                        "type": "string"
-                                    },
-                                    "docIDs": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "timeout": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/sync_documents_params"
                             }
                         }
                     },
