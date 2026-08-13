@@ -103,7 +103,6 @@ func (a *Request) Execute() {
 	var expectedErrorRaised bool
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 
-nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		// Check if a transaction is attached to this action. If so, we will be using it.
@@ -127,11 +126,8 @@ nodeLoop:
 			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
 		}
 
-		if !a.DoNotRefreshViews && !expectedErrorRaised {
-			expectedErrorRaised = refreshViews(a.s, node, identOption, a.ExpectedError)
-			if expectedErrorRaised {
-				continue nodeLoop
-			}
+		if !a.DoNotRefreshViews {
+			refreshViews(a.s, node, nodeID)
 		}
 
 		request := replace(a.s, nodeID, a.Request)
