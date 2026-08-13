@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func putBlock(
@@ -132,7 +133,7 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(link.Cid, err))
 	}
 
-	err = UpdateHeads(ctx, crdtData, block, link)
+	err = UpdateHeads(ctx, crdtData.HeadstorePrefix(), block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -230,13 +231,13 @@ func encryptBlock(
 
 func UpdateHeads(
 	ctx context.Context,
-	crdtData crdt.ReplicatedData,
+	prefix keys.HeadstoreKey,
 	block *Block,
 	blockLink cidlink.Link,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	headset := NewHeadSet(txn.Headstore(), crdtData.HeadstorePrefix())
+	headset := NewHeadSet(txn.Headstore(), prefix)
 
 	priority := block.Delta.GetPriority()
 

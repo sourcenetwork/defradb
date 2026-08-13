@@ -389,7 +389,7 @@ func (mp *mergeProcessor) processBlock(
 			return NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}
 
-		err = coreblock.UpdateHeads(ctx, crdt, block, blockLink)
+		err = coreblock.UpdateHeads(ctx, crdt.HeadstorePrefix(), block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
