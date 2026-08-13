@@ -384,10 +384,16 @@ func (mp *mergeProcessor) processBlock(
 		}
 
 		txn := datastore.CtxMustGetTxn(ctx)
-		err = coreblock.ProcessBlock(ctx, txn.Datastore(), crdt, block, blockLink)
+		err = crdt.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
+		if err != nil {
+			return NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
+		}
+
+		err = coreblock.UpdateHeads(ctx, crdt, block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
+
 		if docRef.docID != "" {
 			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, blockLink.Cid); err != nil {
 				return err

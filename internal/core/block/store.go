@@ -127,8 +127,12 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
 
-	// merge the delta and update the state
-	err = ProcessBlock(ctx, txn.Datastore(), crdtData, block, link)
+	err = crdtData.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
+	if err != nil {
+		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(link.Cid, err))
+	}
+
+	err = UpdateHeads(ctx, crdtData, block, link)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
@@ -224,22 +228,7 @@ func encryptBlock(
 	return &Block{Delta: clonedCRDT, Heads: block.Heads, Links: block.Links}, nil
 }
 
-// ProcessBlock merges the delta CRDT and updates the state accordingly.
-func ProcessBlock(
-	ctx context.Context,
-	store datastore.Keyedstore,
-	crdtData crdt.ReplicatedData,
-	block *Block,
-	blockLink cidlink.Link,
-) error {
-	if err := crdtData.Merge(ctx, store, block.Delta.GetDelta()); err != nil {
-		return NewErrMergingDelta(blockLink.Cid, err)
-	}
-
-	return updateHeads(ctx, crdtData, block, blockLink)
-}
-
-func updateHeads(
+func UpdateHeads(
 	ctx context.Context,
 	crdtData crdt.ReplicatedData,
 	block *Block,
