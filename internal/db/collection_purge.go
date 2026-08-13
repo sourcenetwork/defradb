@@ -28,7 +28,7 @@ import (
 // purgeChunkSize is the number of documents purged per transaction when no caller
 // transaction is supplied. It keeps each commit well under the store's per-transaction
 // size limit.
-const purgeChunkSize = 100
+const purgeChunkSize = 8
 
 // PurgeByDocIDs permanently removes all state for the given documents from this node:
 // datastore values, headstore entries, and, when pruneHistory is true, every blockstore
