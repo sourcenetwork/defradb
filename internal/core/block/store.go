@@ -94,7 +94,14 @@ func addDelta(
 	}
 	height = height + 1
 
+	// todo - this is an unpleasent post-init mutation that prevents Merge calls that use it from being called before this line,
+	// try and remove it and then see if Merge can be extracted to a location where the crdt is known (allowing concrete call)
 	delta.SetPriority(height)
+	err = crdtData.Merge(ctx, txn.Datastore(), delta)
+	if err != nil {
+		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(cid.Undef /*todo*/, err))
+	}
+
 	block := New(crdt.NewCRDT(delta), links, heads...)
 
 	fieldName := immutable.None[string]()
@@ -129,11 +136,6 @@ func addDelta(
 	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
-	}
-
-	err = crdtData.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
-	if err != nil {
-		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(link.Cid, err))
 	}
 
 	err = UpdateHeads(ctx, headstorePrefix, block, link)
