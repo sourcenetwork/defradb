@@ -17,6 +17,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -47,18 +48,49 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 
 	linkSystem := makeLinkSystem(p.host.IPLDStore())
 
+	p.statSyncDAGCalls.Add(1)
+
+	// written counts the links this walk has loaded, which is how far it got rather than
+	// how many blocks it added: a link already held loads without writing anything.
+	var written int64
+
 	// Store the block in the DAG store
 	_, err := linkSystem.Store(linking.LinkContext{Ctx: sessionCtx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
+		p.syncDAGFailure(reasonStoreRoot, written, err)
 		return NewErrStoreBlockDAGSync(err)
 	}
+	written++
 
-	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
+	reason, err := p.loadBlockLinks(sessionCtx, &linkSystem, block, &written)
+	if err != nil {
+		p.syncDAGFailure(reason, written, err)
+		return err
+	}
+	return nil
+}
+
+// syncDAGFailure records an abandoned walk: how it failed and how far it had got. The
+// first occurrence of each reason gets a log line; the rest are counted only.
+func (p *P2P) syncDAGFailure(reason string, loaded int64, err error) {
+	if p.syncDAGFailureReason.record(reason) {
+		log.ErrorE("DAG sync abandoned", err,
+			corelog.String("reason", reason),
+			corelog.Int64("blocksLoaded", loaded))
+	}
 }
 
 // loadBlockLinks traverses the DAG rooted at block and syncs all linked blocks.
 // Uses an explicit stack to avoid goroutine stack overflow on deep DAGs (#2722).
-func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
+//
+// written is incremented for each block the walk pulls into the blockstore. On error the
+// returned reason names the step that failed, for the caller's counters.
+func (p *P2P) loadBlockLinks(
+	ctx context.Context,
+	linkSys *linking.LinkSystem,
+	block *coreblock.Block,
+	written *int64,
+) (string, error) {
 	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
 	stack := []*coreblock.Block{block}
 
@@ -68,11 +100,11 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 
 		link, err := current.GenerateLink()
 		if err != nil {
-			return NewErrGenerateBlockLink(err)
+			return reasonBlockLink, NewErrGenerateBlockLink(err)
 		}
 		merged, err := bstore.IsMerged(ctx, link.Cid)
 		if err != nil {
-			return NewErrCheckBlockMerged(err)
+			return reasonIsMerged, NewErrCheckBlockMerged(err)
 		}
 		if merged {
 			continue
@@ -86,7 +118,7 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 			// But we want to keep the API of VerifyBlockSignature explicit about the results.
 			_, err := coreblock.VerifyBlockSignature(current, linkSys)
 			if err != nil {
-				return NewErrVerifyBlockSig(err)
+				return reasonVerifySig, NewErrVerifyBlockSig(err)
 			}
 		}
 
@@ -94,21 +126,21 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		if current.IsEncrypted() {
 			results, err := p.kms.GetKeys(ctx, *current.Encryption)
 			if err != nil {
-				return NewErrGetEncKeysForBlock(err)
+				return reasonEncKeys, NewErrGetEncKeysForBlock(err)
 			}
 			encResults = results
 		}
 
 		for _, lnk := range current.AllLinks() {
 			if ctx.Err() != nil {
-				return ctx.Err()
+				return reasonContext, ctx.Err()
 			}
 
 			// Skip fetch if the linked block is already merged locally — avoids a BitSwap
 			// round-trip for historical blocks that may have been pruned on the sender.
 			linkedMerged, err := bstore.IsMerged(ctx, lnk.Cid)
 			if err != nil {
-				return NewErrCheckBlockMerged(err)
+				return reasonIsMerged, NewErrCheckBlockMerged(err)
 			}
 			if linkedMerged {
 				continue
@@ -119,12 +151,15 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 			cancel()
 
 			if err != nil {
-				return NewErrLoadLinkedBlock(err)
+				return reasonLoadLink, NewErrLoadLinkedBlock(err)
 			}
+			// The link system writes what it fetches, so a successful load is one more
+			// block in the store.
+			*written++
 
 			linkBlock, err := coreblock.GetFromNode(nd)
 			if err != nil {
-				return NewErrDecodeLinkedBlock(err)
+				return reasonDecodeLink, NewErrDecodeLinkedBlock(err)
 			}
 
 			stack = append(stack, linkBlock)
@@ -133,11 +168,11 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		if encResults != nil {
 			for res := range encResults.Get() {
 				if res.Error != nil {
-					return NewErrRetrieveEncKey(res.Error)
+					return reasonEncKeys, NewErrRetrieveEncKey(res.Error)
 				}
 			}
 		}
 	}
 
-	return nil
+	return "", nil
 }
