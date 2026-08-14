@@ -93,7 +93,7 @@ func TestCollectionVersionPatch_SomeEmptyMigration_TransformRecorded(t *testing.
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: usersCollectionVersion1ID,
-							Transform:          immutable.Some("lensID1"),
+							Transform:          immutable.Some(emptyLensID),
 						}),
 					},
 				},
