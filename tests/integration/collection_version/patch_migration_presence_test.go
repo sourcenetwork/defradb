@@ -28,6 +28,9 @@ import (
 
 const usersCollectionVersion1ID = "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
 
+// emptyLensID is the content-addressed ID of model.Lens{} (an empty lens config)
+const emptyLensID = "bafyreiagp6nl5qdyhlqvwgj3l2dvxz6nqte2btv7i7qhhjgatufehkvmka"
+
 // This tests no migration
 func TestCollectionVersionPatch_NoneMigration_NoTransformRecorded(t *testing.T) {
 	test := testUtils.TestCase{
