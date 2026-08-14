@@ -438,6 +438,8 @@ func saveUniqueKey(
 	}
 
 	if len(val) != 0 {
+		// This read puts the unique key in the transaction's read set, so two transactions
+		// writing the same index value conflict at commit rather than at this check.
 		existing, err := txn.Datastore().Get(ctx, &key)
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return NewErrCheckUniqueIndexConstraint(err)
@@ -446,7 +448,7 @@ func saveUniqueKey(
 			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
 			}
-			return newUniqueIndexError(doc, fieldsDescs)
+			return newUniqueIndexError(ctx, doc, fieldsDescs, existing)
 		}
 	}
 
@@ -456,8 +458,33 @@ func saveUniqueKey(
 	return nil
 }
 
-func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
-	kvs := make([]errors.KV, 0, len(fieldsDescs))
+// incumbentDocID resolves the document already holding a unique index entry, from the
+// short ID the entry stores. Returns an empty string if it cannot be resolved, since this
+// only decorates an error that is being returned either way.
+func incumbentDocID(ctx context.Context, encodedShortID []byte) string {
+	shortID, err := keys.DecodeDocShortID(encodedShortID)
+	if err != nil {
+		return ""
+	}
+	docID, found, err := id.GetDocID(ctx, shortID)
+	if err != nil || !found {
+		return ""
+	}
+	return docID
+}
+
+func newUniqueIndexError(
+	ctx context.Context,
+	doc *client.Document,
+	fieldsDescs []client.CollectionFieldDescription,
+	existing []byte,
+) error {
+	kvs := make([]errors.KV, 0, len(fieldsDescs)+1)
+	// Naming the document that already holds the value is what makes the two comparable;
+	// without it the error only says which one lost.
+	if incumbent := incumbentDocID(ctx, existing); incumbent != "" {
+		kvs = append(kvs, errors.NewKV("HeldBy", incumbent))
+	}
 	for iter := range fieldsDescs {
 		fieldVal, err := doc.TryGetValue(fieldsDescs[iter].Name)
 		var val any
