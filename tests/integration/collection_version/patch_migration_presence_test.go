@@ -49,8 +49,9 @@ func TestCollectionVersionPatch_NoneMigration_NoTransformRecorded(t *testing.T) 
 				FilterOptions: options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:     "Users",
-						IsActive: true,
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: usersCollectionVersion1ID,
 						}),
@@ -84,8 +85,9 @@ func TestCollectionVersionPatch_SomeEmptyMigration_TransformRecorded(t *testing.
 				FilterOptions: options.GetCollections().SetCollectionName("Users"),
 				ExpectedResults: []client.CollectionVersion{
 					{
-						Name:     "Users",
-						IsActive: true,
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
 							SourceCollectionID: usersCollectionVersion1ID,
 							Transform:          immutable.Some("lensID1"),
