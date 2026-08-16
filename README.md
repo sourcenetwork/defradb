@@ -490,6 +490,65 @@ Because the certificates are self-signed, HTTPS clients must be configured to tr
 ## Access Control System
 Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
+### Using SourceHub for Document ACP
+
+By default, Document ACP is local to the node. Setting `acp.document.type` to `source-hub` stores policies and relationships on a [SourceHub](https://github.com/sourcenetwork/sourcehub) chain instead, which is what makes them verifiable across nodes.
+
+Four parameters are required on the node when that type is selected, and one more on the client:
+
+| Parameter | Side | Description |
+| --- | --- | --- |
+| `acp.document.sourceHub.ChainID` | node | ID of the chain to write ACP data to |
+| `acp.document.sourceHub.GRPCAddress` | node | address of the SourceHub gRPC server |
+| `acp.document.sourceHub.CometRPCAddress` | node | address of the SourceHub Comet RPC server |
+| `acp.document.sourceHub.KeyName` | node | keyring entry holding the secp256k1 key that signs and pays for SourceHub transactions |
+| `acp.document.sourceHub.address` | client | SourceHub address allowed to act on the client's behalf |
+
+The signing key is a regular keyring entry, so it is added the same way as any other key:
+
+```shell
+defradb keyring add sourcehub-key <secp256k1-private-key-hex>
+```
+
+#### Running a SourceHub node locally
+
+For local development, the SourceHub image can run an isolated chain of its own with `STANDALONE=1`, which is also how the integration tests bring it up:
+
+```shell
+docker run --rm \
+  -e STANDALONE=1 \
+  -p 26657:26657 -p 9090:9090 \
+  ghcr.io/sourcenetwork/sourcehub:dev
+```
+
+It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain is `sourcehub-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs, so transactions can be paid for without setting up an account first.
+
+A node is pointed at it through the config file at `~/.defradb/config.yaml`:
+
+```yaml
+acp:
+  document:
+    type: source-hub
+    sourceHub:
+      ChainID: sourcehub-dev
+      GRPCAddress: 127.0.0.1:9090
+      CometRPCAddress: 127.0.0.1:26657
+      KeyName: sourcehub-key
+```
+
+Only `acp.document.type` and `acp.document.sourceHub.address` have CLI flags (`--document-acp-type` and `--source-hub-address`); the rest are set in the config file or through the environment, where `DEFRA_` is prefixed and dots become underscores:
+
+```shell
+export DEFRA_ACP_DOCUMENT_TYPE=source-hub
+export DEFRA_ACP_DOCUMENT_SOURCEHUB_CHAINID=sourcehub-dev
+export DEFRA_ACP_DOCUMENT_SOURCEHUB_GRPCADDRESS=127.0.0.1:9090
+export DEFRA_ACP_DOCUMENT_SOURCEHUB_COMETRPCADDRESS=127.0.0.1:26657
+export DEFRA_ACP_DOCUMENT_SOURCEHUB_KEYNAME=sourcehub-key
+defradb start
+```
+
+The SourceHub version DefraDB is built against is pinned in `go.mod` as `github.com/sourcenetwork/sourcehub`; use a node from a matching release when running against something other than the `dev` image.
+
 ## Supporting CORS
 
 When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
