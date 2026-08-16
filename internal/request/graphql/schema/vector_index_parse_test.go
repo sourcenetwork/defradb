@@ -89,10 +89,11 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 	require.NotNil(t, newIndex.Vector)
 
 	// Simulate turning the request into a descriptor, as processNewIndexRequest would: a request with
-	// a Vector becomes a descriptor whose kind is the vector config.
+	// a Vector becomes a vector-kind descriptor carrying the vector config.
 	desc := client.IndexDescription{
-		Fields: newIndex.Fields,
-		Kind:   newIndex.Vector,
+		Fields:          newIndex.Fields,
+		Kind:            client.IndexKindVector,
+		KindDescription: newIndex.Vector,
 	}
 	require.True(t, desc.IsVector())
 	vec, _ := desc.GetVector()

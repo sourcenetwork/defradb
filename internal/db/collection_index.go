@@ -496,18 +496,21 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	// Turn the flat request into the kind-specific config: a Vector request is a vector index, else
-	// an ordered index carrying the unique flag.
-	var kind client.IndexKind = &client.OrderedIndexDescription{Unique: desc.Unique}
+	// Turn the flat request into the kind + kind-specific config: a Vector request is a vector
+	// index, else an ordered index carrying the unique flag.
+	kind := client.IndexKindOrdered
+	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: desc.Unique}
 	if desc.Vector != nil {
-		kind = desc.Vector
+		kind = client.IndexKindVector
+		kindDescription = desc.Vector
 	}
 
 	res := client.IndexDescription{
-		Name:   indexName,
-		ID:     uint32(indexID),
-		Fields: desc.Fields,
-		Kind:   kind,
+		Name:            indexName,
+		ID:              uint32(indexID),
+		Fields:          desc.Fields,
+		Kind:            kind,
+		KindDescription: kindDescription,
 		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
 		Unique: desc.Vector == nil && desc.Unique,
 	}

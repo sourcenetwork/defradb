@@ -130,8 +130,8 @@ func TestCollectIndexesOnField(t *testing.T) {
 	}
 }
 
-// A descriptor persisted before the Kind interface existed has only a top-level Unique. It must
-// still load, reading that Unique into both the ordered kind and the compat Unique field.
+// A descriptor persisted before the Kind field existed has only a top-level Unique. It must
+// still load, reading that Unique into both the ordered config and the compat Unique field.
 func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
 	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
 
@@ -141,8 +141,9 @@ func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
 
 	assert.False(t, actual.IsVector())
 	assert.True(t, actual.GetUnique())
-	assert.True(t, actual.Unique) // compat field synced from the resolved kind
-	assert.Equal(t, &OrderedIndexDescription{Unique: true}, actual.Kind)
+	assert.True(t, actual.Unique) // compat field synced from the resolved config
+	assert.Equal(t, IndexKindOrdered, actual.Kind)
+	assert.Equal(t, &OrderedIndexDescription{Unique: true}, actual.KindDescription)
 }
 
 // An embedded caller that predates Kind builds the struct with only the top-level Unique. It must
@@ -171,9 +172,10 @@ func TestIndexDescription_OrderedDescriptor_RoundTrips(t *testing.T) {
 		Name:   "some_unique_index",
 		ID:     1,
 		Fields: []IndexedFieldDescription{{Name: "age"}},
-		// A fully-formed ordered descriptor sets both the compat Unique and the Kind, in sync.
-		Unique: true,
-		Kind:   &OrderedIndexDescription{Unique: true},
+		// A fully-formed ordered descriptor sets the compat Unique and the config, in sync.
+		Unique:          true,
+		Kind:            IndexKindOrdered,
+		KindDescription: &OrderedIndexDescription{Unique: true},
 	}
 
 	bytes, err := json.Marshal(original)
@@ -193,7 +195,8 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 		Name:   "some_vector_index",
 		ID:     2,
 		Fields: []IndexedFieldDescription{{Name: "embedding"}},
-		Kind: &VectorIndexDescription{
+		Kind:   IndexKindVector,
+		KindDescription: &VectorIndexDescription{
 			Algorithm:  VectorAlgorithmHNSW,
 			Metric:     DistanceMetricCosine,
 			Dimensions: 128,
@@ -214,4 +217,14 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 
 	require.True(t, actual.IsVector())
 	assert.Equal(t, original, actual)
+}
+
+// Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not
+// know cannot be loaded: silently defaulting it would misread the index.
+func TestIndexDescription_UnknownKind_Errors(t *testing.T) {
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":42}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(json1), &actual)
+	require.ErrorContains(t, err, "unknown index kind")
 }

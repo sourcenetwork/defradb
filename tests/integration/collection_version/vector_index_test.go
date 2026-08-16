@@ -42,7 +42,8 @@ func TestCollectionVersion_VectorIndexOnRawFloat32Array_ShouldSucceed(t *testing
 						Fields: []client.IndexedFieldDescription{
 							{Name: "embedding"},
 						},
-						Kind: &client.VectorIndexDescription{
+						Kind: client.IndexKindVector,
+						KindDescription: &client.VectorIndexDescription{
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     client.DistanceMetricCosine,
 							Dimensions: 3,
