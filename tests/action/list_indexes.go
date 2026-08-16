@@ -209,6 +209,7 @@ func assertIndexCollectionNames(
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t require.TestingT) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
 	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
+	assert.Equal(t, expectedIndex.Kind, actualIndex.Kind, "index kind mismatch")
 	assert.Equal(t, expectedIndex.GetUnique(), actualIndex.GetUnique(), "index unique mismatch")
 	expectedVec, _ := expectedIndex.GetVector()
 	actualVec, _ := actualIndex.GetVector()

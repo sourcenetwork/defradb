@@ -53,7 +53,8 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 			Name:   "User_vector_ASC",
 			ID:     1,
 			Fields: []client.IndexedFieldDescription{{Name: "vector"}},
-			Kind: &client.VectorIndexDescription{
+			Kind:   client.IndexKindVector,
+			KindDescription: &client.VectorIndexDescription{
 				Algorithm:  client.VectorAlgorithmHNSW,
 				Metric:     client.DistanceMetricCosine,
 				Dimensions: 3,
