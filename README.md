@@ -521,7 +521,15 @@ docker run --rm \
   ghcr.io/sourcenetwork/sourcehub:dev
 ```
 
-It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain is `sourcehub-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs, so transactions can be paid for without setting up an account first.
+It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain is `sourcehub-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs.
+
+The account behind `KeyName` pays for the SourceHub transactions the node creates, and the faucet does not fund it automatically. Either import the faucet mnemonic as the node's key, or send funds to the address derived from the key already in the keyring:
+
+```shell
+docker exec <container> sourcehubd tx bank send \
+  faucet <address of the KeyName key> 1000000uopen \
+  --keyring-backend test --chain-id sourcehub-dev --yes
+```
 
 A node is pointed at it through the config file at `~/.defradb/config.yaml`:
 
@@ -547,7 +555,7 @@ export DEFRA_ACP_DOCUMENT_SOURCEHUB_KEYNAME=sourcehub-key
 defradb start
 ```
 
-The SourceHub version DefraDB is built against is pinned in `go.mod` as `github.com/sourcenetwork/sourcehub`; use a node from a matching release when running against something other than the `dev` image.
+The SourceHub version DefraDB is built against is pinned in `go.mod`, currently `github.com/sourcenetwork/sourcehub v0.4.1-0.20260128164915-1bce44032618`; use a node built from that revision when running against something other than the `dev` image.
 
 ## Supporting CORS
 
