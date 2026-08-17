@@ -40,7 +40,6 @@ func FieldLevelCRDTWithStore(
 	case client.LWW_REGISTER:
 		return NewLWW(
 			key,
-			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
