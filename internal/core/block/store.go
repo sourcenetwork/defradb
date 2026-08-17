@@ -57,42 +57,34 @@ type AddDeltaOptions struct {
 func AddDelta(
 	ctx context.Context,
 	headstorePrefix keys.HeadstoreKey,
-	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return AddDeltaWithOptions(ctx, headstorePrefix, crdtData, delta, AddDeltaOptions{}, heads, links...)
+	return AddDeltaWithOptions(ctx, headstorePrefix, delta, AddDeltaOptions{}, heads, links...)
 }
 
 // AddDeltaWithOptions adds a delta with explicit storage behavior options.
 func AddDeltaWithOptions(
 	ctx context.Context,
 	headstorePrefix keys.HeadstoreKey,
-	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
 	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, headstorePrefix, crdtData, delta, options, heads, links...)
+	return addDelta(ctx, headstorePrefix, delta, options, heads, links...)
 }
 
 func addDelta(
 	ctx context.Context,
 	headstorePrefix keys.HeadstoreKey,
-	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
 	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-
-	err := crdtData.Merge(ctx, txn.Datastore(), delta)
-	if err != nil {
-		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(cid.Undef /*todo*/, err))
-	}
 
 	block := New(crdt.NewCRDT(delta), links, heads...)
 
@@ -102,6 +94,7 @@ func addDelta(
 	}
 	var encBlock *Encryption
 	var encLink cidlink.Link
+	var err error
 	if !block.Delta.IsCollection() {
 		encBlock, encLink, err = determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
 		if err != nil {

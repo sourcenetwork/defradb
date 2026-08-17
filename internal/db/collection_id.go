@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
@@ -472,13 +473,17 @@ func saveBlocks(
 			}
 			hasFieldsChanged = true
 
+			err = fieldCRDT.Merge(ctx, txn.Datastore(), delta)
+			if err != nil {
+				return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
+			}
+
 			cid, _, err := coreblock.AddDelta(
 				ctx,
 				keys.HeadstoreFieldDefinition{
 					CollectionName: collection.Name,
 					FieldName:      newField.Name,
 				},
-				fieldCRDT,
 				delta,
 				heads,
 			)
@@ -515,12 +520,16 @@ func saveBlocks(
 		}
 		hasSetUpdated = true
 
+		err = colCRDT.Merge(ctx, txn.Datastore(), delta)
+		if err != nil {
+			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
+		}
+
 		cid, _, err := coreblock.AddDelta(
 			ctx,
 			keys.HeadstoreCollectionDefinition{
 				CollectionName: collection.Name,
 			},
-			colCRDT,
 			delta,
 			heads,
 			newFieldLevelCIDs...,
@@ -569,6 +578,11 @@ func saveBlocks(
 		colSetCRDT := crdt.NewCollectionSet()
 		delta := colSetCRDT.Delta(height)
 
+		err = colSetCRDT.Merge(ctx, txn.Datastore(), delta)
+		if err != nil {
+			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
+		}
+
 		links := make([]coreblock.DAGLink, 0, len(colIds))
 		for _, colId := range colIds {
 			links = append(links, coreblock.DAGLink{Link: colId})
@@ -579,7 +593,6 @@ func saveBlocks(
 			keys.HeadstoreCollectionSetDefinition{
 				FirstCollectionID: collectionSet[0].CollectionID,
 			},
-			colSetCRDT,
 			delta,
 			heads,
 			links...,

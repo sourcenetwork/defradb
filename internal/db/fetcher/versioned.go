@@ -420,18 +420,31 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			}
 		}
 
-		var mcrdt crdt.ReplicatedData
 		switch {
 		case block.Delta.IsCollection():
-			mcrdt = crdt.NewCollection()
+			mcrdt := crdt.NewCollection()
+
+			// Merge the block without worrying about updating the headstore - they are not used
+			// by this store/fetcher.
+			err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
+			if err != nil {
+				return err
+			}
 
 		case block.Delta.IsComposite():
-			mcrdt = crdt.NewDocComposite(
+			mcrdt := crdt.NewDocComposite(
 				keys.PrimaryDataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        blockDocShortID,
 				},
 			)
+
+			// Merge the block without worrying about updating the headstore - they are not used
+			// by this store/fetcher.
+			err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
+			if err != nil {
+				return err
+			}
 
 		default:
 			field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
@@ -444,7 +457,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return err
 			}
 
-			mcrdt, err = crdt.FieldLevelCRDTWithStore(
+			mcrdt, err := crdt.FieldLevelCRDTWithStore(
 				field.Typ,
 				field.Kind,
 				keys.DataStoreKey{
@@ -456,13 +469,13 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			if err != nil {
 				return err
 			}
-		}
 
-		// Merge the block without worrying about updating the headstore - they are not used
-		// by this store/fetcher.
-		err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
-		if err != nil {
-			return err
+			// Merge the block without worrying about updating the headstore - they are not used
+			// by this store/fetcher.
+			err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
+			if err != nil {
+				return err
+			}
 		}
 
 		for i := len(block.Links) - 1; i >= 0; i-- {

@@ -558,10 +558,14 @@ func (c *collection) save(
 				return err
 			}
 
+			err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+			if err != nil {
+				return err
+			}
+
 			link, rawBlock, err := coreblock.AddDeltaWithOptions(
 				signingCtx,
 				fieldKey.ToHeadStoreKey(),
-				merkleCRDT,
 				delta,
 				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 				heads,
@@ -588,11 +592,17 @@ func (c *collection) save(
 	merkleCRDT := crdt.NewDocComposite(
 		primaryKey,
 	)
+	delta := merkleCRDT.Delta(c.Version().VersionID, height)
+
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+	if err != nil {
+		return err
+	}
+
 	link, headNode, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-		merkleCRDT,
-		merkleCRDT.Delta(c.Version().VersionID, height),
+		delta,
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 		heads,
 		links...,
@@ -677,12 +687,17 @@ func (c *collection) save(
 		height = height + 1
 
 		collectionCRDT := crdt.NewCollection()
+		delta := collectionCRDT.Delta(c.Version().VersionID, height)
+
+		err = collectionCRDT.Merge(ctx, txn.Datastore(), delta)
+		if err != nil {
+			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
+		}
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
 			keys.NewHeadstoreColKey(collectionShortID),
-			collectionCRDT,
-			collectionCRDT.Delta(c.Version().VersionID, height),
+			delta,
 			heads,
 			[]coreblock.DAGLink{{Link: link}}...,
 		)

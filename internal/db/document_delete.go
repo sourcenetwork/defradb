@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -187,12 +188,17 @@ func (c *collection) applyDelete(
 	merkleCRDT := crdt.NewDocComposite(
 		primaryKey,
 	)
+	delta := merkleCRDT.DeleteDelta(c.Version().VersionID, height)
+
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+	if err != nil {
+		return err
+	}
 
 	link, b, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
-		merkleCRDT,
-		merkleCRDT.DeleteDelta(c.Version().VersionID, height),
+		delta,
 		coreblock.AddDeltaOptions{
 			EncryptionDocKey: keys.EncodeDocRef(primaryKey.CollectionShortID, primaryKey.DocShortID),
 		},
@@ -239,12 +245,17 @@ func (c *collection) applyDelete(
 		height = height + 1
 
 		collectionCRDT := crdt.NewCollection()
+		delta := collectionCRDT.Delta(c.Version().VersionID, height)
+
+		err = collectionCRDT.Merge(ctx, txn.Datastore(), delta)
+		if err != nil {
+			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
+		}
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
 			keys.NewHeadstoreColKey(collectionShortID),
-			collectionCRDT,
-			collectionCRDT.Delta(c.Version().VersionID, height),
+			delta,
 			heads,
 			[]coreblock.DAGLink{{Link: link}}...,
 		)
