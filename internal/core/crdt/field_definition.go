@@ -50,10 +50,6 @@ func (d *FieldDefinitionDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *FieldDefinitionDelta) SetPriority(priority uint64) {
-	d.Priority = priority
-}
-
 type FieldDefinition struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
@@ -65,6 +61,7 @@ func NewFieldDefinition() *FieldDefinition {
 func (f *FieldDefinition) Delta(
 	new client.CollectionFieldDescription,
 	old client.CollectionFieldDescription,
+	priority uint64,
 ) (*FieldDefinitionDelta, bool, error) {
 	if new.FieldID != "" {
 		// This function is currently taking advantage of us not yet having implemented field-mutations,
@@ -103,6 +100,7 @@ func (f *FieldDefinition) Delta(
 		ScalarKind:   scalarKind,
 		CollectionID: relatedCollectionID,
 		RelativeID:   relativeID,
+		Priority:     priority,
 	}, true, nil
 }
 

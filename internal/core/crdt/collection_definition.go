@@ -46,10 +46,6 @@ func (d *CollectionDefinitionDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *CollectionDefinitionDelta) SetPriority(priority uint64) {
-	d.Priority = priority
-}
-
 type CollectionDefinition struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
@@ -61,6 +57,7 @@ func NewCollectionDefinition() *CollectionDefinition {
 func (c *CollectionDefinition) Delta(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
+	priority uint64,
 ) (*CollectionDefinitionDelta, bool, error) {
 	var name *string
 	if new.Name != old.Name {
@@ -109,13 +106,16 @@ func (c *CollectionDefinition) Delta(
 	}
 
 	if name == nil && queryDelta == nil && transformDelta == nil {
-		return &CollectionDefinitionDelta{}, false, nil
+		return &CollectionDefinitionDelta{
+			Priority: priority,
+		}, false, nil
 	}
 
 	return &CollectionDefinitionDelta{
 		Name:           name,
 		QuerySelect:    queryDelta,
 		QueryTransform: transformDelta,
+		Priority:       priority,
 	}, true, nil
 }
 

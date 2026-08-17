@@ -538,6 +538,13 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
+			headset := coreblock.NewHeadSet(txn.Headstore(), fieldKey.ToHeadStoreKey())
+			heads, height, err := headset.List(ctx)
+			if err != nil {
+				return coreblock.NewErrGettingHeads(err)
+			}
+			height = height + 1
+
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
 				val.Type(),
 				fieldDescription.Kind,
@@ -546,7 +553,7 @@ func (c *collection) save(
 			if err != nil {
 				return err
 			}
-			delta, err := merkleCRDT.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd)
+			delta, err := merkleCRDT.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
 			if err != nil {
 				return err
 			}
@@ -557,6 +564,7 @@ func (c *collection) save(
 				merkleCRDT,
 				delta,
 				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+				heads,
 			)
 			if err != nil {
 				return err
@@ -570,6 +578,13 @@ func (c *collection) save(
 		}
 	}
 
+	headset := coreblock.NewHeadSet(txn.Headstore(), primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey())
+	heads, height, err := headset.List(ctx)
+	if err != nil {
+		return coreblock.NewErrGettingHeads(err)
+	}
+	height = height + 1
+
 	merkleCRDT := crdt.NewDocComposite(
 		primaryKey,
 	)
@@ -577,8 +592,9 @@ func (c *collection) save(
 		signingCtx,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
 		merkleCRDT,
-		merkleCRDT.Delta(c.Version().VersionID),
+		merkleCRDT.Delta(c.Version().VersionID, height),
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+		heads,
 		links...,
 	)
 	if err != nil {
@@ -652,13 +668,22 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
+
+		headset := coreblock.NewHeadSet(txn.Headstore(), keys.NewHeadstoreColKey(collectionShortID))
+		heads, height, err := headset.List(ctx)
+		if err != nil {
+			return coreblock.NewErrGettingHeads(err)
+		}
+		height = height + 1
+
 		collectionCRDT := crdt.NewCollection()
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
 			keys.NewHeadstoreColKey(collectionShortID),
 			collectionCRDT,
-			collectionCRDT.Delta(c.Version().VersionID),
+			collectionCRDT.Delta(c.Version().VersionID, height),
+			heads,
 			[]coreblock.DAGLink{{Link: link}}...,
 		)
 		if err != nil {

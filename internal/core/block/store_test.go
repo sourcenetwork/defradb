@@ -14,6 +14,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/memory"
@@ -39,7 +40,7 @@ func TestAddDelta_DoesNotEncryptCollectionBlocks(t *testing.T) {
 	ctx = encryption.SetContextConfigFromParams(ctx, true, nil)
 
 	collectionCRDT := crdt.NewCollection()
-	_, rawBlock, err := AddDelta(ctx, keys.NewHeadstoreColKey(1), collectionCRDT, collectionCRDT.Delta("collection-version"))
+	_, rawBlock, err := AddDelta(ctx, keys.NewHeadstoreColKey(1), collectionCRDT, collectionCRDT.Delta("collection-version", 1), []cid.Cid{})
 	require.NoError(t, err)
 
 	block, err := GetFromBytes(rawBlock)

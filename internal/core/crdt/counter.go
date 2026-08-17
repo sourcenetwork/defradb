@@ -68,11 +68,6 @@ func (delta *CounterDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta.
-func (delta *CounterDelta) SetPriority(prio uint64) {
-	delta.Priority = prio
-}
-
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
 	key            keys.DataStoreKey
@@ -107,6 +102,7 @@ func (c *Counter) Delta(
 	collectionVersionID string,
 	data *DocField,
 	isAdd bool,
+	priority uint64,
 ) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
@@ -130,6 +126,7 @@ func (c *Counter) Delta(
 		Data:                bytes,
 		CollectionVersionID: collectionVersionID,
 		Nonce:               nonce,
+		Priority:            priority,
 	}, nil
 }
 

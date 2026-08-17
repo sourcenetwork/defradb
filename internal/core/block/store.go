@@ -59,9 +59,10 @@ func AddDelta(
 	headstorePrefix keys.HeadstoreKey,
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
+	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return AddDeltaWithOptions(ctx, headstorePrefix, crdtData, delta, AddDeltaOptions{}, links...)
+	return AddDeltaWithOptions(ctx, headstorePrefix, crdtData, delta, AddDeltaOptions{}, heads, links...)
 }
 
 // AddDeltaWithOptions adds a delta with explicit storage behavior options.
@@ -71,9 +72,10 @@ func AddDeltaWithOptions(
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
+	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
-	return addDelta(ctx, headstorePrefix, crdtData, delta, options, links...)
+	return addDelta(ctx, headstorePrefix, crdtData, delta, options, heads, links...)
 }
 
 func addDelta(
@@ -82,22 +84,12 @@ func addDelta(
 	crdtData crdt.ReplicatedData,
 	delta crdt.Delta,
 	options AddDeltaOptions,
+	heads []cid.Cid,
 	links ...DAGLink,
 ) (cidlink.Link, []byte, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	headset := NewHeadSet(txn.Headstore(), headstorePrefix)
-
-	heads, height, err := headset.List(ctx)
-	if err != nil {
-		return cidlink.Link{}, nil, NewErrGettingHeads(err)
-	}
-	height = height + 1
-
-	// todo - this is an unpleasent post-init mutation that prevents Merge calls that use it from being called before this line,
-	// try and remove it and then see if Merge can be extracted to a location where the crdt is known (allowing concrete call)
-	delta.SetPriority(height)
-	err = crdtData.Merge(ctx, txn.Datastore(), delta)
+	err := crdtData.Merge(ctx, txn.Datastore(), delta)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrProcessBlock(NewErrMergingDelta(cid.Undef /*todo*/, err))
 	}

@@ -33,10 +33,6 @@ func (d *CollectionSetDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *CollectionSetDelta) SetPriority(priority uint64) {
-	d.Priority = priority
-}
-
 type CollectionSetDefinition struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
@@ -45,8 +41,12 @@ func NewCollectionSet() *CollectionSetDefinition {
 	return &CollectionSetDefinition{}
 }
 
-func (c *CollectionSetDefinition) Delta() *CollectionSetDelta {
-	return &CollectionSetDelta{}
+func (c *CollectionSetDefinition) Delta(
+	priority uint64,
+) *CollectionSetDelta {
+	return &CollectionSetDelta{
+		Priority: priority,
+	}
 }
 
 func (c *CollectionSetDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {

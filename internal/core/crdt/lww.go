@@ -55,11 +55,6 @@ func (d *LWWDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-// SetPriority will set the priority for this delta.
-func (d *LWWDelta) SetPriority(prio uint64) {
-	d.Priority = prio
-}
-
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
 	key keys.DataStoreKey
@@ -84,6 +79,7 @@ func (l *LWW) Delta(
 	collectionVersionID string,
 	data *DocField,
 	isAdd bool,
+	priority uint64,
 ) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
@@ -94,6 +90,7 @@ func (l *LWW) Delta(
 		Data:                bytes,
 		FieldName:           data.FieldName,
 		CollectionVersionID: collectionVersionID,
+		Priority:            priority,
 	}, nil
 }
 

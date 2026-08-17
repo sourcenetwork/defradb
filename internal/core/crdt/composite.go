@@ -60,11 +60,6 @@ func (delta *DocCompositeDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// SetPriority will set the priority for this delta.
-func (delta *DocCompositeDelta) SetPriority(prio uint64) {
-	delta.Priority = prio
-}
-
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct {
 	key keys.PrimaryDataStoreKey
@@ -83,18 +78,26 @@ func NewDocComposite(
 }
 
 // DeleteDelta sets the values of CompositeDAG for a delete.
-func (m *DocComposite) DeleteDelta(collectionVersionID string) *DocCompositeDelta {
+func (m *DocComposite) DeleteDelta(
+	collectionVersionID string,
+	priority uint64,
+) *DocCompositeDelta {
 	return &DocCompositeDelta{
 		CollectionVersionID: collectionVersionID,
 		Status:              client.Deleted,
+		Priority:            priority,
 	}
 }
 
 // Delta the value of the composite CRDT to DAG.
-func (m *DocComposite) Delta(collectionVersionID string) *DocCompositeDelta {
+func (m *DocComposite) Delta(
+	collectionVersionID string,
+	priority uint64,
+) *DocCompositeDelta {
 	return &DocCompositeDelta{
 		CollectionVersionID: collectionVersionID,
 		Status:              client.Active,
+		Priority:            priority,
 	}
 }
 

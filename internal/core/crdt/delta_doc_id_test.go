@@ -41,6 +41,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		"collection-version",
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
 		true,
+		1,
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
@@ -51,10 +52,11 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		"collection-version",
 		NewDocField("age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
 		false,
+		1,
 	)
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
 	composite := NewDocComposite(key.ToPrimaryDataStoreKey())
-	require.NotContains(t, string(composite.Delta("collection-version").IPLDSchemaBytes()), "docID")
+	require.NotContains(t, string(composite.Delta("collection-version", 1).IPLDSchemaBytes()), "docID")
 }

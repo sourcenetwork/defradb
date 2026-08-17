@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -412,6 +413,8 @@ func saveBlocks(
 	collectionRepository *description.CollectionRepository,
 	collectionSet []*client.CollectionVersion,
 ) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	colIds := make([]cidlink.Link, 0, len(collectionSet))
 	hasSetUpdated := false
 
@@ -439,12 +442,26 @@ func saveBlocks(
 		var hasFieldsChanged bool
 		newFieldLevelCIDs := []coreblock.DAGLink{}
 		for i, newField := range collection.Fields {
+			headset := coreblock.NewHeadSet(
+				txn.Headstore(),
+				keys.HeadstoreFieldDefinition{
+					CollectionName: collection.Name,
+					FieldName:      newField.Name,
+				},
+			)
+			heads, height, err := headset.List(ctx)
+			if err != nil {
+				return coreblock.NewErrGettingHeads(err)
+			}
+			height = height + 1
+
 			fieldCRDT := crdt.NewFieldDefinition()
 			delta, hasFieldChanged, err := fieldCRDT.Delta(
 				newField,
 				// We cheat here for now, as users cannot yet mutate fields.  When they can,
 				// we will need to pass in the old version here.
 				client.CollectionFieldDescription{},
+				height,
 			)
 			if err != nil {
 				return err
@@ -463,6 +480,7 @@ func saveBlocks(
 				},
 				fieldCRDT,
 				delta,
+				heads,
 			)
 			if err != nil {
 				return err
@@ -472,8 +490,20 @@ func saveBlocks(
 			newFieldLevelCIDs = append(newFieldLevelCIDs, coreblock.DAGLink{Link: cid})
 		}
 
+		headset := coreblock.NewHeadSet(
+			txn.Headstore(),
+			keys.HeadstoreCollectionDefinition{
+				CollectionName: collection.Name,
+			},
+		)
+		heads, height, err := headset.List(ctx)
+		if err != nil {
+			return coreblock.NewErrGettingHeads(err)
+		}
+		height = height + 1
+
 		colCRDT := crdt.NewCollectionDefinition()
-		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol)
+		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol, height)
 		if err != nil {
 			return err
 		}
@@ -492,6 +522,7 @@ func saveBlocks(
 			},
 			colCRDT,
 			delta,
+			heads,
 			newFieldLevelCIDs...,
 		)
 		if err != nil {
@@ -523,8 +554,20 @@ func saveBlocks(
 	}
 
 	if hasSetUpdated && len(collectionSet) > 1 {
+		headset := coreblock.NewHeadSet(
+			txn.Headstore(),
+			keys.HeadstoreCollectionSetDefinition{
+				FirstCollectionID: collectionSet[0].CollectionID,
+			},
+		)
+		heads, height, err := headset.List(ctx)
+		if err != nil {
+			return coreblock.NewErrGettingHeads(err)
+		}
+		height = height + 1
+
 		colSetCRDT := crdt.NewCollectionSet()
-		delta := colSetCRDT.Delta()
+		delta := colSetCRDT.Delta(height)
 
 		links := make([]coreblock.DAGLink, 0, len(colIds))
 		for _, colId := range colIds {
@@ -538,6 +581,7 @@ func saveBlocks(
 			},
 			colSetCRDT,
 			delta,
+			heads,
 			links...,
 		)
 		if err != nil {

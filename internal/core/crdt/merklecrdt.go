@@ -27,6 +27,7 @@ type FieldLevelCRDT interface {
 		collectionVersionID string,
 		data *DocField,
 		isAdd bool,
+		priority uint64,
 	) (Delta, error)
 }
 
