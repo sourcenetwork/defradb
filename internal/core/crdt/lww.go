@@ -61,6 +61,10 @@ func NewLWW() *LWW {
 	return &LWW{}
 }
 
+func (l *LWW) CType() client.CType {
+	return client.LWW_REGISTER
+}
+
 func (l *LWW) Set(
 	ctx context.Context,
 	collectionVersionID string,

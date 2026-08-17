@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -834,7 +835,7 @@ func validateTypeSupported(
 	var errs []error
 	for _, col := range newState.collections {
 		for _, newField := range col.Fields {
-			if !newField.Typ.IsSupportedFieldCType() {
+			if _, ok := crdt.TryGetFieldCRDT(newField.Typ); !ok {
 				errs = append(errs, client.NewErrInvalidCRDTType(newField.Name, newField.Typ.String()))
 			}
 		}

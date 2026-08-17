@@ -41,6 +41,8 @@ const (
 )
 
 // IsSupportedFieldCType returns true if the type is supported as a document field type.
+//
+// Deprecated: This function will be removed in Defra v2.0.0
 func (t CType) IsSupportedFieldCType() bool {
 	switch t {
 	case NONE_CRDT, LWW_REGISTER, PN_COUNTER, P_COUNTER:

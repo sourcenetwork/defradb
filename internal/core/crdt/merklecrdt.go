@@ -21,7 +21,28 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+var FieldCRDTs = []FieldValueCRDT{
+	NewLWW(),
+	NewCounter(true),
+	NewCounter(false),
+}
+
+func TryGetFieldCRDT(ct client.CType) (FieldValueCRDT, bool) {
+	if ct == client.NONE_CRDT {
+		return nil, true
+	}
+
+	for _, crdt := range FieldCRDTs {
+		if crdt.CType() == ct {
+			return crdt, true
+		}
+	}
+	return nil, false
+}
+
 type FieldValueCRDT interface {
+	CType() client.CType
+
 	Merge(
 		ctx context.Context,
 		store datastore.Keyedstore,
