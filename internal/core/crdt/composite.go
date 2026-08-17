@@ -61,20 +61,14 @@ func (delta *DocCompositeDelta) GetPriority() uint64 {
 }
 
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
-type DocComposite struct {
-	key keys.PrimaryDataStoreKey
-}
+type DocComposite struct{}
 
-var _ ReplicatedData = (*DocComposite)(nil)
+var _ DocumentValueCRDT = (*DocComposite)(nil)
 
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
-func NewDocComposite(
-	key keys.PrimaryDataStoreKey,
-) *DocComposite {
-	return &DocComposite{
-		key: key,
-	}
+func NewDocComposite() *DocComposite {
+	return &DocComposite{}
 }
 
 // DeleteDelta sets the values of CompositeDAG for a delete.
@@ -104,26 +98,31 @@ func (m *DocComposite) Delta(
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (m *DocComposite) Merge(ctx context.Context, store datastore.Keyedstore, delta Delta) error {
+func (m *DocComposite) Merge(
+	ctx context.Context,
+	store datastore.Keyedstore,
+	key keys.PrimaryDataStoreKey,
+	delta Delta,
+) error {
 	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
 	if dagDelta.Status.IsDeleted() {
-		err := store.Set(ctx, m.key, []byte{base.DeletedObjectMarker})
+		err := store.Set(ctx, key, []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return NewErrSetDocAsDeleted(err)
 		}
-		return m.deleteWithPrefix(ctx, store, m.key.ToDataStoreKey().WithValueFlag())
+		return m.deleteWithPrefix(ctx, store, key.ToDataStoreKey().WithValueFlag())
 	}
 
-	versionKey := m.key.ToDataStoreKey().WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+	versionKey := key.ToDataStoreKey().WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
-	objectMarker, err := store.Get(ctx, m.key)
+	objectMarker, err := store.Get(ctx, key)
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return NewErrGetDocMarker(err)
@@ -140,7 +139,7 @@ func (m *DocComposite) Merge(ctx context.Context, store datastore.Keyedstore, de
 
 	if !hasObjectMarker {
 		// ensure object marker exists
-		return store.Set(ctx, m.key, []byte{base.ObjectMarker})
+		return store.Set(ctx, key, []byte{base.ObjectMarker})
 	}
 
 	return nil

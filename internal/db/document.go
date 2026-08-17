@@ -604,12 +604,10 @@ func (c *collection) save(
 	}
 	height = height + 1
 
-	merkleCRDT := crdt.NewDocComposite(
-		primaryKey,
-	)
+	merkleCRDT := crdt.NewDocComposite()
 	delta := merkleCRDT.Delta(c.Version().VersionID, height)
 
-	err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
 	if err != nil {
 		return err
 	}

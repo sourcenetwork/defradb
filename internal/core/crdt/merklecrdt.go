@@ -25,6 +25,10 @@ type FieldValueCRDT interface {
 	Merge(ctx context.Context, store datastore.Keyedstore, key keys.DataStoreKey, other Delta) error
 }
 
+type DocumentValueCRDT interface {
+	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
+}
+
 func FieldLevelCRDTWithStore(
 	cType client.CType,
 	kind client.FieldKind,

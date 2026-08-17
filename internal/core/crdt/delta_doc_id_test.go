@@ -20,7 +20,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
-	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -28,12 +27,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	ctx := context.Background()
 	txn := datastore.NewTxnFrom(memory.NewDatastore(ctx), lock.NewLockSet(), 1, false, immutable.None[int]())
 	ctx = datastore.CtxSetTxn(ctx, txn)
-
-	key := keys.DataStoreKey{
-		CollectionShortID: 1,
-		DocShortID:        42,
-		FieldID:           "1",
-	}
 
 	lww := NewLWW()
 	lwwDelta, err := lww.Delta(
@@ -57,6 +50,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
-	composite := NewDocComposite(key.ToPrimaryDataStoreKey())
+	composite := NewDocComposite()
 	require.NotContains(t, string(composite.Delta("collection-version", 1).IPLDSchemaBytes()), "docID")
 }

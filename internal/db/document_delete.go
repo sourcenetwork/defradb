@@ -185,12 +185,10 @@ func (c *collection) applyDelete(
 	}
 	height = height + 1
 
-	merkleCRDT := crdt.NewDocComposite(
-		primaryKey,
-	)
+	merkleCRDT := crdt.NewDocComposite()
 	delta := merkleCRDT.DeleteDelta(c.Version().VersionID, height)
 
-	err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
 	if err != nil {
 		return err
 	}

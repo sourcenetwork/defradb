@@ -487,14 +487,17 @@ func (mp *mergeProcessor) mergeBlock(
 		if err != nil {
 			return false, nil, resolvedDocRef{}, err
 		}
-		c := crdt.NewDocComposite(
+		c := crdt.NewDocComposite()
+
+		err = c.Merge(
+			ctx,
+			txn.Datastore(),
 			keys.PrimaryDataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			},
+			block.Delta.GetDelta(),
 		)
-
-		err = c.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
 		if err != nil {
 			return false, nil, resolvedDocRef{}, NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}
