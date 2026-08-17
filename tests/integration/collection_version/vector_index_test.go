@@ -134,10 +134,10 @@ func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testi
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: EUCLIDEAN})
+						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: MANHATTAN})
 					}
 				`,
-				ExpectedError: `Expected type "VectorDistanceMetric", found EUCLIDEAN`,
+				ExpectedError: `Expected type "VectorDistanceMetric", found MANHATTAN`,
 			},
 		},
 	}

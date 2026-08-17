@@ -91,6 +91,10 @@ func hnswMetric(m client.DistanceMetric) (hnsw.Metric, error) {
 	switch m {
 	case client.DistanceMetricCosine:
 		return hnsw.Cosine, nil
+	case client.DistanceMetricEuclidean:
+		return hnsw.Euclidean, nil
+	case client.DistanceMetricDotProduct:
+		return hnsw.DotProduct, nil
 	default:
 		return 0, newErrUnsupportedMetric(m)
 	}

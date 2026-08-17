@@ -146,6 +146,8 @@ const (
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errVectorIndexMetricCannotBeChanged    string = "cannot change the distance metric of an existing " +
+		"vector index; drop the index and create it again"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -1280,6 +1282,20 @@ func NewErrVectorIndexCannotBeUnique(fieldName string) error {
 	return errors.New(
 		errVectorIndexCannotBeUnique,
 		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexMetricCannotBeChanged returns a new error indicating that a vector index request
+// asked for a different metric than the field's existing vector index was built with.
+func NewErrVectorIndexMetricCannotBeChanged(
+	fieldName string,
+	existing, requested client.DistanceMetric,
+) error {
+	return errors.New(
+		errVectorIndexMetricCannotBeChanged,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Existing", existing),
+		errors.NewKV("Requested", requested),
 	)
 }
 

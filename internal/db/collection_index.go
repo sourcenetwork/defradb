@@ -568,6 +568,10 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
+	if err := validateVectorIndexMetricUnchanged(def, fieldName, desc.Vector.Metric); err != nil {
+		return err
+	}
+
 	if desc.Vector.Dimensions > 0 {
 		return nil
 	}
@@ -581,6 +585,25 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	}
 
 	return NewErrVectorIndexMissingDimensions(fieldName)
+}
+
+// validateVectorIndexMetricUnchanged rejects a new metric on a field that already has a vector
+// index. The graph is built for its metric, so changing it needs a rebuild: drop and recreate.
+func validateVectorIndexMetricUnchanged(
+	def client.CollectionVersion,
+	fieldName string,
+	metric client.DistanceMetric,
+) error {
+	for _, index := range def.Indexes {
+		vector, ok := index.GetVector()
+		if !ok || index.Fields[0].Name != fieldName {
+			continue
+		}
+		if vector.Metric != metric {
+			return NewErrVectorIndexMetricCannotBeChanged(fieldName, vector.Metric, metric)
+		}
+	}
+	return nil
 }
 
 // validateHNSWParams rejects HNSW parameters above their allowed maximum. See the Max* constants in

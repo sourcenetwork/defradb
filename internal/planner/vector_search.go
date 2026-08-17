@@ -107,11 +107,17 @@ func (n *selectNode) isOrderedBySimilarityDesc(sim *mapper.Similarity) bool {
 	return len(cond.FieldIndexes) == 1 && cond.FieldIndexes[0] == sim.Field.Index
 }
 
-// readyVectorIndexOnField returns the vector index on the field, if any. queryableIndexesOnField has
-// already excluded indexes that are still building or have failed, so a returned index is usable.
+// readyVectorIndexOnField returns the cosine vector index on the field, if any.
+// queryableIndexesOnField has already excluded indexes that are still building or have failed, so a
+// returned index is usable.
+//
+// Only cosine qualifies: `_similarity` scores by cosine, so an index built for another metric ranks
+// documents differently and its k nearest are not the ones asked for. Querying by those metrics waits
+// on the dedicated nearest-neighbour argument:
+// https://github.com/sourcenetwork/defradb/issues/5072
 func (n *selectNode) readyVectorIndexOnField(fieldName string) (client.IndexDescription, bool) {
 	for _, idx := range queryableIndexesOnField(n.collection, fieldName) {
-		if idx.IsVector() {
+		if vector, ok := idx.GetVector(); ok && vector.Metric == client.DistanceMetricCosine {
 			return idx, true
 		}
 	}

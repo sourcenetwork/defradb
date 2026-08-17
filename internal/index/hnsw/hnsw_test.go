@@ -51,34 +51,37 @@ func randomVector(rng *rand.Rand, dim int) []float32 {
 	return v
 }
 
-func TestGraph_RandomVectors_RecallMeetsThreshold(t *testing.T) {
+// recallAgainstBruteForce builds a graph of random vectors under the given metric and returns the
+// average recall@k of its search against an exhaustive scan. The baseline uses the same metric, since
+// each one ranks the same data differently.
+func recallAgainstBruteForce(t *testing.T, metric Metric) float64 {
 	const (
-		n           = 1000
-		dim         = 32
-		k           = 10
-		numQueries  = 50
-		efSearch    = 64
-		recallFloor = 0.90
+		n          = 1000
+		dim        = 32
+		k          = 10
+		numQueries = 50
+		efSearch   = 64
 	)
 
 	rng := rand.New(rand.NewSource(42))
 	store := NewMemStore()
 	params := DefaultParams(16)
 	params.EfSearch = efSearch
-	g := New(store, Cosine, params, 42)
+	g := New(store, metric, params, 42)
 
 	truth := make(map[NodeID][]float32, n)
 	for i := range n {
 		v := randomVector(rng, dim)
 		id := NodeID(i + 1)
 		require.NoError(t, g.Insert(id, v))
-		truth[id] = normalize(v)
+		// The baseline must hold what the graph stores.
+		truth[id] = vectorForMetric(metric, v)
 	}
 
 	var totalRecall float64
 	for range numQueries {
 		query := randomVector(rng, dim)
-		expected := bruteForceKNN(Cosine, normalize(query), truth, k)
+		expected := bruteForceKNN(metric, vectorForMetric(metric, query), truth, k)
 		actual, err := g.Search(query, k, efSearch)
 		require.NoError(t, err)
 
@@ -97,7 +100,11 @@ func TestGraph_RandomVectors_RecallMeetsThreshold(t *testing.T) {
 
 	avgRecall := totalRecall / float64(numQueries)
 	t.Logf("average recall@%d over %d queries: %.4f", k, numQueries, avgRecall)
-	assert.GreaterOrEqual(t, avgRecall, recallFloor, "recall below threshold")
+	return avgRecall
+}
+
+func TestGraph_RandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, Cosine), 0.90, "recall below threshold")
 }
 
 func TestGraph_SmallHandPlaced_ReturnsNearestInOrder(t *testing.T) {
@@ -311,4 +318,84 @@ func TestNormalize_NonZeroVector_ReturnsUnitLength(t *testing.T) {
 	assert.InDelta(t, 1.0, sumSq, 1e-6)
 	assert.InDelta(t, 0.6, out[0], 1e-6)
 	assert.InDelta(t, 0.8, out[1], 1e-6)
+}
+
+// Cosine compares direction alone, so the engine scales vectors to unit length for it.
+func TestVectorForMetric_Cosine_ScalesToUnitLength(t *testing.T) {
+	out := vectorForMetric(Cosine, []float32{3, 4})
+	assert.InDelta(t, 0.6, out[0], 1e-6)
+	assert.InDelta(t, 0.8, out[1], 1e-6)
+}
+
+// The other metrics read magnitude, so they must get the vector as given.
+func TestVectorForMetric_EuclideanAndDotProduct_KeepMagnitude(t *testing.T) {
+	for _, metric := range []Metric{Euclidean, DotProduct} {
+		assert.Equal(t, []float32{3, 4}, vectorForMetric(metric, []float32{3, 4}))
+	}
+}
+
+// Neither metric hands the caller's slice on, so a later write through it changes nothing.
+func TestVectorForMetric_EveryMetric_ReturnsCopy(t *testing.T) {
+	for _, metric := range []Metric{Cosine, Euclidean, DotProduct} {
+		v := []float32{3, 4}
+		out := vectorForMetric(metric, v)
+		v[0] = 99
+		assert.NotEqual(t, float32(99), out[0])
+	}
+}
+
+func TestSquaredEuclideanDistance_KnownVectors_MatchesHandComputed(t *testing.T) {
+	// (1-4)^2 + (2-6)^2 = 9 + 16 = 25.
+	assert.InDelta(t, 25.0, squaredEuclideanDistance([]float32{1, 2}, []float32{4, 6}), 1e-6)
+	assert.InDelta(t, 0.0, squaredEuclideanDistance([]float32{1, 2}, []float32{1, 2}), 1e-6)
+}
+
+// The dot product is a similarity, so distance must order the other way round.
+func TestDotProductDistance_LargerDotProduct_IsSmallerDistance(t *testing.T) {
+	near := dotProductDistance([]float32{2, 0}, []float32{3, 0})
+	far := dotProductDistance([]float32{2, 0}, []float32{1, 0})
+	assert.InDelta(t, -6.0, near, 1e-6)
+	assert.InDelta(t, -2.0, far, 1e-6)
+	assert.Less(t, near, far)
+}
+
+func TestGraph_EuclideanRandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, Euclidean), 0.90, "recall below threshold")
+}
+
+func TestGraph_DotProductRandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, DotProduct), 0.90, "recall below threshold")
+}
+
+// Euclidean ranks by position, so {1,0} beats {5,0} for a query at {1,0} even though both point the
+// same way. Cosine would tie them, so this fails if the engine normalizes here.
+func TestGraph_Euclidean_RanksByPositionNotDirection(t *testing.T) {
+	g := New(NewMemStore(), Euclidean, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{1, 0}))
+	require.NoError(t, g.Insert(2, []float32{5, 0}))
+	require.NoError(t, g.Insert(3, []float32{0, 1.2}))
+
+	result, err := g.Search([]float32{1, 0}, 3, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{1, 3, 2}, result)
+}
+
+// Dot product ranks by magnitude too, so {5,0} beats {1,0}. Cosine would tie them, so this fails if
+// the engine normalizes here.
+func TestGraph_DotProduct_RanksLongerVectorNearer(t *testing.T) {
+	g := New(NewMemStore(), DotProduct, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{1, 0}))
+	require.NoError(t, g.Insert(2, []float32{5, 0}))
+	require.NoError(t, g.Insert(3, []float32{0, 1}))
+
+	result, err := g.Search([]float32{1, 0}, 3, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{2, 1, 3}, result)
+}
+
+// An unrecognised metric is a programming error, not a silent fallback.
+func TestDistance_UnknownMetric_Panics(t *testing.T) {
+	assert.Panics(t, func() { distance(Metric(99), []float32{1}, []float32{1}) })
 }
