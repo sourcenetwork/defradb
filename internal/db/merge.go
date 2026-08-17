@@ -550,16 +550,20 @@ func (mp *mergeProcessor) mergeBlock(
 		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
 			fd.Typ,
 			fd.Kind,
-			keys.DataStoreKey{
-				CollectionShortID: collectionShortID,
-				DocShortID:        docRef.docShortID,
-			}.WithFieldID(fmt.Sprint(fieldShortID)),
 		)
 		if err != nil {
 			return false, nil, resolvedDocRef{}, err
 		}
 
-		err = fieldCRDT.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
+		err = fieldCRDT.Merge(
+			ctx,
+			txn.Datastore(),
+			keys.DataStoreKey{
+				CollectionShortID: collectionShortID,
+				DocShortID:        docRef.docShortID,
+			}.WithFieldID(fmt.Sprint(fieldShortID)),
+			block.Delta.GetDelta(),
+		)
 		if err != nil {
 			return false, nil, resolvedDocRef{}, NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}

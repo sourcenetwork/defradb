@@ -460,11 +460,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			mcrdt, err := crdt.FieldLevelCRDTWithStore(
 				field.Typ,
 				field.Kind,
-				keys.DataStoreKey{
-					CollectionShortID: collectionShortID,
-					DocShortID:        blockDocShortID,
-					FieldID:           fmt.Sprint(fieldShortID),
-				},
 			)
 			if err != nil {
 				return err
@@ -472,7 +467,16 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 
 			// Merge the block without worrying about updating the headstore - they are not used
 			// by this store/fetcher.
-			err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
+			err = mcrdt.Merge(
+				vf.ctx,
+				vf.store.Datastore(),
+				keys.DataStoreKey{
+					CollectionShortID: collectionShortID,
+					DocShortID:        blockDocShortID,
+					FieldID:           fmt.Sprint(fieldShortID),
+				},
+				block.Delta.GetDelta(),
+			)
 			if err != nil {
 				return err
 			}

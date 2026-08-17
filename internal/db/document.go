@@ -545,20 +545,35 @@ func (c *collection) save(
 			}
 			height = height + 1
 
-			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				val.Type(),
-				fieldDescription.Kind,
-				fieldKey,
-			)
-			if err != nil {
-				return err
-			}
-			delta, err := merkleCRDT.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
-			if err != nil {
-				return err
+			var merkleCRDT crdt.FieldValueCRDT
+			var delta crdt.Delta
+			switch val.Type() {
+			case client.LWW_REGISTER:
+				lww := crdt.NewLWW()
+				merkleCRDT = lww
+
+				delta, err = lww.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
+				if err != nil {
+					return err
+				}
+
+			case client.PN_COUNTER, client.P_COUNTER:
+				counter := crdt.NewCounter(
+					val.Type() == client.PN_COUNTER,
+					fieldDescription.Kind.(client.ScalarKind), //nolint:forcetypeassert
+				)
+				merkleCRDT = counter
+
+				delta, err = counter.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
+				if err != nil {
+					return err
+				}
+
+			default:
+				return client.NewErrUnknownCRDT(val.Type())
 			}
 
-			err = merkleCRDT.Merge(ctx, txn.Datastore(), delta)
+			err = merkleCRDT.Merge(ctx, txn.Datastore(), fieldKey, delta)
 			if err != nil {
 				return err
 			}

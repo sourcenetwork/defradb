@@ -35,7 +35,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		FieldID:           "1",
 	}
 
-	lww := NewLWW(key)
+	lww := NewLWW()
 	lwwDelta, err := lww.Delta(
 		ctx,
 		"collection-version",
@@ -46,7 +46,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
-	counter := NewCounter(key, false, client.FieldKind_NILLABLE_INT)
+	counter := NewCounter(false, client.FieldKind_NILLABLE_INT)
 	counterDelta, err := counter.Delta(
 		ctx,
 		"collection-version",
