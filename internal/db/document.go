@@ -542,7 +542,6 @@ func (c *collection) save(
 				val.Type(),
 				fieldDescription.Kind,
 				fieldKey,
-				fieldDescription.Name,
 			)
 			if err != nil {
 				return err

@@ -34,7 +34,6 @@ func FieldLevelCRDTWithStore(
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
-	fieldName string,
 ) (FieldLevelCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
@@ -44,7 +43,6 @@ func FieldLevelCRDTWithStore(
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
 			key,
-			fieldName,
 			cType == client.PN_COUNTER,
 			kind.(client.ScalarKind), //nolint:forcetypeassert
 		), nil

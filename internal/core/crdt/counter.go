@@ -76,7 +76,6 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
 	key            keys.DataStoreKey
-	fieldName      string
 	allowDecrement bool
 	kind           client.ScalarKind
 }
@@ -88,13 +87,11 @@ var _ ReplicatedData = (*Counter)(nil)
 // backed by a Counter CRDT.
 func NewCounter(
 	key keys.DataStoreKey,
-	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *Counter {
 	return &Counter{
 		key:            key,
-		fieldName:      fieldName,
 		allowDecrement: allowDecrement,
 		kind:           kind,
 	}
@@ -129,7 +126,7 @@ func (c *Counter) Delta(
 	}
 
 	return &CounterDelta{
-		FieldName:           c.fieldName,
+		FieldName:           data.FieldName,
 		Data:                bytes,
 		CollectionVersionID: collectionVersionID,
 		Nonce:               nonce,
@@ -144,19 +141,18 @@ func (c *Counter) Merge(ctx context.Context, store datastore.Keyedstore, delta D
 		return ErrMismatchedMergeType
 	}
 
-	return c.incrementValue(ctx, store, d.Data, d.GetPriority())
+	return c.incrementValue(ctx, store, d)
 }
 
 func (c *Counter) incrementValue(
 	ctx context.Context,
 	store datastore.Keyedstore,
-	valueAsBytes []byte,
-	priority uint64,
+	delta *CounterDelta,
 ) error {
 	key := c.key.WithValueFlag()
 	marker, err := store.Get(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return NewErrGetCounterStatus(err, c.fieldName)
+		return NewErrGetCounterStatus(err, delta.FieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
 		key = key.WithDeletedFlag()
@@ -166,19 +162,19 @@ func (c *Counter) incrementValue(
 
 	switch c.kind {
 	case client.FieldKind_NILLABLE_INT:
-		resultAsBytes, err = validateAndIncrement[int64](ctx, store, key, valueAsBytes, c.allowDecrement)
+		resultAsBytes, err = validateAndIncrement[int64](ctx, store, key, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT32:
-		resultAsBytes, err = validateAndIncrement[float32](ctx, store, key, valueAsBytes, c.allowDecrement)
+		resultAsBytes, err = validateAndIncrement[float32](ctx, store, key, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT64:
-		resultAsBytes, err = validateAndIncrement[float64](ctx, store, key, valueAsBytes, c.allowDecrement)
+		resultAsBytes, err = validateAndIncrement[float64](ctx, store, key, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, c.fieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
 		}
 	default:
 		return NewErrUnsupportedCounterType(c.kind)
@@ -189,7 +185,7 @@ func (c *Counter) incrementValue(
 		return NewErrFailedToStoreValue(err)
 	}
 
-	return setPriority(ctx, store, c.key, priority)
+	return setPriority(ctx, store, c.key, delta.Priority)
 }
 
 func (c *Counter) CType() client.CType {

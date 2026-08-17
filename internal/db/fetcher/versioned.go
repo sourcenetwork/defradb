@@ -455,7 +455,6 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 					DocShortID:        blockDocShortID,
 					FieldID:           fmt.Sprint(fieldShortID),
 				},
-				field.Name,
 			)
 			if err != nil {
 				return err

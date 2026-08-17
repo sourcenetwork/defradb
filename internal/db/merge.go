@@ -542,7 +542,6 @@ func (mp *mergeProcessor) initCRDTForType(
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
-			field,
 		)
 		if err != nil {
 			return nil, nil, resolvedDocRef{}, err
