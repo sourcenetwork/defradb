@@ -46,7 +46,7 @@ var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper implements clients.Client by driving an already-running *node.Node through the DefraJavaWrapper JNI bindings,
-// embedded in this process (see doc.go). It mirrors cbindings.CWrapper's behaviour, but every call passes through a 
+// embedded in this process (see doc.go). It mirrors cbindings.CWrapper's behaviour, but every call passes through a
 // Java DefraNode object instead of calling cbindings' exported C functions directly.
 type Wrapper struct {
 	node    *node.Node
@@ -55,7 +55,7 @@ type Wrapper struct {
 	closed  bool // set by the first call to Close; guards against a second call reusing the deleted JNI ref
 }
 
-// NewWrapper wraps an already-constructed *node.Node, reusing its cgo.Handle the same way cbindings.NewCWrapper does 
+// NewWrapper wraps an already-constructed *node.Node, reusing its cgo.Handle the same way cbindings.NewCWrapper does
 // for the C client, but obtains a DefraNode Java object for it via DefraNode's package-private constructor rather
 // than the public constructor (which would start a brand new node.)
 func NewWrapper(n *node.Node) (*Wrapper, error) {
@@ -350,9 +350,6 @@ func (w *Wrapper) AddCollection(
 		if !ok {
 			return nil, errors.New(errCastClientTxnFailed)
 		}
-		// Discard is a no-op if Commit already finalized the transaction below - this just
-		// guarantees the transaction (and its cgo handle and JNI global ref) is released on
-		// every return path, not only the success path.
 		defer txn.Discard()
 	}
 	ctx = datastore.CtxSetTxn(ctx, txn)
