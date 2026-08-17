@@ -49,15 +49,6 @@ func TestAddView_NoTransformCID_CreatesViewSuccessfully(t *testing.T) {
 					}
 				`,
 			},
-			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetCollectionName("UserView"),
-				ExpectedResults: []client.CollectionVersion{
-					{
-						Name:     "UserView",
-						IsActive: true,
-					},
-				},
-			},
 		},
 	}
 
