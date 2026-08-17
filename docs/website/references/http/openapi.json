@@ -274,49 +274,12 @@
                                     "minimum": 0,
                                     "type": "integer"
                                 },
+                                "KindDescription": {},
                                 "Name": {
                                     "type": "string"
                                 },
                                 "Unique": {
                                     "type": "boolean"
-                                },
-                                "Vector": {
-                                    "nullable": true,
-                                    "properties": {
-                                        "Algorithm": {
-                                            "type": "string"
-                                        },
-                                        "Dimensions": {
-                                            "maximum": 4294967295,
-                                            "minimum": 0,
-                                            "type": "integer"
-                                        },
-                                        "HNSW": {
-                                            "nullable": true,
-                                            "properties": {
-                                                "EfConstruction": {
-                                                    "maximum": 4294967295,
-                                                    "minimum": 0,
-                                                    "type": "integer"
-                                                },
-                                                "EfSearch": {
-                                                    "maximum": 4294967295,
-                                                    "minimum": 0,
-                                                    "type": "integer"
-                                                },
-                                                "M": {
-                                                    "maximum": 4294967295,
-                                                    "minimum": 0,
-                                                    "type": "integer"
-                                                }
-                                            },
-                                            "type": "object"
-                                        },
-                                        "Metric": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
                                 }
                             },
                             "type": "object"
@@ -540,49 +503,12 @@
                         "minimum": 0,
                         "type": "integer"
                     },
+                    "KindDescription": {},
                     "Name": {
                         "type": "string"
                     },
                     "Unique": {
                         "type": "boolean"
-                    },
-                    "Vector": {
-                        "nullable": true,
-                        "properties": {
-                            "Algorithm": {
-                                "type": "string"
-                            },
-                            "Dimensions": {
-                                "maximum": 4294967295,
-                                "minimum": 0,
-                                "type": "integer"
-                            },
-                            "HNSW": {
-                                "nullable": true,
-                                "properties": {
-                                    "EfConstruction": {
-                                        "maximum": 4294967295,
-                                        "minimum": 0,
-                                        "type": "integer"
-                                    },
-                                    "EfSearch": {
-                                        "maximum": 4294967295,
-                                        "minimum": 0,
-                                        "type": "integer"
-                                    },
-                                    "M": {
-                                        "maximum": 4294967295,
-                                        "minimum": 0,
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            },
-                            "Metric": {
-                                "type": "string"
-                            }
-                        },
-                        "type": "object"
                     }
                 },
                 "type": "object"
