@@ -128,6 +128,47 @@ func TestCollectionVersion_VectorIndexWithUnsupportedAlgorithm_ShouldError(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// The directive accepts each supported metric and stores it on the descriptor. The test above covers
+// COSINE; these cover the two that do not scale vectors to unit length.
+func TestCollectionVersion_VectorIndexWithEuclideanMetric_ShouldSucceed(t *testing.T) {
+	testUtils.ExecuteTestCase(t, vectorIndexMetricTest("EUCLIDEAN", client.DistanceMetricEuclidean))
+}
+
+func TestCollectionVersion_VectorIndexWithDotProductMetric_ShouldSucceed(t *testing.T) {
+	testUtils.ExecuteTestCase(t, vectorIndexMetricTest("DOT", client.DistanceMetricDotProduct))
+}
+
+func vectorIndexMetricTest(sdlMetric string, expected client.DistanceMetric) testUtils.TestCase {
+	return testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` + sdlMetric + `})
+					}
+				`,
+			},
+			&action.ListIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "Users_embedding_ASC",
+						ID:     1,
+						Fields: []client.IndexedFieldDescription{{Name: "embedding"}},
+						Kind:   client.IndexKindVector,
+						KindDescription: &client.VectorIndexDescription{
+							Algorithm:  client.VectorAlgorithmHNSW,
+							Metric:     expected,
+							Dimensions: 3,
+							HNSW:       &client.HNSWParams{M: 16, EfConstruction: 128, EfSearch: 64},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

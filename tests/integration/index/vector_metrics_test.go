@@ -19,42 +19,24 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// vectorIndexWithMetric is the index the SDL directive below produces, for ListIndexes to assert.
-func vectorIndexWithMetric(id uint32, metric client.DistanceMetric) []client.IndexDescription {
-	return []client.IndexDescription{
-		{
-			Name:   "User_vector_ASC",
-			ID:     id,
-			Fields: []client.IndexedFieldDescription{{Name: "vector"}},
-			Kind:   client.IndexKindVector,
-			KindDescription: &client.VectorIndexDescription{
-				Algorithm:  client.VectorAlgorithmHNSW,
-				Metric:     metric,
-				Dimensions: 3,
-				HNSW: &client.HNSWParams{
-					M:              client.DefaultHNSWM,
-					EfConstruction: client.DefaultHNSWEfConstruction,
-					EfSearch:       client.DefaultHNSWEfSearch,
-				},
-			},
-		},
-	}
-}
-
-// A non-cosine metric survives the whole path: the directive parses it, it is stored, and writes
-// maintain the graph. A metric the engine could not use would show up as a failed build.
+// Every metric builds a graph that writes maintain, but only a cosine one answers the similarity
+// query. `_similarity` scores by cosine, so a graph built for another metric holds a different set of
+// k nearest; the planner leaves it alone and full-scans (indexFetches 0) rather than return the wrong
+// documents. Results are identical either way, which is the point: the metric changes the cost, never
+// the answer.
 //
-// Results stay cosine-scored: `_similarity` is cosine regardless of any index, and the planner leaves
-// a non-cosine index alone (the explain assertion below).
-func TestVectorIndex_EuclideanMetric_IndexIsBuiltAndMaintained(t *testing.T) {
-	testUtils.ExecuteTestCase(t, metricLifecycleTest("EUCLIDEAN", client.DistanceMetricEuclidean))
-}
+// A metric the engine could not use would surface here as a failed build instead of a ready index.
+func TestVectorIndex_MetricDecidesWhetherQueryRoutes(t *testing.T) {
+	testCases := []struct {
+		sdlMetric string
+		// indexFetches is 1 when the planner routed to the graph, 0 when it full-scanned.
+		indexFetches int
+	}{
+		{"COSINE", 1},
+		{"EUCLIDEAN", 0},
+		{"DOT", 0},
+	}
 
-func TestVectorIndex_DotProductMetric_IndexIsBuiltAndMaintained(t *testing.T) {
-	testUtils.ExecuteTestCase(t, metricLifecycleTest("DOT", client.DistanceMetricDotProduct))
-}
-
-func metricLifecycleTest(sdlMetric string, metric client.DistanceMetric) testUtils.TestCase {
 	req := `query {
 		User(order: {_alias: {sim: DESC}}, limit: 2){
 			name
@@ -62,75 +44,43 @@ func metricLifecycleTest(sdlMetric string, metric client.DistanceMetric) testUti
 		}
 	}`
 
-	return testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `type User {
-					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` + sdlMetric + `})
-				}`,
-			},
-			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
-			// An update and a delete cover the maintenance path, not just the insert.
-			&action.UpdateDoc{
-				DocID: 1,
-				Doc:   `{"vector": [0, 0.5, 0]}`,
-			},
-			testUtils.DeleteDoc{DocID: 2},
-			&action.WaitForIndexReady{CollectionID: 0},
-			&action.ListIndexes{
-				CollectionID:    0,
-				ExpectedIndexes: vectorIndexWithMetric(1, metric),
-			},
-			&action.Request{
-				Request: req,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
-						{"name": "y", "sim": testUtils.CosineSimilarity([]float64{0, 0.5, 0}, []float64{1, 0, 0})},
+	for _, testCase := range testCases {
+		test := testUtils.TestCase{
+			Actions: []any{
+				&action.AddCollection{
+					SDL: `type User {
+						name: String
+						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` +
+						testCase.sdlMetric + `})
+					}`,
+				},
+				&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
+				&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
+				&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
+				// An update and a delete cover the maintenance path, not just the insert.
+				&action.UpdateDoc{DocID: 1, Doc: `{"vector": [0, 0.5, 0]}`},
+				testUtils.DeleteDoc{DocID: 2},
+				&action.WaitForIndexReady{CollectionID: 0},
+				&action.Request{
+					Request: req,
+					Results: map[string]any{
+						"User": []map[string]any{
+							{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
+							{"name": "y", "sim": testUtils.CosineSimilarity([]float64{0, 0.5, 0}, []float64{1, 0, 0})},
+						},
 					},
 				},
+				&action.Request{
+					Request: makeExplainQuery(req),
+					Asserter: testUtils.NewExplainAsserter().
+						WithIndexFetches(testCase.indexFetches).
+						WithDocFetches(2),
+				},
 			},
-			&action.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(2),
-			},
-		},
-	}
-}
-
-// A cosine index still routes. Without this, the two tests above would pass even if the planner
-// never routed to any vector index.
-func TestVectorIndex_CosineMetric_StillRoutesToIndex(t *testing.T) {
-	req := `query {
-		User(order: {_alias: {sim: DESC}}, limit: 2){
-			name
-			sim: SIMILARITY(vector: {vector: [1, 0, 0]})
 		}
-	}`
 
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `type User {
-					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
-				}`,
-			},
-			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "y", "vector": []float32{0, 1, 0}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "xy", "vector": []float32{0.9, 0.4, 0}}},
-			&action.WaitForIndexReady{CollectionID: 0},
-			&action.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
-			},
-		},
+		t.Run(testCase.sdlMetric, func(t *testing.T) { testUtils.ExecuteTestCase(t, test) })
 	}
-
-	testUtils.ExecuteTestCase(t, test)
 }
 
 // Changing the metric would need the graph rebuilt, so the request is rejected instead.
@@ -160,6 +110,7 @@ func TestVectorIndex_ChangeMetricOnExistingIndex_IsRejected(t *testing.T) {
 }
 
 // Dropping and recreating is the rebuild the rejection above asks for, so the new metric is accepted.
+// This is also the index API's path for a metric, which the CLI and C clients carry as JSON.
 func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -187,8 +138,26 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 				},
 			},
 			&action.ListIndexes{
-				CollectionID:    0,
-				ExpectedIndexes: vectorIndexWithMetric(2, client.DistanceMetricEuclidean),
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_vector_ASC",
+						// The recreated index gets a fresh id; the dropped one had 1.
+						ID:     2,
+						Fields: []client.IndexedFieldDescription{{Name: "vector"}},
+						Kind:   client.IndexKindVector,
+						KindDescription: &client.VectorIndexDescription{
+							Algorithm:  client.VectorAlgorithmHNSW,
+							Metric:     client.DistanceMetricEuclidean,
+							Dimensions: 3,
+							HNSW: &client.HNSWParams{
+								M:              client.DefaultHNSWM,
+								EfConstruction: client.DefaultHNSWEfConstruction,
+								EfSearch:       client.DefaultHNSWEfSearch,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
