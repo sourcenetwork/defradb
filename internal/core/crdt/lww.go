@@ -71,7 +71,6 @@ func (l *LWW) Delta(
 	ctx context.Context,
 	collectionVersionID string,
 	data *DocField,
-	isAdd bool,
 	priority uint64,
 ) (Delta, error) {
 	bytes, err := data.FieldValue.Bytes()

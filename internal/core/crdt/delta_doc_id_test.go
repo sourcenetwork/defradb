@@ -33,7 +33,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		ctx,
 		"collection-version",
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
-		true,
 		1,
 	)
 	require.NoError(t, err)

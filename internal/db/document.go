@@ -552,7 +552,7 @@ func (c *collection) save(
 				lww := crdt.NewLWW()
 				merkleCRDT = lww
 
-				delta, err = lww.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
+				delta, err = lww.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), height)
 				if err != nil {
 					return err
 				}
