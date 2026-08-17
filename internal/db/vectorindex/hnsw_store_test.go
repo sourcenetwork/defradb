@@ -53,7 +53,7 @@ func TestNodeStore_PutNodeThenGetNode_RoundTripsNode(t *testing.T) {
 	node := hnsw.Node{
 		ID:     5,
 		Vector: []float32{1, 2, 3},
-		Layers: [][]hnsw.NodeID{{1, 2}, {3}},
+		Neighbours: [][]hnsw.NodeID{{1, 2}, {3}},
 	}
 
 	err := store.PutNode(node)

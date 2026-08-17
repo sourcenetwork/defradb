@@ -25,17 +25,17 @@ func TestMarshalNode_RepresentativeShapes_RoundTrip(t *testing.T) {
 		"all fields with an empty-but-present layer": {
 			ID:      42,
 			Vector:  []float32{0.1, -0.2, 0.3, 1.5, -9.75},
-			Layers:  [][]NodeID{{1, 2, 3}, {4}, {}, {5, 6, 7, 8, 9}},
+			Neighbours:  [][]NodeID{{1, 2, 3}, {4}, {}, {5, 6, 7, 8, 9}},
 			Deleted: true,
 		},
 		"present-but-empty vector and nil layers": {
-			ID: 7, Vector: []float32{}, Layers: nil,
+			ID: 7, Vector: []float32{}, Neighbours: nil,
 		},
 		"zero-value node (nil vector, nil layers)": {
 			ID: 3,
 		},
 		"single element vector, single layer": {
-			ID: 8, Vector: []float32{1.25}, Layers: [][]NodeID{{9}},
+			ID: 8, Vector: []float32{1.25}, Neighbours: [][]NodeID{{9}},
 		},
 	}
 
@@ -53,16 +53,16 @@ func TestMarshalNode_RepresentativeShapes_RoundTrip(t *testing.T) {
 			for i := range n.Vector {
 				assert.Equal(t, n.Vector[i], out.Vector[i])
 			}
-			assert.Equal(t, len(n.Layers), len(out.Layers))
-			for i := range n.Layers {
-				assert.Equal(t, n.Layers[i], out.Layers[i])
+			assert.Equal(t, len(n.Neighbours), len(out.Neighbours))
+			for i := range n.Neighbours {
+				assert.Equal(t, n.Neighbours[i], out.Neighbours[i])
 			}
 		})
 	}
 }
 
 func TestMarshalNode_Deterministic_SameBytes(t *testing.T) {
-	n := Node{ID: 123, Vector: []float32{1, 2, 3}, Layers: [][]NodeID{{1, 2}, {3}}}
+	n := Node{ID: 123, Vector: []float32{1, 2, 3}, Neighbours: [][]NodeID{{1, 2}, {3}}}
 
 	b1, err := MarshalNode(n)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestMarshalNode_Deterministic_SameBytes(t *testing.T) {
 func TestUnmarshalNode_CorruptInput_ReturnsError(t *testing.T) {
 	valid := func(t *testing.T) []byte {
 		t.Helper()
-		b, err := MarshalNode(Node{ID: 1, Vector: []float32{1, 2}, Layers: [][]NodeID{{9}}})
+		b, err := MarshalNode(Node{ID: 1, Vector: []float32{1, 2}, Neighbours: [][]NodeID{{9}}})
 		require.NoError(t, err)
 		return b
 	}
@@ -113,7 +113,7 @@ func TestUnmarshalNode_TruncatedAtEveryBoundary_ReturnsError(t *testing.T) {
 	// A node whose encoding exercises each internal bounds check (vector-length prefix, vector
 	// body, layer-count prefix, neighbour-count prefix, neighbour body). Truncating at every
 	// length short of the full buffer must error at some bounds check and never panic.
-	b, err := MarshalNode(Node{ID: 1, Vector: []float32{1, 2, 3}, Layers: [][]NodeID{{1, 2, 3}, {4}}})
+	b, err := MarshalNode(Node{ID: 1, Vector: []float32{1, 2, 3}, Neighbours: [][]NodeID{{1, 2, 3}, {4}}})
 	require.NoError(t, err)
 
 	for truncLen := range len(b) {
@@ -220,7 +220,7 @@ func TestCodec_EngineProducedGraph_RoundTripsThroughBytes(t *testing.T) {
 			return unmarshalErr
 		}
 		assert.Equal(t, original, out)
-		if len(original.Layers) > 1 {
+		if len(original.Neighbours) > 1 {
 			sawMultiLayer = true
 		}
 		return nil

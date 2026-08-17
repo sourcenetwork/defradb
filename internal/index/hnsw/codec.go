@@ -55,7 +55,7 @@ const (
 //	  8 bytes  * neighbour count: neighbour ids (uint64)
 func MarshalNode(n Node) ([]byte, error) {
 	size := nodeHeaderLen + float32Width*len(n.Vector)
-	for _, layer := range n.Layers {
+	for _, layer := range n.Neighbours {
 		size += countWidth + nodeIDWidth*len(layer)
 	}
 
@@ -82,9 +82,9 @@ func MarshalNode(n Node) ([]byte, error) {
 		off += float32Width
 	}
 
-	binary.LittleEndian.PutUint32(buf[off:], uint32(len(n.Layers)))
+	binary.LittleEndian.PutUint32(buf[off:], uint32(len(n.Neighbours)))
 	off += countWidth
-	for _, layer := range n.Layers {
+	for _, layer := range n.Neighbours {
 		binary.LittleEndian.PutUint32(buf[off:], uint32(len(layer)))
 		off += countWidth
 		for _, id := range layer {
@@ -170,7 +170,7 @@ func UnmarshalNode(b []byte) (Node, error) {
 	return Node{
 		ID:      id,
 		Vector:  vector,
-		Layers:  layers,
+		Neighbours:  layers,
 		Deleted: deleted,
 	}, nil
 }

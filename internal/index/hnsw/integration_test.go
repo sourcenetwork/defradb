@@ -323,7 +323,7 @@ func TestGraph_InsertsBeyondM_ShrinksNeighboursToCap(t *testing.T) {
 
 	sawShrunkLayer0 := false
 	require.NoError(t, store.IterateNodes(func(node Node) error {
-		for layer, neighbours := range node.Layers {
+		for layer, neighbours := range node.Neighbours {
 			maxDeg := params.M
 			if layer == 0 {
 				maxDeg = params.Mmax0

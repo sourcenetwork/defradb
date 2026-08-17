@@ -81,7 +81,7 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		for i := range layers {
 			layers[i] = []NodeID{}
 		}
-		if err := g.store.PutNode(Node{ID: id, Vector: v, Layers: layers}); err != nil {
+		if err := g.store.PutNode(Node{ID: id, Vector: v, Neighbours: layers}); err != nil {
 			return err
 		}
 		return g.store.PutMeta(Meta{EntryPoint: id, TopLayer: topLevel})
@@ -149,7 +149,7 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		entryPoints = w
 	}
 
-	if err := g.store.PutNode(Node{ID: id, Vector: v, Layers: newLayers}); err != nil {
+	if err := g.store.PutNode(Node{ID: id, Vector: v, Neighbours: newLayers}); err != nil {
 		return err
 	}
 
@@ -188,19 +188,19 @@ func (g *HNSWIndex) addLink(from, to NodeID, layer, mmax int) error {
 
 	// "from" may have fewer layers than the one we are linking at (its top layer was random). Add
 	// empty layers up to it, then add the link below.
-	for len(node.Layers) <= layer {
-		node.Layers = append(node.Layers, []NodeID{})
+	for len(node.Neighbours) <= layer {
+		node.Neighbours = append(node.Neighbours, []NodeID{})
 	}
 
-	node.Layers[layer] = append(node.Layers[layer], to)
+	node.Neighbours[layer] = append(node.Neighbours[layer], to)
 
-	if len(node.Layers[layer]) > mmax {
-		candidates, err := g.candidatesFromIDs(node.Vector, node.Layers[layer])
+	if len(node.Neighbours[layer]) > mmax {
+		candidates, err := g.candidatesFromIDs(node.Vector, node.Neighbours[layer])
 		if err != nil {
 			return err
 		}
 		selected := selectNeighborsHeuristic(g.metric, candidates, mmax)
-		node.Layers[layer] = idsOf(selected)
+		node.Neighbours[layer] = idsOf(selected)
 	}
 
 	return g.store.PutNode(node)
@@ -300,8 +300,8 @@ func (g *HNSWIndex) searchLayerMulti(query []float32, entryPoints []candidate, e
 		}
 
 		var neighbours []NodeID
-		if layer < len(node.Layers) {
-			neighbours = node.Layers[layer]
+		if layer < len(node.Neighbours) {
+			neighbours = node.Neighbours[layer]
 		}
 
 		for _, nb := range neighbours {

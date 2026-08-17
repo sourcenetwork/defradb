@@ -13,10 +13,12 @@ package hnsw
 // Node is the persisted form of a graph node: its (normalized) vector plus
 // per-layer adjacency.
 type Node struct {
-	ID      NodeID
-	Vector  []float32  // normalized
-	Layers  [][]NodeID // Layers[l] = neighbour ids at layer l; len(Layers) = node's top level + 1
-	Deleted bool       // tombstone
+	ID     NodeID
+	Vector []float32 // normalized
+	// Neighbours[l] is this node's own neighbour ids at layer l (node-scoped adjacency, not the
+	// global layer l). len(Neighbours) = node's top level + 1.
+	Neighbours [][]NodeID
+	Deleted    bool // tombstone
 }
 
 // Meta is the graph's global state: which node to start a search from, and the top layer.

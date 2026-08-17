@@ -92,15 +92,15 @@ func cloneNode(n Node) Node {
 		out.Vector = make([]float32, len(n.Vector))
 		copy(out.Vector, n.Vector)
 	}
-	if n.Layers != nil {
-		out.Layers = make([][]NodeID, len(n.Layers))
-		for i, layer := range n.Layers {
+	if n.Neighbours != nil {
+		out.Neighbours = make([][]NodeID, len(n.Neighbours))
+		for i, layer := range n.Neighbours {
 			if layer == nil {
 				continue
 			}
 			l := make([]NodeID, len(layer))
 			copy(l, layer)
-			out.Layers[i] = l
+			out.Neighbours[i] = l
 		}
 	}
 	return out
