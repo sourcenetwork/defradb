@@ -215,7 +215,7 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 	d.Fields = mirror.Fields
 	d.Kind = mirror.Kind
 
-	hasKindDescription := len(mirror.KindDescription) > 0 && string(mirror.KindDescription) != "null"
+	hasKindDescription := len(mirror.KindDescription) > 0 && string(mirror.KindDescription) != jsonNullLiteral
 	switch mirror.Kind {
 	case IndexKindOrdered:
 		// A legacy descriptor (no Kind, no KindDescription) is an ordered index carrying Unique at
