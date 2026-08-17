@@ -168,10 +168,10 @@ func UnmarshalNode(b []byte) (Node, error) {
 	}
 
 	return Node{
-		ID:      id,
-		Vector:  vector,
-		Neighbours:  layers,
-		Deleted: deleted,
+		ID:         id,
+		Vector:     vector,
+		Neighbours: layers,
+		Deleted:    deleted,
 	}, nil
 }
 

@@ -23,10 +23,10 @@ import (
 func TestMarshalNode_RepresentativeShapes_RoundTrip(t *testing.T) {
 	cases := map[string]Node{
 		"all fields with an empty-but-present layer": {
-			ID:      42,
-			Vector:  []float32{0.1, -0.2, 0.3, 1.5, -9.75},
-			Neighbours:  [][]NodeID{{1, 2, 3}, {4}, {}, {5, 6, 7, 8, 9}},
-			Deleted: true,
+			ID:         42,
+			Vector:     []float32{0.1, -0.2, 0.3, 1.5, -9.75},
+			Neighbours: [][]NodeID{{1, 2, 3}, {4}, {}, {5, 6, 7, 8, 9}},
+			Deleted:    true,
 		},
 		"present-but-empty vector and nil layers": {
 			ID: 7, Vector: []float32{}, Neighbours: nil,
