@@ -40,6 +40,14 @@ type SyncBranchableCollection struct {
 	// CollectionID is the index of the collection to sync.
 	CollectionID int
 
+	// NoDeadline, if true, calls the client with a context that has no deadline,
+	// instead of the default one-second timeout. Optional.
+	//
+	// This exists to exercise the no-deadline path through clients (such as the C
+	// and Java clients) that must serialize the context's deadline across a
+	// non-Go boundary
+	NoDeadline bool
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -51,8 +59,14 @@ var _ Action = (*SyncBranchableCollection)(nil)
 var _ Stateful = (*SyncBranchableCollection)(nil)
 
 func (a *SyncBranchableCollection) Execute() {
-	ctx, cancel := context.WithTimeout(a.s.Ctx, 5*time.Second)
-	defer cancel()
+	ctx := a.s.Ctx
+
+	// Attach the default timeout if the NoDeadline flag is unset
+	if !a.NoDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+	}
 
 	nodeState := a.s.Nodes[a.NodeID]
 

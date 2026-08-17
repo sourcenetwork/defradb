@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
 )
 
 type similarityNode struct {
@@ -109,26 +110,14 @@ func (n *similarityNode) Next() (bool, error) {
 		child := n.currentValue.Fields[n.target.Index]
 		switch childCollection := child.(type) {
 		case []int64:
-			vector := convertArray[int64](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = float64(result)
+			similarity, err = cosineSimilarity(childCollection, convertArray[int64](n.vector))
 		case []float32:
-			vector := convertArray[float32](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = float64(result)
+			similarity, err = cosineSimilarity(childCollection, convertArray[float32](n.vector))
 		case []float64:
-			vector := convertArray[float64](n.vector)
-			result, err := cosineSimilarity(childCollection, vector)
-			if err != nil {
-				return false, err
-			}
-			similarity = result
+			similarity, err = cosineSimilarity(childCollection, convertArray[float64](n.vector))
+		}
+		if err != nil {
+			return false, err
 		}
 
 		n.currentValue.Fields[n.virtualFieldIndex] = similarity
@@ -146,18 +135,19 @@ func (n *similarityNode) Next() (bool, error) {
 
 func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 
+// cosineSimilarity returns the cosine similarity of the field value and the query vector, requiring
+// them to be the same length. The similarity is in [-1, 1] where 1 means the same direction; because
+// it is a true cosine (normalised), it must match the indexed path (which derives similarity as
+// 1 - cosine distance from the graph), so an ordered query returns the same results whether or not a
+// vector index is used.
 func cosineSimilarity[T number](
 	source []T,
 	vector []T,
-) (T, error) {
-	var value T
+) (float64, error) {
 	if len(source) != len(vector) {
-		return value, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
+		return 0, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
 	}
-	for i := range source {
-		value += vector[i] * source[i]
-	}
-	return value, nil
+	return dbmath.CosineSimilarity(source, vector), nil
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {

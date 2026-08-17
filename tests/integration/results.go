@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -236,6 +237,53 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
+}
+
+// cosineSimilarityTolerance absorbs the gap between the exact float64 cosine and the value the engine
+// gets from float32-stored vectors, whose components are not all exactly representable in float32.
+const cosineSimilarityTolerance = 1e-6
+
+// CosineSimilarity matches a _similarity result against the cosine of the two given vectors. Prefer
+// it over a hard-coded float: it names the vectors under comparison and cannot go stale.
+func CosineSimilarity(source, vector []float64) *cosineSimilarity {
+	return &cosineSimilarity{source: source, vector: vector}
+}
+
+type cosineSimilarity struct {
+	source []float64
+	vector []float64
+}
+
+var _ gomega.OmegaMatcher = (*cosineSimilarity)(nil)
+
+// expected computes the cosine similarity of the two vectors using the SAME function the production
+// query path uses, so the matcher is an oracle that cannot drift from what the code computes.
+func (m *cosineSimilarity) expected() float64 {
+	return dbmath.CosineSimilarity(m.source, m.vector)
+}
+
+func (m *cosineSimilarity) Match(actual any) (bool, error) {
+	// The HTTP, CLI and C clients decode the result through JSON, so the similarity value arrives as a
+	// json.Number rather than a float64. gomega.BeNumerically only accepts native numeric types, so
+	// unwrap it first, the same way the rest of the result-matching does.
+	if jsonNum, ok := actual.(json.Number); ok {
+		f, err := jsonNum.Float64()
+		if err != nil {
+			return false, err
+		}
+		actual = f
+	}
+	return gomega.BeNumerically("~", m.expected(), cosineSimilarityTolerance).Match(actual)
+}
+
+func (m *cosineSimilarity) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be the cosine similarity\n\t%v (within %v)",
+		actual, m.expected(), cosineSimilarityTolerance)
+}
+
+func (m *cosineSimilarity) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be the cosine similarity\n\t%v (within %v)",
+		actual, m.expected(), cosineSimilarityTolerance)
 }
 
 func ValidDocID() *validDocID {
