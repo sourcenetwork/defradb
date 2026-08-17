@@ -429,10 +429,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 
 		case block.Delta.IsComposite():
 			mcrdt = crdt.NewDocComposite(
-				keys.DataStoreKey{
+				keys.PrimaryDataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        blockDocShortID,
-					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 				},
 			)
 

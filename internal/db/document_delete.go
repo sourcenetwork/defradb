@@ -177,7 +177,7 @@ func (c *collection) applyDelete(
 	signingCtx := c.contextForSigning(ctx)
 
 	merkleCRDT := crdt.NewDocComposite(
-		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
+		primaryKey,
 	)
 
 	link, b, err := coreblock.AddDeltaWithOptions(

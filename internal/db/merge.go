@@ -491,10 +491,10 @@ func (mp *mergeProcessor) initCRDTForType(
 			return nil, nil, resolvedDocRef{}, err
 		}
 		return crdt.NewDocComposite(
-				keys.DataStoreKey{
+				keys.PrimaryDataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        docRef.docShortID,
-				}.WithFieldID(core.COMPOSITE_NAMESPACE),
+				},
 			), keys.DataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,

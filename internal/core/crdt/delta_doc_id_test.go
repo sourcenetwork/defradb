@@ -55,6 +55,6 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	require.NoError(t, err)
 	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
 
-	composite := NewDocComposite(key)
+	composite := NewDocComposite(key.ToPrimaryDataStoreKey())
 	require.NotContains(t, string(composite.Delta("collection-version").IPLDSchemaBytes()), "docID")
 }
