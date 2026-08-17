@@ -560,7 +560,6 @@ func (c *collection) save(
 			case client.PN_COUNTER, client.P_COUNTER:
 				counter := crdt.NewCounter(
 					val.Type() == client.PN_COUNTER,
-					fieldDescription.Kind.(client.ScalarKind), //nolint:forcetypeassert
 				)
 				merkleCRDT = counter
 
@@ -573,7 +572,13 @@ func (c *collection) save(
 				return client.NewErrUnknownCRDT(val.Type())
 			}
 
-			err = merkleCRDT.Merge(ctx, txn.Datastore(), fieldKey, delta)
+			err = merkleCRDT.Merge(
+				ctx,
+				txn.Datastore(),
+				fieldKey,
+				fieldDescription.Kind,
+				delta,
+			)
 			if err != nil {
 				return err
 			}

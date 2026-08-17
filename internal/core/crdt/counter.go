@@ -71,7 +71,6 @@ func (delta *CounterDelta) GetPriority() uint64 {
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
 	allowDecrement bool
-	kind           client.ScalarKind
 }
 
 var _ FieldValueCRDT = (*Counter)(nil)
@@ -80,11 +79,9 @@ var _ FieldValueCRDT = (*Counter)(nil)
 // backed by a Counter CRDT.
 func NewCounter(
 	allowDecrement bool,
-	kind client.ScalarKind,
 ) *Counter {
 	return &Counter{
 		allowDecrement: allowDecrement,
-		kind:           kind,
 	}
 }
 
@@ -132,6 +129,7 @@ func (c *Counter) Merge(
 	ctx context.Context,
 	store datastore.Keyedstore,
 	key keys.DataStoreKey,
+	kind client.FieldKind,
 	delta Delta,
 ) error {
 	d, ok := delta.(*CounterDelta)
@@ -139,13 +137,19 @@ func (c *Counter) Merge(
 		return ErrMismatchedMergeType
 	}
 
-	return c.incrementValue(ctx, store, key, d)
+	k, ok := kind.(client.ScalarKind)
+	if !ok {
+		return ErrMismatchedMergeType
+	}
+
+	return c.incrementValue(ctx, store, key, k, d)
 }
 
 func (c *Counter) incrementValue(
 	ctx context.Context,
 	store datastore.Keyedstore,
 	key keys.DataStoreKey,
+	kind client.ScalarKind,
 	delta *CounterDelta,
 ) error {
 	valueKey := key.WithValueFlag()
@@ -160,24 +164,24 @@ func (c *Counter) incrementValue(
 
 	var resultAsBytes []byte
 
-	switch c.kind {
+	switch kind {
 	case client.FieldKind_NILLABLE_INT:
 		resultAsBytes, err = validateAndIncrement[int64](ctx, store, valueKey, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT32:
 		resultAsBytes, err = validateAndIncrement[float32](ctx, store, valueKey, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, kind.String())
 		}
 	case client.FieldKind_NILLABLE_FLOAT64:
 		resultAsBytes, err = validateAndIncrement[float64](ctx, store, valueKey, delta.Data, c.allowDecrement)
 		if err != nil {
-			return NewErrIncrementCounter(err, delta.FieldName, c.kind.String())
+			return NewErrIncrementCounter(err, delta.FieldName, kind.String())
 		}
 	default:
-		return NewErrUnsupportedCounterType(c.kind)
+		return NewErrUnsupportedCounterType(kind)
 	}
 
 	err = store.Set(ctx, valueKey, resultAsBytes)

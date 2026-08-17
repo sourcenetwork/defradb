@@ -547,10 +547,7 @@ func (mp *mergeProcessor) mergeBlock(
 			return false, nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
-		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
-			fd.Typ,
-			fd.Kind,
-		)
+		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(fd.Typ)
 		if err != nil {
 			return false, nil, resolvedDocRef{}, err
 		}
@@ -562,6 +559,7 @@ func (mp *mergeProcessor) mergeBlock(
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
+			fd.Kind,
 			block.Delta.GetDelta(),
 		)
 		if err != nil {

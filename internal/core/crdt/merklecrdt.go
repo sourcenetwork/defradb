@@ -22,7 +22,13 @@ import (
 )
 
 type FieldValueCRDT interface {
-	Merge(ctx context.Context, store datastore.Keyedstore, key keys.DataStoreKey, other Delta) error
+	Merge(
+		ctx context.Context,
+		store datastore.Keyedstore,
+		key keys.DataStoreKey,
+		kind client.FieldKind,
+		other Delta,
+	) error
 }
 
 type DocumentValueCRDT interface {
@@ -31,7 +37,6 @@ type DocumentValueCRDT interface {
 
 func FieldLevelCRDTWithStore(
 	cType client.CType,
-	kind client.FieldKind,
 ) (FieldValueCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
@@ -39,7 +44,6 @@ func FieldLevelCRDTWithStore(
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
 			cType == client.PN_COUNTER,
-			kind.(client.ScalarKind), //nolint:forcetypeassert
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)

@@ -95,6 +95,7 @@ func (l *LWW) Merge(
 	ctx context.Context,
 	store datastore.Keyedstore,
 	key keys.DataStoreKey,
+	kind client.FieldKind,
 	delta Delta,
 ) error {
 	d, ok := delta.(*LWWDelta)

@@ -453,10 +453,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return err
 			}
 
-			mcrdt, err := crdt.FieldLevelCRDTWithStore(
-				field.Typ,
-				field.Kind,
-			)
+			mcrdt, err := crdt.FieldLevelCRDTWithStore(field.Typ)
 			if err != nil {
 				return err
 			}
@@ -471,6 +468,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 					DocShortID:        blockDocShortID,
 					FieldID:           fmt.Sprint(fieldShortID),
 				},
+				field.Kind,
 				block.Delta.GetDelta(),
 			)
 			if err != nil {
