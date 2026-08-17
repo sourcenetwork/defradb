@@ -38,10 +38,12 @@ const (
 	opNlike    = connor.NotLikeOp
 	opILike    = connor.CaseInsensitiveLikeOp
 	opNILike   = connor.CaseInsensitiveNotLikeOp
+	opRegex    = connor.RegexOp
 	compOpAny  = connor.AnyOp
 	compOpAll  = connor.AllOp
 	compOpNone = connor.NoneOp
 	opNot      = connor.NotOp
+	opAnd      = connor.AndOp
 	opOr       = connor.OrOp
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
@@ -972,6 +974,9 @@ func isArrayFilterWithComplexValue(filterVal any) bool {
 //     leaf values (scalars), not entire objects or arrays.
 func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
 	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON || fieldKind == client.FieldKind_JSON
+	if op == opRegex {
+		return true
+	}
 
 	if filterVal == nil {
 		if op == opGe {

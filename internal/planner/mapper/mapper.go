@@ -996,6 +996,18 @@ func getRequestables(
 				Key:   getRenderKey(&f.Field),
 			})
 			mapping.Add(index, f.Name)
+		case *request.Bm25:
+			index := mapping.GetNextIndex()
+			fields = append(fields, &Bm25{
+				Field:   Field{Index: index, Name: f.Name},
+				Query:   f.Query,
+				Targets: f.Targets,
+			})
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
 		}
@@ -1529,6 +1541,11 @@ func toMutation(
 	)
 	if err != nil {
 		return nil, err
+	}
+	for _, field := range underlyingSelect.Fields {
+		if _, isBM25 := field.(*Bm25); isBM25 {
+			return nil, ErrBm25InMutation
+		}
 	}
 	return &Mutation{
 		Select:        *underlyingSelect,

@@ -303,6 +303,9 @@ func (p *Planner) newInvertableTypeJoin(
 	subSelect *mapper.Select,
 ) (invertibleTypeJoin, error) {
 	prepareScanNodeFilterForTypeJoin(parent, sourcePlan, subSelect)
+	if bm25Field(subSelect.Fields) != nil {
+		return invertibleTypeJoin{}, ErrBM25NotOnCollectionScan
+	}
 
 	subSelectPlan, err := p.Select(subSelect)
 	if err != nil {

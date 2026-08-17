@@ -30,6 +30,7 @@ const (
 	NotLikeOp                = "_nlike"
 	CaseInsensitiveLikeOp    = "_ilike"
 	CaseInsensitiveNotLikeOp = "_nilike"
+	RegexOp                  = "_regex"
 )
 
 // IsOpSimple returns true if the given operator is simple (not compound).
@@ -39,7 +40,7 @@ func IsOpSimple(op string) bool {
 	switch op {
 	case EqualOp, GreaterOrEqualOp, GreaterOp, InOp,
 		LesserOrEqualOp, LesserOp, NotEqualOp, NotInOp,
-		LikeOp, NotLikeOp, CaseInsensitiveLikeOp, CaseInsensitiveNotLikeOp:
+		LikeOp, NotLikeOp, CaseInsensitiveLikeOp, CaseInsensitiveNotLikeOp, RegexOp:
 		return true
 	default:
 		return false
@@ -93,6 +94,8 @@ func matchWith(op string, conditions, data any, propExists bool) (bool, error) {
 		return ilike(conditions, data)
 	case CaseInsensitiveNotLikeOp:
 		return nilike(conditions, data)
+	case RegexOp:
+		return regex(conditions, data)
 	case NoneOp:
 		return none(conditions, data)
 	case NotOp:

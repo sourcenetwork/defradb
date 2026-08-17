@@ -22,6 +22,7 @@ const (
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
 	errInvalidIndexFieldDescription string = "invalid or malformed field description"
 	errInvalidVectorIndexConfig     string = "invalid vector index config"
+	errInvalidFullTextIndexConfig   string = "invalid full-text index config"
 	errEmptyCollectionSDL           string = "collection definition cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
@@ -76,6 +77,10 @@ func NewErrInvalidAscensionOrder(fieldName string) error {
 
 func NewErrInvalidVectorIndexConfig(inner error) error {
 	return errors.Wrap(errInvalidVectorIndexConfig, inner)
+}
+
+func NewErrInvalidFullTextIndexConfig(inner error) error {
+	return errors.Wrap(errInvalidFullTextIndexConfig, inner)
 }
 
 func NewErrInvalidIndexFieldDescription(fieldName string) error {

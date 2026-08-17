@@ -20,6 +20,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+func withIndexArgs(index *action.NewIndex, args ...string) *action.NewIndex {
+	index.AddArgs(args...)
+	return index
+}
+
 func TestIndexNew_WithSingleField_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
@@ -264,6 +269,56 @@ func TestIndexNew_WithDuplicateName_ShouldReturnError(t *testing.T) {
 			},
 		},
 	}
+
+	test.Execute(t)
+}
+
+func TestIndexNew_WithFullTextFlag_ShouldCreateTypedIndex(t *testing.T) {
+	test := &integration.Test{Actions: []action.Action{
+		&action.AddCollection{InlineSDL: `type Article { body: String }`},
+		withIndexArgs(&action.NewIndex{
+			Collection: "Article",
+			Fields:     []string{"body"},
+			Expected: immutable.Some(client.IndexDescription{
+				Kind: client.IndexKindFullText,
+				KindDescription: &client.FullTextIndexDescription{
+					Algorithm: client.FullTextAlgorithmBM25,
+					BM25:      &client.BM25Params{K1: 2, B: 0.5},
+				},
+				Fields: []client.IndexedFieldDescription{{Name: "body"}},
+			}),
+		}, "--full-text", `{"Algorithm":"BM25","BM25":{"K1":2,"B":0.5}}`),
+	}}
+
+	test.Execute(t)
+}
+
+func TestIndexNew_WithTrigramFlag_ShouldCreateTypedIndex(t *testing.T) {
+	test := &integration.Test{Actions: []action.Action{
+		&action.AddCollection{InlineSDL: `type User { name: String }`},
+		withIndexArgs(&action.NewIndex{
+			Collection: "User",
+			Fields:     []string{"name"},
+			Expected: immutable.Some(client.IndexDescription{
+				Kind:            client.IndexKindTrigram,
+				KindDescription: &client.TrigramIndexDescription{},
+				Fields:          []client.IndexedFieldDescription{{Name: "name"}},
+			}),
+		}, "--trigram"),
+	}}
+
+	test.Execute(t)
+}
+
+func TestIndexNew_WithInvalidFullTextJSON_ShouldReturnError(t *testing.T) {
+	test := &integration.Test{Actions: []action.Action{
+		&action.AddCollection{InlineSDL: `type Article { body: String }`},
+		withIndexArgs(&action.NewIndex{
+			Collection:  "Article",
+			Fields:      []string{"body"},
+			ExpectError: "invalid full-text index config",
+		}, "--full-text", `{not-json}`),
+	}}
 
 	test.Execute(t)
 }

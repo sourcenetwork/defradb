@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -128,6 +129,9 @@ type selectNode struct {
 
 	selectReq    *mapper.Select
 	groupSelects []*mapper.Select
+
+	// bm25 is the sole ranked full-text field requested by this selection, if any.
+	bm25 *mapper.Bm25
 
 	execInfo selectExecInfo
 }
@@ -276,6 +280,9 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	// and rootSubType filters to the selectNode
 	// @todo: simulate splitting for now
 	origScan, isScanNode := n.source.(*scanNode)
+	if bm25Field(n.selectReq.Fields) != nil && hasSimilarityField(n.selectReq.Fields) {
+		return nil, nil, ErrCompetingRankedIndexes
+	}
 	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
 		origScan.filter = n.filter
@@ -412,7 +419,68 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		origScan.initFetcher(n.selectReq.Cids)
 	}
 
+	if n.bm25 != nil {
+		if isScanNode && origScan.vectorIndexed {
+			return nil, nil, ErrCompetingRankedIndexes
+		}
+		if !isScanNode || n.selectReq.Cids.HasValue() || n.selectReq.DocIDs.HasValue() ||
+			len(origScan.prefixes) > 0 {
+			return nil, nil, ErrBM25NotOnCollectionScan
+		}
+		if origScan.showDeleted {
+			return nil, nil, ErrBM25WithShowDeleted
+		}
+		if err := setBM25Scan(origScan, n.bm25); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	return aggregates, similarity, nil
+}
+
+func setBM25Scan(scan *scanNode, bm25 *mapper.Bm25) error {
+	if len(bm25.Targets) == 0 {
+		return ErrBM25NoFields
+	}
+	targets := make([]fetcher.RankTarget, 0, len(bm25.Targets))
+	for _, target := range bm25.Targets {
+		index, found := bm25IndexOnField(scan.col, target.Field)
+		if !found {
+			return NewErrNoBM25Index(scan.col.Name(), target.Field)
+		}
+		targets = append(targets, fetcher.RankTarget{Index: index, Boost: target.Boost})
+	}
+	scan.index = immutable.Some(targets[0].Index)
+	scan.rank = &fetcher.Rank{Query: bm25.Query, Targets: targets}
+	scan.rankFieldIndex = bm25.Index
+	return nil
+}
+
+func bm25IndexOnField(col client.Collection, fieldName string) (client.IndexDescription, bool) {
+	for _, index := range queryableIndexesOnField(col, fieldName) {
+		if desc, ok := index.GetFullText(); ok && desc != nil && desc.Algorithm == client.FullTextAlgorithmBM25 {
+			return index, true
+		}
+	}
+	return client.IndexDescription{}, false
+}
+
+func bm25Field(fields []mapper.Requestable) *mapper.Bm25 {
+	for _, field := range fields {
+		if bm25, ok := field.(*mapper.Bm25); ok {
+			return bm25
+		}
+	}
+	return nil
+}
+
+func hasSimilarityField(fields []mapper.Requestable) bool {
+	for _, field := range fields {
+		if _, ok := field.(*mapper.Similarity); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
@@ -486,6 +554,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 			var simFilter *mapper.Filter
 			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
 			similarity = append(similarity, n.planner.Similarity(f, simFilter))
+		case *mapper.Bm25:
+			if n.bm25 != nil {
+				return nil, nil, ErrMultipleBM25Fields
+			}
+			n.bm25 = f
 		}
 	}
 
@@ -565,6 +638,9 @@ func (p *Planner) SelectTopNodeFromSource(
 	aggregates, similarity, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
+	}
+	if s.bm25 != nil {
+		return nil, ErrBM25NotOnCollectionScan
 	}
 
 	groupPlan, err := p.GroupBy(groupBy, selectReq, s.groupSelects)

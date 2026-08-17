@@ -94,6 +94,16 @@ func (c *Collection) NewIndex(
 		}
 		args = append(args, "--vector", string(vectorJSON))
 	}
+	if indexDesc.FullText != nil {
+		fullTextJSON, err := json.Marshal(indexDesc.FullText)
+		if err != nil {
+			return index, err
+		}
+		args = append(args, "--full-text", string(fullTextJSON))
+	}
+	if indexDesc.Trigram != nil {
+		args = append(args, "--trigram")
+	}
 
 	fields := make([]string, len(indexDesc.Fields))
 	orders := make([]bool, len(indexDesc.Fields))

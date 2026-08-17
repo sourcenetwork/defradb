@@ -57,6 +57,13 @@ const (
 	VectorIndexDirectivePropDimensions = "dimensions"
 	VectorIndexDirectivePropHNSW       = "HNSW"
 
+	FullTextIndexDirectiveLabel    = "fullTextIndex"
+	FullTextIndexDirectivePropBM25 = "BM25"
+	BM25IndexConfigPropK1          = "k1"
+	BM25IndexConfigPropB           = "b"
+
+	TrigramIndexDirectiveLabel = "trigramIndex"
+
 	// Fields of the per-algorithm config objects. `metric` is shared in name but each config declares
 	// its own so a client only sees the knobs of the algorithm it is configuring.
 	VectorIndexConfigPropMetric         = "metric"
@@ -80,6 +87,8 @@ const (
 	FieldOrderDESC = "DESC"
 
 	SimilarityArgVector = "vector"
+	Bm25ArgQuery        = "query"
+	Bm25ArgFields       = "fields"
 )
 
 // OrderingEnum is an enum for the Ordering argument.
@@ -139,6 +148,26 @@ func HNSWIndexConfigInputObject(metricEnum *gql.Enum) *gql.InputObject {
 				Description:  "Default query-time exploration factor. Higher improves recall at the cost of query latency.",
 				Type:         gql.Int,
 				DefaultValue: int(client.DefaultHNSWEfSearch),
+			},
+		},
+	})
+}
+
+// BM25IndexConfigInputObject is the typed config for @fullTextIndex's `BM25` argument.
+func BM25IndexConfigInputObject() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "BM25IndexConfig",
+		Description: "Okapi BM25 full-text relevance parameters.",
+		Fields: gql.InputObjectConfigFieldMap{
+			BM25IndexConfigPropK1: &gql.InputObjectFieldConfig{
+				Description:  "Term-frequency saturation parameter.",
+				Type:         gql.Float,
+				DefaultValue: client.DefaultBM25K1,
+			},
+			BM25IndexConfigPropB: &gql.InputObjectFieldConfig{
+				Description:  "Document-length normalization parameter.",
+				Type:         gql.Float,
+				DefaultValue: client.DefaultBM25B,
 			},
 		},
 	})
@@ -463,6 +492,33 @@ func VectorIndexDirective(hnswConfig *gql.InputObject) *gql.Directive {
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
 		},
+	})
+}
+
+// FullTextIndexDirective @fullTextIndex builds a full-text relevance index over a string field.
+// The algorithm is selected by its typed configuration argument; BM25 is the initial and default
+// algorithm.
+func FullTextIndexDirective(bm25Config *gql.InputObject) *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        FullTextIndexDirectiveLabel,
+		Description: "@fullTextIndex builds a full-text relevance index over a string field.",
+		Args: gql.FieldConfigArgument{
+			FullTextIndexDirectivePropBM25: &gql.ArgumentConfig{
+				Description: "Build the index with Okapi BM25 using these parameters.",
+				Type:        bm25Config,
+			},
+		},
+		Locations: []string{gql.DirectiveLocationFieldDefinition},
+	})
+}
+
+// TrigramIndexDirective @trigramIndex builds an index used to narrow positive LIKE, ILIKE, and
+// regular-expression filters over a string field.
+func TrigramIndexDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        TrigramIndexDirectiveLabel,
+		Description: "@trigramIndex indexes string trigrams for pattern-matching filters.",
+		Locations:   []string{gql.DirectiveLocationFieldDefinition},
 	})
 }
 

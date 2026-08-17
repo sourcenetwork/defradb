@@ -12,7 +12,14 @@ package parser
 
 import "github.com/sourcenetwork/defradb/errors"
 
+const (
+	errInvalidBm25Field   string = "invalid _bm25 field entry"
+	errInvalidBm25Boost   string = "invalid _bm25 field weight"
+	errDuplicateBm25Field string = "_bm25 may name each field only once"
+)
+
 var (
+	ErrBm25NoFields                   = errors.New("_bm25 requires at least one field to score")
 	ErrFilterMissingArgumentType      = errors.New("couldn't find filter argument type")
 	ErrInvalidOrderDirection          = errors.New("invalid order direction")
 	ErrInvalidOrderInput              = errors.New("invalid order input")
@@ -28,3 +35,15 @@ var (
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
 )
+
+func NewErrInvalidBm25Field(entry any) error {
+	return errors.New(errInvalidBm25Field, errors.NewKV("Entry", entry))
+}
+
+func NewErrInvalidBm25Boost(entry, weight string) error {
+	return errors.New(errInvalidBm25Boost, errors.NewKV("Entry", entry), errors.NewKV("Weight", weight))
+}
+
+func NewErrDuplicateBm25Field(name string) error {
+	return errors.New(errDuplicateBm25Field, errors.NewKV("Field", name))
+}

@@ -58,6 +58,10 @@ type lensedFetcher struct {
 
 var _ fetcher.Fetcher = (*lensedFetcher)(nil)
 
+func (f *lensedFetcher) ConfigureRank(rank *fetcher.Rank) bool {
+	return fetcher.ConfigureRank(f.source, rank)
+}
+
 // NewFetcher returns a new fetcher that will migrate any documents from the given
 // source Fetcher as they are are yielded.
 func NewFetcher(

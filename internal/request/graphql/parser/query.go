@@ -11,6 +11,8 @@
 package parser
 
 import (
+	"math"
+	"strconv"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -259,6 +261,57 @@ func parseSimilarity(
 		Target: target,
 		Vector: vector,
 	}, nil
+}
+
+func parseBm25(
+	exe *gql.ExecutionContext,
+	parent *gql.Object,
+	field *ast.Field,
+) (*request.Bm25, error) {
+	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
+	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
+	query, _ := arguments[types.Bm25ArgQuery].(string)
+	entries, _ := arguments[types.Bm25ArgFields].([]any)
+	if len(entries) == 0 {
+		return nil, ErrBm25NoFields
+	}
+	targets := make([]request.Bm25Target, 0, len(entries))
+	named := make(map[string]struct{}, len(entries))
+	for _, entry := range entries {
+		text, ok := entry.(string)
+		if !ok {
+			return nil, NewErrInvalidBm25Field(entry)
+		}
+		target, err := parseBm25Target(text)
+		if err != nil {
+			return nil, err
+		}
+		if _, repeated := named[target.Field]; repeated {
+			return nil, NewErrDuplicateBm25Field(target.Field)
+		}
+		named[target.Field] = struct{}{}
+		targets = append(targets, target)
+	}
+	return &request.Bm25{
+		Field:   request.Field{Name: field.Name.Value, Alias: getFieldAlias(field)},
+		Query:   query,
+		Targets: targets,
+	}, nil
+}
+
+func parseBm25Target(entry string) (request.Bm25Target, error) {
+	name, weight, weighted := strings.Cut(entry, "^")
+	if name == "" {
+		return request.Bm25Target{}, NewErrInvalidBm25Field(entry)
+	}
+	if !weighted {
+		return request.Bm25Target{Field: name, Boost: 1}, nil
+	}
+	boost, err := strconv.ParseFloat(weight, 64)
+	if err != nil || boost < 0 || math.IsInf(boost, 0) || math.IsNaN(boost) {
+		return request.Bm25Target{}, NewErrInvalidBm25Boost(entry, weight)
+	}
+	return request.Bm25Target{Field: name, Boost: boost}, nil
 }
 
 func parseAggregateTarget(

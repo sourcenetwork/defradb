@@ -141,6 +141,15 @@ type Author {
         """
         age: ScalarAggregateNumericBlock
     ): Float!
+    "Returns how well the document matches the provided query, scored with BM25."
+    _bm25(
+        """
+        Fields to score, optionally followed by "^" and a non-negative boost, for example "title^4".
+        """
+        fields: [String!]!
+        "The text to score the fields against."
+        query: String!
+    ): Float
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -354,6 +363,14 @@ input Author___version__CountSelector {
     offset: Int
 }
 
+"Okapi BM25 full-text relevance parameters."
+input BM25IndexConfig {
+    "Document-length normalization parameter."
+    b: Float = 0.75
+    "Term-frequency saturation parameter."
+    k1: Float = 1.2
+}
+
 "The `Blob` scalar type represents a binary large object."
 scalar Blob
 
@@ -558,6 +575,15 @@ type Book {
         rating: ScalarAggregateNumericBlock
     ): Float!
     _authorID: ID
+    "Returns how well the document matches the provided query, scored with BM25."
+    _bm25(
+        """
+        Fields to score, optionally followed by "^" and a non-negative boost, for example "title^4".
+        """
+        fields: [String!]!
+        "The text to score the fields against."
+        query: String!
+    ): Float
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -1431,6 +1457,18 @@ input Float64OperatorBlock {
 
     """
     _nin: [Float64]
+}
+
+"HNSW (Hierarchical Navigable Small World) vector index parameters."
+input HNSWIndexConfig {
+    "Max connections per node. Higher improves recall at the cost of memory and build time."
+    M: Int = 16
+    "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time."
+    efConstruction: Int = 128
+    "Default query-time exploration factor. Higher improves recall at the cost of query latency."
+    efSearch: Int = 64
+    "Distance metric (currently only COSINE)."
+    metric: VectorDistanceMetric = "COSINE"
 }
 
 """
@@ -2384,6 +2422,7 @@ input NotNullStringFilterArg {
     _nin: [String!]
     _nlike: String
     _or: [NotNullStringFilterArg!]
+    _regex: String
 }
 
 "These are the set of filter operators available for use when filtering on [String!] values."
@@ -2484,6 +2523,14 @@ input NotNullStringOperatorBlock {
 
     """
     _nlike: String
+    """
+    
+    The regex operator - if the target value matches the given regular expression anywhere within it the check will
+     pass. The syntax is RE2, for example '_regex: "^Jo.*n$"' would match on the string 'John'. Anchor the pattern
+     with '^' and '$' to match the whole value.
+
+    """
+    _regex: String
 }
 
 enum Ordering {
@@ -2787,6 +2834,7 @@ input StringFilterArg {
     _nin: [String]
     _nlike: String
     _or: [StringFilterArg!]
+    _regex: String
 }
 
 "These are the set of filter operators available for use when filtering on [String] values."
@@ -2887,6 +2935,14 @@ input StringOperatorBlock {
 
     """
     _nlike: String
+    """
+    
+    The regex operator - if the target value matches the given regular expression anywhere within it the check will
+     pass. The syntax is RE2, for example '_regex: "^Jo.*n$"' would match on the string 'John'. Anchor the pattern
+     with '^' and '$' to match the whole value.
+
+    """
+    _regex: String
 }
 
 type Subscription {
@@ -3089,6 +3145,11 @@ type Subscription {
         """
         order: [commitsOrderArg]
     ): [Commit]
+}
+
+enum VectorDistanceMetric {
+    "Cosine distance on normalised vectors."
+    COSINE
 }
 
 """
@@ -3391,6 +3452,12 @@ directive @explain(
     type: ExplainType
 ) on QUERY | MUTATION
 
+"@fullTextIndex builds a full-text relevance index over a string field."
+directive @fullTextIndex(
+    "Build the index with Okapi BM25 using these parameters."
+    BM25: BM25IndexConfig
+) on FIELD_DEFINITION
+
 "@index is a directive that can be used to add an index on a type or a field."
 directive @index(
     """
@@ -3448,4 +3515,15 @@ directive @relation(
 
     """
     name: String
+) on FIELD_DEFINITION
+
+"@trigramIndex indexes string trigrams for pattern-matching filters."
+directive @trigramIndex on FIELD_DEFINITION
+
+"@vectorIndex builds an approximate-nearest-neighbour index over a vector field."
+directive @vectorIndex(
+    "Build the index with the HNSW algorithm using these parameters."
+    HNSW: HNSWIndexConfig
+    "Vector dimensions; required unless inferable from an @embedding."
+    dimensions: Int
 ) on FIELD_DEFINITION

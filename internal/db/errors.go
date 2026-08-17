@@ -146,6 +146,15 @@ const (
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errMultipleIndexKindDescriptions       string = "only one index kind configuration may be supplied"
+	errStringIndexRequiresSingleField      string = "string-derived index must be on exactly one field"
+	errStringIndexCannotBeUnique           string = "string-derived index cannot be unique"
+	errStringIndexCannotBeDescending       string = "string-derived index does not support descending fields"
+	errUnsupportedStringIndexFieldType     string = "unsupported field type for string-derived index"
+	errUnsupportedFullTextAlgorithm        string = "unsupported full-text index algorithm"
+	errInvalidBM25Parameter                string = "invalid BM25 parameter"
+	errCorruptedIndexKindDescription       string = "index kind description does not match index kind"
+	errUnsupportedRuntimeIndexKind         string = "unsupported runtime index kind"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -276,6 +285,7 @@ var (
 	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
 	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
 	ErrIndexWithIDDoesNotExist                   = errors.New(errIndexWithIDDoesNotExist)
+	ErrMultipleIndexKindDescriptions             = errors.New(errMultipleIndexKindDescriptions)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
@@ -1302,4 +1312,60 @@ func NewErrVectorIndexParamOutOfRange(param string, value, max uint32) error {
 		errors.NewKV("Value", value),
 		errors.NewKV("Max", max),
 	)
+}
+
+func NewErrStringIndexRequiresSingleField(kind string, fieldCount int) error {
+	return errors.New(
+		errStringIndexRequiresSingleField,
+		errors.NewKV("IndexKind", kind),
+		errors.NewKV("FieldCount", fieldCount),
+	)
+}
+
+func NewErrStringIndexCannotBeUnique(kind, fieldName string) error {
+	return errors.New(
+		errStringIndexCannotBeUnique,
+		errors.NewKV("IndexKind", kind),
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrStringIndexCannotBeDescending(kind, fieldName string) error {
+	return errors.New(
+		errStringIndexCannotBeDescending,
+		errors.NewKV("IndexKind", kind),
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+func NewErrUnsupportedStringIndexFieldType(kind string, fieldKind client.FieldKind) error {
+	return errors.New(
+		errUnsupportedStringIndexFieldType,
+		errors.NewKV("IndexKind", kind),
+		errors.NewKV("FieldKind", fieldKind.String()),
+	)
+}
+
+func NewErrUnsupportedFullTextAlgorithm(algorithm client.FullTextAlgorithm) error {
+	return errors.New(errUnsupportedFullTextAlgorithm, errors.NewKV("Algorithm", algorithm))
+}
+
+func NewErrInvalidBM25Parameter(name string, value float64) error {
+	return errors.New(
+		errInvalidBM25Parameter,
+		errors.NewKV("Parameter", name),
+		errors.NewKV("Value", value),
+	)
+}
+
+func NewErrCorruptedIndexKindDescription(name string, kind client.IndexKind) error {
+	return errors.New(
+		errCorruptedIndexKindDescription,
+		errors.NewKV("Index", name),
+		errors.NewKV("Kind", uint8(kind)),
+	)
+}
+
+func NewErrUnsupportedRuntimeIndexKind(kind client.IndexKind) error {
+	return errors.New(errUnsupportedRuntimeIndexKind, errors.NewKV("Kind", uint8(kind)))
 }

@@ -49,6 +49,34 @@ func (s *ExecInfo) Reset() {
 	s.IndexesFetched = 0
 }
 
+// Rank configures the dedicated ranked full-text fetch path and carries the score of the candidate
+// most recently produced by it through permission and filter wrappers to the scan node.
+type Rank struct {
+	Query   string
+	Targets []RankTarget
+	Score   float64
+}
+
+// RankTarget is one full-text index contributing to a ranked score.
+type RankTarget struct {
+	Index client.IndexDescription
+	Boost float64
+}
+
+type rankConfigurer interface {
+	ConfigureRank(*Rank) bool
+}
+
+// ConfigureRank configures ranked fetching when f is DefraDB's normal document fetcher, including
+// when it is wrapped by a lens fetcher. Ranked scans reject other fetcher surfaces during planning.
+func ConfigureRank(f Fetcher, rank *Rank) bool {
+	configurer, ok := f.(rankConfigurer)
+	if !ok {
+		return false
+	}
+	return configurer.ConfigureRank(rank)
+}
+
 // Fetcher is the interface for collecting documents from the underlying data store.
 // It handles all the key/value scanning, aggregation, and document encoding.
 type Fetcher interface {

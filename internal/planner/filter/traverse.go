@@ -15,6 +15,47 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
+// OpRelatedFilter stands in for a condition applied to a field of a related collection rather than
+// directly to the indexed relation field.
+const OpRelatedFilter = ""
+
+// IsOperator reports whether a key in an external filter is an operator rather than a field name.
+func IsOperator(key string) bool {
+	if len(key) == 0 || key[0] != '_' || key == request.DocIDFieldName {
+		return false
+	}
+	_, isRelated := request.ToRelatedObjectName(key)
+	return !isRelated
+}
+
+// TraverseFieldOperators calls f for each external leaf condition with its top-level field and
+// operator. Conditions below _not are skipped because a positive candidate index cannot represent
+// the complement of its candidate set.
+func TraverseFieldOperators(field string, conditions any, f func(field, op string)) {
+	switch t := conditions.(type) {
+	case map[string]any:
+		for key, val := range t {
+			switch {
+			case !IsOperator(key):
+				if field == "" {
+					TraverseFieldOperators(key, val, f)
+				} else {
+					f(field, OpRelatedFilter)
+				}
+			case key == request.FilterOpNot:
+			case key == request.FilterOpAnd || key == request.FilterOpOr || key == request.AliasFieldName:
+				TraverseFieldOperators(field, val, f)
+			case field != "":
+				f(field, key)
+			}
+		}
+	case []any:
+		for _, val := range t {
+			TraverseFieldOperators(field, val, f)
+		}
+	}
+}
+
 // TraverseFields walks through a filter condition tree and calls the provided function f
 // for each leaf node (field value) encountered. The function f receives the path to the field
 // (as a string slice) and its value. If f returns false, traversal stops immediately.
@@ -36,13 +77,6 @@ func TraverseFields(conditions map[string]any, f func([]string, any) bool) {
 }
 
 func traverseFields(path []string, key string, value any, f func([]string, any) bool) bool {
-	isKeyOp := func(k string) bool {
-		if len(k) == 0 || k[0] != '_' || k == request.DocIDFieldName {
-			return false
-		}
-		_, ok := request.ToRelatedObjectName(k)
-		return !ok
-	}
 	isOpComplex := func(k string) bool {
 		switch k {
 		// all these ops should have a map or an array as value and can not have a single value
@@ -54,7 +88,7 @@ func traverseFields(path []string, key string, value any, f func([]string, any) 
 	switch t := value.(type) {
 	case map[string]any:
 		for key, value := range t {
-			if isKeyOp(key) {
+			if IsOperator(key) {
 				if !traverseFields(path, key, value, f) {
 					return false
 				}
@@ -74,7 +108,7 @@ func traverseFields(path []string, key string, value any, f func([]string, any) 
 			}
 		}
 	default:
-		if isKeyOp(key) && isOpComplex(key) {
+		if IsOperator(key) && isOpComplex(key) {
 			return false
 		}
 		return f(path, value)

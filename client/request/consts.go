@@ -44,6 +44,7 @@ const (
 	DeletedFieldName = "_deleted"
 	VersionFieldName = "_version"
 	AliasFieldName   = "_alias"
+	Bm25FieldName    = "_bm25"
 
 	MaxFieldName        = "MAX"
 	MinFieldName        = "MIN"
@@ -127,6 +128,7 @@ var (
 		MaxFieldName:        {},
 		MinFieldName:        {},
 		SimilarityFieldName: {},
+		Bm25FieldName:       {},
 	}
 
 	Aggregates = map[string]struct{}{

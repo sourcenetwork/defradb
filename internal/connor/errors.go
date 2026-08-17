@@ -16,6 +16,7 @@ import (
 
 const (
 	errUnknownOperator string = "unknown operator"
+	errInvalidRegex    string = "invalid regular expression"
 )
 
 // Errors returnable from this package.
@@ -24,9 +25,14 @@ const (
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrUnknownOperator   = errors.New(errUnknownOperator)
+	ErrInvalidRegex      = errors.New(errInvalidRegex)
 	ErrSliceTypeNotFound = errors.New("slice type not found")
 )
 
 func NewErrUnknownOperator(operator string) error {
 	return errors.New(errUnknownOperator, errors.NewKV("Operator", operator))
+}
+
+func NewErrInvalidRegex(pattern string, inner error) error {
+	return errors.Wrap(errInvalidRegex, inner, errors.NewKV("Pattern", pattern))
 }

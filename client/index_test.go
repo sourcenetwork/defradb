@@ -12,11 +12,19 @@ package client
 
 import (
 	"encoding/json"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestIndexKind_PersistedValuesAreAppendOnly(t *testing.T) {
+	assert.Equal(t, IndexKind(0), IndexKindOrdered)
+	assert.Equal(t, IndexKind(1), IndexKindVector)
+	assert.Equal(t, IndexKind(2), IndexKindFullText)
+	assert.Equal(t, IndexKind(3), IndexKindTrigram)
+}
 
 func TestCollectIndexesOnField(t *testing.T) {
 	tests := []struct {
@@ -217,6 +225,62 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 
 	require.True(t, actual.IsVector())
 	assert.Equal(t, original, actual)
+}
+
+func TestIndexDescription_FullTextDescriptor_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:   "some_full_text_index",
+		ID:     3,
+		Fields: []IndexedFieldDescription{{Name: "body"}},
+		Kind:   IndexKindFullText,
+		KindDescription: &FullTextIndexDescription{
+			Algorithm: FullTextAlgorithmBM25,
+			BM25:      &BM25Params{K1: 1.5, B: 0.6},
+		},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	require.NoError(t, json.Unmarshal(bytes, &actual))
+
+	require.True(t, actual.IsFullText())
+	assert.False(t, actual.IsTrigram())
+	assert.Equal(t, original, actual)
+}
+
+func TestIndexDescription_TrigramDescriptor_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:            "some_trigram_index",
+		ID:              4,
+		Fields:          []IndexedFieldDescription{{Name: "body"}},
+		Kind:            IndexKindTrigram,
+		KindDescription: &TrigramIndexDescription{},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	require.NoError(t, json.Unmarshal(bytes, &actual))
+
+	require.True(t, actual.IsTrigram())
+	assert.False(t, actual.IsFullText())
+	assert.Equal(t, original, actual)
+}
+
+func TestIndexDescription_MarshalInvalidBM25Float_ReturnsError(t *testing.T) {
+	desc := IndexDescription{
+		Kind: IndexKindFullText,
+		KindDescription: &FullTextIndexDescription{
+			Algorithm: FullTextAlgorithmBM25,
+			BM25:      &BM25Params{K1: math.NaN(), B: DefaultBM25B},
+		},
+	}
+
+	_, err := json.Marshal(desc)
+	require.Error(t, err)
 }
 
 // Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not

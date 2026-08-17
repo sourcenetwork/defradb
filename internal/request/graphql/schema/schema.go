@@ -24,6 +24,7 @@ func defaultSchema() (gql.Schema, error) {
 	explainEnum := types.ExplainEnum()
 	vectorDistanceMetricEnum := types.VectorDistanceMetricEnum()
 	hnswIndexConfigInput := types.HNSWIndexConfigInputObject(vectorDistanceMetricEnum)
+	bm25IndexConfigInput := types.BM25IndexConfigInputObject()
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -49,6 +50,7 @@ func defaultSchema() (gql.Schema, error) {
 			encryptedSearchResult,
 			vectorDistanceMetricEnum,
 			hnswIndexConfigInput,
+			bm25IndexConfigInput,
 		),
 		Query:    defaultQueryType(queryCommits),
 		Mutation: defaultMutationType(),
@@ -58,6 +60,7 @@ func defaultSchema() (gql.Schema, error) {
 			orderEnum,
 			indexFieldInput,
 			hnswIndexConfigInput,
+			bm25IndexConfigInput,
 		),
 		Subscription: defaultSubscriptionType(queryCommits),
 	})
@@ -104,6 +107,7 @@ func defaultDirectivesType(
 	orderEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 	hnswIndexConfigInput *gql.InputObject,
+	bm25IndexConfigInput *gql.InputObject,
 ) []*gql.Directive {
 	return []*gql.Directive{
 		types.CRDTFieldDirective(crdtEnum),
@@ -120,6 +124,8 @@ func defaultDirectivesType(
 		types.ConstraintsDirective(),
 		types.EncryptedIndexDirective(),
 		types.VectorIndexDirective(hnswIndexConfigInput),
+		types.FullTextIndexDirective(bm25IndexConfigInput),
+		types.TrigramIndexDirective(),
 	}
 }
 
@@ -152,6 +158,7 @@ func defaultTypes(
 	encryptedSearchResult *gql.Object,
 	vectorDistanceMetricEnum *gql.Enum,
 	hnswIndexConfigInput *gql.InputObject,
+	bm25IndexConfigInput *gql.InputObject,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -242,5 +249,6 @@ func defaultTypes(
 
 		vectorDistanceMetricEnum,
 		hnswIndexConfigInput,
+		bm25IndexConfigInput,
 	}
 }

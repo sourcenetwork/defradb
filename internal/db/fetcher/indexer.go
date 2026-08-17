@@ -98,6 +98,11 @@ func newIndexFetcher(
 	execInfo *ExecInfo,
 	ordering []mapper.OrderCondition,
 ) (*indexFetcher, error) {
+	// This fetcher decodes the ordered scalar key layout. Kind-specific layouts must use their own
+	// fetch paths; silently opening one here can return corrupt or incomplete results.
+	if indexDesc.Kind != client.IndexKindOrdered && indexDesc.Kind != client.IndexKindTrigram {
+		return nil, nil
+	}
 	// Check if the filter has an OR at the root level that spans different fields.
 	// This check MUST happen here before filter.CopyField strips out non-indexed fields,
 	// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
@@ -144,7 +149,15 @@ func newIndexFetcher(
 		}
 	}
 
-	iter, err := f.createIndexIterator(f.indexFilter)
+	var iter indexIterator
+	switch indexDesc.Kind {
+	case client.IndexKindOrdered:
+		iter, err = f.createIndexIterator(f.indexFilter)
+	case client.IndexKindTrigram:
+		iter, err = f.createTrigramIndexIterator(docFilter)
+	default:
+		return nil, nil
+	}
 	if err != nil || iter == nil {
 		return nil, err
 	}
@@ -166,7 +179,7 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	}
 
 	hasNilField := false
-	for i := range f.indexedFields {
+	for i := range res.key.Fields {
 		hasNilField = hasNilField || res.key.Fields[i].Value.IsNil()
 	}
 
@@ -244,6 +257,9 @@ func CanBeOrderedByIndex(
 	index client.IndexDescription,
 	mapping *core.DocumentMapping,
 ) (bool, bool) {
+	if index.Kind != client.IndexKindOrdered {
+		return false, false
+	}
 	// if there is no ordering in the query or the query requests ordering on more fields, then index
 	// contains, we can't use index
 	if len(ordering) == 0 || len(ordering) > len(index.Fields) {

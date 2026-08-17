@@ -68,6 +68,10 @@ type scanNode struct {
 	// https://github.com/sourcenetwork/defradb/issues/5080
 	vectorIndexed bool
 
+	// rank configures the dedicated full-text fetcher and carries the score of its current document.
+	rank           *fetcher.Rank
+	rankFieldIndex int
+
 	execInfo scanExecInfo
 }
 
@@ -80,6 +84,9 @@ func (n *scanNode) Init() error {
 	filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filter)
 	if err != nil {
 		return err
+	}
+	if n.rank != nil && !fetcher.ConfigureRank(n.fetcher, n.rank) {
+		return ErrBM25NotOnCollectionScan
 	}
 	// init the fetcher
 	if err := n.fetcher.Init(
@@ -491,6 +498,9 @@ func (n *scanNode) Next() (bool, error) {
 		request.DeletedFieldName,
 		n.currentValue.Status.IsDeleted(),
 	)
+	if n.rank != nil {
+		n.currentValue.Fields[n.rankFieldIndex] = n.rank.Score
+	}
 
 	return true, nil
 }

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -47,6 +48,29 @@ func queryableIndexesOnField(col client.Collection, fieldName string) []client.I
 		}
 	}
 	return result
+}
+
+func invertibleJoinIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
+	var result []client.IndexDescription
+	for _, idx := range queryableIndexesOnField(col, fieldName) {
+		if indexKindServesOperator(idx.Kind, filter.OpRelatedFilter) {
+			result = append(result, idx)
+		}
+	}
+	return result
+}
+
+// indexKindServesOperator is the planner capability firewall. A physical layout can only enter the
+// generic scalar fetch path for operators that layout explicitly implements.
+func indexKindServesOperator(kind client.IndexKind, op string) bool {
+	switch kind {
+	case client.IndexKindOrdered:
+		return op != connor.RegexOp
+	case client.IndexKindTrigram:
+		return op == connor.LikeOp || op == connor.CaseInsensitiveLikeOp || op == connor.RegexOp
+	default:
+		return false
+	}
 }
 
 // indexSource indicates what criteria was used to select an index.
@@ -83,18 +107,17 @@ func findIndexByFilter(
 	var indexCandidates []client.IndexDescription
 	colVersion := col.Version()
 
-	filter.TraverseFields(filterConditions, func(path []string, val any) bool {
+	filter.TraverseFieldOperators("", filterConditions, func(fieldName, op string) {
 		for _, field := range colVersion.Fields {
-			if field.Name != path[0] {
+			if field.Name != fieldName {
 				continue
 			}
-			indexes := queryableIndexesOnField(col, field.Name)
-			if len(indexes) > 0 {
-				indexCandidates = append(indexCandidates, indexes...)
-				return true
+			for _, idx := range queryableIndexesOnField(col, fieldName) {
+				if indexKindServesOperator(idx.Kind, op) {
+					indexCandidates = append(indexCandidates, idx)
+				}
 			}
 		}
-		return true
 	})
 
 	if len(indexCandidates) == 0 {
@@ -122,9 +145,10 @@ func findIndexByFieldName(
 		if field.Name != fieldName {
 			continue
 		}
-		indexes := queryableIndexesOnField(col, field.Name)
-		if len(indexes) > 0 {
-			return immutable.Some(indexes[0])
+		for _, idx := range queryableIndexesOnField(col, field.Name) {
+			if indexKindServesOperator(idx.Kind, connor.EqualOp) {
+				return immutable.Some(idx)
+			}
 		}
 	}
 
@@ -143,6 +167,9 @@ func findIndexForOrdering(
 	}
 
 	for _, idx := range queryableIndexes(col) {
+		if idx.Kind != client.IndexKindOrdered {
+			continue
+		}
 		canOrder, _ := fetcher.CanBeOrderedByIndex(ordering, idx, docMapping)
 		if canOrder {
 			return immutable.Some(idx)
@@ -159,6 +186,9 @@ func canIndexSatisfyOrdering(
 	ordering []mapper.OrderCondition,
 	docMapping *core.DocumentMapping,
 ) bool {
+	if index.Kind != client.IndexKindOrdered {
+		return false
+	}
 	if len(ordering) == 0 {
 		return true
 	}

@@ -31,7 +31,7 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 	}
 	// A filter can drop some of the k nearest, so the graph would need to return more than k to
 	// backfill. That is filtered KNN: https://github.com/sourcenetwork/defradb/issues/5071
-	if n.filter != nil {
+	if origScan.filter != nil {
 		return nil
 	}
 

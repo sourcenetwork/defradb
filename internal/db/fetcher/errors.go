@@ -55,6 +55,8 @@ const (
 	errEncryptionKeyMissing       string = "encryption key not available locally for block"
 	errIndexEpochNotFound         string = "index epoch sequence not found"
 	errMissingVersionedPrefix     string = "versioned fetcher started without a prefix"
+	errRankTargetNotFullText      string = "rank target is not a full-text index"
+	errRankedFetchWithDeleted     string = "ranked fetch does not support deleted documents"
 )
 
 var (
@@ -94,6 +96,14 @@ func NewErrEncryptionKeyMissing(cid string) error {
 func NewErrIndexEpochNotFound(inner error, collectionID string, indexID uint32) error {
 	return errors.Wrap(errIndexEpochNotFound, inner,
 		errors.NewKV("CollectionID", collectionID), errors.NewKV("IndexID", indexID))
+}
+
+func NewErrRankTargetNotFullText(indexName string) error {
+	return errors.New(errRankTargetNotFullText, errors.NewKV("Index", indexName))
+}
+
+func NewErrRankedFetchWithDeleted() error {
+	return errors.New(errRankedFetchWithDeleted)
 }
 
 // NewErrFieldIdNotFound returns an error indicating that the given FieldId was not found.

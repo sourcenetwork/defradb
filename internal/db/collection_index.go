@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/binary"
 	"maps"
+	"math"
 	"strconv"
 	"strings"
 
@@ -474,6 +475,18 @@ func processNewIndexRequest(
 			return client.IndexDescription{}, err
 		}
 	}
+	if desc.FullText != nil {
+		err = validateFullTextIndexDescription(def, desc)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+	}
+	if desc.Trigram != nil {
+		err = validateTrigramIndexDescription(def, desc)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+	}
 
 	indexName, err := generateIndexNameIfNeeded(def, desc)
 	if err != nil {
@@ -496,13 +509,18 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	// Turn the flat request into the kind + kind-specific config: a Vector request is a vector
-	// index, else an ordered index carrying the unique flag.
+	// Turn the flat request into the single kind discriminator and its kind-specific description.
 	kind := client.IndexKindOrdered
 	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: desc.Unique}
 	if desc.Vector != nil {
 		kind = client.IndexKindVector
 		kindDescription = desc.Vector
+	} else if desc.FullText != nil {
+		kind = client.IndexKindFullText
+		kindDescription = desc.FullText
+	} else if desc.Trigram != nil {
+		kind = client.IndexKindTrigram
+		kindDescription = desc.Trigram
 	}
 
 	res := client.IndexDescription{
@@ -511,11 +529,62 @@ func processNewIndexRequest(
 		Fields:          desc.Fields,
 		Kind:            kind,
 		KindDescription: kindDescription,
-		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
-		Unique: desc.Vector == nil && desc.Unique,
+		// Mirror the ordered kind's uniqueness into the compatibility field. Derived indexes are never unique.
+		Unique: kind == client.IndexKindOrdered && desc.Unique,
 	}
 
 	return res, nil
+}
+
+func validateFullTextIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
+	if err := validateStringIndexFields(def, desc, "full-text"); err != nil {
+		return err
+	}
+	if desc.FullText.Algorithm == "" {
+		desc.FullText.Algorithm = client.FullTextAlgorithmBM25
+	}
+	if desc.FullText.Algorithm != client.FullTextAlgorithmBM25 {
+		return NewErrUnsupportedFullTextAlgorithm(desc.FullText.Algorithm)
+	}
+	if desc.FullText.BM25 == nil {
+		desc.FullText.BM25 = &client.BM25Params{
+			K1: client.DefaultBM25K1,
+			B:  client.DefaultBM25B,
+		}
+	}
+	params := desc.FullText.BM25
+	if math.IsNaN(params.K1) || math.IsInf(params.K1, 0) || params.K1 < 0 {
+		return NewErrInvalidBM25Parameter("k1", params.K1)
+	}
+	if math.IsNaN(params.B) || math.IsInf(params.B, 0) || params.B < 0 || params.B > 1 {
+		return NewErrInvalidBM25Parameter("b", params.B)
+	}
+	return nil
+}
+
+func validateTrigramIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
+	return validateStringIndexFields(def, desc, "trigram")
+}
+
+func validateStringIndexFields(
+	def client.CollectionVersion,
+	desc client.NewIndexRequest,
+	kind string,
+) error {
+	if len(desc.Fields) != 1 {
+		return NewErrStringIndexRequiresSingleField(kind, len(desc.Fields))
+	}
+	if desc.Unique {
+		return NewErrStringIndexCannotBeUnique(kind, desc.Fields[0].Name)
+	}
+	if desc.Fields[0].Descending {
+		return NewErrStringIndexCannotBeDescending(kind, desc.Fields[0].Name)
+	}
+	field, _ := def.GetFieldByName(desc.Fields[0].Name)
+	if field.Kind != client.FieldKind_STRING && field.Kind != client.FieldKind_NILLABLE_STRING {
+		return NewErrUnsupportedStringIndexFieldType(kind, field.Kind)
+	}
+	return nil
 }
 
 // validateVectorIndexDescription checks and fills in the vector-specific parts of an index request.
@@ -1294,6 +1363,19 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
 		}
+	}
+	kindConfigCount := 0
+	if desc.Vector != nil {
+		kindConfigCount++
+	}
+	if desc.FullText != nil {
+		kindConfigCount++
+	}
+	if desc.Trigram != nil {
+		kindConfigCount++
+	}
+	if kindConfigCount > 1 {
+		return ErrMultipleIndexKindDescriptions
 	}
 	return nil
 }

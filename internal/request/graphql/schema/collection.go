@@ -161,6 +161,18 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				indexes = append(indexes, index)
+			case types.FullTextIndexDirectiveLabel:
+				index, err := fullTextIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				indexes = append(indexes, index)
+			case types.TrigramIndexDirectiveLabel:
+				index, err := trigramIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				indexes = append(indexes, index)
 			}
 		}
 	}
@@ -703,6 +715,83 @@ func vectorIndexFromAST(
 		},
 		Vector: &vectorDesc,
 	}, nil
+}
+
+func fullTextIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.NewIndexRequest, error) {
+	bm25Params := client.BM25Params{K1: client.DefaultBM25K1, B: client.DefaultBM25B}
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.FullTextIndexDirectivePropBM25:
+			if err := parseBM25Config(arg.Value, &bm25Params); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+		default:
+			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+		}
+	}
+
+	return client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: fieldDef.Name.Value}},
+		FullText: &client.FullTextIndexDescription{
+			Algorithm: client.FullTextAlgorithmBM25,
+			BM25:      &bm25Params,
+		},
+	}, nil
+}
+
+func trigramIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.NewIndexRequest, error) {
+	if len(directive.Arguments) != 0 {
+		return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+	}
+	return client.NewIndexRequest{
+		Fields:  []client.IndexedFieldDescription{{Name: fieldDef.Name.Value}},
+		Trigram: &client.TrigramIndexDescription{},
+	}, nil
+}
+
+func parseBM25Config(value ast.Value, params *client.BM25Params) error {
+	obj, ok := value.(*ast.ObjectValue)
+	if !ok {
+		return ErrIndexWithInvalidArg
+	}
+	for _, field := range obj.Fields {
+		parsed, err := parseFloat64ASTValue(field.Value)
+		if err != nil {
+			return err
+		}
+		switch field.Name.Value {
+		case types.BM25IndexConfigPropK1:
+			params.K1 = parsed
+		case types.BM25IndexConfigPropB:
+			params.B = parsed
+		default:
+			return ErrIndexWithUnknownArg
+		}
+	}
+	return nil
+}
+
+func parseFloat64ASTValue(value ast.Value) (float64, error) {
+	var raw string
+	switch value := value.(type) {
+	case *ast.FloatValue:
+		raw = value.Value
+	case *ast.IntValue:
+		raw = value.Value
+	default:
+		return 0, ErrIndexWithInvalidArg
+	}
+	parsed, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return 0, ErrIndexWithInvalidArg
+	}
+	return parsed, nil
 }
 
 // parseHNSWConfig reads the @vectorIndex `HNSW` config object into metric + params, overwriting only

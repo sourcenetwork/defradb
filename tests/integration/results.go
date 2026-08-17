@@ -243,6 +243,17 @@ func (matcher *docIDAt) String() string {
 // gets from float32-stored vectors, whose components are not all exactly representable in float32.
 const cosineSimilarityTolerance = 1e-6
 
+// BeNumerically delegates to gomega.BeNumerically after converting transport-decoded JSON numbers
+// to float64. Go-client results already use native numeric types and pass through unchanged.
+func BeNumerically(comparator string, compareTo ...any) gomega.OmegaMatcher {
+	return gomega.WithTransform(func(actual any) (any, error) {
+		if jsonNum, ok := actual.(json.Number); ok {
+			return jsonNum.Float64()
+		}
+		return actual, nil
+	}, gomega.BeNumerically(comparator, compareTo...))
+}
+
 // CosineSimilarity matches a _similarity result against the cosine of the two given vectors. Prefer
 // it over a hard-coded float: it names the vectors under comparison and cannot go stale.
 func CosineSimilarity(source, vector []float64) *cosineSimilarity {

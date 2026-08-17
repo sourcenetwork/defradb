@@ -25,6 +25,7 @@ const (
 	errDecodeSigBlock                 string = "failed to decode signature block"
 	errSetDocField                    string = "failed to set document field during update"
 	errCheckOrphanPointLookup         string = "failed to check orphan point lookup"
+	errNoBM25Index                    string = "_bm25 requires a full-text BM25 index on the target field"
 	errRefreshView                    string = "failed to refresh view"
 )
 
@@ -50,7 +51,21 @@ var (
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
+	ErrBM25NotOnCollectionScan             = errors.New(
+		"_bm25 may only be requested on a query that scans a collection")
+	ErrMultipleBM25Fields     = errors.New("a query may request only one _bm25 field")
+	ErrBM25NoFields           = errors.New("_bm25 requires at least one field to score")
+	ErrBM25WithShowDeleted    = errors.New("_bm25 does not support showDeleted queries")
+	ErrCompetingRankedIndexes = errors.New("a query cannot use both _bm25 and _similarity ranking")
 )
+
+func NewErrNoBM25Index(collectionName string, fieldName string) error {
+	return errors.New(
+		errNoBM25Index,
+		errors.NewKV("Collection", collectionName),
+		errors.NewKV("Field", fieldName),
+	)
+}
 
 func NewErrUnknownDependency(name string) error {
 	return errors.New(errUnknownDependency, errors.NewKV("Name", name))

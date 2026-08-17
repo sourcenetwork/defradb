@@ -96,6 +96,10 @@ func (a *NewIndex) Execute() {
 		if expected.Name != "" {
 			require.Equal(a.s.T, expected.Name, result.Name)
 		}
+		if expected.KindDescription != nil {
+			require.Equal(a.s.T, expected.Kind, result.Kind)
+			require.Equal(a.s.T, expected.KindDescription, result.KindDescription)
+		}
 		require.Equal(a.s.T, expected.Fields, result.Fields)
 		require.Equal(a.s.T, expected.GetUnique(), result.GetUnique())
 	}

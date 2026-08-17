@@ -44,11 +44,17 @@ type wrappingFetcher struct {
 	fields      []client.CollectionFieldDescription
 	filter      *mapper.Filter
 	ordering    []mapper.OrderCondition
+	rank        *Rank
 	docMapper   *core.DocumentMapping
 	showDeleted bool
 }
 
 var _ Fetcher = (*wrappingFetcher)(nil)
+
+func (f *wrappingFetcher) ConfigureRank(rank *Rank) bool {
+	f.rank = rank
+	return true
+}
 
 func NewDocumentFetcher() Fetcher {
 	return &wrappingFetcher{}
@@ -141,7 +147,15 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	f.execInfo.Reset()
 
 	var top fetcher
-	if f.index.HasValue() {
+	if f.rank != nil {
+		if f.showDeleted {
+			return NewErrRankedFetchWithDeleted()
+		}
+		top, err = newRankedFetcher(ctx, f.txn, fieldsByID, f.col, f.rank, &f.execInfo)
+		if err != nil {
+			return err
+		}
+	} else if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
 			f.docMapper, &f.execInfo, f.ordering)
 		if err != nil {
@@ -186,6 +200,9 @@ func (f *wrappingFetcher) FetchNext(ctx context.Context) (EncodedDocument, ExecI
 	f.execInfo.Reset()
 
 	for {
+		if f.rank != nil {
+			f.rank.Score = 0
+		}
 		docID, err := f.fetcher.NextDoc()
 		if err != nil {
 			return nil, ExecInfo{}, err

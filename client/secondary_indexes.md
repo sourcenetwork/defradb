@@ -4,10 +4,11 @@ DefraDB provides a powerful and flexible secondary indexing system that enables 
 
 ## Overview
 
-The indexing system consists of two main components:
+The indexing system consists of three main components:
 
-- Index storage (handles storing and maintaining index information).
-- Index-based document fetching (manages retrieving documents using these indexes). 
+- Typed index descriptions and lifecycle (creation, backfill, readiness, rebuild epochs, and drop).
+- Kind-specific storage engines (ordered, vector, full-text, and trigram).
+- Planner and fetcher integration, which selects only an index kind that can serve the operator.
 
 Together, these components provide a robust foundation for efficient data access patterns.
 
@@ -15,7 +16,10 @@ Together, these components provide a robust foundation for efficient data access
 
 ### Core types
 
-The indexing system is built around several key types that define how indexes are structured and managed. At its heart is the IndexedFieldDescription, which describes a single field being indexed, including its name and whether it should be ordered in descending order. These field descriptions are combined into an IndexDescription, which provides a complete picture of an index including its name, ID, fields, and whether it enforces uniqueness.
+`IndexDescription.Kind` is the sole discriminator for an index. `KindDescription` is a typed union
+containing only that kind's configuration; code dispatches on `Kind` and never infers the kind from
+the concrete description. `IndexKindOrdered` is zero so descriptions written before the
+discriminator existed remain ordered indexes when decoded. New enum values are append-only.
 
 ```go
 type IndexedFieldDescription struct {
@@ -24,35 +28,60 @@ type IndexedFieldDescription struct {
 }
 
 type IndexDescription struct {
-    Name string                      // Index name
-    ID uint32                        // Local index identifier
-    Fields []IndexedFieldDescription // Fields being indexed
-    Unique bool                      // Whether index enforces uniqueness
+    Name            string
+    ID              uint32
+    Fields          []IndexedFieldDescription
+    Kind            IndexKind
+    KindDescription IndexKindDescription
 }
 ```
+
+The supported kinds are:
+
+- `IndexKindOrdered`: order-preserving scalar, composite, unique, array, relationship, and JSON
+  indexes. Its description holds `Unique`.
+- `IndexKindVector`: approximate-nearest-neighbour indexes. HNSW with cosine distance is currently
+  implemented.
+- `IndexKindFullText`: ranked text indexes. BM25 is currently implemented.
+- `IndexKindTrigram`: candidate indexes for positive `_like`, `_ilike`, and `_regex` filters.
+
+Creation uses the corresponding typed member on `NewIndexRequest` (`Vector`, `FullText`, or
+`Trigram`); when all are nil, the request is ordered. These derived modes are mutually exclusive,
+single-field, non-unique indexes. Full-text and trigram fields must be String or nillable String.
 
 The CollectionIndex interface ties everything together by defining the core operations that any index must support. This interface is implemented by different index types such as regular indexes, unique indexes, and array indexes, allowing each to provide specific behaviors while maintaining a consistent interface.
 
 ```go
 type CollectionIndex interface {
-    Save(context.Context, datastore.Txn, *Document) error
-    Update(context.Context, datastore.Txn, *Document, *Document) error
-    Delete(context.Context, datastore.Txn, *Document) error
+    Save(context.Context, *Document) error
+    Update(context.Context, *Document, *Document) error
+    Delete(context.Context, *Document) error
     Name() string
     Description() IndexDescription
 }
 ```
 
+The generic lifecycle owns description persistence, asynchronous backfill, readiness, rebuild
+epochs, P2P/live-write maintenance, and drop garbage collection. `wrapCollectionIndex` performs one
+explicit dispatch from `Kind` to the concrete write adapter. Algorithm families add a second seam:
+for example `fulltextindex.Open` returns an algorithm handle with `Insert`, `Delete`, and `Search`,
+so another full-text algorithm does not require a switch in the planner or query executor.
+
 ### Key structure
 
-Index keys in DefraDB follow a carefully designed format that enables efficient lookups and range scans. For regular indexes, the key format is:
+All secondary-index entry families begin with the canonical collection/index/epoch prefix. For
+ordered and trigram indexes, the key format is:
 ```
-<collection_id>/<index_id>(/<field_value>)+/<doc_id> -> empty value
+<collection_id>/<index_id>/<epoch>(/<field_value>)+/<doc_id> -> empty value
 ``` 
 Unique indexes follow a similar pattern but store the document ID as the value instead: 
 ```
-<collection_id>/<index_id>(/<field_value>)+ -> <doc_id>
+<collection_id>/<index_id>/<epoch>(/<field_value>)+ -> <doc_id>
 ```
+
+An epoch makes a rebuild disjoint from the live index. The new epoch is filled and atomically made
+live; stale epochs are collected afterward. Kind-specific key families remain under that same
+prefix so generic rebuild and drop garbage collection sees them.
 
 ### Value encoding
 
@@ -69,7 +98,12 @@ Index maintenance happens through three primary operations: document creation, u
 
 ## Index-based document fetching
 
-The IndexFetcher is central to document retrieval, managing the process through two phases. First, it retrieves indexed fields, such as document IDs. Then, it uses a standard fetcher to obtain any additional requested fields.  
+The planner treats kind compatibility as a firewall. Ordered indexes serve scalar comparisons and
+ordering; trigram indexes serve only positive `_like`, `_ilike`, and `_regex`; vector and full-text
+indexes are selected only by their dedicated ranked fields. A derived layout is never decoded as an
+ordered scalar key.
+
+The IndexFetcher is central to ordinary and trigram retrieval, managing the process through two phases. First, it retrieves indexed fields, such as document IDs. Then, it uses a standard fetcher to obtain any additional requested fields.
 
 For each query, the system generates specialized result iterators based on the document filter conditions. These iterators optimize how operations are handled:  
 - For simple equality (_eq) or membership tests (_in), the iterator often constructs the exact keys directly.  
@@ -81,7 +115,74 @@ The performance of these operations varies:
 
 The system is optimized to reduce key-value operations during mutations and minimize memory usage during result streaming.  
 
-Note: the index fetcher can not benefit at the moment from ordered indexes, as the underlying storage does not support such range queries yet.
+### Trigram candidate indexes
+
+Declare a trigram index on a String field with `@trigramIndex`. The writer lowercases the value and
+stores one ordinary non-unique entry for each distinct overlapping three-byte window, without
+padding. A query compiler converts supported LIKE/ILIKE/RE2 patterns into a conservative boolean
+tree of trigram intersections and unions. Posting cursors evaluate that tree in document-short-ID
+order without loading posting lists into memory.
+
+```graphql
+type User {
+    name: String @trigramIndex
+}
+
+query {
+    User(filter: {name: {_regex: "source.*network"}}) { name }
+}
+```
+
+Candidate generation may over-return because trigrams do not preserve position or frequency. The
+complete original predicate is always reapplied to the fetched document. If a pattern has no safe
+three-byte literal, is negated, or occurs in an unsupported boolean branch, the planner full-scans
+instead. This conservative fallback is what prevents false negatives.
+
+### Full-text BM25 indexes
+
+Declare a ranked full-text index with `@fullTextIndex`; BM25 defaults to `k1=1.2` and `b=0.75`.
+
+```graphql
+type Article {
+    title: String @fullTextIndex(BM25: {k1: 1.2, b: 0.75})
+    body: String @fullTextIndex
+}
+
+query {
+    Article(order: {_alias: {rank: DESC}}, limit: 10) {
+        title
+        rank: _bm25(query: "distributed database", fields: ["title^4", "body"])
+    }
+}
+```
+
+The analyzer lowercases text, splits on non-letter/non-digit runes, and drops one-rune tokens. That
+exact behavior is part of the persisted format. Each full-text index stores three record families
+beneath its canonical epoch prefix:
+
+```text
+.../<epoch>/t/<encoded-term>/<doc-short-id> -> term frequency
+.../<epoch>/d/<doc-short-id>                -> field length
+.../<epoch>/s                               -> document count, total field length
+```
+
+`fulltextindex.Open` is the sole algorithm dispatch and returns a transaction-bound handle with
+`Insert`, `Delete`, and `Search`. BM25 merges sorted query-term postings so it reads a document's
+field length once per index, scores against that index's own corpus statistics and parameters, and
+materializes hits in score-descending order with document short ID as the deterministic tie-break.
+Multi-field requests score each field independently, multiply by the optional `^boost`, then sum.
+This is a weighted sum of BM25 field scores, not BM25F.
+
+Ranked fetching is a dedicated candidate source rather than an ordered-index iterator. Permission
+and ordinary filter wrappers remain above it, so a limit keeps pulling past inaccessible or
+filtered high-scoring candidates and returns the best surviving K. Posting traversal and scoring
+are eager, while document point-fetching remains lazy. Exact `_bm25 DESC` ordering is already
+satisfied by the source and does not add a second sort.
+
+Because the score depends on index-wide statistics, `_bm25` has no full-scan fallback: every named
+field must have a ready BM25 index. Ranked full-text requests are rejected on mutation selections,
+join children, source/group scans, CID or explicit DocID scans, `showDeleted`, and queries that also
+request vector-similarity ranking.
 
 ## Performance considerations
 

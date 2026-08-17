@@ -59,6 +59,12 @@ type NewIndex struct {
 	// a collection that already holds documents, so the async backfill builds the graph.
 	Vector *client.VectorIndexDescription
 
+	// FullText, when set, creates a full-text relevance index.
+	FullText *client.FullTextIndexDescription
+
+	// Trigram, when set, creates a trigram pattern-matching index.
+	Trigram *client.TrigramIndexDescription
+
 	// Async, when true, returns without waiting for the backfill. The index stays building until
 	// the worker completes it.
 	//
@@ -127,6 +133,8 @@ func (a *NewIndex) Execute() {
 
 		indexDesc.Unique = a.Unique
 		indexDesc.Vector = a.Vector
+		indexDesc.FullText = a.FullText
+		indexDesc.Trigram = a.Trigram
 
 		opts := options.NewCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

@@ -188,6 +188,14 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		return nil, err
 	}
 
+	if err := g.genTextSearchFields(); err != nil {
+		return nil, err
+	}
+
+	if err := g.manager.ResolveTypes(); err != nil {
+		return nil, err
+	}
+
 	generatedFilterLeafArgs := []*gql.InputObject{}
 	for _, defaultType := range inlineArrayTypes() {
 		leafFilterArg := g.genLeafFilterArgInput(defaultType)
@@ -942,6 +950,24 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 	return field, nil
 }
 
+func genBm25FieldConfig() gql.Field {
+	return gql.Field{
+		Name:        request.Bm25FieldName,
+		Description: "Returns how well the document matches the provided query, scored with BM25.",
+		Type:        gql.Float,
+		Args: gql.FieldConfigArgument{
+			schemaTypes.Bm25ArgQuery: schemaTypes.NewArgConfig(
+				gql.NewNonNull(gql.String),
+				"The text to score the fields against.",
+			),
+			schemaTypes.Bm25ArgFields: schemaTypes.NewArgConfig(
+				gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
+				`Fields to score, optionally followed by "^" and a non-negative boost, for example "title^4".`,
+			),
+		},
+	}
+}
+
 func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
@@ -1610,6 +1636,14 @@ func (g *Generator) genVectorOpsFields() error {
 			return err
 		}
 		t.AddFieldConfig(similarityField.Name, &similarityField)
+	}
+	return nil
+}
+
+func (g *Generator) genTextSearchFields() error {
+	for _, t := range g.typeDefs {
+		field := genBm25FieldConfig()
+		t.AddFieldConfig(field.Name, &field)
 	}
 	return nil
 }

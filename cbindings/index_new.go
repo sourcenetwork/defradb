@@ -33,6 +33,8 @@ func NewIndex(
 	fieldsStr *C.char,
 	isUnique C.int,
 	vectorJSON *C.char,
+	fullTextJSON *C.char,
+	isTrigram C.int,
 	options C.CollectionOptions,
 	identityPtr C.uintptr_t,
 ) C.Result {
@@ -80,6 +82,16 @@ func NewIndex(
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		desc.Vector = &vectorDesc
+	}
+	if fullTextStr := C.GoString(fullTextJSON); fullTextStr != "" {
+		var fullTextDesc client.FullTextIndexDescription
+		if err := json.Unmarshal([]byte(fullTextStr), &fullTextDesc); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		desc.FullText = &fullTextDesc
+	}
+	if isTrigram != 0 {
+		desc.Trigram = &client.TrigramIndexDescription{}
 	}
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {

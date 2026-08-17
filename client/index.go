@@ -36,11 +36,14 @@ const (
 	IndexKindOrdered IndexKind = iota
 	// IndexKindVector identifies a vector (ANN) index.
 	IndexKindVector
+	// IndexKindFullText identifies a full-text relevance index.
+	IndexKindFullText
+	// IndexKindTrigram identifies a trigram candidate index for pattern matching.
+	IndexKindTrigram
 )
 
-// IndexKindDescription is the kind-specific config of an index: an [*OrderedIndexDescription] or a
-// [*VectorIndexDescription]. Which one an index must hold is decided by [IndexDescription.Kind],
-// never by the concrete type itself.
+// IndexKindDescription is the typed kind-specific config of an index. Which concrete description
+// an index must hold is decided by [IndexDescription.Kind], never inferred from the concrete type.
 type IndexKindDescription interface {
 	// isIndexKindDescription is unexported so only types in this package can implement this interface.
 	isIndexKindDescription()
@@ -65,6 +68,27 @@ const (
 	// DistanceMetricCosine identifies the cosine distance metric.
 	DistanceMetricCosine DistanceMetric = "COSINE"
 )
+
+// FullTextAlgorithm identifies the scoring algorithm used by a full-text index.
+type FullTextAlgorithm string
+
+const (
+	// FullTextAlgorithmBM25 identifies the Okapi BM25 scoring algorithm.
+	FullTextAlgorithmBM25 FullTextAlgorithm = "BM25"
+)
+
+const (
+	// DefaultBM25K1 controls term-frequency saturation.
+	DefaultBM25K1 float64 = 1.2
+	// DefaultBM25B controls document-length normalization.
+	DefaultBM25B float64 = 0.75
+)
+
+// BM25Params holds BM25-specific scoring parameters.
+type BM25Params struct {
+	K1 float64
+	B  float64
+}
 
 // HNSWParams holds HNSW-specific build/search parameters.
 type HNSWParams struct {
@@ -126,6 +150,27 @@ func (*VectorIndexDescription) isIndexKindDescription() {}
 
 var _ IndexKindDescription = (*VectorIndexDescription)(nil)
 
+// FullTextIndexDescription is the config for a full-text relevance index.
+type FullTextIndexDescription struct {
+	// Algorithm is the scoring algorithm used by this index.
+	Algorithm FullTextAlgorithm
+	// BM25 holds BM25-specific parameters. It is non-nil when Algorithm is
+	// [FullTextAlgorithmBM25].
+	BM25 *BM25Params
+}
+
+func (*FullTextIndexDescription) isIndexKindDescription() {}
+
+var _ IndexKindDescription = (*FullTextIndexDescription)(nil)
+
+// TrigramIndexDescription is the config for a trigram index. Trigram currently has no tunable
+// parameters; the explicit description keeps the persisted kind union typed and extensible.
+type TrigramIndexDescription struct{}
+
+func (*TrigramIndexDescription) isIndexKindDescription() {}
+
+var _ IndexKindDescription = (*TrigramIndexDescription)(nil)
+
 // IndexDescription describes an index.
 type IndexDescription struct {
 	// Name contains the name of the index.
@@ -146,9 +191,8 @@ type IndexDescription struct {
 	// [IndexKindOrdered], so a descriptor persisted before this field existed reads back as ordered.
 	Kind IndexKind
 
-	// KindDescription is the config for Kind: an [*OrderedIndexDescription] when Kind is
-	// [IndexKindOrdered], a [*VectorIndexDescription] when Kind is [IndexKindVector]. It only carries
-	// the kind's config; Kind is what decides the kind.
+	// KindDescription is the typed config for Kind. It only carries the kind's configuration; Kind
+	// is the sole authority that decides how the index is interpreted.
 	KindDescription IndexKindDescription
 }
 
@@ -163,6 +207,36 @@ func (d IndexDescription) GetVector() (*VectorIndexDescription, bool) {
 		return nil, false
 	}
 	v, ok := d.KindDescription.(*VectorIndexDescription)
+	return v, ok
+}
+
+// IsFullText returns true if this is a full-text index.
+func (d IndexDescription) IsFullText() bool {
+	return d.Kind == IndexKindFullText
+}
+
+// GetFullText returns the full-text config and true if this is a full-text index, otherwise nil and
+// false.
+func (d IndexDescription) GetFullText() (*FullTextIndexDescription, bool) {
+	if d.Kind != IndexKindFullText {
+		return nil, false
+	}
+	v, ok := d.KindDescription.(*FullTextIndexDescription)
+	return v, ok
+}
+
+// IsTrigram returns true if this is a trigram index.
+func (d IndexDescription) IsTrigram() bool {
+	return d.Kind == IndexKindTrigram
+}
+
+// GetTrigram returns the trigram config and true if this is a trigram index, otherwise nil and
+// false.
+func (d IndexDescription) GetTrigram() (*TrigramIndexDescription, bool) {
+	if d.Kind != IndexKindTrigram {
+		return nil, false
+	}
+	v, ok := d.KindDescription.(*TrigramIndexDescription)
 	return v, ok
 }
 
@@ -235,6 +309,22 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 			}
 		}
 		d.KindDescription = vector
+	case IndexKindFullText:
+		fullText := &FullTextIndexDescription{}
+		if hasKindDescription {
+			if err := json.Unmarshal(mirror.KindDescription, fullText); err != nil {
+				return err
+			}
+		}
+		d.KindDescription = fullText
+	case IndexKindTrigram:
+		trigram := &TrigramIndexDescription{}
+		if hasKindDescription {
+			if err := json.Unmarshal(mirror.KindDescription, trigram); err != nil {
+				return err
+			}
+		}
+		d.KindDescription = trigram
 	default:
 		return NewErrUnknownIndexKind(uint8(mirror.Kind))
 	}
@@ -247,8 +337,10 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 // predates [Kind] still gets the uniqueness). They are always emitted consistently.
 func (d IndexDescription) MarshalJSON() ([]byte, error) {
 	d = d.Normalize()
-	// The concrete configs are plain structs; their Marshal cannot fail.
-	kindDescription, _ := json.Marshal(d.KindDescription)
+	kindDescription, err := json.Marshal(d.KindDescription)
+	if err != nil {
+		return nil, err
+	}
 	return json.Marshal(indexDescription{
 		Name:            d.Name,
 		ID:              d.ID,
@@ -271,6 +363,10 @@ type NewIndexRequest struct {
 	Unique bool
 	// Vector holds config specific to vector (ANN) indexes. Non-nil iff this is a vector index request.
 	Vector *VectorIndexDescription
+	// FullText holds config specific to full-text indexes. Non-nil iff this is a full-text request.
+	FullText *FullTextIndexDescription
+	// Trigram holds config specific to trigram indexes. Non-nil iff this is a trigram request.
+	Trigram *TrigramIndexDescription
 }
 
 // CollectionIndex is an interface for indexing documents in a collection.

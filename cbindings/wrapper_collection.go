@@ -16,7 +16,7 @@ package cbindings
 #include "defra_structs.h"
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-char* vectorJSON, CollectionOptions options, uintptr_t identityPtr);
+char* vectorJSON, char* fullTextJSON, int isTrigram, CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
@@ -117,6 +117,23 @@ func (c *Collection) NewIndex(
 	cVectorJSON := C.CString(vectorJSON)
 	defer C.free(unsafe.Pointer(cVectorJSON))
 
+	// An empty string means no full-text index; a non-empty one is its description as JSON.
+	fullTextJSON := ""
+	if indexDesc.FullText != nil {
+		b, err := json.Marshal(indexDesc.FullText)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		fullTextJSON = string(b)
+	}
+	cFullTextJSON := C.CString(fullTextJSON)
+	defer C.free(unsafe.Pointer(cFullTextJSON))
+
+	var cTrigram C.int
+	if indexDesc.Trigram != nil {
+		cTrigram = 1
+	}
+
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
 		callHandle,
@@ -124,6 +141,8 @@ func (c *Collection) NewIndex(
 		fields,
 		cUnique,
 		cVectorJSON,
+		cFullTextJSON,
+		cTrigram,
 		copts,
 		cIdentity,
 	))

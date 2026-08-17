@@ -29,6 +29,8 @@ func MakeIndexNewCommand(ctx context.Context) *cobra.Command {
 	var fieldsArg []string
 	var uniqueArg bool
 	var vectorArg string
+	var fullTextArg string
+	var trigramArg bool
 	var cmd = &cobra.Command{
 		Use:   "new",
 		Short: "Make a new index on a collection's field(s)",
@@ -46,6 +48,13 @@ params are optional and default if omitted:
   M               links per node (higher = better recall, more memory and slower build); default %d
   EfConstruction  build-time search width (higher = better graph, slower build); default %d
   EfSearch        query-time search width (higher = better recall, slower queries); default %d
+
+The --full-text flag makes a ranked full-text index on one String field. Its value is JSON; an
+empty object selects BM25 defaults, while parameters may be set with
+'{"Algorithm":"BM25","BM25":{"K1":1.2,"B":0.75}}'.
+
+The --trigram flag makes a trigram candidate index on one String field for _like, _ilike, and
+_regex filters. Vector, full-text, and trigram modes are mutually exclusive.
 
 The index is built in the background. This command returns once the index is recorded, before
 existing documents are indexed. The index starts "building" and becomes "ready" once complete, or
@@ -91,6 +100,16 @@ existing documents are indexed. The index starts "building" and becomes "ready" 
 				}
 				desc.Vector = &vectorDesc
 			}
+			if fullTextArg != "" {
+				var fullTextDesc client.FullTextIndexDescription
+				if err := json.Unmarshal([]byte(fullTextArg), &fullTextDesc); err != nil {
+					return NewErrInvalidFullTextIndexConfig(err)
+				}
+				desc.FullText = &fullTextDesc
+			}
+			if trigramArg {
+				desc.Trigram = &client.TrigramIndexDescription{}
+			}
 			colOpt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))
 			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, colOpt)
 			if err != nil {
@@ -123,11 +142,19 @@ existing documents are indexed. The index starts "building" and becomes "ready" 
 		`defradb client index new --collection Users --fields vec `+
 			`--vector '{"Metric":"COSINE","Dimensions":3,"HNSW":{"M":16,"EfConstruction":128,"EfSearch":64}}'`)
 
+	EmbedCLIExample(ctx, cmd, "make a BM25 full-text index for 'Articles' on 'body'",
+		`defradb client index new --collection Articles --fields body --full-text '{}'`)
+
+	EmbedCLIExample(ctx, cmd, "make a trigram pattern index for 'Users' on 'name'",
+		`defradb client index new --collection Users --fields name --trigram`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index")
 	cmd.Flags().BoolVarP(&uniqueArg, "unique", "u", false, "Make the index unique")
 	cmd.Flags().StringVar(&vectorArg, "vector", "", "Vector index config as JSON (makes a vector index)")
+	cmd.Flags().StringVar(&fullTextArg, "full-text", "", "Full-text index config as JSON (makes a ranked index)")
+	cmd.Flags().BoolVar(&trigramArg, "trigram", false, "Make a trigram pattern-matching index")
 
 	return cmd
 }
