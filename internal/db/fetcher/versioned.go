@@ -422,14 +422,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 
 		switch {
 		case block.Delta.IsCollection():
-			mcrdt := crdt.NewCollection()
-
-			// Merge the block without worrying about updating the headstore - they are not used
-			// by this store/fetcher.
-			err = mcrdt.Merge(vf.ctx, vf.store.Datastore(), block.Delta.GetDelta())
-			if err != nil {
-				return err
-			}
+			// no-op: collection value blocks are not merged
 
 		case block.Delta.IsComposite():
 			mcrdt := crdt.NewDocComposite()

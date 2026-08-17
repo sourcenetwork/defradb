@@ -10,12 +10,6 @@
 
 package crdt
 
-import (
-	"context"
-
-	"github.com/sourcenetwork/defradb/internal/datastore"
-)
-
 type CollectionDelta struct {
 	Priority            uint64
 	CollectionVersionID string
@@ -37,8 +31,6 @@ func (d *CollectionDelta) GetPriority() uint64 {
 
 type Collection struct{}
 
-var _ ReplicatedData = (*Collection)(nil)
-
 func NewCollection() *Collection {
 	return &Collection{}
 }
@@ -51,10 +43,4 @@ func (c *Collection) Delta(
 		CollectionVersionID: collectionVersionID,
 		Priority:            priority,
 	}
-}
-
-func (c *Collection) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
-	// Collection merges don't actually need to do anything, as the delta is empty,
-	// and doc-level merges are handled by the document commits.
-	return nil
 }

@@ -10,12 +10,6 @@
 
 package crdt
 
-import (
-	"context"
-
-	"github.com/sourcenetwork/defradb/internal/datastore"
-)
-
 type CollectionSetDelta struct {
 	Priority uint64
 }
@@ -35,8 +29,6 @@ func (d *CollectionSetDelta) GetPriority() uint64 {
 
 type CollectionSetDefinition struct{}
 
-var _ ReplicatedData = (*Collection)(nil)
-
 func NewCollectionSet() *CollectionSetDefinition {
 	return &CollectionSetDefinition{}
 }
@@ -47,8 +39,4 @@ func (c *CollectionSetDefinition) Delta(
 	return &CollectionSetDelta{
 		Priority: priority,
 	}
-}
-
-func (c *CollectionSetDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
-	return nil
 }

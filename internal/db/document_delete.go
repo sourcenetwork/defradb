@@ -13,7 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/ipfs/go-cid"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -244,11 +243,6 @@ func (c *collection) applyDelete(
 
 		collectionCRDT := crdt.NewCollection()
 		delta := collectionCRDT.Delta(c.Version().VersionID, height)
-
-		err = collectionCRDT.Merge(ctx, txn.Datastore(), delta)
-		if err != nil {
-			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
-		}
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,

@@ -702,11 +702,6 @@ func (c *collection) save(
 		collectionCRDT := crdt.NewCollection()
 		delta := collectionCRDT.Delta(c.Version().VersionID, height)
 
-		err = collectionCRDT.Merge(ctx, txn.Datastore(), delta)
-		if err != nil {
-			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
-		}
-
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
 			keys.NewHeadstoreColKey(collectionShortID),

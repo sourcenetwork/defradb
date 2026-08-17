@@ -511,11 +511,8 @@ func (mp *mergeProcessor) mergeBlock(
 			nil
 
 	case crdtUnion.IsCollection():
-		c := crdt.NewCollection()
-		err = c.Merge(ctx, txn.Datastore(), block.Delta.GetDelta())
-		if err != nil {
-			return false, nil, resolvedDocRef{}, NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
-		}
+		// no-op: collection value blocks are not merged
+
 		return true, keys.NewHeadstoreColKey(collectionShortID), resolvedDocRef{}, nil
 
 	default:

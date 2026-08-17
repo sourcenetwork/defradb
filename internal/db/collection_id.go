@@ -16,7 +16,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/immutable"
@@ -473,11 +472,6 @@ func saveBlocks(
 			}
 			hasFieldsChanged = true
 
-			err = fieldCRDT.Merge(ctx, txn.Datastore(), delta)
-			if err != nil {
-				return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
-			}
-
 			cid, _, err := coreblock.AddDelta(
 				ctx,
 				keys.HeadstoreFieldDefinition{
@@ -519,11 +513,6 @@ func saveBlocks(
 			continue
 		}
 		hasSetUpdated = true
-
-		err = colCRDT.Merge(ctx, txn.Datastore(), delta)
-		if err != nil {
-			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
-		}
 
 		cid, _, err := coreblock.AddDelta(
 			ctx,
@@ -577,11 +566,6 @@ func saveBlocks(
 
 		colSetCRDT := crdt.NewCollectionSet()
 		delta := colSetCRDT.Delta(height)
-
-		err = colSetCRDT.Merge(ctx, txn.Datastore(), delta)
-		if err != nil {
-			return coreblock.NewErrProcessBlock(coreblock.NewErrMergingDelta(cid.Undef /*todo*/, err))
-		}
 
 		links := make([]coreblock.DAGLink, 0, len(colIds))
 		for _, colId := range colIds {

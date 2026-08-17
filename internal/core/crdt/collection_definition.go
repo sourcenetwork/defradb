@@ -12,14 +12,12 @@ package crdt
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type CollectionDefinitionDelta struct {
@@ -47,8 +45,6 @@ func (d *CollectionDefinitionDelta) GetPriority() uint64 {
 }
 
 type CollectionDefinition struct{}
-
-var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollectionDefinition() *CollectionDefinition {
 	return &CollectionDefinition{}
@@ -117,8 +113,4 @@ func (c *CollectionDefinition) Delta(
 		QueryTransform: transformDelta,
 		Priority:       priority,
 	}, true, nil
-}
-
-func (c *CollectionDefinition) Merge(ctx context.Context, store datastore.Keyedstore, other Delta) error {
-	return nil
 }
