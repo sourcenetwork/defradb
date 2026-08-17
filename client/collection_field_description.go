@@ -17,6 +17,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// jsonNullLiteral is the JSON encoding of a null value.
+const jsonNullLiteral = "null"
+
 // CollectionFieldDescription describes the local components of a field on a collection.
 type CollectionFieldDescription struct {
 	// The immutable ID of this field.
@@ -111,7 +114,7 @@ func (f *CollectionFieldDescription) UnmarshalJSON(bytes []byte) error {
 // parseDefaultValue decodes a field's raw JSON default value into the concrete Go
 // type that matches how it was originally produced.
 func parseDefaultValue(raw json.RawMessage, kind FieldKind) (any, error) {
-	if len(raw) == 0 || string(raw) == "null" {
+	if len(raw) == 0 || string(raw) == jsonNullLiteral {
 		return nil, nil
 	}
 

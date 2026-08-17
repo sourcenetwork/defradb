@@ -87,6 +87,13 @@ func (c *Collection) NewIndex(
 	if indexDesc.Unique {
 		args = append(args, "--unique")
 	}
+	if indexDesc.Vector != nil {
+		vectorJSON, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return index, err
+		}
+		args = append(args, "--vector", string(vectorJSON))
+	}
 
 	fields := make([]string, len(indexDesc.Fields))
 	orders := make([]bool, len(indexDesc.Fields))
