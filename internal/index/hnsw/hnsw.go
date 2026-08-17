@@ -157,6 +157,9 @@ func cosineDistance(a, b []float32) float32 {
 // squaredEuclideanDistance computes the squared straight-line distance between a and b. The square
 // root is skipped: it is monotonic, and distances are only ever compared against each other. If the
 // lengths differ, only the shared leading elements are used, matching dot.
+//
+// Squaring costs range: the sum is held in float64, but the result narrows to float32, so components
+// beyond roughly 1e19 saturate to +Inf. Such a vector still sorts as the farthest, so ordering holds.
 func squaredEuclideanDistance(a, b []float32) float32 {
 	var sum float64
 	n := min(len(a), len(b))
