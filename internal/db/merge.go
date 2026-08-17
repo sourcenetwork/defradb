@@ -367,8 +367,9 @@ func (mp *mergeProcessor) processBlock(
 			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
-		// If the CRDT is nil, it means the field is not part
-		// of the collection definition and we can safely ignore it.
+		// The field may not be known to this node - it may belong to a collection version that does not exist
+		// locally.  In this case, we must ignore it as we cannot merge when we do not know what
+		// kind of CRDT the field is.
 		if crdt == nil {
 			return nil
 		}
@@ -524,7 +525,9 @@ func (mp *mergeProcessor) initCRDTForType(
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the collection definition, we can safely ignore it.
+			// The field may not be known to this node - it may belong to a collection version that does not exist
+			// locally.  In this case, return nil and have the calling code ignore it.  We cannot merge when we do
+			// not know what kind of CRDT the field is.
 			return nil, nil, resolvedDocRef{}, nil
 		}
 
