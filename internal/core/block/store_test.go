@@ -38,8 +38,8 @@ func TestAddDelta_DoesNotEncryptCollectionBlocks(t *testing.T) {
 	ctx = datastore.CtxSetTxn(ctx, txn)
 	ctx = encryption.SetContextConfigFromParams(ctx, true, nil)
 
-	collectionCRDT := crdt.NewCollection("collection-version")
-	_, rawBlock, err := AddDelta(ctx, keys.NewHeadstoreColKey(1), collectionCRDT, collectionCRDT.Delta())
+	collectionCRDT := crdt.NewCollection()
+	_, rawBlock, err := AddDelta(ctx, keys.NewHeadstoreColKey(1), collectionCRDT, collectionCRDT.Delta("collection-version"))
 	require.NoError(t, err)
 
 	block, err := GetFromBytes(rawBlock)

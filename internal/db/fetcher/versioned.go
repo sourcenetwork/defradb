@@ -423,9 +423,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 		var mcrdt crdt.ReplicatedData
 		switch {
 		case block.Delta.IsCollection():
-			mcrdt = crdt.NewCollection(
-				vf.col.Version().VersionID,
-			)
+			mcrdt = crdt.NewCollection()
 
 		case block.Delta.IsComposite():
 			mcrdt = crdt.NewDocComposite(

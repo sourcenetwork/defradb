@@ -39,23 +39,17 @@ func (d *CollectionDelta) SetPriority(priority uint64) {
 	d.Priority = priority
 }
 
-type Collection struct {
-	collectionVersionID string
-}
+type Collection struct{}
 
 var _ ReplicatedData = (*Collection)(nil)
 
-func NewCollection(
-	collectionVersionID string,
-) *Collection {
-	return &Collection{
-		collectionVersionID: collectionVersionID,
-	}
+func NewCollection() *Collection {
+	return &Collection{}
 }
 
-func (c *Collection) Delta() *CollectionDelta {
+func (c *Collection) Delta(collectionVersionID string) *CollectionDelta {
 	return &CollectionDelta{
-		CollectionVersionID: c.collectionVersionID,
+		CollectionVersionID: collectionVersionID,
 	}
 }
 

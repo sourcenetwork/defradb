@@ -652,15 +652,13 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		collectionCRDT := crdt.NewCollection(
-			c.Version().VersionID,
-		)
+		collectionCRDT := crdt.NewCollection()
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
 			keys.NewHeadstoreColKey(collectionShortID),
 			collectionCRDT,
-			collectionCRDT.Delta(),
+			collectionCRDT.Delta(c.Version().VersionID),
 			[]coreblock.DAGLink{{Link: link}}...,
 		)
 		if err != nil {

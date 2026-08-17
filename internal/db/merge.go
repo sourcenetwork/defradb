@@ -501,9 +501,7 @@ func (mp *mergeProcessor) initCRDTForType(
 			}.WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(), docRef, nil
 
 	case crdtUnion.IsCollection():
-		return crdt.NewCollection(
-			mp.col.Version().VersionID,
-		), keys.NewHeadstoreColKey(collectionShortID), resolvedDocRef{}, nil
+		return crdt.NewCollection(), keys.NewHeadstoreColKey(collectionShortID), resolvedDocRef{}, nil
 
 	default:
 		// A field block is always processed as a child of its composite block, which records
