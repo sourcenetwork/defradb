@@ -97,6 +97,6 @@ func (a *NewIndex) Execute() {
 			require.Equal(a.s.T, expected.Name, result.Name)
 		}
 		require.Equal(a.s.T, expected.Fields, result.Fields)
-		require.Equal(a.s.T, expected.Unique, result.Unique)
+		require.Equal(a.s.T, expected.GetUnique(), result.GetUnique())
 	}
 }
