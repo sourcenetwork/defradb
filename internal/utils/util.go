@@ -11,6 +11,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -33,6 +35,49 @@ func NewOptions[T any](opts ...enumerable.Enumerable[func(*T)]) *T {
 	args := new(T)
 	ApplyOptions(args, opts...)
 	return args
+}
+
+// DecodeJSONVariables decodes a JSON-encoded GraphQL variables object without losing
+// integer precision. The standard decoder represents every JSON number as a float64,
+// which silently rounds any integer above 2^53. This instead reconstructs each number
+// as an int64 where the value round-trips exactly, falling back to float64 otherwise.
+func DecodeJSONVariables(data []byte) (map[string]any, error) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+
+	var vars map[string]any
+	if err := dec.Decode(&vars); err != nil {
+		return nil, err
+	}
+	return normalizeJSONNumbers(vars).(map[string]any), nil
+}
+
+// normalizeJSONNumbers walks a value produced by a decoder configured with UseNumber,
+// converting json.Number leaves into an int64 (if the number round-trips exactly) or a
+// float64 (otherwise), so callers receive ordinary numeric types instead of json.Number.
+func normalizeJSONNumbers(value any) any {
+	switch value := value.(type) {
+	case json.Number:
+		if i, err := value.Int64(); err == nil {
+			return i
+		}
+		if f, err := value.Float64(); err == nil {
+			return f
+		}
+		return value.String()
+	case map[string]any:
+		for k, v := range value {
+			value[k] = normalizeJSONNumbers(v)
+		}
+		return value
+	case []any:
+		for i, v := range value {
+			value[i] = normalizeJSONNumbers(v)
+		}
+		return value
+	default:
+		return value
+	}
 }
 
 // ApplyOptions applies all functional options onto the given target.
