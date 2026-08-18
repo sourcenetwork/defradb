@@ -35,7 +35,7 @@ type DocumentValueCRDT interface {
 	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
 }
 
-func FieldLevelCRDTWithStore(
+func FieldLevelCRDT(
 	cType client.CType,
 ) (FieldValueCRDT, error) {
 	switch cType {

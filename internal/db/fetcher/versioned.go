@@ -453,7 +453,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return err
 			}
 
-			mcrdt, err := crdt.FieldLevelCRDTWithStore(field.Typ)
+			mcrdt, err := crdt.FieldLevelCRDT(field.Typ)
 			if err != nil {
 				return err
 			}
