@@ -75,8 +75,7 @@ type Counter struct {
 
 var _ FieldValueCRDT = (*Counter)(nil)
 
-// NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a Counter CRDT.
+// NewCounter creates a new Counter CRDT.
 func NewCounter(
 	allowDecrement bool,
 ) *Counter {

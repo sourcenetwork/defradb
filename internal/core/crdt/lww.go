@@ -23,8 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// LWWDelta is a single delta operation for an LWWRegister
-// @todo: Expand delta metadata (investigate if needed)
 type LWWDelta struct {
 	FieldName string
 	Priority  uint64
@@ -55,18 +53,14 @@ func (d *LWWDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-// LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct{}
 
 var _ FieldValueCRDT = (*LWW)(nil)
 
-// NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a LWWRegister CRDT.
 func NewLWW() *LWW {
 	return &LWW{}
 }
 
-// Save the value of the register to the DAG.
 func (l *LWW) Delta(
 	ctx context.Context,
 	collectionVersionID string,
@@ -86,10 +80,6 @@ func (l *LWW) Delta(
 	}, nil
 }
 
-// Merge implements ReplicatedData interface
-// Merge two LWWRegisty based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
 func (l *LWW) Merge(
 	ctx context.Context,
 	store datastore.Keyedstore,

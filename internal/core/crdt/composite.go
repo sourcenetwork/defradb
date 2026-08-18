@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// DocCompositeDelta represents a delta-state update made of sub-MerkleCRDTs.
 type DocCompositeDelta struct {
 	Priority uint64
 	// CollectionVersionID is the collection version datastore key at the time of commit.
@@ -36,8 +35,7 @@ type DocCompositeDelta struct {
 	// Conversely we could remove this from the field-level commits and leave it on the composite,
 	// however that would complicate commit-queries and would require us to maintain an index elsewhere.
 	CollectionVersionID string
-	// Status represents the status of the document. By default it is `Active`.
-	// Alternatively, if can be set to `Deleted`.
+	// Status represents the status of the document.
 	Status client.DocumentStatus
 }
 
@@ -60,18 +58,14 @@ func (delta *DocCompositeDelta) GetPriority() uint64 {
 	return delta.Priority
 }
 
-// DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct{}
 
 var _ DocumentValueCRDT = (*DocComposite)(nil)
 
-// NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a CompositeDAG CRDT.
 func NewDocComposite() *DocComposite {
 	return &DocComposite{}
 }
 
-// DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta(
 	collectionVersionID string,
 	priority uint64,
@@ -83,7 +77,6 @@ func (m *DocComposite) DeleteDelta(
 	}
 }
 
-// Delta the value of the composite CRDT to DAG.
 func (m *DocComposite) Delta(
 	collectionVersionID string,
 	priority uint64,
@@ -95,7 +88,6 @@ func (m *DocComposite) Delta(
 	}
 }
 
-// Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
 func (m *DocComposite) Merge(
