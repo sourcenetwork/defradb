@@ -442,13 +442,12 @@ func saveBlocks(
 		var hasFieldsChanged bool
 		newFieldLevelCIDs := []coreblock.DAGLink{}
 		for i, newField := range collection.Fields {
-			headset := coreblock.NewHeadSet(
-				txn.Headstore(),
-				keys.HeadstoreFieldDefinition{
-					CollectionName: collection.Name,
-					FieldName:      newField.Name,
-				},
-			)
+			headstoreKey := keys.HeadstoreFieldDefinition{
+				CollectionName: collection.Name,
+				FieldName:      newField.Name,
+			}
+
+			headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
 			heads, height, err := headset.List(ctx)
 			if err != nil {
 				return coreblock.NewErrGettingHeads(err)
@@ -474,10 +473,7 @@ func saveBlocks(
 
 			cid, _, err := coreblock.AddDelta(
 				ctx,
-				keys.HeadstoreFieldDefinition{
-					CollectionName: collection.Name,
-					FieldName:      newField.Name,
-				},
+				headstoreKey,
 				delta,
 				heads,
 			)
@@ -489,12 +485,11 @@ func saveBlocks(
 			newFieldLevelCIDs = append(newFieldLevelCIDs, coreblock.DAGLink{Link: cid})
 		}
 
-		headset := coreblock.NewHeadSet(
-			txn.Headstore(),
-			keys.HeadstoreCollectionDefinition{
-				CollectionName: collection.Name,
-			},
-		)
+		headstoreKey := keys.HeadstoreCollectionDefinition{
+			CollectionName: collection.Name,
+		}
+
+		headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
 		heads, height, err := headset.List(ctx)
 		if err != nil {
 			return coreblock.NewErrGettingHeads(err)
@@ -516,9 +511,7 @@ func saveBlocks(
 
 		cid, _, err := coreblock.AddDelta(
 			ctx,
-			keys.HeadstoreCollectionDefinition{
-				CollectionName: collection.Name,
-			},
+			headstoreKey,
 			delta,
 			heads,
 			newFieldLevelCIDs...,
@@ -552,12 +545,11 @@ func saveBlocks(
 	}
 
 	if hasSetUpdated && len(collectionSet) > 1 {
-		headset := coreblock.NewHeadSet(
-			txn.Headstore(),
-			keys.HeadstoreCollectionSetDefinition{
-				FirstCollectionID: collectionSet[0].CollectionID,
-			},
-		)
+		headstoreKey := keys.HeadstoreCollectionSetDefinition{
+			FirstCollectionID: collectionSet[0].CollectionID,
+		}
+
+		headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
 		heads, height, err := headset.List(ctx)
 		if err != nil {
 			return coreblock.NewErrGettingHeads(err)
@@ -574,9 +566,7 @@ func saveBlocks(
 
 		cid, _, err := coreblock.AddDelta(
 			ctx,
-			keys.HeadstoreCollectionSetDefinition{
-				FirstCollectionID: collectionSet[0].CollectionID,
-			},
+			headstoreKey,
 			delta,
 			heads,
 			links...,

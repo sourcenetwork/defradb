@@ -177,7 +177,11 @@ func (c *collection) applyDelete(
 	signingCtx := c.contextForSigning(ctx)
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	headset := coreblock.NewHeadSet(txn.Headstore(), primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey())
+	headstoreKey := keys.HeadstoreDocKey{
+		DocShortID: primaryKey.DocShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
+	}
+	headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
 	heads, height, err := headset.List(ctx)
 	if err != nil {
 		return coreblock.NewErrGettingHeads(err)
@@ -194,7 +198,7 @@ func (c *collection) applyDelete(
 
 	link, b, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
-		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+		headstoreKey,
 		delta,
 		coreblock.AddDeltaOptions{
 			EncryptionDocKey: keys.EncodeDocRef(primaryKey.CollectionShortID, primaryKey.DocShortID),
