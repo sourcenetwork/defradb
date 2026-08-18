@@ -35,7 +35,7 @@ func NewCollection() *Collection {
 	return &Collection{}
 }
 
-func (c *Collection) Delta(
+func (c *Collection) Mutate(
 	collectionVersionID string,
 	priority uint64,
 ) *CollectionDelta {

@@ -66,7 +66,7 @@ func NewDocComposite() *DocComposite {
 	return &DocComposite{}
 }
 
-func (m *DocComposite) DeleteDelta(
+func (m *DocComposite) Delete(
 	collectionVersionID string,
 	priority uint64,
 ) *DocCompositeDelta {
@@ -77,7 +77,7 @@ func (m *DocComposite) DeleteDelta(
 	}
 }
 
-func (m *DocComposite) Delta(
+func (m *DocComposite) Upsert(
 	collectionVersionID string,
 	priority uint64,
 ) *DocCompositeDelta {

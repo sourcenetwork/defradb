@@ -50,7 +50,7 @@ func NewCollectionDefinition() *CollectionDefinition {
 	return &CollectionDefinition{}
 }
 
-func (c *CollectionDefinition) Delta(
+func (c *CollectionDefinition) Mutate(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
 	priority uint64,

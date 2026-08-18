@@ -33,7 +33,7 @@ func NewCollectionSet() *CollectionSetDefinition {
 	return &CollectionSetDefinition{}
 }
 
-func (c *CollectionSetDefinition) Delta(
+func (c *CollectionSetDefinition) Mutate(
 	priority uint64,
 ) *CollectionSetDelta {
 	return &CollectionSetDelta{

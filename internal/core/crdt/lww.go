@@ -61,12 +61,12 @@ func NewLWW() *LWW {
 	return &LWW{}
 }
 
-func (l *LWW) Delta(
+func (l *LWW) Set(
 	ctx context.Context,
 	collectionVersionID string,
 	data *DocField,
 	priority uint64,
-) (Delta, error) {
+) (*LWWDelta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, NewErrSerializeLWWValue(err, data.FieldName)

@@ -29,17 +29,17 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
 	lww := NewLWW()
-	lwwDelta, err := lww.Delta(
+	lwwDelta, err := lww.Set(
 		ctx,
 		"collection-version",
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
 		1,
 	)
 	require.NoError(t, err)
-	require.NotContains(t, string(lwwDelta.(*LWWDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
+	require.NotContains(t, string(lwwDelta.IPLDSchemaBytes()), "docID")
 
 	counter := NewCounter(false)
-	counterDelta, err := counter.Delta(
+	counterDelta, err := counter.Increment(
 		ctx,
 		"collection-version",
 		NewDocField("age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
@@ -47,8 +47,8 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 		1,
 	)
 	require.NoError(t, err)
-	require.NotContains(t, string(counterDelta.(*CounterDelta).IPLDSchemaBytes()), "docID") //nolint:forcetypeassert
+	require.NotContains(t, string(counterDelta.IPLDSchemaBytes()), "docID")
 
 	composite := NewDocComposite()
-	require.NotContains(t, string(composite.Delta("collection-version", 1).IPLDSchemaBytes()), "docID")
+	require.NotContains(t, string(composite.Upsert("collection-version", 1).IPLDSchemaBytes()), "docID")
 }

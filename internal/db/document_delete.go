@@ -189,7 +189,7 @@ func (c *collection) applyDelete(
 	height = height + 1
 
 	merkleCRDT := crdt.NewDocComposite()
-	delta := merkleCRDT.DeleteDelta(c.Version().VersionID, height)
+	delta := merkleCRDT.Delete(c.Version().VersionID, height)
 
 	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
 	if err != nil {
@@ -246,7 +246,7 @@ func (c *collection) applyDelete(
 		height = height + 1
 
 		collectionCRDT := crdt.NewCollection()
-		delta := collectionCRDT.Delta(c.Version().VersionID, height)
+		delta := collectionCRDT.Mutate(c.Version().VersionID, height)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,

@@ -89,13 +89,13 @@ func NewCounter(
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
-func (c *Counter) Delta(
+func (c *Counter) Increment(
 	ctx context.Context,
 	collectionVersionID string,
 	data *DocField,
 	isAdd bool,
 	priority uint64,
-) (Delta, error) {
+) (*CounterDelta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
 		return nil, err

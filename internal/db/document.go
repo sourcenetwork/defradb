@@ -552,7 +552,7 @@ func (c *collection) save(
 				lww := crdt.NewLWW()
 				merkleCRDT = lww
 
-				delta, err = lww.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), height)
+				delta, err = lww.Set(ctx, c.VersionID(), crdt.NewDocField(k, val), height)
 				if err != nil {
 					return err
 				}
@@ -563,7 +563,7 @@ func (c *collection) save(
 				)
 				merkleCRDT = counter
 
-				delta, err = counter.Delta(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
+				delta, err = counter.Increment(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
 				if err != nil {
 					return err
 				}
@@ -615,7 +615,7 @@ func (c *collection) save(
 	height = height + 1
 
 	merkleCRDT := crdt.NewDocComposite()
-	delta := merkleCRDT.Delta(c.Version().VersionID, height)
+	delta := merkleCRDT.Upsert(c.Version().VersionID, height)
 
 	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
 	if err != nil {
@@ -710,7 +710,7 @@ func (c *collection) save(
 		height = height + 1
 
 		collectionCRDT := crdt.NewCollection()
-		delta := collectionCRDT.Delta(c.Version().VersionID, height)
+		delta := collectionCRDT.Mutate(c.Version().VersionID, height)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,

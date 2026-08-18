@@ -54,7 +54,7 @@ func NewFieldDefinition() *FieldDefinition {
 	return &FieldDefinition{}
 }
 
-func (f *FieldDefinition) Delta(
+func (f *FieldDefinition) Mutate(
 	new client.CollectionFieldDescription,
 	old client.CollectionFieldDescription,
 	priority uint64,

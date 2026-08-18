@@ -455,7 +455,7 @@ func saveBlocks(
 			height = height + 1
 
 			fieldCRDT := crdt.NewFieldDefinition()
-			delta, hasFieldChanged, err := fieldCRDT.Delta(
+			delta, hasFieldChanged, err := fieldCRDT.Mutate(
 				newField,
 				// We cheat here for now, as users cannot yet mutate fields.  When they can,
 				// we will need to pass in the old version here.
@@ -497,7 +497,7 @@ func saveBlocks(
 		height = height + 1
 
 		colCRDT := crdt.NewCollectionDefinition()
-		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol, height)
+		delta, hasCollectionChanged, err := colCRDT.Mutate(*collection, oldCol, height)
 		if err != nil {
 			return err
 		}
@@ -557,7 +557,7 @@ func saveBlocks(
 		height = height + 1
 
 		colSetCRDT := crdt.NewCollectionSet()
-		delta := colSetCRDT.Delta(height)
+		delta := colSetCRDT.Mutate(height)
 
 		links := make([]coreblock.DAGLink, 0, len(colIds))
 		for _, colId := range colIds {
