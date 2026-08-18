@@ -602,11 +602,12 @@ func (w *Wrapper) AddView(
 func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	opt := utils.NewOptions(opts...)
 	name, version, collectionID := collectionOptionsStrings(opt)
+	getInactive := opt.GetInactive.HasValue() && opt.GetInactive.Value()
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(w, ctx, "RefreshViewNative",
-		newArgs().collOpts(name, version, collectionID, false, immutable.None[bool]()).argLong(idH))
+		newArgs().collOpts(name, version, collectionID, getInactive, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return err
 	}
