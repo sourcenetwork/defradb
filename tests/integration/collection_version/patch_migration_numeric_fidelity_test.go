@@ -17,61 +17,52 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-// These tests illustrate that every client computes the same CID for the same large integers
-// in tests with lens migration. Previously, values abbove 2^53 were being incorrectly rounded
-// by somee clients during decoding. Therefore these tests exist as regression tests of this
-// issuee.
+// A Lens module argument above 2^53 used to be rounded to the nearest representable
+// float64 by every JSON decode boundary that reads an untyped Lens config into
+// map[string]any without json.Decoder.UseNumber().
+//
+// 9007199254740993 (2^53 + 1) and 9007199254740992 (2^53) are different int64
+// values, but under that bug both round to the identical float64(9007199254740992), so
+// the two AddLens calls below would produce identical, content-addressed configs and get
+// deduplicated into a single stored lens instead of two. Therefore, this exists as a
+// regression test by checking that the count of lenses is actually two.
 
-const usersCollectionVersion1ID = "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
-
-const largeIntArgumentLensCID = "bafyreihzes3vm5dqvvd6h6jxtdkgc4ts3eey4ixvkc3424kxnu66xt3ohe"
-
-func TestCollectionVersionPatch_LargeIntegerLensArgument_ProducesConsistentCID(t *testing.T) {
+func TestCollectionVersionPatch_LargeIntegerLensArguments_AreNotDeduplicated(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			&action.AddCollection{
-				SDL: `
-					type Users {}
-				`,
-			},
-			&action.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
-					]
-				`,
-				Lens: immutable.Some(model.Lens{
+			&action.AddLens{
+				Lens: model.Lens{
 					Lenses: []model.LensModule{
 						{
 							Path: lenses.SetDefaultModulePath,
 							Arguments: map[string]any{
 								"dst":   "verified",
-								"value": int64(9007199254740993), // 2^53 + 1, not representable exactly as float64
+								"value": int64(9007199254740993), // 2^53 + 1
 							},
 						},
 					},
-				}),
+				},
 			},
-			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetCollectionName("Users"),
-				ExpectedResults: []client.CollectionVersion{
-					{
-						Name:           "Users",
-						IsActive:       true,
-						IsMaterialized: true,
-						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: usersCollectionVersion1ID,
-							Transform:          immutable.Some(largeIntArgumentLensCID),
-						}),
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.SetDefaultModulePath,
+							Arguments: map[string]any{
+								"dst":   "verified",
+								"value": int64(9007199254740992), // 2^53
+							},
+						},
 					},
 				},
+			},
+			&action.ListLenses{
+				ExpectedCount: immutable.Some(2),
 			},
 		},
 	}
