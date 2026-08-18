@@ -22,8 +22,12 @@ func EncodeJSONAscending(b []byte, v client.JSON) []byte {
 
 	if str, ok := v.String(); ok {
 		b = EncodeStringAscending(b, str)
-	} else if num, ok := v.Number(); ok {
-		b = EncodeFloat64Ascending(b, num)
+	} else if intVal, floatVal, isInt, isNum := jsonNumberValue(v); isNum {
+		if isInt {
+			b = EncodeVarintAscending(b, intVal)
+		} else {
+			b = EncodeFloat64Ascending(b, floatVal)
+		}
 	} else if boolVal, ok := v.Bool(); ok {
 		b = EncodeBoolAscending(b, boolVal)
 	} else if v.IsNull() {
@@ -41,8 +45,12 @@ func EncodeJSONDescending(b []byte, v client.JSON) []byte {
 
 	if str, ok := v.String(); ok {
 		b = EncodeStringDescending(b, str)
-	} else if num, ok := v.Number(); ok {
-		b = EncodeFloat64Descending(b, num)
+	} else if intVal, floatVal, isInt, isNum := jsonNumberValue(v); isNum {
+		if isInt {
+			b = EncodeVarintDescending(b, intVal)
+		} else {
+			b = EncodeFloat64Descending(b, floatVal)
+		}
 	} else if boolVal, ok := v.Bool(); ok {
 		b = EncodeBoolDescending(b, boolVal)
 	} else if v.IsNull() {
@@ -50,6 +58,20 @@ func EncodeJSONDescending(b []byte, v client.JSON) []byte {
 	}
 
 	return b
+}
+
+// jsonNumberValue extracts a JSON value's numeric content, preserving whether it was
+// stored as an exact integer so the caller can pick a sortable encoder that doesn't
+// force it through a lossy float64 (anything above 2^53 loses precision as a float64).
+func jsonNumberValue(v client.JSON) (intVal int64, floatVal float64, isInt bool, isNum bool) {
+	num, ok := v.Number()
+	if !ok {
+		return 0, 0, false, false
+	}
+	if i, ok := v.Value().(int64); ok {
+		return i, 0, true, true
+	}
+	return 0, num, false, true
 }
 
 // DecodeJSONAscending decodes a JSON value encoded in ascending order.
@@ -89,6 +111,12 @@ func decodeJSON(b []byte, ascending bool) ([]byte, client.JSON, error) {
 			return nil, nil, err
 		}
 		jsonValue = string(v)
+	case Int:
+		if ascending {
+			b, jsonValue, err = DecodeVarintAscending(b)
+		} else {
+			b, jsonValue, err = DecodeVarintDescending(b)
+		}
 	case Float64:
 		if ascending {
 			b, jsonValue, err = DecodeFloat64Ascending(b)
