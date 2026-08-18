@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -110,6 +109,46 @@ func TestMutationAdd_WithVariableInJSONObject_Succeeds(t *testing.T) {
 						{
 							"embed": map[string]any{
 								"message": "hello",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// TestMutationAdd_WithJSONVariable_LargeInt64_PreservesPrecision tests request
+// variables being decoded into map[string]any using large numbers. If it passes,
+// then precision has been preserved, because the int hasn't been rounded.
+func TestMutationAdd_WithJSONVariable_LargeInt64_PreservesPrecision(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embed: JSON
+					}
+				`,
+			},
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"embed": map[string]any{
+						"bar": int64(9007199254740993),
+					},
+				}),
+				Request: `mutation($embed: JSON) {
+					add_Users(input: {embed: $embed}) {
+						embed
+					}
+				}`,
+				Results: map[string]any{
+					"add_Users": []map[string]any{
+						{
+							"embed": map[string]any{
+								"bar": int64(9007199254740993),
 							},
 						},
 					},
