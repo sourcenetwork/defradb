@@ -68,6 +68,11 @@ type scanNode struct {
 	// https://github.com/sourcenetwork/defradb/issues/5080
 	vectorIndexed bool
 
+	// vectorSearch is set when the prefixes come from a vector-index search and the scan also has a
+	// filter, in which case the scan may have to widen the search to make up for documents the filter
+	// drops. It is nil for every other scan.
+	vectorSearch *vectorSearch
+
 	// rank configures the dedicated full-text fetcher and carries the score of its current document.
 	rank           *fetcher.Rank
 	rankFieldIndex int
@@ -473,14 +478,31 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	doc, execInfo, err := n.fetcher.FetchNext(n.p.ctx)
-	if err != nil {
-		return false, err
-	}
-	n.execInfo.fetches.Add(execInfo)
+	var doc fetcher.EncodedDocument
+	for {
+		fetched, execInfo, err := n.fetcher.FetchNext(n.p.ctx)
+		if err != nil {
+			return false, err
+		}
+		n.execInfo.fetches.Add(execInfo)
 
-	if doc == nil {
-		return false, nil
+		if fetched != nil {
+			doc = fetched
+			break
+		}
+
+		// The prefixes are used up. A vector search may still have documents to give: widen it and
+		// fetch those too, otherwise the filter would leave fewer results than were asked for.
+		widened, err := n.widenVectorSearch()
+		if err != nil {
+			return false, err
+		}
+		if !widened {
+			return false, nil
+		}
+	}
+	if n.vectorSearch != nil {
+		n.vectorSearch.yielded++
 	}
 
 	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
@@ -505,9 +527,36 @@ func (n *scanNode) Next() (bool, error) {
 	return true, nil
 }
 
+// widenVectorSearch searches the vector graph again with twice the previous k and restarts the
+// fetcher on the documents that search adds. It reports whether there is anything new to fetch.
+func (n *scanNode) widenVectorSearch() (bool, error) {
+	search := n.vectorSearch
+	if search == nil || search.exhausted || search.yielded >= search.target {
+		return false, nil
+	}
+
+	prefixes, err := search.searchPrefixes(n.p.ctx, search.searched*2)
+	if err != nil {
+		return false, err
+	}
+	if len(prefixes) == 0 {
+		// The graph search is deterministic, so a doubled search that adds no new document has
+		// re-covered the same reachable region and settled: stop rather than double again.
+		search.exhausted = true
+		return false, nil
+	}
+
+	n.prefixes = prefixes
+	// Start closes the previous fetch before opening the new prefixes.
+	return true, n.fetcher.Start(n.p.ctx, prefixes...)
+}
+
 func (n *scanNode) Prefixes(prefixes []keys.Walkable) {
 	n.prefixes = prefixes
 	n.noResults = false
+	// The scan is being pointed at different documents (a type join re-targeting it, for example),
+	// so any vector search these prefixes did not come from no longer applies.
+	n.vectorSearch = nil
 }
 
 func (n *scanNode) Close() error {

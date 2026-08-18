@@ -297,6 +297,24 @@ func prepareScanNodeFilterForTypeJoin(
 	}
 }
 
+// unrouteVectorSearchForTypeJoin puts the scans a join is built on back on the full-scan path if
+// they were routed to a vector search that widens as its filter drops documents.
+//
+// A join moves filter conditions off the scan (see prepareScanNodeFilterForTypeJoin) and re-drives
+// the scan once per parent document with a filter and index of its own (see retrievePrimaryDocs),
+// so the search can neither count what passed nor keep its prefixes.
+func unrouteVectorSearchForTypeJoin(plans ...planNode) {
+	for _, plan := range plans {
+		scan, ok := walkAndFindPlanType[*scanNode](plan)
+		if !ok || scan.vectorSearch == nil {
+			continue
+		}
+		scan.vectorSearch = nil
+		scan.vectorIndexed = false
+		scan.Prefixes(nil)
+	}
+}
+
 func (p *Planner) newInvertableTypeJoin(
 	parent *selectNode,
 	sourcePlan planNode,
@@ -311,6 +329,8 @@ func (p *Planner) newInvertableTypeJoin(
 	if err != nil {
 		return invertibleTypeJoin{}, err
 	}
+
+	unrouteVectorSearchForTypeJoin(sourcePlan, subSelectPlan)
 
 	parentsRelFieldDef, ok := parent.collection.Version().GetFieldByName(subSelect.Name)
 	if !ok {
