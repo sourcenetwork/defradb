@@ -436,12 +436,16 @@ func (w *CWrapper) AddCollection(
 	if hadTxn {
 		txn = gotTxn
 	} else {
-		clientTxn, _ := w.NewTxn(false)
+		clientTxn, err := w.NewTxn(false)
+		if err != nil {
+			return nil, err
+		}
 		var ok bool
 		txn, ok = clientTxn.(datastore.Txn)
 		if !ok {
 			return nil, errors.New("failed to cast clientTxn to datastore.Txn")
 		}
+		defer txn.Discard()
 	}
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -463,8 +467,9 @@ func (w *CWrapper) AddCollection(
 	}
 
 	if !hadTxn {
-		defer txn.Discard()
-		_ = txn.Commit()
+		if err := txn.Commit(); err != nil {
+			return nil, err
+		}
 	}
 
 	return collectionVersions, nil
