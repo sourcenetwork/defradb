@@ -499,7 +499,10 @@ func (mp *mergeProcessor) mergeBlock(
 			block.Delta.GetDelta(),
 		)
 		if err != nil {
-			return false, nil, resolvedDocRef{}, NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
+			return false,
+				nil,
+				resolvedDocRef{},
+				NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}
 
 		return true,
@@ -563,7 +566,10 @@ func (mp *mergeProcessor) mergeBlock(
 			block.Delta.GetDelta(),
 		)
 		if err != nil {
-			return false, nil, resolvedDocRef{}, NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
+			return false,
+				nil,
+				resolvedDocRef{},
+				NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}
 
 		return true, keys.DataStoreKey{
