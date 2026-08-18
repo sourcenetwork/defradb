@@ -132,7 +132,7 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 
 // patchCollectionRequestBody mirrors patchCollectionRequest, but defers decoding Migration
 // until its presence (json.RawMessage, not immutable.Option[model.Lens]) can be checked and
-// then decoded separately with UseNumber. 
+// then decoded separately with UseNumber.
 type patchCollectionRequestBody struct {
 	Patch     string
 	Migration json.RawMessage
