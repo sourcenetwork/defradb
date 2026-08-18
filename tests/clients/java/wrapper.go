@@ -699,7 +699,12 @@ func (w *Wrapper) ListLenses(
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
+	opt := utils.NewOptions(opts...)
+	getOpts := options.GetCollections().SetCollectionName(name)
+	if opt.GetIdentity().HasValue() {
+		getOpts.SetIdentity(opt.GetIdentity().Value())
+	}
+	cols, err := w.GetCollections(ctx, getOpts)
 	if err != nil {
 		return nil, err
 	}
