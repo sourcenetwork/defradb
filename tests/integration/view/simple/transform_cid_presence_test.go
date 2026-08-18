@@ -24,36 +24,8 @@ import (
 
 // AddViewOptions.TransformCID being omitted (None) and being explicitly set to ""
 // (Some("")) must not be treated the same. An empty CID is invalid and should be
-// rejected, while an omitted one means "no transform". These illustrate the two
-// different cases.
-
-func TestAddView_NoTransformCID_CreatesViewSuccessfully(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `
-					type User {
-						name: String
-					}
-				`,
-			},
-			&action.AddView{
-				Query: `
-					User {
-						name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						name: String
-					}
-				`,
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
+// rejected, while an omitted one means "no transform". The latter is alreedy covered
+// by existing tests, so we only test the former here.
 
 func TestAddView_BlankTransformCID_FailsAndCreatesNoView(t *testing.T) {
 	test := testUtils.TestCase{
