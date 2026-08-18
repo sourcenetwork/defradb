@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -163,7 +164,13 @@ func waitForUpdateEvents(
 			continue // node is closed
 		}
 		if node.IsExternal {
-			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
+			// A node in another process emits no events we can read, so there is
+			// nothing to wait for here. The write still has to reach the nodes this
+			// one syncs to, and normally those nodes learn what to expect from this
+			// event. Read the head back with a query and record it for them, or
+			// they would wait for nothing and the test would read stale data.
+			action.MarkDocsExpectedOnTargets(s, i, collectionIndex, docIDs, ident)
+			continue
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
@@ -297,10 +304,12 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			totalPending += len(cidSet)
 		}
 
-		// An external node runs in another process, so its event bus cannot be
-		// read from here. Poll it for the same CIDs instead.
+		// A node in another process has no event bus we can read, so ask it for
+		// the commits instead. Waiting for the specific head matters: the
+		// document itself already exists after the first write, so waiting only
+		// for that would return immediately on every later update.
 		if node.IsExternal {
-			waitForCommitsOnNode(s, node, pending)
+			waitForHeadsOnNode(s, node, pending)
 			continue
 		}
 
@@ -343,62 +352,151 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 	}
 }
 
-// errCommitCIDNotFound is returned when querying a CID the node does not hold.
-const errCommitCIDNotFound = "cid either does not exist or belong to document"
-
-// waitForCommitsOnNode waits until every pending CID is present on the node.
+// waitForHeadsOnNode waits until every expected head has arrived on the node.
 //
-// It queries the node instead of reading its event bus, so it works for a node
-// running in another process. pending maps a doc ID or collection ID to the CIDs
-// still expected to arrive.
-func waitForCommitsOnNode(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) {
-	remaining := 0
-	for _, cidSet := range pending {
-		remaining += len(cidSet)
+// It asks the node for its commits rather than reading its event bus, so it
+// works for a node running in another process. Waiting on the head rather than
+// on the document is what makes an update observable: the document exists from
+// the first write onwards, but each update brings a new head.
+func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) {
+	type wanted struct {
+		key string
+		cid cid.Cid
 	}
-	if remaining == 0 {
+	var heads []wanted
+	for key, cidSet := range pending {
+		// A collection level key has no document to ask about.
+		if !strings.HasPrefix(key, "bae-") {
+			continue
+		}
+		for c := range cidSet {
+			heads = append(heads, wanted{key: key, cid: c})
+		}
+	}
+	if len(heads) == 0 {
 		return
+	}
+
+	// A head that is still readable somewhere should become readable here too,
+	// so the wait covers the merge and not just the block arriving. A head that
+	// deleted the document is readable nowhere, and waiting for it would never
+	// finish. This is read once up front, before the target has caught up, so it
+	// reflects the writer rather than the node being waited on.
+	wantDoc := make(map[string]bool, len(heads))
+	for _, head := range heads {
+		if _, seen := wantDoc[head.key]; seen {
+			continue
+		}
+		wantDoc[head.key] = anyNodeHasDocExcept(s, node, head.key)
 	}
 
 	deadline := time.Now().Add(30 * eventTimeout)
 	for {
-		missing := false
-		for key, cidSet := range pending {
-			for c := range cidSet {
-				if !hasCommit(s, node, c) {
-					missing = true
-					continue
-				}
-				delete(cidSet, c)
-				node.P2P.ActualDAGHeads[key] = state.DocHeadState{CID: c}
+		missing := make([]string, 0, len(heads))
+		for _, head := range heads {
+			if !hasCommit(s, node, head.key, head.cid) {
+				missing = append(missing, head.cid.String())
+				continue
 			}
+			// The block is stored before it is merged, so the head arriving does
+			// not mean the document can be read yet. Wait for that too, but only
+			// while the document still exists on the source: a head that deleted
+			// it is never going to become readable.
+			if wantDoc[head.key] && !hasDoc(s, node, head.key) {
+				missing = append(missing, head.cid.String())
+				continue
+			}
+			node.P2P.ActualDAGHeads[head.key] = state.DocHeadState{CID: head.cid}
 		}
-		if !missing {
+		if len(missing) == 0 {
 			return
 		}
 		if time.Now().After(deadline) {
 			require.Fail(s.T, "timeout waiting for commits to sync to external node",
-				"node still missing: %v", pending)
+				"still missing: %v", missing)
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
 }
 
-// hasCommit reports whether the node holds the block for the given CID.
+// errCollectionVersionNotFound is returned when a node is asked about a commit
+// whose collection version it does not have.
+const errCollectionVersionNotFound = "failed to get collection by version ID"
+
+// anyNodeHasDocExcept reports whether a node other than the given one still
+// holds the document, which stands in for "the writer did not delete it".
+func anyNodeHasDocExcept(s *state.State, except *state.NodeState, docID string) bool {
+	for _, node := range s.Nodes {
+		if node == except || node.Closed {
+			continue
+		}
+		if hasDoc(s, node, docID) {
+			return true
+		}
+	}
+	return false
+}
+
+// hasDoc reports whether the node can read the given document in any of its
+// collections.
 //
-// Querying a CID the node does not have yet is an error rather than an empty
-// result, so that case reports false and the caller keeps waiting. Any other
-// error is a real problem and fails the test.
-func hasCommit(s *state.State, node *state.NodeState, target cid.Cid) bool {
+// This is weaker than checking the head, so it is only used when the node
+// cannot answer about commits at all.
+func hasDoc(s *state.State, node *state.NodeState, docID string) bool {
+	for _, col := range node.Collections {
+		result := node.ExecRequest(
+			s.Ctx,
+			fmt.Sprintf(`query { %s(docID: %q) { _docID } }`, col.Name(), docID),
+		)
+		if len(result.GQL.Errors) > 0 {
+			continue
+		}
+
+		data, ok := result.GQL.Data.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		switch docs := data[col.Name()].(type) {
+		case []any:
+			if len(docs) > 0 {
+				return true
+			}
+		case []map[string]any:
+			if len(docs) > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// hasCommit reports whether the node holds the given commit of a document.
+func hasCommit(s *state.State, node *state.NodeState, docID string, target cid.Cid) bool {
 	result := node.ExecRequest(
 		s.Ctx,
-		fmt.Sprintf(`query { _commits(cid: %q) { cid } }`, target.String()),
+		fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, docID, target.String()),
 	)
 	for _, err := range result.GQL.Errors {
-		if strings.Contains(err.Error(), errCommitCIDNotFound) {
-			return false
+		// A node on an older release can hold a block written against a newer
+		// collection version without being able to describe it. Nothing can be
+		// asked about the commit in that case, so the wait falls back to
+		// comparing the document against the node that wrote it.
+		// The block is here but the node cannot describe it, so there is nothing
+		// left to check. Treat it as arrived: waiting longer would never resolve.
+		//
+		// This is weaker than matching the head, so a test that updates a
+		// document this way can read the value from before the update. Comparing
+		// content instead does not work either, because the two nodes hold
+		// deliberately different schemas in exactly this case.
+		if strings.Contains(err.Error(), errCollectionVersionNotFound) {
+			return true
 		}
-		require.NoError(s.T, err, "commit query failed on node")
+	}
+	// Asking for a commit the node does not hold is an error rather than an
+	// empty result, so treat any other error as not yet arrived.
+	if len(result.GQL.Errors) > 0 {
+		return false
 	}
 
 	data, ok := result.GQL.Data.(map[string]any)

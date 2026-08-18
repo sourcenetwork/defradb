@@ -12,6 +12,7 @@
 package action
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -50,7 +51,16 @@ func waitForUpdateEvents(
 			continue // node is closed
 		}
 		if node.IsExternal {
-			continue // external node: its event bus is in another process; the cross-version test polls a query to confirm sync
+			// A node in another process emits no events we can read, so there is
+			// nothing to wait for here. The write still has to reach the nodes this
+			// one replicates to, and normally those nodes learn what to expect from
+			// this event. Tell them the document ID directly instead, or they would
+			// wait for nothing and the test would read the data too early.
+			//
+			// A node with no replicators has no one to tell, so this does nothing
+			// when networking is not in use.
+			MarkDocsExpectedOnTargets(s, i, collectionIndex, docIDs, ident)
+			continue
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
@@ -123,6 +133,125 @@ func waitForUpdateEvents(
 			}
 		}
 	}
+}
+
+// MarkDocsExpectedOnTargets records that the given documents should reach every
+// node the source syncs to.
+//
+// It is the counterpart of [updateNetworkState] for a source node whose events
+// cannot be read. The head CID is read back from the node with a query rather
+// than taken from an event, so the nodes downstream wait on the same head they
+// would have anyway.
+func MarkDocsExpectedOnTargets(
+	s *state.State,
+	sourceNodeID int,
+	collectionIndex int,
+	docIDs map[string]struct{},
+	ident immutable.Option[state.Identity],
+) {
+	for docID := range docIDs {
+		head, ok := latestCompositeCID(s, sourceNodeID, docID)
+		if !ok {
+			continue
+		}
+
+		// Build the event ourselves, since we cannot read the real one.
+		evt := event.Update{
+			DocID:        docID,
+			Cid:          head,
+			CollectionID: collectionIDForIndex(s, sourceNodeID, collectionIndex),
+		}
+
+		s.Nodes[sourceNodeID].P2P.ActualDAGHeads[docID] = state.DocHeadState{CID: head}
+
+		for targetID := range s.Nodes[sourceNodeID].P2P.Replicators {
+			s.Nodes[targetID].P2P.ExpectedDAGHeads[docID] = append(
+				s.Nodes[targetID].P2P.ExpectedDAGHeads[docID],
+				state.ExpectedHead{CID: head, SourceNodeID: sourceNodeID},
+			)
+		}
+
+		// Subscribers are reached over connections rather than replicators, so
+		// they need the same walk the native path does.
+		updateConnectedNodes(
+			s, sourceNodeID, sourceNodeID, map[int]struct{}{}, ident,
+			collectionIndex, docIndexForID(s, collectionIndex, docID), evt,
+		)
+	}
+}
+
+// collectionIDForIndex returns the collection ID for a collection index on a node.
+func collectionIDForIndex(s *state.State, nodeID int, collectionIndex int) string {
+	collections := s.Nodes[nodeID].Collections
+	if collectionIndex < 0 || collectionIndex >= len(collections) {
+		return ""
+	}
+	return collections[collectionIndex].Version().CollectionID
+}
+
+// docIndexForID returns the index a document was added under, or -1 if unknown.
+func docIndexForID(s *state.State, collectionIndex int, docID string) int {
+	s.DocIDsLock.RLock()
+	defer s.DocIDsLock.RUnlock()
+
+	if collectionIndex < 0 || collectionIndex >= len(s.DocIDs) {
+		return -1
+	}
+	for i, id := range s.DocIDs[collectionIndex] {
+		if id.String() == docID {
+			return i
+		}
+	}
+	return -1
+}
+
+// latestCompositeCID asks the node for the newest composite commit of a
+// document.
+//
+// The composite commit is the one a merge event reports, so this is the same
+// CID the native path takes from that event.
+func latestCompositeCID(s *state.State, nodeID int, docID string) (cid.Cid, bool) {
+	result := s.Nodes[nodeID].ExecRequest(
+		s.Ctx,
+		fmt.Sprintf(
+			`query { _commits(docID: %q, filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
+			docID,
+		),
+	)
+	if len(result.GQL.Errors) > 0 {
+		return cid.Cid{}, false
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return cid.Cid{}, false
+	}
+
+	var cidStr string
+	switch commits := data["_commits"].(type) {
+	case []any:
+		if len(commits) == 0 {
+			return cid.Cid{}, false
+		}
+		commit, ok := commits[0].(map[string]any)
+		if !ok {
+			return cid.Cid{}, false
+		}
+		cidStr, _ = commit["cid"].(string)
+	case []map[string]any:
+		if len(commits) == 0 {
+			return cid.Cid{}, false
+		}
+		cidStr, _ = commits[0]["cid"].(string)
+	default:
+		return cid.Cid{}, false
+	}
+
+	parsed, err := cid.Decode(cidStr)
+	if err != nil {
+		return cid.Cid{}, false
+	}
+	return parsed, true
 }
 
 // updateNetworkState updates the network state by checking which
