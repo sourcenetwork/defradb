@@ -13,6 +13,7 @@ package client
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 
@@ -371,14 +372,54 @@ func (arr jsonArray) visit(visitor JSONVisitor, path JSONPath, opts traverseJSON
 	return nil
 }
 
+// jsonNumber holds a JSON number. Where the value originated as (or was parsed as) an exact
+// integer, intVal/isInt preserve it precisely. floatVal alone cannot represent every int64
+// exactly (e.g. anything above 2^53), so Value/Unwrap/Marshal must prefer the int64 form
+// where available rather than always going through floatVal.
 type jsonNumber struct {
-	jsonBase[float64]
+	jsonVoid
+	floatVal float64
+	isInt    bool
+	intVal   int64
+	path     JSONPath
 }
 
 var _ JSON = jsonNumber{}
 
 func (n jsonNumber) Number() (float64, bool) {
-	return n.val, true
+	if n.isInt {
+		return float64(n.intVal), true
+	}
+	return n.floatVal, true
+}
+
+// value returns the underlying Go value: an int64 if this number was constructed/parsed as
+// an exact integer, otherwise a float64.
+func (n jsonNumber) value() any {
+	if n.isInt {
+		return n.intVal
+	}
+	return n.floatVal
+}
+
+func (n jsonNumber) Value() any {
+	return n.value()
+}
+
+func (n jsonNumber) Unwrap() any {
+	return n.value()
+}
+
+func (n jsonNumber) Marshal(w io.Writer) error {
+	return json.NewEncoder(w).Encode(n.value())
+}
+
+func (n jsonNumber) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n.value())
+}
+
+func (n jsonNumber) GetPath() JSONPath {
+	return n.path
 }
 
 func (n jsonNumber) visit(visitor JSONVisitor, path JSONPath, opts traverseJSONOptions) error {
@@ -440,7 +481,11 @@ func newJSONArray(val []JSON, path JSONPath) jsonArray {
 }
 
 func newJSONNumber(val float64, path JSONPath) jsonNumber {
-	return jsonNumber{jsonBase[float64]{val: val, path: path}}
+	return jsonNumber{floatVal: val, path: path}
+}
+
+func newJSONNumberInt(val int64, path JSONPath) jsonNumber {
+	return jsonNumber{floatVal: float64(val), isInt: true, intVal: val, path: path}
 }
 
 func newJSONString(val string, path JSONPath) jsonString {
@@ -524,24 +569,30 @@ func newJSON(v any, path JSONPath) (JSON, error) {
 		case bool:
 			return newJSONBool(val, path), nil
 		case int8:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case int16:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case int32:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case int64:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(val, path), nil
 		case int:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case uint8:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case uint16:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case uint32:
-			return newJSONNumber(float64(val), path), nil
+			return newJSONNumberInt(int64(val), path), nil
 		case uint64:
+			if val <= math.MaxInt64 {
+				return newJSONNumberInt(int64(val), path), nil
+			}
 			return newJSONNumber(float64(val), path), nil
 		case uint:
+			if uint64(val) <= math.MaxInt64 {
+				return newJSONNumberInt(int64(val), path), nil
+			}
 			return newJSONNumber(float64(val), path), nil
 		case float32:
 			return newJSONNumber(float64(val), path), nil
@@ -551,29 +602,29 @@ func newJSON(v any, path JSONPath) (JSON, error) {
 		case []bool:
 			return newJSONBoolArray(val, path), nil
 		case []int8:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []int16:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []int32:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []int64:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []int:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []uint8:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []uint16:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []uint32:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []uint64:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []uint:
-			return newJSONNumberArray(val, path), nil
+			return newJSONIntArray(val, path), nil
 		case []float32:
-			return newJSONNumberArray(val, path), nil
+			return newJSONFloatArray(val, path), nil
 		case []float64:
-			return newJSONNumberArray(val, path), nil
+			return newJSONFloatArray(val, path), nil
 		case []string:
 			return newJSONStringArray(val, path), nil
 		case []any:
@@ -604,7 +655,15 @@ func newJSONBoolArray(v []bool, path JSONPath) JSON {
 	return newJSONArray(arr, path)
 }
 
-func newJSONNumberArray[T constraints.Integer | constraints.Float](v []T, path JSONPath) JSON {
+func newJSONIntArray[T constraints.Integer](v []T, path JSONPath) JSON {
+	arr := make([]JSON, len(v))
+	for i := range v {
+		arr[i] = newJSONNumberInt(int64(v[i]), path.AppendIndex(uint64(i)))
+	}
+	return newJSONArray(arr, path)
+}
+
+func newJSONFloatArray[T constraints.Float](v []T, path JSONPath) JSON {
 	arr := make([]JSON, len(v))
 	for i := range v {
 		arr[i] = newJSONNumber(float64(v[i]), path.AppendIndex(uint64(i)))
@@ -639,6 +698,9 @@ func newJSONFromFastJSON(v *fastjson.Value, path JSONPath) JSON {
 		}
 		return newJSONArray(arr, path)
 	case fastjson.TypeNumber:
+		if i, err := v.Int64(); err == nil {
+			return newJSONNumberInt(i, path)
+		}
 		return newJSONNumber(v.GetFloat64(), path)
 	case fastjson.TypeString:
 		return newJSONString(string(v.GetStringBytes()), path)
