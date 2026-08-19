@@ -112,7 +112,7 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[optio
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "GetP2PInfoNative", w.handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("GetP2PInfoNative", w.handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (w *Wrapper) ActivePeers(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "ListP2PActivePeersNative", w.handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("ListP2PActivePeersNative", w.handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (w *Wrapper) AddReplicator(
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "AddP2PReplicatorNative", w.handle,
+	res, err := w.callGuarded("AddP2PReplicatorNative", w.handle,
 		newArgs().argStr(strings.Join(opt.CollectionNames, ",")).argStr(strings.Join(addresses, ",")).argLong(idH))
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func (w *Wrapper) DeleteReplicator(
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "DeleteP2PReplicatorNative", w.handle,
+	res, err := w.callGuarded("DeleteP2PReplicatorNative", w.handle,
 		newArgs().argStr(strings.Join(opt.CollectionNames, ",")).argStr(id).argLong(idH))
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func (w *Wrapper) ListReplicators(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "ListP2PReplicatorsNative", w.handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("ListP2PReplicatorsNative", w.handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (w *Wrapper) AddP2PCollections(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "AddP2PCollectionNative", w.handle,
+	res, err := w.callGuarded("AddP2PCollectionNative", w.handle,
 		newArgs().argStr(strings.Join(collectionIDs, ",")).argLong(idH))
 	if err != nil {
 		return err
@@ -204,7 +204,7 @@ func (w *Wrapper) DeleteP2PCollections(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "DeleteP2PCollectionNative", w.handle,
+	res, err := w.callGuarded("DeleteP2PCollectionNative", w.handle,
 		newArgs().argStr(strings.Join(collectionIDs, ",")).argLong(idH))
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func (w *Wrapper) ListP2PCollections(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "ListP2PCollectionsNative", w.handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("ListP2PCollectionsNative", w.handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (w *Wrapper) AddP2PDocuments(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "AddP2PDocumentNative", w.handle,
+	res, err := w.callGuarded("AddP2PDocumentNative", w.handle,
 		newArgs().argStr(strings.Join(docIDs, ",")).argLong(idH))
 	if err != nil {
 		return err
@@ -248,7 +248,7 @@ func (w *Wrapper) DeleteP2PDocuments(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "DeleteP2PDocumentNative", w.handle,
+	res, err := w.callGuarded("DeleteP2PDocumentNative", w.handle,
 		newArgs().argStr(strings.Join(docIDs, ",")).argLong(idH))
 	if err != nil {
 		return err
@@ -262,7 +262,7 @@ func (w *Wrapper) ListP2PDocuments(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "ListP2PDocumentsNative", w.handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("ListP2PDocumentsNative", w.handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func (w *Wrapper) SyncDocuments(
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "SyncP2PDocumentsNative", w.handle,
+	res, err := w.callGuarded("SyncP2PDocumentsNative", w.handle,
 		newArgs().argStr(collectionName).argStr(strings.Join(docIDs, ",")).argStr(ctxTimeoutString(ctx)).argLong(idH))
 	if err != nil {
 		return err
@@ -305,7 +305,7 @@ func (w *Wrapper) SyncCollectionVersions(
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "SyncP2PCollectionVersionsNative", w.handle,
+	res, err := w.callGuarded("SyncP2PCollectionVersionsNative", w.handle,
 		newArgs().argStr(strings.Join(versionIDs, ",")).argStr(ctxTimeoutString(ctx)).argLong(idH))
 	if err != nil {
 		return err
@@ -320,7 +320,7 @@ func (w *Wrapper) SyncBranchableCollection(
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	res, err := callNode(w.nodeObj, "SyncP2PBranchableCollectionNative", w.handle,
+	res, err := w.callGuarded("SyncP2PBranchableCollectionNative", w.handle,
 		newArgs().argStr(collectionID).argStr(ctxTimeoutString(ctx)).argLong(idH))
 	if err != nil {
 		return err
@@ -560,7 +560,7 @@ func (w *Wrapper) DeleteCollection(
 	}
 
 	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := callNode(w.nodeObj, "DeleteCollectionNative", handle,
+	res, err := w.callGuarded("DeleteCollectionNative", handle,
 		newArgs().argStr(strings.Join(names, ",")).argInt(activeOnly).argLong(idH))
 	if err != nil {
 		return err
@@ -626,7 +626,7 @@ func (w *Wrapper) ListActions(
 	defer freeIdentityHandle(idH)
 
 	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := callNode(w.nodeObj, "ListActionsNative", handle, newArgs().argLong(idH))
+	res, err := w.callGuarded("ListActionsNative", handle, newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -927,8 +927,18 @@ func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <
 	return ch
 }
 
+// NewTxn creates a new transaction against this Wrapper's node. Guards against Close having
+// deleted nodeObj's JNI global ref out from under it the same way callStore/callGuarded do - only
+// the createTransactionWithHandle call touches nodeObj, so nodeMu is released before
+// newTransactionObject, which doesn't.
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
+	w.nodeMu.RLock()
+	if w.closed {
+		w.nodeMu.RUnlock()
+		return nil, errors.New(errWrapperClosed)
+	}
 	txnPtr, err := createTransactionWithHandle(w.nodeObj, w.handle, readOnly)
+	w.nodeMu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -951,18 +961,23 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 // commonly expected to behave) - a second call would otherwise reuse nodeObj's JNI global ref after
 // the first call already deleted it.
 //
-// Holds nodeMu for the whole close sequence, so it can't run concurrently with a subscription-polling
-// goroutine's use of nodeObj (see callNodeIfOpen). Without that, Close deleting the JNI global ref
-// while a poll is in flight (or about to start) races with the poll's own use of nodeObj.
+// Holds nodeMu for the whole close sequence, so it can't run concurrently with any other method's
+// use of nodeObj. Only marks closed (and only deletes nodeObj's global ref) once NodeCloseNative has 
+// actually succeeded, mirroring cbindings.CloseNode's handling of a failed node.Close. A failed close 
+// here leaves the wrapper exactly as it was, so a caller can call Close again to retry instead of the 
+// node/handle becoming unreachable.
 func (w *Wrapper) Close() {
 	w.nodeMu.Lock()
 	defer w.nodeMu.Unlock()
 	if w.closed {
 		return
 	}
+	res, err := callNode(w.nodeObj, "NodeCloseNative", w.handle, newArgs())
+	if err != nil || res.asError() != nil {
+		return
+	}
 	w.closed = true
-	_, _ = callNode(w.nodeObj, "NodeCloseNative", w.handle, newArgs())
-	if env, detach, err := attach(); err == nil {
+	if env, detach, aerr := attach(); aerr == nil {
 		C.defra_delete_global_ref(env, w.nodeObj)
 		detach()
 	}
@@ -1010,7 +1025,7 @@ func (w *Wrapper) Disconnect(
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := callNode(w.nodeObj, "GetNodeIdentityNative", handle, newArgs())
+	res, err := w.callGuarded("GetNodeIdentityNative", handle, newArgs())
 	if err != nil {
 		return immutable.None[identity.PublicRawIdentity](), err
 	}

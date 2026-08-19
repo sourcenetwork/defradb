@@ -256,7 +256,18 @@ func callTxnRaw(txnObj C.jobject, name string, b *argBuilder) (defraResult, erro
 // callStore invokes the named native method appropriately based on context. If ctx carries an
 // active transaction (a *Txn) AND DefraTransaction actually has this native method registered, it
 // gets invoked on the transaction's own Java object. Otherwise, it gets invoked on the node.
+//
+// Guards against Close having deleted w.nodeObj's JNI global ref out from under it: nodeMu is held
+// for the whole call, so this can't run concurrently with Close deleting the ref, and w.closed is
+// checked so a call that arrives after Close has already finished returns a clean error instead of
+// using a stale/deleted nodeObj.
 func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (defraResult, error) {
+	w.nodeMu.RLock()
+	defer w.nodeMu.RUnlock()
+	if w.closed {
+		return defraResult{}, errors.New(errWrapperClosed)
+	}
+
 	handle := getNodeOrTxnHandle(w.handle, ctx)
 	if activeTxn, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
 		if t, ok := activeTxn.(*Txn); ok {
@@ -264,6 +275,17 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 				return callTxn(t.txnObj, name, handle, b)
 			}
 		}
+	}
+	return callNode(w.nodeObj, name, handle, b)
+}
+
+// callGuarded invokes a DefraNode native method directly on this Wrapper's own node object,
+// bypassing callStore's transaction dispatch. Guards against Close the same way callStore does.
+func (w *Wrapper) callGuarded(name string, handle uintptr, b *argBuilder) (defraResult, error) {
+	w.nodeMu.RLock()
+	defer w.nodeMu.RUnlock()
+	if w.closed {
+		return defraResult{}, errors.New(errWrapperClosed)
 	}
 	return callNode(w.nodeObj, name, handle, b)
 }
