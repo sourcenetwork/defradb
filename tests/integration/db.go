@@ -15,44 +15,49 @@ import (
 	"context"
 	"os"
 	"strconv"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
-	fileBadgerPathEnvName   = "DEFRA_BADGER_FILE_PATH"
 	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
 	levelEnvName            = "DEFRA_LEVEL"
 	inMemoryEnvName         = "DEFRA_IN_MEMORY"
+	lensTypeEnvName         = "DEFRA_LENS_TYPE"
+
+	// Instantiating lenses is expensive, and our tests do not benefit from a large
+	// number of them, so we explicitly set it to a low value.
+	lensPoolSize = 2
 )
 
 const (
-	BadgerIMType   state.DatabaseType = "badger-in-memory"
-	DefraIMType    state.DatabaseType = "defra-memory-datastore"
-	BadgerFileType state.DatabaseType = "badger-file-system"
-	LevelStoreType state.DatabaseType = "level"
+	BadgerIMType   = action.BadgerIMType
+	DefraIMType    = action.DefraIMType
+	BadgerFileType = action.BadgerFileType
+	LevelStoreType = action.LevelStoreType
 )
 
 var (
-	badgerInMemory   bool
-	badgerFile       bool
-	inMemoryStore    bool
-	levelStore       bool
-	databaseDir      string
+	badgerInMemory bool
+	badgerFile     bool
+	inMemoryStore  bool
+	levelStore     bool
+
+	// databaseDir is the path a restarting node reopens its store from. It is
+	// set by the harness around restart actions.
+	databaseDir string
+
+	// lensType is the lens runtime under test.
+	lensType options.NodeLensRuntimeType
+
+	// badgerEncryption reports whether the badger store is encrypted.
 	badgerEncryption bool
-	encryptionKey    []byte
-	// encryptionKeyOnce guards the lazy, process-wide initialization of
-	// encryptionKey so concurrent node setups don't race on it.
-	encryptionKeyOnce sync.Once
-	encryptionKeyErr  error
 )
 
 func init() {
@@ -63,6 +68,7 @@ func init() {
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
 	levelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
 	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
+	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.
@@ -77,25 +83,6 @@ func init() {
 		inMemoryStore = false
 		levelStore = false
 	}
-}
-
-func defaultNodeOpts() *options.NodeOptionsBuilder {
-	opt := options.Node().
-		// The test framework sets this up elsewhere when required so that it may be wrapped
-		// into a [client.TxnStore].
-		SetDisableAPI(true).
-		// The p2p is configured in the tests by [NodeConfig] actions, we disable it here
-		// to keep the tests as lightweight as possible.
-		SetDisableP2P(true)
-
-	opt.DB().
-		SetLensPoolSize(lensPoolSize).
-		SetLensRuntime(lensType).
-		// The default is 5 and that is never going to be needed in a testing scenario where all the
-		// nodes are on the same machine with no network latency.
-		SetP2PBlockSyncTimeout(1 * time.Second)
-
-	return opt
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {

@@ -12,7 +12,6 @@
 package tests
 
 import (
-	"os"
 	"slices"
 
 	"github.com/stretchr/testify/require"
@@ -20,39 +19,19 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
-	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
-	sourcehubImageEnvName  = "DEFRA_SOURCEHUB_IMAGE"
-)
-
-var (
-	documentACPType state.DocumentACPType
-	sourcehubImage  string
-)
-
-const (
 	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
-	NoneKMSType state.KMSType = "none"
+	NoneKMSType = action.NoneKMSType
 	// PubSubKMSType is the PubSub KMS type.
-	PubSubKMSType state.KMSType = "pubsub"
+	PubSubKMSType = action.PubSubKMSType
 )
 
 func getKMSTypes() []state.KMSType {
 	return []state.KMSType{PubSubKMSType}
-}
-
-func init() {
-	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
-	if documentACPType == "" {
-		documentACPType = state.LocalDocumentACPType
-	}
-	sourcehubImage = os.Getenv(sourcehubImageEnvName)
-	if sourcehubImage == "" {
-		sourcehubImage = "ghcr.io/sourcenetwork/sourcehub:dev"
-	}
 }
 
 // AddDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.

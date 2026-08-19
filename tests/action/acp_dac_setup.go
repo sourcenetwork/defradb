@@ -11,7 +11,7 @@
 
 //go:build !js
 
-package tests
+package action
 
 import (
 	"bytes"
@@ -37,7 +37,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/sourcehub/sdk"
 )
@@ -53,20 +52,8 @@ const (
 	sourcehubTestChainID string = "sourcehub-dev"
 )
 
-func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACPOptions, error) {
-	var isDocumentACPTest bool
-	for _, a := range testCase.Actions {
-		switch a.(type) {
-		case
-			AddDACPolicy,
-			AddDACActorRelationship,
-			*action.AddDACCollectionActorRelationship,
-			DeleteDACActorRelationship:
-			isDocumentACPTest = true
-		}
-	}
-
-	if !isDocumentACPTest {
+func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
+	if !cfg.IsDocumentACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
 		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
@@ -77,7 +64,7 @@ func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACP
 
 	name := uuid.New()
 	container, err := testcontainers.Run(ctx,
-		sourcehubImage,
+		cfg.SourceHubImage,
 		testcontainers.WithName(name.String()),
 		testcontainers.WithExposedPorts("26657/tcp"),
 		testcontainers.WithExposedPorts("9090/tcp"),

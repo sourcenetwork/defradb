@@ -11,11 +11,12 @@
 
 //go:build !js
 
-package tests
+package action
 
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
@@ -36,8 +37,16 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func createBadgerEncryptionKey() error {
-	if !badgerEncryption {
+var (
+	encryptionKey []byte
+	// encryptionKeyOnce guards the lazy, process-wide initialization of
+	// encryptionKey so concurrent node setups don't race on it.
+	encryptionKeyOnce sync.Once
+	encryptionKeyErr  error
+)
+
+func createBadgerEncryptionKey(enabled bool) error {
+	if !enabled {
 		return nil
 	}
 	encryptionKeyOnce.Do(func() {
@@ -46,7 +55,7 @@ func createBadgerEncryptionKey() error {
 	return encryptionKeyErr
 }
 
-// setupNode returns the database implementation for the current
+// SetupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 //
@@ -55,12 +64,12 @@ func createBadgerEncryptionKey() error {
 // ignored in that case (the external process gets its own flags).
 //
 // Note: If the signature of this function is updated, don't forget to
-// also update the function in [tests/integration/db_setup_js.go] otherwise
+// also update the function in [tests/action/node_setup_js.go] otherwise
 // the js client build may fail (the failure might not be obvious to find).
-func setupNode(
+func SetupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
-	testCase TestCase,
+	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
 ) (*state.NodeState, error) {
@@ -69,11 +78,11 @@ func setupNode(
 	}
 
 	if opts == nil {
-		opts = defaultNodeOpts()
+		opts = DefaultNodeOpts(cfg)
 	}
-	opts.DB().SetEnableSigning(testCase.EnableSigning)
-	if testCase.HTTP.HasValue() {
-		applyHTTPOptions(opts, testCase.HTTP.Value())
+	opts.DB().SetEnableSigning(cfg.EnableSigning)
+	if cfg.HTTP.HasValue() {
+		applyHTTPOptions(opts, cfg.HTTP.Value())
 	}
 
 	if s.EnableSearchableEncryption {
@@ -84,11 +93,11 @@ func setupNode(
 		opts.DB().SetSearchableEncryptionKey(seKey)
 	}
 
-	err := createBadgerEncryptionKey()
+	err := createBadgerEncryptionKey(cfg.BadgerEncryption)
 	if err != nil {
 		return nil, err
 	}
-	if badgerEncryption && encryptionKey != nil {
+	if cfg.BadgerEncryption && encryptionKey != nil {
 		opts.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
@@ -98,7 +107,7 @@ func setupNode(
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
-			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
+			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
@@ -109,9 +118,9 @@ func setupNode(
 
 	var path string
 	if s.DbType == BadgerFileType || s.DbType == LevelStoreType {
-		if databaseDir != "" {
+		if cfg.DatabaseDir != "" {
 			// restarting database
-			path = databaseDir
+			path = cfg.DatabaseDir
 		} else if changeDetector.Enabled {
 			// change detector
 			path = changeDetector.DatabaseDir(s.T)
