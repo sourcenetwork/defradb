@@ -75,8 +75,10 @@ var (
 	viewType state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
-	// skipBackupTests will skip any tests that involve backup actions
-	skipBackupTests = false
+	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
+	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
+	// suitable for browser environments).
+	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -152,7 +154,6 @@ func ExecuteTestCase(
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
-	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
@@ -205,6 +206,7 @@ func ExecuteTestCase(
 
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
+	clients = skipIfBackupTest(t, clients, testCase.Actions)
 
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -2345,9 +2347,9 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-// skipIfBackupTest skips the current test if the given actions
-// contain backup actions and skipBackupTests is true.
-func skipIfBackupTest(t testing.TB, actions []any) {
+// skipIfBackupTest removes any client type that doesn't support the Backup API from clients, if the
+// given actions contain backup actions. Skips the test entirely if no client type remains.
+func skipIfBackupTest(t testing.TB, clients []state.ClientType, actions []any) []state.ClientType {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
@@ -2357,9 +2359,20 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 			hasBackupAction = true
 		}
 	}
-	if skipBackupTests && hasBackupAction {
-		t.Skip("test involves backup actions")
+	if !hasBackupAction {
+		return clients
 	}
+
+	filteredClients := make([]state.ClientType, 0, len(clients))
+	for _, ct := range clients {
+		if !slices.Contains(backupUnsupportedClientTypes, ct) {
+			filteredClients = append(filteredClients, ct)
+		}
+	}
+	if len(filteredClients) == 0 {
+		t.Skip("test involves backup actions, but no selected client type supports them")
+	}
+	return filteredClients
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions

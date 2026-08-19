@@ -11,10 +11,18 @@
 package http
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 func TestAuthAudienceForURL(t *testing.T) {
@@ -115,4 +123,33 @@ func TestAuthAudienceForURL_MatchesDialedClientHost(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, client.baseURL.Host, audience)
+}
+
+func TestClientDefaultIdentity(t *testing.T) {
+	authorization := make(chan string, 1)
+	server := httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authorization <- req.Header.Get(authHeaderName)
+		rw.Header().Set("Content-Type", "application/json")
+		if _, err := rw.Write([]byte(`{"id":1}`)); err != nil {
+			t.Errorf("write response: %v", err)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	audience, err := AuthAudienceForURL(server.URL)
+	require.NoError(t, err)
+	ident, err := identity.Generate(crypto.KeyTypeEd25519)
+	require.NoError(t, err)
+	require.NoError(t, ident.UpdateToken(time.Hour, immutable.Some(audience), immutable.None[string]()))
+
+	client, err := NewClient(
+		server.URL,
+		WithHTTPClient(server.Client()),
+		WithIdentity(ident),
+	)
+	require.NoError(t, err)
+	_, err = client.NewTxn(true)
+	require.NoError(t, err)
+
+	assert.Equal(t, authSchemaPrefix+ident.BearerToken(), <-authorization)
 }

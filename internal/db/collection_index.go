@@ -468,6 +468,13 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	if desc.Vector != nil {
+		err = validateVectorIndexDescription(def, desc)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+	}
+
 	indexName, err := generateIndexNameIfNeeded(def, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -489,12 +496,109 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	return client.IndexDescription{
-		Name:   indexName,
-		ID:     uint32(indexID),
-		Fields: desc.Fields,
-		Unique: desc.Unique,
-	}, nil
+	// Turn the flat request into the kind + kind-specific config: a Vector request is a vector
+	// index, else an ordered index carrying the unique flag.
+	kind := client.IndexKindOrdered
+	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: desc.Unique}
+	if desc.Vector != nil {
+		kind = client.IndexKindVector
+		kindDescription = desc.Vector
+	}
+
+	res := client.IndexDescription{
+		Name:            indexName,
+		ID:              uint32(indexID),
+		Fields:          desc.Fields,
+		Kind:            kind,
+		KindDescription: kindDescription,
+		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
+		Unique: desc.Vector == nil && desc.Unique,
+	}
+
+	return res, nil
+}
+
+// validateVectorIndexDescription checks and fills in the vector-specific parts of an index request.
+// The field must hold a float32 array, and dimensions must be set unless the field is an @embedding,
+// whose model fixes the vector length. It also defaults the algorithm, metric, and any missing
+// params (mutating desc.Vector), so a request made through the index API works the same as one from
+// the @vectorIndex directive.
+//
+// The field is guaranteed to exist here because validateIndexDescription and
+// checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
+func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
+	// The rest of the vector index code only ever reads the first field, so more than one would be
+	// stored but never indexed. Uniqueness has no meaning for a vector index and is likewise ignored
+	// downstream. Reject both rather than half-honour the request.
+	if len(desc.Fields) != 1 {
+		return NewErrVectorIndexRequiresSingleField(len(desc.Fields))
+	}
+	if desc.Unique {
+		return NewErrVectorIndexCannotBeUnique(desc.Fields[0].Name)
+	}
+
+	fieldName := desc.Fields[0].Name
+	field, _ := def.GetFieldByName(fieldName)
+
+	if !client.IsVectorEmbeddingCompatible(field.Kind) {
+		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
+	}
+
+	// The config object present is what picks the algorithm, so the caller never sets one directly.
+	// Fill in the algorithm, metric, and any missing params with defaults. A nil config means an empty
+	// one, so a caller can leave it out and still get a working HNSW index.
+	if desc.Vector.HNSW == nil {
+		desc.Vector.HNSW = &client.HNSWParams{}
+	}
+	desc.Vector.Algorithm = client.VectorAlgorithmHNSW
+	if desc.Vector.Metric == "" {
+		desc.Vector.Metric = client.DistanceMetricCosine
+	}
+	if desc.Vector.HNSW.M == 0 {
+		desc.Vector.HNSW.M = client.DefaultHNSWM
+	}
+	if desc.Vector.HNSW.EfConstruction == 0 {
+		desc.Vector.HNSW.EfConstruction = client.DefaultHNSWEfConstruction
+	}
+	if desc.Vector.HNSW.EfSearch == 0 {
+		desc.Vector.HNSW.EfSearch = client.DefaultHNSWEfSearch
+	}
+
+	if err := validateHNSWParams(desc.Vector.HNSW); err != nil {
+		return err
+	}
+
+	if desc.Vector.Dimensions > 0 {
+		return nil
+	}
+
+	// No dimensions were given. That is only allowed when the field is an @embedding, since the
+	// model then fixes the dimensions. The value itself is filled in later.
+	for _, embedding := range def.VectorEmbeddings {
+		if embedding.FieldName == fieldName {
+			return nil
+		}
+	}
+
+	return NewErrVectorIndexMissingDimensions(fieldName)
+}
+
+// validateHNSWParams rejects HNSW parameters above their allowed maximum. See the Max* constants in
+// the client package for why the caps exist. A nil params is a non-HNSW request and passes.
+func validateHNSWParams(params *client.HNSWParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.M > client.MaxHNSWM {
+		return NewErrVectorIndexParamOutOfRange("M", params.M, client.MaxHNSWM)
+	}
+	if params.EfConstruction > client.MaxHNSWEfConstruction {
+		return NewErrVectorIndexParamOutOfRange("efConstruction", params.EfConstruction, client.MaxHNSWEfConstruction)
+	}
+	if params.EfSearch > client.MaxHNSWEfSearch {
+		return NewErrVectorIndexParamOutOfRange("efSearch", params.EfSearch, client.MaxHNSWEfSearch)
+	}
+	return nil
 }
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.

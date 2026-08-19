@@ -382,6 +382,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			if len(prefixes) == 0 {
 				origScan.noResults = true
 			}
+		} else {
+			// No CID or explicit docID constraint, so this scan is otherwise a full scan. If it is a
+			// nearest-neighbour query with a ready vector index, narrow it to the k nearest documents.
+			if err := n.tryRouteSimilarityToVectorIndex(origScan); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
