@@ -84,8 +84,6 @@ func NewCounter(
 	}
 }
 
-// Save the value of the  Counter to the DAG.
-//
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
 // will cause the value to roll over to the int64 min value. Incremeting a float and
 // causing it to overflow the float64 max value will act like a no-op.
