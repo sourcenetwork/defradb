@@ -44,7 +44,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return NewErrReadingArgument("sdl-file", err)
 			}
 			opt := options.WithIdentity(options.AddView(), identity.FromContext(cmd.Context()))
-			if lensCID != "" {
+			if cmd.Flags().Changed("lens-cid") {
 				opt.SetTransformCID(lensCID)
 			}
 

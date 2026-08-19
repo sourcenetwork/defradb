@@ -20,6 +20,5 @@ func init() {
 	}
 	if cClient {
 		skipNetworkTests = false
-		skipBackupTests = true
 	}
 }

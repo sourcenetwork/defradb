@@ -61,6 +61,13 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
+	// vectorIndexed is set when the scan's prefixes come from a vector-index search rather than a
+	// filter or full scan. It only affects explain output: the search is reported as one index fetch,
+	// the same way a scalar index fetch is counted, so a routed nearest-neighbour query is visible.
+	// The single-fetch count is a simplification; granular per-node-read counting is tracked in
+	// https://github.com/sourcenetwork/defradb/issues/5080
+	vectorIndexed bool
+
 	execInfo scanExecInfo
 }
 
@@ -529,11 +536,19 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 }
 
 func (n *scanNode) executeExplain() map[string]any {
+	indexFetches := n.execInfo.fetches.IndexesFetched
+	if n.vectorIndexed {
+		// Reported as a single index fetch: enough to show the query routed to the vector index, but
+		// unlike a scalar index (which counts each entry read) it does not reflect the graph search's
+		// real node reads. Granular counting is tracked in
+		// https://github.com/sourcenetwork/defradb/issues/5080
+		indexFetches++
+	}
 	return map[string]any{
 		"iterations":   n.execInfo.iterations,
 		"docFetches":   n.execInfo.fetches.DocsFetched,
 		"fieldFetches": n.execInfo.fetches.FieldsFetched,
-		"indexFetches": n.execInfo.fetches.IndexesFetched,
+		"indexFetches": indexFetches,
 	}
 }
 
