@@ -53,7 +53,7 @@ type AddDeltaOptions struct {
 
 // AddDelta adds a new delta to the existing DAG.
 //
-// It checks the current heads, sets the delta priority, adds it to the blockstore, then runs ProcessBlock.
+// It adds it to the blockstore then updates the headstore.
 func AddDelta(
 	ctx context.Context,
 	headstorePrefix keys.HeadstoreKey,
