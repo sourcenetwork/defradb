@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"runtime/cgo"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -52,7 +53,11 @@ type Wrapper struct {
 	node    *node.Node
 	handle  uintptr
 	nodeObj C.jobject
-	closed  bool // set by the first call to Close; guards against a second call reusing the deleted JNI ref
+
+	// nodeMu guards nodeObj/closed against Close deleting the JNI global ref while a
+	// subscription-polling goroutine (which outlives the call that started it) is still using it.
+	nodeMu sync.RWMutex
+	closed bool // set by the first call to Close; guards against reusing the deleted JNI ref
 }
 
 // NewWrapper wraps an already-constructed *node.Node, reusing its cgo.Handle the same way cbindings.NewCWrapper does
@@ -850,13 +855,41 @@ func (w *Wrapper) ExecRequest(
 // notes) that busy-spinning isn't free the way it is for a plain cgo call.
 const subscriptionPollInterval = 15 * time.Millisecond
 
+// callNodeIfOpen calls a no-handle native method on nodeObj, guarding against Close having
+// deleted (or concurrently deleting) the JNI global ref out from under a long-lived caller such
+// as the subscription-polling goroutine. Returns open=false if the wrapper is closed, in which
+// case res/err are not meaningful and nodeObj must not be touched.
+func (w *Wrapper) callNodeIfOpen(name string, b *argBuilder) (res defraResult, err error, open bool) {
+	w.nodeMu.RLock()
+	defer w.nodeMu.RUnlock()
+	if w.closed {
+		return defraResult{}, nil, false
+	}
+	res, err = callNodeNoHandle(w.nodeObj, name, b)
+	return res, err, true
+}
+
 // wrapSubscriptionAsChannel mirrors cbindings' helper of the same name, polling the subscription via
 // PollSubscriptionNative in a loop until ctx is done. PollSubscriptionNative is an instance method on
 // DefraNode, so it's invoked on this Wrapper's cached nodeObj.
+//
+// PollSubscriptionNative returns status 1 for two different situations: a transport/JNI-level
+// problem, and the subscription having naturally ended (its result channel closed, or its ID no longer
+// being recognised because that already happened on an earlier poll). Either way there is nothing to
+// gain from polling the same ID again, so status 1 is treated as terminal rather than being retried
+// forever like the "nothing new yet" case (status 2 / empty value).
 func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.GQLResult {
 	ch := make(chan client.GQLResult)
 	go func() {
 		defer close(ch)
+		// Always tell the native side to release the subscription store entry (and cancel the
+		// underlying DB-level subscription) once this goroutine stops polling it, however that
+		// happens (ctx cancellation, a terminal poll result, or the wrapper being closed.) Without
+		// this, every subscription that isn't explicitly closed by the caller leaks both the C-side
+		// subscription store entry and the live DB subscription driving it.
+		defer func() {
+			_, _, _ = w.callNodeIfOpen("CloseSubscriptionNative", newArgs().argStr(subID))
+		}()
 		for {
 			select {
 			case <-ctx.Done():
@@ -864,8 +897,14 @@ func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <
 			default:
 			}
 
-			res, err := callNodeNoHandle(w.nodeObj, "PollSubscriptionNative", newArgs().argStr(subID))
-			if err != nil || res.Status != 0 || res.Value == "" {
+			res, err, open := w.callNodeIfOpen("PollSubscriptionNative", newArgs().argStr(subID))
+			if !open {
+				return
+			}
+			if err != nil || res.Status == 1 {
+				return
+			}
+			if res.Status == 2 || res.Value == "" {
 				select {
 				case <-time.After(subscriptionPollInterval):
 				case <-ctx.Done():
@@ -904,7 +943,13 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 // Close closes the node. Safe to call more than once (mirroring how io.Closer implementations are
 // commonly expected to behave) - a second call would otherwise reuse nodeObj's JNI global ref after
 // the first call already deleted it.
+//
+// Holds nodeMu for the whole close sequence, so it can't run concurrently with a subscription-polling
+// goroutine's use of nodeObj (see callNodeIfOpen). Without that, Close deleting the JNI global ref
+// while a poll is in flight (or about to start) races with the poll's own use of nodeObj.
 func (w *Wrapper) Close() {
+	w.nodeMu.Lock()
+	defer w.nodeMu.Unlock()
 	if w.closed {
 		return
 	}
