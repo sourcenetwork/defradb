@@ -19,9 +19,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Routing and scoring must both follow the index's metric: doing one without the other would rank by
+// Using the index and scoring must both follow its metric: doing one without the other would rank by
 // one metric and score by another. A metric the engine cannot use fails the build instead.
-func TestVectorIndex_QueryOnAnyMetric_RoutesAndScoresByIndexMetric(t *testing.T) {
+func TestVectorIndex_QueryOnAnyMetric_ShouldUseIndexAndScoreByItsMetric(t *testing.T) {
 	testCases := []struct {
 		sdlMetric string
 		metric    client.DistanceMetric
@@ -85,17 +85,12 @@ func TestVectorIndex_QueryOnAnyMetric_RoutesAndScoresByIndexMetric(t *testing.T)
 	}
 }
 
-// Routing must not change the answer. The vectors are ranked differently by each metric, so a wrong
-// metric cannot pass by coincidence:
+// Using the index must not change the answer. Each metric ranks these vectors differently, so a wrong
+// metric cannot pass by coincidence.
 //
-//	           cosine   -L2      dot
-//	short      1.0      -0.25    0.5
-//	long       1.0      -4.0     3.0
-//	diag       0.914    -0.17    0.9
-//
-// Both runs share one indexed collection: dropping the index would not full-scan the same search, it
-// would make it a cosine one. Omitting the limit full-scans while leaving the metric intact.
-func TestVectorIndex_SameQueryRoutedAndFullScanned_ReturnsSameResults(t *testing.T) {
+// Both runs share one indexed collection, since dropping the index would make the query a cosine one
+// instead of the same search. Omitting the limit is what makes it a full scan.
+func TestVectorIndex_SameQueryUsingIndexAndFullScan_ReturnsSameResults(t *testing.T) {
 	testCases := []struct {
 		sdlMetric string
 		metric    client.DistanceMetric
@@ -113,9 +108,9 @@ func TestVectorIndex_SameQueryRoutedAndFullScanned_ReturnsSameResults(t *testing
 		"diag":  {0.9, 0.4, 0},
 	}
 
-	// Routing needs a limit, so dropping it is the least invasive way to force the full scan. Any of
-	// the other conditions in tryRouteSimilarityToVectorIndex would do just as well.
-	routedReq := `query {
+	// The index is only used with a limit, so dropping it is the least invasive way to force a full
+	// scan: the index, its metric and the ordering all stay as they are.
+	indexedReq := `query {
 		User(order: {_alias: {sim: DESC}}, limit: 2){
 			name
 			sim: SIMILARITY(vector: {vector: [1, 0, 0]})
@@ -155,13 +150,13 @@ func TestVectorIndex_SameQueryRoutedAndFullScanned_ReturnsSameResults(t *testing
 				&action.AddDoc{DocMap: map[string]any{"name": "diag", "vector": vectors["diag"]}},
 				&action.WaitForIndexReady{CollectionID: 0},
 
-				&action.Request{Request: routedReq, Results: map[string]any{"User": expected[:2]}},
+				&action.Request{Request: indexedReq, Results: map[string]any{"User": expected[:2]}},
 				&action.Request{
-					Request:  makeExplainQuery(routedReq),
+					Request:  makeExplainQuery(indexedReq),
 					Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
 				},
 
-				// The same order, reached without the graph.
+				// The same order, reached without the index.
 				&action.Request{Request: fullScanReq, Results: map[string]any{"User": expected}},
 				&action.Request{
 					Request:  makeExplainQuery(fullScanReq),
