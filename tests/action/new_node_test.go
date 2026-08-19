@@ -27,12 +27,12 @@ func TestNodeConfig_ImplementsAction(t *testing.T) {
 	// the harness applies before handing the set to a multiplier. Anything that
 	// is not an action is silently dropped there, which would leave a multiplier
 	// targeting node config running green while changing nothing.
-	var _ Action = (*NodeConfig)(nil)
-	var _ Stateful = (*NodeConfig)(nil)
+	var _ Action = (*NewNode)(nil)
+	var _ Stateful = (*NewNode)(nil)
 
-	var cfg any = &NodeConfig{}
+	var cfg any = &NewNode{}
 	_, ok := cfg.(Action)
-	assert.True(t, ok, "NodeConfig must implement Action")
+	assert.True(t, ok, "NewNode must implement Action")
 }
 
 func TestNodeConfig_SurvivesActionFilter(t *testing.T) {
@@ -54,7 +54,7 @@ func TestNodeConfig_SurvivesActionFilter(t *testing.T) {
 
 	var found bool
 	for _, a := range actions {
-		if _, ok := a.(*NodeConfig); ok {
+		if _, ok := a.(*NewNode); ok {
 			found = true
 		}
 	}
@@ -70,15 +70,15 @@ func TestNodeConfig_ApplyCanRewriteVersion(t *testing.T) {
 	}
 
 	for _, a := range source {
-		if cfg, ok := a.(*NodeConfig); ok {
+		if cfg, ok := a.(*NewNode); ok {
 			cfg.Version = "v1.0.0"
 			break
 		}
 	}
 
-	first, ok := source[0].(*NodeConfig)
+	first, ok := source[0].(*NewNode)
 	require.True(t, ok)
-	second, ok := source[1].(*NodeConfig)
+	second, ok := source[1].(*NewNode)
 	require.True(t, ok)
 
 	assert.Equal(t, "v1.0.0", first.Version)
@@ -86,13 +86,13 @@ func TestNodeConfig_ApplyCanRewriteVersion(t *testing.T) {
 }
 
 func TestNodeConfigP2POptions_WithNilNetwork_ReturnsDefaults(t *testing.T) {
-	cfg := &NodeConfig{}
+	cfg := &NewNode{}
 
 	assert.Equal(t, options.NodeP2POptions{}, cfg.P2POptions())
 }
 
 func TestNodeConfigP2POptions_WithNetwork_ReturnsConfigured(t *testing.T) {
-	cfg := &NodeConfig{
+	cfg := &NewNode{
 		Network: func() options.NodeP2POptions {
 			return options.NodeP2POptions{EnablePubSub: true}
 		},
@@ -130,7 +130,7 @@ func TestRandomNetworkingConfig_ReturnsPointer(t *testing.T) {
 }
 
 func TestNodeConfig_ZeroValueIsNative(t *testing.T) {
-	cfg := &NodeConfig{}
+	cfg := &NewNode{}
 
 	assert.Equal(t, "", cfg.Version, "the zero value must describe a native, current-build node")
 }
@@ -138,7 +138,7 @@ func TestNodeConfig_ZeroValueIsNative(t *testing.T) {
 func TestNodeConfig_NotAnActionAwareSkipper(t *testing.T) {
 	// Node config carries no skip logic of its own; skipping is decided by the
 	// multipliers that rewrite it.
-	var cfg any = &NodeConfig{}
+	var cfg any = &NewNode{}
 	_, ok := cfg.(m.ActionAwareSkipper)
 	assert.False(t, ok)
 }

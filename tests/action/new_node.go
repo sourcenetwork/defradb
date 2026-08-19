@@ -26,8 +26,8 @@ import (
 // ConfigureNode returns the P2P options for a new Defra node.
 type ConfigureNode func() options.NodeP2POptions
 
-// NodeConfig allows the explicit configuration of new Defra nodes. The zero value
-// is a native, current-build node with default networking.
+// NewNode creates a new Defra node. The zero value creates a native,
+// current-build node with default networking.
 //
 // If no nodes are explicitly configured, a default one will be setup.  There is no
 // upper limit to the number that can be configured.
@@ -38,7 +38,7 @@ type ConfigureNode func() options.NodeP2POptions
 //
 // Configuration is held as plain data so a multiplier can rewrite it to run existing
 // tests under other node configurations.
-type NodeConfig struct {
+type NewNode struct {
 	stateful
 
 	// Version, when set (e.g. "v1.0.0"), runs the node as an external process from
@@ -52,21 +52,24 @@ type NodeConfig struct {
 	SetupConfig NodeSetupConfig
 }
 
-var _ Action = (*NodeConfig)(nil)
-var _ Stateful = (*NodeConfig)(nil)
+var _ Action = (*NewNode)(nil)
+var _ Stateful = (*NewNode)(nil)
 
 // P2POptions returns the configured P2P options, or the defaults if no networking
 // config was supplied.
-func (a *NodeConfig) P2POptions() options.NodeP2POptions {
+func (a *NewNode) P2POptions() options.NodeP2POptions {
 	if a.Network == nil {
 		return options.NodeP2POptions{}
 	}
 	return a.Network()
 }
 
-// WithVersion returns a copy of the config that runs the node as an external process
-// from the given published release, e.g. "v1.0.0".
-func (a *NodeConfig) WithVersion(version string) *NodeConfig {
+// WithVersion returns a copy of the action that runs the node as an external
+// process from the given published release, e.g. "v1.0.0".
+//
+// The copy is shallow: the Network function and the fields of SetupConfig are
+// shared with the original, not cloned.
+func (a *NewNode) WithVersion(version string) *NewNode {
 	clone := *a
 	clone.Version = version
 	return &clone
@@ -75,7 +78,7 @@ func (a *NodeConfig) WithVersion(version string) *NodeConfig {
 // Execute configures and starts a new Defra node.
 //
 // Any errors generated during configuration will result in a test failure.
-func (a *NodeConfig) Execute() {
+func (a *NewNode) Execute() {
 	s := a.s
 
 	if changeDetector.Enabled {
@@ -95,7 +98,7 @@ func (a *NodeConfig) Execute() {
 		require.NoError(s.T, err)
 		WithPrivateKey(&p2pOpts, privateKey)
 
-		opts = DefaultNodeOpts()
+		opts = DefaultNodeOpts(a.SetupConfig)
 		opts.DB().
 			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
 			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))

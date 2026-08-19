@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// isDocumentACPTest is unused: the js build has no SourceHub container to gate on.
-func setupSourceHub(s *state.State, isDocumentACPTest bool) (*options.NodeDocumentACPOptions, error) {
+// cfg is unused: the js build has no SourceHub container to gate on.
+func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
 	return s.DocumentACPOptions, nil
 }

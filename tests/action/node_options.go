@@ -12,27 +12,12 @@
 package action
 
 import (
-	"os"
-	"strconv"
-	"sync"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/options"
-	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
-)
-
-const (
-	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
-	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
-	levelEnvName            = "DEFRA_LEVEL"
-	inMemoryEnvName         = "DEFRA_IN_MEMORY"
-	lensTypeEnvName         = "DEFRA_LENS_TYPE"
-
-	lensPoolSize = 2
 )
 
 const (
@@ -61,6 +46,17 @@ type NodeSetupConfig struct {
 	// IsDocumentACPTest reports whether the test uses document ACP, which
 	// decides whether a SourceHub instance is needed at all.
 	IsDocumentACPTest bool
+	// SourceHubImage is the container image used to run SourceHub.
+	SourceHubImage string
+	// DatabaseDir, when set, is the path a restarting node reopens its store
+	// from. Empty means a fresh directory.
+	DatabaseDir string
+	// BadgerEncryption enables encryption on a badger store.
+	BadgerEncryption bool
+	// LensRuntime selects the lens runtime, and LensPoolSize how many are
+	// instantiated. A zero pool size leaves the node default in place.
+	LensRuntime  options.NodeLensRuntimeType
+	LensPoolSize int
 }
 
 func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
@@ -97,70 +93,21 @@ func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTT
 	}
 }
 
-var (
-	// BadgerInMemory, BadgerFile, InMemoryStore and LevelStore select the store
-	// types under test. Node setup and the test harness both read them, so they
-	// are resolved once here rather than copied into each package.
-	BadgerInMemory bool
-	BadgerFile     bool
-	InMemoryStore  bool
-	LevelStore     bool
-
-	// DatabaseDir is the path a restarting node reopens its store from. It is
-	// set by the harness around restart actions.
-	DatabaseDir string
-
-	// lensType is the lens runtime under test.
-	lensType options.NodeLensRuntimeType
-
-	// BadgerEncryption reports whether the badger store is encrypted.
-	BadgerEncryption bool
-
-	encryptionKey []byte
-	// encryptionKeyOnce guards the lazy, process-wide initialization of
-	// encryptionKey so concurrent node setups don't race on it.
-	encryptionKeyOnce sync.Once
-	encryptionKeyErr  error
-)
-
-func init() {
-	// We use environment variables instead of flags `go test ./...` throws for all packages
-	// that don't have the flag defined
-	BadgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
-	BadgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
-	InMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
-	LevelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
-	BadgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
-	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
-
-	if changeDetector.Enabled {
-		// Change detector only uses badger file db type.
-		BadgerFile = true
-		BadgerInMemory = false
-		InMemoryStore = false
-		LevelStore = false
-	} else if !BadgerInMemory && !BadgerFile && !InMemoryStore && !LevelStore {
-		// Default is to test all but filesystem db types.
-		BadgerFile = false
-		BadgerInMemory = true
-		InMemoryStore = false
-		LevelStore = false
-	}
-}
-
 // DefaultNodeOpts returns the node options shared by every test node.
-func DefaultNodeOpts() *options.NodeOptionsBuilder {
+func DefaultNodeOpts(cfg NodeSetupConfig) *options.NodeOptionsBuilder {
 	opt := options.Node().
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.TxnStore].
 		SetDisableAPI(true).
-		// The p2p is configured in the tests by [NodeConfig] actions, we disable it here
+		// The p2p is configured in the tests by [NewNode] actions, we disable it here
 		// to keep the tests as lightweight as possible.
 		SetDisableP2P(true)
 
+	if cfg.LensPoolSize != 0 {
+		opt.DB().SetLensPoolSize(cfg.LensPoolSize)
+	}
 	opt.DB().
-		SetLensPoolSize(lensPoolSize).
-		SetLensRuntime(lensType).
+		SetLensRuntime(cfg.LensRuntime).
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
 		SetP2PBlockSyncTimeout(1 * time.Second)

@@ -9,7 +9,7 @@
 //
 // See tests/LICENSE for details.
 
-package action
+package tests
 
 import (
 	"os"
@@ -23,20 +23,17 @@ const (
 )
 
 var (
-	// DocumentACPType is the document ACP implementation under test.
-	//
-	// Node setup and the test harness both read this, so it is resolved once
-	// here rather than copied into each package.
-	DocumentACPType state.DocumentACPType
+	// documentACPType is the document ACP implementation under test.
+	documentACPType state.DocumentACPType
 
 	// sourcehubImage is the container image used to run SourceHub.
 	sourcehubImage string
 )
 
 func init() {
-	DocumentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
-	if DocumentACPType == "" {
-		DocumentACPType = state.LocalDocumentACPType
+	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
+	if documentACPType == "" {
+		documentACPType = state.LocalDocumentACPType
 	}
 	sourcehubImage = os.Getenv(sourcehubImageEnvName)
 	if sourcehubImage == "" {
