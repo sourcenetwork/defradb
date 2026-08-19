@@ -934,6 +934,13 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	}
 	txnObj, err := newTransactionObject(txnPtr)
 	if err != nil {
+		// The native transaction was created successfully, but we failed to construct its Java
+		// wrapper object, so discard it via the handle.
+		h := cgo.Handle(txnPtr)
+		if dsTxn, ok := h.Value().(datastore.Txn); ok {
+			dsTxn.Discard()
+		}
+		h.Delete()
 		return nil, err
 	}
 	dsTxn := cgo.Handle(txnPtr).Value().(datastore.Txn) //nolint:forcetypeassert
