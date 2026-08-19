@@ -271,15 +271,6 @@ func setupExternalNode(s *state.State, cfg NodeSetupConfig, ver string) (*state.
 		return nil, nil
 	}
 
-	// A restart sets up a node that is already on the state, expecting it to
-	// reopen its store. The wrapper gives the process a new rootdir each time it
-	// starts, so the node would come back up empty and the test would read that
-	// as data that never synced.
-	if s.CurrentSetupNodeID < len(s.Nodes) && s.Nodes[s.CurrentSetupNodeID] != nil {
-		s.T.Skipf("an external node cannot be restarted: it starts with a new rootdir")
-		return nil, nil
-	}
-
 	flags, unsupported := externalNodeFlags(s, cfg)
 	if len(unsupported) > 0 {
 		s.T.Skipf("external node cannot be given this test's configuration: %s",
