@@ -54,6 +54,10 @@ func (a *Eventually) Execute() {
 	}
 
 	realT := a.s.T
+	// Restore with a defer: a real panic from the nested action skips past the
+	// assignment below, which would leave the state pointing at a recorder that
+	// nothing reads, silently swallowing later failures.
+	defer func() { a.s.T = realT }()
 	deadline := time.Now().Add(timeout)
 
 	var lastErr string

@@ -132,6 +132,20 @@ func TestEventually_RealPanic_IsNotSwallowed(t *testing.T) {
 	assert.PanicsWithValue(t, "nil map write", func() { act.Execute() })
 }
 
+func TestEventually_RealPanic_RestoresTheRealT(t *testing.T) {
+	// The recorder swallows failures so a failed attempt can be retried. If a
+	// panic left it in place, every later assertion in the test would be written
+	// to something nothing reads, turning real failures into passes.
+	st := newEventuallyState(t)
+	realT := st.T
+	act := &Eventually{Action: &fakeAction{panicWith: "nil map write"}, Timeout: time.Second}
+	act.SetState(st)
+
+	assert.Panics(t, func() { act.Execute() })
+
+	assert.Same(t, realT, st.T, "the real T must be restored even when the action panics")
+}
+
 func TestEventually_SetsStateOnTheNestedAction(t *testing.T) {
 	// The nested action is given the state each attempt, so it can assert
 	// through the recorder rather than the real T.

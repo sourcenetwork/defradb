@@ -150,10 +150,12 @@ func MarkDocsExpectedOnTargets(
 	ident immutable.Option[state.Identity],
 ) {
 	for docID := range docIDs {
+		// The source node wrote this document, so it must be able to report the
+		// commit. Skipping instead would record nothing to wait for, and the
+		// assertions that follow would run against data that never arrived and
+		// still pass.
 		head, ok := latestCompositeCID(s, sourceNodeID, docID)
-		if !ok {
-			continue
-		}
+		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
 
 		// Build the event ourselves, since we cannot read the real one.
 		evt := event.Update{
