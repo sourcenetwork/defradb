@@ -87,8 +87,11 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 					},
 				},
 			},
-			&action.Request{
-				// The second update should still be received by the second node, updating Name
+			// The second update should still be received by the second node,
+			// updating Name. That node may be on an older release, which can hold
+			// the document without being able to report the commit that carried
+			// it, so there is nothing for WaitForSync to observe. Poll instead.
+			action.NewEventually(&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -102,7 +105,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *
 						},
 					},
 				},
-			},
+			}),
 		},
 	}
 
@@ -169,7 +172,11 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T
 					},
 				},
 			},
-			&action.Request{
+			// The second node may be on an older release, which can hold this
+			// document without being able to report the commit that carried it.
+			// There is nothing for WaitForSync to observe in that case, so poll
+			// the result instead.
+			action.NewEventually(&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -183,7 +190,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *testing.T
 						},
 					},
 				},
-			},
+			}),
 		},
 	}
 

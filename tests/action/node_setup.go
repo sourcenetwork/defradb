@@ -291,6 +291,11 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 		flags = append(flags, "--no-signing")
 	}
 
+	// Listen on the same interface a native node would. The addresses a node
+	// reports are asserted by some tests, so a node listening on loopback while
+	// its peers listen on the LAN address reports something different from them.
+	flags = append(flags, "--p2paddr", "/ip4/"+getIPString()+"/tcp/0")
+
 	// The store flag takes badger or memory, so the in-memory badger the tests
 	// usually run is not offered. Badger on disk is what the node starts with.
 	switch s.DbType {

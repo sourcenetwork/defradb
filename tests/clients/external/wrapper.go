@@ -118,7 +118,6 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFla
 	// match the configuration a native node would be given.
 	args := []string{"start",
 		"--url", apiURL,
-		"--p2paddr", "/ip4/127.0.0.1/tcp/0",
 		"--development",
 		"--no-keyring",
 		"--rootdir", rootDir,
