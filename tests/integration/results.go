@@ -26,7 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -264,17 +264,10 @@ type cosineSimilarity struct {
 
 var _ gomega.OmegaMatcher = (*cosineSimilarity)(nil)
 
-// expected computes the score the two vectors should produce under the metric, mirroring what the
-// production query path computes, so the matcher is an oracle that cannot drift from the code.
+// expected computes the score the two vectors should produce under the metric, using the SAME
+// function the production query path uses, so the matcher cannot drift from what the code computes.
 func (m *cosineSimilarity) expected() float64 {
-	switch m.metric {
-	case client.DistanceMetricEuclidean:
-		return dbmath.NegativeSquaredEuclidean(m.source, m.vector)
-	case client.DistanceMetricDotProduct:
-		return dbmath.Dot(m.source, m.vector)
-	default:
-		return dbmath.CosineSimilarity(m.source, m.vector)
-	}
+	return vectorindex.Score(m.metric, m.source, m.vector)
 }
 
 func (m *cosineSimilarity) Match(actual any) (bool, error) {

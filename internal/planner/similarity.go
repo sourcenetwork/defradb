@@ -13,9 +13,9 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
-	dbmath "github.com/sourcenetwork/defradb/internal/utils/math"
 )
 
 type similarityNode struct {
@@ -142,14 +142,9 @@ func (n *similarityNode) Next() (bool, error) {
 
 func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 
-// similarityScore scores the field value against the query vector under the given metric. The two
-// must be the same length, unlike the math helpers it calls, which would silently compare only the
-// shared leading elements.
-//
-// Every metric returns a "larger is nearer" score, because that is what `_similarity` means and what
-// its descending order needs. Cosine already is one; the other two are distances, so they are
-// negated. Negation is monotonic, so the order stays the metric's own. This is what lets an index of
-// any metric answer the query and agree with a full scan.
+// similarityScore scores the field value against the query vector under the given metric, requiring
+// them to be the same length. vectorindex.Score would otherwise silently compare only the shared
+// leading elements, which for a query is a mistake worth reporting rather than absorbing.
 func similarityScore[T number](
 	metric client.DistanceMetric,
 	source []T,
@@ -158,15 +153,7 @@ func similarityScore[T number](
 	if len(source) != len(vector) {
 		return 0, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
 	}
-	switch metric {
-	case client.DistanceMetricEuclidean:
-		return dbmath.NegativeSquaredEuclidean(source, vector), nil
-	case client.DistanceMetricDotProduct:
-		// The dot product is already a similarity: it grows as vectors align and lengthen.
-		return dbmath.Dot(source, vector), nil
-	default:
-		return dbmath.CosineSimilarity(source, vector), nil
-	}
+	return vectorindex.Score(metric, source, vector), nil
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {
