@@ -174,8 +174,9 @@ func TestVectorIndex_SameQueryRoutedAndFullScanned_ReturnsSameResults(t *testing
 	}
 }
 
-// Changing the metric would need the graph rebuilt, so the request is rejected instead.
-func TestVectorIndex_ChangeMetricOnExistingIndex_IsRejected(t *testing.T) {
+// Two indexes on one field with different metrics would leave it arbitrary which one answers a
+// query, so the second is rejected.
+func TestVectorIndex_SecondIndexOnFieldWithDifferentMetric_IsRejected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -192,7 +193,7 @@ func TestVectorIndex_ChangeMetricOnExistingIndex_IsRejected(t *testing.T) {
 					Dimensions: 3,
 					HNSW:       &client.HNSWParams{},
 				},
-				ExpectedError: "cannot change the distance metric of an existing vector index",
+				ExpectedError: "field already has a vector index with a different distance metric",
 			},
 		},
 	}

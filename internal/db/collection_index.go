@@ -568,7 +568,7 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
-	if err := validateVectorIndexMetricUnchanged(def, fieldName, desc.Vector.Metric); err != nil {
+	if err := validateNoConflictingVectorIndexMetric(def, fieldName, desc.Vector.Metric); err != nil {
 		return err
 	}
 
@@ -587,9 +587,14 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	return NewErrVectorIndexMissingDimensions(fieldName)
 }
 
-// validateVectorIndexMetricUnchanged rejects a new metric on a field that already has a vector
-// index. The graph is built for its metric, so changing it needs a rebuild: drop and recreate.
-func validateVectorIndexMetricUnchanged(
+// validateNoConflictingVectorIndexMetric rejects creating a vector index on a field that another
+// vector index already covers with a different metric.
+//
+// There is no operation that changes an existing index, so this is about two indexes coexisting. The
+// planner uses the first vector index it finds on a field, so which metric answered a query would be
+// arbitrary. A different metric also means a differently built graph, which is why the fix is to drop
+// and recreate rather than to keep both.
+func validateNoConflictingVectorIndexMetric(
 	def client.CollectionVersion,
 	fieldName string,
 	metric client.DistanceMetric,
@@ -600,7 +605,7 @@ func validateVectorIndexMetricUnchanged(
 			continue
 		}
 		if vector.Metric != metric {
-			return NewErrVectorIndexMetricCannotBeChanged(fieldName, vector.Metric, metric)
+			return NewErrVectorIndexMetricConflict(fieldName, vector.Metric, metric)
 		}
 	}
 	return nil
