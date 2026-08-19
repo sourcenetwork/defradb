@@ -49,7 +49,8 @@ func DecodeJSONVariables(data []byte) (map[string]any, error) {
 	if err := dec.Decode(&vars); err != nil {
 		return nil, err
 	}
-	return normalizeJSONNumbers(vars).(map[string]any), nil
+	normalizeJSONNumbers(vars)
+	return vars, nil
 }
 
 // normalizeJSONNumbers walks a value produced by a decoder configured with UseNumber,
