@@ -175,16 +175,16 @@ func ExecuteTestCase(
 	}
 
 	var databases []state.DatabaseType
-	if action.BadgerInMemory {
+	if badgerInMemory {
 		databases = append(databases, BadgerIMType)
 	}
-	if action.BadgerFile {
+	if badgerFile {
 		databases = append(databases, BadgerFileType)
 	}
-	if action.InMemoryStore {
+	if inMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
-	if action.LevelStore {
+	if levelStore {
 		databases = append(databases, LevelStoreType)
 	}
 
@@ -258,8 +258,8 @@ func executeTestCase(
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
 		corelog.Any("mutationType", state.ActiveMutationType),
-		corelog.String("databaseDir", action.DatabaseDir),
-		corelog.Bool("badgerEncryption", action.BadgerEncryption),
+		corelog.String("databaseDir", databaseDir),
+		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
 		corelog.Bool("changeDetector.Enabled", changeDetector.Enabled),
 		corelog.Bool("changeDetector.SetupOnly", changeDetector.SetupOnly),
@@ -358,7 +358,7 @@ func performAction(
 
 	switch action := act.(type) {
 	case action.Action:
-		// [action.NodeConfig] is an action, so node setup runs from here too.
+		// [action.NewNode] is an action, so node setup runs from here too.
 		action.Execute()
 
 	case Restart:
@@ -831,7 +831,7 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
 		switch a.(type) {
-		case *action.NodeConfig:
+		case *action.NewNode:
 			nodeCount++
 		}
 	}
@@ -990,7 +990,7 @@ func actionTransactionID(a any) (int, bool) {
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a [action.NodeConfig] action then no new
+// If a node(s) has been explicitly configured via a [action.NewNode] action then no new
 // nodes will be added.
 func setStartingNodes(
 	s *state.State,
@@ -999,7 +999,7 @@ func setStartingNodes(
 	setupConfig := testCase.nodeSetupConfig()
 	for _, a := range testCase.Actions {
 		switch cfg := a.(type) {
-		case *action.NodeConfig:
+		case *action.NewNode:
 			// Node setup needs a few test-level settings that the action cannot
 			// reach on its own.
 			cfg.SetupConfig = setupConfig
@@ -1010,7 +1010,7 @@ func setStartingNodes(
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
 		s.CurrentSetupNodeID = 0
-		nodeBuilder := action.DefaultNodeOpts()
+		nodeBuilder := action.DefaultNodeOpts(testCase.nodeSetupConfig())
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
@@ -1030,25 +1030,30 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for index := len(nodes) - 1; index >= 0; index-- {
 		nodeID := nodeIDs[index]
-		originalPath := action.DatabaseDir
-		action.DatabaseDir = s.Nodes[nodeID].DbPath
 
-		s.CurrentSetupNodeID = nodeID
-		p2pOpts := s.Nodes[nodeID].P2POpts
-		action.WithListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
-		opts := action.DefaultNodeOpts()
-		opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		opts.P2P().SetAll(p2pOpts)
-		opts.NodeACP().SetEnabled(start.EnableNAC)
-		node, err := action.SetupNode(
-			s,
-			getIdentityOption(s, start.Identity),
-			testCase.nodeSetupConfig(),
-			opts,
-			s.Nodes[nodeID].Version,
-		)
+		// databaseDir points a restarting node at its existing store. Restore it
+		// with a defer: node setup asserts with require, which ends the goroutine
+		// on failure and would otherwise leave the path set for every later test.
+		node, err := func() (*state.NodeState, error) {
+			originalPath := databaseDir
+			defer func() { databaseDir = originalPath }()
+			databaseDir = s.Nodes[nodeID].DbPath
 
-		action.DatabaseDir = originalPath
+			s.CurrentSetupNodeID = nodeID
+			p2pOpts := s.Nodes[nodeID].P2POpts
+			action.WithListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
+			opts := action.DefaultNodeOpts(testCase.nodeSetupConfig())
+			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+			opts.P2P().SetAll(p2pOpts)
+			opts.NodeACP().SetEnabled(start.EnableNAC)
+			return action.SetupNode(
+				s,
+				getIdentityOption(s, start.Identity),
+				testCase.nodeSetupConfig(),
+				opts,
+				s.Nodes[nodeID].Version,
+			)
+		}()
 
 		expectedErrorRaised := AssertError(s.T, err, start.ExpectedError)
 		assertExpectedErrorRaised(s.T, start.ExpectedError, expectedErrorRaised)
@@ -2338,7 +2343,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case *action.NodeConfig:
+		case *action.NewNode:
 			hasNetworkAction = true
 		}
 	}

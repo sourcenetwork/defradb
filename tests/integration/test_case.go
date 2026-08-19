@@ -130,6 +130,11 @@ func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
 		EnableSigning:     tc.EnableSigning,
 		HTTP:              tc.HTTP,
 		IsDocumentACPTest: hasDocumentACPActions(tc.Actions),
+		SourceHubImage:    sourcehubImage,
+		DatabaseDir:       databaseDir,
+		BadgerEncryption:  badgerEncryption,
+		LensRuntime:       lensType,
+		LensPoolSize:      lensPoolSize,
 	}
 }
 

@@ -66,7 +66,7 @@ func (m *crossVersion) Name() Name {
 // that already sets a version is checking something specific that this would
 // overwrite.
 func (m *crossVersion) ShouldSkip(actions action.Actions) bool {
-	nodes := nodeConfigs(actions)
+	nodes := nodeActions(actions)
 	if len(nodes) < 2 {
 		return true
 	}
@@ -81,7 +81,7 @@ func (m *crossVersion) ShouldSkip(actions action.Actions) bool {
 }
 
 func (m *crossVersion) Apply(source action.Actions) action.Actions {
-	nodes := nodeConfigs(source)
+	nodes := nodeActions(source)
 	if len(nodes) < 2 {
 		return source
 	}
@@ -93,7 +93,7 @@ func (m *crossVersion) Apply(source action.Actions) action.Actions {
 
 	result := make(action.Actions, len(source))
 	for i, a := range source {
-		if cfg, ok := a.(*action.NodeConfig); ok && cfg == target {
+		if cfg, ok := a.(*action.NewNode); ok && cfg == target {
 			result[i] = cfg.WithVersion(CrossVersionTargetVersion)
 			continue
 		}
@@ -103,11 +103,11 @@ func (m *crossVersion) Apply(source action.Actions) action.Actions {
 	return result
 }
 
-// nodeConfigs returns the node configurations in the action set, in order.
-func nodeConfigs(actions action.Actions) []*action.NodeConfig {
-	var configs []*action.NodeConfig
+// nodeActions returns the node creation actions in the action set, in order.
+func nodeActions(actions action.Actions) []*action.NewNode {
+	var configs []*action.NewNode
 	for _, a := range actions {
-		if cfg, ok := a.(*action.NodeConfig); ok {
+		if cfg, ok := a.(*action.NewNode); ok {
 			configs = append(configs, cfg)
 		}
 	}

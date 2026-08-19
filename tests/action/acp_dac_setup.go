@@ -52,8 +52,8 @@ const (
 	sourcehubTestChainID string = "sourcehub-dev"
 )
 
-func setupSourceHub(s *state.State, isDocumentACPTest bool) (*options.NodeDocumentACPOptions, error) {
-	if !isDocumentACPTest {
+func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
+	if !cfg.IsDocumentACPTest {
 		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
 		// runtime of the test suite when SourceHub ACP is selected.
 		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
@@ -64,7 +64,7 @@ func setupSourceHub(s *state.State, isDocumentACPTest bool) (*options.NodeDocume
 
 	name := uuid.New()
 	container, err := testcontainers.Run(ctx,
-		sourcehubImage,
+		cfg.SourceHubImage,
 		testcontainers.WithName(name.String()),
 		testcontainers.WithExposedPorts("26657/tcp"),
 		testcontainers.WithExposedPorts("9090/tcp"),

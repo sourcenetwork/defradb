@@ -13,22 +13,77 @@ package tests
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
+	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
-// Store type selection and the shared node options live in the action package
-// alongside node setup. They are aliased here so the harness and existing tests
-// keep reading a single source of truth rather than a second copy.
+const (
+	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
+	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
+	levelEnvName            = "DEFRA_LEVEL"
+	inMemoryEnvName         = "DEFRA_IN_MEMORY"
+	lensTypeEnvName         = "DEFRA_LENS_TYPE"
+
+	// Instantiating lenses is expensive, and our tests do not benefit from a large
+	// number of them, so we explicitly set it to a low value.
+	lensPoolSize = 2
+)
+
 const (
 	BadgerIMType   = action.BadgerIMType
 	DefraIMType    = action.DefraIMType
 	BadgerFileType = action.BadgerFileType
 	LevelStoreType = action.LevelStoreType
 )
+
+var (
+	badgerInMemory bool
+	badgerFile     bool
+	inMemoryStore  bool
+	levelStore     bool
+
+	// databaseDir is the path a restarting node reopens its store from. It is
+	// set by the harness around restart actions.
+	databaseDir string
+
+	// lensType is the lens runtime under test.
+	lensType options.NodeLensRuntimeType
+
+	// badgerEncryption reports whether the badger store is encrypted.
+	badgerEncryption bool
+)
+
+func init() {
+	// We use environment variables instead of flags `go test ./...` throws for all packages
+	// that don't have the flag defined
+	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
+	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
+	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	levelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
+	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
+	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
+
+	if changeDetector.Enabled {
+		// Change detector only uses badger file db type.
+		badgerFile = true
+		badgerInMemory = false
+		inMemoryStore = false
+		levelStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore && !levelStore {
+		// Default is to test all but filesystem db types.
+		badgerFile = false
+		badgerInMemory = true
+		inMemoryStore = false
+		levelStore = false
+	}
+}
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := options.Node().

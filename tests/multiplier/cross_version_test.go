@@ -79,8 +79,8 @@ func TestCrossVersionApply_OldSource_VersionsFirstNode(t *testing.T) {
 	result := oldSource().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, CrossVersionTargetVersion, result[0].(*action.NodeConfig).Version)
-	assert.Equal(t, "", result[1].(*action.NodeConfig).Version)
+	assert.Equal(t, CrossVersionTargetVersion, result[0].(*action.NewNode).Version)
+	assert.Equal(t, "", result[1].(*action.NewNode).Version)
 }
 
 func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
@@ -91,8 +91,8 @@ func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
 	result := newSource().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, "", result[0].(*action.NodeConfig).Version)
-	assert.Equal(t, CrossVersionTargetVersion, result[1].(*action.NodeConfig).Version)
+	assert.Equal(t, "", result[0].(*action.NewNode).Version)
+	assert.Equal(t, CrossVersionTargetVersion, result[1].(*action.NewNode).Version)
 }
 
 func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
@@ -105,9 +105,9 @@ func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
 	result := newSource().Apply(source)
 
 	require.Len(t, result, 3)
-	assert.Equal(t, "", result[0].(*action.NodeConfig).Version)
-	assert.Equal(t, "", result[1].(*action.NodeConfig).Version)
-	assert.Equal(t, CrossVersionTargetVersion, result[2].(*action.NodeConfig).Version)
+	assert.Equal(t, "", result[0].(*action.NewNode).Version)
+	assert.Equal(t, "", result[1].(*action.NewNode).Version)
+	assert.Equal(t, CrossVersionTargetVersion, result[2].(*action.NewNode).Version)
 }
 
 func TestCrossVersionApply_LeavesOtherActionsUntouched(t *testing.T) {
@@ -143,7 +143,7 @@ func TestCrossVersionApply_PreservesNetworkingConfig(t *testing.T) {
 
 	result := oldSource().Apply(source)
 
-	versioned := result[0].(*action.NodeConfig)
+	versioned := result[0].(*action.NewNode)
 	assert.NotNil(t, versioned.Network, "networking config must survive the rewrite")
 }
 
@@ -152,7 +152,7 @@ func TestCrossVersionApply_WithSingleNode_ReturnsSourceUnchanged(t *testing.T) {
 
 	result := oldSource().Apply(source)
 
-	assert.Equal(t, "", result[0].(*action.NodeConfig).Version)
+	assert.Equal(t, "", result[0].(*action.NewNode).Version)
 }
 
 func TestCrossVersionShouldSkip_WithSingleNode_Skips(t *testing.T) {

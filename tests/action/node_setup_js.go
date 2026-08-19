@@ -36,7 +36,7 @@ func SetupNode(
 	ver string,
 ) (*state.NodeState, error) {
 	if opts == nil {
-		opts = DefaultNodeOpts()
+		opts = DefaultNodeOpts(cfg)
 	}
 	opts.DB().
 		SetEnableSigning(cfg.EnableSigning).
@@ -50,14 +50,14 @@ func SetupNode(
 	// [skipJSClientIfUnsupportedDBType]
 	opts.Store().SetBadgerInMemory(true)
 
-	switch DocumentACPType {
+	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			var err error
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg.IsDocumentACPTest)
+			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().

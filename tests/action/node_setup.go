@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
@@ -37,8 +38,16 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func createBadgerEncryptionKey() error {
-	if !BadgerEncryption {
+var (
+	encryptionKey []byte
+	// encryptionKeyOnce guards the lazy, process-wide initialization of
+	// encryptionKey so concurrent node setups don't race on it.
+	encryptionKeyOnce sync.Once
+	encryptionKeyErr  error
+)
+
+func createBadgerEncryptionKey(enabled bool) error {
+	if !enabled {
 		return nil
 	}
 	encryptionKeyOnce.Do(func() {
@@ -70,7 +79,7 @@ func SetupNode(
 	}
 
 	if opts == nil {
-		opts = DefaultNodeOpts()
+		opts = DefaultNodeOpts(cfg)
 	}
 	opts.DB().SetEnableSigning(cfg.EnableSigning)
 	if cfg.HTTP.HasValue() {
@@ -85,11 +94,11 @@ func SetupNode(
 		opts.DB().SetSearchableEncryptionKey(seKey)
 	}
 
-	err := createBadgerEncryptionKey()
+	err := createBadgerEncryptionKey(cfg.BadgerEncryption)
 	if err != nil {
 		return nil, err
 	}
-	if BadgerEncryption && encryptionKey != nil {
+	if cfg.BadgerEncryption && encryptionKey != nil {
 		opts.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
@@ -99,7 +108,7 @@ func SetupNode(
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg.IsDocumentACPTest)
+			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
@@ -110,9 +119,9 @@ func SetupNode(
 
 	var path string
 	if s.DbType == BadgerFileType || s.DbType == LevelStoreType {
-		if DatabaseDir != "" {
+		if cfg.DatabaseDir != "" {
 			// restarting database
-			path = DatabaseDir
+			path = cfg.DatabaseDir
 		} else if changeDetector.Enabled {
 			// change detector
 			path = changeDetector.DatabaseDir(s.T)
@@ -319,7 +328,7 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 	} else {
 		flags = append(flags, "--no-searchable-encryption")
 	}
-	if BadgerEncryption {
+	if cfg.BadgerEncryption {
 		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
 	}
 

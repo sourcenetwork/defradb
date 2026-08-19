@@ -15,8 +15,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func RandomNetworkingConfig() *NodeConfig {
-	return &NodeConfig{
+func RandomNetworkingConfig() *NewNode {
+	return &NewNode{
 		Network: func() options.NodeP2POptions {
 			return options.NodeP2POptions{}
 		},
