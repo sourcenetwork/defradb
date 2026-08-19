@@ -23,16 +23,6 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 )
 
-// The store type constants are declared alongside node setup, which switches on
-// them. They are aliased here because most of the test suite refers to them
-// through this package.
-const (
-	BadgerIMType   = action.BadgerIMType
-	DefraIMType    = action.DefraIMType
-	BadgerFileType = action.BadgerFileType
-	LevelStoreType = action.LevelStoreType
-)
-
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
@@ -44,6 +34,13 @@ const (
 	// Instantiating lenses is expensive, and our tests do not benefit from a large
 	// number of them, so we explicitly set it to a low value.
 	lensPoolSize = 2
+)
+
+const (
+	BadgerIMType   = action.BadgerIMType
+	DefraIMType    = action.DefraIMType
+	BadgerFileType = action.BadgerFileType
+	LevelStoreType = action.LevelStoreType
 )
 
 var (
