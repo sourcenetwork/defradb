@@ -21,6 +21,7 @@ const (
 	errRequiredFlag                 string = "the required flag [--%s|-%s] is %s"
 	errInvalidAscensionOrder        string = "invalid order: expected ASC or DESC"
 	errInvalidIndexFieldDescription string = "invalid or malformed field description"
+	errInvalidVectorIndexConfig     string = "invalid vector index config"
 	errEmptyCollectionSDL           string = "collection definition cannot be empty"
 	errMissingRequiredFlag          string = "missing required flag"
 	errMissingRequiredParameter     string = "required parameter %s is missing"
@@ -71,6 +72,10 @@ func NewErrInvalidLensConfig(inner error) error {
 
 func NewErrInvalidAscensionOrder(fieldName string) error {
 	return errors.New(errInvalidAscensionOrder, errors.NewKV("Field", fieldName))
+}
+
+func NewErrInvalidVectorIndexConfig(inner error) error {
+	return errors.Wrap(errInvalidVectorIndexConfig, inner)
 }
 
 func NewErrInvalidIndexFieldDescription(fieldName string) error {

@@ -132,6 +132,12 @@ func NewErrFieldIndexNotExist(index int) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Index", index))
 }
 
+// NewErrUnknownIndexKind returns an error indicating that an index descriptor holds a Kind value
+// this build does not know.
+func NewErrUnknownIndexKind(kind uint8) error {
+	return errors.New("unknown index kind", errors.NewKV("Kind", kind))
+}
+
 // NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
 func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 	var expected TExpected

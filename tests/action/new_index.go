@@ -54,6 +54,11 @@ type NewIndex struct {
 	// If Unique is true, the index will be added as a unique index.
 	Unique bool
 
+	// Vector, when set, creates a vector (ANN) index instead of a secondary index. It carries the
+	// algorithm, metric, dimensions and params. Used to create a vector index through the index API on
+	// a collection that already holds documents, so the async backfill builds the graph.
+	Vector *client.VectorIndexDescription
+
 	// Async, when true, returns without waiting for the backfill. The index stays building until
 	// the worker completes it.
 	//
@@ -121,6 +126,7 @@ func (a *NewIndex) Execute() {
 		}
 
 		indexDesc.Unique = a.Unique
+		indexDesc.Vector = a.Vector
 
 		opts := options.NewCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
