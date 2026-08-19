@@ -13,6 +13,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -41,6 +42,8 @@ func NewOptions[T any](opts ...enumerable.Enumerable[func(*T)]) *T {
 // integer precision. The standard decoder represents every JSON number as a float64,
 // which silently rounds any integer above 2^53. This instead reconstructs each number
 // as an int64 where the value round-trips exactly, falling back to float64 otherwise.
+// Returns an error if a number is out of range for both int64 and float64 (root or
+// nested), or if data contains anything beyond a single JSON value.
 func DecodeJSONVariables(data []byte) (map[string]any, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
@@ -49,35 +52,50 @@ func DecodeJSONVariables(data []byte) (map[string]any, error) {
 	if err := dec.Decode(&vars); err != nil {
 		return nil, err
 	}
-	normalizeJSONNumbers(vars)
+	if dec.More() {
+		return nil, fmt.Errorf("unexpected data after JSON variables object")
+	}
+
+	if _, err := normalizeJSONNumbers(vars); err != nil {
+		return nil, err
+	}
 	return vars, nil
 }
 
 // normalizeJSONNumbers walks a value produced by a decoder configured with UseNumber,
 // converting json.Number leaves into an int64 (if the number round-trips exactly) or a
 // float64 (otherwise), so callers receive ordinary numeric types instead of json.Number.
-func normalizeJSONNumbers(value any) any {
+// Returns an error if a number is out of range for both.
+func normalizeJSONNumbers(value any) (any, error) {
 	switch value := value.(type) {
 	case json.Number:
 		if i, err := value.Int64(); err == nil {
-			return i
+			return i, nil
 		}
 		if f, err := value.Float64(); err == nil {
-			return f
+			return f, nil
 		}
-		return value.String()
+		return nil, fmt.Errorf("json number %q is out of range", value.String())
 	case map[string]any:
 		for k, v := range value {
-			value[k] = normalizeJSONNumbers(v)
+			normalized, err := normalizeJSONNumbers(v)
+			if err != nil {
+				return nil, err
+			}
+			value[k] = normalized
 		}
-		return value
+		return value, nil
 	case []any:
 		for i, v := range value {
-			value[i] = normalizeJSONNumbers(v)
+			normalized, err := normalizeJSONNumbers(v)
+			if err != nil {
+				return nil, err
+			}
+			value[i] = normalized
 		}
-		return value
+		return value, nil
 	default:
-		return value
+		return value, nil
 	}
 }
 
