@@ -362,14 +362,15 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, docRef, err := mp.initCRDTForType(ctx, block, blockLink)
+		shouldProcess, headstorePrefix, docRef, err := mp.mergeBlock(ctx, block, blockLink)
 		if err != nil {
 			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
-		// If the CRDT is nil, it means the field is not part
-		// of the collection definition and we can safely ignore it.
-		if crdt == nil {
+		// The field may not be known to this node - it may belong to a collection version that does not exist
+		// locally.  In this case, we must ignore it as we cannot merge when we do not know what
+		// kind of CRDT the field is.
+		if !shouldProcess {
 			return nil
 		}
 
@@ -383,10 +384,11 @@ func (mp *mergeProcessor) processBlock(
 			}()
 		}
 
-		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
+		err = coreblock.UpdateHeads(ctx, headstorePrefix, block, blockLink)
 		if err != nil {
 			return NewErrProcessCRDTBlock(err, blockLink.String())
 		}
+
 		if docRef.docID != "" {
 			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, blockLink.Cid); err != nil {
 				return err
@@ -452,17 +454,18 @@ func (mp *mergeProcessor) setLinkedBlockDocIDMappings(
 	return nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(
+func (mp *mergeProcessor) mergeBlock(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
-) (crdt.ReplicatedData, resolvedDocRef, error) {
+) (bool, keys.HeadstoreKey, resolvedDocRef, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
+
 	crdtUnion := block.Delta
 
 	collectionShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
 	if err != nil {
-		return nil, resolvedDocRef{}, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
+		return false, nil, resolvedDocRef{}, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
 	}
 
 	switch {
@@ -474,30 +477,46 @@ func (mp *mergeProcessor) initCRDTForType(
 			blockLink.Cid,
 		)
 		if err != nil {
-			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
+			return false, nil, resolvedDocRef{}, NewErrParseDocIDMerge(err, blockLink.Cid.String())
 		}
 		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
-			return nil, resolvedDocRef{}, err
+			return false, nil, resolvedDocRef{}, err
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, resolvedDocRef{}, err
+			return false, nil, resolvedDocRef{}, err
 		}
-		return crdt.NewDocComposite(
+		c := crdt.NewDocComposite()
+
+		err = c.Merge(
+			ctx,
 			txn.Datastore(),
-			mp.col.Version().VersionID,
+			keys.PrimaryDataStoreKey{
+				CollectionShortID: collectionShortID,
+				DocShortID:        docRef.docShortID,
+			},
+			block.Delta.GetDelta(),
+		)
+		if err != nil {
+			return false,
+				nil,
+				resolvedDocRef{},
+				NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
+		}
+
+		return true,
 			keys.DataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
-			}.WithFieldID(core.COMPOSITE_NAMESPACE),
-		), docRef, nil
+			}.WithFieldID(core.COMPOSITE_NAMESPACE).ToHeadStoreKey(),
+			docRef,
+			nil
 
 	case crdtUnion.IsCollection():
-		return crdt.NewCollection(
-			mp.col.Version().VersionID,
-			keys.NewHeadstoreColKey(collectionShortID),
-		), resolvedDocRef{}, nil
+		// no-op: collection value blocks are not merged
+
+		return true, keys.NewHeadstoreColKey(collectionShortID), resolvedDocRef{}, nil
 
 	default:
 		// A field block is always processed as a child of its composite block, which records
@@ -505,45 +524,58 @@ func (mp *mergeProcessor) initCRDTForType(
 		// into that document - never one resolved from the block-CID owner index, since a field
 		// block can be shared across documents.
 		if mp.currentCompositeDocRef == nil {
-			return nil, resolvedDocRef{}, NewErrParseDocIDMerge(client.ErrMalformedDocID, blockLink.Cid.String())
+			return false, nil, resolvedDocRef{}, NewErrParseDocIDMerge(client.ErrMalformedDocID, blockLink.Cid.String())
 		}
 		docRef := *mp.currentCompositeDocRef
 		docID, err := client.NewDocIDFromString(docRef.docID)
 		if err != nil {
-			return nil, resolvedDocRef{}, err
+			return false, nil, resolvedDocRef{}, err
 		}
 		err = mp.trackMergedDocument(ctx, docID)
 		if err != nil {
-			return nil, resolvedDocRef{}, err
+			return false, nil, resolvedDocRef{}, err
 		}
 
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the collection definition, we can safely ignore it.
-			return nil, resolvedDocRef{}, nil
+			// The field may not be known to this node - it may belong to a collection version that does not exist
+			// locally.  In this case, return nil and have the calling code ignore it.  We cannot merge when we do
+			// not know what kind of CRDT the field is.
+			return false, nil, resolvedDocRef{}, nil
 		}
 
 		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
 		if err != nil {
-			return nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
+			return false, nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
-		fieldCRDT, err := crdt.FieldLevelCRDTWithStore(
+		fieldCRDT, err := crdt.FieldLevelCRDT(fd.Typ)
+		if err != nil {
+			return false, nil, resolvedDocRef{}, err
+		}
+
+		err = fieldCRDT.Merge(
+			ctx,
 			txn.Datastore(),
-			mp.col.Version().VersionID,
-			fd.Typ,
-			fd.Kind,
 			keys.DataStoreKey{
 				CollectionShortID: collectionShortID,
 				DocShortID:        docRef.docShortID,
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
-			field,
+			fd.Kind,
+			block.Delta.GetDelta(),
 		)
 		if err != nil {
-			return nil, resolvedDocRef{}, err
+			return false,
+				nil,
+				resolvedDocRef{},
+				NewErrProcessCRDTBlock(coreblock.NewErrMergingDelta(blockLink.Cid, err), blockLink.String())
 		}
-		return fieldCRDT, docRef, nil
+
+		return true, keys.DataStoreKey{
+			CollectionShortID: collectionShortID,
+			DocShortID:        docRef.docShortID,
+		}.WithFieldID(fmt.Sprint(fieldShortID)).ToHeadStoreKey(), docRef, nil
 	}
 }
 
