@@ -11,6 +11,7 @@
 package planner
 
 import (
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -29,6 +30,10 @@ type similarityNode struct {
 	vector            any
 	execInfo          similarityExecInfo
 	simFilter         *mapper.Filter
+
+	// metric is the target field's vector index metric, or cosine if it has no index. Scoring follows
+	// the index so the results are the same whether or not the index was used.
+	metric client.DistanceMetric
 }
 
 type similarityExecInfo struct {
@@ -39,6 +44,7 @@ type similarityExecInfo struct {
 func (p *Planner) Similarity(
 	field *mapper.Similarity,
 	filter *mapper.Filter,
+	metric client.DistanceMetric,
 ) *similarityNode {
 	return &similarityNode{
 		p:                 p,
@@ -46,6 +52,7 @@ func (p *Planner) Similarity(
 		vector:            field.Vector,
 		target:            field.SimilarityTarget,
 		simFilter:         filter,
+		metric:            metric,
 		docMapper:         docMapper{field.DocumentMapping},
 	}
 }
@@ -110,11 +117,11 @@ func (n *similarityNode) Next() (bool, error) {
 		child := n.currentValue.Fields[n.target.Index]
 		switch childCollection := child.(type) {
 		case []int64:
-			similarity, err = cosineSimilarity(childCollection, convertArray[int64](n.vector))
+			similarity, err = similarityScore(n.metric, childCollection, convertArray[int64](n.vector))
 		case []float32:
-			similarity, err = cosineSimilarity(childCollection, convertArray[float32](n.vector))
+			similarity, err = similarityScore(n.metric, childCollection, convertArray[float32](n.vector))
 		case []float64:
-			similarity, err = cosineSimilarity(childCollection, convertArray[float64](n.vector))
+			similarity, err = similarityScore(n.metric, childCollection, convertArray[float64](n.vector))
 		}
 		if err != nil {
 			return false, err
@@ -135,19 +142,31 @@ func (n *similarityNode) Next() (bool, error) {
 
 func (n *similarityNode) SetPlan(p planNode) { n.plan = p }
 
-// cosineSimilarity returns the cosine similarity of the field value and the query vector, requiring
-// them to be the same length. The similarity is in [-1, 1] where 1 means the same direction; because
-// it is a true cosine (normalised), it must match the indexed path (which derives similarity as
-// 1 - cosine distance from the graph), so an ordered query returns the same results whether or not a
-// vector index is used.
-func cosineSimilarity[T number](
+// similarityScore scores the field value against the query vector under the given metric. The two
+// must be the same length, unlike the math helpers it calls, which would silently compare only the
+// shared leading elements.
+//
+// Every metric returns a "larger is nearer" score, because that is what `_similarity` means and what
+// its descending order needs. Cosine already is one; the other two are distances, so they are
+// negated. Negation is monotonic, so the order stays the metric's own. This is what lets an index of
+// any metric answer the query and agree with a full scan.
+func similarityScore[T number](
+	metric client.DistanceMetric,
 	source []T,
 	vector []T,
 ) (float64, error) {
 	if len(source) != len(vector) {
 		return 0, NewErrMismatchLengthOnSimilarity(len(source), len(vector))
 	}
-	return dbmath.CosineSimilarity(source, vector), nil
+	switch metric {
+	case client.DistanceMetricEuclidean:
+		return dbmath.NegativeSquaredEuclidean(source, vector), nil
+	case client.DistanceMetricDotProduct:
+		// The dot product is already a similarity: it grows as vectors align and lengthen.
+		return dbmath.Dot(source, vector), nil
+	default:
+		return dbmath.CosineSimilarity(source, vector), nil
+	}
 }
 
 func convertArray[T int64 | float32 | float64](val any) []T {

@@ -249,17 +249,32 @@ func CosineSimilarity(source, vector []float64) *cosineSimilarity {
 	return &cosineSimilarity{source: source, vector: vector}
 }
 
+// SimilarityScore matches a _similarity result under the given metric. Use it when the field being
+// queried has a non-cosine vector index, since the score follows the index's metric.
+func SimilarityScore(metric client.DistanceMetric, source, vector []float64) *cosineSimilarity {
+	return &cosineSimilarity{source: source, vector: vector, metric: metric}
+}
+
 type cosineSimilarity struct {
 	source []float64
 	vector []float64
+	// The zero value is cosine, so CosineSimilarity keeps working unchanged.
+	metric client.DistanceMetric
 }
 
 var _ gomega.OmegaMatcher = (*cosineSimilarity)(nil)
 
-// expected computes the cosine similarity of the two vectors using the SAME function the production
-// query path uses, so the matcher is an oracle that cannot drift from what the code computes.
+// expected computes the score the two vectors should produce under the metric, mirroring what the
+// production query path computes, so the matcher is an oracle that cannot drift from the code.
 func (m *cosineSimilarity) expected() float64 {
-	return dbmath.CosineSimilarity(m.source, m.vector)
+	switch m.metric {
+	case client.DistanceMetricEuclidean:
+		return dbmath.NegativeSquaredEuclidean(m.source, m.vector)
+	case client.DistanceMetricDotProduct:
+		return dbmath.Dot(m.source, m.vector)
+	default:
+		return dbmath.CosineSimilarity(m.source, m.vector)
+	}
 }
 
 func (m *cosineSimilarity) Match(actual any) (bool, error) {

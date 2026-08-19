@@ -19,22 +19,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Every metric builds a graph that writes maintain, but only a cosine one answers the similarity
-// query. `_similarity` scores by cosine, so a graph built for another metric holds a different set of
-// k nearest; the planner leaves it alone and full-scans (indexFetches 0) rather than return the wrong
-// documents. Results are identical either way, which is the point: the metric changes the cost, never
-// the answer.
-//
-// A metric the engine could not use would surface here as a failed build instead of a ready index.
-func TestVectorIndex_MetricDecidesWhetherQueryRoutes(t *testing.T) {
+// Routing and scoring must both follow the index's metric: doing one without the other would rank by
+// one metric and score by another. A metric the engine cannot use fails the build instead.
+func TestVectorIndex_QueryOnAnyMetric_RoutesAndScoresByIndexMetric(t *testing.T) {
 	testCases := []struct {
 		sdlMetric string
-		// indexFetches is 1 when the planner routed to the graph, 0 when it full-scanned.
-		indexFetches int
+		metric    client.DistanceMetric
 	}{
-		{"COSINE", 1},
-		{"EUCLIDEAN", 0},
-		{"DOT", 0},
+		{"COSINE", client.DistanceMetricCosine},
+		{"EUCLIDEAN", client.DistanceMetricEuclidean},
+		{"DOT", client.DistanceMetricDotProduct},
 	}
 
 	req := `query {
@@ -65,16 +59,113 @@ func TestVectorIndex_MetricDecidesWhetherQueryRoutes(t *testing.T) {
 					Request: req,
 					Results: map[string]any{
 						"User": []map[string]any{
-							{"name": "x", "sim": testUtils.CosineSimilarity([]float64{1, 0, 0}, []float64{1, 0, 0})},
-							{"name": "y", "sim": testUtils.CosineSimilarity([]float64{0, 0.5, 0}, []float64{1, 0, 0})},
+							{
+								"name": "x",
+								"sim": testUtils.SimilarityScore(
+									testCase.metric, []float64{1, 0, 0}, []float64{1, 0, 0}),
+							},
+							{
+								"name": "y",
+								"sim": testUtils.SimilarityScore(
+									testCase.metric, []float64{0, 0.5, 0}, []float64{1, 0, 0}),
+							},
 						},
 					},
 				},
 				&action.Request{
 					Request: makeExplainQuery(req),
 					Asserter: testUtils.NewExplainAsserter().
-						WithIndexFetches(testCase.indexFetches).
+						WithIndexFetches(1).
 						WithDocFetches(2),
+				},
+			},
+		}
+
+		t.Run(testCase.sdlMetric, func(t *testing.T) { testUtils.ExecuteTestCase(t, test) })
+	}
+}
+
+// Routing must not change the answer. The vectors are ranked differently by each metric, so a wrong
+// metric cannot pass by coincidence:
+//
+//	           cosine   -L2      dot
+//	short      1.0      -0.25    0.5
+//	long       1.0      -4.0     3.0
+//	diag       0.914    -0.17    0.9
+//
+// Both runs share one indexed collection: dropping the index would not full-scan the same search, it
+// would make it a cosine one. Omitting the limit full-scans while leaving the metric intact.
+func TestVectorIndex_SameQueryRoutedAndFullScanned_ReturnsSameResults(t *testing.T) {
+	testCases := []struct {
+		sdlMetric string
+		metric    client.DistanceMetric
+		// Cosine is absent: it scores "short" and "long" equally, so their order is an arbitrary
+		// tiebreak nothing guarantees.
+		order []string
+	}{
+		{"EUCLIDEAN", client.DistanceMetricEuclidean, []string{"diag", "short", "long"}},
+		{"DOT", client.DistanceMetricDotProduct, []string{"long", "diag", "short"}},
+	}
+
+	vectors := map[string][]float32{
+		"short": {0.5, 0, 0},
+		"long":  {3, 0, 0},
+		"diag":  {0.9, 0.4, 0},
+	}
+
+	// Routing needs a limit, so dropping it is the least invasive way to force the full scan. Any of
+	// the other conditions in tryRouteSimilarityToVectorIndex would do just as well.
+	routedReq := `query {
+		User(order: {_alias: {sim: DESC}}, limit: 2){
+			name
+			sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+		}
+	}`
+	fullScanReq := `query {
+		User(order: {_alias: {sim: DESC}}){
+			name
+			sim: SIMILARITY(vector: {vector: [1, 0, 0]})
+		}
+	}`
+
+	for _, testCase := range testCases {
+		expected := make([]map[string]any, 0, len(testCase.order))
+		for _, name := range testCase.order {
+			source := make([]float64, len(vectors[name]))
+			for i, v := range vectors[name] {
+				source[i] = float64(v)
+			}
+			expected = append(expected, map[string]any{
+				"name": name,
+				"sim":  testUtils.SimilarityScore(testCase.metric, source, []float64{1, 0, 0}),
+			})
+		}
+
+		test := testUtils.TestCase{
+			Actions: []any{
+				&action.AddCollection{
+					SDL: `type User {
+						name: String
+						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` +
+						testCase.sdlMetric + `})
+					}`,
+				},
+				&action.AddDoc{DocMap: map[string]any{"name": "short", "vector": vectors["short"]}},
+				&action.AddDoc{DocMap: map[string]any{"name": "long", "vector": vectors["long"]}},
+				&action.AddDoc{DocMap: map[string]any{"name": "diag", "vector": vectors["diag"]}},
+				&action.WaitForIndexReady{CollectionID: 0},
+
+				&action.Request{Request: routedReq, Results: map[string]any{"User": expected[:2]}},
+				&action.Request{
+					Request:  makeExplainQuery(routedReq),
+					Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
+				},
+
+				// The same order, reached without the graph.
+				&action.Request{Request: fullScanReq, Results: map[string]any{"User": expected}},
+				&action.Request{
+					Request:  makeExplainQuery(fullScanReq),
+					Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(3),
 				},
 			},
 		}

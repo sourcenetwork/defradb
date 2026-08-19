@@ -107,21 +107,30 @@ func (n *selectNode) isOrderedBySimilarityDesc(sim *mapper.Similarity) bool {
 	return len(cond.FieldIndexes) == 1 && cond.FieldIndexes[0] == sim.Field.Index
 }
 
-// readyVectorIndexOnField returns the cosine vector index on the field, if any.
-// queryableIndexesOnField has already excluded indexes that are still building or have failed, so a
-// returned index is usable.
+// readyVectorIndexOnField returns the vector index on the field, if any. queryableIndexesOnField has
+// already excluded indexes that are still building or have failed, so a returned index is usable.
 //
-// Only cosine qualifies: `_similarity` scores by cosine, so an index built for another metric ranks
-// documents differently and its k nearest are not the ones asked for. Querying by those metrics waits
-// on the dedicated nearest-neighbour argument:
-// https://github.com/sourcenetwork/defradb/issues/5072
+// Any metric qualifies, because similarityNode scores by the index's metric, so the k documents the
+// graph returns are the k the query asked for.
 func (n *selectNode) readyVectorIndexOnField(fieldName string) (client.IndexDescription, bool) {
 	for _, idx := range queryableIndexesOnField(n.collection, fieldName) {
-		if vector, ok := idx.GetVector(); ok && vector.Metric == client.DistanceMetricCosine {
+		if idx.IsVector() {
 			return idx, true
 		}
 	}
 	return client.IndexDescription{}, false
+}
+
+// vectorIndexMetricOnField returns the metric of the field's vector index, or cosine if it has no
+// index. Cosine is the default because that is what `_similarity` meant before any metric existed, so
+// an unindexed field keeps scoring as it did.
+func vectorIndexMetricOnField(col client.Collection, fieldName string) client.DistanceMetric {
+	for _, idx := range queryableIndexesOnField(col, fieldName) {
+		if vector, ok := idx.GetVector(); ok {
+			return vector.Metric
+		}
+	}
+	return client.DistanceMetricCosine
 }
 
 // vectorSearchPrefixes runs the graph search and returns one datastore prefix per nearest document.

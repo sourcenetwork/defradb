@@ -21,8 +21,8 @@ type Number interface {
 	int64 | float64 | float32
 }
 
-// Dot returns the dot product of two equal-length vectors, accumulated in float64. The caller is
-// responsible for passing equal-length slices; extra elements of the longer slice are ignored.
+// Dot returns the dot product of two vectors, accumulated in float64. Only the shared leading
+// elements are used; extra elements of the longer slice are ignored.
 func Dot[T Number](a, b []T) float64 {
 	var sum float64
 	n := min(len(a), len(b))
@@ -32,13 +32,13 @@ func Dot[T Number](a, b []T) float64 {
 	return sum
 }
 
-// CosineSimilarity returns the cosine similarity of two equal-length vectors: their dot product
-// divided by the product of their magnitudes, in the range [-1, 1] where 1 means the same direction.
-// Dividing by the magnitudes is what makes this a true cosine, so the result does not depend on the
-// vectors' lengths (a long vector and a short one pointing the same way score 1).
+// CosineSimilarity returns the cosine similarity of two vectors: their dot product divided by the
+// product of their magnitudes, in the range [-1, 1] where 1 means the same direction. Dividing by the
+// magnitudes is what makes this a true cosine, so magnitude does not affect the result (a long vector
+// and a short one pointing the same way both score 1).
 //
-// A zero-length vector has no direction, so its cosine similarity to anything is defined as 0 rather
-// than a division by zero. The caller is responsible for passing equal-length slices.
+// A zero vector has no direction, so its similarity to anything is 0 rather than a division by zero.
+// Only the shared leading elements are used; extra elements of the longer slice are ignored.
 func CosineSimilarity[T Number](a, b []T) float64 {
 	var dot, aNorm, bNorm float64
 	n := min(len(a), len(b))
@@ -52,4 +52,19 @@ func CosineSimilarity[T Number](a, b []T) float64 {
 		return 0
 	}
 	return dot / (math.Sqrt(aNorm) * math.Sqrt(bNorm))
+}
+
+// NegativeSquaredEuclidean returns the squared Euclidean (L2) distance of two vectors, negated, so
+// that a larger value means nearer.
+//
+// The square root is omitted because it is monotonic: it would change every value but no ordering.
+// Only the shared leading elements are compared; extra elements of the longer slice are ignored.
+func NegativeSquaredEuclidean[T Number](a, b []T) float64 {
+	var sumSq float64
+	n := min(len(a), len(b))
+	for i := range n {
+		d := float64(a[i]) - float64(b[i])
+		sumSq += d * d
+	}
+	return -sumSq
 }
