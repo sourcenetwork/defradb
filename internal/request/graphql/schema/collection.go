@@ -940,13 +940,6 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 		}
 	}
 
-	if kind.IsObject() {
-		if kind.IsArray() {
-			return client.NONE_CRDT, nil
-		}
-		return client.LWW_REGISTER, nil
-	}
-
 	return defaultCRDTForFieldKind[kind], nil
 }
 
