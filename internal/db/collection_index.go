@@ -594,6 +594,9 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 // planner uses the first vector index it finds on a field, so which metric answered a query would be
 // arbitrary. A different metric also means a differently built graph, which is why the fix is to drop
 // and recreate rather than to keep both.
+//
+// We don't have a way to query with a specific metric. So until then we have time limit
+// https://github.com/sourcenetwork/defradb/issues/5072
 func validateNoConflictingVectorIndexMetric(
 	def client.CollectionVersion,
 	fieldName string,
