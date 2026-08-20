@@ -935,9 +935,6 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 				if !validCRDTEnum {
 					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}
-				if !cType.IsCompatibleWith(kind) {
-					return 0, client.NewErrCRDTKindMismatch(cType.String(), kind.String())
-				}
 				return cType, nil
 			}
 		}
