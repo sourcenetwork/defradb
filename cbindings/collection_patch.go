@@ -46,6 +46,7 @@ func PatchCollection(nodePtr C.uintptr_t,
 		var lensCfg model.Lens
 		decoder := json.NewDecoder(strings.NewReader(lensString))
 		decoder.DisallowUnknownFields()
+		decoder.UseNumber()
 		if err := decoder.Decode(&lensCfg); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
