@@ -139,9 +139,8 @@ func waitForUpdateEvents(
 // node the source syncs to.
 //
 // It is the counterpart of [updateNetworkState] for a source node whose events
-// cannot be read. The head CID is read back from the node with a query rather
-// than taken from an event, so the nodes downstream wait on the same head they
-// would have anyway.
+// cannot be read. The head is queried from the node instead of taken from an
+// event, so the nodes downstream wait on the same head either way.
 func MarkDocsExpectedOnTargets(
 	s *state.State,
 	sourceNodeID int,
@@ -151,13 +150,12 @@ func MarkDocsExpectedOnTargets(
 ) {
 	for docID := range docIDs {
 		// The source node wrote this document, so it must be able to report the
-		// commit. Skipping instead would record nothing to wait for, and the
-		// assertions that follow would run against data that never arrived and
-		// still pass.
+		// commit. Skipping would record nothing to wait for, letting the
+		// assertions that follow pass against data that never arrived.
 		head, ok := latestCompositeCID(s, sourceNodeID, docID)
 		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
 
-		// Build the event ourselves, since we cannot read the real one.
+		// Build the event, since the real one cannot be read.
 		evt := event.Update{
 			DocID:        docID,
 			Cid:          head,
@@ -210,8 +208,8 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 // latestCompositeCID asks the node for the newest composite commit of a
 // document.
 //
-// The composite commit is the one a merge event reports, so this is the same
-// CID the native path takes from that event.
+// A merge event reports the composite commit, so this is the same CID the native
+// path takes from that event.
 func latestCompositeCID(s *state.State, nodeID int, docID string) (cid.Cid, bool) {
 	result := s.Nodes[nodeID].ExecRequest(
 		s.Ctx,

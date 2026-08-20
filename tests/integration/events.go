@@ -354,10 +354,10 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 
 // waitForHeadsOnNode waits until every expected head has arrived on the node.
 //
-// It asks the node for its commits rather than reading its event bus, so it
-// works for a node running in another process. Waiting on the head rather than
-// on the document is what makes an update observable: the document exists from
-// the first write onwards, but each update brings a new head.
+// It asks the node for its commits instead of reading its event bus, so it works
+// for a node in another process. It waits on the head rather than the document
+// because the document exists from the first write, while each update adds a
+// new head.
 func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) {
 	type wanted struct {
 		key string
@@ -365,8 +365,9 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 	}
 	var heads []wanted
 	for key, cidSet := range pending {
-		// A collection level key has no document to ask about.
-		if !strings.HasPrefix(key, "bae-") {
+		// A collection level key has no document to ask about, and only a
+		// document ID parses as one.
+		if _, err := client.NewDocIDFromString(key); err != nil {
 			continue
 		}
 		for c := range cidSet {
@@ -377,11 +378,11 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 		return
 	}
 
-	// A head that is still readable somewhere should become readable here too,
-	// so the wait covers the merge and not just the block arriving. A head that
-	// deleted the document is readable nowhere, and waiting for it would never
-	// finish. This is read once up front, before the target has caught up, so it
-	// reflects the writer rather than the node being waited on.
+	// A head that is readable elsewhere should become readable here too, so the
+	// wait covers the merge and not just the block arriving. A head that deleted
+	// the document is readable nowhere, so waiting for it would never finish.
+	//
+	// Read up front, before the target catches up, so it reflects the writer.
 	wantDoc := make(map[string]bool, len(heads))
 	for _, head := range heads {
 		if _, seen := wantDoc[head.key]; seen {
@@ -399,9 +400,8 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 				continue
 			}
 			// The block is stored before it is merged, so the head arriving does
-			// not mean the document can be read yet. Wait for that too, but only
-			// while the document still exists on the source: a head that deleted
-			// it is never going to become readable.
+			// not mean the document can be read yet. Wait for that too, unless
+			// the head deleted the document.
 			if wantDoc[head.key] && !hasDoc(s, node, head.key) {
 				missing = append(missing, head.cid.String())
 				continue
@@ -423,8 +423,8 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 // whose collection version it does not have.
 const errCollectionVersionNotFound = "failed to get collection by version ID"
 
-// anyNodeHasDocExcept reports whether a node other than the given one still
-// holds the document, which stands in for "the writer did not delete it".
+// anyNodeHasDocExcept reports whether any other node still holds the document,
+// which stands in for "the writer did not delete it".
 func anyNodeHasDocExcept(s *state.State, except *state.NodeState, docID string) bool {
 	for _, node := range s.Nodes {
 		if node == except || node.Closed {
@@ -440,8 +440,8 @@ func anyNodeHasDocExcept(s *state.State, except *state.NodeState, docID string) 
 // hasDoc reports whether the node can read the given document in any of its
 // collections.
 //
-// This is weaker than checking the head, so it is only used when the node
-// cannot answer about commits at all.
+// Weaker than checking the head, so it is only used when the node cannot answer
+// about commits at all.
 func hasDoc(s *state.State, node *state.NodeState, docID string) bool {
 	for _, col := range node.Collections {
 		result := node.ExecRequest(
@@ -478,17 +478,11 @@ func hasCommit(s *state.State, node *state.NodeState, docID string, target cid.C
 		fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, docID, target.String()),
 	)
 	for _, err := range result.GQL.Errors {
-		// A node on an older release can hold a block written against a newer
-		// collection version without being able to describe it. Nothing can be
-		// asked about the commit in that case, so the wait falls back to
-		// comparing the document against the node that wrote it.
-		// The block is here but the node cannot describe it, so there is nothing
-		// left to check. Treat it as arrived: waiting longer would never resolve.
+		// The node holds the block but cannot describe it, so there is nothing
+		// left to ask. Treat it as arrived, since waiting longer never resolves.
 		//
-		// This is weaker than matching the head, so a test that updates a
-		// document this way can read the value from before the update. Comparing
-		// content instead does not work either, because the two nodes hold
-		// deliberately different schemas in exactly this case.
+		// Weaker than matching the head: a test that updates the document this
+		// way can read the value from before the update.
 		if strings.Contains(err.Error(), errCollectionVersionNotFound) {
 			return true
 		}
