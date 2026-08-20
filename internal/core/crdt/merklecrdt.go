@@ -59,17 +59,3 @@ type FieldValueCRDT interface {
 type DocumentValueCRDT interface {
 	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
 }
-
-func FieldLevelCRDT(
-	cType client.CType,
-) (FieldValueCRDT, error) {
-	switch cType {
-	case client.LWW_REGISTER:
-		return NewLWW(), nil
-	case client.PN_COUNTER, client.P_COUNTER:
-		return NewCounter(
-			cType == client.PN_COUNTER,
-		), nil
-	}
-	return nil, client.NewErrUnknownCRDT(cType)
-}
