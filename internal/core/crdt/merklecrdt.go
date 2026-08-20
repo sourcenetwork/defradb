@@ -40,6 +40,10 @@ func TryGetFieldCRDT(ct client.CType) (FieldValueCRDT, bool) {
 	return nil, false
 }
 
+type KindLimitedCRDT interface {
+	SupportedKinds() []client.FieldKind
+}
+
 type FieldValueCRDT interface {
 	CType() client.CType
 

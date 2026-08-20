@@ -74,6 +74,7 @@ type Counter struct {
 }
 
 var _ FieldValueCRDT = (*Counter)(nil)
+var _ KindLimitedCRDT = (*Counter)(nil)
 
 // NewCounter creates a new Counter CRDT.
 func NewCounter(
@@ -194,6 +195,14 @@ func (c *Counter) CType() client.CType {
 		return client.PN_COUNTER
 	}
 	return client.P_COUNTER
+}
+
+func (c *Counter) SupportedKinds() []client.FieldKind {
+	return []client.FieldKind{
+		client.FieldKind_NILLABLE_INT,
+		client.FieldKind_NILLABLE_FLOAT64,
+		client.FieldKind_NILLABLE_FLOAT32,
+	}
 }
 
 func validateAndIncrement[T Incrementable](

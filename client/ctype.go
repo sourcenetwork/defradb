@@ -53,6 +53,8 @@ func (t CType) IsSupportedFieldCType() bool {
 }
 
 // IsCompatibleWith returns true if the CRDT is compatible with the field kind
+//
+// Deprecated: This function will be removed in Defra v2.0.0
 func (t CType) IsCompatibleWith(kind FieldKind) bool {
 	switch t {
 	case PN_COUNTER, P_COUNTER:

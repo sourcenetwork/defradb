@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/ipfs/go-cid"
 
@@ -722,8 +723,17 @@ func validateTypeAndKindCompatible(
 	var errs []error
 	for _, col := range newState.collections {
 		for _, newField := range col.Fields {
-			if !newField.Typ.IsCompatibleWith(newField.Kind) {
-				errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String()))
+			ct, ok := crdt.TryGetFieldCRDT(newField.Typ)
+			if !ok {
+				// If the configured crdt is not found, ingore it here and let other validation raise any
+				// appropriate errors
+				continue
+			}
+
+			if kindLimitedCrdt, ok := ct.(crdt.KindLimitedCRDT); ok {
+				if !slices.Contains(kindLimitedCrdt.SupportedKinds(), newField.Kind) {
+					errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String()))
+				}
 			}
 		}
 	}
