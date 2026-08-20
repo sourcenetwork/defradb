@@ -846,7 +846,7 @@ func validateTypeSupported(
 	for _, col := range newState.collections {
 		for _, newField := range col.Fields {
 			if _, ok := crdt.TryGetFieldCRDT(newField.Typ); !ok {
-				errs = append(errs, client.NewErrInvalidCRDTType(newField.Name, newField.Typ.String()))
+				errs = append(errs, client.NewErrInvalidCRDTTypeV(newField.Name, newField.Typ))
 			}
 		}
 	}

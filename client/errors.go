@@ -240,6 +240,14 @@ func NewErrInvalidCRDTType(name, crdtType string) error {
 	)
 }
 
+func NewErrInvalidCRDTTypeV(name string, crdtType CType) error {
+	return errors.New(
+		errInvalidCRDTType,
+		errors.NewKV("Name", name),
+		errors.NewKV("CRDTType", crdtType),
+	)
+}
+
 func NewErrCRDTKindMismatch(cType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
