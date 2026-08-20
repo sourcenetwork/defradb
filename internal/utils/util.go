@@ -11,6 +11,9 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -33,6 +36,67 @@ func NewOptions[T any](opts ...enumerable.Enumerable[func(*T)]) *T {
 	args := new(T)
 	ApplyOptions(args, opts...)
 	return args
+}
+
+// DecodeJSONVariables decodes a JSON-encoded GraphQL variables object without losing
+// integer precision. The standard decoder represents every JSON number as a float64,
+// which silently rounds any integer above 2^53. This instead reconstructs each number
+// as an int64 where the value round-trips exactly, falling back to float64 otherwise.
+// Returns an error if a number is out of range for both int64 and float64 (root or
+// nested), or if data contains anything beyond a single JSON value.
+func DecodeJSONVariables(data []byte) (map[string]any, error) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+
+	var vars map[string]any
+	if err := dec.Decode(&vars); err != nil {
+		return nil, err
+	}
+	if dec.More() {
+		return nil, fmt.Errorf("unexpected data after JSON variables object")
+	}
+
+	if _, err := normalizeJSONNumbers(vars); err != nil {
+		return nil, err
+	}
+	return vars, nil
+}
+
+// normalizeJSONNumbers walks a value produced by a decoder configured with UseNumber,
+// converting json.Number leaves into an int64 (if the number round-trips exactly) or a
+// float64 (otherwise), so callers receive ordinary numeric types instead of json.Number.
+// Returns an error if a number is out of range for both.
+func normalizeJSONNumbers(value any) (any, error) {
+	switch value := value.(type) {
+	case json.Number:
+		if i, err := value.Int64(); err == nil {
+			return i, nil
+		}
+		if f, err := value.Float64(); err == nil {
+			return f, nil
+		}
+		return nil, fmt.Errorf("json number %q is out of range", value.String())
+	case map[string]any:
+		for k, v := range value {
+			normalized, err := normalizeJSONNumbers(v)
+			if err != nil {
+				return nil, err
+			}
+			value[k] = normalized
+		}
+		return value, nil
+	case []any:
+		for i, v := range value {
+			normalized, err := normalizeJSONNumbers(v)
+			if err != nil {
+				return nil, err
+			}
+			value[i] = normalized
+		}
+		return value, nil
+	default:
+		return value, nil
+	}
 }
 
 // ApplyOptions applies all functional options onto the given target.

@@ -123,3 +123,35 @@ func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// The metric of an existing vector index cannot be swapped by patching the collection either. The
+// index API rejects this with its own error; here the general index-immutability rule catches it, so
+// there is no way in through the patch surface.
+func TestPatchCollection_ModifyVectorIndexMetric_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "replace",
+							"path": "User/Indexes/0/KindDescription/Metric",
+							"value": "EUCLIDEAN"
+						}
+					]
+				`,
+				ExpectedError: "collection indexes cannot be mutated",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -538,27 +538,57 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
-				txn.Datastore(),
-				c.VersionID(),
-				val.Type(),
-				fieldDescription.Kind,
-				fieldKey,
-				fieldDescription.Name,
-			)
+			headset := coreblock.NewHeadSet(txn.Headstore(), fieldKey.ToHeadStoreKey())
+			heads, height, err := headset.List(ctx)
 			if err != nil {
-				return err
+				return coreblock.NewErrGettingHeads(err)
 			}
-			delta, err := merkleCRDT.Delta(ctx, crdt.NewDocField(k, val))
+			height = height + 1
+
+			var merkleCRDT crdt.FieldValueCRDT
+			var delta crdt.Delta
+			switch val.Type() {
+			case client.LWW_REGISTER:
+				lww := crdt.NewLWW()
+				merkleCRDT = lww
+
+				delta, err = lww.Set(ctx, c.VersionID(), crdt.NewDocField(k, val), height)
+				if err != nil {
+					return err
+				}
+
+			case client.PN_COUNTER, client.P_COUNTER:
+				counter := crdt.NewCounter(
+					val.Type() == client.PN_COUNTER,
+				)
+				merkleCRDT = counter
+
+				delta, err = counter.Increment(ctx, c.VersionID(), crdt.NewDocField(k, val), isAdd, height)
+				if err != nil {
+					return err
+				}
+
+			default:
+				return client.NewErrUnknownCRDT(val.Type())
+			}
+
+			err = merkleCRDT.Merge(
+				ctx,
+				txn.Datastore(),
+				fieldKey,
+				fieldDescription.Kind,
+				delta,
+			)
 			if err != nil {
 				return err
 			}
 
 			link, rawBlock, err := coreblock.AddDeltaWithOptions(
 				signingCtx,
-				merkleCRDT,
+				fieldKey.ToHeadStoreKey(),
 				delta,
 				coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+				heads,
 			)
 			if err != nil {
 				return err
@@ -572,16 +602,32 @@ func (c *collection) save(
 		}
 	}
 
-	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
-		c.Version().VersionID,
-		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
-	)
+	headstoreKey := keys.HeadstoreDocKey{
+		DocShortID: primaryKey.DocShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
+	}
+
+	headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
+	heads, height, err := headset.List(ctx)
+	if err != nil {
+		return coreblock.NewErrGettingHeads(err)
+	}
+	height = height + 1
+
+	merkleCRDT := crdt.NewDocComposite()
+	delta := merkleCRDT.Upsert(c.Version().VersionID, height)
+
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
+	if err != nil {
+		return err
+	}
+
 	link, headNode, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
-		merkleCRDT,
-		merkleCRDT.Delta(),
+		headstoreKey,
+		delta,
 		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
+		heads,
 		links...,
 	)
 	if err != nil {
@@ -655,15 +701,22 @@ func (c *collection) save(
 		if err != nil {
 			return err
 		}
-		collectionCRDT := crdt.NewCollection(
-			c.Version().VersionID,
-			keys.NewHeadstoreColKey(collectionShortID),
-		)
+
+		headset := coreblock.NewHeadSet(txn.Headstore(), keys.NewHeadstoreColKey(collectionShortID))
+		heads, height, err := headset.List(ctx)
+		if err != nil {
+			return coreblock.NewErrGettingHeads(err)
+		}
+		height = height + 1
+
+		collectionCRDT := crdt.NewCollection()
+		delta := collectionCRDT.Mutate(c.Version().VersionID, height)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
-			collectionCRDT,
-			collectionCRDT.Delta(),
+			keys.NewHeadstoreColKey(collectionShortID),
+			delta,
+			heads,
 			[]coreblock.DAGLink{{Link: link}}...,
 		)
 		if err != nil {
