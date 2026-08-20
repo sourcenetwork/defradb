@@ -41,6 +41,12 @@ type ListLenses struct {
 	// If set, the action will verify the lens content matches.
 	ExpectedLenses map[string]model.Lens
 
+	// ExpectedCount, if set, asserts the number of stored lenses without comparing
+	// their content - useful when the number of distinct lenses is itself the thing
+	// under test (e.g. asserting that two logically-different configs were not
+	// deduplicated into the same CID), independently of ExpectedLenses.
+	ExpectedCount immutable.Option[int]
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -90,6 +96,11 @@ func (a *ListLenses) Execute() {
 
 		if err != nil {
 			a.s.T.Fatalf("failed to list lenses: %v", err)
+		}
+
+		if a.ExpectedCount.HasValue() {
+			assert.Equal(a.s.T, a.ExpectedCount.Value(), len(lenses),
+				"expected %d lenses, got %d", a.ExpectedCount.Value(), len(lenses))
 		}
 
 		if a.ExpectedLenses == nil {
