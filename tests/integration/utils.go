@@ -28,6 +28,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/mod/semver"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -801,6 +802,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
+	skipUnsupportedVersion(t, testCase.SupportedFromVersion, activeMultipliers)
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -846,8 +849,41 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
+// skipUnsupportedVersion skips the test if an active multiplier targets a release
+// older than the one the test needs.
+//
+// This is done here rather than in the multiplier because testo hands
+// [multiplier.ActionAwareSkipper] only the action set, and the required version is
+// TestCase-level configuration it cannot see.
+//
+// activeNames is passed in rather than read from testo's package-level state so
+// this function is directly unit-testable.
+func skipUnsupportedVersion(t testing.TB, supportedFrom string, activeNames string) {
+	if supportedFrom == "" {
+		return
+	}
+
+	// A malformed value would compare as older than everything and silently stop
+	// gating, letting the test run against a release that cannot support it.
+	require.True(t, semver.IsValid(supportedFrom),
+		"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		target, targetsVersion := defraMultiplier.TargetVersionFor(name)
+		if !targetsVersion {
+			continue
+		}
+
+		if semver.Compare(target, supportedFrom) < 0 {
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
+				name, target, supportedFrom)
+		}
+	}
+}
+
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
-	for _, name := range strings.Split(activeNames, ",") {
+	for name := range strings.SplitSeq(activeNames, ",") {
 		switch strings.TrimSpace(name) {
 		case defraMultiplier.SignedDocs:
 			testCase.EnableSigning = true
