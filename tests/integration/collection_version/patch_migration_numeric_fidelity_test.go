@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // A Lens module argument above 2^53 used to be rounded to the nearest representable
@@ -31,9 +32,20 @@ import (
 // the two AddLens calls below would produce identical, content-addressed configs and get
 // deduplicated into a single stored lens instead of two. Therefore, this exists as a
 // regression test by checking that the count of lenses is actually two.
-
 func TestCollectionVersionPatch_LargeIntegerLensArguments_AreNotDeduplicated(t *testing.T) {
 	test := testUtils.TestCase{
+		// Excludes the JS client because its wrapper marshals the Lens config to a js.Value via
+		// goji.MarshalJS, which round-trips the JSON text through JavaScript's native JSON.parse.
+		// JS has no int64 type - every number becomes an IEEE754 double there regardless of what
+		// Go marshaled, so both arguments below collapse to the same value on that boundary and
+		// get deduplicated.
+		// To do: https://github.com/sourcenetwork/defradb/issues/5176
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			state.GoClientType,
+			state.HTTPClientType,
+			state.CLIClientType,
+			state.CClientType,
+		}),
 		Actions: []any{
 			&action.AddLens{
 				Lens: model.Lens{
