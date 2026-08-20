@@ -11,11 +11,9 @@
 package crdt
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // FieldDefinitionDelta contains the properties changed between two different field versions.
@@ -50,41 +48,16 @@ func (d *FieldDefinitionDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *FieldDefinitionDelta) SetPriority(priority uint64) {
-	d.Priority = priority
+type FieldDefinition struct{}
+
+func NewFieldDefinition() *FieldDefinition {
+	return &FieldDefinition{}
 }
 
-type FieldDefinition struct {
-	headstorePrefix keys.HeadstoreFieldDefinition
-}
-
-var _ ReplicatedData = (*Collection)(nil)
-
-func NewFieldDefinition(
-	collectionName string,
-	fieldName string,
-) *FieldDefinition {
-	return &FieldDefinition{
-		// WARNING: This prefix will need to be rebuilt if/when we allow the mutation of collection
-		// and/or field names.
-		//
-		// Whilst the field blocks are not collection specific, the heads are - a patch may update
-		// a field definition on one collection but not the other - in which case the headstore
-		// should differ.
-		headstorePrefix: keys.HeadstoreFieldDefinition{
-			CollectionName: collectionName,
-			FieldName:      fieldName,
-		},
-	}
-}
-
-func (f *FieldDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return f.headstorePrefix
-}
-
-func (f *FieldDefinition) Delta(
+func (f *FieldDefinition) Mutate(
 	new client.CollectionFieldDescription,
 	old client.CollectionFieldDescription,
+	priority uint64,
 ) (*FieldDefinitionDelta, bool, error) {
 	if new.FieldID != "" {
 		// This function is currently taking advantage of us not yet having implemented field-mutations,
@@ -123,12 +96,6 @@ func (f *FieldDefinition) Delta(
 		ScalarKind:   scalarKind,
 		CollectionID: relatedCollectionID,
 		RelativeID:   relativeID,
+		Priority:     priority,
 	}, true, nil
-}
-
-func (f *FieldDefinition) Merge(ctx context.Context, other Delta) error {
-	// WARNING: This is okay for now, as we dont (yet) support the merging of divergant heads,
-	// (this is not *really* a CRDT) however, if we do want to support that at somepoint, this function
-	// will need to be implemented.
-	return nil
 }
