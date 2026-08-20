@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 const (
@@ -533,6 +534,30 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
+// UnmarshalJSON decodes a GraphQLRequest, preserving integer precision in Variables.
+// The standard decoder represents every JSON number as a float64, which silently
+// rounds any integer above 2^53. This instead reconstructs each number as an int64.
+func (r *GraphQLRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Query         string          `json:"query"`
+		OperationName string          `json:"operationName"`
+		Variables     json.RawMessage `json:"variables"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.Query = raw.Query
+	r.OperationName = raw.OperationName
+	if len(raw.Variables) > 0 {
+		vars, err := utils.DecodeJSONVariables(raw.Variables)
+		if err != nil {
+			return err
+		}
+		r.Variables = vars
+	}
+	return nil
+}
+
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// handle different request transports
 	// specifically, SSE
@@ -686,8 +711,8 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequ
 
 		variablesFromQuery := req.URL.Query().Get("variables")
 		if variablesFromQuery != "" {
-			var variables map[string]any
-			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+			variables, err := utils.DecodeJSONVariables([]byte(variablesFromQuery))
+			if err != nil {
 				return GraphQLRequest{}, nil, err
 			}
 			request.Variables = variables
