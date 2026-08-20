@@ -48,7 +48,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 					},
 				},
 			},
-			// Under explain: one index fetch and two doc fetches, proving it routed to the index.
+			// Under explain: one index fetch and two doc fetches, proving it used the index.
 			&action.Request{
 				Request: `query @explain(type: execute) {
 					User(order: {_alias: {sim: DESC}}, limit: 2){
@@ -263,7 +263,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_RespectsOffset(t *testing.T) {
 }
 
 // A query vector whose length differs from the index dimensions would be scored on only its shared
-// leading elements, giving wrong results. Both the routed and full-scan paths must error on this.
+// leading elements, giving wrong results. Both the indexed and full-scan paths must error on this.
 func TestQuerySimple_WithSimilarityOnVectorIndex_WrongLengthQueryErrors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -291,9 +291,9 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_WrongLengthQueryErrors(t *testi
 }
 
 // Without an order clause, a _similarity + limit query asks for any k documents, not the k nearest,
-// so it must not route (routing would wrongly return the nearest). Explain asserts no index fetch.
-// (docFetches cannot show this: a limit reads only k documents whether or not it routed.)
-func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotRoute(t *testing.T) {
+// so the index must not be used (it would wrongly return the nearest). Explain asserts no index fetch.
+// (docFetches cannot show this: a limit reads only k documents whether or not the index was used.)
+func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotUseIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{

@@ -485,7 +485,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 		case *mapper.Similarity:
 			var simFilter *mapper.Filter
 			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
-			similarity = append(similarity, n.planner.Similarity(f, simFilter))
+			metric := vectorIndexMetricOnField(n.collection, f.SimilarityTarget.Field.Name)
+			similarity = append(similarity, n.planner.Similarity(f, simFilter, metric))
 		}
 	}
 

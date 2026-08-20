@@ -68,7 +68,7 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	v := normalize(vector)
+	v := vectorForMetric(g.metric, vector)
 	topLevel := g.randomLevel()
 
 	meta, found, err := g.store.GetMeta()
