@@ -248,7 +248,7 @@ func NewErrInvalidCRDTTypeV(name string, crdtType CType) error {
 	)
 }
 
-func NewErrCRDTKindMismatch(cType, kind string) error {
+func NewErrCRDTKindMismatch(cType CType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
 

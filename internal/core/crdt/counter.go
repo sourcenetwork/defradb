@@ -205,6 +205,29 @@ func (c *Counter) SupportedKinds() []client.FieldKind {
 	}
 }
 
+func (c *Counter) String() string {
+	if c.allowDecrement {
+		return "pncounter"
+	}
+	return "pcounter"
+}
+
+func (c *Counter) Description() string {
+	if c.allowDecrement {
+		return `Positive-Negative Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.`
+	}
+
+	return `Positive Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incremeting a float and
+	causing it to overflow the float64 max value will act like a no-op.`
+}
+
 func validateAndIncrement[T Incrementable](
 	ctx context.Context,
 	store datastore.Keyedstore,

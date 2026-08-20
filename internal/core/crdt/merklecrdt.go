@@ -47,6 +47,10 @@ type KindLimitedCRDT interface {
 type FieldValueCRDT interface {
 	CType() client.CType
 
+	String() string
+
+	Description() string
+
 	Merge(
 		ctx context.Context,
 		store datastore.Keyedstore,

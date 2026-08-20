@@ -732,7 +732,7 @@ func validateTypeAndKindCompatible(
 
 			if kindLimitedCrdt, ok := ct.(crdt.KindLimitedCRDT); ok {
 				if !slices.Contains(kindLimitedCrdt.SupportedKinds(), newField.Kind) {
-					errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String()))
+					errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ, newField.Kind.String()))
 				}
 			}
 		}

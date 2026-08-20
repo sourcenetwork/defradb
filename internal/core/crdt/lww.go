@@ -65,6 +65,14 @@ func (l *LWW) CType() client.CType {
 	return client.LWW_REGISTER
 }
 
+func (l *LWW) String() string {
+	return "lww"
+}
+
+func (l *LWW) Description() string {
+	return "Last Write Wins register"
+}
+
 func (l *LWW) Set(
 	ctx context.Context,
 	collectionVersionID string,

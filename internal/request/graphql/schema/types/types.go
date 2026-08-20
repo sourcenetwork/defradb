@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
 const (
@@ -396,31 +397,18 @@ func BranchableDirective() *gql.Directive {
 }
 
 func CRDTEnum() *gql.Enum {
+	valueMap := gql.EnumValueConfigMap{}
+	for _, fieldCrdt := range crdt.FieldCRDTs {
+		valueMap[fieldCrdt.String()] = &gql.EnumValueConfig{
+			Value:       fieldCrdt.CType(),
+			Description: fieldCrdt.Description(),
+		}
+	}
+
 	return gql.NewEnum(gql.EnumConfig{
 		Name:        "CRDTType",
 		Description: "One of the possible CRDT Types.",
-		Values: gql.EnumValueConfigMap{
-			client.LWW_REGISTER.String(): &gql.EnumValueConfig{
-				Value:       client.LWW_REGISTER,
-				Description: "Last Write Wins register",
-			},
-			client.PN_COUNTER.String(): &gql.EnumValueConfig{
-				Value: client.PN_COUNTER,
-				Description: `Positive-Negative Counter.
-
-	WARNING: Incrementing an integer and causing it to overflow the int64 max value
-	will cause the value to roll over to the int64 min value. Incremeting a float and
-	causing it to overflow the float64 max value will act like a no-op.`,
-			},
-			client.P_COUNTER.String(): &gql.EnumValueConfig{
-				Value: client.P_COUNTER,
-				Description: `Positive Counter.
-
-	WARNING: Incrementing an integer and causing it to overflow the int64 max value
-	will cause the value to roll over to the int64 min value. Incremeting a float and
-	causing it to overflow the float64 max value will act like a no-op.`,
-			},
-		},
+		Values:      valueMap,
 	})
 }
 

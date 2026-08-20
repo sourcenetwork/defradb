@@ -68,6 +68,8 @@ func (t CType) IsCompatibleWith(kind FieldKind) bool {
 }
 
 // String returns the string representation of the CRDT.
+//
+// Deprecated: This function will be removed in Defra v2.0.0
 func (t CType) String() string {
 	switch t {
 	case NONE_CRDT:
