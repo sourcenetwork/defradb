@@ -18,11 +18,19 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 	test := testUtils.TestCase{
+		// An external node is started as a new process with a new identity, so it
+		// cannot reopen the store it wrote before the restart.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

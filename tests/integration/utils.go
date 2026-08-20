@@ -224,7 +224,7 @@ func ExecuteTestCase(
 						kms,
 						dbt,
 						ct,
-						documentACPType,
+						action.DocumentACPType,
 					)
 				}
 
@@ -2300,14 +2300,14 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == documentACPType {
+			if supportedType == action.DocumentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
+			t.Skipf("test does not support given acp type. Type: %s", action.DocumentACPType)
 		}
 	}
 }
