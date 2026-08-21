@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// A collection carrying a valid @vectorIndex on a raw [Float32!] field is created end-to-end: the
+// A collection carrying a valid @index(vector: {...}) on a raw [Float32!] field is created end-to-end: the
 // index is registered as a vector-kind index with its parsed algorithm/metric/dimensions/HNSW
 // params. The index performs no graph work yet (Phase 3 wires the HNSW engine); this asserts the
 // schema surface + descriptor plumbing only.
@@ -29,7 +29,7 @@ func TestCollectionVersion_VectorIndexOnRawFloat32Array_ShouldSucceed(t *testing
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+						embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 					}
 				`,
 			},
@@ -64,7 +64,7 @@ func TestCollectionVersion_VectorIndexOnFloat32ArrayWithoutDimensionsOrEmbedding
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex
+						embedding: [Float32!] @index(kind: vector)
 					}
 				`,
 				ExpectedError: "vector index requires dimensions unless field is an embedding",
@@ -81,7 +81,7 @@ func TestCollectionVersion_VectorIndexOnStringField_ShouldError(t *testing.T) {
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: String @vectorIndex(dimensions: 3)
+						embedding: String @index(vector: {dimensions: 3})
 					}
 				`,
 				ExpectedError: "unsupported field type for vector index",
@@ -98,7 +98,7 @@ func TestCollectionVersion_VectorIndexOnFloat64ArrayField_ShouldError(t *testing
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float64!] @vectorIndex(dimensions: 3)
+						embedding: [Float64!] @index(vector: {dimensions: 3})
 					}
 				`,
 				ExpectedError: "unsupported field type for vector index",
@@ -110,17 +110,17 @@ func TestCollectionVersion_VectorIndexOnFloat64ArrayField_ShouldError(t *testing
 }
 
 func TestCollectionVersion_VectorIndexWithUnsupportedAlgorithm_ShouldError(t *testing.T) {
-	// An unknown algorithm is now an unknown directive argument (the algorithm is the argument key),
-	// so GraphQL rejects it before the parser runs.
+	// An unknown algorithm config is an unknown field in the vector config, so GraphQL rejects it
+	// before the parser runs.
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(dimensions: 3, IVFFlat: {})
+						embedding: [Float32!] @index(vector: {dimensions: 3, IVFFlat: {}})
 					}
 				`,
-				ExpectedError: `Unknown argument "IVFFlat" on directive "@vectorIndex"`,
+				ExpectedError: `In field "IVFFlat": Unknown field.`,
 			},
 		},
 	}
@@ -144,7 +144,7 @@ func vectorIndexMetricTest(sdlMetric string, expected client.DistanceMetric) tes
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` + sdlMetric + `})
+						embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: ` + sdlMetric + `}})
 					}
 				`,
 			},
@@ -175,7 +175,7 @@ func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testi
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: MANHATTAN})
+						embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: MANHATTAN}})
 					}
 				`,
 				ExpectedError: `Expected type "VectorDistanceMetric", found MANHATTAN`,

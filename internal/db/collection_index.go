@@ -562,7 +562,7 @@ func processNewIndexRequest(
 // The field must hold a float32 array, and dimensions must be set unless the field is an @embedding,
 // whose model fixes the vector length. It also defaults the algorithm, metric, and any missing
 // params (mutating desc.Vector), so a request made through the index API works the same as one from
-// the @vectorIndex directive.
+// the @index directive's vector configuration.
 //
 // The field is guaranteed to exist here because validateIndexDescription and
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.

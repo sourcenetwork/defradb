@@ -376,6 +376,18 @@ func TestParseIndexOnField(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "nested and legacy ordered configs merge when they do not overlap",
+			sdl: `type user {
+				name: String @index(ordered: {unique: true}, direction: DESC)
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{{Name: "name", Descending: true}},
+					Unique: true,
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {
@@ -456,9 +468,9 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
-			description: "nested and legacy ordered configs are competing kind selectors",
+			description: "nested and legacy ordered configs cannot set the same property",
 			sdl: `type user {
-				name: String @index(ordered: {unique: true}, direction: DESC)
+				name: String @index(ordered: {unique: true}, unique: false)
 			}`,
 			expectedErr: errIndexInvalidArgument,
 		},

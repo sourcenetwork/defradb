@@ -27,7 +27,7 @@ func TestVectorIndex_CreateWithOversizedM_IsRejected(t *testing.T) {
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE, M: 100000})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE, M: 100000}})
 				}`,
 				ExpectedError: "vector index parameter is out of range",
 			},
