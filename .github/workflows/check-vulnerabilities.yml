@@ -47,10 +47,12 @@ jobs:
         run: govulncheck -C . -format text ./... | tee govulncheck.txt
 
       - name: Check if only known vulnerabilities were found (there are new vulnerabilities if this fails)
-        run: cat govulncheck.txt | grep "Your code is affected by 2 vulnerabilities from 1 module."
+        run: >-
+          sed -n 's/^Vulnerability #[0-9][0-9]*: //p' govulncheck.txt |
+          sort |
+          diff -u .github/known-vulnerabilities.txt -
 
-    # Use the steps below once the x/crisis (crisis.init) bug is fixed or if the
-    # ability to silence is implemented: https://github.com/golang/go/issues/61211
+    # Remove allowlisted findings as compatible upstream fixes become available.
     #steps:
     # - name: Run govulncheck
     #   uses: golang/govulncheck-action@v1
