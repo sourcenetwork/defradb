@@ -17,7 +17,18 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"golang.org/x/mod/semver"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 )
+
+// twoNodeActions returns the minimal action set the cross-version multiplier
+// acts on.
+func twoNodeActions() action.Actions {
+	return action.Actions{
+		action.RandomNetworkingConfig(),
+		action.RandomNetworkingConfig(),
+	}
+}
 
 func TestTargetVersionFor_CrossVersionMultipliers(t *testing.T) {
 	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
@@ -50,4 +61,81 @@ func TestTargetVersionFor_ReturnsComparableSemver(t *testing.T) {
 		version, _ := TargetVersionFor(name)
 		assert.True(t, semver.IsValid(version), "%s targets %q which is not valid semver", name, version)
 	}
+}
+
+func TestResolveTargetVersion_NoRequirement_UsesDefaultTarget(t *testing.T) {
+	version, ok := ResolveTargetVersion(CrossVersionOldSource, "")
+
+	assert.True(t, ok)
+	assert.Equal(t, CrossVersionTargetVersion, version)
+}
+
+func TestResolveTargetVersion_RequirementNewerThanTarget_UsesRequirement(t *testing.T) {
+	version, ok := ResolveTargetVersion(CrossVersionOldSource, "v99.0.0")
+
+	assert.True(t, ok)
+	assert.Equal(t, "v99.0.0", version)
+}
+
+func TestResolveTargetVersion_RequirementOlderThanTarget_UsesDefaultTarget(t *testing.T) {
+	// The default target already supports the test, and it is the pairing most
+	// likely to have drifted from the current build.
+	version, ok := ResolveTargetVersion(CrossVersionOldSource, "v0.9.0")
+
+	assert.True(t, ok)
+	assert.Equal(t, CrossVersionTargetVersion, version)
+}
+
+func TestResolveTargetVersion_RequirementEqualToTarget_UsesTarget(t *testing.T) {
+	version, ok := ResolveTargetVersion(CrossVersionOldSource, CrossVersionTargetVersion)
+
+	assert.True(t, ok)
+	assert.Equal(t, CrossVersionTargetVersion, version)
+}
+
+func TestResolveTargetVersion_NonVersionMultiplier_TargetsNothing(t *testing.T) {
+	version, ok := ResolveTargetVersion(SignedDocs, "v99.0.0")
+
+	assert.False(t, ok)
+	assert.Equal(t, "", version)
+}
+
+func TestSetTargetVersion_AppliesToNodeAndRestores(t *testing.T) {
+	// The whole point of the override: Apply stamps the requested release rather
+	// than the default target.
+	m := oldSource()
+
+	restore := SetTargetVersion(CrossVersionOldSource, "v99.0.0")
+	applied := m.Apply(twoNodeActions())
+	assert.Equal(t, "v99.0.0", nodeActions(applied)[0].Version)
+
+	restore()
+	applied = m.Apply(twoNodeActions())
+	assert.Equal(t, CrossVersionTargetVersion, nodeActions(applied)[0].Version)
+}
+
+func TestSetTargetVersion_EmptyVersion_KeepsDefaultTarget(t *testing.T) {
+	restore := SetTargetVersion(CrossVersionOldSource, "")
+	defer restore()
+
+	assert.Equal(t, CrossVersionTargetVersion, TargetVersionInEffect(CrossVersionOldSource))
+}
+
+func TestSetTargetVersion_IsPerMultiplier(t *testing.T) {
+	restore := SetTargetVersion(CrossVersionOldSource, "v99.0.0")
+	defer restore()
+
+	assert.Equal(t, "v99.0.0", TargetVersionInEffect(CrossVersionOldSource))
+	assert.Equal(t, CrossVersionTargetVersion, TargetVersionInEffect(CrossVersionNewSource))
+}
+
+func TestSetTargetVersion_NestedRestoreReturnsPreviousValue(t *testing.T) {
+	outer := SetTargetVersion(CrossVersionOldSource, "v98.0.0")
+	defer outer()
+
+	inner := SetTargetVersion(CrossVersionOldSource, "v99.0.0")
+	assert.Equal(t, "v99.0.0", TargetVersionInEffect(CrossVersionOldSource))
+
+	inner()
+	assert.Equal(t, "v98.0.0", TargetVersionInEffect(CrossVersionOldSource))
 }

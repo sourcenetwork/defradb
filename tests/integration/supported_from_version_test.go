@@ -18,167 +18,177 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"golang.org/x/mod/semver"
 
 	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-// gateRecorder captures what skipUnsupportedVersion did without ending the real test.
+// versionRecorder captures a failure from applyTestCaseVersion without ending
+// the real test.
 //
-// Skipf and Fatalf both end the calling goroutine, so runGate runs the call in one
-// of its own.
-type gateRecorder struct {
+// Fatalf ends the calling goroutine, so runVersion runs the call in one of its
+// own.
+type versionRecorder struct {
 	testing.TB
-	skipped bool
 	failed  bool
 	message string
 }
 
-func (r *gateRecorder) Skipf(format string, args ...any) {
-	r.skipped = true
-	r.message = fmt.Sprintf(format, args...)
-	r.SkipNow()
-}
-
-func (r *gateRecorder) SkipNow() {
-	runtime.Goexit()
-}
-
-func (r *gateRecorder) Errorf(format string, args ...any) {
+func (r *versionRecorder) Errorf(format string, args ...any) {
 	r.failed = true
 	r.message = fmt.Sprintf(format, args...)
 }
 
-func (r *gateRecorder) FailNow() {
+func (r *versionRecorder) FailNow() {
 	r.failed = true
 	runtime.Goexit()
 }
 
-func (r *gateRecorder) Fatalf(format string, args ...any) {
+func (r *versionRecorder) Fatalf(format string, args ...any) {
 	r.failed = true
 	r.message = fmt.Sprintf(format, args...)
 	runtime.Goexit()
 }
 
-func (r *gateRecorder) Helper() {}
+func (r *versionRecorder) Helper() {}
 
-// runGate calls the gate and reports what it decided.
-func runGate(t *testing.T, supportedFrom string, activeNames string) *gateRecorder {
+// runVersion applies the version resolution and reports the version each
+// multiplier ended up pointed at, leaving the defaults restored.
+func runVersion(t *testing.T, supportedFrom string, activeNames string, names ...defraMultiplier.Name) (
+	map[defraMultiplier.Name]string, *versionRecorder,
+) {
 	t.Helper()
 
-	rec := &gateRecorder{TB: t}
+	rec := &versionRecorder{TB: t}
+	resolved := map[defraMultiplier.Name]string{}
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		skipUnsupportedVersion(rec, supportedFrom, activeNames)
+
+		restore := applyTestCaseVersion(rec, supportedFrom, activeNames)
+		defer restore()
+
+		for _, name := range names {
+			resolved[name] = defraMultiplier.TargetVersionInEffect(name)
+		}
 	}()
 	<-done
 
-	return rec
+	return resolved, rec
 }
 
-func TestSkipUnsupportedVersion_TargetOlderThanRequired_Skips(t *testing.T) {
-	rec := runGate(t, "v99.0.0", defraMultiplier.CrossVersionOldSource)
+func TestApplyTestCaseVersion_NoSupportedFrom_UsesDefaultTarget(t *testing.T) {
+	resolved, rec := runVersion(t, "", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
 
-	assert.True(t, rec.skipped)
-	assert.False(t, rec.failed)
-	assert.Contains(t, rec.message, defraMultiplier.CrossVersionOldSource)
-	assert.Contains(t, rec.message, defraMultiplier.CrossVersionTargetVersion)
-	assert.Contains(t, rec.message, "v99.0.0")
+	require.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		resolved[defraMultiplier.CrossVersionOldSource])
 }
 
-func TestSkipUnsupportedVersion_TargetEqualToRequired_Runs(t *testing.T) {
-	rec := runGate(t, defraMultiplier.CrossVersionTargetVersion, defraMultiplier.CrossVersionOldSource)
+func TestApplyTestCaseVersion_SupportedFromNewerThanTarget_RunsAtSupportedFrom(t *testing.T) {
+	// The point of the change: rather than skipping, the test runs against the
+	// oldest release it supports.
+	resolved, rec := runVersion(t, "v99.0.0", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
 
-	assert.False(t, rec.skipped)
-	assert.False(t, rec.failed)
+	require.False(t, rec.failed)
+	assert.Equal(t, "v99.0.0", resolved[defraMultiplier.CrossVersionOldSource])
 }
 
-func TestSkipUnsupportedVersion_TargetNewerThanRequired_Runs(t *testing.T) {
-	require.Equal(t, "v1.0.0", defraMultiplier.CrossVersionTargetVersion,
-		"this test assumes the target is newer than v0.9.0")
+func TestApplyTestCaseVersion_SupportedFromEqualToTarget_UsesTarget(t *testing.T) {
+	resolved, rec := runVersion(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.CrossVersionOldSource, defraMultiplier.CrossVersionOldSource)
 
-	rec := runGate(t, "v0.9.0", defraMultiplier.CrossVersionOldSource)
-
-	assert.False(t, rec.skipped)
-	assert.False(t, rec.failed)
+	require.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		resolved[defraMultiplier.CrossVersionOldSource])
 }
 
-func TestSkipUnsupportedVersion_Empty_Runs(t *testing.T) {
-	rec := runGate(t, "", defraMultiplier.CrossVersionOldSource)
+func TestApplyTestCaseVersion_SupportedFromOlderThanTarget_UsesTarget(t *testing.T) {
+	// The default target already satisfies the test, so it stays: it is the
+	// pairing most likely to have drifted from the current build.
+	require.Equal(t, "v1.0.0", defraMultiplier.CrossVersionTargetVersion)
 
-	assert.False(t, rec.skipped)
-	assert.False(t, rec.failed)
+	resolved, rec := runVersion(t, "v0.9.0", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
+
+	require.False(t, rec.failed)
+	assert.Equal(t, "v1.0.0", resolved[defraMultiplier.CrossVersionOldSource])
 }
 
-func TestSkipUnsupportedVersion_NonVersionMultiplier_Runs(t *testing.T) {
-	// signed-docs says nothing about the release under test, so even a version the
-	// current build does not have must not gate on it.
-	rec := runGate(t, "v99.0.0", defraMultiplier.SignedDocs)
+func TestApplyTestCaseVersion_BothDirections_AreSetIndependently(t *testing.T) {
+	active := fmt.Sprintf("%s,%s",
+		defraMultiplier.CrossVersionOldSource, defraMultiplier.CrossVersionNewSource)
 
-	assert.False(t, rec.skipped)
-	assert.False(t, rec.failed)
+	resolved, rec := runVersion(t, "v99.0.0", active,
+		defraMultiplier.CrossVersionOldSource, defraMultiplier.CrossVersionNewSource)
+
+	require.False(t, rec.failed)
+	assert.Equal(t, "v99.0.0", resolved[defraMultiplier.CrossVersionOldSource])
+	assert.Equal(t, "v99.0.0", resolved[defraMultiplier.CrossVersionNewSource])
 }
 
-func TestSkipUnsupportedVersion_NoActiveMultipliers_Runs(t *testing.T) {
-	rec := runGate(t, "v99.0.0", "")
+func TestApplyTestCaseVersion_RestoresDefaultAfterwards(t *testing.T) {
+	// A version must not leak into the next test in the package.
+	_, rec := runVersion(t, "v99.0.0", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
+	require.False(t, rec.failed)
 
-	assert.False(t, rec.skipped)
-	assert.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.TargetVersionInEffect(defraMultiplier.CrossVersionOldSource))
 }
 
-func TestSkipUnsupportedVersion_InvalidVersion_Fails(t *testing.T) {
+func TestApplyTestCaseVersion_NonVersionMultiplier_Unaffected(t *testing.T) {
+	// signed-docs targets no release, so a declared version must not reach it and
+	// must not disturb the cross-version default.
+	_, rec := runVersion(t, "v99.0.0", defraMultiplier.SignedDocs)
+
+	require.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.TargetVersionInEffect(defraMultiplier.CrossVersionOldSource))
+}
+
+func TestApplyTestCaseVersion_InvalidVersion_Fails(t *testing.T) {
 	// A missing leading v would compare as older than every target and silently
-	// stop gating, so it fails the test instead.
+	// leave the default in place, running against a release that cannot support
+	// the test.
 	for _, invalid := range []string{"1.1.0", "latest", "v", "vX.Y.Z"} {
 		t.Run(invalid, func(t *testing.T) {
-			rec := runGate(t, invalid, defraMultiplier.CrossVersionOldSource)
+			_, rec := runVersion(t, invalid, defraMultiplier.CrossVersionOldSource)
 
 			assert.True(t, rec.failed, "expected %q to fail the test", invalid)
-			assert.False(t, rec.skipped)
 			assert.Contains(t, rec.message, "SupportedFromVersion")
 		})
 	}
 }
 
-func TestSkipUnsupportedVersion_InvalidVersionCheckedBeforeMultipliers(t *testing.T) {
-	// The value is wrong whether or not a version-targeting multiplier is active,
-	// so a run with none must still report it.
-	rec := runGate(t, "1.1.0", defraMultiplier.SignedDocs)
+func TestApplyTestCaseVersion_InvalidVersionCheckedWithoutVersionMultiplier(t *testing.T) {
+	// The value is wrong whether or not a version-targeting multiplier is active.
+	_, rec := runVersion(t, "1.1.0", defraMultiplier.SignedDocs)
 
 	assert.True(t, rec.failed)
-	assert.False(t, rec.skipped)
 }
 
-func TestSkipUnsupportedVersion_SeveralMultipliers_SkipsIfAnyTargetIsTooOld(t *testing.T) {
-	active := fmt.Sprintf("%s,%s", defraMultiplier.SignedDocs, defraMultiplier.CrossVersionNewSource)
+func TestApplyTestCaseVersion_SpacedNames_AreTrimmed(t *testing.T) {
+	resolved, rec := runVersion(t, "v99.0.0", " signed-docs , cross-version-old-source ",
+		defraMultiplier.CrossVersionOldSource)
 
-	rec := runGate(t, "v99.0.0", active)
-
-	assert.True(t, rec.skipped)
-	assert.Contains(t, rec.message, defraMultiplier.CrossVersionNewSource)
-}
-
-func TestSkipUnsupportedVersion_SpacedNames_AreTrimmed(t *testing.T) {
-	// multiplier.Get joins on a comma, but DEFRA_MULTIPLIERS is user-written and
-	// testo trims its own copy, so the harness must not depend on the spacing.
-	rec := runGate(t, "v99.0.0", " signed-docs , cross-version-old-source ")
-
-	assert.True(t, rec.skipped)
+	require.False(t, rec.failed)
+	assert.Equal(t, "v99.0.0", resolved[defraMultiplier.CrossVersionOldSource])
 }
 
 // TestSupportedFromVersion_ComparisonIsNotLexical guards the reason x/mod/semver
 // is used rather than plain string comparison.
-//
-// The gate itself can only be given the one real target, so the ordering the gate
-// relies on is checked directly.
 func TestSupportedFromVersion_ComparisonIsNotLexical(t *testing.T) {
-	// "v1.10.0" sorts before "v1.9.0" as a string, so a lexical gate would decide a
-	// v1.10.0 target is too old for a test needing v1.9.0 and skip it forever.
+	// "v1.10.0" sorts before "v1.9.0" as a string, so a lexical comparison would
+	// treat a v1.10.0 target as older than a v1.9.0 requirement and needlessly
+	// move the run to v1.9.0.
 	require.Less(t, "v1.10.0", "v1.9.0", "precondition: these compare the wrong way lexically")
 
-	assert.Positive(t, semver.Compare("v1.10.0", "v1.9.0"),
-		"v1.10.0 must compare as newer than v1.9.0")
+	assert.Positive(t, semver.Compare("v1.10.0", "v1.9.0"))
 	assert.Negative(t, semver.Compare("v1.9.0", "v1.10.0"))
 	assert.Zero(t, semver.Compare("v1.9.0", "v1.9.0"))
 }

@@ -802,7 +802,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
-	skipUnsupportedVersion(t, testCase.SupportedFromVersion, activeMultipliers)
+	restoreVersions := applyTestCaseVersion(t, testCase.SupportedFromVersion, activeMultipliers)
+	defer restoreVersions()
 
 	modified := multiplier.Apply(actions)
 
@@ -849,35 +850,44 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
-// skipUnsupportedVersion skips the test if an active multiplier targets a release
-// older than the one the test needs.
+// applyTestCaseVersion points each active version-targeting multiplier at the
+// release this test should run against, returning a function that restores the
+// previous values.
+//
+// A test declaring [TestCase.SupportedFromVersion] cannot run against an older
+// release, so rather than dropping it, the multiplier runs it against the oldest
+// release it does support. Skipping would mean a test that names a version
+// contributes nothing to compatibility coverage.
 //
 // This is done here rather than in the multiplier because testo hands
-// [multiplier.ActionAwareSkipper] only the action set, and the required version is
+// [multiplier.Multiplier] only the action set, and the required version is
 // TestCase-level configuration it cannot see.
 //
 // activeNames is passed in rather than read from testo's package-level state so
 // this function is directly unit-testable.
-func skipUnsupportedVersion(t testing.TB, supportedFrom string, activeNames string) {
-	if supportedFrom == "" {
-		return
+func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string) func() {
+	if supportedFrom != "" {
+		// A malformed value would compare as older than every target and silently
+		// leave the default in place, running the test against a release that
+		// cannot support it.
+		require.True(t, semver.IsValid(supportedFrom),
+			"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
 	}
 
-	// A malformed value would compare as older than everything and silently stop
-	// gating, letting the test run against a release that cannot support it.
-	require.True(t, semver.IsValid(supportedFrom),
-		"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
-
+	var restores []func()
 	for name := range strings.SplitSeq(activeNames, ",") {
 		name = strings.TrimSpace(name)
-		target, targetsVersion := defraMultiplier.TargetVersionFor(name)
+		version, targetsVersion := defraMultiplier.ResolveTargetVersion(name, supportedFrom)
 		if !targetsVersion {
 			continue
 		}
 
-		if semver.Compare(target, supportedFrom) < 0 {
-			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
-				name, target, supportedFrom)
+		restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
+	}
+
+	return func() {
+		for _, restore := range restores {
+			restore()
 		}
 	}
 }
