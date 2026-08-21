@@ -342,8 +342,8 @@ func (c *Collection) ExistsDocument(
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
+	cVersion := C.CString(c.def.VersionID)
+	cCollectionID := C.CString(c.def.CollectionID)
 	cName := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
@@ -368,7 +368,11 @@ func (c *Collection) ExistsDocument(
 	))
 
 	if res.Status != 0 {
-		return false, errors.New(res.Error)
+		err := client.ReviveError(res.Error)
+		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	return true, nil
