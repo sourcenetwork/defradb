@@ -316,11 +316,35 @@ func (c *Collection) UpdateDocument(
 	return nil
 }
 
+// SaveDocument emulates the direct Go client's atomic save (GetDocument then Add/UpdateDocument
+// in a single transaction) by explicitly opening one of its own when the caller hasn't already
+// attached one (via a transaction-bound Collection, c.txn), the same pattern Wrapper.AddCollection
+// uses. Without this, each of the three calls below would open and commit its own implicit
+// transaction, leaving a window in which another writer can add or delete the document between
+// the initial GetDocument and the resulting Add/UpdateDocument call.
 func (c *Collection) SaveDocument(
 	ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
 	if !doc.ID().IsValid() {
 		return c.AddDocument(ctx, doc, opts...)
+	}
+
+	var txn datastore.Txn
+	hadTxn := c.txn.HasValue()
+	if hadTxn {
+		txn = c.txn.Value()
+	} else {
+		clientTxn, err := c.w.NewTxn(false)
+		if err != nil {
+			return err
+		}
+		var ok bool
+		txn, ok = clientTxn.(datastore.Txn)
+		if !ok {
+			return errors.New(errCastClientTxnFailed)
+		}
+		defer txn.Discard()
+		ctx = datastore.CtxSetTxn(ctx, txn)
 	}
 
 	saveOpt := utils.NewOptions(opts...)
@@ -329,17 +353,24 @@ func (c *Collection) SaveDocument(
 		getOpts.SetIdentity(saveOpt.Identity.Value())
 	}
 	_, err := c.GetDocument(ctx, doc.ID(), getOpts)
-	if err == nil {
+	switch {
+	case err == nil:
 		updateOpts := options.UpdateDocument()
 		if saveOpt.Identity.HasValue() {
 			updateOpts.SetIdentity(saveOpt.Identity.Value())
 		}
-		return c.UpdateDocument(ctx, doc, updateOpts)
+		err = c.UpdateDocument(ctx, doc, updateOpts)
+	case errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized):
+		err = c.AddDocument(ctx, doc, opts...)
 	}
-	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.AddDocument(ctx, doc, opts...)
+	if err != nil {
+		return err
 	}
-	return err
+
+	if !hadTxn {
+		return txn.Commit()
+	}
+	return nil
 }
 
 func (c *Collection) DeleteDocument(
