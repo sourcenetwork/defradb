@@ -368,11 +368,7 @@ func (c *Collection) ExistsDocument(
 	))
 
 	if res.Status != 0 {
-		err := client.ReviveError(res.Error)
-		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-			return false, nil
-		}
-		return false, err
+		return false, errors.New(res.Error)
 	}
 
 	return true, nil
