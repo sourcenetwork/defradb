@@ -268,76 +268,86 @@ type orderedIndexConfig struct {
 	hasIncludes  bool
 }
 
+type indexDirectiveConfig struct {
+	name string
+	kind string
+
+	// orderedIndexConfig is broken out to support the legacy and newer config
+	// options. New and future index types should use the same approach as the
+	// `vector` field and just have the single `ast.Value` that is directly
+	// parsed.
+	ordered orderedIndexConfig
+	vector  ast.Value
+}
+
+func (c *indexDirectiveConfig) selectKind(kind string) error {
+	if c.kind != "" && c.kind != kind {
+		return ErrIndexWithInvalidArg
+	}
+	c.kind = kind
+	return nil
+}
+
+func (c indexDirectiveConfig) newIndex(fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
+	switch c.kind {
+	case "", types.OrderedIndexKind:
+		return orderedIndexFromConfig(c.name, c.ordered, fieldDef)
+	case types.VectorIndexKind:
+		return vectorIndexFromAST(c.name, c.vector, fieldDef)
+	default:
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+}
+
 func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
-	var name string
-	var kind string
-	var orderedConfig orderedIndexConfig
-	var vectorConfig ast.Value
-	var hasLegacyOrderedConfig bool
-	var hasOrderedConfig bool
-	var hasVectorConfig bool
+	var config indexDirectiveConfig
 
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.IndexDirectivePropName:
-			nameVal, ok := arg.Value.(*ast.StringValue)
+			name, ok := arg.Value.(*ast.StringValue)
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
-			name = nameVal.Value
-			if !IsValidIndexName(name) {
-				return client.NewIndexRequest{}, NewErrIndexWithInvalidName(name)
+			if !IsValidIndexName(name.Value) {
+				return client.NewIndexRequest{}, NewErrIndexWithInvalidName(name.Value)
 			}
+			config.name = name.Value
 
 		case types.IndexDirectivePropKind:
-			kindVal, ok := arg.Value.(*ast.EnumValue)
+			kind, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
-			kind = kindVal.Value
+			if err := config.selectKind(kind.Value); err != nil {
+				return client.NewIndexRequest{}, err
+			}
 
 		case types.OrderedIndexKind:
-			hasOrderedConfig = true
-			if err := parseOrderedIndexConfig(arg.Value, &orderedConfig); err != nil {
+			if err := config.selectKind(types.OrderedIndexKind); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+			if err := parseOrderedIndexConfig(arg.Value, &config.ordered); err != nil {
 				return client.NewIndexRequest{}, err
 			}
 
 		case types.VectorIndexKind:
-			hasVectorConfig = true
-			vectorConfig = arg.Value
+			if err := config.selectKind(types.VectorIndexKind); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+			config.vector = arg.Value
 
 		default:
-			hasLegacyOrderedConfig = true
-			if err := parseOrderedIndexProperty(arg.Name.Value, arg.Value, &orderedConfig); err != nil {
+			if err := config.selectKind(types.OrderedIndexKind); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+			if err := parseOrderedIndexProperty(arg.Name.Value, arg.Value, &config.ordered); err != nil {
 				return client.NewIndexRequest{}, err
 			}
 		}
 	}
 
-	if hasOrderedConfig && (hasVectorConfig || hasLegacyOrderedConfig) ||
-		hasVectorConfig && hasLegacyOrderedConfig ||
-		kind == types.OrderedIndexKind && hasVectorConfig ||
-		kind == types.VectorIndexKind && (hasOrderedConfig || hasLegacyOrderedConfig) {
-		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-	}
-
-	selectedKind := kind
-	if selectedKind == "" {
-		if hasVectorConfig {
-			selectedKind = types.VectorIndexKind
-		} else {
-			selectedKind = types.OrderedIndexKind
-		}
-	}
-
-	switch selectedKind {
-	case types.OrderedIndexKind:
-		return orderedIndexFromConfig(name, orderedConfig, fieldDef)
-	case types.VectorIndexKind:
-		return vectorIndexFromAST(name, vectorConfig, fieldDef)
-	default:
-		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-	}
+	return config.newIndex(fieldDef)
 }
 
 func parseOrderedIndexConfig(value ast.Value, config *orderedIndexConfig) error {
@@ -741,6 +751,10 @@ func vectorIndexFromAST(
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 
+	if config == nil {
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+
 	var dimensions uint32
 	algorithm := client.VectorAlgorithmHNSW
 	metric := client.DistanceMetricCosine
@@ -750,36 +764,34 @@ func vectorIndexFromAST(
 		EfSearch:       client.DefaultHNSWEfSearch,
 	}
 
-	if config != nil {
-		obj, ok := config.(*ast.ObjectValue)
-		if !ok {
-			return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-		}
-		for _, field := range obj.Fields {
-			switch field.Name.Value {
-			case types.VectorIndexPropDimensions:
-				parsed, err := parseUint32ASTValue(field.Value)
-				if err != nil {
-					return client.NewIndexRequest{}, err
-				}
-				dimensions = parsed
-
-			case types.VectorIndexPropAlgorithm:
-				algorithmVal, ok := field.Value.(*ast.EnumValue)
-				if !ok || algorithmVal.Value != types.VectorIndexAlgorithmHNSW {
-					return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-				}
-				algorithm = client.VectorAlgorithmHNSW
-
-			case types.VectorIndexPropHNSW:
-				algorithm = client.VectorAlgorithmHNSW
-				if err := parseHNSWConfig(field.Value, &metric, &hnswParams); err != nil {
-					return client.NewIndexRequest{}, err
-				}
-
-			default:
-				return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+	obj, ok := config.(*ast.ObjectValue)
+	if !ok {
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+	for _, field := range obj.Fields {
+		switch field.Name.Value {
+		case types.VectorIndexPropDimensions:
+			parsed, err := parseUint32ASTValue(field.Value)
+			if err != nil {
+				return client.NewIndexRequest{}, err
 			}
+			dimensions = parsed
+
+		case types.VectorIndexPropAlgorithm:
+			algorithmVal, ok := field.Value.(*ast.EnumValue)
+			if !ok || algorithmVal.Value != types.VectorIndexAlgorithmHNSW {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			algorithm = client.VectorAlgorithmHNSW
+
+		case types.VectorIndexPropHNSW:
+			algorithm = client.VectorAlgorithmHNSW
+			if err := parseHNSWConfig(field.Value, &metric, &hnswParams); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+
+		default:
+			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
 		}
 	}
 
