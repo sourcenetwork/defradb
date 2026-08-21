@@ -9,24 +9,24 @@
 //
 // See tests/LICENSE for details.
 
-package tests
+package action
 
 import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func RandomNetworkingConfig() NodeConfig {
-	return NodeConfig{
+func RandomNetworkingConfig() *NewNode {
+	return &NewNode{
 		Network: func() options.NodeP2POptions {
 			return options.NodeP2POptions{}
 		},
 	}
 }
 
-func withPrivateKey(_ *options.NodeP2POptions, _ []byte) {
+func WithPrivateKey(_ *options.NodeP2POptions, _ []byte) {
 	// JS builds don't support P2P
 }
 
-func withListenAddresses(_ *options.NodeP2POptions, _ ...string) {
+func WithListenAddresses(_ *options.NodeP2POptions, _ ...string) {
 	// JS builds don't support P2P
 }

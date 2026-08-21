@@ -39,6 +39,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
+   * [Embedded DefraDB](#embedded-defradb)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -597,6 +598,23 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 [Metric exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp)
 
 [Trace exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
+
+## Embedded DefraDB
+
+Besides running as a standalone node, DefraDB can be embedded into an application through its C bindings, built from the [`cbindings`](./cbindings) package. The shared library exposes the operations implemented there, so an embedding application works against a local database in process.
+
+Build the library with one of the following targets:
+
+```shell
+make build-c-shared-linux      # build/libdefradb.so plus the C headers
+make build-c-shared-linux:deb  # the same, packaged as a .deb
+make build-c-static-windows
+make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=21
+```
+
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
+
+For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
 
 ## Community
 

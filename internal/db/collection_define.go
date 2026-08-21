@@ -934,8 +934,9 @@ func findIndexWithFirstField(
 		}
 	}
 	for _, index := range existingIndexes {
-		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
-			return index.Unique, true
+		// Only non-vector indexes carry uniqueness, so skip a vector index here.
+		if !index.IsVector() && len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index.GetUnique(), true
 		}
 	}
 	return false, false

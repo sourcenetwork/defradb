@@ -155,6 +155,12 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
+			case types.VectorIndexDirectiveLabel:
+				index, err := vectorIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				indexes = append(indexes, index)
 			}
 		}
 	}
@@ -639,6 +645,132 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 		}
 	}
 	return policyDesc, nil
+}
+
+func vectorIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.NewIndexRequest, error) {
+	var dimensions uint32
+	// The algorithm is chosen by which config arg is set. HNSW is the only one today, and also the
+	// default when no config is given.
+	algorithm := client.VectorAlgorithmHNSW
+	metric := client.DistanceMetricCosine
+	// Defaults come from client so the directive definition and the parser cannot drift.
+	hnswParams := client.HNSWParams{
+		M:              client.DefaultHNSWM,
+		EfConstruction: client.DefaultHNSWEfConstruction,
+		EfSearch:       client.DefaultHNSWEfSearch,
+	}
+
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.VectorIndexDirectivePropDimensions:
+			dimensionsVal, ok := arg.Value.(*ast.IntValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			parsed, err := strconv.ParseUint(dimensionsVal.Value, 10, 32)
+			if err != nil {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			dimensions = uint32(parsed)
+
+		case types.VectorIndexDirectivePropHNSW:
+			algorithm = client.VectorAlgorithmHNSW
+			if err := parseHNSWConfig(arg.Value, &metric, &hnswParams); err != nil {
+				return client.NewIndexRequest{}, err
+			}
+
+		default:
+			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+		}
+	}
+
+	vectorDesc := client.VectorIndexDescription{
+		Algorithm:  algorithm,
+		Metric:     metric,
+		Dimensions: dimensions,
+	}
+	if algorithm == client.VectorAlgorithmHNSW {
+		vectorDesc.HNSW = &hnswParams
+	}
+
+	return client.NewIndexRequest{
+		Name: "",
+		Fields: []client.IndexedFieldDescription{
+			{Name: fieldDef.Name.Value},
+		},
+		Vector: &vectorDesc,
+	}, nil
+}
+
+// parseHNSWConfig reads the @vectorIndex `HNSW` config object into metric + params, overwriting only
+// the fields the user set (the rest keep their defaults).
+func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *client.HNSWParams) error {
+	obj, ok := value.(*ast.ObjectValue)
+	if !ok {
+		return ErrIndexWithInvalidArg
+	}
+
+	for _, field := range obj.Fields {
+		switch field.Name.Value {
+		case types.VectorIndexConfigPropMetric:
+			metricVal, ok := field.Value.(*ast.EnumValue)
+			if !ok {
+				return ErrIndexWithInvalidArg
+			}
+			switch metricVal.Value {
+			case types.VectorDistanceMetricCosine:
+				*metric = client.DistanceMetricCosine
+			case types.VectorDistanceMetricEuclidean:
+				*metric = client.DistanceMetricEuclidean
+			case types.VectorDistanceMetricDot:
+				*metric = client.DistanceMetricDotProduct
+			default:
+				return NewErrVectorIndexUnknownMetric(metricVal.Value)
+			}
+
+		case types.VectorIndexConfigPropM:
+			parsed, err := parseUint32ASTValue(field.Value)
+			if err != nil {
+				return err
+			}
+			params.M = parsed
+
+		case types.VectorIndexConfigPropEfConstruction:
+			parsed, err := parseUint32ASTValue(field.Value)
+			if err != nil {
+				return err
+			}
+			params.EfConstruction = parsed
+
+		case types.VectorIndexConfigPropEfSearch:
+			parsed, err := parseUint32ASTValue(field.Value)
+			if err != nil {
+				return err
+			}
+			params.EfSearch = parsed
+
+		default:
+			return ErrIndexWithUnknownArg
+		}
+	}
+	return nil
+}
+
+// parseUint32ASTValue reads an AST int literal into a uint32, rejecting non-ints and out-of-range
+// values.
+func parseUint32ASTValue(value ast.Value) (uint32, error) {
+	intVal, ok := value.(*ast.IntValue)
+	if !ok {
+		return 0, ErrIndexWithInvalidArg
+	}
+	parsed, err := strconv.ParseUint(intVal.Value, 10, 32)
+	if err != nil {
+		return 0, ErrIndexWithInvalidArg
+	}
+	return uint32(parsed), nil
 }
 
 func vectorEmbeddingFromAST(
