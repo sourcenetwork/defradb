@@ -62,8 +62,14 @@ const (
 type DistanceMetric string
 
 const (
-	// DistanceMetricCosine identifies the cosine distance metric.
+	// DistanceMetricCosine identifies the cosine distance metric, which compares direction only.
 	DistanceMetricCosine DistanceMetric = "COSINE"
+	// DistanceMetricEuclidean identifies the straight-line (L2) distance metric, which compares both
+	// direction and magnitude.
+	DistanceMetricEuclidean DistanceMetric = "EUCLIDEAN"
+	// DistanceMetricDotProduct identifies the dot product metric, which grows with magnitude, so a
+	// longer vector pointing the same way scores nearer than a shorter one.
+	DistanceMetricDotProduct DistanceMetric = "DOT"
 )
 
 // HNSWParams holds HNSW-specific build/search parameters.

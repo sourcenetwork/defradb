@@ -568,6 +568,10 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
+	if err := validateNoConflictingVectorIndexMetric(def, fieldName, desc.Vector.Metric); err != nil {
+		return err
+	}
+
 	if desc.Vector.Dimensions > 0 {
 		return nil
 	}
@@ -581,6 +585,33 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	}
 
 	return NewErrVectorIndexMissingDimensions(fieldName)
+}
+
+// validateNoConflictingVectorIndexMetric rejects creating a vector index on a field that another
+// vector index already covers with a different metric.
+//
+// There is no operation that changes an existing index, so this is about two indexes coexisting. The
+// planner uses the first vector index it finds on a field, so which metric answered a query would be
+// arbitrary. A different metric also means a differently built graph, which is why the fix is to drop
+// and recreate rather than to keep both.
+//
+// We don't have a way to query with a specific metric. So until then we have time limit
+// https://github.com/sourcenetwork/defradb/issues/5072
+func validateNoConflictingVectorIndexMetric(
+	def client.CollectionVersion,
+	fieldName string,
+	metric client.DistanceMetric,
+) error {
+	for _, index := range def.Indexes {
+		vector, ok := index.GetVector()
+		if !ok || index.Fields[0].Name != fieldName {
+			continue
+		}
+		if vector.Metric != metric {
+			return NewErrVectorIndexMetricConflict(fieldName, vector.Metric, metric)
+		}
+	}
+	return nil
 }
 
 // validateHNSWParams rejects HNSW parameters above their allowed maximum. See the Max* constants in

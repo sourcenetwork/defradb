@@ -118,9 +118,9 @@ func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 		{
 			description: "unsupported metric inside the HNSW config",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: EUCLIDEAN})
+				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: MANHATTAN})
 			}`,
-			expectedErr: `Expected type "VectorDistanceMetric", found EUCLIDEAN`,
+			expectedErr: `Expected type "VectorDistanceMetric", found MANHATTAN`,
 		},
 		{
 			description: "unknown top-level argument",

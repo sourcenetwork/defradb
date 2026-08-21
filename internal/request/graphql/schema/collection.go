@@ -721,8 +721,12 @@ func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *cli
 				return ErrIndexWithInvalidArg
 			}
 			switch metricVal.Value {
-			case "COSINE":
+			case types.VectorDistanceMetricCosine:
 				*metric = client.DistanceMetricCosine
+			case types.VectorDistanceMetricEuclidean:
+				*metric = client.DistanceMetricEuclidean
+			case types.VectorDistanceMetricDot:
+				*metric = client.DistanceMetricDotProduct
 			default:
 				return NewErrVectorIndexUnknownMetric(metricVal.Value)
 			}

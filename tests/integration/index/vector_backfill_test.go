@@ -41,7 +41,7 @@ func newAsyncVectorIndex() *action.NewIndex {
 
 // Creating a vector index on a populated collection backfills the graph via the async worker. The
 // explain assertion is what proves the backfill built a usable graph: a broken build would leave the
-// index non-ready and the query would full-scan (indexFetches 0, docFetches 4) instead of routing.
+// index non-ready and the query would full-scan (indexFetches 0, docFetches 4) instead of using the index.
 func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.T) {
 	release, cleanup := installBuildGate(t)
 	defer cleanup()
@@ -134,9 +134,9 @@ func TestVectorIndex_AsyncBackfillOverExistingDocs_BuildsUsableGraph(t *testing.
 }
 
 // While a vector index is building, the planner must not use it: the query full-scans (indexFetches
-// 0) but still returns correct results. Once ready, the same query routes to the index (indexFetches
+// 0) but still returns correct results. Once ready, the same query uses the index (indexFetches
 // 1).
-func TestVectorIndex_QueryWhileBuilding_FullScansThenRoutes(t *testing.T) {
+func TestVectorIndex_QueryWhileBuilding_FullScansThenUsesIndex(t *testing.T) {
 	release, cleanup := installBuildGate(t)
 	defer cleanup()
 
@@ -178,7 +178,7 @@ func TestVectorIndex_QueryWhileBuilding_FullScansThenRoutes(t *testing.T) {
 			},
 			action.NewRunFunc(release),
 			&action.WaitForIndexReady{CollectionID: 0},
-			// Ready: the same query now routes to the graph.
+			// Ready: the same query now uses the index.
 			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
