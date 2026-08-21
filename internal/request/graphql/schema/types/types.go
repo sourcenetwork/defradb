@@ -64,6 +64,13 @@ const (
 	VectorIndexConfigPropEfConstruction = "efConstruction"
 	VectorIndexConfigPropEfSearch       = "efSearch"
 
+	// Values of the VectorDistanceMetric enum. They are the string form of the matching
+	// [client.DistanceMetric], so the two cannot drift apart and the directive parser maps one to the
+	// other without a translation table.
+	VectorDistanceMetricCosine    = string(client.DistanceMetricCosine)
+	VectorDistanceMetricEuclidean = string(client.DistanceMetricEuclidean)
+	VectorDistanceMetricDot       = string(client.DistanceMetricDotProduct)
+
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
@@ -104,9 +111,18 @@ func VectorDistanceMetricEnum() *gql.Enum {
 	return gql.NewEnum(gql.EnumConfig{
 		Name: "VectorDistanceMetric",
 		Values: gql.EnumValueConfigMap{
-			"COSINE": &gql.EnumValueConfig{
-				Description: "Cosine distance on normalised vectors.",
-				Value:       "COSINE",
+			VectorDistanceMetricCosine: &gql.EnumValueConfig{
+				Description: "Cosine distance on normalised vectors. Compares direction only.",
+				Value:       VectorDistanceMetricCosine,
+			},
+			VectorDistanceMetricEuclidean: &gql.EnumValueConfig{
+				Description: "Straight-line (L2) distance. Compares direction and magnitude.",
+				Value:       VectorDistanceMetricEuclidean,
+			},
+			VectorDistanceMetricDot: &gql.EnumValueConfig{
+				Description: "Dot product. Grows with magnitude, so a longer vector pointing the " +
+					"same way is nearer.",
+				Value: VectorDistanceMetricDot,
 			},
 		},
 	})
@@ -121,9 +137,9 @@ func HNSWIndexConfigInputObject(metricEnum *gql.Enum) *gql.InputObject {
 		Description: "HNSW (Hierarchical Navigable Small World) vector index parameters.",
 		Fields: gql.InputObjectConfigFieldMap{
 			VectorIndexConfigPropMetric: &gql.InputObjectFieldConfig{
-				Description:  "Distance metric (currently only COSINE).",
+				Description:  "Distance metric used to compare vectors.",
 				Type:         metricEnum,
-				DefaultValue: "COSINE",
+				DefaultValue: VectorDistanceMetricCosine,
 			},
 			VectorIndexConfigPropM: &gql.InputObjectFieldConfig{
 				Description:  "Max connections per node. Higher improves recall at the cost of memory and build time.",
