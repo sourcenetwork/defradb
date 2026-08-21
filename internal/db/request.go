@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/extensions"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -47,6 +48,10 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		return res
 	}
 
+	// Warnings raised while running the request are collected here and returned in
+	// the `extensions` field of the response.
+	ctx = extensions.WithAccumulator(ctx)
+
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
@@ -63,5 +68,6 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		res.GQL.Errors = append(res.GQL.Errors, err)
 	}
 	res.GQL.Data = results
+	res.GQL.Extensions = extensions.Collect(ctx)
 	return res
 }

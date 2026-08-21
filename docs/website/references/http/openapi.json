@@ -2031,6 +2031,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2058,6 +2081,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2103,6 +2149,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2130,6 +2199,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

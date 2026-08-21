@@ -421,6 +421,45 @@ type GQLResult struct {
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+
+	// Extensions holds extra information about the request, such as warnings.
+	//
+	// It is nil when there is nothing to report, and the field is then left out
+	// of the response.
+	Extensions *GQLExtensions `json:"extensions,omitempty"`
+}
+
+// GQLExtensions sits alongside data and errors in a GQL response. It carries anything
+// we want to tell the caller that is not a result and not an error.
+//
+// Callers ignore entries they do not know about.
+type GQLExtensions struct {
+	// Warnings holds anything the caller should know about a request that worked.
+	Warnings []GQLWarning `json:"warnings,omitempty"`
+}
+
+// IsEmpty returns true if there is nothing to send.
+//
+// An empty value must be left out of the response, not sent as an empty object.
+// Sending `"extensions":{}` would change the shape of every response.
+func (e *GQLExtensions) IsEmpty() bool {
+	return e == nil || len(e.Warnings) == 0
+}
+
+// GQLWarning describes something that happened during a request that worked. It is not
+// an error, and it does not mean the results are wrong.
+type GQLWarning struct {
+	// Code names the warning. Callers check this, and it does not change once
+	// released.
+	Code string `json:"code"`
+
+	// Message explains the warning to a person.
+	//
+	// The wording can change at any time, so do not parse it.
+	Message string `json:"message"`
+
+	// Detail holds values belonging to this warning. Optional.
+	Detail map[string]any `json:"detail,omitempty"`
 }
 
 // gqlError represents an error that was encountered during a GQL request.
@@ -439,6 +478,8 @@ type gqlResult struct {
 	Errors []gqlError `json:"errors,omitempty"`
 	// Data contains the result data
 	Data any `json:"data"`
+	// Extensions contains the result extensions
+	Extensions *GQLExtensions `json:"extensions,omitempty"`
 }
 
 func (res *GQLResult) UnmarshalJSON(data []byte) error {
@@ -449,6 +490,7 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	res.Data = out.Data
+	res.Extensions = out.Extensions
 	res.Errors = make([]error, len(out.Errors))
 	for i, e := range out.Errors {
 		res.Errors[i] = ReviveError(e.Message)
@@ -458,6 +500,9 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 
 func (res GQLResult) MarshalJSON() ([]byte, error) {
 	out := gqlResult{Data: res.Data}
+	if !res.Extensions.IsEmpty() {
+		out.Extensions = res.Extensions
+	}
 	out.Errors = make([]gqlError, len(res.Errors))
 	for i, e := range res.Errors {
 		out.Errors[i] = gqlError{Message: e.Error()}
