@@ -163,7 +163,7 @@ deps\:test\:js:
 
 .PHONY: deps\:bench
 deps\:bench:
-	go install golang.org/x/perf/cmd/benchstat@latest
+	go install golang.org/x/perf/cmd/benchstat@fd4a688df89207abdabe0a0cf5b2cd9ccfd376d2
 
 .PHONY: deps\:chglog
 deps\:chglog:
