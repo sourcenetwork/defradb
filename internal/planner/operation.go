@@ -94,7 +94,7 @@ func (n *operationNode) Next() (bool, error) {
 	n.currentValue = n.documentMapping.NewDoc()
 	for i, child := range n.children {
 		switch child.(type) {
-		case *topLevelNode:
+		case *topLevelNode, *truncateNode:
 			hasChild, err := child.Next()
 			if err != nil {
 				return false, err

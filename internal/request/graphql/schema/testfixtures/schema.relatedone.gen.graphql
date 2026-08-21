@@ -1696,6 +1696,20 @@ type Mutation {
         """
         filter: BookFilterArg
     ): [Book]
+    "Permanently remove all or matching documents from this node."
+    truncate_Author(
+        "Filter documents to truncate"
+        filter: AuthorFilterArg
+        "Remove unshared history for matching documents"
+        pruneHistory: Boolean
+    ): Boolean!
+    "Permanently remove all or matching documents from this node."
+    truncate_Book(
+        "Filter documents to truncate"
+        filter: BookFilterArg
+        "Remove unshared history for matching documents"
+        pruneHistory: Boolean
+    ): Boolean!
     """
     
     Updates documents in this collection using the data provided. Only documents

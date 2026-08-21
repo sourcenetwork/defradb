@@ -955,6 +955,13 @@ type Mutation {
         """
         filter: UserFilterArg
     ): [User]
+    "Permanently remove all or matching documents from this node."
+    truncate_User(
+        "Filter documents to truncate"
+        filter: UserFilterArg
+        "Remove unshared history for matching documents"
+        pruneHistory: Boolean
+    ): Boolean!
     """
     
     Updates documents in this collection using the data provided. Only documents

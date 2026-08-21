@@ -15,14 +15,15 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	Input              = "input"
-	AddInput           = "add"
-	UpdateInput        = "update"
-	FieldArgName       = "field"
-	FieldIDName        = "fieldId"
-	FieldNameName      = "fieldName"
-	CompositeFieldName = "_C"
-	ShowDeleted        = "showDeleted"
+	Input               = "input"
+	AddInput            = "add"
+	UpdateInput         = "update"
+	FieldArgName        = "field"
+	FieldIDName         = "fieldId"
+	FieldNameName       = "fieldName"
+	CompositeFieldName  = "_C"
+	ShowDeleted         = "showDeleted"
+	PruneHistoryArgName = "pruneHistory"
 
 	EncryptDocArgName         = "encrypt"
 	EncryptFieldsArgName      = "encryptFields"

@@ -14,27 +14,36 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
 
-// execRequest executes a request against the database.
-func (db *DB) execRequest(ctx context.Context, request string, options *client.GQLOptions) *client.RequestResult {
+func (db *DB) parseRequest(
+	ctx context.Context,
+	query string,
+	options *client.GQLOptions,
+) (*request.Request, *client.RequestResult) {
 	res := &client.RequestResult{}
-	ast, err := db.parser.BuildRequestAST(ctx, request)
+	ast, err := db.parser.BuildRequestAST(ctx, query)
 	if err != nil {
 		res.GQL.Errors = append(res.GQL.Errors, err)
-		return res
+		return nil, res
 	}
 	if db.parser.IsIntrospection(ast) {
-		return db.parser.ExecuteIntrospection(ctx, request)
+		return nil, db.parser.ExecuteIntrospection(ctx, query)
 	}
 
 	parsedRequest, errors := db.parser.Parse(ctx, ast, options)
 	if len(errors) > 0 {
 		res.GQL.Errors = append(res.GQL.Errors, errors...)
-		return res
+		return nil, res
 	}
+	return parsedRequest, nil
+}
+
+func (db *DB) executeRequest(ctx context.Context, parsedRequest *request.Request) *client.RequestResult {
+	res := &client.RequestResult{}
 
 	pub, err := db.handleSubscription(ctx, parsedRequest)
 	if err != nil {
@@ -64,4 +73,19 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 	}
 	res.GQL.Data = results
 	return res
+}
+
+func truncateMutationState(req *request.Request) (bool, bool) {
+	if len(req.Mutations) == 0 {
+		return false, false
+	}
+
+	hasTruncate := false
+	for _, selection := range req.Mutations[0].Selections {
+		mutation, ok := selection.(*request.ObjectMutation)
+		if ok && mutation.Type == request.TruncateObjects {
+			hasTruncate = true
+		}
+	}
+	return hasTruncate, hasTruncate && len(req.Mutations[0].Selections) == 1
 }

@@ -57,6 +57,7 @@ var (
 	_ explainablePlanNode = (*selectTopNode)(nil)
 	_ explainablePlanNode = (*sumNode)(nil)
 	_ explainablePlanNode = (*topLevelNode)(nil)
+	_ explainablePlanNode = (*truncateNode)(nil)
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
 	_ explainablePlanNode = (*upsertNode)(nil)
