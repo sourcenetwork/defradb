@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
@@ -129,6 +130,7 @@ func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 // there is no way in through the patch surface.
 func TestPatchCollection_ModifyVectorIndexMetric_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
