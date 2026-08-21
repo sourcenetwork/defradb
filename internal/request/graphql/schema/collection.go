@@ -155,12 +155,6 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
-			case types.VectorIndexDirectiveLabel:
-				index, err := vectorIndexFromAST(directive, field)
-				if err != nil {
-					return core.Collection{}, err
-				}
-				indexes = append(indexes, index)
 			}
 		}
 	}
@@ -265,12 +259,23 @@ func IsValidIndexName(name string) bool {
 	return true
 }
 
+type orderedIndexConfig struct {
+	unique       bool
+	direction    *ast.EnumValue
+	includes     *ast.ListValue
+	hasUnique    bool
+	hasDirection bool
+	hasIncludes  bool
+}
+
 func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
 	var name string
-	var unique bool
-
-	var direction *ast.EnumValue
-	var includes *ast.ListValue
+	var kind string
+	var orderedConfig orderedIndexConfig
+	var vectorConfig ast.Value
+	var hasLegacyOrderedConfig bool
+	var hasOrderedConfig bool
+	var hasVectorConfig bool
 
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
@@ -284,38 +289,122 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 				return client.NewIndexRequest{}, NewErrIndexWithInvalidName(name)
 			}
 
-		case types.IndexDirectivePropIncludes:
-			includesVal, ok := arg.Value.(*ast.ListValue)
+		case types.IndexDirectivePropKind:
+			kindVal, ok := arg.Value.(*ast.EnumValue)
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
-			includes = includesVal
+			kind = kindVal.Value
 
-		case types.IndexDirectivePropDirection:
-			directionVal, ok := arg.Value.(*ast.EnumValue)
-			if !ok {
-				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+		case types.OrderedIndexKind:
+			hasOrderedConfig = true
+			if err := parseOrderedIndexConfig(arg.Value, &orderedConfig); err != nil {
+				return client.NewIndexRequest{}, err
 			}
-			direction = directionVal
 
-		case types.IndexDirectivePropUnique:
-			uniqueVal, ok := arg.Value.(*ast.BooleanValue)
-			if !ok {
-				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-			}
-			unique = uniqueVal.Value
+		case types.VectorIndexKind:
+			hasVectorConfig = true
+			vectorConfig = arg.Value
 
 		default:
-			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+			hasLegacyOrderedConfig = true
+			if err := parseOrderedIndexProperty(arg.Name.Value, arg.Value, &orderedConfig); err != nil {
+				return client.NewIndexRequest{}, err
+			}
 		}
 	}
 
+	if hasOrderedConfig && (hasVectorConfig || hasLegacyOrderedConfig) ||
+		hasVectorConfig && hasLegacyOrderedConfig ||
+		kind == types.OrderedIndexKind && hasVectorConfig ||
+		kind == types.VectorIndexKind && (hasOrderedConfig || hasLegacyOrderedConfig) {
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+
+	selectedKind := kind
+	if selectedKind == "" {
+		if hasVectorConfig {
+			selectedKind = types.VectorIndexKind
+		} else {
+			selectedKind = types.OrderedIndexKind
+		}
+	}
+
+	switch selectedKind {
+	case types.OrderedIndexKind:
+		return orderedIndexFromConfig(name, orderedConfig, fieldDef)
+	case types.VectorIndexKind:
+		return vectorIndexFromAST(name, vectorConfig, fieldDef)
+	default:
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+}
+
+func parseOrderedIndexConfig(value ast.Value, config *orderedIndexConfig) error {
+	obj, ok := value.(*ast.ObjectValue)
+	if !ok {
+		return ErrIndexWithInvalidArg
+	}
+	for _, field := range obj.Fields {
+		if err := parseOrderedIndexProperty(field.Name.Value, field.Value, config); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func parseOrderedIndexProperty(name string, value ast.Value, config *orderedIndexConfig) error {
+	switch name {
+	case types.IndexDirectivePropIncludes:
+		if config.hasIncludes {
+			return ErrIndexWithInvalidArg
+		}
+		includes, ok := value.(*ast.ListValue)
+		if !ok {
+			return ErrIndexWithInvalidArg
+		}
+		config.includes = includes
+		config.hasIncludes = true
+
+	case types.IndexDirectivePropDirection:
+		if config.hasDirection {
+			return ErrIndexWithInvalidArg
+		}
+		direction, ok := value.(*ast.EnumValue)
+		if !ok {
+			return ErrIndexWithInvalidArg
+		}
+		config.direction = direction
+		config.hasDirection = true
+
+	case types.IndexDirectivePropUnique:
+		if config.hasUnique {
+			return ErrIndexWithInvalidArg
+		}
+		unique, ok := value.(*ast.BooleanValue)
+		if !ok {
+			return ErrIndexWithInvalidArg
+		}
+		config.unique = unique.Value
+		config.hasUnique = true
+
+	default:
+		return ErrIndexWithUnknownArg
+	}
+	return nil
+}
+
+func orderedIndexFromConfig(
+	name string,
+	config orderedIndexConfig,
+	fieldDef *ast.FieldDefinition,
+) (client.NewIndexRequest, error) {
 	var containsField bool
 	var fields []client.IndexedFieldDescription
 
-	if includes != nil {
-		for _, include := range includes.Values {
-			field, err := indexFieldFromAST(include, direction)
+	if config.includes != nil {
+		for _, include := range config.includes.Values {
+			field, err := indexFieldFromAST(include, config.direction)
 			if err != nil {
 				return client.NewIndexRequest{}, err
 			}
@@ -326,15 +415,11 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 		}
 	}
 
-	// if the directive is applied to a field and
-	// the field is not in the includes list
-	// implicitly add it as the first entry
+	// If the directive is applied to a field that is not in the includes list, add it first.
 	if !containsField && fieldDef != nil {
-		field := client.IndexedFieldDescription{
-			Name: fieldDef.Name.Value,
-		}
-		if direction != nil {
-			field.Descending = direction.Value == types.FieldOrderDESC
+		field := client.IndexedFieldDescription{Name: fieldDef.Name.Value}
+		if config.direction != nil {
+			field.Descending = config.direction.Value == types.FieldOrderDESC
 		}
 		fields = append([]client.IndexedFieldDescription{field}, fields...)
 	}
@@ -346,7 +431,7 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 	return client.NewIndexRequest{
 		Name:   name,
 		Fields: fields,
-		Unique: unique,
+		Unique: config.unique,
 	}, nil
 }
 
@@ -648,42 +733,53 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 }
 
 func vectorIndexFromAST(
-	directive *ast.Directive,
+	name string,
+	config ast.Value,
 	fieldDef *ast.FieldDefinition,
 ) (client.NewIndexRequest, error) {
+	if fieldDef == nil {
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	}
+
 	var dimensions uint32
-	// The algorithm is chosen by which config arg is set. HNSW is the only one today, and also the
-	// default when no config is given.
 	algorithm := client.VectorAlgorithmHNSW
 	metric := client.DistanceMetricCosine
-	// Defaults come from client so the directive definition and the parser cannot drift.
 	hnswParams := client.HNSWParams{
 		M:              client.DefaultHNSWM,
 		EfConstruction: client.DefaultHNSWEfConstruction,
 		EfSearch:       client.DefaultHNSWEfSearch,
 	}
 
-	for _, arg := range directive.Arguments {
-		switch arg.Name.Value {
-		case types.VectorIndexDirectivePropDimensions:
-			dimensionsVal, ok := arg.Value.(*ast.IntValue)
-			if !ok {
-				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-			}
-			parsed, err := strconv.ParseUint(dimensionsVal.Value, 10, 32)
-			if err != nil {
-				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-			}
-			dimensions = uint32(parsed)
+	if config != nil {
+		obj, ok := config.(*ast.ObjectValue)
+		if !ok {
+			return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+		}
+		for _, field := range obj.Fields {
+			switch field.Name.Value {
+			case types.VectorIndexPropDimensions:
+				parsed, err := parseUint32ASTValue(field.Value)
+				if err != nil {
+					return client.NewIndexRequest{}, err
+				}
+				dimensions = parsed
 
-		case types.VectorIndexDirectivePropHNSW:
-			algorithm = client.VectorAlgorithmHNSW
-			if err := parseHNSWConfig(arg.Value, &metric, &hnswParams); err != nil {
-				return client.NewIndexRequest{}, err
-			}
+			case types.VectorIndexPropAlgorithm:
+				algorithmVal, ok := field.Value.(*ast.EnumValue)
+				if !ok || algorithmVal.Value != types.VectorIndexAlgorithmHNSW {
+					return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+				}
+				algorithm = client.VectorAlgorithmHNSW
 
-		default:
-			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+			case types.VectorIndexPropHNSW:
+				algorithm = client.VectorAlgorithmHNSW
+				if err := parseHNSWConfig(field.Value, &metric, &hnswParams); err != nil {
+					return client.NewIndexRequest{}, err
+				}
+
+			default:
+				return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+			}
 		}
 	}
 
@@ -697,16 +793,13 @@ func vectorIndexFromAST(
 	}
 
 	return client.NewIndexRequest{
-		Name: "",
-		Fields: []client.IndexedFieldDescription{
-			{Name: fieldDef.Name.Value},
-		},
+		Name:   name,
+		Fields: []client.IndexedFieldDescription{{Name: fieldDef.Name.Value}},
 		Vector: &vectorDesc,
 	}, nil
 }
 
-// parseHNSWConfig reads the @vectorIndex `HNSW` config object into metric + params, overwriting only
-// the fields the user set (the rest keep their defaults).
+// parseHNSWConfig reads the @index vector HNSW config, overwriting only explicitly set defaults.
 func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *client.HNSWParams) error {
 	obj, ok := value.(*ast.ObjectValue)
 	if !ok {
@@ -731,21 +824,21 @@ func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *cli
 				return NewErrVectorIndexUnknownMetric(metricVal.Value)
 			}
 
-		case types.VectorIndexConfigPropM:
+		case types.VectorIndexHNSWConfigPropM:
 			parsed, err := parseUint32ASTValue(field.Value)
 			if err != nil {
 				return err
 			}
 			params.M = parsed
 
-		case types.VectorIndexConfigPropEfConstruction:
+		case types.VectorIndexHNSWConfigPropEfConstruction:
 			parsed, err := parseUint32ASTValue(field.Value)
 			if err != nil {
 				return err
 			}
 			params.EfConstruction = parsed
 
-		case types.VectorIndexConfigPropEfSearch:
+		case types.VectorIndexHNSWConfigPropEfSearch:
 			parsed, err := parseUint32ASTValue(field.Value)
 			if err != nil {
 				return err
