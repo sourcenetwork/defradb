@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
@@ -28,6 +29,37 @@ func TruncateCollection(
 	nodePtr C.uintptr_t,
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
+) C.Result {
+	return truncateCollection(nodePtr, opts, identityPtr, nil, false)
+}
+
+//export TruncateCollectionWithFilter
+func TruncateCollectionWithFilter(
+	nodePtr C.uintptr_t,
+	opts C.CollectionOptions,
+	identityPtr C.uintptr_t,
+	filterJSON *C.char,
+	pruneHistory C.int,
+) C.Result {
+	if filterJSON == nil {
+		return returnC(returnGoC(1, "filter is required", ""))
+	}
+	var filter any
+	if err := json.Unmarshal([]byte(C.GoString(filterJSON)), &filter); err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	if filter == nil {
+		return returnC(returnGoC(1, "filter cannot be null", ""))
+	}
+	return truncateCollection(nodePtr, opts, identityPtr, filter, pruneHistory != 0)
+}
+
+func truncateCollection(
+	nodePtr C.uintptr_t,
+	opts C.CollectionOptions,
+	identityPtr C.uintptr_t,
+	filter any,
+	pruneHistory bool,
 ) C.Result {
 	ctx := context.Background()
 
@@ -54,7 +86,11 @@ func TruncateCollection(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = col.Truncate(ctx, options.WithIdentity(options.TruncateCollection(), ident))
+	truncateOpts := options.WithIdentity(options.TruncateCollection(), ident)
+	if filter != nil {
+		truncateOpts.SetFilter(filter).SetPruneHistory(pruneHistory)
+	}
+	err = col.Truncate(ctx, truncateOpts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

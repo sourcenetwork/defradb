@@ -108,6 +108,11 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errCannotPruneBranchableCollection     string = "cannot prune document history in a branchable collection"
+	errPruneHistoryRequiresFilter          string = "prune history requires a filter"
+	errFilteredTruncateInTransaction       string = "filtered truncate cannot run in a transaction"
+	errTruncateMutationMustBeStandalone    string = "truncate mutation must be the only field in an operation"
+	errTruncateMutationInTransaction       string = "truncate mutation cannot run in a transaction"
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
@@ -189,6 +194,7 @@ const (
 	errTruncateDatastoreKey       string = "failed to delete key during truncate"
 	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
 	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errUnsafeDatastoreWriter      string = "datastore does not expose unsafe writer"
 	errDeleteViewCacheItem        string = "failed to delete view cache item"
 	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"
@@ -251,6 +257,11 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
+	ErrCannotPruneBranchableCollection           = errors.New(errCannotPruneBranchableCollection)
+	ErrPruneHistoryRequiresFilter                = errors.New(errPruneHistoryRequiresFilter)
+	ErrFilteredTruncateInTransaction             = errors.New(errFilteredTruncateInTransaction)
+	ErrTruncateMutationMustBeStandalone          = errors.New(errTruncateMutationMustBeStandalone)
+	ErrTruncateMutationInTransaction             = errors.New(errTruncateMutationInTransaction)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                        = errors.New(errGetDocForEmbedding)

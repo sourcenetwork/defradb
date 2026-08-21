@@ -43,7 +43,8 @@ func (p truncatePrefix) Bytes() []byte {
 func (c *collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
-	ctx, _, _ = getTxnAndSetCtxForCollection(ctx, c)
+	var hadTxn bool
+	ctx, _, hadTxn = getTxnAndSetCtxForCollection(ctx, c)
 
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -52,6 +53,15 @@ func (c *collection) Truncate(
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeTruncateCollectionPerm); err != nil {
 		return err
+	}
+	if opt.Filter == nil && opt.PruneHistory {
+		return ErrPruneHistoryRequiresFilter
+	}
+	if opt.Filter != nil && opt.PruneHistory && c.Version().IsBranchable {
+		return ErrCannotPruneBranchableCollection
+	}
+	if opt.Filter != nil && hadTxn {
+		return ErrFilteredTruncateInTransaction
 	}
 
 	ctx, txn, err := ensureContextTxnShim(ctx, c.db)
@@ -79,7 +89,11 @@ func (c *collection) Truncate(
 		return err
 	}
 
-	err = c.truncate(ctx)
+	if opt.Filter == nil {
+		err = c.truncate(ctx)
+	} else {
+		err = c.truncateWithFilter(ctx, txn, opt.Filter, opt.PruneHistory)
+	}
 	if err != nil {
 		errErr := action.Set(
 			txnFreeCtx,
@@ -226,7 +240,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.hardDeleteDocumentBlocks(ctx, systemstore, key.DocShortID)
+						err = c.removeDocumentHeads(ctx, systemstore, key.DocShortID, true)
 						if err != nil {
 							return err
 						}
@@ -261,8 +275,6 @@ func (c *collection) hardDeleteDatastorePrefix(
 ) error {
 	ds := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Datastore()
 
-	// If there are more keys than we wish to load into memory at once, this will be set to
-	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
 	for hasMore {
@@ -299,22 +311,16 @@ func (c *collection) hardDeleteDatastorePrefix(
 		}
 		datastore, ok := ds.(unsafestore)
 		if !ok {
-			return NewErrTruncateDatastoreKey(errors.New("datastore does not expose unsafe writer"), prefix.ToString())
+			return NewErrTruncateDatastoreKey(
+				errors.New(errUnsafeDatastoreWriter),
+				prefix.ToString(),
+			)
 		}
 
-		// This `Unsafe` call is not technically required, it just allows us to
-		// write this function using the `keys.Key` interface and call `Delete`
-		// using an untyped key.
-		//
-		// Bypassing the lock system here is a safe side-effect, as this function
-		// is only ever called within the context of a collection level write lock -
-		// attempting to obtain a read lock would essentially be a no-op anyway.
+		// Unsafe permits untyped keys here. The collection lock already excludes concurrent writes.
 		underlyingStore := datastore.Unsafe()
 
 		for _, key := range keysToDelete {
-			// Not all store implementations support mutations whilst iterating, so whilst it would
-			// be simpler and probably more efficient to delete whilst iterating, it would not work
-			// with all supported corekv store implementations.
 			err := underlyingStore.Delete(ctx, key)
 			if err != nil {
 				return NewErrTruncateDatastoreKey(err, string(key))
@@ -325,13 +331,16 @@ func (c *collection) hardDeleteDatastorePrefix(
 	return nil
 }
 
-func (c *collection) hardDeleteDocumentBlocks(
+// removeDocumentHeads removes document head entries and block ownership edges.
+// When pruneBlocks is true, blocks without another owner are deleted as well.
+func (c *collection) removeDocumentHeads(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docShortID uint64,
+	pruneBlocks bool,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
-	docID, _, err := id.GetDocIDFromStore(ctx, systemstore, docShortID)
+	docIDs, err := id.GetDocIDAliasesFromStore(ctx, systemstore, docShortID)
 	if err != nil {
 		return err
 	}
@@ -379,7 +388,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid)
+			err = c.deleteBlocks(ctx, systemstore, docIDs, key.Cid, pruneBlocks)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -450,12 +459,9 @@ func (c *collection) hardDeleteCollectionBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			// A nil systemstore and empty docID make deleteBlocks delete every reached block
-			// unconditionally, without touching block->docID owner edges. This is safe only because
-			// the document blocks and their owner edges are deleted earlier in truncate (see the
-			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
-			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid)
+			// Document blocks and owner edges were deleted in hardDeleteDocKeysAndHeadstore,
+			// so this remaining collection DAG can be removed unconditionally.
+			err = c.deleteBlocks(ctx, nil, nil, key.Cid, true)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -477,154 +483,138 @@ func (c *collection) hardDeleteCollectionBlocks(
 	return nil
 }
 
-// deleteBlocks deletes the block of the given cid and all the blocks it links to, if
-// a block with this cid is found.
-//
-// If the block is not found, it will not error.
+// deleteBlocks releases the document owners across the reachable DAG and deletes ownerless blocks.
+// A nil systemstore deletes the DAG unconditionally. Missing blocks are ignored.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
-	docID string,
+	docIDs []string,
 	currentCid cid.Cid,
+	pruneBlocks bool,
 ) error {
-	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
+	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+	blockstore := multistore.Blockstore()
+	encstore := multistore.Encstore()
 
 	deleteBlockMapping := func(blockCID cid.Cid) (bool, error) {
-		if systemstore == nil || docID == "" {
+		if systemstore == nil {
 			return true, nil
 		}
-		if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
-			return false, err
+		for _, docID := range docIDs {
+			if err := id.DeleteBlockDocIDMapping(ctx, systemstore, blockCID, docID); err != nil {
+				return false, err
+			}
 		}
-		docIDs, err := id.GetDocIDsForBlockFromStore(ctx, systemstore, blockCID)
+		hasOwners, err := id.BlockHasOwners(ctx, systemstore, blockCID)
 		if err != nil {
 			return false, err
 		}
-		return len(docIDs) == 0, nil
-	}
-
-	deleteBlock := func(blockCID cid.Cid) error {
-		canDelete, err := deleteBlockMapping(blockCID)
-		if err != nil || !canDelete {
-			return err
-		}
-		if err := blockstore.DeleteBlock(ctx, blockCID); err != nil {
-			return err
-		}
-		return nil
+		return !hasOwners, nil
 	}
 
 	type block struct {
-		id    cid.Cid
-		block *coreblock.Block
+		id        cid.Cid
+		block     *coreblock.Block
+		canDelete bool
+	}
+	type visit struct {
+		id       cid.Cid
+		expanded bool
+		block    *block
 	}
 
-	coreBlock, isFound, err := getBlock(ctx, blockstore, currentCid)
-	if err != nil {
-		return err
-	}
-	if !isFound {
-		_, err := deleteBlockMapping(currentCid)
-		return err
-	}
+	stack := []visit{{id: currentCid}}
+	seen := make(map[string]struct{})
+	postorder := make([]*block, 0)
+	encryptionToDelete := make(map[string]cid.Cid)
+	seenEncryption := make(map[string]struct{})
 
-	toDelete := []*block{
-		{
-			id:    currentCid,
-			block: coreBlock,
-		},
-	}
-
-	i := -1
-	isReversed := false
-	increment := func() bool {
-		if isReversed {
-			i--
-		} else {
-			i++
+	for len(stack) > 0 {
+		last := len(stack) - 1
+		current := stack[last]
+		stack = stack[:last]
+		if current.expanded {
+			postorder = append(postorder, current.block)
+			continue
 		}
 
-		if !isReversed && i == len(toDelete) {
-			// if we have reached the end of the set, reverse direction - the children are now
-			// gaurenteed to be deleted before their parents.
-			isReversed = true
-			i--
-			return true
+		key := current.id.String()
+		if _, ok := seen[key]; ok {
+			continue
 		}
+		seen[key] = struct{}{}
 
-		if i == -1 && isReversed {
-			// we only need to iterate through twice, once in either direction, once we have finished
-			// iterating in reverse, all blocks should have been deleted.
-			return false
+		coreBlock, found, err := getBlock(ctx, blockstore, current.id)
+		if err != nil {
+			return err
 		}
-
-		return true
-	}
-
-	for increment() {
-		currentBlock := toDelete[i]
-
-		if currentBlock.block == nil {
-			coreBlock, isFound, err := getBlock(ctx, blockstore, currentBlock.id)
-			if err != nil {
-				return err
-			}
-			if !isFound {
-				if _, err := deleteBlockMapping(currentBlock.id); err != nil {
-					return err
-				}
-				continue
-			}
-
-			currentBlock.block = coreBlock
-		}
-
-		if currentBlock.block.Encryption != nil {
-			err := deleteBlock(currentBlock.block.Encryption.Cid)
-			if err != nil {
-				return err
-			}
-		}
-
-		if currentBlock.block.Signature != nil {
-			err := deleteBlock(currentBlock.block.Signature.Cid)
-			if err != nil {
-				return err
-			}
-		}
-
-		if isReversed {
-			// If we are now iterating in reverse order, all the children of this block should
-			// have been deleted, and we are now free to delete this block.
-			err := deleteBlock(currentBlock.id)
-			if err != nil {
+		if !found {
+			if _, err := deleteBlockMapping(current.id); err != nil {
 				return err
 			}
 			continue
 		}
 
-		switch {
-		case currentBlock.block.Delta.IsField():
-			// If this block is a field block, we can delete it immediately after blocks such
-			// as encryption and signature are deleted.  Whilst it may have children, these
-			// children will be referenced by the composite commit, which will only be deleted
-			// after all of *its* children, meaning nothing will be orphaned if an error is thrown
-			// at some point during the truncate.
-			err := deleteBlock(currentBlock.id)
-			if err != nil {
+		currentBlock := &block{id: current.id, block: coreBlock}
+		currentBlock.canDelete, err = deleteBlockMapping(current.id)
+		if err != nil {
+			return err
+		}
+		if coreBlock.Encryption != nil {
+			encryptionCID := coreBlock.Encryption.Cid
+			encryptionKey := encryptionCID.String()
+			if _, ok := seenEncryption[encryptionKey]; !ok {
+				seenEncryption[encryptionKey] = struct{}{}
+				canDelete, err := deleteBlockMapping(encryptionCID)
+				if err != nil {
+					return err
+				}
+				if canDelete {
+					encryptionToDelete[encryptionKey] = encryptionCID
+				}
+			}
+		}
+
+		stack = append(stack, visit{expanded: true, block: currentBlock})
+		links := coreBlock.AllLinks()
+		for i := len(links) - 1; i >= 0; i-- {
+			stack = append(stack, visit{id: links[i].Cid})
+		}
+	}
+
+	if !pruneBlocks {
+		return nil
+	}
+
+	for _, encryptionCID := range encryptionToDelete {
+		if err := deleteBlockIfPresent(ctx, encstore, encryptionCID); err != nil {
+			return err
+		}
+	}
+	for _, currentBlock := range postorder {
+		if !currentBlock.canDelete {
+			continue
+		}
+		// Signature blocks inherit their parent block's ownership.
+		if currentBlock.block.Signature != nil {
+			if err := deleteBlockIfPresent(ctx, blockstore, currentBlock.block.Signature.Cid); err != nil {
 				return err
 			}
-
-		default:
-			for _, link := range currentBlock.block.AllLinks() {
-				toDelete = append(toDelete, &block{
-					id: link.Cid,
-				})
-			}
+		}
+		if err := deleteBlockIfPresent(ctx, blockstore, currentBlock.id); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func deleteBlockIfPresent(ctx context.Context, blockstore datastore.Blockstore, blockID cid.Cid) error {
+	err := blockstore.DeleteBlock(ctx, blockID)
+	if errors.Is(err, corekv.ErrNotFound) || errors.Is(err, ipld.ErrNotFound{}) {
+		return nil
+	}
+	return err
 }
 
 func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {

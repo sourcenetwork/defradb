@@ -4,8 +4,9 @@ Truncate the given collection
 
 ### Synopsis
 
-Truncate the given collection, removing all document data within it from the local node.
- Does not propagate the deletion to other Defra nodes in the peer network.
+Truncate the given collection, removing document data from the local node.
+Without a filter all documents are removed. With a filter only matching documents are removed,
+and --prune-history also removes their unshared history. Changes do not propagate to other nodes.
 
 ```
 defradb client collection truncate [flags]
@@ -16,8 +17,10 @@ defradb client collection truncate [flags]
 ```
       --collection-id string     Collection ID
       --collection-name string   Collection name
+      --filter string            Document filter
       --get-inactive             Get inactive collections as well as active
   -h, --help                     help for truncate
+      --prune-history            Remove unshared history for matching documents
       --version-id string        Collection version ID
 ```
 

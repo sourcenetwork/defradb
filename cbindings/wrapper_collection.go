@@ -23,6 +23,8 @@ extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* f
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr,
+char* filterJSON, int pruneHistory);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
@@ -311,11 +313,12 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
+	opt := utils.NewOptions(opts...)
 
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(opt.GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -329,13 +332,23 @@ func (c *Collection) Truncate(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(
-		C.TruncateCollection(
-			callHandle,
-			copts,
-			cIdentity,
-		),
-	)
+	var result C.Result
+	if opt.Filter == nil {
+		result = C.TruncateCollection(callHandle, copts, cIdentity)
+	} else {
+		filterJSON, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		cFilter := C.CString(string(filterJSON))
+		defer C.free(unsafe.Pointer(cFilter))
+		pruneHistory := C.int(0)
+		if opt.PruneHistory {
+			pruneHistory = 1
+		}
+		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter, pruneHistory)
+	}
+	res := ConvertAndFreeCResult(result)
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

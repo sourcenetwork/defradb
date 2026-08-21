@@ -95,6 +95,31 @@ func decodeRequestFilter(data json.RawMessage) (any, error) {
 	return filter, nil
 }
 
+type TruncateCollectionRequest struct {
+	Filter       any  `json:"filter"`
+	PruneHistory bool `json:"pruneHistory"`
+}
+
+// UnmarshalJSON decodes a TruncateCollectionRequest, preserving integer precision in Filter.
+func (r *TruncateCollectionRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Filter       json.RawMessage `json:"filter"`
+		PruneHistory bool            `json:"pruneHistory"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if len(raw.Filter) != 0 {
+		filter, err := utils.DecodeJSONFilter(raw.Filter)
+		if err != nil {
+			return err
+		}
+		r.Filter = filter
+	}
+	r.PruneHistory = raw.PruneHistory
+	return nil
+}
+
 func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
@@ -289,6 +314,18 @@ func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) 
 	ctx := req.Context()
 
 	truncateOpt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(ctx))
+	if req.ContentLength != 0 {
+		var request TruncateCollectionRequest
+		if err := requestJSON(req, &request); err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		if request.Filter == nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("filter is required")})
+			return
+		}
+		truncateOpt.SetFilter(request.Filter).SetPruneHistory(request.PruneHistory)
+	}
 
 	err := col.Truncate(ctx, truncateOpt)
 	if err != nil {
@@ -550,10 +587,17 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 
 	truncate := openapi3.NewOperation()
 	truncate.OperationID = "truncate"
-	truncate.Description = "Truncate a collection, removing all document data within it from the server. " +
+	truncate.Description = "Permanently remove all or filtered document data from a collection on this server. " +
 		"Does not propagate the deletion to other Defra nodes in the network."
 	truncate.Tags = []string{"truncate"}
 	truncate.AddParameter(collectionNamePathParam)
+	truncate.RequestBody = &openapi3.RequestBodyRef{
+		Value: openapi3.NewRequestBody().WithContent(
+			openapi3.NewContentWithJSONSchemaRef(&openapi3.SchemaRef{
+				Ref: "#/components/schemas/truncate_collection",
+			}),
+		),
+	}
 	truncate.Responses = openapi3.NewResponses()
 	truncate.Responses.Set("200", successResponse)
 	truncate.Responses.Set("400", errorResponse)
