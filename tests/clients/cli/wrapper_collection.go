@@ -238,6 +238,16 @@ func (c *Collection) Truncate(
 	args = append(args, "--collection-name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
+	if opt.Filter != nil {
+		filter, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		args = append(args, "--filter", string(filter))
+		if opt.PruneHistory {
+			args = append(args, "--prune-history")
+		}
+	}
 	args = appendIdentityArg(args, opt.GetIdentity())
 	args = appendTxnArg(args, c.txn)
 
