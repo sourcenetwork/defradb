@@ -403,11 +403,14 @@ func (c *Collection) ExistsDocument(
 
 	res, err := callStore(c.w, ctx, "GetDocumentNative",
 		newArgs().argStr(docID.String()).argBool(false).
-			collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
+			collOpts("", c.def.VersionID, c.def.CollectionID, false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return false, err
 	}
 	if err := res.asError(); err != nil {
+		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+			return false, nil
+		}
 		return false, err
 	}
 	return true, nil

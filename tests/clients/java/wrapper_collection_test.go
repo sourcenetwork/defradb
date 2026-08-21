@@ -16,6 +16,7 @@ package java
 import (
 	"testing"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -80,4 +81,48 @@ func TestCollectionSaveDocument_AddAndUpdatePaths_Succeed(t *testing.T) {
 	name, err = fetched.Get("name")
 	require.NoError(t, err)
 	require.Equal(t, "Bob", name)
+}
+
+// TestCollectionExistsDocument_ExistingMissingAndDeleted covers the three cases ExistsDocument's
+// documented contract: one that exists, one that was never created, and one that was created
+// but then deleted.
+func TestCollectionExistsDocument_ExistingMissingAndDeleted(t *testing.T) {
+	w, ctx := newTestWrapper(t)
+
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName("Users"))
+	require.NoError(t, err)
+	require.Len(t, cols, 1)
+	col := cols[0]
+
+	t.Run("existing", func(t *testing.T) {
+		doc, err := client.NewDocFromMap(ctx, map[string]any{"name": "Alice"}, col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+
+		exists, err := col.ExistsDocument(ctx, doc.ID())
+		require.NoError(t, err)
+		require.True(t, exists)
+	})
+
+	t.Run("missing", func(t *testing.T) {
+		// A Document's docID isn't assigned until it's actually added. Construct one directly to
+		// get a well-formed docID that's guaranteed not to correspond to any added document.
+		missingDocID := client.NewDocIDV0(blocks.NewBlock([]byte("never added")).Cid())
+
+		exists, err := col.ExistsDocument(ctx, missingDocID)
+		require.NoError(t, err)
+		require.False(t, exists)
+	})
+
+	t.Run("deleted", func(t *testing.T) {
+		doc, err := client.NewDocFromMap(ctx, map[string]any{"name": "Carol"}, col.Version())
+		require.NoError(t, err)
+		require.NoError(t, col.AddDocument(ctx, doc))
+		_, err = col.DeleteDocument(ctx, doc.ID())
+		require.NoError(t, err)
+
+		exists, err := col.ExistsDocument(ctx, doc.ID())
+		require.NoError(t, err)
+		require.False(t, exists)
+	})
 }
