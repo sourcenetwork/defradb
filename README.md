@@ -36,6 +36,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
    * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
    * [Access Control System](#access-control-system)
+      * [Using SourceHub for Document ACP](#using-sourcehub-for-document-acp)
+         * [Running a SourceHub node locally](#running-a-sourcehub-node-locally)
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
