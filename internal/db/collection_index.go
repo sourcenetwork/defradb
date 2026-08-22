@@ -559,10 +559,9 @@ func processNewIndexRequest(
 }
 
 // validateVectorIndexDescription checks and fills in the vector-specific parts of an index request.
-// The field must hold a float32 array, and dimensions must be set unless the field is an @embedding,
-// whose model fixes the vector length. It also defaults the algorithm, metric, and any missing
-// params (mutating desc.Vector), so a request made through the index API works the same as one from
-// the @index directive's vector configuration.
+// The field must hold a float32 array, and dimensions must be greater than zero. It also defaults
+// the algorithm, metric, and any missing params (mutating desc.Vector), so a request made through
+// the index API works the same as one from the @index directive's vector configuration.
 //
 // The field is guaranteed to exist here because validateIndexDescription and
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
@@ -583,10 +582,13 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	if !client.IsVectorEmbeddingCompatible(field.Kind) {
 		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
 	}
+	if desc.Vector.Dimensions == 0 {
+		return NewErrVectorIndexMissingDimensions(fieldName)
+	}
 
-	// The config object present is what picks the algorithm, so the caller never sets one directly.
-	// Fill in the algorithm, metric, and any missing params with defaults. A nil config means an empty
-	// one, so a caller can leave it out and still get a working HNSW index.
+	// The algorithm config object present is what picks the algorithm, so the caller never sets one
+	// directly. Fill in the algorithm, metric, and any missing params with defaults. A nil HNSW config
+	// means an empty one, so a caller can leave it out and still get a working HNSW index.
 	if desc.Vector.HNSW == nil {
 		desc.Vector.HNSW = &client.HNSWParams{}
 	}
@@ -612,19 +614,7 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
-	if desc.Vector.Dimensions > 0 {
-		return nil
-	}
-
-	// No dimensions were given. That is only allowed when the field is an @embedding, since the
-	// model then fixes the dimensions. The value itself is filled in later.
-	for _, embedding := range def.VectorEmbeddings {
-		if embedding.FieldName == fieldName {
-			return nil
-		}
-	}
-
-	return NewErrVectorIndexMissingDimensions(fieldName)
+	return nil
 }
 
 // validateNoConflictingVectorIndexMetric rejects creating a vector index on a field that another

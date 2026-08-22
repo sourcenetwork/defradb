@@ -3215,7 +3215,7 @@ enum VectorIndexAlgorithm {
 input VectorIndexConfig {
     "Selects the vector index algorithm using its default configuration."
     alg: VectorIndexAlgorithm
-    "Vector dimensions; required unless inferable from an @embedding."
+    "Vector dimensions; must be greater than zero."
     dimensions: Int
     "Configures the HNSW algorithm."
     hnsw: HNSWIndexConfig

@@ -121,8 +121,7 @@ type VectorIndexDescription struct {
 	Algorithm VectorAlgorithm
 	// Metric is the distance metric used to compare vectors.
 	Metric DistanceMetric
-	// Dimensions is the length of the vectors being indexed. It must be set, except on an @embedding
-	// field, where the embedding model fixes the length and Dimensions may be left 0.
+	// Dimensions is the length of the vectors being indexed. It must be greater than zero.
 	Dimensions uint32
 	// HNSW holds HNSW-specific parameters. Non-nil when Algorithm == VectorAlgorithmHNSW.
 	HNSW *HNSWParams

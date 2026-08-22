@@ -751,8 +751,13 @@ func vectorIndexFromAST(
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 
-	if config == nil {
-		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+	obj := &ast.ObjectValue{}
+	if config != nil {
+		var ok bool
+		obj, ok = config.(*ast.ObjectValue)
+		if !ok {
+			return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+		}
 	}
 
 	var dimensions uint32
@@ -762,11 +767,6 @@ func vectorIndexFromAST(
 		M:              client.DefaultHNSWM,
 		EfConstruction: client.DefaultHNSWEfConstruction,
 		EfSearch:       client.DefaultHNSWEfSearch,
-	}
-
-	obj, ok := config.(*ast.ObjectValue)
-	if !ok {
-		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 	for _, field := range obj.Fields {
 		switch field.Name.Value {

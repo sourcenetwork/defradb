@@ -522,7 +522,7 @@ func VectorIndexInputObject(
 		Description: "Configures an approximate-nearest-neighbour index over a vector field.",
 		Fields: gql.InputObjectConfigFieldMap{
 			VectorIndexPropDimensions: &gql.InputObjectFieldConfig{
-				Description: "Vector dimensions; required unless inferable from an @embedding.",
+				Description: "Vector dimensions; must be greater than zero.",
 				Type:        gql.Int,
 			},
 			VectorIndexPropAlgorithm: &gql.InputObjectFieldConfig{

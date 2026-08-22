@@ -82,6 +82,21 @@ func vectorIndexSearch(
 	return docIDs
 }
 
+func TestValidateVectorIndexDescription_EmbeddingRequiresDimensions(t *testing.T) {
+	const fieldName = "embedding"
+	def := client.CollectionVersion{
+		Fields:           []client.CollectionFieldDescription{{Name: fieldName, Kind: client.FieldKind_FLOAT32_ARRAY}},
+		VectorEmbeddings: []client.VectorEmbeddingDescription{{FieldName: fieldName}},
+	}
+	desc := client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: fieldName}},
+		Vector: &client.VectorIndexDescription{},
+	}
+
+	err := validateVectorIndexDescription(def, desc)
+	require.ErrorContains(t, err, "vector index dimensions must be greater than zero")
+}
+
 func TestCollectionVectorIndex_Save_InsertsIntoGraphAndIsSearchable(t *testing.T) {
 	ctx, db, col := newVectorIndexTestDB(t, 3)
 
