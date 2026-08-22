@@ -1,3 +1,5 @@
+# Details for each ID are available at https://pkg.go.dev/vuln/<ID>.
+# Refresh this list with: govulncheck -C . -format text ./...
 GO-2023-1821
 GO-2023-1881
 GO-2024-3218
