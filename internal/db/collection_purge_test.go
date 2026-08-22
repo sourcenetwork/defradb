@@ -176,7 +176,7 @@ func sharedFieldBlock(t *testing.T, ctx context.Context, db *DB, headA, headB ci
 
 func requireBlockPresent(t *testing.T, ctx context.Context, bs datastore.Blockstore, blockCID cid.Cid, want bool) {
 	t.Helper()
-	_, found, err := getBlock(ctx, bs, blockCID)
+	_, found, err := getBlock(ctx, bs, nil, blockCID)
 	require.NoError(t, err)
 	require.Equal(t, want, found)
 }

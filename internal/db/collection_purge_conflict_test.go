@@ -86,7 +86,7 @@ func TestPurgeByDocIDsPruneHistoryReadsBlocksOutsideConflictSet(t *testing.T) {
 		txn, err := db.NewTxn(false)
 		require.NoError(t, err)
 		tctx := InitContext(ctx, txn)
-		_, _, err = getBlock(tctx, blockstore, blockCID)
+		_, _, err = getBlock(tctx, blockstore, nil, blockCID)
 		require.NoError(t, err)
 		// badger only checks for conflicts when the transaction has a pending write; the real
 		// purge deletes as it walks, so delete the block here too.

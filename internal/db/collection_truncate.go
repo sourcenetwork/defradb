@@ -380,8 +380,10 @@ func (c *collection) hardDeleteDocumentBlocks(
 			return err
 		}
 
+		cache := blockCache{}
+
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners, cache)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -457,7 +459,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			// the document blocks and their owner edges are deleted earlier in truncate (see the
 			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
 			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
+			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil, nil)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -479,6 +481,12 @@ func (c *collection) hardDeleteCollectionBlocks(
 	return nil
 }
 
+// blockCache holds blocks already read while deleting one document, so a block reachable from more
+// than one of the document's headstore entries is read and decoded once rather than once per entry.
+// Blocks are content-addressed and immutable, so one read under any transaction is valid to follow
+// links from under another. A nil entry records a block that was not found; a nil cache disables it.
+type blockCache map[cid.Cid]*coreblock.Block
+
 // deleteBlocks deletes the block of the given cid and all the blocks it links to, if
 // a block with this cid is found.
 //
@@ -489,6 +497,7 @@ func (c *collection) deleteBlocks(
 	docID string,
 	currentCid cid.Cid,
 	prunedOwners map[string]struct{},
+	cache blockCache,
 ) error {
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
@@ -545,7 +554,7 @@ func (c *collection) deleteBlocks(
 		block *coreblock.Block
 	}
 
-	coreBlock, isFound, err := getBlock(readCtx, blockstore, currentCid)
+	coreBlock, isFound, err := getBlock(readCtx, blockstore, cache, currentCid)
 	if err != nil {
 		return err
 	}
@@ -591,7 +600,7 @@ func (c *collection) deleteBlocks(
 		currentBlock := toDelete[i]
 
 		if currentBlock.block == nil {
-			coreBlock, isFound, err := getBlock(readCtx, blockstore, currentBlock.id)
+			coreBlock, isFound, err := getBlock(readCtx, blockstore, cache, currentBlock.id)
 			if err != nil {
 				return err
 			}
@@ -653,7 +662,16 @@ func (c *collection) deleteBlocks(
 	return nil
 }
 
-func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {
+func getBlock(
+	ctx context.Context,
+	blockstore datastore.Blockstore,
+	cache blockCache,
+	id cid.Cid,
+) (*coreblock.Block, bool, error) {
+	if block, ok := cache[id]; ok {
+		return block, block != nil, nil
+	}
+
 	rawBlock, err := blockstore.Get(ctx, id)
 	if errors.Is(err, ipld.ErrNotFound{}) {
 		// We are looping through the links in a simple way that may result in us
@@ -662,6 +680,9 @@ func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) 
 		// (another call to `deleteBlocks`).
 		//
 		// If we encounter such a block, we can skip over the error and continue.
+		if cache != nil {
+			cache[id] = nil
+		}
 		return nil, false, nil
 	}
 	if err != nil {
@@ -671,6 +692,10 @@ func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) 
 	decodedBlock, err := coreblock.GetFromBytes(rawBlock.RawData())
 	if err != nil {
 		return nil, false, err
+	}
+
+	if cache != nil {
+		cache[id] = decodedBlock
 	}
 
 	return decodedBlock, true, nil
