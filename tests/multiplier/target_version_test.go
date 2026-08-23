@@ -64,39 +64,62 @@ func TestTargetVersionFor_ReturnsComparableSemver(t *testing.T) {
 }
 
 func TestResolveTargetVersion_NoRequirement_UsesDefaultTarget(t *testing.T) {
-	version, ok := ResolveTargetVersion(CrossVersionOldSource, "")
+	version, resolution := ResolveTargetVersion(CrossVersionOldSource, "", false)
 
-	assert.True(t, ok)
+	assert.Equal(t, VersionRun, resolution)
 	assert.Equal(t, CrossVersionTargetVersion, version)
 }
 
 func TestResolveTargetVersion_RequirementNewerThanTarget_UsesRequirement(t *testing.T) {
-	version, ok := ResolveTargetVersion(CrossVersionOldSource, "v99.0.0")
+	version, resolution := ResolveTargetVersion(CrossVersionOldSource, "v99.0.0", false)
 
-	assert.True(t, ok)
+	assert.Equal(t, VersionRun, resolution)
 	assert.Equal(t, "v99.0.0", version)
 }
 
 func TestResolveTargetVersion_RequirementOlderThanTarget_UsesDefaultTarget(t *testing.T) {
 	// The default target already supports the test, and it is the pairing most
 	// likely to have drifted from the current build.
-	version, ok := ResolveTargetVersion(CrossVersionOldSource, "v0.9.0")
+	version, resolution := ResolveTargetVersion(CrossVersionOldSource, "v0.9.0", false)
 
-	assert.True(t, ok)
+	assert.Equal(t, VersionRun, resolution)
 	assert.Equal(t, CrossVersionTargetVersion, version)
 }
 
 func TestResolveTargetVersion_RequirementEqualToTarget_UsesTarget(t *testing.T) {
-	version, ok := ResolveTargetVersion(CrossVersionOldSource, CrossVersionTargetVersion)
+	version, resolution := ResolveTargetVersion(CrossVersionOldSource, CrossVersionTargetVersion, false)
 
-	assert.True(t, ok)
+	assert.Equal(t, VersionRun, resolution)
 	assert.Equal(t, CrossVersionTargetVersion, version)
 }
 
 func TestResolveTargetVersion_NonVersionMultiplier_TargetsNothing(t *testing.T) {
-	version, ok := ResolveTargetVersion(SignedDocs, "v99.0.0")
+	version, resolution := ResolveTargetVersion(SignedDocs, "v99.0.0", false)
 
-	assert.False(t, ok)
+	assert.Equal(t, VersionNotTargeted, resolution)
+	assert.Equal(t, "", version)
+}
+
+func TestResolveTargetVersion_Exact_RequirementNewerThanTarget_Skips(t *testing.T) {
+	version, resolution := ResolveTargetVersion(CrossVersionOldSource, "v99.0.0", true)
+
+	assert.Equal(t, VersionSkip, resolution)
+	assert.Equal(t, "", version)
+}
+
+func TestResolveTargetVersion_Exact_RequirementTargetOrOlder_Runs(t *testing.T) {
+	for _, supportedFrom := range []string{"", "v0.9.0", CrossVersionTargetVersion} {
+		version, resolution := ResolveTargetVersion(CrossVersionOldSource, supportedFrom, true)
+
+		assert.Equal(t, VersionRun, resolution, "supportedFrom %q", supportedFrom)
+		assert.Equal(t, CrossVersionTargetVersion, version)
+	}
+}
+
+func TestResolveTargetVersion_Exact_NonVersionMultiplier_TargetsNothing(t *testing.T) {
+	version, resolution := ResolveTargetVersion(SignedDocs, "v99.0.0", true)
+
+	assert.Equal(t, VersionNotTargeted, resolution)
 	assert.Equal(t, "", version)
 }
 

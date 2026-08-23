@@ -29,25 +29,49 @@ func TargetVersionFor(name Name) (string, bool) {
 	}
 }
 
-// ResolveTargetVersion returns the release the named multiplier should run
-// against for a test declaring supportedFrom, and whether that multiplier
-// targets a version at all.
+// VersionResolution says what a version-targeting multiplier should do with a
+// test.
+type VersionResolution int
+
+const (
+	// VersionNotTargeted means the multiplier does not target a release, so the
+	// test is unaffected by it.
+	VersionNotTargeted VersionResolution = iota
+
+	// VersionRun means the test should run against the returned release.
+	VersionRun
+
+	// VersionSkip means the test needs a newer release than this multiplier
+	// targets and cannot run under it.
+	VersionSkip
+)
+
+// ResolveTargetVersion decides what the named multiplier should do with a test
+// declaring supportedFrom, and which release it should run against.
 //
-// A test needing a release newer than the default target runs against the
-// release it needs, rather than being dropped. Running the oldest release a
-// test supports still exercises the pairing most likely to have drifted from
-// the current build.
+// When exact is false, a test needing a release newer than the default target
+// runs against the release it needs rather than being dropped. This keeps a test
+// that names a version contributing to compatibility coverage when only one
+// release is being tested.
+//
+// When exact is true, the multiplier runs only the release it targets and skips
+// anything needing newer. This is for runs that test several releases, where
+// promoting a test to a newer release would duplicate the run that release
+// already gets, and would report coverage of a release the test never touched.
 //
 // supportedFrom must be valid semver; callers validate it first.
-func ResolveTargetVersion(name Name, supportedFrom string) (string, bool) {
+func ResolveTargetVersion(name Name, supportedFrom string, exact bool) (string, VersionResolution) {
 	target, targetsVersion := TargetVersionFor(name)
 	if !targetsVersion {
-		return "", false
+		return "", VersionNotTargeted
 	}
 
 	if supportedFrom != "" && semver.Compare(target, supportedFrom) < 0 {
-		return supportedFrom, true
+		if exact {
+			return "", VersionSkip
+		}
+		return supportedFrom, VersionRun
 	}
 
-	return target, true
+	return target, VersionRun
 }

@@ -32,7 +32,19 @@ import (
 type versionRecorder struct {
 	testing.TB
 	failed  bool
+	skipped bool
 	message string
+}
+
+func (r *versionRecorder) Skipf(format string, args ...any) {
+	r.skipped = true
+	r.message = fmt.Sprintf(format, args...)
+	runtime.Goexit()
+}
+
+func (r *versionRecorder) SkipNow() {
+	r.skipped = true
+	runtime.Goexit()
 }
 
 func (r *versionRecorder) Errorf(format string, args ...any) {
@@ -59,6 +71,25 @@ func runVersion(t *testing.T, supportedFrom string, activeNames string, names ..
 	map[defraMultiplier.Name]string, *versionRecorder,
 ) {
 	t.Helper()
+	return runVersionMode(t, supportedFrom, activeNames, false, names...)
+}
+
+// runVersionExact is [runVersion] with exact mode on.
+func runVersionExact(t *testing.T, supportedFrom string, activeNames string, names ...defraMultiplier.Name) (
+	map[defraMultiplier.Name]string, *versionRecorder,
+) {
+	t.Helper()
+	return runVersionMode(t, supportedFrom, activeNames, true, names...)
+}
+
+func runVersionMode(
+	t *testing.T,
+	supportedFrom string,
+	activeNames string,
+	exact bool,
+	names ...defraMultiplier.Name,
+) (map[defraMultiplier.Name]string, *versionRecorder) {
+	t.Helper()
 
 	rec := &versionRecorder{TB: t}
 	resolved := map[defraMultiplier.Name]string{}
@@ -67,7 +98,7 @@ func runVersion(t *testing.T, supportedFrom string, activeNames string, names ..
 	go func() {
 		defer close(done)
 
-		restore := applyTestCaseVersion(rec, supportedFrom, activeNames)
+		restore := applyTestCaseVersion(rec, supportedFrom, activeNames, exact)
 		defer restore()
 
 		for _, name := range names {
@@ -191,4 +222,62 @@ func TestSupportedFromVersion_ComparisonIsNotLexical(t *testing.T) {
 	assert.Positive(t, semver.Compare("v1.10.0", "v1.9.0"))
 	assert.Negative(t, semver.Compare("v1.9.0", "v1.10.0"))
 	assert.Zero(t, semver.Compare("v1.9.0", "v1.9.0"))
+}
+
+func TestApplyTestCaseVersion_Exact_SupportedFromNewerThanTarget_Skips(t *testing.T) {
+	// In exact mode the release the test needs is covered by its own run, so
+	// promoting it here would run it twice and report coverage of a release this
+	// run never touched.
+	_, rec := runVersionExact(t, "v99.0.0", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
+
+	assert.True(t, rec.skipped)
+	assert.False(t, rec.failed)
+	assert.Contains(t, rec.message, defraMultiplier.CrossVersionOldSource)
+	assert.Contains(t, rec.message, defraMultiplier.CrossVersionTargetVersion)
+	assert.Contains(t, rec.message, "v99.0.0")
+}
+
+func TestApplyTestCaseVersion_Exact_SupportedFromEqualToTarget_Runs(t *testing.T) {
+	resolved, rec := runVersionExact(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.CrossVersionOldSource, defraMultiplier.CrossVersionOldSource)
+
+	require.False(t, rec.skipped)
+	require.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		resolved[defraMultiplier.CrossVersionOldSource])
+}
+
+func TestApplyTestCaseVersion_Exact_SupportedFromOlderThanTarget_Runs(t *testing.T) {
+	resolved, rec := runVersionExact(t, "v0.9.0", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
+
+	require.False(t, rec.skipped)
+	require.False(t, rec.failed)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		resolved[defraMultiplier.CrossVersionOldSource])
+}
+
+func TestApplyTestCaseVersion_Exact_NoSupportedFrom_Runs(t *testing.T) {
+	resolved, rec := runVersionExact(t, "", defraMultiplier.CrossVersionOldSource,
+		defraMultiplier.CrossVersionOldSource)
+
+	require.False(t, rec.skipped)
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		resolved[defraMultiplier.CrossVersionOldSource])
+}
+
+func TestApplyTestCaseVersion_Exact_SkipRestoresEarlierMultipliers(t *testing.T) {
+	// The skip ends the test partway through the loop, so a version set for an
+	// earlier multiplier must not leak into the next test.
+	active := fmt.Sprintf("%s,%s",
+		defraMultiplier.CrossVersionOldSource, defraMultiplier.CrossVersionNewSource)
+
+	_, rec := runVersionExact(t, "v99.0.0", active)
+	require.True(t, rec.skipped)
+
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.TargetVersionInEffect(defraMultiplier.CrossVersionOldSource))
+	assert.Equal(t, defraMultiplier.CrossVersionTargetVersion,
+		defraMultiplier.TargetVersionInEffect(defraMultiplier.CrossVersionNewSource))
 }

@@ -802,7 +802,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
-	restoreVersions := applyTestCaseVersion(t, testCase.SupportedFromVersion, activeMultipliers)
+	restoreVersions := applyTestCaseVersion(t, testCase.SupportedFromVersion, activeMultipliers, crossVersionExact)
 	defer restoreVersions()
 
 	modified := multiplier.Apply(actions)
@@ -859,13 +859,17 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 // release it does support. Skipping would mean a test that names a version
 // contributes nothing to compatibility coverage.
 //
+// exact turns that off, skipping such a test instead. Runs covering several
+// releases set it so the release a test needs is exercised by its own run rather
+// than twice, once by that release and again by an older one promoting the test.
+//
 // This is done here rather than in the multiplier because testo hands
 // [multiplier.Multiplier] only the action set, and the required version is
 // TestCase-level configuration it cannot see.
 //
 // activeNames is passed in rather than read from testo's package-level state so
 // this function is directly unit-testable.
-func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string) func() {
+func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string, exact bool) func() {
 	if supportedFrom != "" {
 		// A malformed value would compare as older than every target and silently
 		// leave the default in place, running the test against a release that
@@ -875,21 +879,33 @@ func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string
 	}
 
 	var restores []func()
-	for name := range strings.SplitSeq(activeNames, ",") {
-		name = strings.TrimSpace(name)
-		version, targetsVersion := defraMultiplier.ResolveTargetVersion(name, supportedFrom)
-		if !targetsVersion {
-			continue
-		}
-
-		restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
-	}
-
-	return func() {
+	restoreAll := func() {
 		for _, restore := range restores {
 			restore()
 		}
 	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		version, resolution := defraMultiplier.ResolveTargetVersion(name, supportedFrom, exact)
+
+		switch resolution {
+		case defraMultiplier.VersionNotTargeted:
+			continue
+
+		case defraMultiplier.VersionSkip:
+			// Skipf ends the test, so anything already set has to be put back first.
+			restoreAll()
+			target, _ := defraMultiplier.TargetVersionFor(name)
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
+				name, target, supportedFrom)
+
+		case defraMultiplier.VersionRun:
+			restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
+		}
+	}
+
+	return restoreAll
 }
 
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
