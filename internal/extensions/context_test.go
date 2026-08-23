@@ -82,3 +82,17 @@ func TestAddWarning_FromMultipleGoroutines_RecordsAll(t *testing.T) {
 
 	require.Len(t, Collect(ctx).Warnings, 50)
 }
+
+func TestCollect_ThenAddWarning_DoesNotChangeTheEarlierResult(t *testing.T) {
+	ctx := WithAccumulator(context.Background())
+	AddWarning(ctx, client.GQLWarning{Code: "first"})
+
+	collected := Collect(ctx)
+	require.Len(t, collected.Warnings, 1)
+
+	AddWarning(ctx, client.GQLWarning{Code: "second"})
+
+	require.Len(t, collected.Warnings, 1)
+	require.Equal(t, "first", collected.Warnings[0].Code)
+	require.Len(t, Collect(ctx).Warnings, 2)
+}

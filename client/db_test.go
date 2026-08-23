@@ -139,3 +139,42 @@ func TestGQLResultUnmarshal_WithoutExtensions_LeavesNil(t *testing.T) {
 	require.Nil(t, output.Extensions)
 	require.True(t, output.Extensions.IsEmpty())
 }
+
+// The empty non nil slice is the case a field by field check gets wrong: the slice is
+// not the zero value, but it still encodes to nothing.
+func TestGQLExtensionsIsEmpty_WithEmptyWarningSlice_IsEmpty(t *testing.T) {
+	extensions := &GQLExtensions{Warnings: []GQLWarning{}}
+
+	require.True(t, extensions.IsEmpty())
+}
+
+func TestGQLExtensionsIsEmpty_WithNilReceiver_IsEmpty(t *testing.T) {
+	var extensions *GQLExtensions
+
+	require.True(t, extensions.IsEmpty())
+}
+
+func TestGQLExtensionsIsEmpty_WithAWarning_IsNotEmpty(t *testing.T) {
+	extensions := &GQLExtensions{Warnings: []GQLWarning{{Code: "test_warning"}}}
+
+	require.False(t, extensions.IsEmpty())
+}
+
+// A peer may send an empty extensions object. Callers are told the field is nil when
+// there is nothing to report, so decoding must make that true rather than hand back a
+// non nil value with nothing in it.
+func TestGQLResultUnmarshal_WithEmptyExtensions_LeavesNil(t *testing.T) {
+	var output GQLResult
+	err := json.Unmarshal([]byte(`{"data": null, "extensions": {}}`), &output)
+	require.NoError(t, err)
+
+	require.Nil(t, output.Extensions)
+}
+
+func TestGQLResultUnmarshal_WithOnlyUnknownExtensionKeys_LeavesNil(t *testing.T) {
+	var output GQLResult
+	err := json.Unmarshal([]byte(`{"data": null, "extensions": {"unknownKey": 1}}`), &output)
+	require.NoError(t, err)
+
+	require.Nil(t, output.Extensions)
+}

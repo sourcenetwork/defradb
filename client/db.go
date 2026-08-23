@@ -442,8 +442,20 @@ type GQLExtensions struct {
 //
 // An empty value must be left out of the response, not sent as an empty object.
 // Sending `"extensions":{}` would change the shape of every response.
+//
+// This asks the encoder rather than checking each field, so a field added later is
+// covered without editing here. Checking fields by hand means the next field added is
+// silently dropped from every response until someone remembers to update this.
+//
+// A value the encoder cannot handle is treated as empty. The warning is then missing,
+// which is better than failing the whole response over a diagnostic.
 func (e *GQLExtensions) IsEmpty() bool {
-	return e == nil || len(e.Warnings) == 0
+	if e == nil {
+		return true
+	}
+
+	data, err := json.Marshal(e)
+	return err != nil || string(data) == "{}"
 }
 
 // GQLWarning describes something that happened during a request that worked. It is not
@@ -459,6 +471,13 @@ type GQLWarning struct {
 	Message string `json:"message"`
 
 	// Detail holds values belonging to this warning. Optional.
+	//
+	// Everything here is sent to the caller and may also be logged, so do not put
+	// secrets, credentials or identity material in it.
+	//
+	// Take care with counts and identifiers drawn from documents the caller is not
+	// allowed to read. Saying how many documents were examined can tell the caller
+	// about documents that access control hid from them.
 	Detail map[string]any `json:"detail,omitempty"`
 }
 
@@ -491,6 +510,11 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 	}
 	res.Data = out.Data
 	res.Extensions = out.Extensions
+	// A peer may send `"extensions":{}`, which decodes to a non nil empty value. Callers
+	// are told the field is nil when there is nothing to report, so make that true.
+	if res.Extensions.IsEmpty() {
+		res.Extensions = nil
+	}
 	res.Errors = make([]error, len(out.Errors))
 	for i, e := range out.Errors {
 		res.Errors[i] = ReviveError(e.Message)

@@ -18,6 +18,7 @@ package extensions
 
 import (
 	"context"
+	"slices"
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -58,6 +59,9 @@ func AddWarning(ctx context.Context, warning client.GQLWarning) {
 }
 
 // Collect returns the warnings recorded on the context, or nil if there are none.
+//
+// The returned slice is a copy. Handing out the accumulator's own slice would let a
+// later AddWarning change a result the caller is already holding.
 func Collect(ctx context.Context) *client.GQLExtensions {
 	acc, ok := ctx.Value(accumulatorContextKey{}).(*accumulator)
 	if !ok {
@@ -70,5 +74,5 @@ func Collect(ctx context.Context) *client.GQLExtensions {
 		return nil
 	}
 
-	return &client.GQLExtensions{Warnings: acc.warnings}
+	return &client.GQLExtensions{Warnings: slices.Clone(acc.warnings)}
 }
