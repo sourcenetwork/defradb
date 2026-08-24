@@ -90,6 +90,30 @@ func TestReclaimOrphanBlocksNeverReclaimsUntimestampedMarker(t *testing.T) {
 	requireKept(t, ctx, blockNS, legacy, true)
 }
 
+// A marker key whose remainder is not a CID names no block the sweep can identify, so it is left
+// in place and counted.
+func TestReclaimOrphanBlocksCountsUnparsedMarker(t *testing.T) {
+	ctx := context.Background()
+	blockNS, _, rootstore := newTestBlockstore(t)
+	defer func() { require.NoError(t, rootstore.Close()) }()
+
+	cutoff := time.Now()
+	orphan := putMarkedBlock(t, ctx, blockNS, []byte("orphan"), newToMergeValue(cutoff.Add(-time.Hour)))
+	unparsed := append([]byte{toMergeIndexPrefix}, []byte("not a cid")...)
+	require.NoError(t, blockNS.Set(ctx, unparsed, newToMergeValue(cutoff.Add(-time.Hour))))
+
+	result, err := ReclaimOrphanBlocks(ctx, rootstore, cutoff, nil, 100)
+	require.NoError(t, err)
+	require.Equal(t, 2, result.Scanned)
+	require.Equal(t, 1, result.Reclaimed)
+	require.Equal(t, 1, result.Unparsed)
+
+	requireReclaimed(t, ctx, blockNS, orphan)
+	hasUnparsed, err := blockNS.Has(ctx, unparsed)
+	require.NoError(t, err)
+	require.True(t, hasUnparsed, "an unparsed marker should be left in place")
+}
+
 // A block a document owns must survive an expired marker over it. The marker is not proof
 // the block is garbage; ownership is what decides.
 func TestReclaimOrphanBlocksKeepsBlockOwnedByDocument(t *testing.T) {

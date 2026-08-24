@@ -41,6 +41,9 @@ type SweepResult struct {
 	// Conflicts counts batches abandoned because a merge committed against a marker they
 	// held. Their blocks stay marked and are reconsidered on the next full pass.
 	Conflicts int
+	// Unparsed counts markers whose key did not decode as a CID. No block can be identified
+	// from such a key, so nothing is deleted for it and it is left in place.
+	Unparsed int
 }
 
 // ReclaimOrphanBlocks deletes blocks that were fetched during P2P sync but never merged
@@ -126,12 +129,16 @@ func reclaimBatch(
 			continue
 		}
 
-		// A marker key is the to-merge prefix followed by the block's CID.
-		blockCID, err := cid.Cast(marker[1:])
+		// A marker key is the to-merge prefix followed by the block's CID. A chunked store
+		// appends a suffix to every key it writes, so the CID is read off the front rather
+		// than from the whole remainder, and what follows it says whether it is chunked.
+		cidLen, blockCID, err := cid.CidFromBytes(marker[1:])
 		if err != nil {
 			// Not a CID, so ownership cannot be checked. Leave it rather than guess.
+			result.Unparsed++
 			continue
 		}
+		chunked := len(marker)-1 > cidLen
 
 		owned, err := blockowner.HasOwners(txnCtx, systemNS, blockCID)
 		if err != nil {
@@ -141,7 +148,7 @@ func reclaimBatch(
 			// A committed document owns the block, so the marker is stale rather than the
 			// block being garbage. Ownership decides that, not the marker's presence.
 			// Drop the marker, keep the block.
-			if err := blockNS.Delete(txnCtx, marker); err != nil {
+			if err := deleteKey(txnCtx, blockNS, marker[:1+cidLen], chunked); err != nil {
 				return err
 			}
 			repaired++
@@ -150,10 +157,10 @@ func reclaimBatch(
 
 		// Both deletes land in one commit, so a crash leaves the block and its marker
 		// either both present, and reclaimable again on a later pass, or both gone.
-		if err := blockNS.Delete(txnCtx, marker[1:]); err != nil {
+		if err := deleteKey(txnCtx, blockNS, blockCID.Bytes(), chunked); err != nil {
 			return err
 		}
-		if err := blockNS.Delete(txnCtx, marker); err != nil {
+		if err := deleteKey(txnCtx, blockNS, marker[:1+cidLen], chunked); err != nil {
 			return err
 		}
 		reclaimed++
@@ -227,6 +234,42 @@ func seekMarker(iter corekv.Iterator, startKey []byte) (bool, error) {
 		return iter.Next()
 	}
 	return iter.Seek(startKey)
+}
+
+// deleteKey removes the value stored under key. A chunked store splits one value across several
+// keys sharing it as a prefix, so those are gathered before any delete: the memory store deadlocks
+// if it is written to while an iterator is open.
+func deleteKey(ctx context.Context, store corekv.ReaderWriter, key []byte, chunked bool) error {
+	if !chunked {
+		return store.Delete(ctx, key)
+	}
+
+	iter, err := store.Iterator(ctx, corekv.IterOptions{Prefix: key, KeysOnly: true})
+	if err != nil {
+		return err
+	}
+
+	var keys [][]byte
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		keys = append(keys, copyKey(iter.Key()))
+	}
+	if err := iter.Close(); err != nil {
+		return err
+	}
+
+	for _, k := range keys {
+		if err := store.Delete(ctx, k); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func copyKey(k []byte) []byte {

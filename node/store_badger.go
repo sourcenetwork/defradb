@@ -286,6 +286,7 @@ func (s *badgerStore) reclaimOrphanBlocks(ctx context.Context, cursor []byte) []
 			corelog.Int("reclaimed", result.Reclaimed),
 			corelog.Int("repaired", result.Repaired),
 			corelog.Int("conflicts", result.Conflicts),
+			corelog.Int("unparsed", result.Unparsed),
 			corelog.Int("scanned", result.Scanned),
 			corelog.Bool("completedPass", result.NextKey == nil),
 			corelog.Duration("duration", time.Since(start)))
