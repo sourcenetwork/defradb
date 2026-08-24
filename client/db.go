@@ -424,31 +424,25 @@ type GQLResult struct {
 
 	// Extensions holds extra information about the request, such as warnings.
 	//
-	// It is nil when there is nothing to report, and the field is then left out
-	// of the response.
+	// It is nil when there is nothing to report, and is then left out of the response.
 	Extensions *GQLExtensions `json:"extensions,omitempty"`
 }
 
-// GQLExtensions sits alongside data and errors in a GQL response. It carries anything
-// we want to tell the caller that is not a result and not an error.
+// GQLExtensions sits next to data and errors in a response. It holds anything we want
+// to tell the caller that is neither a result nor an error.
 //
-// Callers ignore entries they do not know about.
+// Callers skip anything in here they do not recognise.
 type GQLExtensions struct {
-	// Warnings holds anything the caller should know about a request that worked.
+	// Warnings holds things the caller should know about a request that worked.
 	Warnings []GQLWarning `json:"warnings,omitempty"`
 }
 
-// IsEmpty returns true if there is nothing to send.
+// IsEmpty returns true if there is nothing to send. An empty value is left out of the
+// response rather than sent as `{}`.
 //
-// An empty value must be left out of the response, not sent as an empty object.
-// Sending `"extensions":{}` would change the shape of every response.
-//
-// This asks the encoder rather than checking each field, so a field added later is
-// covered without editing here. Checking fields by hand means the next field added is
-// silently dropped from every response until someone remembers to update this.
-//
-// A value the encoder cannot handle is treated as empty. The warning is then missing,
-// which is better than failing the whole response over a diagnostic.
+// It turns the value into JSON and looks at the result, so a field added later is
+// covered without changing this. A value that cannot be turned into JSON counts as
+// empty, so a bad warning is dropped instead of breaking the whole response.
 func (e *GQLExtensions) IsEmpty() bool {
 	if e == nil {
 		return true
@@ -458,26 +452,20 @@ func (e *GQLExtensions) IsEmpty() bool {
 	return err != nil || string(data) == "{}"
 }
 
-// GQLWarning describes something that happened during a request that worked. It is not
-// an error, and it does not mean the results are wrong.
+// GQLWarning describes something that happened during a request that still worked.
 type GQLWarning struct {
-	// Code names the warning. Callers check this, and it does not change once
-	// released.
+	// Code names the warning. Callers check this. It does not change once released.
 	Code string `json:"code"`
 
-	// Message explains the warning to a person.
-	//
-	// The wording can change at any time, so do not parse it.
+	// Message explains the warning to a person. The wording can change, so do not
+	// read it in code.
 	Message string `json:"message"`
 
-	// Detail holds values belonging to this warning. Optional.
+	// Detail holds values that belong to this warning. Optional.
 	//
-	// Everything here is sent to the caller and may also be logged, so do not put
-	// secrets, credentials or identity material in it.
-	//
-	// Take care with counts and identifiers drawn from documents the caller is not
-	// allowed to read. Saying how many documents were examined can tell the caller
-	// about documents that access control hid from them.
+	// It is sent to the caller and may be logged, so keep secrets and keys out of it.
+	// Be careful with counts too: saying how many documents were looked at can tell
+	// the caller about documents they are not allowed to see.
 	Detail map[string]any `json:"detail,omitempty"`
 }
 
