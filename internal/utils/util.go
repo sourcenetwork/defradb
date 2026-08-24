@@ -104,7 +104,7 @@ func normalizeJSONNumbers(value any) (any, error) {
 
 // DecodeJSONFilter decodes a JSON-encoded document filter without losing integer
 // precision (see DecodeJSONVariables). Unlike DecodeJSONVariables, the decoded value
-// is not assumed to be an object: data may be a filter expression (a string), a map 
+// is not assumed to be an object: data may be a filter expression (a string), a map
 // of filter conditions (an object), or null.
 func DecodeJSONFilter(data []byte) (any, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
