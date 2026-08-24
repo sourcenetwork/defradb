@@ -924,21 +924,19 @@ func (doc *Document) Set(ctx context.Context, field string, value any) error {
 	if err != nil {
 		return err
 	}
-	return doc.set(fd.Typ, field, val)
-}
 
-func (doc *Document) set(t CType, field string, value NormalValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
 	} else {
-		f = doc.newField(t, field)
+		f = doc.newField(fd.Typ, field)
 		doc.fields[field] = f
 	}
-	doc.values[f] = NewFieldValue(t, value)
+	doc.values[f] = NewFieldValue(fd.Typ, val)
 	doc.isDirty = true
+
 	return nil
 }
 
