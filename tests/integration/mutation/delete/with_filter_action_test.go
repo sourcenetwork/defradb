@@ -136,6 +136,14 @@ func TestDeleteWithMapFilter_LargeIntegerStraddling2To53_DeletesOnlyExactMatch(t
 				state.CClientType,
 			},
 		),
+		// The gql mutation type embeds the doc as a literal in a GraphQL mutation, and
+		// GraphQL's Int scalar is 32-bit, too small for the values used here.
+		SupportedMutationTypes: immutable.Some(
+			[]state.MutationType{
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+			},
+		),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
