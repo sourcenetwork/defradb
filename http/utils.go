@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -91,6 +92,20 @@ func requestJSON(req *http.Request, out any) error {
 		return err
 	}
 	return json.Unmarshal(data, out)
+}
+
+// requestJSONPreserveNumbers behaves like requestJSON, but decodes numbers as json.Number
+// instead of a lossy float64. Needed for endpoints that carry untyped, arbitrary-precision
+// numeric values (e.g. Lens module Arguments, a map[string]any) where the default float64
+// decode can silently round large integers before they're ever stored.
+func requestJSONPreserveNumbers(req *http.Request, out any) error {
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	return decoder.Decode(out)
 }
 
 // responseJSON writes a json response with the given status and data

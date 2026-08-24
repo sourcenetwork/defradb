@@ -146,6 +146,8 @@ const (
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errVectorIndexMetricConflict           string = "field already has a vector index with a different " +
+		"distance metric; drop the existing index and create it again with the new metric"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -1280,6 +1282,20 @@ func NewErrVectorIndexCannotBeUnique(fieldName string) error {
 	return errors.New(
 		errVectorIndexCannotBeUnique,
 		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexMetricConflict returns a new error indicating that a vector index was requested
+// with a different metric than the one already indexing that field.
+func NewErrVectorIndexMetricConflict(
+	fieldName string,
+	existing, requested client.DistanceMetric,
+) error {
+	return errors.New(
+		errVectorIndexMetricConflict,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Existing", existing),
+		errors.NewKV("Requested", requested),
 	)
 }
 

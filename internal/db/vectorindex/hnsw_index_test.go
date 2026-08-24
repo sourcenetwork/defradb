@@ -78,3 +78,49 @@ func TestIndex_DeleteAndUnsupportedMetric(t *testing.T) {
 	_, err = Open(ctx, 1, 1, 1, bad)
 	require.Error(t, err)
 }
+
+// The descriptor's metric reaches the engine and decides the ranking. The vectors are placed so each
+// metric orders them differently, so no single ranking passes by accident. It also pins that only
+// cosine normalizes: scaled to unit length, all three orders would match.
+//
+//	        cosine   squared L2   dot
+//	(1, 0.5)  0.894      0.25      1.0
+//	(3, 0.1)  0.999      4.01      3.0
+//	(0.8,0.3) 0.936      0.13      0.8
+func TestIndexSearch_MetricDecidesRanking(t *testing.T) {
+	vectors := [][]float32{{1, 0.5}, {3, 0.1}, {0.8, 0.3}}
+
+	testCases := []struct {
+		metric   client.DistanceMetric
+		expected []uint64
+	}{
+		{client.DistanceMetricCosine, []uint64{2, 3, 1}},
+		{client.DistanceMetricEuclidean, []uint64{3, 1, 2}},
+		{client.DistanceMetricDotProduct, []uint64{2, 1, 3}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(string(testCase.metric), func(t *testing.T) {
+			ctx := newStoreTestCtx(t)
+			desc := testDesc()
+			desc.Metric = testCase.metric
+
+			index, err := Open(ctx, 1, 1, 1, desc)
+			require.NoError(t, err)
+
+			for i, v := range vectors {
+				require.NoError(t, index.Insert(uint64(i+1), v))
+			}
+
+			hits, err := index.Search([]float32{1, 0}, len(vectors))
+			require.NoError(t, err)
+			require.Len(t, hits, len(vectors))
+
+			actual := make([]uint64, len(hits))
+			for i, h := range hits {
+				actual[i] = h.NodeID
+			}
+			assert.Equal(t, testCase.expected, actual)
+		})
+	}
+}
