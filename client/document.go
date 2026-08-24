@@ -924,10 +924,10 @@ func (doc *Document) Set(ctx context.Context, field string, value any) error {
 	if err != nil {
 		return err
 	}
-	return doc.setCBOR(fd.Typ, field, val)
+	return doc.set(fd.Typ, field, val)
 }
 
-func (doc *Document) set(t CType, field string, value *FieldValue) error {
+func (doc *Document) set(t CType, field string, value NormalValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
@@ -937,14 +937,9 @@ func (doc *Document) set(t CType, field string, value *FieldValue) error {
 		f = doc.newField(t, field)
 		doc.fields[field] = f
 	}
-	doc.values[f] = value
+	doc.values[f] = NewFieldValue(t, value)
 	doc.isDirty = true
 	return nil
-}
-
-func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
-	value := NewFieldValue(t, val)
-	return doc.set(t, field, value)
 }
 
 func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string]any) error {
