@@ -90,6 +90,14 @@ For detailed instructions on deploying DefraDB with Akash, refer to the [Akash D
 - Specifiy the DefraDB folder with this command: `defradb --rootdir <path> start`.
 - The default directory for where data is specified is `<rootdir>/data`.
 
+### Memory Limits
+
+The Go runtime does not read a container or cgroup memory ceiling. Set `GOMEMLIMIT` to that ceiling so a node sizes itself against the memory it actually has:
+
+- `GOMEMLIMIT` takes a size suffix, for example `GOMEMLIMIT=2GiB`.
+- Leave headroom below the ceiling for memory the Go runtime does not account for.
+- Without it, a node sizes its inbound message queue from a fixed default, which may sit above the ceiling it is running under.
+
  
 
 ## Storage Engine
