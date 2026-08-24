@@ -67,7 +67,7 @@ func (g *HNSWIndex) search(query []float32, k, efSearch int) ([]candidate, error
 		return nil, nil
 	}
 
-	q := normalize(query)
+	q := vectorForMetric(g.metric, query)
 
 	entry, ok, err := g.store.GetNode(meta.EntryPoint)
 	if err != nil {

@@ -32,9 +32,20 @@ type Metric int
 
 const (
 	// Cosine is the cosine distance metric: 1 - dot(a, b) for unit-length
-	// vectors a and b. It is currently the only supported metric.
+	// vectors a and b. It compares direction only.
 	Cosine Metric = iota
+	// Euclidean is the straight-line (L2) distance metric. It compares direction and magnitude.
+	Euclidean
+	// DotProduct is the (negated) dot product metric. It grows with magnitude, so a longer vector
+	// pointing the same way is nearer.
+	DotProduct
 )
+
+// requiresNormalized reports whether the metric needs unit-length vectors. Only cosine does; the
+// others read magnitude, so scaling would change their answers.
+func (m Metric) requiresNormalized() bool {
+	return m == Cosine
+}
 
 // Params holds the tunable construction/search parameters of the graph.
 type Params struct {
@@ -98,6 +109,19 @@ func normalize(v []float32) []float32 {
 	return out
 }
 
+// vectorForMetric returns the form of v the metric compares. Both branches copy, matching what
+// normalize already did for cosine. Nothing here needs the copy today (Insert hands the vector to a
+// store that serializes it, and search only reads it), but it keeps a NodeStore that retains the
+// slice from aliasing the caller's.
+func vectorForMetric(metric Metric, v []float32) []float32 {
+	if metric.requiresNormalized() {
+		return normalize(v)
+	}
+	out := make([]float32, len(v))
+	copy(out, v)
+	return out
+}
+
 // dot returns the dot product of a and b, accumulated in float64 to avoid float32 rounding/underflow.
 // If the lengths differ, only the shared leading elements are used.
 func dot(a, b []float32) float64 {
@@ -109,13 +133,17 @@ func dot(a, b []float32) float64 {
 	return sum
 }
 
-// distance returns the distance between two (assumed normalized) vectors under the given metric.
-// The switch is the extension point for additional metrics (L2, dot product); an unrecognised
-// metric is a programming error rather than a silent fallback, so it panics.
+// distance returns the distance between two vectors under the given metric, smaller being nearer.
+// Both must have come through vectorForMetric for this metric. An unrecognised metric is a
+// programming error rather than a silent fallback, so it panics.
 func distance(metric Metric, a, b []float32) float32 {
 	switch metric {
 	case Cosine:
 		return cosineDistance(a, b)
+	case Euclidean:
+		return squaredEuclideanDistance(a, b)
+	case DotProduct:
+		return dotProductDistance(a, b)
 	default:
 		panic("hnsw: unsupported distance metric")
 	}
@@ -124,4 +152,26 @@ func distance(metric Metric, a, b []float32) float32 {
 // cosineDistance computes 1 - dot(a, b) for unit-length vectors a and b.
 func cosineDistance(a, b []float32) float32 {
 	return float32(1 - dot(a, b))
+}
+
+// squaredEuclideanDistance computes the squared straight-line distance between a and b. The square
+// root is skipped: it is monotonic, and distances are only ever compared against each other. If the
+// lengths differ, only the shared leading elements are used, matching dot.
+//
+// Squaring costs range: the sum is held in float64, but the result narrows to float32, so components
+// beyond roughly 1e19 saturate to +Inf. Such a vector still sorts as the farthest, so ordering holds.
+func squaredEuclideanDistance(a, b []float32) float32 {
+	var sum float64
+	n := min(len(a), len(b))
+	for i := range n {
+		d := float64(a[i]) - float64(b[i])
+		sum += d * d
+	}
+	return float32(sum)
+}
+
+// dotProductDistance computes -dot(a, b). The dot product is a similarity (bigger is nearer), so the
+// sign is flipped to keep smaller nearer.
+func dotProductDistance(a, b []float32) float32 {
+	return float32(-dot(a, b))
 }
