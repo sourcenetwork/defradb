@@ -96,8 +96,6 @@ type Document struct {
 	values map[Field]*FieldValue
 	head   cid.Cid
 	mu     sync.RWMutex
-	// marks if document has unsaved changes
-	isDirty bool
 
 	collection CollectionVersion
 }
@@ -935,7 +933,6 @@ func (doc *Document) Set(ctx context.Context, field string, value any) error {
 		doc.fields[field] = f
 	}
 	doc.values[f] = NewFieldValue(fd.Typ, val)
-	doc.isDirty = true
 
 	return nil
 }
