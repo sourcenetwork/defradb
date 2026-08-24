@@ -911,68 +911,82 @@ func (p *P2P) processPushlogRequest(
 
 	// Handle batched multi-document push using a single shared transaction.
 	if len(req.Documents) > 0 {
-		results, err := p.processBatchedDocuments(ctx, req, isReplicator)
+		// Counted before the documents are processed, so a batch still counts when none
+		// of them survives.
+		p.statBatches.Add(1)
+
+		results, dropped, err := p.processBatchedDocuments(ctx, req, isReplicator)
 		if err != nil {
 			return err
 		}
-		if len(results) == 0 {
-			return nil
-		}
-		merges := make([]event.Merge, len(results))
-		for i, r := range results {
-			merges[i] = r.merge
-		}
-		merged, err := p.db.MergeBatchWithTxn(ctx, merges)
-		p.statBatches.Add(1)
-		for _, ok := range merged {
-			if ok {
-				p.statMergedDocs.Add(1)
-			} else {
-				p.dropDoc("mergeFailed")
+		if len(results) > 0 {
+			merges := make([]event.Merge, len(results))
+			for i, r := range results {
+				merges[i] = r.merge
+			}
+			merged, err := p.db.MergeBatchWithTxn(ctx, merges)
+			for _, ok := range merged {
+				if ok {
+					p.statMergedDocs.Add(1)
+				} else {
+					p.dropDoc("mergeFailed")
+					dropped++
+				}
+			}
+			if err != nil {
+				log.ErrorE("Failed to merge documents in batch", err,
+					corelog.String("PeerID", req.SenderID),
+					corelog.Int("Documents", len(merges)))
+			}
+			for i, r := range results {
+				if !merged[i] {
+					// Not stored here, so relaying it would advertise a document this node
+					// cannot serve.
+					continue
+				}
+				updateEvt := event.Update{
+					DocID:        r.merge.DocID,
+					Cid:          r.merge.Cid,
+					CollectionID: r.merge.CollectionID,
+					Block:        r.block,
+					IsRelay:      true,
+				}
+				p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+				if err := p.SendUpdate(updateEvt); err != nil {
+					log.ErrorE("Failed to send update after batch sync", err,
+						slog.String("DocID", r.merge.DocID),
+						slog.Any("PeerID", p.host.ID()),
+					)
+				}
 			}
 		}
-		if err != nil {
+
+		if dropped > 0 {
 			p.statBatchesWithDrops.Add(1)
-			log.ErrorE("Failed to merge documents in batch", err,
-				corelog.String("PeerID", req.SenderID),
-				corelog.Int("Documents", len(merges)))
-		}
-		for i, r := range results {
-			if !merged[i] {
-				// Not stored here, so relaying it would advertise a document this node
-				// cannot serve.
-				continue
-			}
-			updateEvt := event.Update{
-				DocID:        r.merge.DocID,
-				Cid:          r.merge.Cid,
-				CollectionID: r.merge.CollectionID,
-				Block:        r.block,
-				IsRelay:      true,
-			}
-			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
-			if err := p.SendUpdate(updateEvt); err != nil {
-				log.ErrorE("Failed to send update after batch sync", err,
-					slog.String("DocID", r.merge.DocID),
-					slog.Any("PeerID", p.host.ID()),
-				)
-			}
 		}
 		return nil
 	}
 
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
+		p.dropDoc("invalidCID")
 		return err
 	}
 
-	return p.processQueue.enqueue(headCID.String(), func() error {
+	// enqueue returns without running the handler when the same document is already in
+	// flight, or when the queue is full. Neither case reaches the outcomes recorded inside it.
+	handled := false
+	err = p.processQueue.enqueue(headCID.String(), func() error {
+		handled = true
+
 		// Check if we've already merged this block. If so, skip the sink process.
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
+			p.dropDoc("isMergedError")
 			return err
 		}
 		if isMerged {
+			p.skipDoc("alreadyMerged")
 			return nil
 		}
 
@@ -986,6 +1000,7 @@ func (p *P2P) processPushlogRequest(
 			block, err = coreblock.GetFromBytes(req.Block)
 		}
 		if err != nil {
+			p.dropDoc("blockDecode")
 			return err
 		}
 
@@ -993,9 +1008,11 @@ func (p *P2P) processPushlogRequest(
 		// arbitrary content under a CID of its choosing.
 		blockLink, err := block.GenerateLink()
 		if err != nil {
+			p.dropDoc("generateLink")
 			return err
 		}
 		if blockLink.Cid != headCID {
+			p.dropDoc("cidMismatch")
 			return ErrBlockCIDMismatch
 		}
 
@@ -1004,16 +1021,19 @@ func (p *P2P) processPushlogRequest(
 		if !isReplicator {
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 			if err != nil {
+				p.dropDoc("accessError")
 				return err
 			}
 			if !mightHaveAccess {
 				// If we know we don't have access, we can skip the rest of the processing.
+				p.skipDoc("noAccess")
 				return nil
 			}
 		}
 
 		// Run the replication filter before writing any blocks to storage.
 		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
+			p.skipDoc("filtered")
 			return nil
 		}
 
@@ -1021,10 +1041,12 @@ func (p *P2P) processPushlogRequest(
 		if len(req.CAR) > 0 {
 			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
 			if _, err = p.importCAR(ctx, req.CAR); err != nil {
+				p.dropDoc("importCAR")
 				return err
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
+				p.dropDoc("syncDAG")
 				return err
 			}
 		}
@@ -1059,6 +1081,15 @@ func (p *P2P) processPushlogRequest(
 
 		return nil
 	})
+
+	if !handled {
+		if err == nil {
+			p.skipDoc("inFlight")
+		} else {
+			p.dropDoc("syncQueueFull")
+		}
+	}
+	return err
 }
 
 // batchedDoc pairs a merge event with its raw block bytes for relay after batch commit.
@@ -1075,8 +1106,15 @@ func (p *P2P) processBatchedDocuments(
 	ctx context.Context,
 	req *protocol.PushLogRequest,
 	isReplicator bool,
-) ([]batchedDoc, error) {
+) ([]batchedDoc, int, error) {
 	results := make([]batchedDoc, 0, len(req.Documents))
+
+	// The counters are process-wide, so this batch's own drops are tallied separately.
+	dropped := 0
+	drop := func(reason string) {
+		p.dropDoc(reason)
+		dropped++
+	}
 
 	for _, doc := range req.Documents {
 		headCID, err := cid.Cast(doc.CID)
@@ -1085,14 +1123,14 @@ func (p *P2P) processBatchedDocuments(
 				slog.String("DocID", doc.DocID),
 				slog.String("CollectionID", req.CollectionID),
 			)
-			p.dropDoc("invalidCID")
+			drop("invalidCID")
 			continue
 		}
 
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
 			log.ErrorE("Batch: IsMerged check failed", err, slog.String("DocID", doc.DocID))
-			p.dropDoc("isMergedError")
+			drop("isMergedError")
 			continue
 		}
 		if isMerged {
@@ -1108,19 +1146,19 @@ func (p *P2P) processBatchedDocuments(
 		}
 		if err != nil {
 			log.ErrorE("Batch: block decode failed", err, slog.String("DocID", doc.DocID))
-			p.dropDoc("blockDecode")
+			drop("blockDecode")
 			continue
 		}
 
 		blockLink, err := block.GenerateLink()
 		if err != nil {
 			log.ErrorE("Batch: GenerateLink failed", err, slog.String("DocID", doc.DocID))
-			p.dropDoc("generateLink")
+			drop("generateLink")
 			continue
 		}
 		if blockLink.Cid != headCID {
 			log.Error("Batch: CID mismatch", slog.String("DocID", doc.DocID))
-			p.dropDoc("cidMismatch")
+			drop("cidMismatch")
 			continue
 		}
 
@@ -1128,7 +1166,7 @@ func (p *P2P) processBatchedDocuments(
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, doc.DocID)
 			if err != nil {
 				log.ErrorE("Batch: access check failed", err, slog.String("DocID", doc.DocID))
-				p.dropDoc("accessError")
+				drop("accessError")
 				continue
 			}
 			if !mightHaveAccess {
@@ -1145,13 +1183,13 @@ func (p *P2P) processBatchedDocuments(
 		if len(doc.CAR) > 0 {
 			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
 				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
-				p.dropDoc("importCAR")
+				drop("importCAR")
 				continue
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
 				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
-				p.dropDoc("syncDAG")
+				drop("syncDAG")
 				continue
 			}
 		}
@@ -1168,7 +1206,7 @@ func (p *P2P) processBatchedDocuments(
 		})
 	}
 
-	return results, nil
+	return results, dropped, nil
 }
 func (p *P2P) SendUpdate(evt event.Update) error {
 	// push to each peer (replicator)

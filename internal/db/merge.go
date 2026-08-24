@@ -43,6 +43,7 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
+		db.stats.markDropped(dropCollection)
 		return err
 	}
 
@@ -62,13 +63,16 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	for i := 0; i < db.txnAttempts(); i++ {
 		err = db.executeMerge(ctx, col, evt)
 		if errors.Is(err, corekv.ErrTxnConflict) {
+			db.stats.chunkConflicts.Add(1)
 			continue
 		}
 		if err != nil {
+			db.stats.markDropped(mergeDropReason(err))
 			return err
 		}
 		return nil
 	}
+	db.stats.markDropped(dropRetryExhausted)
 	return client.NewErrMaxTxnRetries(err)
 }
 
