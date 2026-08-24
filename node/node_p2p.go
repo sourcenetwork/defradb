@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
+func (n *Node) startP2P(ctx context.Context, store corekv.TxnReaderWriter, chunkSize immutable.Option[int]) error {
 	if n.opts.DisableP2P {
 		return nil
 	}

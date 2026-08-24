@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"time"
 
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
@@ -119,6 +120,10 @@ func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
 
 type p2pBlockStore struct {
 	*bstore
+
+	// rootstore backs the marker refresh. The refresh reads the marker and writes it back, which
+	// has to happen in one transaction or a merge clearing the marker in between is undone.
+	rootstore corekv.TxnReaderWriter
 }
 
 var _ Blockstore = (*p2pBlockStore)(nil)
@@ -128,7 +133,9 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	// Has is cheaper than Set, so see if we already have it
 	exists, err := bs.store.Has(ctx, block.Cid().Bytes())
 	if err == nil && exists {
-		return nil // already stored.
+		// Already stored, but a block still waiting to merge needs its marker renewed so the
+		// sweep does not treat it as abandoned.
+		return bs.refreshMarker(ctx, block)
 	}
 	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), newToMergeValue(time.Now()))
 	if err != nil {
@@ -141,11 +148,46 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	return nil
 }
 
+// refreshMarker moves an unmerged block's marker forward so a block that keeps arriving is not
+// treated as abandoned. The read and the write share a transaction: reading the marker puts it in
+// the transaction's read set, so a merge that clears it concurrently makes this commit fail rather
+// than silently marking a merged block unmerged again.
+func (bs *p2pBlockStore) refreshMarker(ctx context.Context, block blocks.Block) error {
+	markerKey := newToMergeKey(block.Cid().Bytes())
+
+	txn := bs.rootstore.NewTxn(false)
+	defer txn.Discard()
+	txnCtx := corekv.SetCtxTxn(ctx, txn)
+
+	stillUnmerged, err := bs.store.Has(txnCtx, markerKey)
+	if err != nil {
+		return NewErrCheckBlockMergeStatus(err)
+	}
+	if !stillUnmerged {
+		return nil
+	}
+	if err := bs.store.Set(txnCtx, markerKey, newToMergeValue(time.Now())); err != nil {
+		return NewErrStoreBlock(err)
+	}
+
+	// A conflict means another transaction wrote the marker after this one read it: a merge
+	// clearing it, another refresh stamping it, or the sweep reclaiming the block along with
+	// it. The first two leave the marker where this refresh would have; the third leaves no
+	// block to mark, and the next fetch writes both again.
+	if err := txn.Commit(); err != nil && !errors.Is(err, corekv.ErrTxnConflict) {
+		return NewErrStoreBlock(err)
+	}
+	return nil
+}
+
 // PutMany stores multiple blocks to the blockstore.
 func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
 		exists, err := bs.store.Has(ctx, b.Cid().Bytes())
 		if err == nil && exists {
+			if err := bs.refreshMarker(ctx, b); err != nil {
+				return err
+			}
 			continue
 		}
 		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), newToMergeValue(time.Now()))

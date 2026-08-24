@@ -110,9 +110,10 @@ func blockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[in
 	return newBlockstore(store)
 }
 
-func P2PBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) Blockstore {
+func P2PBlockstoreFrom(rootstore corekv.TxnReaderWriter, chunkSize immutable.Option[int]) Blockstore {
 	return &p2pBlockStore{
-		bstore: blockstoreFrom(rootstore, chunkSize),
+		bstore:    blockstoreFrom(rootstore, chunkSize),
+		rootstore: rootstore,
 	}
 }
 
