@@ -271,7 +271,7 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
 	if w.closed {
-		return defraResult{}, errors.New(errWrapperClosed)
+		return defraResult{}, errors.New(ErrWrapperClosed)
 	}
 
 	if activeTxn, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
@@ -294,7 +294,7 @@ func (w *Wrapper) callGuarded(name string, handle uintptr, b *argBuilder) (defra
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
 	if w.closed {
-		return defraResult{}, errors.New(errWrapperClosed)
+		return defraResult{}, errors.New(ErrWrapperClosed)
 	}
 	return callNode(w.nodeObj, name, handle, b)
 }

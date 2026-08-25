@@ -935,7 +935,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	w.nodeMu.RLock()
 	if w.closed {
 		w.nodeMu.RUnlock()
-		return nil, errors.New(errWrapperClosed)
+		return nil, errors.New(ErrWrapperClosed)
 	}
 	txnPtr, err := createTransactionWithHandle(w.nodeObj, w.handle, readOnly)
 	w.nodeMu.RUnlock()
@@ -962,9 +962,9 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 // the first call already deleted it.
 //
 // Holds nodeMu for the whole close sequence, so it can't run concurrently with any other method's
-// use of nodeObj. Only marks closed (and only deletes nodeObj's global ref) once NodeCloseNative has 
-// actually succeeded, mirroring cbindings.CloseNode's handling of a failed node.Close. A failed close 
-// here leaves the wrapper exactly as it was, so a caller can call Close again to retry instead of the 
+// use of nodeObj. Only marks closed (and only deletes nodeObj's global ref) once NodeCloseNative has
+// actually succeeded, mirroring cbindings.CloseNode's handling of a failed node.Close. A failed close
+// here leaves the wrapper exactly as it was, so a caller can call Close again to retry instead of the
 // node/handle becoming unreachable.
 func (w *Wrapper) Close() {
 	w.nodeMu.Lock()

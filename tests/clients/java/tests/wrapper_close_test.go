@@ -11,7 +11,7 @@
 
 //go:build javaclient
 
-package java
+package tests
 
 import (
 	"sync"
@@ -21,27 +21,28 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	javaclient "github.com/sourcenetwork/defradb/tests/clients/java"
 )
 
 // TestWrapperClose_ThenNewTxn_ReturnsClosedError guards against calls made after Close using
 // nodeObj/handle once the JNI global ref has already been deleted. NewTxn (and every other
-// method, via callStore/callGuarded) must reject with errWrapperClosed.
+// method, via callStore/callGuarded) must reject with ErrWrapperClosed.
 func TestWrapperClose_ThenNewTxn_ReturnsClosedError(t *testing.T) {
 	w, ctx := newTestWrapper(t)
 
 	w.Close()
 
 	_, err := w.NewTxn(false)
-	require.ErrorContains(t, err, errWrapperClosed)
+	require.ErrorContains(t, err, javaclient.ErrWrapperClosed)
 
 	_, err = w.GetCollections(ctx, options.GetCollections())
-	require.ErrorContains(t, err, errWrapperClosed)
+	require.ErrorContains(t, err, javaclient.ErrWrapperClosed)
 }
 
 // TestWrapperClose_ConcurrentWithNewTxn_NoRace guards against Close deleting nodeObj's JNI global
 // ref while NewTxn is concurrently using it. Run with -race. The meaningful assertion isn't which
-// of the two wins, it's that NewTxn either succeeds cleanly, or fails with exactly errWrapperClosed.
-// There should never be a raw JNI/native error from touching a stale reference, which is what an 
+// of the two wins, it's that NewTxn either succeeds cleanly, or fails with exactly ErrWrapperClosed.
+// There should never be a raw JNI/native error from touching a stale reference, which is what an
 // unsynchronized race would produce instead.
 func TestWrapperClose_ConcurrentWithNewTxn_NoRace(t *testing.T) {
 	w, _ := newTestWrapper(t)
@@ -63,7 +64,7 @@ func TestWrapperClose_ConcurrentWithNewTxn_NoRace(t *testing.T) {
 	if txnErr == nil {
 		txn.Discard()
 	} else {
-		require.ErrorContains(t, txnErr, errWrapperClosed)
+		require.ErrorContains(t, txnErr, javaclient.ErrWrapperClosed)
 	}
 }
 
@@ -87,5 +88,5 @@ func TestWrapperClose_ConcurrentDoubleClose_NoRace(t *testing.T) {
 	wg.Wait()
 
 	_, err := w.NewTxn(false)
-	require.ErrorContains(t, err, errWrapperClosed)
+	require.ErrorContains(t, err, javaclient.ErrWrapperClosed)
 }

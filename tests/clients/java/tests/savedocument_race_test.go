@@ -11,7 +11,7 @@
 
 //go:build javaclient
 
-package java
+package tests
 
 import (
 	"fmt"

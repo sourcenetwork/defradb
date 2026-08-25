@@ -40,5 +40,5 @@ const (
 	errCastClientTxnFailed     = "failed to cast clientTxn to datastore.Txn"
 	errFmtListLensesUnmarshal  = "%w (value len=%d, snippet=%q)"
 	errFmtDocumentToJSONFailed = "failed to convert document to JSON: %w"
-	errWrapperClosed           = "java client: wrapper is closed"
+	ErrWrapperClosed           = "java client: wrapper is closed"
 )

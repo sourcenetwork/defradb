@@ -11,7 +11,7 @@
 
 //go:build javaclient
 
-package java
+package tests
 
 import (
 	"sync"
@@ -23,8 +23,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-// TestTxnCommit_ConflictingWrite_ReturnsError forces a real native commit failure by having two 
-// independent transactions read-then-write the same document. The first Commit should win and 
+// TestTxnCommit_ConflictingWrite_ReturnsError forces a real native commit failure by having two
+// independent transactions read-then-write the same document. The first Commit should win and
 // succeed. The second should fail with a conflict.
 func TestTxnCommit_ConflictingWrite_ReturnsError(t *testing.T) {
 	w, ctx := newTestWrapper(t)
@@ -126,9 +126,9 @@ func TestTxnPostFinalization_Operations_ReturnTransactionNotFound(t *testing.T) 
 
 // TestTxnCommitDiscard_Concurrent_NoRace guards finalizeMu. Commit and Discard racing each other
 // on the same transaction must never both reach the native layer, which would double-delete the
-// same cgo.Handle/JNI global reference. 
-// 
-// Run with -race. 
+// same cgo.Handle/JNI global reference.
+//
+// Run with -race.
 // Also run with DEFRA_JAVA_JVM_OPTS=-Xcheck:jni to make the JVM itself abort on invalid reference
 // use instead of silently tolerating it.
 func TestTxnCommitDiscard_Concurrent_NoRace(t *testing.T) {

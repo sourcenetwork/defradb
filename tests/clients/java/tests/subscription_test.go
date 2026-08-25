@@ -11,7 +11,7 @@
 
 //go:build javaclient
 
-package java
+package tests
 
 import (
 	"context"
@@ -21,37 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/node"
 )
-
-// newTestWrapper starts a minimal in-memory node with a single collection and wraps it,
-// registering cleanup for both. Used by tests that need a real *Wrapper but don't want to go
-// through the shared tests/action framework (which has no way to cancel a single subscription's
-// context independently of the whole test's lifecycle).
-func newTestWrapper(t *testing.T) (*Wrapper, context.Context) {
-	t.Helper()
-	ctx := context.Background()
-
-	n, err := node.New(ctx,
-		options.Node().
-			SetDisableAPI(true).
-			SetDisableP2P(true).
-			Store().SetType(options.NodeMemoryStore).
-			Node(),
-	)
-	require.NoError(t, err)
-	require.NoError(t, n.Start(ctx))
-	t.Cleanup(func() { _ = n.Close(ctx) })
-
-	w, err := NewWrapper(n)
-	require.NoError(t, err)
-	t.Cleanup(w.Close)
-
-	_, err = w.AddCollection(ctx, `type Users { name: String }`)
-	require.NoError(t, err)
-
-	return w, ctx
-}
 
 // TestWrapperSubscription_ContextCancelled_ChannelClosesPromptly guards against
 // wrapSubscriptionAsChannel's background poll goroutine outliving the caller's context.
