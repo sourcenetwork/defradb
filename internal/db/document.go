@@ -534,10 +534,6 @@ func (c *collection) save(
 				FieldID:           strconv.FormatUint(uint64(fieldID), 10),
 			}
 
-			// by default the type will have been set to LWW_REGISTER. We need to ensure
-			// that it's set to the same as the field description CRDT type.
-			val.SetType(fieldDescription.Typ)
-
 			headset := coreblock.NewHeadSet(txn.Headstore(), fieldKey.ToHeadStoreKey())
 			heads, height, err := headset.List(ctx)
 			if err != nil {
@@ -547,7 +543,7 @@ func (c *collection) save(
 
 			var merkleCRDT crdt.FieldValueCRDT
 			var delta crdt.Delta
-			switch val.Type() {
+			switch fieldDescription.Typ {
 			case client.LWW_REGISTER:
 				lww := crdt.NewLWW()
 				merkleCRDT = lww
@@ -559,7 +555,7 @@ func (c *collection) save(
 
 			case client.PN_COUNTER, client.P_COUNTER:
 				counter := crdt.NewCounter(
-					val.Type() == client.PN_COUNTER,
+					fieldDescription.Typ == client.PN_COUNTER,
 				)
 				merkleCRDT = counter
 
@@ -567,9 +563,6 @@ func (c *collection) save(
 				if err != nil {
 					return err
 				}
-
-			default:
-				return client.NewErrUnknownCRDT(val.Type())
 			}
 
 			err = merkleCRDT.Merge(
