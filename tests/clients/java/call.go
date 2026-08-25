@@ -95,6 +95,19 @@ func (b *argBuilder) argStr(v string) *argBuilder {
 	return b
 }
 
+// argOptStr appends a String argument that is a genuine null (not merely an empty string) when v
+// has no value. jnicall.c's DEFRA_ARG_STRING case passes a NULL str through as an actual Java
+// null, matching the C client's *C.char == nil convention for "not set" (see cbindings.AddView's
+// transformCIDStr != nil check) - passing an empty string here instead would be seen as a real,
+// present-but-empty value on the other side, not "absent".
+func (b *argBuilder) argOptStr(v immutable.Option[string]) *argBuilder {
+	if !v.HasValue() {
+		b.args = append(b.args, C.DefraArg{kind: C.DEFRA_ARG_STRING, str: nil})
+		return b
+	}
+	return b.argStr(v.Value())
+}
+
 // collOpts appends a DefraCollectionOptions argument, built on the C side from the given fields.
 // enableSigning overrides the node-level signing setting for this operation; None leaves it unset.
 func (b *argBuilder) collOpts(

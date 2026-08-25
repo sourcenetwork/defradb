@@ -586,15 +586,11 @@ func (w *Wrapper) AddView(
 	ctx context.Context, query string, sdl string, opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
-	transformCID := ""
-	if opt.TransformCID.HasValue() {
-		transformCID = opt.TransformCID.Value()
-	}
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(w, ctx, "AddViewNative",
-		newArgs().argStr(query).argStr(sdl).argStr(transformCID).argLong(idH))
+		newArgs().argStr(query).argStr(sdl).argOptStr(opt.TransformCID).argLong(idH))
 	if err != nil {
 		return []client.CollectionVersion{}, err
 	}
