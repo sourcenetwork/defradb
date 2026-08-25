@@ -847,7 +847,7 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_NewIndexNative(
     const char* indexNameC = jstring_to_utf8(env, indexNameStr);
     const char* fieldsC = jstring_to_utf8(env, fieldsStr);
     int isUniqueC = (isUnique == JNI_TRUE) ? 1 : 0;
-    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, opts, (uintptr_t)identityPtr);
+    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, NULL, opts, (uintptr_t)identityPtr);
     free((void*)indexNameC);
     free((void*)fieldsC);
     releaseJavaCollectionOptions(env, optionsObj, opts);
@@ -1558,7 +1558,7 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_NewIndexNative(
     const char* indexNameC = jstring_to_utf8(env, indexNameStr);
     const char* fieldsC = jstring_to_utf8(env, fieldsStr);
     int isUniqueC = (isUnique == JNI_TRUE) ? 1 : 0;
-    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, opts, (uintptr_t)identityPtr);
+    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, NULL, opts, (uintptr_t)identityPtr);
     free((void*)indexNameC);
     free((void*)fieldsC);
     releaseJavaCollectionOptions(env, optionsObj, opts);
@@ -2059,7 +2059,7 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraCollection_NewIndexNative(
     const char* indexNameC = jstring_to_utf8(env, indexNameStr);
     const char* fieldsC = jstring_to_utf8(env, fieldsStr);
     int isUniqueC = (isUnique == JNI_TRUE) ? 1 : 0;
-    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, opts, (uintptr_t)identityPtr);
+    Result res = NewIndex((uintptr_t)nodePtr, (char*)indexNameC, (char*)fieldsC, isUniqueC, NULL, opts, (uintptr_t)identityPtr);
     free((void*)indexNameC);
     free((void*)fieldsC);
     releaseJavaCollectionOptions(env, optionsObj, opts);

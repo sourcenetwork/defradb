@@ -421,7 +421,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 ) (*client.UpdateResult, error) {
 	ctx = setCtxTxnFromCollection(ctx, c)
 
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 ) (*client.DeleteResult, error) {
 	ctx = setCtxTxnFromCollection(ctx, c)
 
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,401 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package hnsw
+
+import (
+	"math"
+	"math/rand"
+	"sort"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// bruteForceKNN computes the true k nearest neighbours of query among
+// vectors (already normalized), by exhaustive cosine-distance
+// comparison. Returns node ids nearest-first.
+func bruteForceKNN(metric Metric, query []float32, vectors map[NodeID][]float32, k int) []NodeID {
+	type scored struct {
+		id   NodeID
+		dist float32
+	}
+	scoredList := make([]scored, 0, len(vectors))
+	for id, v := range vectors {
+		scoredList = append(scoredList, scored{id: id, dist: distance(metric, query, v)})
+	}
+	sort.Slice(scoredList, func(i, j int) bool { return scoredList[i].dist < scoredList[j].dist })
+	if k > len(scoredList) {
+		k = len(scoredList)
+	}
+	out := make([]NodeID, k)
+	for i := 0; i < k; i++ {
+		out[i] = scoredList[i].id
+	}
+	return out
+}
+
+func randomVector(rng *rand.Rand, dim int) []float32 {
+	v := make([]float32, dim)
+	for i := range v {
+		v[i] = float32(rng.NormFloat64())
+	}
+	return v
+}
+
+// recallAgainstBruteForce builds a graph of random vectors under the given metric and returns the
+// average recall@k of its search against an exhaustive scan. The baseline uses the same metric, since
+// each one ranks the same data differently.
+func recallAgainstBruteForce(t *testing.T, metric Metric) float64 {
+	const (
+		n          = 1000
+		dim        = 32
+		k          = 10
+		numQueries = 50
+		efSearch   = 64
+	)
+
+	rng := rand.New(rand.NewSource(42))
+	store := NewMemStore()
+	params := DefaultParams(16)
+	params.EfSearch = efSearch
+	g := New(store, metric, params, 42)
+
+	truth := make(map[NodeID][]float32, n)
+	for i := range n {
+		v := randomVector(rng, dim)
+		id := NodeID(i + 1)
+		require.NoError(t, g.Insert(id, v))
+		// The baseline must hold what the graph stores.
+		truth[id] = vectorForMetric(metric, v)
+	}
+
+	var totalRecall float64
+	for range numQueries {
+		query := randomVector(rng, dim)
+		expected := bruteForceKNN(metric, vectorForMetric(metric, query), truth, k)
+		actual, err := g.Search(query, k, efSearch)
+		require.NoError(t, err)
+
+		expectedSet := make(map[NodeID]struct{}, len(expected))
+		for _, id := range expected {
+			expectedSet[id] = struct{}{}
+		}
+		hits := 0
+		for _, id := range actual {
+			if _, ok := expectedSet[id]; ok {
+				hits++
+			}
+		}
+		totalRecall += float64(hits) / float64(len(expected))
+	}
+
+	avgRecall := totalRecall / float64(numQueries)
+	t.Logf("average recall@%d over %d queries: %.4f", k, numQueries, avgRecall)
+	return avgRecall
+}
+
+func TestGraph_RandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, Cosine), 0.90, "recall below threshold")
+}
+
+func TestGraph_SmallHandPlaced_ReturnsNearestInOrder(t *testing.T) {
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(8), 1)
+
+	// Vectors placed at increasing angles from the +X axis so their
+	// cosine similarity to the query (+X axis) decreases monotonically.
+	ids := []NodeID{1, 2, 3, 4}
+	vectors := [][]float32{
+		{1, 0},      // 0 degrees -- closest to query
+		{0.9, 0.1},  // small angle
+		{0.5, 0.86}, // ~60 degrees
+		{-1, 0},     // 180 degrees -- farthest
+	}
+	for i, v := range vectors {
+		require.NoError(t, g.Insert(ids[i], v))
+	}
+
+	result, err := g.Search([]float32{1, 0}, 4, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{1, 2, 3, 4}, result)
+}
+
+func TestGraph_DeletedNodes_ExcludedFromResults(t *testing.T) {
+	const (
+		n        = 300
+		dim      = 16
+		k        = 10
+		efSearch = 64
+	)
+
+	rng := rand.New(rand.NewSource(7))
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(16), 7)
+
+	truth := make(map[NodeID][]float32, n)
+	allIDs := make([]NodeID, 0, n)
+	for i := range n {
+		v := randomVector(rng, dim)
+		id := NodeID(i + 1)
+		require.NoError(t, g.Insert(id, v))
+		truth[id] = normalize(v)
+		allIDs = append(allIDs, id)
+	}
+
+	// Delete every 3rd node.
+	deleted := make(map[NodeID]struct{})
+	for i, id := range allIDs {
+		if i%3 == 0 {
+			require.NoError(t, g.Delete(id))
+			deleted[id] = struct{}{}
+			delete(truth, id)
+		}
+	}
+
+	var totalRecall float64
+	const numQueries = 30
+	for range numQueries {
+		query := randomVector(rng, dim)
+		result, err := g.Search(query, k, efSearch)
+		require.NoError(t, err)
+
+		for _, id := range result {
+			_, isDeleted := deleted[id]
+			assert.False(t, isDeleted, "deleted node %d appeared in search results", id)
+		}
+
+		expected := bruteForceKNN(Cosine, normalize(query), truth, k)
+		expectedSet := make(map[NodeID]struct{}, len(expected))
+		for _, id := range expected {
+			expectedSet[id] = struct{}{}
+		}
+		hits := 0
+		for _, id := range result {
+			if _, ok := expectedSet[id]; ok {
+				hits++
+			}
+		}
+		totalRecall += float64(hits) / float64(len(expected))
+	}
+
+	avgRecall := totalRecall / float64(numQueries)
+	t.Logf("average recall@%d after deletions: %.4f", k, avgRecall)
+	assert.GreaterOrEqual(t, avgRecall, 0.85, "recall degraded too much after deletions")
+}
+
+// After deleting every node and inserting new ones, the new nodes must be searchable. The entry
+// point still refers to a tombstoned node, so the first new insert links to nothing; it has to
+// become the entry point itself or the whole collection stays invisible.
+func TestGraph_InsertAfterAllDeleted_NewNodesAreSearchable(t *testing.T) {
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(16), 1)
+
+	// A first generation of nodes, then delete all of them.
+	first := []NodeID{1, 2, 3, 4, 5}
+	for _, id := range first {
+		require.NoError(t, g.Insert(id, randomVector(rand.New(rand.NewSource(int64(id))), 8)))
+	}
+	for _, id := range first {
+		require.NoError(t, g.Delete(id))
+	}
+
+	// A second generation inserted into the now fully-tombstoned graph.
+	target := []float32{1, 0, 0, 0, 0, 0, 0, 0}
+	require.NoError(t, g.Insert(100, target))
+	require.NoError(t, g.Insert(101, []float32{0, 1, 0, 0, 0, 0, 0, 0}))
+
+	result, err := g.Search(target, 2, 64)
+	require.NoError(t, err)
+
+	found := make(map[NodeID]struct{}, len(result))
+	for _, id := range result {
+		found[id] = struct{}{}
+	}
+	assert.Contains(t, found, NodeID(100), "new node unreachable after deleting all prior nodes")
+	assert.Contains(t, found, NodeID(101), "new node unreachable after deleting all prior nodes")
+}
+
+func TestGraph_KExceedsNodeCount_ReturnsAll(t *testing.T) {
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(8), 3)
+
+	ids := []NodeID{1, 2, 3, 4, 5}
+	rng := rand.New(rand.NewSource(3))
+	for _, id := range ids {
+		require.NoError(t, g.Insert(id, randomVector(rng, 8)))
+	}
+
+	result, err := g.Search(randomVector(rng, 8), 100, 64)
+	require.NoError(t, err)
+	assert.Len(t, result, len(ids))
+
+	seen := make(map[NodeID]struct{})
+	for _, id := range result {
+		seen[id] = struct{}{}
+	}
+	for _, id := range ids {
+		_, ok := seen[id]
+		assert.True(t, ok, "expected id %d to be present in results", id)
+	}
+}
+
+func TestGraph_SameSeed_Deterministic(t *testing.T) {
+	buildGraph := func(seed int64) (*HNSWIndex, []NodeID) {
+		store := NewMemStore()
+		g := New(store, Cosine, DefaultParams(8), seed)
+		rng := rand.New(rand.NewSource(99))
+		ids := make([]NodeID, 200)
+		for i := range 200 {
+			id := NodeID(i + 1)
+			ids[i] = id
+			require.NoError(t, g.Insert(id, randomVector(rng, 16)))
+		}
+		return g, ids
+	}
+
+	g1, _ := buildGraph(123)
+	g2, _ := buildGraph(123)
+
+	meta1, _, err := g1.store.GetMeta()
+	require.NoError(t, err)
+	meta2, _, err := g2.store.GetMeta()
+	require.NoError(t, err)
+	assert.Equal(t, meta1, meta2)
+
+	queryRng := rand.New(rand.NewSource(55))
+	query := randomVector(queryRng, 16)
+
+	result1, err := g1.Search(query, 10, 64)
+	require.NoError(t, err)
+	result2, err := g2.Search(query, 10, 64)
+	require.NoError(t, err)
+	assert.Equal(t, result1, result2)
+}
+
+func TestGraph_EmptyGraph_ReturnsNoResults(t *testing.T) {
+	store := NewMemStore()
+	g := New(store, Cosine, DefaultParams(8), 1)
+
+	result, err := g.Search([]float32{1, 0, 0}, 5, 64)
+	require.NoError(t, err)
+	assert.Empty(t, result)
+}
+
+func TestNormalize_ZeroVector_ReturnsUnchanged(t *testing.T) {
+	v := []float32{0, 0, 0}
+	out := normalize(v)
+	assert.Equal(t, []float32{0, 0, 0}, out)
+}
+
+func TestNormalize_NegligibleNorm_ReturnsUnchangedWithoutInf(t *testing.T) {
+	// A vector whose squared norm is below normThreshold must be returned unchanged rather than
+	// divided by a near-zero norm (which would overflow float32 to ±Inf).
+	v := []float32{1e-25, -1e-25}
+	out := normalize(v)
+	assert.Equal(t, v, out)
+	for _, x := range out {
+		assert.False(t, math.IsInf(float64(x), 0), "normalize must not produce Inf for a negligible-norm vector")
+	}
+}
+
+func TestNormalize_NonZeroVector_ReturnsUnitLength(t *testing.T) {
+	v := []float32{3, 4}
+	out := normalize(v)
+
+	var sumSq float64
+	for _, x := range out {
+		sumSq += float64(x) * float64(x)
+	}
+	assert.InDelta(t, 1.0, sumSq, 1e-6)
+	assert.InDelta(t, 0.6, out[0], 1e-6)
+	assert.InDelta(t, 0.8, out[1], 1e-6)
+}
+
+// Cosine compares direction alone, so the engine scales vectors to unit length for it.
+func TestVectorForMetric_Cosine_ScalesToUnitLength(t *testing.T) {
+	out := vectorForMetric(Cosine, []float32{3, 4})
+	assert.InDelta(t, 0.6, out[0], 1e-6)
+	assert.InDelta(t, 0.8, out[1], 1e-6)
+}
+
+// The other metrics read magnitude, so they must get the vector as given.
+func TestVectorForMetric_EuclideanAndDotProduct_KeepMagnitude(t *testing.T) {
+	for _, metric := range []Metric{Euclidean, DotProduct} {
+		assert.Equal(t, []float32{3, 4}, vectorForMetric(metric, []float32{3, 4}))
+	}
+}
+
+// Neither metric hands the caller's slice on, so a later write through it changes nothing.
+func TestVectorForMetric_EveryMetric_ReturnsCopy(t *testing.T) {
+	for _, metric := range []Metric{Cosine, Euclidean, DotProduct} {
+		v := []float32{3, 4}
+		out := vectorForMetric(metric, v)
+		v[0] = 99
+		assert.NotEqual(t, float32(99), out[0])
+	}
+}
+
+func TestSquaredEuclideanDistance_KnownVectors_MatchesHandComputed(t *testing.T) {
+	// (1-4)^2 + (2-6)^2 = 9 + 16 = 25.
+	assert.InDelta(t, 25.0, squaredEuclideanDistance([]float32{1, 2}, []float32{4, 6}), 1e-6)
+	assert.InDelta(t, 0.0, squaredEuclideanDistance([]float32{1, 2}, []float32{1, 2}), 1e-6)
+}
+
+// The dot product is a similarity, so distance must order the other way round.
+func TestDotProductDistance_LargerDotProduct_IsSmallerDistance(t *testing.T) {
+	near := dotProductDistance([]float32{2, 0}, []float32{3, 0})
+	far := dotProductDistance([]float32{2, 0}, []float32{1, 0})
+	assert.InDelta(t, -6.0, near, 1e-6)
+	assert.InDelta(t, -2.0, far, 1e-6)
+	assert.Less(t, near, far)
+}
+
+func TestGraph_EuclideanRandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, Euclidean), 0.90, "recall below threshold")
+}
+
+func TestGraph_DotProductRandomVectors_RecallMeetsThreshold(t *testing.T) {
+	assert.GreaterOrEqual(t, recallAgainstBruteForce(t, DotProduct), 0.90, "recall below threshold")
+}
+
+// Euclidean ranks by position, so {1,0} beats {5,0} for a query at {1,0} even though both point the
+// same way. Cosine would tie them, so this fails if the engine normalizes here.
+func TestGraph_Euclidean_RanksByPositionNotDirection(t *testing.T) {
+	g := New(NewMemStore(), Euclidean, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{1, 0}))
+	require.NoError(t, g.Insert(2, []float32{5, 0}))
+	require.NoError(t, g.Insert(3, []float32{0, 1.2}))
+
+	result, err := g.Search([]float32{1, 0}, 3, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{1, 3, 2}, result)
+}
+
+// Dot product ranks by magnitude too, so {5,0} beats {1,0}. Cosine would tie them, so this fails if
+// the engine normalizes here.
+func TestGraph_DotProduct_RanksLongerVectorNearer(t *testing.T) {
+	g := New(NewMemStore(), DotProduct, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{1, 0}))
+	require.NoError(t, g.Insert(2, []float32{5, 0}))
+	require.NoError(t, g.Insert(3, []float32{0, 1}))
+
+	result, err := g.Search([]float32{1, 0}, 3, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{2, 1, 3}, result)
+}
+
+// An unrecognised metric is a programming error, not a silent fallback.
+func TestDistance_UnknownMetric_Panics(t *testing.T) {
+	assert.Panics(t, func() { distance(Metric(99), []float32{1}, []float32{1}) })
+}

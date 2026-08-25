@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"unsafe"
@@ -93,12 +94,25 @@ func (c *Collection) NewIndex(
 		cUnique = 1
 	}
 
+	// An empty string means no vector index; a non-empty one is the VectorIndexDescription as JSON.
+	vectorJSON := ""
+	if indexDesc.Vector != nil {
+		b, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		vectorJSON = string(b)
+	}
+	cVectorJSON := C.CString(vectorJSON)
+	defer C.free(unsafe.Pointer(cVectorJSON))
+
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
 		callHandle,
 		cIndexDescName,
 		fields,
 		cUnique,
+		cVectorJSON,
 		copts,
 		cIdentity,
 	))

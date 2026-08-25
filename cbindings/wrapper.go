@@ -379,12 +379,16 @@ func (w *CWrapper) AddCollection(
 	if hadTxn {
 		txn = gotTxn
 	} else {
-		clientTxn, _ := w.NewTxn(false)
+		clientTxn, err := w.NewTxn(false)
+		if err != nil {
+			return nil, err
+		}
 		var ok bool
 		txn, ok = clientTxn.(datastore.Txn)
 		if !ok {
 			return nil, errors.New("failed to cast clientTxn to datastore.Txn")
 		}
+		defer txn.Discard()
 	}
 	ctx = datastore.CtxSetTxn(ctx, txn)
 
@@ -406,8 +410,9 @@ func (w *CWrapper) AddCollection(
 	}
 
 	if !hadTxn {
-		defer txn.Discard()
-		_ = txn.Commit()
+		if err := txn.Commit(); err != nil {
+			return nil, err
+		}
 	}
 
 	return collectionVersions, nil
@@ -702,10 +707,13 @@ func (w *CWrapper) AddView(
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 
-	cTransformCID := C.CString(stringFromImmutableOptionString(opt.TransformCID))
+	var cTransformCID *C.char
+	if opt.TransformCID.HasValue() {
+		cTransformCID = C.CString(opt.TransformCID.Value())
+		defer C.free(unsafe.Pointer(cTransformCID))
+	}
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
-	defer C.free(unsafe.Pointer(cTransformCID))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
 

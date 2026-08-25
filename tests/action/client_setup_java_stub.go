@@ -11,7 +11,7 @@
 
 //go:build !javaclient
 
-package tests
+package action
 
 import (
 	"fmt"
@@ -21,9 +21,9 @@ import (
 )
 
 // setupJavaClient is a stub used whenever this binary was not built with
-// -tags javaclient (the default). Building the real implementation
-// (tests/clients/java) requires a JDK's JNI headers on CGO_CFLAGS - see
-// that package's doc.go - so it's kept out of the default build.
+// -tags javaclient. Building the real implementation (tests/clients/java) 
+// requires a JDK's JNI headers on CGO_CFLAGS (see that package's doc.go),
+// so it's kept out of the default build.
 func setupJavaClient(*node.Node) (clients.Client, error) {
 	return nil, fmt.Errorf(
 		"the java client requires building with -tags javaclient (see tests/clients/java/doc.go)")

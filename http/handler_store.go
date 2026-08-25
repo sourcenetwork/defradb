@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,12 +21,14 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 const (
@@ -128,26 +131,46 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 	responseJSON(rw, http.StatusOK, cols)
 }
 
+// patchCollectionRequestBody mirrors patchCollectionRequest, but defers decoding Migration
+// until its presence (json.RawMessage, not immutable.Option[model.Lens]) can be checked and
+// then decoded separately with UseNumber.
+type patchCollectionRequestBody struct {
+	Patch     string
+	Migration json.RawMessage
+}
+
 func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
-	var message patchCollectionRequest
+	var message patchCollectionRequestBody
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
+	var migration immutable.Option[model.Lens]
+	if len(message.Migration) > 0 && string(message.Migration) != "null" {
+		var lensCfg model.Lens
+		decoder := json.NewDecoder(bytes.NewReader(message.Migration))
+		decoder.UseNumber()
+		if err := decoder.Decode(&lensCfg); err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		migration = immutable.Some(lensCfg)
+	}
+
 	opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(ctx))
 
 	// If there is an explicit transaction, use it. Otherwise use the db.
 	if !hadTxn {
-		err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
+		err = db.PatchCollection(ctx, message.Patch, migration, opt)
 	} else {
-		err = txn.PatchCollection(ctx, message.Patch, message.Migration, opt)
+		err = txn.PatchCollection(ctx, message.Patch, migration, opt)
 	}
 	if err != nil {
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
@@ -269,7 +292,7 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	var cfg client.LensConfig
-	if err := requestJSON(req, &cfg); err != nil {
+	if err := requestJSONPreserveNumbers(req, &cfg); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
@@ -308,7 +331,7 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 	txn, hadTxn := datastore.CtxTryGetClientTxn(ctx)
 
 	var addLensReq AddLensRequest
-	if err := requestJSON(req, &addLensReq); err != nil {
+	if err := requestJSONPreserveNumbers(req, &addLensReq); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
@@ -511,6 +534,30 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
+// UnmarshalJSON decodes a GraphQLRequest, preserving integer precision in Variables.
+// The standard decoder represents every JSON number as a float64, which silently
+// rounds any integer above 2^53. This instead reconstructs each number as an int64.
+func (r *GraphQLRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Query         string          `json:"query"`
+		OperationName string          `json:"operationName"`
+		Variables     json.RawMessage `json:"variables"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	r.Query = raw.Query
+	r.OperationName = raw.OperationName
+	if len(raw.Variables) > 0 {
+		vars, err := utils.DecodeJSONVariables(raw.Variables)
+		if err != nil {
+			return err
+		}
+		r.Variables = vars
+	}
+	return nil
+}
+
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// handle different request transports
 	// specifically, SSE
@@ -664,8 +711,8 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequ
 
 		variablesFromQuery := req.URL.Query().Get("variables")
 		if variablesFromQuery != "" {
-			var variables map[string]any
-			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+			variables, err := utils.DecodeJSONVariables([]byte(variablesFromQuery))
+			if err != nil {
 				return GraphQLRequest{}, nil, err
 			}
 			request.Variables = variables

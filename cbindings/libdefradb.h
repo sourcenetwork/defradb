@@ -57,7 +57,7 @@ extern NewIdentityResult NewIdentity(char* keyType);
 extern NewIdentityResult NewIdentityFromPrivateKey(char* privateKeyHex);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique, CollectionOptions options, uintptr_t identityPtr);
+extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique, char* vectorJSON, CollectionOptions options, uintptr_t identityPtr);
 extern Result AddLens(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
 extern Result ListLenses(uintptr_t nodePtr, uintptr_t identityPtr);
 extern Result SetLens(uintptr_t nodePtr, uintptr_t identityPtr, char* src, char* dst, char* cfg);

@@ -12,13 +12,13 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
@@ -43,9 +43,12 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 
 			switch {
 			case filter != "":
-				var filterValue any
-				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+				filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+				if err != nil {
 					return NewErrParsingArgument("filter", err)
+				}
+				if filterValue == nil {
+					filterValue = map[string]any{}
 				}
 
 				updateWithFilterOpt := options.WithIdentity(

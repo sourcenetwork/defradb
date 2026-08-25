@@ -11,7 +11,7 @@
 
 //go:build javaclient
 
-package tests
+package action
 
 import (
 	"github.com/sourcenetwork/defradb/node"

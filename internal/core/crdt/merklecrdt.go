@@ -21,35 +21,29 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-type FieldLevelCRDT interface {
-	ReplicatedData
-	Delta(ctx context.Context, data *DocField) (Delta, error)
+type FieldValueCRDT interface {
+	Merge(
+		ctx context.Context,
+		store datastore.Keyedstore,
+		key keys.DataStoreKey,
+		kind client.FieldKind,
+		other Delta,
+	) error
 }
 
-func FieldLevelCRDTWithStore(
-	store datastore.Keyedstore,
-	collectionVersionID string,
+type DocumentValueCRDT interface {
+	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
+}
+
+func FieldLevelCRDT(
 	cType client.CType,
-	kind client.FieldKind,
-	key keys.DataStoreKey,
-	fieldName string,
-) (FieldLevelCRDT, error) {
+) (FieldValueCRDT, error) {
 	switch cType {
 	case client.LWW_REGISTER:
-		return NewLWW(
-			store,
-			collectionVersionID,
-			key,
-			fieldName,
-		), nil
+		return NewLWW(), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
-			store,
-			collectionVersionID,
-			key,
-			fieldName,
 			cType == client.PN_COUNTER,
-			kind.(client.ScalarKind), //nolint:forcetypeassert
 		), nil
 	}
 	return nil, client.NewErrUnknownCRDT(cType)
