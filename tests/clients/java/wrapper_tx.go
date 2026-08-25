@@ -21,6 +21,7 @@ import "C"
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -37,17 +38,17 @@ import (
 var _ client.Txn = (*Txn)(nil)
 var _ datastore.Txn = (*Txn)(nil)
 
-// Txn implements client.Txn (and datastore.Txn, so getNodeOrTxnHandle can
-// recognise it via context), delegating every Store/P2P method to the
-// embedded *Wrapper with the transaction attached to ctx (mirroring
-// cbindings.Transaction), and Commit/Discard/ID/StartTS to the real
-// underlying transaction obtained when it was created.
 type Txn struct {
 	*Wrapper
-	tx        datastore.Txn
-	handle    uintptr
-	txnObj    C.jobject // the constructed DefraTransaction Java object
-	finalized bool      // set by the first of Commit/Discard to run; guards against the other also running
+	tx datastore.Txn
+
+	handle uintptr
+	txnObj C.jobject // the constructed DefraTransaction Java object
+
+	// We track whether the transaction has been committed or discarded to prevent double-finalization.
+	// We protect this with a mutex to defend against concurrent calls to Commit and Discard.
+	finalizeMu sync.Mutex
+	finalized  bool
 }
 
 func (txn *Txn) ID() uint64 {
@@ -58,37 +59,59 @@ func (txn *Txn) StartTS() time.Time {
 	return txn.tx.StartTS()
 }
 
-// Commit commits the transaction. Callers commonly follow the "defer txn.Discard()" safety-net
-// idiom right after committing (see Wrapper.AddCollection) - the finalized guard makes that
-// Discard() call a no-op instead of reusing txnObj's JNI global ref after Commit already deleted it.
+// Commit commits the transaction.
+//
+// Once this returns, the transaction is always finalized. That mirrors the native CommitTransaction
+// it calls into (see: cbindings/transaction_commit.go), which deletes the underlying cgo.Handle in a
+// deferred call regardless of whether the commit itself succeeded. By the time this method returns,
+// the native handle is gone, so there is nothing left for a later Discard to roll back even on failure.
+//
+//	A second call to Commit (or a Commit racing a Discard) does not repeat the native call, which would
+//
+// panic, since the handle it would look up has already been deleted. Instead, it returns an error.
 func (txn *Txn) Commit() error {
+	txn.finalizeMu.Lock()
+	defer txn.finalizeMu.Unlock()
 	if txn.finalized {
-		return nil
+		return client.ErrTransactionNotFound
 	}
-	txn.finalized = true
 	err := commitTransaction(txn.txnObj, txn.handle)
-	txn.releaseTxnObj()
+	txn.finalize()
 	return err
 }
 
-// Discard discards the transaction, unless Commit already finalized it (see Commit's comment).
+// Discard discards the transaction, unless Commit already finalized it (see Commit's comment) -
+// including when Commit failed, since the native side has already released the transaction either
+// way by the time Commit returns.
 func (txn *Txn) Discard() {
+	txn.finalizeMu.Lock()
+	defer txn.finalizeMu.Unlock()
 	if txn.finalized {
 		return
 	}
-	txn.finalized = true
 	discardTransaction(txn.txnObj, txn.handle)
-	txn.releaseTxnObj()
+	txn.finalize()
 }
 
-// releaseTxnObj releases the global reference held for this transaction's
-// DefraTransaction Java object, once Commit/Discard (its only uses) is done
-// with it. This mirrors Wrapper.Close's cleanup of its own DefraNode object.
-func (txn *Txn) releaseTxnObj() {
+// finalize marks the transaction finalized, releases txnObj's JNI global reference, and zeroes
+// handle/txnObj so that any use that manages to slip past the finalized guard fails on a
+// zero/invalid handle rather than silently reusing now-invalid native resources.
+// Callers must hold the finalizeMu lock.
+func (txn *Txn) finalize() {
+	txn.finalized = true
 	if env, detach, err := attach(); err == nil {
 		C.defra_delete_global_ref(env, txn.txnObj)
 		detach()
 	}
+	txn.handle = 0
+	txn.txnObj = 0
+}
+
+// isFinalized reports whether Commit or Discard has already run.
+func (txn *Txn) isFinalized() bool {
+	txn.finalizeMu.Lock()
+	defer txn.finalizeMu.Unlock()
+	return txn.finalized
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {

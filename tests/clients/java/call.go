@@ -261,6 +261,12 @@ func callTxnRaw(txnObj C.jobject, name string, b *argBuilder) (defraResult, erro
 // for the whole call, so this can't run concurrently with Close deleting the ref, and w.closed is
 // checked so a call that arrives after Close has already finished returns a clean error instead of
 // using a stale/deleted nodeObj.
+//
+// Also guards against a ctx that still carries a *Txn whose Commit/Discard has already run. That
+// txn's handle/txnObj are zeroed on finalization (see Txn.finalize), so without this check a call
+// made through a finished transaction would either look up a stale native handle (already reused
+// or deleted, since 0 is never a valid cgo.Handle) or silently fall back to operating on the whole
+// node instead of failing clearly.
 func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (defraResult, error) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
@@ -268,14 +274,17 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 		return defraResult{}, errors.New(errWrapperClosed)
 	}
 
-	handle := getNodeOrTxnHandle(w.handle, ctx)
 	if activeTxn, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
 		if t, ok := activeTxn.(*Txn); ok {
+			if t.isFinalized() {
+				return defraResult{}, client.ErrTransactionNotFound
+			}
 			if _, hasMethod := transactionMethodIDs[name]; hasMethod {
-				return callTxn(t.txnObj, name, handle, b)
+				return callTxn(t.txnObj, name, t.handle, b)
 			}
 		}
 	}
+	handle := getNodeOrTxnHandle(w.handle, ctx)
 	return callNode(w.nodeObj, name, handle, b)
 }
 
