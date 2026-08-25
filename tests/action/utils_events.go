@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -152,7 +153,7 @@ func MarkDocsExpectedOnTargets(
 		// The source node wrote this document, so it must be able to report the
 		// commit. Skipping would record nothing to wait for, letting the
 		// assertions that follow pass against data that never arrived.
-		head, ok := latestCompositeCID(s, sourceNodeID, docID)
+		head, ok := latestCompositeCID(s, sourceNodeID, docID, ident)
 		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
 
 		// Build the event, since the real one cannot be read.
@@ -210,13 +211,29 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 //
 // A merge event reports the composite commit, so this is the same CID the native
 // path takes from that event.
-func latestCompositeCID(s *state.State, nodeID int, docID string) (cid.Cid, bool) {
+//
+// ident is the identity the document was written with. A document protected by
+// document ACP is invisible to an unidentified reader, so without it the query
+// returns nothing and the head cannot be found.
+func latestCompositeCID(
+	s *state.State,
+	nodeID int,
+	docID string,
+	ident immutable.Option[state.Identity],
+) (cid.Cid, bool) {
+	reqOption := options.ExecRequest()
+	identOption := getIdentityForRequestSpecificToNode(s, ident, nodeID)
+	if identOption.HasValue() {
+		reqOption.SetIdentity(identOption.Value())
+	}
+
 	result := s.Nodes[nodeID].ExecRequest(
 		s.Ctx,
 		fmt.Sprintf(
 			`query { _commits(docID: %q, filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
 			docID,
 		),
+		reqOption,
 	)
 	if len(result.GQL.Errors) > 0 {
 		return cid.Cid{}, false
