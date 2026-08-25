@@ -342,8 +342,8 @@ func (c *Collection) ExistsDocument(
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
+	cVersion := C.CString(c.def.VersionID)
+	cCollectionID := C.CString(c.def.CollectionID)
 	cName := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
