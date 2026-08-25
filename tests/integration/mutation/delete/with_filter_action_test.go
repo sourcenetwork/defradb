@@ -69,15 +69,6 @@ func TestDeleteWithFilter_Succeeds(t *testing.T) {
 
 func TestDeleteWithMapFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -191,15 +182,6 @@ func TestDeleteWithMapFilter_LargeIntegerStraddling2To53_DeletesOnlyExactMatch(t
 
 func TestDeleteWithSomeOptionFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -249,15 +231,6 @@ func TestDeleteWithSomeOptionFilter_Succeeds(t *testing.T) {
 
 func TestDeleteWithNoneOptionFilter_DeletesAllDocuments(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
