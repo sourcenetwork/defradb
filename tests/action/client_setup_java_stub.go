@@ -21,7 +21,7 @@ import (
 )
 
 // setupJavaClient is a stub used whenever this binary was not built with
-// -tags javaclient. Building the real implementation (tests/clients/java) 
+// -tags javaclient. Building the real implementation (tests/clients/java)
 // requires a JDK's JNI headers on CGO_CFLAGS (see that package's doc.go),
 // so it's kept out of the default build.
 func setupJavaClient(*node.Node) (clients.Client, error) {
