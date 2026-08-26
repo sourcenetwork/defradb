@@ -412,7 +412,8 @@ type TruncateCollectionOptions struct {
 	Identity immutable.Option[identity.Identity]
 	// Filter limits the truncate to matching documents. A nil filter truncates the full collection.
 	Filter any
-	// PruneHistory removes unshared history for documents selected by Filter.
+	// PruneHistory deletes history blocks owned only by documents selected by Filter,
+	// reclaiming local storage. Blocks shared with other documents are retained.
 	PruneHistory bool
 }
 
@@ -447,7 +448,8 @@ func (b *TruncateCollectionOptionsBuilder) SetFilter(filter any) *TruncateCollec
 	return b
 }
 
-// SetPruneHistory sets whether filtered truncation removes unshared history.
+// SetPruneHistory controls whether truncation deletes unshared history blocks.
+// Shared blocks are retained until their final owner is truncated.
 func (b *TruncateCollectionOptionsBuilder) SetPruneHistory(prune bool) *TruncateCollectionOptionsBuilder {
 	b.append(func(opts *TruncateCollectionOptions) {
 		opts.PruneHistory = prune

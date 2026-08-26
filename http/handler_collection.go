@@ -109,6 +109,7 @@ func (r *TruncateCollectionRequest) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
+	r.Filter = nil
 	if len(raw.Filter) != 0 {
 		filter, err := utils.DecodeJSONFilter(raw.Filter)
 		if err != nil {

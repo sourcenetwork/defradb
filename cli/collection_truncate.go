@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
@@ -60,8 +60,8 @@ and --prune-history also removes their unshared history. Changes do not propagat
 }
 
 func parseTruncateFilter(value string) (any, error) {
-	var filter any
-	if err := json.Unmarshal([]byte(value), &filter); err != nil {
+	filter, err := utils.DecodeJSONFilter([]byte(value))
+	if err != nil {
 		return nil, err
 	}
 	if filter == nil {

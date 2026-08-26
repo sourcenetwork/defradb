@@ -21,6 +21,10 @@ func TestParseTruncateFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string]any{"name": map[string]any{"_eq": "Alice"}}, filter)
 
+	filter, err = parseTruncateFilter(`{"age":{"_eq":9007199254740993}}`)
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{"age": map[string]any{"_eq": int64(9007199254740993)}}, filter)
+
 	_, err = parseTruncateFilter("null")
 	require.EqualError(t, err, "filter cannot be null")
 

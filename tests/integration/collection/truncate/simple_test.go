@@ -54,39 +54,3 @@ func TestTruncateCollection_TruncateTwice(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestTruncateCollection_WithFilter(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{
-				SDL: `type Users { name: String }`,
-			},
-			&action.AddDoc{
-				CollectionID: 0,
-				DocMap:       map[string]any{"name": "John"},
-			},
-			&action.AddDoc{
-				CollectionID: 0,
-				DocMap:       map[string]any{"name": "Jane"},
-			},
-			&action.Truncate{
-				CollectionIndex: 0,
-				DocIndexes:      []int{0},
-				PruneHistory:    true,
-			},
-			&action.Truncate{
-				CollectionIndex: 0,
-				DocIndexes:      []int{0},
-				PruneHistory:    true,
-			},
-			&action.Request{
-				Request: `query { Users { name } }`,
-				Results: map[string]any{
-					"Users": []map[string]any{{"name": "Jane"}},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}

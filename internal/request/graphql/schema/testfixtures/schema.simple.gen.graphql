@@ -955,7 +955,7 @@ type Mutation {
         """
         filter: UserFilterArg
     ): [User]
-    "Permanently remove all or matching documents from this node."
+    "Remove all or matching documents from this node. Returns true when complete."
     truncate_User(
         "Filter documents to truncate"
         filter: UserFilterArg

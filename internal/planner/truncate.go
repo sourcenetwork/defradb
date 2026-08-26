@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -66,24 +65,6 @@ func (n *truncateNode) Next() (bool, error) {
 	n.currentValue.Fields[0] = true
 	n.isDone = true
 	return true, nil
-}
-
-func (n *truncateNode) Explain(explainType request.ExplainType) (map[string]any, error) {
-	switch explainType {
-	case request.SimpleExplain:
-		var filter any
-		if n.filter.HasValue() {
-			filter = n.filter.Value()
-		}
-		return map[string]any{
-			filterLabel:                 filter,
-			request.PruneHistoryArgName: n.pruneHistory,
-		}, nil
-	case request.ExecuteExplain:
-		return map[string]any{"executed": n.isDone}, nil
-	default:
-		return nil, ErrUnknownExplainRequestType
-	}
 }
 
 func (p *Planner) Truncate(parsed *mapper.Mutation) (planNode, error) {

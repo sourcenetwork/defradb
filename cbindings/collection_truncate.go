@@ -18,10 +18,10 @@ import "C"
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 //export TruncateCollection
@@ -33,6 +33,11 @@ func TruncateCollection(
 	return truncateCollection(nodePtr, opts, identityPtr, nil, false)
 }
 
+// TruncateCollectionWithFilter preserves TruncateCollection's v1 C ABI.
+//
+// Deprecated: This compatibility function will be removed in v2, when TruncateCollection
+// accepts filtered-truncate options.
+//
 //export TruncateCollectionWithFilter
 func TruncateCollectionWithFilter(
 	nodePtr C.uintptr_t,
@@ -44,10 +49,11 @@ func TruncateCollectionWithFilter(
 	if filterJSON == nil {
 		return returnC(returnGoC(1, "filter is required", ""))
 	}
-	var filter any
-	if err := json.Unmarshal([]byte(C.GoString(filterJSON)), &filter); err != nil {
+	filter, err := utils.DecodeJSONFilter([]byte(C.GoString(filterJSON)))
+	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+	// JSON null must not fall through to an unfiltered collection truncate.
 	if filter == nil {
 		return returnC(returnGoC(1, "filter cannot be null", ""))
 	}

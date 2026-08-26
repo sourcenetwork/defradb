@@ -94,6 +94,7 @@ func (n *operationNode) Next() (bool, error) {
 	n.currentValue = n.documentMapping.NewDoc()
 	for i, child := range n.children {
 		switch child.(type) {
+		// Truncate and top-level plans return scalar fields; other mutations return document lists.
 		case *topLevelNode, *truncateNode:
 			hasChild, err := child.Next()
 			if err != nil {

@@ -1753,14 +1753,14 @@ type Mutation {
         """
         filter: BookFilterArg
     ): [Book]
-    "Permanently remove all or matching documents from this node."
+    "Remove all or matching documents from this node. Returns true when complete."
     truncate_Author(
         "Filter documents to truncate"
         filter: AuthorFilterArg
         "Remove unshared history for matching documents"
         pruneHistory: Boolean
     ): Boolean!
-    "Permanently remove all or matching documents from this node."
+    "Remove all or matching documents from this node. Returns true when complete."
     truncate_Book(
         "Filter documents to truncate"
         filter: BookFilterArg
