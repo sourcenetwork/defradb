@@ -1668,11 +1668,6 @@ func (w *Wrapper) AddDACActorRelationship(
 			fmt.Errorf("failed to add document actor relationship with acp: %w", err)
 	}
 
-	// Emit update event when relationship is newly added (matches Go behavior)
-	if added {
-		w.publishRelationshipEvent(ctx, requestorDID, collectionName, docID)
-	}
-
 	return client.AddActorRelationshipResult{ExistedAlready: !added}, nil
 }
 
@@ -1692,40 +1687,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 			fmt.Errorf("failed to delete document actor relationship with acp: %w", err)
 	}
 
-	// Emit update event when relationship is deleted (matches Go behavior)
-	if deleted {
-		w.publishRelationshipEvent(ctx, requestorDID, collectionName, docID)
-	}
-
 	return client.DeleteActorRelationshipResult{RecordFound: deleted}, nil
-}
-
-// publishRelationshipEvent emits an update event after a DAC relationship change.
-// This matches Go DefraDB behavior where relationship add/delete triggers an update event
-// so the test framework's waitForUpdateEvents can synchronize.
-// The requestorDID is needed to authenticate the collection lookup when NAC is enabled.
-func (w *Wrapper) publishRelationshipEvent(ctx context.Context, requestorDID string, collectionName string, docID string) {
-	responseJSON, err := w.node.GetCollectionByName(requestorDID, collectionName)
-	if err != nil {
-		return
-	}
-
-	var version client.CollectionVersion
-	if err := json.Unmarshal([]byte(responseJSON), &version); err != nil {
-		return
-	}
-
-	cw := &CollectionWrapper{
-		wrapper: w,
-		version: version,
-	}
-
-	compositeCid := cw.getLatestCompositeCID(ctx, docID)
-	w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-		DocID:        docID,
-		CollectionID: cw.version.CollectionID,
-		Cid:          compositeCid,
-	}))
 }
 
 func (w *Wrapper) AddNACActorRelationship(
@@ -3030,35 +2992,6 @@ func (c *CollectionWrapper) SaveDocument(ctx context.Context, doc *client.Docume
 		updateOpt.SetIdentity(opt.GetIdentity().Value())
 	}
 	return c.UpdateDocument(ctx, doc, updateOpt)
-}
-
-// getLatestCompositeCID queries _commits to get the latest composite CID for a document.
-// This is needed for update/delete events so the test framework can resolve CID template variables.
-func (c *CollectionWrapper) getLatestCompositeCID(ctx context.Context, docID string) gocid.Cid {
-	query := fmt.Sprintf(
-		`{ _commits(docID: "%s", filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
-		docID,
-	)
-	result := c.wrapper.ExecRequest(ctx, query)
-	if c.txn != nil {
-		result = c.txn.ExecRequest(ctx, query)
-	}
-	if len(result.GQL.Errors) > 0 {
-		return gocid.Undef
-	}
-	if data, ok := result.GQL.Data.(map[string]any); ok {
-		if commits, ok := data["_commits"].([]any); ok && len(commits) > 0 {
-			if commit, ok := commits[0].(map[string]any); ok {
-				if cidStr, ok := commit["cid"].(string); ok {
-					parsed, err := gocid.Decode(cidStr)
-					if err == nil {
-						return parsed
-					}
-				}
-			}
-		}
-	}
-	return gocid.Undef
 }
 
 // isDocumentDeleted checks if a document is marked as deleted using showDeleted query.
