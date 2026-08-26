@@ -124,6 +124,7 @@ func (a *SubscriptionRequest) Execute() {
 						nil,
 						nodeID,
 						true,
+						nil,
 					)
 
 					assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

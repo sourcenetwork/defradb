@@ -469,6 +469,15 @@ type GQLWarning struct {
 	Detail map[string]any `json:"detail,omitempty"`
 }
 
+// Warning codes. Callers match on these, so they do not change once released.
+const (
+	// WarningCodeVectorIndexUnused means a similarity query read the whole collection even though
+	// the field it scored has a vector index. The results are correct, but the query costs more as
+	// the collection grows. The `reason` detail says which part of the query shape ruled the index
+	// out.
+	WarningCodeVectorIndexUnused = "VECTOR_INDEX_UNUSED"
+)
+
 // gqlError represents an error that was encountered during a GQL request.
 //
 // This is only used for marshalling to keep our responses spec compliant.

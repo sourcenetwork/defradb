@@ -14,6 +14,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -211,6 +212,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 						{"name": "far", "sim": testUtils.CosineSimilarity([]float64{0.1, 1, 0}, []float64{1, 0, 0})},
 					},
 				},
+				ExpectedWarnings: ascendingFallbackWarning(),
 			},
 			&action.Request{
 				Request: `query @explain(type: execute) {
@@ -218,7 +220,8 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(4),
+				Asserter:         testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(4),
+				ExpectedWarnings: ascendingFallbackWarning(),
 			},
 		)...),
 	}
@@ -312,10 +315,22 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotUseIndex(t *testi
 						sim: SIMILARITY(vector: {vector: [1, 0, 0]})
 					}
 				}`,
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+				Asserter:         testUtils.NewExplainAsserter().WithIndexFetches(0),
+				ExpectedWarnings: ascendingFallbackWarning(),
 			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
+}
+
+// ascendingFallbackWarning is the warning reported when a similarity query on an indexed field is
+// not ordered by that similarity descending, so it reads the whole collection.
+func ascendingFallbackWarning() []client.GQLWarning {
+	return []client.GQLWarning{
+		{
+			Code:   client.WarningCodeVectorIndexUnused,
+			Detail: map[string]any{"field": "vector", "reason": "notOrderedBySimilarityDesc"},
+		},
+	}
 }
