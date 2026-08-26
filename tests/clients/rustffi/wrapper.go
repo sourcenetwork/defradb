@@ -1362,6 +1362,13 @@ func buildDeleteCollectionPatch(
 	seen := make(map[string]struct{}, len(names))
 	ops := make([]string, 0, len(names))
 	for _, name := range names {
+		// Go rejects an empty name before it resolves anything. This client
+		// resolves first, so without this guard the failure surfaces as
+		// "collection '' not found" and never reaches the Rust-side check.
+		if name == "" {
+			return "", fmt.Errorf("collection name can't be empty")
+		}
+
 		if _, ok := seen[name]; ok {
 			continue
 		}
