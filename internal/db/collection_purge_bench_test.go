@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	badgeropts "github.com/dgraph-io/badger/v4/options"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv/badger"
@@ -25,17 +26,24 @@ import (
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
-// newOnDiskDB opens a DB on a badger directory with stock options. It returns a close func
-// rather than registering cleanup so a caller can release it per iteration. An in-memory
-// store has no value log and different write amplification, so it cannot stand in for a
-// deployed node when the cost of a write path is what is being measured.
+// newOnDiskDB opens a DB on a badger directory with the options a node uses, so the value
+// threshold and compression match a deployment. It returns a close func rather than
+// registering cleanup so a caller can release it per iteration. An in-memory store has no
+// value log and different write amplification, so it cannot stand in for a node when the
+// cost of a write path is what is being measured.
 func newOnDiskDB(b *testing.B, ctx context.Context) (*DB, func()) {
 	b.Helper()
 
 	dir, err := os.MkdirTemp("", "purgebench")
 	require.NoError(b, err)
 
-	rootstore, err := badger.NewDatastore(dir, badgerds.DefaultOptions(dir))
+	// Mirrors node/store_badger.go. ZSTDCompressionLevel is left alone because badger
+	// already defaults it to the value a node sets.
+	opts := badgerds.DefaultOptions(dir)
+	opts.ValueThreshold = 1 << 8
+	opts.Compression = badgeropts.ZSTD
+
+	rootstore, err := badger.NewDatastore(dir, opts)
 	require.NoError(b, err)
 
 	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
@@ -80,7 +88,8 @@ func setupIndexedCollection(b *testing.B, ctx context.Context, db *DB) client.Co
 }
 
 // addRecords writes n documents and returns their IDs. The payload field is unindexed and
-// exists only to give each document enough size to reach the value log.
+// exists to carry each document past the value threshold, so writes reach the value log the
+// way they do on a node.
 func addRecords(b *testing.B, ctx context.Context, col client.Collection, n int) []client.DocID {
 	b.Helper()
 
@@ -98,37 +107,46 @@ func addRecords(b *testing.B, ctx context.Context, col client.Collection, n int)
 }
 
 // BenchmarkPurgeByDocIDsChunkSize measures how long it takes to purge a fixed set of
-// documents as the number of them sharing a transaction changes, so purgeChunkSize can be
-// chosen from a measurement rather than assumed.
+// documents as the number of them sharing a transaction changes.
 //
-// pruneHistory is on because that is the deployed setting and it adds the per-document DAG
-// walk. Documents are written locally, so their DAGs are one commit deep; a document built
-// up over many merges walks further and costs more than this measures.
+// Both pruneHistory branches are swept. The CLI and HTTP defaults are false and true adds
+// the per-document DAG walk, so a size measured under one branch is not automatically right
+// for the other. Documents are written locally, so their DAGs are one commit deep; a
+// document built up over many merges walks further and costs more than this measures.
+//
+// The sweep runs below purgeChunkSize so the low end is measured rather than assumed to be
+// the endpoint.
+//
+// This purges single-threaded against an idle store, so it shows how cost scales with chunk
+// size and not how a size holds up under concurrent merge traffic, which is what the choice
+// of constant turns on.
 func BenchmarkPurgeByDocIDsChunkSize(b *testing.B) {
 	const docs = 2000
 
-	for _, chunkSize := range []int{8, 25, 50, 100, 200} {
-		b.Run(fmt.Sprintf("chunk=%d", chunkSize), func(b *testing.B) {
-			ctx := context.Background()
+	for _, pruneHistory := range []bool{true, false} {
+		for _, chunkSize := range []int{1, 2, 4, 8, 25, 50, 100, 200} {
+			b.Run(fmt.Sprintf("prune=%v/chunk=%d", pruneHistory, chunkSize), func(b *testing.B) {
+				ctx := context.Background()
 
-			for b.Loop() {
-				b.StopTimer()
-				db, closeDB := newOnDiskDB(b, ctx)
-				col := setupIndexedCollection(b, ctx, db)
-				docIDs := addRecords(b, ctx, col, docs)
-				concrete, ok := col.(*collection)
-				require.True(b, ok)
-				b.StartTimer()
+				for b.Loop() {
+					b.StopTimer()
+					db, closeDB := newOnDiskDB(b, ctx)
+					col := setupIndexedCollection(b, ctx, db)
+					docIDs := addRecords(b, ctx, col, docs)
+					concrete, ok := col.(*collection)
+					require.True(b, ok)
+					b.StartTimer()
 
-				for i := 0; i < len(docIDs); i += chunkSize {
-					end := min(i+chunkSize, len(docIDs))
-					require.NoError(b, concrete.purgeChunk(ctx, docIDs[i:end], true))
+					for i := 0; i < len(docIDs); i += chunkSize {
+						end := min(i+chunkSize, len(docIDs))
+						require.NoError(b, concrete.purgeChunk(ctx, docIDs[i:end], pruneHistory))
+					}
+
+					b.StopTimer()
+					closeDB()
+					b.StartTimer()
 				}
-
-				b.StopTimer()
-				closeDB()
-				b.StartTimer()
-			}
-		})
+			})
+		}
 	}
 }
