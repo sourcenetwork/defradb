@@ -1416,6 +1416,11 @@ struct FfiResult defra_mobile_peer_info(uintptr_t node_ptr);
 struct FfiResult defra_mobile_shareable_address(uintptr_t node_ptr);
 
 /*
+ Return the node's live P2P sync status as JSON.
+ */
+struct FfiResult defra_mobile_sync_status(uintptr_t node_ptr);
+
+/*
  Connect the node to a peer address.
  */
 struct FfiResult defra_mobile_connect(uintptr_t node_ptr, const char *addr);
@@ -1668,6 +1673,16 @@ struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
  The caller must free the returned string with `defra_free_string`.
  */
 struct FfiResult p2p_list_replicators(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Return the node's live P2P sync status as JSON.
+
+ # Safety
+
+ `identity_did` must be a valid null-terminated UTF-8 string when non-null.
+ `node_ptr` must reference a live node handle created by this library.
+ */
+struct FfiResult p2p_sync_status(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Sync specific documents from peers.
