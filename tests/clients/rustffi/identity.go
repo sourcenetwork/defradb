@@ -14,7 +14,6 @@ import "C"
 import (
 	"encoding/hex"
 	"fmt"
-	"unsafe"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
@@ -36,16 +35,10 @@ func RegisterIdentityWithRust(ident identity.Identity) error {
 	publicKeyHex := hex.EncodeToString(ident.PublicKey().Raw())
 	keyType := string(fullIdent.PrivateKey().Type())
 
-	cDid := C.CString(did)
-	cPrivateKeyHex := C.CString(privateKeyHex)
-	cPublicKeyHex := C.CString(publicKeyHex)
-	cKeyType := C.CString(keyType)
-	defer C.free(unsafe.Pointer(cDid))
-	defer C.free(unsafe.Pointer(cPrivateKeyHex))
-	defer C.free(unsafe.Pointer(cPublicKeyHex))
-	defer C.free(unsafe.Pointer(cKeyType))
+	var a cargs
+	defer a.free()
 
-	result := C.RegisterIdentity(cDid, cPrivateKeyHex, cPublicKeyHex, cKeyType)
+	result := C.RegisterIdentity(a.s(did), a.s(privateKeyHex), a.s(publicKeyHex), a.s(keyType))
 
 	if result.status != 0 {
 		err := C.GoString(result.error)

@@ -44,6 +44,52 @@ var (
 	initOnce sync.Once
 )
 
+// cargs is a scratch arena for the C strings passed to a single FFI call.
+// Every allocation is released by one `defer a.free()` at function exit,
+// which is where the per-allocation defers it replaces used to run.
+type cargs struct {
+	p []unsafe.Pointer
+}
+
+// s allocates a C string that lives until free is called.
+func (a *cargs) s(v string) *C.char {
+	c := C.CString(v)
+	a.p = append(a.p, unsafe.Pointer(c))
+	return c
+}
+
+// opt is s, except that an empty string yields a nil pointer rather than an
+// allocated empty string. The FFI reads nil as "argument not supplied".
+func (a *cargs) opt(v string) *C.char {
+	if v == "" {
+		return nil
+	}
+	return a.s(v)
+}
+
+// free releases every allocation made through the arena.
+func (a *cargs) free() {
+	for _, p := range a.p {
+		C.free(p)
+	}
+}
+
+// unwrap turns an FFI result's status/error/value triple into (value, error),
+// releasing whichever C string the call populated. On failure the value is
+// null and only the error is freed; on success the reverse. Callers with no
+// value to read pass nil, which defra_free_string ignores.
+func unwrap(status C.int, cError *C.char, cValue *C.char, op string) (string, error) {
+	if status != 0 {
+		err := C.GoString(cError)
+		C.defra_free_string(cError)
+		return "", mapFFIError(op, err)
+	}
+
+	value := C.GoString(cValue)
+	C.defra_free_string(cValue)
+	return value, nil
+}
+
 // mapFFIError maps raw FFI error strings to proper Go error types.
 //
 // FFI errors are flat strings like "not authorized to perform operation. Permission: xyz".
@@ -163,12 +209,13 @@ type NodeOptions struct {
 // NewNode creates a new DefraDB node.
 // The node must be closed with Close() when done.
 func NewNode(opts NodeOptions) (*Node, error) {
+	var a cargs
+	defer a.free()
+
 	var cOpts C.struct_NodeInitOptions
 
 	if opts.DBPath != "" {
-		cDBPath := C.CString(opts.DBPath)
-		defer C.free(unsafe.Pointer(cDBPath))
-		cOpts.db_path = cDBPath
+		cOpts.db_path = a.s(opts.DBPath)
 	}
 
 	if opts.InMemory || opts.DBPath == "" {
@@ -190,24 +237,14 @@ func NewNode(opts NodeOptions) (*Node, error) {
 		if keyType == "" {
 			keyType = "secp256k1"
 		}
-		cKeyType := C.CString(keyType)
-		defer C.free(unsafe.Pointer(cKeyType))
-		cOpts.signing_key_type = cKeyType
+		cOpts.signing_key_type = a.s(keyType)
 	}
 
 	// Pass SourceHub config if provided
 	if opts.SourceHubGRPCAddress != "" {
-		cGRPC := C.CString(opts.SourceHubGRPCAddress)
-		defer C.free(unsafe.Pointer(cGRPC))
-		cOpts.sourcehub_grpc_address = cGRPC
-
-		cComet := C.CString(opts.SourceHubCometRPCAddress)
-		defer C.free(unsafe.Pointer(cComet))
-		cOpts.sourcehub_comet_rpc_address = cComet
-
-		cChainID := C.CString(opts.SourceHubChainID)
-		defer C.free(unsafe.Pointer(cChainID))
-		cOpts.sourcehub_chain_id = cChainID
+		cOpts.sourcehub_grpc_address = a.s(opts.SourceHubGRPCAddress)
+		cOpts.sourcehub_comet_rpc_address = a.s(opts.SourceHubCometRPCAddress)
+		cOpts.sourcehub_chain_id = a.s(opts.SourceHubChainID)
 
 		if len(opts.SourceHubSignerKey) > 0 {
 			cOpts.sourcehub_signer_key = (*C.uint8_t)(unsafe.Pointer(&opts.SourceHubSignerKey[0]))
@@ -231,113 +268,52 @@ func NewNode(opts NodeOptions) (*Node, error) {
 func (n *Node) Close() error {
 	result := C.node_close(n.ptr)
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("node_close", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "node_close")
+	return err
 }
 
 // AddSchema adds a GraphQL SDL schema to the database.
 // Returns the JSON response containing created collection versions.
 func (n *Node) AddSchema(identityDID string, sdl string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cSDL := C.CString(sdl)
-	defer C.free(unsafe.Pointer(cSDL))
+	result := C.add_schema(n.ptr, a.opt(identityDID), a.s(sdl))
 
-	result := C.add_schema(n.ptr, cIdentityDID, cSDL)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("add_schema", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "add_schema")
 }
 
 // AddSchemaInTxn adds a GraphQL SDL schema within a specific transaction.
 // Returns the JSON response containing created collection versions visible in that transaction.
 func (n *Node) AddSchemaInTxn(txnID string, identityDID string, sdl string) (string, error) {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.add_schema_in_txn(n.ptr, a.s(txnID), a.opt(identityDID), a.s(sdl))
 
-	cSDL := C.CString(sdl)
-	defer C.free(unsafe.Pointer(cSDL))
-
-	result := C.add_schema_in_txn(n.ptr, cTxnID, cIdentityDID, cSDL)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("add_schema_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "add_schema_in_txn")
 }
 
 // GetCollections returns all collections in the database as JSON.
 func (n *Node) GetCollections(identityDID string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	result := C.get_collections(n.ptr, cIdentityDID)
+	result := C.get_collections(n.ptr, a.opt(identityDID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("get_collections", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "get_collections")
 }
 
 // GetCollectionsInTxn returns all collection versions visible within a specific transaction.
 // This reads from the transaction's systemstore, which includes uncommitted writes
 // (e.g., placeholders from set_migration_in_txn).
 func (n *Node) GetCollectionsInTxn(txnID string, identityDID string) (string, error) {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.get_collections_in_txn(n.ptr, a.s(txnID), a.opt(identityDID))
 
-	result := C.get_collections_in_txn(n.ptr, cTxnID, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("get_collections_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "get_collections_in_txn")
 }
 
 // QueryResult represents a GraphQL query response.
@@ -388,31 +364,10 @@ func (n *Node) ExecRequest(identityDID string, query string, operationName strin
 // ExecRequestFull executes a GraphQL query, mutation, or subscription.
 // Returns an ExecRequestResult that indicates whether the result is a subscription.
 func (n *Node) ExecRequestFull(identityDID string, query string, operationName string, variables string) (*ExecRequestResult, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cQuery := C.CString(query)
-	defer C.free(unsafe.Pointer(cQuery))
-
-	var cOpName *C.char
-	if operationName != "" {
-		cOpName = C.CString(operationName)
-		defer C.free(unsafe.Pointer(cOpName))
-	}
-
-	var cVars *C.char
-	if variables != "" {
-		cVars = C.CString(variables)
-		defer C.free(unsafe.Pointer(cVars))
-	}
-
-	cBatchSessionID := C.CString("")
-	defer C.free(unsafe.Pointer(cBatchSessionID))
-
-	result := C.exec_request(n.ptr, cIdentityDID, cQuery, cOpName, cVars, cBatchSessionID)
+	result := C.exec_request(n.ptr, a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""))
 
 	switch result.status {
 	case 0: // Success - query/mutation result
@@ -450,10 +405,10 @@ type GraphQLSubscriptionResult struct {
 
 // PollGraphQLSubscription polls a GraphQL subscription for new results.
 func PollGraphQLSubscription(subscriptionID string) (*GraphQLSubscriptionResult, error) {
-	cSubID := C.CString(subscriptionID)
-	defer C.free(unsafe.Pointer(cSubID))
+	var a cargs
+	defer a.free()
 
-	result := C.poll_graphql_subscription(cSubID)
+	result := C.poll_graphql_subscription(a.s(subscriptionID))
 
 	switch result.status {
 	case 0: // Result available
@@ -479,18 +434,13 @@ func PollGraphQLSubscription(subscriptionID string) (*GraphQLSubscriptionResult,
 
 // CloseGraphQLSubscription closes a GraphQL subscription and releases resources.
 func CloseGraphQLSubscription(subscriptionID string) error {
-	cSubID := C.CString(subscriptionID)
-	defer C.free(unsafe.Pointer(cSubID))
+	var a cargs
+	defer a.free()
 
-	result := C.close_graphql_subscription(cSubID)
+	result := C.close_graphql_subscription(a.s(subscriptionID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("close_graphql_subscription", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "close_graphql_subscription")
+	return err
 }
 
 // Query executes a GraphQL query and returns a parsed result.
@@ -520,11 +470,6 @@ func (n *Node) QueryWithVars(query string, operationName string, variables map[s
 	}
 
 	return &result, nil
-}
-
-// Mutate executes a GraphQL mutation and returns a parsed result.
-func (n *Node) Mutate(mutation string) (*QueryResult, error) {
-	return n.Query(mutation)
 }
 
 // Transaction represents an active database transaction.
@@ -564,78 +509,36 @@ func (t *Transaction) ID() string {
 // Commit commits the transaction, making all changes permanent.
 // After commit, the transaction is no longer valid.
 func (t *Transaction) Commit() error {
-	cTxnID := C.CString(t.id)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	result := C.commit_txn(t.node.ptr, cTxnID)
+	result := C.commit_txn(t.node.ptr, a.s(t.id))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("commit_txn", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "commit_txn")
+	return err
 }
 
 // Rollback discards all changes made in the transaction.
 // After rollback, the transaction is no longer valid.
 func (t *Transaction) Rollback() error {
-	cTxnID := C.CString(t.id)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	result := C.rollback_txn(t.node.ptr, cTxnID)
+	result := C.rollback_txn(t.node.ptr, a.s(t.id))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("rollback_txn", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "rollback_txn")
+	return err
 }
 
 // ExecRequest executes a GraphQL query or mutation within the transaction.
 // identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
 func (t *Transaction) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
-	cTxnID := C.CString(t.id)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.exec_request_in_txn(t.node.ptr, a.s(t.id), a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""))
 
-	cQuery := C.CString(query)
-	defer C.free(unsafe.Pointer(cQuery))
-
-	var cOpName *C.char
-	if operationName != "" {
-		cOpName = C.CString(operationName)
-		defer C.free(unsafe.Pointer(cOpName))
-	}
-
-	var cVars *C.char
-	if variables != "" {
-		cVars = C.CString(variables)
-		defer C.free(unsafe.Pointer(cVars))
-	}
-
-	cBatchSessionID := C.CString("")
-	defer C.free(unsafe.Pointer(cBatchSessionID))
-
-	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cIdentityDID, cQuery, cOpName, cVars, cBatchSessionID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("exec_request_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "exec_request_in_txn")
 }
 
 // Query executes a GraphQL query within the transaction.
@@ -660,68 +563,39 @@ func (t *Transaction) Mutate(mutation string) (*QueryResult, error) {
 
 // DeleteCollections deletes collections within the transaction.
 func (t *Transaction) DeleteCollections(identityDID string, targets []string, activeOnly bool) error {
-	cTxnID := C.CString(t.id)
-	defer C.free(unsafe.Pointer(cTxnID))
-
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	targetsJSON, err := json.Marshal(targets)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal collection targets: %w", err)
 	}
-	cTargets := C.CString(string(targetsJSON))
-	defer C.free(unsafe.Pointer(cTargets))
 
 	result := C.delete_collections_in_txn(
 		t.node.ptr,
-		cTxnID,
-		cIdentityDID,
-		cTargets,
+		a.s(t.id),
+		a.opt(identityDID),
+		a.s(string(targetsJSON)),
 		C.bool(activeOnly),
 	)
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("delete_collections_in_txn", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "delete_collections_in_txn")
+	return err
 }
 
 // SetCollectionActive updates a collection version within the transaction.
 func (t *Transaction) SetCollectionActive(identityDID string, versionID string, isActive bool) error {
-	cTxnID := C.CString(t.id)
-	defer C.free(unsafe.Pointer(cTxnID))
-
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cVersionID := C.CString(versionID)
-	defer C.free(unsafe.Pointer(cVersionID))
+	var a cargs
+	defer a.free()
 
 	result := C.set_collection_active_in_txn(
 		t.node.ptr,
-		cTxnID,
-		cIdentityDID,
-		cVersionID,
+		a.s(t.id),
+		a.opt(identityDID),
+		a.s(versionID),
 		C.bool(isActive),
 	)
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("set_collection_active_in_txn", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "set_collection_active_in_txn")
+	return err
 }
 
 // ============================================================================
@@ -731,313 +605,112 @@ func (t *Transaction) SetCollectionActive(identityDID string, versionID string, 
 // GetCollectionByName returns a collection by its name.
 // Returns the collection's schema as JSON if found.
 func (n *Node) GetCollectionByName(identityDID string, name string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	result := C.get_collection_by_name(n.ptr, a.opt(identityDID), a.s(name))
 
-	result := C.get_collection_by_name(n.ptr, cIdentityDID, cName)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("get_collection_by_name", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
-}
-
-// HasCollection checks if a collection exists by name.
-func (n *Node) HasCollection(identityDID string, name string) (bool, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
-
-	result := C.has_collection(n.ptr, cIdentityDID, cName)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return false, mapFFIError("has_collection", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value == "true", nil
-}
-
-// DeleteCollection deletes a collection and all its documents.
-func (n *Node) DeleteCollection(identityDID string, name string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
-
-	result := C.delete_collection(n.ptr, cIdentityDID, cName)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("delete_collection", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	return unwrap(result.status, result.error, result.value, "get_collection_by_name")
 }
 
 // DeleteCollectionVersions deletes multiple collection versions by their version IDs.
 // Versions are deleted in topological order (children before parents).
 func (n *Node) DeleteCollectionVersions(identityDID string, versionIDs []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	idsJSON, err := json.Marshal(versionIDs)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal version IDs: %w", err)
 	}
 
-	cIDs := C.CString(string(idsJSON))
-	defer C.free(unsafe.Pointer(cIDs))
+	result := C.delete_collection_versions(n.ptr, a.opt(identityDID), a.s(string(idsJSON)))
 
-	result := C.delete_collection_versions(n.ptr, cIdentityDID, cIDs)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("delete_collection_versions", errStr)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "delete_collection_versions")
+	return err
 }
 
 // TruncateCollection deletes all documents from a collection while preserving the schema.
 func (n *Node) TruncateCollection(identityDID string, name string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cName := C.CString(name)
-	defer C.free(unsafe.Pointer(cName))
+	result := C.truncate_collection(n.ptr, a.opt(identityDID), a.s(name))
 
-	result := C.truncate_collection(n.ptr, cIdentityDID, cName)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("truncate_collection", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
-}
-
-// FindCollectionByID finds a collection by its collection ID (schema version ID).
-// Returns the collection's schema as JSON if found, or "null" if not found.
-func (n *Node) FindCollectionByID(identityDID string, collectionID string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cID := C.CString(collectionID)
-	defer C.free(unsafe.Pointer(cID))
-
-	result := C.find_collection_by_id(n.ptr, cIdentityDID, cID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("find_collection_by_id", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	_, err := unwrap(result.status, result.error, result.value, "truncate_collection")
+	return err
 }
 
 // SetActiveCollectionVersion activates the collection with the given version ID.
 func (n *Node) SetActiveCollectionVersion(identityDID string, versionID string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cVersionID := C.CString(versionID)
-	defer C.free(unsafe.Pointer(cVersionID))
+	result := C.set_active_collection_version(n.ptr, a.opt(identityDID), a.s(versionID))
 
-	result := C.set_active_collection_version(n.ptr, cIdentityDID, cVersionID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("set_active_collection_version", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "set_active_collection_version")
+	return err
 }
 
 // PatchCollection applies a JSON patch to a collection's schema.
 // Returns the updated collection schema as JSON.
 func (n *Node) PatchCollection(identityDID string, collectionName string, patch string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cName))
+	result := C.patch_collection(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(patch))
 
-	cPatch := C.CString(patch)
-	defer C.free(unsafe.Pointer(cPatch))
-
-	result := C.patch_collection(n.ptr, cIdentityDID, cName, cPatch)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("patch_collection", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "patch_collection")
 }
 
 // GetCollectionByVersionID returns a collection by its version ID.
 // Returns the collection's schema as JSON if found, or "null" if not found.
 func (n *Node) GetCollectionByVersionID(identityDID string, versionID string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cVersionID := C.CString(versionID)
-	defer C.free(unsafe.Pointer(cVersionID))
+	result := C.get_collection_by_version_id(n.ptr, a.opt(identityDID), a.s(versionID))
 
-	result := C.get_collection_by_version_id(n.ptr, cIdentityDID, cVersionID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("get_collection_by_version_id", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "get_collection_by_version_id")
 }
 
 // AddView creates a new Defra View from a GQL query and SDL schema.
 // The transform parameter is optional (pass empty string for none).
 // Note: Not yet implemented - see issue #178.
 func (n *Node) AddView(identityDID string, gqlQuery string, sdl string, transform string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cQuery := C.CString(gqlQuery)
-	defer C.free(unsafe.Pointer(cQuery))
+	result := C.add_view(n.ptr, a.opt(identityDID), a.s(gqlQuery), a.s(sdl), a.opt(transform))
 
-	cSDL := C.CString(sdl)
-	defer C.free(unsafe.Pointer(cSDL))
-
-	var cTransform *C.char
-	if transform != "" {
-		cTransform = C.CString(transform)
-		defer C.free(unsafe.Pointer(cTransform))
-	}
-
-	result := C.add_view(n.ptr, cIdentityDID, cQuery, cSDL, cTransform)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("add_view", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "add_view")
 }
 
 // RefreshViews refreshes the caches of all views matching the given options.
 // Pass empty string for options to refresh all views.
 // Note: Not yet implemented - see issue #178.
 func (n *Node) RefreshViews(identityDID string, options string) error {
-	var cOptions *C.char
-	if options != "" {
-		cOptions = C.CString(options)
-		defer C.free(unsafe.Pointer(cOptions))
-	}
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.refresh_views(n.ptr, a.opt(identityDID), a.opt(options))
 
-	result := C.refresh_views(n.ptr, cIdentityDID, cOptions)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("refresh_views", err)
-	}
-
-	C.defra_free_string(result.value)
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "refresh_views")
+	return err
 }
 
 // MaterializeCollection eagerly migrates and caches every known-version
 // document in a collection. It returns the number of documents advanced.
 func (n *Node) MaterializeCollection(identityDID string, collectionName string) (int, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.materialize_collection(n.ptr, a.opt(identityDID), a.s(collectionName))
+
+	value, err := unwrap(result.status, result.error, result.value, "materialize_collection")
+	if err != nil {
+		return 0, err
 	}
-
-	cCollectionName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollectionName))
-
-	result := C.materialize_collection(n.ptr, cIdentityDID, cCollectionName)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return 0, mapFFIError("materialize_collection", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 	count, err := strconv.Atoi(value)
 	if err != nil {
 		return 0, fmt.Errorf("ffi: failed to parse materialized document count %q: %w", value, err)
@@ -1048,151 +721,64 @@ func (n *Node) MaterializeCollection(identityDID string, collectionName string) 
 // SetMigration sets the migration for collection versions.
 // The config parameter should be a JSON string containing LensConfig.
 func (n *Node) SetMigration(identityDID string, config string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cConfig := C.CString(config)
-	defer C.free(unsafe.Pointer(cConfig))
+	result := C.set_migration(n.ptr, a.opt(identityDID), a.s(config))
 
-	result := C.set_migration(n.ptr, cIdentityDID, cConfig)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("set_migration", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "set_migration")
 }
 
 // SetMigrationInTxn sets the migration for collection versions within a transaction.
 // The migration will only be visible after the transaction is committed.
 func (n *Node) SetMigrationInTxn(txnID string, identityDID string, config string) (string, error) {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.set_migration_in_txn(n.ptr, a.s(txnID), a.opt(identityDID), a.s(config))
 
-	cConfig := C.CString(config)
-	defer C.free(unsafe.Pointer(cConfig))
-
-	result := C.set_migration_in_txn(n.ptr, cTxnID, cIdentityDID, cConfig)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("set_migration_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "set_migration_in_txn")
 }
 
 // LensAdd adds a lens transform to the database.
 // The lensJSON parameter should be a JSON string matching Go's model.Lens format.
 func (n *Node) LensAdd(identityDID string, lensJSON string) (string, error) {
-	cLens := C.CString(lensJSON)
-	defer C.free(unsafe.Pointer(cLens))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.lens_add(n.ptr, a.opt(identityDID), a.s(lensJSON))
 
-	result := C.lens_add(n.ptr, cIdentityDID, cLens)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("lens_add", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "lens_add")
 }
 
 // LensAddInTxn adds a lens transform within a transaction.
 func (n *Node) LensAddInTxn(txnID string, identityDID string, lensJSON string) (string, error) {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	cLens := C.CString(lensJSON)
-	defer C.free(unsafe.Pointer(cLens))
+	result := C.lens_add_in_txn(n.ptr, a.s(txnID), a.opt(identityDID), a.s(lensJSON))
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	result := C.lens_add_in_txn(n.ptr, cTxnID, cIdentityDID, cLens)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("lens_add_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "lens_add_in_txn")
 }
 
 // LensList returns all lens transforms as a map of ID -> LensModule JSON.
 func (n *Node) LensList(identityDID string) (string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	result := C.lens_list(n.ptr, cIdentityDID)
+	result := C.lens_list(n.ptr, a.opt(identityDID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("lens_list", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "lens_list")
 }
 
 // LensListInTxn lists all lens transforms visible within a transaction.
 func (n *Node) LensListInTxn(txnID string, identityDID string) (string, error) {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
+	var a cargs
+	defer a.free()
 
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	result := C.lens_list_in_txn(n.ptr, a.s(txnID), a.opt(identityDID))
 
-	result := C.lens_list_in_txn(n.ptr, cTxnID, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("lens_list_in_txn", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return unwrap(result.status, result.error, result.value, "lens_list_in_txn")
 }
 
 // ============================================================================
@@ -1222,14 +808,8 @@ type IndexResult struct {
 // CreateIndex creates a new index on a collection.
 // Returns the created index description with assigned ID.
 func (n *Node) CreateIndex(identityDID string, collectionName string, indexName string, fields []IndexField, unique bool) (*IndexDescription, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
+	var a cargs
+	defer a.free()
 
 	indexInput := IndexDescription{
 		Name:   indexName,
@@ -1241,19 +821,12 @@ func (n *Node) CreateIndex(identityDID string, collectionName string, indexName 
 		return nil, fmt.Errorf("ffi: failed to marshal index: %w", err)
 	}
 
-	cIndexJSON := C.CString(string(indexJSON))
-	defer C.free(unsafe.Pointer(cIndexJSON))
+	result := C.create_index(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(string(indexJSON)))
 
-	result := C.create_index(n.ptr, cIdentityDID, cCollName, cIndexJSON)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("create_index", errMsg)
+	value, err := unwrap(result.status, result.error, result.value, "create_index")
+	if err != nil {
+		return nil, err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var index IndexDescription
 	if err := json.Unmarshal([]byte(value), &index); err != nil {
@@ -1265,54 +838,26 @@ func (n *Node) CreateIndex(identityDID string, collectionName string, indexName 
 
 // DropIndex drops an index from a collection.
 func (n *Node) DropIndex(identityDID string, collectionName string, indexName string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
+	result := C.delete_index(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(indexName))
 
-	cIndexName := C.CString(indexName)
-	defer C.free(unsafe.Pointer(cIndexName))
-
-	result := C.delete_index(n.ptr, cIdentityDID, cCollName, cIndexName)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("drop_index", errMsg)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "drop_index")
+	return err
 }
 
 // GetIndexes returns all indexes for a collection.
 func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexResult, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.get_indexes(n.ptr, a.opt(identityDID), a.s(collectionName))
+
+	value, err := unwrap(result.status, result.error, result.value, "get_indexes")
+	if err != nil {
+		return nil, err
 	}
-
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
-
-	result := C.get_indexes(n.ptr, cIdentityDID, cCollName)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("get_indexes", errMsg)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var indexes []IndexResult
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
@@ -1324,22 +869,15 @@ func (n *Node) GetIndexes(identityDID string, collectionName string) ([]IndexRes
 
 // GetAllIndexes returns all indexes across all collections.
 func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexResult, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.list_all_indexes(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "get_all_indexes")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.list_all_indexes(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("get_all_indexes", errMsg)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var indexes map[string][]IndexResult
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
@@ -1361,28 +899,15 @@ type EncryptedIndexDescription struct {
 
 // CreateEncryptedIndex creates an encrypted index on a collection field.
 func (n *Node) CreateEncryptedIndex(identityDID string, collectionName string, fieldName string) (*EncryptedIndexDescription, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.add_encrypted_index(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(fieldName))
+
+	value, err := unwrap(result.status, result.error, result.value, "create_encrypted_index")
+	if err != nil {
+		return nil, err
 	}
-
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
-
-	cFieldName := C.CString(fieldName)
-	defer C.free(unsafe.Pointer(cFieldName))
-
-	result := C.add_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("create_encrypted_index", errMsg)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var encIdx EncryptedIndexDescription
 	if err := json.Unmarshal([]byte(value), &encIdx); err != nil {
@@ -1394,54 +919,26 @@ func (n *Node) CreateEncryptedIndex(identityDID string, collectionName string, f
 
 // DeleteEncryptedIndex deletes an encrypted index from a collection.
 func (n *Node) DeleteEncryptedIndex(identityDID string, collectionName string, fieldName string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
+	result := C.delete_encrypted_index(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(fieldName))
 
-	cFieldName := C.CString(fieldName)
-	defer C.free(unsafe.Pointer(cFieldName))
-
-	result := C.delete_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("delete_encrypted_index", errMsg)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "delete_encrypted_index")
+	return err
 }
 
 // ListEncryptedIndexes returns all encrypted indexes for a collection.
 func (n *Node) ListEncryptedIndexes(identityDID string, collectionName string) ([]EncryptedIndexDescription, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.list_encrypted_indexes(n.ptr, a.opt(identityDID), a.s(collectionName))
+
+	value, err := unwrap(result.status, result.error, result.value, "list_encrypted_indexes")
+	if err != nil {
+		return nil, err
 	}
-
-	cCollName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollName))
-
-	result := C.list_encrypted_indexes(n.ptr, cIdentityDID, cCollName)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("list_encrypted_indexes", errMsg)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var indexes []EncryptedIndexDescription
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
@@ -1453,22 +950,15 @@ func (n *Node) ListEncryptedIndexes(identityDID string, collectionName string) (
 
 // ListAllEncryptedIndexes returns all encrypted indexes across all collections.
 func (n *Node) ListAllEncryptedIndexes(identityDID string) (map[string][]EncryptedIndexDescription, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.list_all_encrypted_indexes(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "list_all_encrypted_indexes")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.list_all_encrypted_indexes(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("list_all_encrypted_indexes", errMsg)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var indexes map[string][]EncryptedIndexDescription
 	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
@@ -1492,22 +982,15 @@ type NACStatus struct {
 
 // GetNACStatus returns the current NAC status.
 func (n *Node) GetNACStatus(identityDID string) (*NACStatus, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.get_nac_status(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "get_nac_status")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.get_nac_status(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("get_nac_status", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var status NACStatus
 	if err := json.Unmarshal([]byte(value), &status); err != nil {
@@ -1519,76 +1002,51 @@ func (n *Node) GetNACStatus(identityDID string) (*NACStatus, error) {
 
 // EnableNAC enables NAC with the given owner DID.
 func (n *Node) EnableNAC(ownerDID string) error {
-	cOwnerDID := C.CString(ownerDID)
-	defer C.free(unsafe.Pointer(cOwnerDID))
+	var a cargs
+	defer a.free()
 
-	result := C.enable_nac(n.ptr, cOwnerDID)
+	result := C.enable_nac(n.ptr, a.s(ownerDID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("enable_nac", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "enable_nac")
+	return err
 }
 
 // DisableNAC temporarily disables NAC.
 // The requestor must be an admin.
 func (n *Node) DisableNAC(requestorDID string) error {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	result := C.disable_nac(n.ptr, cRequestorDID)
+	result := C.disable_nac(n.ptr, a.s(requestorDID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("disable_nac", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "disable_nac")
+	return err
 }
 
 // ReEnableNAC re-enables NAC after temporary disable.
 // The requestor must be an admin.
 func (n *Node) ReEnableNAC(requestorDID string) error {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	result := C.re_enable_nac(n.ptr, cRequestorDID)
+	result := C.re_enable_nac(n.ptr, a.s(requestorDID))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("re_enable_nac", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "re_enable_nac")
+	return err
 }
 
 // AddNACActorRelationship adds a NAC relationship for the given relation.
 // Returns true if added, false if already exists.
 func (n *Node) AddNACActorRelationship(requestorDID, relation, targetDID string) (bool, error) {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	cRelation := C.CString(relation)
-	defer C.free(unsafe.Pointer(cRelation))
+	result := C.add_nac_actor_relationship(n.ptr, a.s(requestorDID), a.s(relation), a.s(targetDID))
 
-	cTargetDID := C.CString(targetDID)
-	defer C.free(unsafe.Pointer(cTargetDID))
-
-	result := C.add_nac_actor_relationship(n.ptr, cRequestorDID, cRelation, cTargetDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return false, mapFFIError("add_nac_actor_relationship", err)
+	value, err := unwrap(result.status, result.error, result.value, "add_nac_actor_relationship")
+	if err != nil {
+		return false, err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		Added bool `json:"added"`
@@ -1603,25 +1061,15 @@ func (n *Node) AddNACActorRelationship(requestorDID, relation, targetDID string)
 // DeleteNACActorRelationship removes a NAC relationship for the given relation.
 // Returns true if deleted, false if didn't exist.
 func (n *Node) DeleteNACActorRelationship(requestorDID, relation, targetDID string) (bool, error) {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	cRelation := C.CString(relation)
-	defer C.free(unsafe.Pointer(cRelation))
+	result := C.delete_nac_actor_relationship(n.ptr, a.s(requestorDID), a.s(relation), a.s(targetDID))
 
-	cTargetDID := C.CString(targetDID)
-	defer C.free(unsafe.Pointer(cTargetDID))
-
-	result := C.delete_nac_actor_relationship(n.ptr, cRequestorDID, cRelation, cTargetDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return false, mapFFIError("delete_nac_actor_relationship", err)
+	value, err := unwrap(result.status, result.error, result.value, "delete_nac_actor_relationship")
+	if err != nil {
+		return false, err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		Deleted bool `json:"deleted"`
@@ -1639,22 +1087,15 @@ func (n *Node) DeleteNACActorRelationship(requestorDID, relation, targetDID stri
 
 // AddDACPolicy registers a DAC policy and returns its content-addressed ID.
 func (n *Node) AddDACPolicy(identityDID, policy string) (string, error) {
-	cIdentityDID := C.CString(identityDID)
-	defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
 
-	cPolicy := C.CString(policy)
-	defer C.free(unsafe.Pointer(cPolicy))
+	result := C.add_dac_policy(n.ptr, a.s(identityDID), a.s(policy))
 
-	result := C.add_dac_policy(n.ptr, cIdentityDID, cPolicy)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("add_dac_policy", err)
+	value, err := unwrap(result.status, result.error, result.value, "add_dac_policy")
+	if err != nil {
+		return "", err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		PolicyID string `json:"PolicyID"`
@@ -1670,31 +1111,15 @@ func (n *Node) AddDACPolicy(identityDID, policy string) (string, error) {
 // Relation can be "reader", "updater", or "deleter".
 // Returns true if added, false if already exists.
 func (n *Node) AddDACActorRelationship(requestorDID, targetDID, collectionID, docID, relation string) (bool, error) {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	cTargetDID := C.CString(targetDID)
-	defer C.free(unsafe.Pointer(cTargetDID))
+	result := C.add_dac_actor_relationship(n.ptr, a.s(requestorDID), a.s(targetDID), a.s(collectionID), a.s(docID), a.s(relation))
 
-	cCollectionID := C.CString(collectionID)
-	defer C.free(unsafe.Pointer(cCollectionID))
-
-	cDocID := C.CString(docID)
-	defer C.free(unsafe.Pointer(cDocID))
-
-	cRelation := C.CString(relation)
-	defer C.free(unsafe.Pointer(cRelation))
-
-	result := C.add_dac_actor_relationship(n.ptr, cRequestorDID, cTargetDID, cCollectionID, cDocID, cRelation)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return false, mapFFIError("add_dac_actor_relationship", err)
+	value, err := unwrap(result.status, result.error, result.value, "add_dac_actor_relationship")
+	if err != nil {
+		return false, err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		Added bool `json:"added"`
@@ -1709,31 +1134,15 @@ func (n *Node) AddDACActorRelationship(requestorDID, targetDID, collectionID, do
 // DeleteDACActorRelationship revokes document access from target.
 // Returns true if deleted, false if didn't exist.
 func (n *Node) DeleteDACActorRelationship(requestorDID, targetDID, collectionID, docID, relation string) (bool, error) {
-	cRequestorDID := C.CString(requestorDID)
-	defer C.free(unsafe.Pointer(cRequestorDID))
+	var a cargs
+	defer a.free()
 
-	cTargetDID := C.CString(targetDID)
-	defer C.free(unsafe.Pointer(cTargetDID))
+	result := C.delete_dac_actor_relationship(n.ptr, a.s(requestorDID), a.s(targetDID), a.s(collectionID), a.s(docID), a.s(relation))
 
-	cCollectionID := C.CString(collectionID)
-	defer C.free(unsafe.Pointer(cCollectionID))
-
-	cDocID := C.CString(docID)
-	defer C.free(unsafe.Pointer(cDocID))
-
-	cRelation := C.CString(relation)
-	defer C.free(unsafe.Pointer(cRelation))
-
-	result := C.delete_dac_actor_relationship(n.ptr, cRequestorDID, cTargetDID, cCollectionID, cDocID, cRelation)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return false, mapFFIError("delete_dac_actor_relationship", err)
+	value, err := unwrap(result.status, result.error, result.value, "delete_dac_actor_relationship")
+	if err != nil {
+		return false, err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		Deleted bool `json:"deleted"`
@@ -1753,14 +1162,10 @@ func (n *Node) DeleteDACActorRelationship(requestorDID, targetDID, collectionID,
 func (n *Node) GetNodeIdentity() (string, error) {
 	result := C.get_node_identity(n.ptr)
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return "", mapFFIError("get_node_identity", err)
+	value, err := unwrap(result.status, result.error, result.value, "get_node_identity")
+	if err != nil {
+		return "", err
 	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var response struct {
 		DID string `json:"did"`
@@ -1775,19 +1180,12 @@ func (n *Node) GetNodeIdentity() (string, error) {
 // SetDefaultIdentity sets the node's default signing identity DID.
 // The DID must already be registered via RegisterIdentityWithRust.
 func (n *Node) SetDefaultIdentity(did string) error {
-	cDid := C.CString(did)
-	defer C.free(unsafe.Pointer(cDid))
+	var a cargs
+	defer a.free()
 
-	result := C.node_set_default_identity(n.ptr, cDid)
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("node_set_default_identity", err)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-	return nil
+	result := C.node_set_default_identity(n.ptr, a.s(did))
+	_, err := unwrap(result.status, result.error, result.value, "node_set_default_identity")
+	return err
 }
 
 // ============================================================================
@@ -1796,34 +1194,13 @@ func (n *Node) SetDefaultIdentity(did string) error {
 
 // BlockVerifySignature verifies the signature of a block identified by CID.
 func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid, identityDID string) error {
-	cKeyType := C.CString(keyType)
-	defer C.free(unsafe.Pointer(cKeyType))
+	var a cargs
+	defer a.free()
 
-	cPubKey := C.CString(publicKey)
-	defer C.free(unsafe.Pointer(cPubKey))
+	result := C.block_verify_signature(n.ptr, a.s(keyType), a.s(publicKey), a.s(blockCid), a.opt(identityDID))
 
-	cBlockCid := C.CString(blockCid)
-	defer C.free(unsafe.Pointer(cBlockCid))
-
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	result := C.block_verify_signature(n.ptr, cKeyType, cPubKey, cBlockCid, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("block_verify_signature", err)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "block_verify_signature")
+	return err
 }
 
 // BlockVerifySignatureInTxn verifies the signature of a block identified by CID
@@ -1835,44 +1212,20 @@ func (n *Node) BlockVerifySignatureInTxn(
 	blockCid string,
 	identityDID string,
 ) error {
-	cTxnID := C.CString(txnID)
-	defer C.free(unsafe.Pointer(cTxnID))
-
-	cKeyType := C.CString(keyType)
-	defer C.free(unsafe.Pointer(cKeyType))
-
-	cPubKey := C.CString(publicKey)
-	defer C.free(unsafe.Pointer(cPubKey))
-
-	cBlockCid := C.CString(blockCid)
-	defer C.free(unsafe.Pointer(cBlockCid))
-
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	result := C.block_verify_signature_in_txn(
 		n.ptr,
-		cTxnID,
-		cKeyType,
-		cPubKey,
-		cBlockCid,
-		cIdentityDID,
+		a.s(txnID),
+		a.s(keyType),
+		a.s(publicKey),
+		a.s(blockCid),
+		a.opt(identityDID),
 	)
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("block_verify_signature_in_txn", err)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "block_verify_signature_in_txn")
+	return err
 }
 
 // ============================================================================
@@ -1922,13 +1275,10 @@ var ErrNoEvent = errors.New("ffi: no event available")
 // The optional collectionFilter limits events to a specific collection.
 // The subscription must be closed with Close() when done.
 func (n *Node) Subscribe(collectionFilter string) (*Subscription, error) {
-	var cFilter *C.char
-	if collectionFilter != "" {
-		cFilter = C.CString(collectionFilter)
-		defer C.free(unsafe.Pointer(cFilter))
-	}
+	var a cargs
+	defer a.free()
 
-	result := C.create_subscription(n.ptr, cFilter)
+	result := C.create_subscription(n.ptr, a.opt(collectionFilter))
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1990,13 +1340,8 @@ func (s *Subscription) Poll() (*PollResult, error) {
 func (s *Subscription) Close() error {
 	result := C.close_subscription(s.handle)
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("close_subscription", err)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "close_subscription")
+	return err
 }
 
 // SubscribeMergeComplete creates a subscription to P2P merge complete events.
@@ -2023,12 +1368,13 @@ func (n *Node) SubscribeMergeComplete() (*Subscription, error) {
 // NewNodeWithP2P creates a new DefraDB node with P2P enabled.
 // The node must be closed with Close() when done.
 func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
+	var a cargs
+	defer a.free()
+
 	var cOpts C.struct_NodeInitOptions
 
 	if opts.DBPath != "" {
-		cDBPath := C.CString(opts.DBPath)
-		defer C.free(unsafe.Pointer(cDBPath))
-		cOpts.db_path = cDBPath
+		cOpts.db_path = a.s(opts.DBPath)
 	}
 
 	if opts.InMemory || opts.DBPath == "" {
@@ -2050,24 +1396,14 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 		if keyType == "" {
 			keyType = "secp256k1"
 		}
-		cKeyType := C.CString(keyType)
-		defer C.free(unsafe.Pointer(cKeyType))
-		cOpts.signing_key_type = cKeyType
+		cOpts.signing_key_type = a.s(keyType)
 	}
 
 	// Pass SourceHub config if provided
 	if opts.SourceHubGRPCAddress != "" {
-		cGRPC := C.CString(opts.SourceHubGRPCAddress)
-		defer C.free(unsafe.Pointer(cGRPC))
-		cOpts.sourcehub_grpc_address = cGRPC
-
-		cComet := C.CString(opts.SourceHubCometRPCAddress)
-		defer C.free(unsafe.Pointer(cComet))
-		cOpts.sourcehub_comet_rpc_address = cComet
-
-		cChainID := C.CString(opts.SourceHubChainID)
-		defer C.free(unsafe.Pointer(cChainID))
-		cOpts.sourcehub_chain_id = cChainID
+		cOpts.sourcehub_grpc_address = a.s(opts.SourceHubGRPCAddress)
+		cOpts.sourcehub_comet_rpc_address = a.s(opts.SourceHubCometRPCAddress)
+		cOpts.sourcehub_chain_id = a.s(opts.SourceHubChainID)
 
 		if len(opts.SourceHubSignerKey) > 0 {
 			cOpts.sourcehub_signer_key = (*C.uint8_t)(unsafe.Pointer(&opts.SourceHubSignerKey[0]))
@@ -2075,10 +1411,7 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 		}
 	}
 
-	cListenAddr := C.CString(listenAddr)
-	defer C.free(unsafe.Pointer(cListenAddr))
-
-	result := C.new_node_with_p2p(cOpts, cListenAddr)
+	result := C.new_node_with_p2p(cOpts, a.s(listenAddr))
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -2091,22 +1424,15 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 
 // P2PPeerInfo returns the local peer info as a list of multiaddrs with peer ID.
 func (n *Node) P2PPeerInfo(identityDID string) ([]string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.p2p_peer_info(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "p2p_peer_info")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.p2p_peer_info(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("p2p_peer_info", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var addrs []string
 	if err := json.Unmarshal([]byte(value), &addrs); err != nil {
@@ -2118,22 +1444,15 @@ func (n *Node) P2PPeerInfo(identityDID string) ([]string, error) {
 
 // P2PActivePeers returns the list of connected peer IDs.
 func (n *Node) P2PActivePeers(identityDID string) ([]string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.p2p_active_peers(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "p2p_active_peers")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.p2p_active_peers(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("p2p_active_peers", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var peers []string
 	if err := json.Unmarshal([]byte(value), &peers); err != nil {
@@ -2145,66 +1464,30 @@ func (n *Node) P2PActivePeers(identityDID string) ([]string, error) {
 
 // P2PConnect connects to a peer at the given multiaddr.
 func (n *Node) P2PConnect(identityDID string, addr string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cAddr := C.CString(addr)
-	defer C.free(unsafe.Pointer(cAddr))
+	result := C.p2p_connect(n.ptr, a.opt(identityDID), a.s(addr))
 
-	result := C.p2p_connect(n.ptr, cIdentityDID, cAddr)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_connect", err)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "p2p_connect")
+	return err
 }
 
 // P2PDisconnect disconnects from a peer at the given multiaddr.
 func (n *Node) P2PDisconnect(identityDID string, addr string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cAddr := C.CString(addr)
-	defer C.free(unsafe.Pointer(cAddr))
+	result := C.p2p_disconnect(n.ptr, a.opt(identityDID), a.s(addr))
 
-	result := C.p2p_disconnect(n.ptr, cIdentityDID, cAddr)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_disconnect", err)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "p2p_disconnect")
+	return err
 }
 
 // P2PSetReplicator sets a replicator for the given collections.
 func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cPeerAddr := C.CString(peerAddr)
-	defer C.free(unsafe.Pointer(cPeerAddr))
+	var a cargs
+	defer a.free()
 
 	if collections == nil {
 		collections = []string{}
@@ -2214,22 +1497,10 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
 	}
 
-	cCollections := C.CString(string(collectionsJSON))
-	defer C.free(unsafe.Pointer(cCollections))
+	result := C.p2p_add_replicator(n.ptr, a.opt(identityDID), a.s(peerAddr), a.s(string(collectionsJSON)))
 
-	result := C.p2p_add_replicator(n.ptr, cIdentityDID, cPeerAddr, cCollections)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_create_replicator", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_create_replicator")
+	return err
 }
 
 // P2PRetryReplicators re-pushes all existing documents to connected replicator peers.
@@ -2237,17 +1508,8 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 func (n *Node) P2PRetryReplicators() error {
 	result := C.p2p_retry_replicators(n.ptr)
 
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_retry_replicators", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "p2p_retry_replicators")
+	return err
 }
 
 // SetSEEncryptionKey sets the searchable encryption key for the node.
@@ -2263,48 +1525,26 @@ func (n *Node) SetSEEncryptionKey(key []byte) error {
 		C.uintptr_t(len(key)),
 	)
 
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("set_se_encryption_key", errStr)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, nil, "set_se_encryption_key")
+	return err
 }
 
 // P2PDeleteReplicator removes a replicator by peer ID.
 // If collections is non-empty, only those collections are removed from the replicator.
 // If collections is empty, the entire replicator is deleted.
 func (n *Node) P2PDeleteReplicator(identityDID string, peerID string, collections []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cPeerID := C.CString(peerID)
-	defer C.free(unsafe.Pointer(cPeerID))
+	var a cargs
+	defer a.free()
 
 	collectionsJSON, err := json.Marshal(collections)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
 	}
-	cCollections := C.CString(string(collectionsJSON))
-	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_delete_replicator(n.ptr, cIdentityDID, cPeerID, cCollections)
+	result := C.p2p_delete_replicator(n.ptr, a.opt(identityDID), a.s(peerID), a.s(string(collectionsJSON)))
 
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_delete_replicator", err)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_delete_replicator")
+	return err
 }
 
 // ReplicatorInfo represents replicator information returned from FFI.
@@ -2316,22 +1556,15 @@ type ReplicatorInfo struct {
 
 // P2PGetAllReplicators returns all replicators.
 func (n *Node) P2PGetAllReplicators(identityDID string) ([]ReplicatorInfo, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.p2p_list_replicators(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "p2p_list_replicators")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.p2p_list_replicators(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("p2p_list_replicators", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var replicators []ReplicatorInfo
 	if err := json.Unmarshal([]byte(value), &replicators); err != nil {
@@ -2343,84 +1576,47 @@ func (n *Node) P2PGetAllReplicators(identityDID string) ([]ReplicatorInfo, error
 
 // P2PAddCollections adds collections to P2P replication.
 func (n *Node) P2PAddCollections(identityDID string, collections []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	collectionsJSON, err := json.Marshal(collections)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
 	}
 
-	cCollections := C.CString(string(collectionsJSON))
-	defer C.free(unsafe.Pointer(cCollections))
+	result := C.p2p_add_collections(n.ptr, a.opt(identityDID), a.s(string(collectionsJSON)))
 
-	result := C.p2p_add_collections(n.ptr, cIdentityDID, cCollections)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_create_collections", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_create_collections")
+	return err
 }
 
 // P2PRemoveCollections removes collections from P2P replication.
 func (n *Node) P2PRemoveCollections(identityDID string, collections []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	collectionsJSON, err := json.Marshal(collections)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
 	}
 
-	cCollections := C.CString(string(collectionsJSON))
-	defer C.free(unsafe.Pointer(cCollections))
+	result := C.p2p_delete_collections(n.ptr, a.opt(identityDID), a.s(string(collectionsJSON)))
 
-	result := C.p2p_delete_collections(n.ptr, cIdentityDID, cCollections)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_delete_collections", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_delete_collections")
+	return err
 }
 
 // P2PGetAllCollections returns all collections configured for P2P replication.
 func (n *Node) P2PGetAllCollections(identityDID string) ([]string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.p2p_list_collections(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "p2p_list_collections")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.p2p_list_collections(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("p2p_list_collections", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var collections []string
 	if err := json.Unmarshal([]byte(value), &collections); err != nil {
@@ -2432,84 +1628,47 @@ func (n *Node) P2PGetAllCollections(identityDID string) ([]string, error) {
 
 // P2PAddDocuments adds documents to P2P replication by subscribing to their GossipSub topics.
 func (n *Node) P2PAddDocuments(identityDID string, docIDs []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	docIDsJSON, err := json.Marshal(docIDs)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
 	}
 
-	cDocIDs := C.CString(string(docIDsJSON))
-	defer C.free(unsafe.Pointer(cDocIDs))
+	result := C.p2p_add_documents(n.ptr, a.opt(identityDID), a.s(string(docIDsJSON)))
 
-	result := C.p2p_add_documents(n.ptr, cIdentityDID, cDocIDs)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_create_documents", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_create_documents")
+	return err
 }
 
 // P2PRemoveDocuments removes documents from P2P replication.
 func (n *Node) P2PRemoveDocuments(identityDID string, docIDs []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	docIDsJSON, err := json.Marshal(docIDs)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
 	}
 
-	cDocIDs := C.CString(string(docIDsJSON))
-	defer C.free(unsafe.Pointer(cDocIDs))
+	result := C.p2p_delete_documents(n.ptr, a.opt(identityDID), a.s(string(docIDsJSON)))
 
-	result := C.p2p_delete_documents(n.ptr, cIdentityDID, cDocIDs)
-
-	if result.status != 0 {
-		errStr := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_delete_documents", errStr)
-	}
-
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_delete_documents")
+	return err
 }
 
 // P2PGetAllDocuments returns all documents configured for P2P replication.
 func (n *Node) P2PGetAllDocuments(identityDID string) ([]string, error) {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
+	var a cargs
+	defer a.free()
+
+	result := C.p2p_list_documents(n.ptr, a.opt(identityDID))
+
+	value, err := unwrap(result.status, result.error, result.value, "p2p_list_documents")
+	if err != nil {
+		return nil, err
 	}
-
-	result := C.p2p_list_documents(n.ptr, cIdentityDID)
-
-	if result.status != 0 {
-		err := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return nil, mapFFIError("p2p_list_documents", err)
-	}
-
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
 
 	var docIDs []string
 	if err := json.Unmarshal([]byte(value), &docIDs); err != nil {
@@ -2522,121 +1681,63 @@ func (n *Node) P2PGetAllDocuments(identityDID string) ([]string, error) {
 // P2PSyncDocuments syncs specific documents from peers.
 // This implements the DocSync pull-based protocol.
 func (n *Node) P2PSyncDocuments(identityDID string, collectionName string, docIDs []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
-
-	cCollectionName := C.CString(collectionName)
-	defer C.free(unsafe.Pointer(cCollectionName))
+	var a cargs
+	defer a.free()
 
 	docIDsJSON, err := json.Marshal(docIDs)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
 	}
-	cDocIDsJSON := C.CString(string(docIDsJSON))
-	defer C.free(unsafe.Pointer(cDocIDsJSON))
 
-	result := C.p2p_sync_documents(n.ptr, cIdentityDID, cCollectionName, cDocIDsJSON)
+	result := C.p2p_sync_documents(n.ptr, a.opt(identityDID), a.s(collectionName), a.s(string(docIDsJSON)))
 
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_sync_documents", errMsg)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_sync_documents")
+	return err
 }
 
 // P2PSyncBranchableCollection syncs a branchable collection from peers.
 func (n *Node) P2PSyncBranchableCollection(identityDID string, collectionID string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
-	cCollectionID := C.CString(collectionID)
-	defer C.free(unsafe.Pointer(cCollectionID))
+	result := C.p2p_sync_branchable_collection(n.ptr, a.opt(identityDID), a.s(collectionID))
 
-	result := C.p2p_sync_branchable_collection(n.ptr, cIdentityDID, cCollectionID)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_sync_branchable_collection", errMsg)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err := unwrap(result.status, result.error, result.value, "p2p_sync_branchable_collection")
+	return err
 }
 
 // P2PSyncCollectionVersions syncs collection versions by their CIDs.
 func (n *Node) P2PSyncCollectionVersions(identityDID string, versionIDs []string) error {
-	var cIdentityDID *C.char
-	if identityDID != "" {
-		cIdentityDID = C.CString(identityDID)
-		defer C.free(unsafe.Pointer(cIdentityDID))
-	}
+	var a cargs
+	defer a.free()
 
 	versionIDsJSON, err := json.Marshal(versionIDs)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal version IDs: %w", err)
 	}
 
-	cVersionIDsJSON := C.CString(string(versionIDsJSON))
-	defer C.free(unsafe.Pointer(cVersionIDsJSON))
+	result := C.p2p_sync_collection_versions(n.ptr, a.opt(identityDID), a.s(string(versionIDsJSON)))
 
-	result := C.p2p_sync_collection_versions(n.ptr, cIdentityDID, cVersionIDsJSON)
-
-	if result.status != 0 {
-		errMsg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("p2p_sync_collection_versions", errMsg)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-
-	return nil
+	_, err = unwrap(result.status, result.error, result.value, "p2p_sync_collection_versions")
+	return err
 }
 
 // BasicExportDB exports the database to a JSON file.
 func (n *Node) BasicExportDB(configJSON string) error {
-	cConfig := C.CString(configJSON)
-	defer C.free(unsafe.Pointer(cConfig))
+	var a cargs
+	defer a.free()
 
-	result := C.basic_export(n.ptr, cConfig)
-	if result.status != 0 {
-		msg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("basic_export", msg)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-	return nil
+	result := C.basic_export(n.ptr, a.s(configJSON))
+	_, err := unwrap(result.status, result.error, result.value, "basic_export")
+	return err
 }
 
 // BasicImportDB imports documents from a JSON backup file.
 func (n *Node) BasicImportDB(filepath string) error {
-	cFilepath := C.CString(filepath)
-	defer C.free(unsafe.Pointer(cFilepath))
+	var a cargs
+	defer a.free()
 
-	result := C.basic_import(n.ptr, cFilepath)
-	if result.status != 0 {
-		msg := C.GoString(result.error)
-		C.defra_free_string(result.error)
-		return mapFFIError("basic_import", msg)
-	}
-	if result.value != nil {
-		C.defra_free_string(result.value)
-	}
-	return nil
+	result := C.basic_import(n.ptr, a.s(filepath))
+	_, err := unwrap(result.status, result.error, result.value, "basic_import")
+	return err
 }
