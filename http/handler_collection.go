@@ -11,6 +11,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -21,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 const docEncryptParam = "encrypt"
@@ -33,9 +35,64 @@ type DeleteCollectionRequest struct {
 	Filter any `json:"filter"`
 }
 
+// UnmarshalJSON decodes a DeleteCollectionRequest, preserving integer precision in Filter.
+// The standard decoder represents every JSON number as a float64, which silently rounds
+// any integer above 2^53.
+func (r *DeleteCollectionRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Filter json.RawMessage `json:"filter"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	filter, err := decodeRequestFilter(raw.Filter)
+	if err != nil {
+		return err
+	}
+	r.Filter = filter
+	return nil
+}
+
 type UpdateCollectionRequest struct {
 	Filter  any    `json:"filter"`
 	Updater string `json:"updater"`
+}
+
+// UnmarshalJSON decodes an UpdateCollectionRequest, preserving integer precision in Filter.
+// The standard decoder represents every JSON number as a float64, which silently rounds
+// any integer above 2^53.
+func (r *UpdateCollectionRequest) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Filter  json.RawMessage `json:"filter"`
+		Updater string          `json:"updater"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	filter, err := decodeRequestFilter(raw.Filter)
+	if err != nil {
+		return err
+	}
+	r.Filter = filter
+	r.Updater = raw.Updater
+	return nil
+}
+
+// decodeRequestFilter decodes a document filter carried as raw JSON on a request body,
+// without losing integer precision. No filter (an absent key, or an explicit null) means
+// match all documents.
+func decodeRequestFilter(data json.RawMessage) (any, error) {
+	if len(data) == 0 {
+		return map[string]any{}, nil
+	}
+	filter, err := utils.DecodeJSONFilter(data)
+	if err != nil {
+		return nil, err
+	}
+	if filter == nil {
+		filter = map[string]any{}
+	}
+	return filter, nil
 }
 
 func (h *collectionHandler) DeleteDocumentsWithFilter(rw http.ResponseWriter, req *http.Request) {

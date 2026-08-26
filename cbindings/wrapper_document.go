@@ -383,7 +383,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	docID := C.CString("")
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	docID := C.CString("")
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}
