@@ -3255,13 +3255,34 @@ func normalizeCollectionDateTimes(v any, version client.CollectionVersion) any {
 		}
 	case map[string]any:
 		for _, field := range version.Fields {
-			if field.Kind.String() != "[DateTime]" {
+			kind := field.Kind.String()
+			if kind != "[DateTime]" && kind != "[DateTime!]" {
 				continue
 			}
 			items, ok := value[field.Name].([]any)
 			if !ok {
 				continue
 			}
+
+			// A non-nillable array carries no None case, so Go's own client
+			// decodes it as []time.Time rather than []immutable.Option[time.Time].
+			if kind == "[DateTime!]" {
+				times := make([]time.Time, len(items))
+				valid := true
+				for i, item := range items {
+					dateTime, ok := item.(time.Time)
+					if !ok {
+						valid = false
+						break
+					}
+					times[i] = dateTime
+				}
+				if valid {
+					value[field.Name] = times
+				}
+				continue
+			}
+
 			nullable := make([]immutable.Option[time.Time], len(items))
 			valid := true
 			for i, item := range items {
