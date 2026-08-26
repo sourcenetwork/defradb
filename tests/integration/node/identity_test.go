@@ -15,10 +15,18 @@ import (
 	"testing"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestNodeIdentity_NodeIdentity_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
+		// An external node generates its own node identity, so it does not match the
+		// identity the harness expects.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
