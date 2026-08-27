@@ -13,13 +13,14 @@ package dac
 import (
 	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/local"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
 const localStoreName = "local_document_acp"
 
 var _ acp.ACPSystemClient = (*LocalDocumentACP)(nil)
 
-// LocalDocumentACP represents a local document acp implementation that makes no remote calls.
+// LocalDocumentACP represents the Local DAC implementation, which makes no remote calls.
 type LocalDocumentACP struct {
 	*local.LocalACP
 }
@@ -31,6 +32,7 @@ func NewLocalDocumentACP(pathToStore string) (DocumentACP, error) {
 	}
 
 	return &bridgeDocumentACP{
-		clientACP: &LocalDocumentACP{LocalACP: localACP},
+		clientACP:       &LocalDocumentACP{LocalACP: localACP},
+		documentACPType: acpTypes.LocalDocumentACP,
 	}, nil
 }

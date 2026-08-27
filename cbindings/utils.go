@@ -74,9 +74,9 @@ type GoNodeInitOptions struct {
 	// Document ACP options
 	DocumentACPType          string
 	DocumentACPPath          string
-	SourceHubChainID         string
-	SourceHubGRPCAddress     string
-	SourceHubCometRPCAddress string
+	RemoteDACChainID         string
+	RemoteDACGRPCAddress     string
+	RemoteDACCometRPCAddress string
 
 	// Node ACP options
 	NodeACPPath string

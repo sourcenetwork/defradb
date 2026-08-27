@@ -19,15 +19,15 @@ import (
 
 const (
 	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
-	sourcehubImageEnvName  = "DEFRA_SOURCEHUB_IMAGE"
+	veraImageEnvName       = "DEFRA_VERA_IMAGE"
 )
 
 var (
 	// documentACPType is the document ACP implementation under test.
 	documentACPType state.DocumentACPType
 
-	// sourcehubImage is the container image used to run SourceHub.
-	sourcehubImage string
+	// veraImage is the container image used to run Vera.
+	veraImage string
 )
 
 func init() {
@@ -35,8 +35,8 @@ func init() {
 	if documentACPType == "" {
 		documentACPType = state.LocalDocumentACPType
 	}
-	sourcehubImage = os.Getenv(sourcehubImageEnvName)
-	if sourcehubImage == "" {
-		sourcehubImage = "ghcr.io/sourcenetwork/vera:dev"
+	veraImage = os.Getenv(veraImageEnvName)
+	if veraImage == "" {
+		veraImage = "ghcr.io/sourcenetwork/vera:dev"
 	}
 }

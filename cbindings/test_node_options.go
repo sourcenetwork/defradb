@@ -199,9 +199,9 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	// Document ACP
 	opts.documentACPType = dacType
 	opts.documentACPPath = dacPath
-	opts.sourceHubChainID = chainID
-	opts.sourceHubGRPCAddress = grpcAddr
-	opts.sourceHubCometRPCAddress = cometAddr
+	opts.remoteDACChainID = chainID
+	opts.remoteDACGRPCAddress = grpcAddr
+	opts.remoteDACCometRPCAddress = cometAddr
 	// Identity + Node ACP
 	opts.identityPtr = identResult.identityPtr
 	opts.enableNodeACP = 1
@@ -249,9 +249,9 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 	// Document ACP
 	assertNodeOptionField(t, m, "local", "DocumentACP", "DocumentACPType")
 	assertNodeOptionField(t, m, dacPathStr, "DocumentACP", "Path")
-	assertNodeOptionField(t, m, "chain-a", "DocumentACP", "SourceHubChainID")
-	assertNodeOptionField(t, m, "grpc-a:9090", "DocumentACP", "SourceHubGRPCAddress")
-	assertNodeOptionField(t, m, "comet-a:26657", "DocumentACP", "SourceHubCometRPCAddress")
+	assertNodeOptionField(t, m, "chain-a", "DocumentACP", "RemoteDACChainID")
+	assertNodeOptionField(t, m, "grpc-a:9090", "DocumentACP", "RemoteDACGRPCAddress")
+	assertNodeOptionField(t, m, "comet-a:26657", "DocumentACP", "RemoteDACCometRPCAddress")
 
 	// Node ACP
 	assertNodeOptionField(t, m, true, "NodeACP", "IsEnabled")
@@ -323,9 +323,9 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 	opts.httpWriteTimeoutMs = C.int64_t(5000)
 	opts.httpIdleTimeoutMs = C.int64_t(6000)
 	// Document ACP
-	opts.sourceHubChainID = chainID
-	opts.sourceHubGRPCAddress = grpcAddr
-	opts.sourceHubCometRPCAddress = cometAddr
+	opts.remoteDACChainID = chainID
+	opts.remoteDACGRPCAddress = grpcAddr
+	opts.remoteDACCometRPCAddress = cometAddr
 	// Node ACP
 	// enableNodeACP is not set, defaulting to false (vs true in set A)
 	opts.nodeACPPath = nodeACPPath
@@ -373,9 +373,9 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 	// Type is not set, defaulting to "local" (vs explicit "local" in set A)
 	assertNodeOptionField(t, m, "local", "DocumentACP", "DocumentACPType")
 	assertNodeOptionField(t, m, "", "DocumentACP", "Path")
-	assertNodeOptionField(t, m, "chain-b", "DocumentACP", "SourceHubChainID")
-	assertNodeOptionField(t, m, "grpc-b:9090", "DocumentACP", "SourceHubGRPCAddress")
-	assertNodeOptionField(t, m, "comet-b:26657", "DocumentACP", "SourceHubCometRPCAddress")
+	assertNodeOptionField(t, m, "chain-b", "DocumentACP", "RemoteDACChainID")
+	assertNodeOptionField(t, m, "grpc-b:9090", "DocumentACP", "RemoteDACGRPCAddress")
+	assertNodeOptionField(t, m, "comet-b:26657", "DocumentACP", "RemoteDACCometRPCAddress")
 
 	// Node ACP
 	// enableNodeACP is not set, defaulting to false (vs true in set A)

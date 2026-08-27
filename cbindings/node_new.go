@@ -157,14 +157,14 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	if gocOptions.DocumentACPPath != "" {
 		opts.DocumentACP().SetPath(gocOptions.DocumentACPPath)
 	}
-	if gocOptions.SourceHubChainID != "" {
-		opts.DocumentACP().SetChainID(gocOptions.SourceHubChainID)
+	if gocOptions.RemoteDACChainID != "" {
+		opts.DocumentACP().SetChainID(gocOptions.RemoteDACChainID)
 	}
-	if gocOptions.SourceHubGRPCAddress != "" {
-		opts.DocumentACP().SetGRPCAddress(gocOptions.SourceHubGRPCAddress)
+	if gocOptions.RemoteDACGRPCAddress != "" {
+		opts.DocumentACP().SetGRPCAddress(gocOptions.RemoteDACGRPCAddress)
 	}
-	if gocOptions.SourceHubCometRPCAddress != "" {
-		opts.DocumentACP().SetCometRPCAddress(gocOptions.SourceHubCometRPCAddress)
+	if gocOptions.RemoteDACCometRPCAddress != "" {
+		opts.DocumentACP().SetCometRPCAddress(gocOptions.RemoteDACCometRPCAddress)
 	}
 
 	// Node ACP options

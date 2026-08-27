@@ -10,14 +10,12 @@
 
 package client
 
-// PolicyDescription describes a policy using it's ID and it's resource name, where:
-// 1) the ID is the policyID of the registered policy on the document acp system and
-// 2) the resource name is of a valid resource that adheres to the corresponding
+// PolicyDescription describes a policy by its ID and resource name, where:
+// 1) the ID identifies the policy registered with the ACP system and
+// 2) the resource name identifies a valid resource that adheres to the corresponding
 // resource interface (RI) rules.
 type PolicyDescription struct {
-	// ID is the local policyID when using local acp, and global policyID when
-	// using remote acp with sourcehub. This identifier is externally managed
-	// by the acp system.
+	// ID is the policy identifier managed by the configured ACP system.
 	ID string
 
 	// ResourceName is the name of the corresponding resource within the policy.

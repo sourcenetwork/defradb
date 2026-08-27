@@ -133,31 +133,31 @@ Possible values:
 The type of Document ACP to use.
 
 Possible values:
-- `local` (default): local-only Document ACP
-- `source-hub` source hub Document ACP: https://github.com/sourcenetwork/sourcehub
+- `local` (default): Local DAC
+- `remote`: Remote DAC (backed by [Vera](https://github.com/sourcenetwork/vera))
 
-## `acp.document.sourceHub.ChainID`
+## `acp.document.remote.ChainID`
 
-The ID of the SourceHub chain to store ACP data in. Required when using `acp.document.type`:`source-hub`.
+The ID of the Vera chain to store ACP data in. Required when using `acp.document.type`:`remote`.
 
-## `acp.document.sourceHub.GRPCAddress`
+## `acp.document.remote.GRPCAddress`
 
-The address of the SourceHub GRPC server. Required when using `acp.document.type`:`source-hub`.
+The address of the Vera GRPC server. Required when using `acp.document.type`:`remote`.
 
-## `acp.document.sourceHub.CometRPCAddress`
+## `acp.document.remote.CometRPCAddress`
 
-The address of the SourceHub Comet RPC server. Required when using `acp.document.type`:`source-hub`.
+The address of the Vera Comet RPC server. Required when using `acp.document.type`:`remote`.
 
-## `acp.document.sourceHub.KeyName`
+## `acp.document.remote.KeyName`
 
-The name of the key in the keyring where the SourceHub credentials used to sign (and pay for) SourceHub
-transactions created by the node is stored. Required when using `acp.document.type`:`source-hub`.
+The name of the key in the keyring that stores the Vera credentials used to sign (and pay for)
+Vera transactions created by the node. Required when using `acp.document.type`:`remote`.
 
-## `acp.document.sourceHub.address`
+## `acp.document.remote.address`
 
-The SourceHub address of the actor that client-side actions should permit to make SourceHub actions on
-their behalf.  This is a client-side only config param.  It is required if the client wishes to make
-SourceHub ACP requests in order to create protected data.
+The Vera address that client-side actions should authorize to make Remote DAC transactions on the
+actor's behalf. This is a client-side-only configuration parameter and is required when the client
+uses Remote DAC to create protected data.
 
 ## `secretfile`
 

@@ -123,9 +123,9 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetCertPath(tlsCertPath).
 				SetKeyPath(tlsKeyPath)
 			opts.DocumentACP().
-				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
-				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
-				SetCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress"))
+				SetChainID(cfg.GetString("acp.document.remote.ChainID")).
+				SetGRPCAddress(cfg.GetString("acp.document.remote.GRPCAddress")).
+				SetCometRPCAddress(cfg.GetString("acp.document.remote.CometRPCAddress"))
 			opts.NodeACP().
 				SetEnabled(enableNAC)
 
@@ -180,10 +180,10 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				}
 				opts.DB().SetNodeIdentity(ident)
 
-				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
-				if sourceHubKeyName != "" {
-					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
+				// Set up the Vera transaction signer used by the Remote DAC.
+				remoteDACKeyName := cfg.GetString("acp.document.remote.KeyName")
+				if remoteDACKeyName != "" {
+					signer, err := keyring.NewTxSignerFromKeyringKey(kr, remoteDACKeyName)
 					if err != nil {
 						return err
 					}
@@ -373,7 +373,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(config.ConfigFlags["document-acp-type"]),
-		"Specify the document acp engine to use (supported: local (default), source-hub)")
+		"Document Access Control (DAC) backend to use: local (default) or remote")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),

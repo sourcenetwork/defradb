@@ -46,10 +46,10 @@ const (
 type NodeDocumentACPType string
 
 const (
-	// NodeLocalDocumentACPType uses the local document ACP implementation.
+	// NodeLocalDocumentACPType uses the Local DAC implementation.
 	NodeLocalDocumentACPType NodeDocumentACPType = "local"
-	// NodeSourceHubDocumentACPType uses the SourceHub ACP implementation.
-	NodeSourceHubDocumentACPType NodeDocumentACPType = "source-hub"
+	// NodeRemoteDocumentACPType uses the Remote DAC implementation backed by Vera.
+	NodeRemoteDocumentACPType NodeDocumentACPType = "remote"
 )
 
 // NodeLensRuntimeType represents the lens runtime type.
@@ -157,14 +157,14 @@ type NodeDocumentACPOptions struct {
 	DocumentACPType NodeDocumentACPType
 	// Path is the filesystem path for the document ACP system.
 	Path string
-	// Signer is the transaction signer for SourceHub ACP.
+	// Signer signs Vera transactions made by the Remote DAC.
 	Signer immutable.Option[NodeTxSigner]
-	// SourceHubChainID is the chain ID for SourceHub.
-	SourceHubChainID string
-	// SourceHubGRPCAddress is the gRPC address for SourceHub.
-	SourceHubGRPCAddress string
-	// SourceHubCometRPCAddress is the Comet RPC address for SourceHub.
-	SourceHubCometRPCAddress string
+	// RemoteDACChainID is the chain ID for Vera.
+	RemoteDACChainID string
+	// RemoteDACGRPCAddress is the gRPC address for Vera.
+	RemoteDACGRPCAddress string
+	// RemoteDACCometRPCAddress is the Comet RPC address for Vera.
+	RemoteDACCometRPCAddress string
 }
 
 // NodeACPOptions contains node ACP configuration values.
@@ -665,21 +665,21 @@ func (sb *NodeDocumentACPOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *Node
 	return sb
 }
 
-// SetChainID sets the chainID of the SourceHub chain.
+// SetChainID sets the chainID of the Vera chain.
 func (sb *NodeDocumentACPOptionsBuilder) SetChainID(chainID string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubChainID = chainID })
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACChainID = chainID })
 	return sb
 }
 
-// SetGRPCAddress sets the GRPC address of the SourceHub node.
+// SetGRPCAddress sets the GRPC address of the Vera node.
 func (sb *NodeDocumentACPOptionsBuilder) SetGRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubGRPCAddress = address })
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACGRPCAddress = address })
 	return sb
 }
 
-// SetCometRPCAddress sets the Comet RPC address of the SourceHub node.
+// SetCometRPCAddress sets the Comet RPC address of the Vera node.
 func (sb *NodeDocumentACPOptionsBuilder) SetCometRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubCometRPCAddress = address })
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACCometRPCAddress = address })
 	return sb
 }
 

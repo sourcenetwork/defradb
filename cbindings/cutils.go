@@ -149,9 +149,9 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 		HTTPIdleTimeoutMs:         int64(cOptions.httpIdleTimeoutMs),
 		DocumentACPType:           C.GoString(cOptions.documentACPType),
 		DocumentACPPath:           C.GoString(cOptions.documentACPPath),
-		SourceHubChainID:          C.GoString(cOptions.sourceHubChainID),
-		SourceHubGRPCAddress:      C.GoString(cOptions.sourceHubGRPCAddress),
-		SourceHubCometRPCAddress:  C.GoString(cOptions.sourceHubCometRPCAddress),
+		RemoteDACChainID:          C.GoString(cOptions.remoteDACChainID),
+		RemoteDACGRPCAddress:      C.GoString(cOptions.remoteDACGRPCAddress),
+		RemoteDACCometRPCAddress:  C.GoString(cOptions.remoteDACCometRPCAddress),
 		NodeACPPath:               C.GoString(cOptions.nodeACPPath),
 	}, nil
 }
