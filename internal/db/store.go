@@ -41,22 +41,37 @@ func (db *DB) ExecRequest(
 		ctx = identity.WithContext(ctx, opt.Identity)
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		res := &client.RequestResult{}
-		res.GQL.Errors = append(res.GQL.Errors, err)
-		return res
-	}
-
-	defer txn.Discard()
-
 	gqlOpts := &client.GQLOptions{}
 	if opt.OperationName.HasValue() {
 		gqlOpts.OperationName = opt.OperationName.Value()
 	}
 	gqlOpts.Variables = opt.Variables
 
-	res := db.execRequest(ctx, request, gqlOpts)
+	parsedRequest, res := db.parseRequest(ctx, request, gqlOpts)
+	if res != nil {
+		return res
+	}
+
+	hasTruncate, isStandalone := truncateMutationState(parsedRequest)
+	if hasTruncate {
+		if !isStandalone {
+			return requestError(ErrTruncateMutationMustBeStandalone)
+		}
+		if _, hasTxn := datastore.CtxTryGetTxn(ctx); hasTxn {
+			return requestError(ErrTruncateMutationInTransaction)
+		}
+
+		// Truncate owns its collection lock and applies changes outside a datastore transaction.
+		return db.executeRequest(ctx, parsedRequest)
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return requestError(err)
+	}
+	defer txn.Discard()
+
+	res = db.executeRequest(ctx, parsedRequest)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -66,6 +81,12 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
+	return res
+}
+
+func requestError(err error) *client.RequestResult {
+	res := &client.RequestResult{}
+	res.GQL.Errors = append(res.GQL.Errors, err)
 	return res
 }
 

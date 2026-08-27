@@ -176,6 +176,7 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrMaterializedViewAndACPNotSupported) ||
 		errors.Is(err, db.ErrColNotMaterialized) ||
 		errors.Is(err, db.ErrColMutatingIsBranchable) ||
+		errors.Is(err, db.ErrFilteredTruncateBranchableCollection) ||
 		errors.Is(err, db.ErrP2PColHasPolicy) ||
 		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
 		errors.Is(err, db.ErrCollectionNameMutated) ||
