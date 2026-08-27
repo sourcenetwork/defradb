@@ -20,6 +20,7 @@ var (
 	ErrFailedToParseConditionValue    = errors.New("failed to parse condition value from query filter statement")
 	ErrEmptyDataPayload               = errors.New("given data payload is empty")
 	ErrUnknownMutationName            = errors.New("unknown mutation name")
+	ErrTruncateFilterNull             = errors.New("truncate filter cannot be null")
 	ErrInvalidExplainTypeArg          = errors.New("invalid explain request type argument")
 	ErrInvalidNumberOfExplainArgs     = errors.New("invalid number of arguments to an explain request")
 	ErrUnknownExplainType             = errors.New("invalid / unknown explain type")

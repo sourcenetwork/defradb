@@ -677,6 +677,12 @@
                 },
                 "type": "object"
             },
+            "truncate_collection": {
+                "properties": {
+                    "filter": {}
+                },
+                "type": "object"
+            },
             "update_collection": {
                 "properties": {
                     "filter": {},
@@ -1925,7 +1931,7 @@
         },
         "/collections/{name}/truncate": {
             "delete": {
-                "description": "Truncate a collection, removing all document data within it from the server. Does not propagate the deletion to other Defra nodes in the network.",
+                "description": "Permanently remove all or filtered document data from a collection on this server. Does not propagate the deletion to other Defra nodes in the network.",
                 "operationId": "truncate",
                 "parameters": [
                     {
@@ -1938,6 +1944,15 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/truncate_collection"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
