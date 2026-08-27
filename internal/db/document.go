@@ -615,11 +615,10 @@ func (c *collection) save(
 		return err
 	}
 
-	link, headNode, err := coreblock.AddDeltaWithOptions(
+	link, headNode, err := coreblock.AddDelta(
 		signingCtx,
 		headstoreKey,
 		delta,
-		coreblock.AddDeltaOptions{EncryptionDocKey: encryptionDocID},
 		heads,
 		links...,
 	)
