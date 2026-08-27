@@ -967,6 +967,11 @@ type Mutation {
         """
         filter: UserFilterArg
     ): [User]
+    "Remove all or matching documents from this node. Returns true when complete."
+    truncate_User(
+        "Filter documents to truncate"
+        filter: UserFilterArg
+    ): Boolean!
     """
     
     Updates documents in this collection using the data provided. Only documents
