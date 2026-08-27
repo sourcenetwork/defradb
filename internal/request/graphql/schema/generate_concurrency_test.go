@@ -36,9 +36,16 @@ func TestGenerator_EmptyCollectionDoesNotError(t *testing.T) {
 		},
 	}})
 	require.NoError(t, err)
+
+	fields := manager.Schema().MutationType().Fields()
+	require.NotContains(t, fields, "add_User")
+	require.NotContains(t, fields, "update_User")
+	require.NotContains(t, fields, "upsert_User")
+	require.Contains(t, fields, "delete_User")
+	require.Contains(t, fields, "truncate_User")
 }
 
-func TestGenerator_MutationInputIsSafeForConcurrentUse(t *testing.T) {
+func TestGenerator_SchemaIsSafeForConcurrentUse(t *testing.T) {
 	manager, err := NewSchemaManager(false)
 	require.NoError(t, err)
 
@@ -50,28 +57,32 @@ func TestGenerator_MutationInputIsSafeForConcurrentUse(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
+	requests := []string{
+		`query { User(filter: {name: {_eq: "Jane"}}) { name } }`,
+		`mutation { update_User(input: {name: "Jane"}) { name } }`,
+	}
 	const requestCount = 20
 	start := make(chan struct{})
 	errors := make(chan error, requestCount)
 	var waitGroup sync.WaitGroup
-	for range requestCount {
+	for i := range requestCount {
 		waitGroup.Add(1)
-		go func() {
+		go func(request string) {
 			defer waitGroup.Done()
 			<-start
 
 			document, err := gqlp.Parse(gqlp.ParseParams{Source: source.NewSource(&source.Source{
-				Body: []byte(`mutation { update_User(input: {name: "Jane"}) { name } }`),
+				Body: []byte(request),
 			})})
 			if err != nil {
 				errors <- err
 				return
 			}
-			result := gql.ValidateDocument(manager.Schema(), document, nil)
+			result := gql.ValidateDocument(manager.Schema(), document, gql.SpecifiedRules)
 			if !result.IsValid {
 				errors <- result.Errors[0]
 			}
-		}()
+		}(requests[i%len(requests)])
 	}
 
 	close(start)

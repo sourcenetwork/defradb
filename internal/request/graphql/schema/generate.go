@@ -285,9 +285,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 	}
 
-	// final resolve
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
+	if err := g.manager.FinalizeTypes(); err != nil {
 		return nil, err
 	}
 
@@ -654,17 +652,13 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 			}
 		}
 
+		if len(fields) == 0 {
+			continue
+		}
 		mutationObj := gql.NewInputObject(gql.InputObjectConfig{
 			Name:   mutationInputName,
 			Fields: fields,
 		})
-		// Empty collections have no mutable fields.
-		if len(fields) > 0 {
-			mutationObj.Fields()
-			if mutationObj.Error() != nil {
-				return mutationObj.Error()
-			}
-		}
 		g.manager.schema.TypeMap()[mutationObj.Name()] = mutationObj
 	}
 
@@ -1232,13 +1226,30 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, NewErrTypeNotFound(filterInputName)
 	}
 
+	delete := &gql.Field{
+		Name:        "delete_" + obj.Name(),
+		Description: deleteDocumentsDescription,
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
+			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
+		},
+	}
+
+	truncate := &gql.Field{
+		Name:        "truncate_" + obj.Name(),
+		Description: "Remove all or matching documents from this node. Returns true when complete.",
+		Type:        gql.NewNonNull(gql.Boolean),
+		Args: gql.FieldConfigArgument{
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
+		},
+	}
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
 	if !ok {
-		return nil, NewErrTypeNotFound(mutationInputName)
+		return []*gql.Field{delete, truncate}, nil
 	}
 
 	explicitUserFieldsEnum := g.genUserExplicitTypeFieldsEnum(obj)
-
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
 	add := &gql.Field{
@@ -1265,16 +1276,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	delete := &gql.Field{
-		Name:        "delete_" + obj.Name(),
-		Description: deleteDocumentsDescription,
-		Type:        gql.NewList(obj),
-		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
-			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
-		},
-	}
-
 	upsert := &gql.Field{
 		Name:        "upsert_" + obj.Name(),
 		Description: upsertDocumentDescription,
@@ -1283,15 +1284,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
 			request.AddInput:     schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Add field values"),
 			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
-		},
-	}
-
-	truncate := &gql.Field{
-		Name:        "truncate_" + obj.Name(),
-		Description: "Remove all or matching documents from this node. Returns true when complete.",
-		Type:        gql.NewNonNull(gql.Boolean),
-		Args: gql.FieldConfigArgument{
-			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
 		},
 	}
 
