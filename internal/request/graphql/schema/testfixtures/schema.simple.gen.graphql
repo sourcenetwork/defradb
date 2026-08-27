@@ -743,6 +743,18 @@ input Float64OperatorBlock {
     _nin: [Float64]
 }
 
+"HNSW (Hierarchical Navigable Small World) vector index parameters."
+input HNSWIndexConfig {
+    "Max connections per node. Higher improves recall at the cost of memory and build time."
+    M: Int = 16
+    "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time."
+    efConstruction: Int = 128
+    "Default query-time exploration factor. Higher improves recall at the cost of query latency."
+    efSearch: Int = 64
+    "Distance metric used to compare vectors."
+    metric: VectorDistanceMetric = "COSINE"
+}
+
 """
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 """
@@ -2531,6 +2543,15 @@ input User___version__CountSelector {
     offset: Int
 }
 
+enum VectorDistanceMetric {
+    "Cosine distance on normalised vectors. Compares direction only."
+    COSINE
+    "Dot product. Grows with magnitude, so a longer vector pointing the same way is nearer."
+    DOT
+    "Straight-line (L2) distance. Compares direction and magnitude."
+    EUCLIDEAN
+}
+
 """
 A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document. 
 
@@ -2888,4 +2909,12 @@ directive @relation(
 
     """
     name: String
+) on FIELD_DEFINITION
+
+"@vectorIndex builds an approximate-nearest-neighbour index over a vector field."
+directive @vectorIndex(
+    "Build the index with the HNSW algorithm using these parameters."
+    HNSW: HNSWIndexConfig
+    "Vector dimensions; required unless inferable from an @embedding."
+    dimensions: Int
 ) on FIELD_DEFINITION
