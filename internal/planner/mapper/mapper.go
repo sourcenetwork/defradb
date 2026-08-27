@@ -1518,6 +1518,24 @@ func toMutation(
 	mutationRequest *request.ObjectMutation,
 	thisIndex int,
 ) (*Mutation, error) {
+	if mutationRequest.Type == request.TruncateObjects {
+		mapping := core.NewDocumentMapping()
+		mapping.Add(0, "result")
+		filter := immutable.None[map[string]any]()
+		if mutationRequest.Filter.HasValue() {
+			filter = immutable.Some(mutationRequest.Filter.Value().Conditions)
+		}
+		return &Mutation{
+			Select: Select{
+				Targetable:      Targetable{Field: Field{Index: thisIndex, Name: mutationRequest.Collection}},
+				DocumentMapping: mapping,
+				CollectionName:  mutationRequest.Collection,
+			},
+			Type:           TruncateObjects,
+			TruncateFilter: filter,
+		}, nil
+	}
+
 	underlyingSelect, err := toSelect(
 		ctx,
 		store,

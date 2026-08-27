@@ -1765,6 +1765,16 @@ type Mutation {
         """
         filter: BookFilterArg
     ): [Book]
+    "Remove all or matching documents from this node. Returns true when complete."
+    truncate_Author(
+        "Filter documents to truncate"
+        filter: AuthorFilterArg
+    ): Boolean!
+    "Remove all or matching documents from this node. Returns true when complete."
+    truncate_Book(
+        "Filter documents to truncate"
+        filter: BookFilterArg
+    ): Boolean!
     """
     
     Updates documents in this collection using the data provided. Only documents

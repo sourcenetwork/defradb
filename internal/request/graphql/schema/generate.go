@@ -1288,7 +1288,16 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	return []*gql.Field{add, update, delete, upsert}, nil
+	truncate := &gql.Field{
+		Name:        "truncate_" + obj.Name(),
+		Description: "Remove all or matching documents from this node. Returns true when complete.",
+		Type:        gql.NewNonNull(gql.Boolean),
+		Args: gql.FieldConfigArgument{
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
+		},
+	}
+
+	return []*gql.Field{add, update, delete, upsert, truncate}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {
