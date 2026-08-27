@@ -25,8 +25,8 @@ import (
 	acpErrors "github.com/sourcenetwork/acp_core/pkg/errors"
 	coreTypes "github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-	sourcehub "github.com/sourcenetwork/sourcehub/sdk"
-	sourcehubTypes "github.com/sourcenetwork/sourcehub/x/acp/types"
+	vera "github.com/sourcenetwork/vera/sdk"
+	veraTypes "github.com/sourcenetwork/vera/x/acp/types"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -36,7 +36,7 @@ func NewSourceHubACP(
 	chainID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	signer sourcehub.TxSigner,
+	signer vera.TxSigner,
 ) (DocumentACP, error) {
 	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, signer)
 	if err != nil {
@@ -49,29 +49,29 @@ func NewSourceHubACP(
 }
 
 type SourceHubDocumentACP struct {
-	client    *sourcehub.Client
-	txBuilder *sourcehub.TxBuilder
-	signer    sourcehub.TxSigner
+	client    *vera.Client
+	txBuilder *vera.TxBuilder
+	signer    vera.TxSigner
 }
 
 func NewACPSourceHub(
 	chainID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	signer sourcehub.TxSigner,
+	signer vera.TxSigner,
 ) (*SourceHubDocumentACP, error) {
-	client, err := sourcehub.NewClient(
-		sourcehub.WithGRPCAddr(grpcAddress),
-		sourcehub.WithCometRPCAddr(cometRPCAddress),
+	client, err := vera.NewClient(
+		vera.WithGRPCAddr(grpcAddress),
+		vera.WithCometRPCAddr(cometRPCAddress),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	txBuilder, err := sourcehub.NewTxBuilder(
-		sourcehub.WithSDKClient(client),
-		sourcehub.WithChainID(chainID),
-		sourcehub.WithGasLimit(400000),
+	txBuilder, err := vera.NewTxBuilder(
+		vera.WithSDKClient(client),
+		vera.WithChainID(chainID),
+		vera.WithGasLimit(400000),
 	)
 	if err != nil {
 		return nil, err
@@ -95,9 +95,9 @@ func (a *SourceHubDocumentACP) AddPolicy(
 	policyMarshalType acpTypes.PolicyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 	policyMapper := msgSet.WithCreatePolicy(
-		sourcehubTypes.NewMsgCreatePolicy(
+		veraTypes.NewMsgCreatePolicy(
 			a.signer.GetAccAddress(),
 			policy,
 			coreTypes.PolicyMarshalingType(policyMarshalType),
@@ -135,7 +135,7 @@ func (a *SourceHubDocumentACP) Policy(
 ) (immutable.Option[acpTypes.Policy], error) {
 	response, err := a.client.ACPQueryClient().Policy(
 		ctx,
-		&sourcehubTypes.QueryPolicyRequest{Id: policyID},
+		&veraTypes.QueryPolicyRequest{Id: policyID},
 	)
 	if err != nil {
 		// todo: https://github.com/sourcenetwork/defradb/issues/2826
@@ -202,12 +202,12 @@ func (a *SourceHubDocumentACP) RegisterObject(
 		return identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	msgSet := vera.MsgSet{}
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
+		Cmd:         veraTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -241,7 +241,7 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 
 	resp, err := a.client.ACPQueryClient().ObjectOwner(
 		ctx,
-		&sourcehubTypes.QueryObjectOwnerRequest{
+		&veraTypes.QueryObjectOwnerRequest{
 			PolicyId: policyID,
 			Object:   coreTypes.NewObject(resourceName, objectID),
 		},
@@ -269,7 +269,7 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 
 	checkDocResponse, err := a.client.ACPQueryClient().VerifyAccessRequest(
 		ctx,
-		&sourcehubTypes.QueryVerifyAccessRequestRequest{
+		&veraTypes.QueryVerifyAccessRequestRequest{
 			PolicyId: policyID,
 			AccessRequest: &coreTypes.AccessRequest{
 				Operations: []*coreTypes.Operation{
@@ -317,7 +317,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
 	if targetActor == "*" {
@@ -335,11 +335,11 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		)
 	}
 
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewSetRelationshipCmd(newActorRelationship),
+		Cmd:         veraTypes.NewSetRelationshipCmd(newActorRelationship),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -384,7 +384,7 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
 	if targetActor == "*" {
@@ -402,11 +402,11 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 		)
 	}
 
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewDeleteRelationshipCmd(newActorRelationship),
+		Cmd:         veraTypes.NewDeleteRelationshipCmd(newActorRelationship),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {

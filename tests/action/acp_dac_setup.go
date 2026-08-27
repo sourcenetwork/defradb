@@ -38,7 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/sourcehub/sdk"
+	"github.com/sourcenetwork/vera/sdk"
 )
 
 const (
@@ -47,9 +47,9 @@ const (
 	faucetMnemonic = "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold" //nolint:lll
 
 	// faucetAddr is the account address matching the faucetMnemonic
-	faucetAddr = "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
+	faucetAddr = "vera12d9hjf0639k995venpv675sju9ltsvf8v73hjv"
 
-	sourcehubTestChainID string = "sourcehub-dev"
+	sourcehubTestChainID string = "vera-dev"
 )
 
 func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {

@@ -37,6 +37,6 @@ func init() {
 	}
 	sourcehubImage = os.Getenv(sourcehubImageEnvName)
 	if sourcehubImage == "" {
-		sourcehubImage = "ghcr.io/sourcenetwork/sourcehub:dev"
+		sourcehubImage = "ghcr.io/sourcenetwork/vera:dev"
 	}
 }
