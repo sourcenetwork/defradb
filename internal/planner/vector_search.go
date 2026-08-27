@@ -99,6 +99,8 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 	// readyVectorIndexOnField only returns a vector index, so GetVector always succeeds here.
 	vectorDesc, _ := index.GetVector()
 
+	// No warning here: the vector is malformed rather than the query shape being wrong, so there is
+	// nothing to rewrite. The full-scan path reports its own error.
 	query, ok := similarityQueryVector(sim.Vector)
 	if !ok {
 		return nil

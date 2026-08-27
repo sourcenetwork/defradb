@@ -86,7 +86,12 @@ func (a *assertStack) String() string {
 // Expecting none is the default, so a test that never mentions warnings still fails if the code
 // starts emitting one. Only the code and the details given are compared: message wording is free
 // to change, and a test can pin just the details it cares about.
-func assertWarnings(t testing.TB, actual *client.GQLExtensions, expected []client.GQLWarning) {
+func assertWarnings(
+	t testing.TB,
+	clientType state.ClientType,
+	actual *client.GQLExtensions,
+	expected []client.GQLWarning,
+) {
 	var warnings []client.GQLWarning
 	if actual != nil {
 		warnings = actual.Warnings
@@ -102,10 +107,19 @@ func assertWarnings(t testing.TB, actual *client.GQLExtensions, expected []clien
 		got := warnings[i]
 		require.Equal(t, exp.Code, got.Code, "unexpected warning code")
 		require.NotEmpty(t, got.Message, "warning %s has no message", got.Code)
+		// Details are part of the API, so an unexpected one is a change a test should catch.
+		require.Len(t, got.Detail, len(exp.Detail), "unexpected details on warning %s: %v", got.Code, got.Detail)
 		for key, expValue := range exp.Detail {
 			actualValue, ok := got.Detail[key]
 			require.True(t, ok, "warning %s has no detail %q", got.Code, key)
-			require.Equal(t, expValue, actualValue, "unexpected detail %q on warning %s", key, got.Code)
+			// isResultsEqual, not require.Equal: the serializing clients decode numbers as
+			// json.Number, so a number detail would not match its Go value.
+			require.True(
+				t,
+				isResultsEqual(clientType, expValue, actualValue),
+				"unexpected detail %q on warning %s: expected %v, got %v",
+				key, got.Code, expValue, actualValue,
+			)
 		}
 	}
 }
@@ -127,7 +141,7 @@ func assertRequestResults(
 		return true
 	}
 
-	assertWarnings(s.T, result.Extensions, expectedWarnings)
+	assertWarnings(s.T, s.ClientType, result.Extensions, expectedWarnings)
 
 	if expectedResults == nil && result.Data == nil {
 		return false

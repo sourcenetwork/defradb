@@ -162,7 +162,7 @@ func TestVectorIndex_SameQueryUsingIndexAndFullScan_ReturnsSameResults(t *testin
 					Request: fullScanReq,
 					Results: map[string]any{"User": expected},
 					ExpectedWarnings: []client.GQLWarning{
-						{Code: client.WarningCodeVectorIndexUnused, Detail: map[string]any{"reason": "noLimit"}},
+						{Code: client.WarningCodeVectorIndexUnused, Detail: map[string]any{"field": "vector", "reason": "noLimit"}},
 					},
 				},
 				&action.Request{
@@ -170,7 +170,7 @@ func TestVectorIndex_SameQueryUsingIndexAndFullScan_ReturnsSameResults(t *testin
 					Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0).WithDocFetches(3),
 					// Explaining a query still plans it, so the warning is reported here too.
 					ExpectedWarnings: []client.GQLWarning{
-						{Code: client.WarningCodeVectorIndexUnused, Detail: map[string]any{"reason": "noLimit"}},
+						{Code: client.WarningCodeVectorIndexUnused, Detail: map[string]any{"field": "vector", "reason": "noLimit"}},
 					},
 				},
 			},
