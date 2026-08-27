@@ -225,3 +225,17 @@ func TestCrossVersionShouldSkip_WithVersionAlreadySet_Skips(t *testing.T) {
 
 	assert.True(t, oldSource().ShouldSkip(actions))
 }
+
+func TestMakesNodeExternal_WithCrossVersionMultipliers_ReturnsTrue(t *testing.T) {
+	assert.True(t, MakesNodeExternal(CrossVersionOldSource))
+	assert.True(t, MakesNodeExternal(CrossVersionNewSource))
+}
+
+func TestMakesNodeExternal_WithOtherMultipliers_ReturnsFalse(t *testing.T) {
+	// These run every node in process, so a test's supported client types still hold.
+	assert.False(t, MakesNodeExternal(SignedDocs))
+	assert.False(t, MakesNodeExternal(SecondaryIndex))
+	assert.False(t, MakesNodeExternal(EncryptedDocs))
+	assert.False(t, MakesNodeExternal(Name("")))
+	assert.False(t, MakesNodeExternal(Name("not-a-multiplier")))
+}

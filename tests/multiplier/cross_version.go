@@ -113,3 +113,11 @@ func nodeActions(actions action.Actions) []*action.NewNode {
 	}
 	return configs
 }
+
+// MakesNodeExternal reports whether the named multiplier runs one of the nodes as a
+// separate process.
+//
+// Such a node is reached over HTTP whatever the run-wide client type.
+func MakesNodeExternal(name Name) bool {
+	return name == CrossVersionOldSource || name == CrossVersionNewSource
+}
