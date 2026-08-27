@@ -233,6 +233,12 @@ type P2P struct {
 	msgQueueBytes atomic.Int64
 	// msgQueueMaxBytes caps msgQueueBytes. Zero or less disables the byte bound.
 	msgQueueMaxBytes int64
+
+	// stopAccepting ends the worker pool. The queue itself is never closed: the pubsub
+	// dispatcher keeps calling the handler until libp2p tears the subscription down, and a
+	// send on a closed channel is a ready case in a select, so closing it would panic the
+	// dispatcher rather than fall through to the default arm.
+	stopAccepting chan struct{}
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -290,6 +296,7 @@ func New(
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
+		stopAccepting:        make(chan struct{}),
 	}
 
 	for i := 0; i < dagSyncWorkers; i++ {
@@ -721,6 +728,8 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 
 	select {
 	case p.msgQueue <- queuedMessage{req: req, size: size}:
+	case <-p.stopAccepting:
+		p.releaseQueueBytes(size)
 	case <-p.ctx.Done():
 		p.releaseQueueBytes(size)
 	default:
@@ -756,7 +765,17 @@ func (p *P2P) releaseQueueBytes(size int64) {
 // concurrently, bounding the goroutine count regardless of inbound message rate.
 func (p *P2P) processMessageWorker() {
 	defer p.msgWorkers.Done()
-	for m := range p.msgQueue {
+	for {
+		// A worker finishes the message in hand and then stops, abandoning whatever is still
+		// queued. Nothing has claimed those messages, and working a full queue off would
+		// outlast any shutdown budget by minutes.
+		var m queuedMessage
+		select {
+		case <-p.stopAccepting:
+			return
+		case m = <-p.msgQueue:
+		}
+
 		err := p.processPushlogRequest(p.ctx, m.req, false)
 		// Released here rather than deferred so the budget frees up per message, not
 		// when the worker exits.
@@ -1188,7 +1207,7 @@ func (pq *processQueue) close() {
 // and waits for all worker goroutines to exit.
 // It should be called once when the P2P subsystem is shutting down.
 func (p *P2P) Close() {
-	close(p.msgQueue)
+	close(p.stopAccepting)
 	done := make(chan struct{})
 	go func() {
 		p.msgWorkers.Wait()
@@ -1197,7 +1216,7 @@ func (p *P2P) Close() {
 	select {
 	case <-done:
 	case <-time.After(10 * time.Second):
-		log.Info("timed out waiting for pubsub workers to drain")
+		log.Info("timed out waiting for pubsub workers to finish")
 	}
 	p.batcher.Close()
 	p.processQueue.close()
