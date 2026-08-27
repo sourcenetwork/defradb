@@ -140,8 +140,9 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
-		// An external node generates its own node identity, so the key types this test
-		// assigns per node are not applied to it.
+		// An external node generates its own node identity on every start, so the
+		// signatures it writes carry a key the test cannot predict. The key type is
+		// honoured, the identity is not.
 		// https://github.com/sourcenetwork/defradb/issues/5170
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
@@ -247,8 +248,9 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
-		// An external node generates its own node identity, so the key types this test
-		// assigns per node are not applied to it.
+		// An external node generates its own node identity on every start, so the
+		// signatures it writes carry a key the test cannot predict. The key type is
+		// honoured, the identity is not.
 		// https://github.com/sourcenetwork/defradb/issues/5170
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,

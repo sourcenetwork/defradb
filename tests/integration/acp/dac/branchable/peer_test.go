@@ -36,9 +36,10 @@ const commitsQuery = `
 // at the sync layer and never reach node 1 - the owner sees nothing on the peer.
 func TestACP_P2PBranchableCollectionNotSyncedWithoutNodeCollectionAccess_LocalACP(t *testing.T) {
 	test := testUtils.TestCase{
-		// The collection is private, and the document is written without an identity, so
-		// the head cannot be read back to work out what the peer should receive.
-		// https://github.com/sourcenetwork/defradb/issues/5193
+		// The document is written without an identity into an ACP gated collection, so
+		// the head read-back that works out what the peer should receive is
+		// unauthenticated and finds nothing.
+		// https://github.com/sourcenetwork/defradb/issues/5196
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
 			multiplier.CrossVersionNewSource,
@@ -103,9 +104,10 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 	ownerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The collection is private, and the document is written without an identity, so
-		// the head cannot be read back to work out what the peer should receive.
-		// https://github.com/sourcenetwork/defradb/issues/5193
+		// The document is written without an identity into an ACP gated collection, so
+		// the head read-back that works out what the peer should receive is
+		// unauthenticated and finds nothing.
+		// https://github.com/sourcenetwork/defradb/issues/5196
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
 			multiplier.CrossVersionNewSource,
@@ -204,9 +206,10 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 	afterCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The collection is private, and the document is written without an identity, so
-		// the head cannot be read back to work out what the peer should receive.
-		// https://github.com/sourcenetwork/defradb/issues/5193
+		// The document is written without an identity into an ACP gated collection, so
+		// the head read-back that works out what the peer should receive is
+		// unauthenticated and finds nothing.
+		// https://github.com/sourcenetwork/defradb/issues/5196
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
 			multiplier.CrossVersionNewSource,
