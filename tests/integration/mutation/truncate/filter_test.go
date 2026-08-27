@@ -26,7 +26,7 @@ func TestMutationTruncateWithFilter(t *testing.T) {
 			&action.AddDoc{CollectionID: 0, Doc: `{"name":"Bob"}`},
 			&action.Request{
 				Request: `mutation {
-					truncate_User(filter: {name: {_eq: "Alice"}}, pruneHistory: true)
+					truncate_User(filter: {name: {_eq: "Alice"}})
 				}`,
 				Results: map[string]any{"truncate_User": true},
 			},
@@ -35,20 +35,6 @@ func TestMutationTruncateWithFilter(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Bob"}},
 				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestMutationTruncatePruneHistoryRequiresFilter(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddCollection{SDL: `type User { name: String }`},
-			&action.Request{
-				Request:       `mutation { truncate_User(pruneHistory: true) }`,
-				ExpectedError: "prune history requires a filter",
 			},
 		},
 	}

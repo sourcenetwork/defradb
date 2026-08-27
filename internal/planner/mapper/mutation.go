@@ -44,5 +44,4 @@ type Mutation struct {
 	EncryptFields []string
 
 	TruncateFilter immutable.Option[map[string]any]
-	PruneHistory   bool
 }

@@ -1294,10 +1294,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Type:        gql.NewNonNull(gql.Boolean),
 		Args: gql.FieldConfigArgument{
 			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
-			request.PruneHistoryArgName: schemaTypes.NewArgConfig(
-				gql.Boolean,
-				"Remove unshared history for matching documents",
-			),
 		},
 	}
 

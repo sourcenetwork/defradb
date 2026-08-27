@@ -13,7 +13,6 @@ package cli
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -25,13 +24,12 @@ import (
 
 func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 	var filter string
-	var pruneHistory bool
 	var cmd = &cobra.Command{
 		Use:   "truncate",
 		Short: "Truncate the given collection",
 		Long: `Truncate the given collection, removing document data from the local node.
-Without a filter all documents are removed. With a filter only matching documents are removed,
-and --prune-history also removes their unshared history. Changes do not propagate to other nodes.`,
+Without a filter all documents are removed. With a filter only matching documents and their
+unshared history are removed. Changes do not propagate to other nodes.`,
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
@@ -40,21 +38,17 @@ and --prune-history also removes their unshared history. Changes do not propagat
 			}
 
 			opt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(cmd.Context()))
-			if pruneHistory && filter == "" {
-				return fmt.Errorf("--prune-history requires --filter")
-			}
 			if filter != "" {
 				filterValue, err := parseTruncateFilter(filter)
 				if err != nil {
 					return NewErrParsingArgument("filter", err)
 				}
-				opt.SetFilter(filterValue).SetPruneHistory(pruneHistory)
+				opt.SetFilter(filterValue)
 			}
 			return col.Truncate(cmd.Context(), opt)
 		},
 	}
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
-	cmd.Flags().BoolVar(&pruneHistory, "prune-history", false, "Remove unshared history for matching documents")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

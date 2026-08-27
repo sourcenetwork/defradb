@@ -58,7 +58,6 @@ resources:
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionIndex: 0,
 				DocIndexes:      []int{0},
-				PruneHistory:    true,
 			},
 			&action.AddDoc{
 				Identity:     testUtils.ClientIdentity(1),

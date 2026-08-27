@@ -49,9 +49,6 @@ type ObjectMutation struct {
 
 	// EncryptFields is a list of doc fields from input data that should be encrypted.
 	EncryptFields []string
-
-	// PruneHistory removes unshared history for documents selected by the filter.
-	PruneHistory bool
 }
 
 // ToSelect returns a basic Select object, with the same Name, Alias, and Fields as

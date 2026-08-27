@@ -20,17 +20,14 @@ import (
 func TestTruncateCollectionRequestUnmarshalJSON(t *testing.T) {
 	var request TruncateCollectionRequest
 	require.NoError(t, json.Unmarshal(
-		[]byte(`{"filter":{"age":{"_eq":9007199254740993}},"pruneHistory":true}`),
+		[]byte(`{"filter":{"age":{"_eq":9007199254740993}}}`),
 		&request,
 	))
 	require.Equal(t, map[string]any{
 		"age": map[string]any{"_eq": int64(9007199254740993)},
 	}, request.Filter)
-	require.True(t, request.PruneHistory)
-
 	require.NoError(t, json.Unmarshal([]byte(`{}`), &request))
 	require.Nil(t, request.Filter)
-	require.False(t, request.PruneHistory)
 
 	require.NoError(t, json.Unmarshal([]byte(`{"filter":null}`), &request))
 	require.Nil(t, request.Filter)

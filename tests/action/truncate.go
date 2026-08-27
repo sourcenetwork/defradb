@@ -42,9 +42,6 @@ type Truncate struct {
 	// DocIndexes builds a DocID filter from documents in the test state.
 	DocIndexes []int
 
-	// PruneHistory removes unshared history for matching documents.
-	PruneHistory bool
-
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -95,7 +92,7 @@ func (a *Truncate) Execute() {
 			filter = map[string]any{"_docID": map[string]any{"_in": values}}
 		}
 		if filter != nil {
-			opts.SetFilter(filter).SetPruneHistory(a.PruneHistory)
+			opts.SetFilter(filter)
 		}
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {

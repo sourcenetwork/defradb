@@ -24,7 +24,7 @@ extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uint
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr,
-char* filterJSON, int pruneHistory);
+char* filterJSON);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
@@ -342,11 +342,7 @@ func (c *Collection) Truncate(
 		}
 		cFilter := C.CString(string(filterJSON))
 		defer C.free(unsafe.Pointer(cFilter))
-		pruneHistory := C.int(0)
-		if opt.PruneHistory {
-			pruneHistory = 1
-		}
-		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter, pruneHistory)
+		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter)
 	}
 	res := ConvertAndFreeCResult(result)
 	if res.Status != 0 {

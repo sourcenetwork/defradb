@@ -31,7 +31,6 @@ func (c *collection) truncateWithFilter(
 	ctx context.Context,
 	lockTxn datastore.Txn,
 	filter any,
-	pruneHistory bool,
 ) error {
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 	systemstore := multistore.Systemstore()
@@ -62,7 +61,6 @@ func (c *collection) truncateWithFilter(
 				ctx,
 				systemstore,
 				target.docShortID,
-				pruneHistory,
 			); err != nil {
 				return err
 			}

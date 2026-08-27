@@ -136,10 +136,6 @@ func parseTruncateMutationArgs(mut *request.ObjectMutation, args map[string]any)
 				return ErrInvalidFilterConditions
 			}
 			mut.Filter = immutable.Some(request.Filter{Conditions: v})
-		case request.PruneHistoryArgName:
-			if v, ok := value.(bool); ok {
-				mut.PruneHistory = v
-			}
 		}
 	}
 	return nil

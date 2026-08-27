@@ -23,11 +23,10 @@ type truncateNode struct {
 	documentIterator
 	docMapper
 
-	p            *Planner
-	collection   client.Collection
-	filter       immutable.Option[map[string]any]
-	pruneHistory bool
-	isDone       bool
+	p          *Planner
+	collection client.Collection
+	filter     immutable.Option[map[string]any]
+	isDone     bool
 }
 
 func (n *truncateNode) Prefixes([]keys.Walkable) {}
@@ -57,7 +56,6 @@ func (n *truncateNode) Next() (bool, error) {
 	if n.filter.HasValue() {
 		truncateOpts.SetFilter(n.filter.Value())
 	}
-	truncateOpts.SetPruneHistory(n.pruneHistory)
 	if err := n.collection.Truncate(n.p.ctx, truncateOpts); err != nil {
 		return false, err
 	}
@@ -78,10 +76,9 @@ func (p *Planner) Truncate(parsed *mapper.Mutation) (planNode, error) {
 	}
 
 	return &truncateNode{
-		p:            p,
-		collection:   col,
-		filter:       parsed.TruncateFilter,
-		pruneHistory: parsed.PruneHistory,
-		docMapper:    docMapper{parsed.DocumentMapping},
+		p:          p,
+		collection: col,
+		filter:     parsed.TruncateFilter,
+		docMapper:  docMapper{parsed.DocumentMapping},
 	}, nil
 }

@@ -38,13 +38,11 @@ func TestTruncateCollection_WithFilterIsIdempotent(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 				DocIndexes:      []int{0},
-				PruneHistory:    true,
 			},
 			// Retrying the same filtered truncate is a no-op.
 			&action.Truncate{
 				CollectionIndex: 0,
 				DocIndexes:      []int{0},
-				PruneHistory:    true,
 			},
 			&action.Request{
 				Request: `query { Users { name } }`,

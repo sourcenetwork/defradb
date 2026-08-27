@@ -215,8 +215,7 @@ func (c *Collection) Truncate(
 	var body *bytes.Buffer
 	if opt.Filter != nil {
 		data, err := json.Marshal(TruncateCollectionRequest{
-			Filter:       opt.Filter,
-			PruneHistory: opt.PruneHistory,
+			Filter: opt.Filter,
 		})
 		if err != nil {
 			return err

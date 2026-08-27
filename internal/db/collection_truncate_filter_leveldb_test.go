@@ -111,7 +111,7 @@ func TestTruncateWithFilterDoesNotOpenNestedLevelDBTransaction(t *testing.T) {
 	_, docID := seedLevelDBHistoryDocument(t, ctx, db)
 
 	requireLevelDBOperationCompletes(t, func() error {
-		return truncateDocuments(db, ctx, "User", []client.DocID{docID}, true)
+		return truncateDocuments(db, ctx, "User", []client.DocID{docID})
 	})
 }
 
@@ -133,7 +133,7 @@ func TestGraphQLTruncateDoesNotOpenNestedLevelDBTransaction(t *testing.T) {
 	done := make(chan *client.RequestResult, 1)
 	go func() {
 		done <- db.ExecRequest(ctx, fmt.Sprintf(`mutation {
-			truncate_User(filter: {_docID: {_eq: %q}}, pruneHistory: true)
+			truncate_User(filter: {_docID: {_eq: %q}})
 		}`, docID.String()))
 	}()
 

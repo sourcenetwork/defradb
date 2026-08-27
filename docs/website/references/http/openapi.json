@@ -679,10 +679,7 @@
             },
             "truncate_collection": {
                 "properties": {
-                    "filter": {},
-                    "pruneHistory": {
-                        "type": "boolean"
-                    }
+                    "filter": {}
                 },
                 "type": "object"
             },

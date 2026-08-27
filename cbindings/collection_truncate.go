@@ -30,7 +30,7 @@ func TruncateCollection(
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
 ) C.Result {
-	return truncateCollection(nodePtr, opts, identityPtr, nil, false)
+	return truncateCollection(nodePtr, opts, identityPtr, nil)
 }
 
 // TruncateCollectionWithFilter preserves TruncateCollection's v1 C ABI.
@@ -44,7 +44,6 @@ func TruncateCollectionWithFilter(
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
 	filterJSON *C.char,
-	pruneHistory C.int,
 ) C.Result {
 	if filterJSON == nil {
 		return returnC(returnGoC(1, "filter is required", ""))
@@ -57,7 +56,7 @@ func TruncateCollectionWithFilter(
 	if filter == nil {
 		return returnC(returnGoC(1, "filter cannot be null", ""))
 	}
-	return truncateCollection(nodePtr, opts, identityPtr, filter, pruneHistory != 0)
+	return truncateCollection(nodePtr, opts, identityPtr, filter)
 }
 
 func truncateCollection(
@@ -65,7 +64,6 @@ func truncateCollection(
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
 	filter any,
-	pruneHistory bool,
 ) C.Result {
 	ctx := context.Background()
 
@@ -94,7 +92,7 @@ func truncateCollection(
 
 	truncateOpts := options.WithIdentity(options.TruncateCollection(), ident)
 	if filter != nil {
-		truncateOpts.SetFilter(filter).SetPruneHistory(pruneHistory)
+		truncateOpts.SetFilter(filter)
 	}
 	err = col.Truncate(ctx, truncateOpts)
 	if err != nil {

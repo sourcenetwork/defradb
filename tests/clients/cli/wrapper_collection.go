@@ -244,9 +244,6 @@ func (c *Collection) Truncate(
 			return err
 		}
 		args = append(args, "--filter", string(filter))
-		if opt.PruneHistory {
-			args = append(args, "--prune-history")
-		}
 	}
 	args = appendIdentityArg(args, opt.GetIdentity())
 	args = appendTxnArg(args, c.txn)

@@ -108,8 +108,7 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
-	errCannotPruneBranchableCollection     string = "cannot prune document history in a branchable collection"
-	errPruneHistoryRequiresFilter          string = "prune history requires a filter"
+	errFilteredTruncateBranchable          string = "filtered truncate is not supported for branchable collections"
 	errFilteredTruncateInTransaction       string = "filtered truncate cannot run in a transaction"
 	errTruncateMutationMustBeStandalone    string = "truncate mutation must be the only field in an operation"
 	errTruncateMutationInTransaction       string = "truncate mutation cannot run in a transaction"
@@ -257,8 +256,7 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
-	ErrCannotPruneBranchableCollection           = errors.New(errCannotPruneBranchableCollection)
-	ErrPruneHistoryRequiresFilter                = errors.New(errPruneHistoryRequiresFilter)
+	ErrFilteredTruncateBranchableCollection      = errors.New(errFilteredTruncateBranchable)
 	ErrFilteredTruncateInTransaction             = errors.New(errFilteredTruncateInTransaction)
 	ErrTruncateMutationMustBeStandalone          = errors.New(errTruncateMutationMustBeStandalone)
 	ErrTruncateMutationInTransaction             = errors.New(errTruncateMutationInTransaction)

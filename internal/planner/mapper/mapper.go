@@ -1533,7 +1533,6 @@ func toMutation(
 			},
 			Type:           TruncateObjects,
 			TruncateFilter: filter,
-			PruneHistory:   mutationRequest.PruneHistory,
 		}, nil
 	}
 

@@ -959,8 +959,6 @@ type Mutation {
     truncate_User(
         "Filter documents to truncate"
         filter: UserFilterArg
-        "Remove unshared history for matching documents"
-        pruneHistory: Boolean
     ): Boolean!
     """
     

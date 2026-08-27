@@ -54,11 +54,8 @@ func (c *collection) Truncate(
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeTruncateCollectionPerm); err != nil {
 		return err
 	}
-	if opt.Filter == nil && opt.PruneHistory {
-		return ErrPruneHistoryRequiresFilter
-	}
-	if opt.Filter != nil && opt.PruneHistory && c.Version().IsBranchable {
-		return ErrCannotPruneBranchableCollection
+	if opt.Filter != nil && c.Version().IsBranchable {
+		return ErrFilteredTruncateBranchableCollection
 	}
 	if opt.Filter != nil && hadTxn {
 		return ErrFilteredTruncateInTransaction
@@ -92,7 +89,7 @@ func (c *collection) Truncate(
 	if opt.Filter == nil {
 		err = c.truncate(ctx)
 	} else {
-		err = c.truncateWithFilter(ctx, txn, opt.Filter, opt.PruneHistory)
+		err = c.truncateWithFilter(ctx, txn, opt.Filter)
 	}
 	if err != nil {
 		errErr := action.Set(
@@ -240,7 +237,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				// when the datastore read-locks are released.
 				if key.DocShortID != 0 {
 					if _, done := deletedDocIDs[key.DocShortID]; !done {
-						err = c.removeDocumentHeads(ctx, systemstore, key.DocShortID, true)
+						err = c.removeDocumentHeads(ctx, systemstore, key.DocShortID)
 						if err != nil {
 							return err
 						}
@@ -332,12 +329,10 @@ func (c *collection) hardDeleteDatastorePrefix(
 }
 
 // removeDocumentHeads removes document head entries and block ownership edges.
-// When pruneBlocks is true, blocks without another owner are deleted as well.
 func (c *collection) removeDocumentHeads(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docShortID uint64,
-	pruneBlocks bool,
 ) error {
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 	docIDs, err := id.GetDocIDAliasesFromStore(ctx, systemstore, docShortID)
@@ -388,7 +383,7 @@ func (c *collection) removeDocumentHeads(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docIDs, key.Cid, pruneBlocks)
+			err = c.deleteBlocks(ctx, systemstore, docIDs, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -461,7 +456,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		for _, key := range keysToDelete {
 			// Document blocks and owner edges were deleted in hardDeleteDocKeysAndHeadstore,
 			// so this remaining collection DAG can be removed unconditionally.
-			err = c.deleteBlocks(ctx, nil, nil, key.Cid, true)
+			err = c.deleteBlocks(ctx, nil, nil, key.Cid)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -490,7 +485,6 @@ func (c *collection) deleteBlocks(
 	systemstore corekv.ReaderWriter,
 	docIDs []string,
 	currentCid cid.Cid,
-	pruneBlocks bool,
 ) error {
 	multistore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
 	blockstore := multistore.Blockstore()
@@ -580,10 +574,6 @@ func (c *collection) deleteBlocks(
 		for i := len(links) - 1; i >= 0; i-- {
 			stack = append(stack, visit{id: links[i].Cid})
 		}
-	}
-
-	if !pruneBlocks {
-		return nil
 	}
 
 	for _, encryptionCID := range encryptionToDelete {

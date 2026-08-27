@@ -96,15 +96,13 @@ func decodeRequestFilter(data json.RawMessage) (any, error) {
 }
 
 type TruncateCollectionRequest struct {
-	Filter       any  `json:"filter"`
-	PruneHistory bool `json:"pruneHistory"`
+	Filter any `json:"filter"`
 }
 
 // UnmarshalJSON decodes a TruncateCollectionRequest, preserving integer precision in Filter.
 func (r *TruncateCollectionRequest) UnmarshalJSON(data []byte) error {
 	var raw struct {
-		Filter       json.RawMessage `json:"filter"`
-		PruneHistory bool            `json:"pruneHistory"`
+		Filter json.RawMessage `json:"filter"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -117,7 +115,6 @@ func (r *TruncateCollectionRequest) UnmarshalJSON(data []byte) error {
 		}
 		r.Filter = filter
 	}
-	r.PruneHistory = raw.PruneHistory
 	return nil
 }
 
@@ -325,7 +322,7 @@ func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("filter is required")})
 			return
 		}
-		truncateOpt.SetFilter(request.Filter).SetPruneHistory(request.PruneHistory)
+		truncateOpt.SetFilter(request.Filter)
 	}
 
 	err := col.Truncate(ctx, truncateOpt)

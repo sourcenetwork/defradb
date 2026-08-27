@@ -61,7 +61,6 @@ func truncateDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []client.DocID,
-	pruneHistory bool,
 ) error {
 	col, err := db.GetCollectionByName(ctx, collectionName)
 	if err != nil {
@@ -72,11 +71,9 @@ func truncateDocuments(
 	for i, docID := range docIDs {
 		ids[i] = docID.String()
 	}
-	truncateOpts := options.TruncateCollection().SetFilter(map[string]any{
+	return col.Truncate(ctx, options.TruncateCollection().SetFilter(map[string]any{
 		"_docID": map[string]any{"_in": ids},
-	}).
-		SetPruneHistory(pruneHistory)
-	return col.Truncate(ctx, truncateOpts)
+	}))
 }
 
 func TestTruncateWithFilterProcessesBatchOverTransactionLimit(t *testing.T) {
@@ -108,11 +105,11 @@ func TestTruncateWithFilterProcessesBatchOverTransactionLimit(t *testing.T) {
 	require.NoError(t, err)
 	dbTxn, ok := txn.(*Txn)
 	require.True(t, ok)
-	guardErr := truncateDocuments(db, InitContext(ctx, dbTxn), "User", docIDs, false)
+	guardErr := truncateDocuments(db, InitContext(ctx, dbTxn), "User", docIDs)
 	require.ErrorIs(t, guardErr, ErrFilteredTruncateInTransaction)
 	txn.Discard()
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", docIDs, false))
+	require.NoError(t, truncateDocuments(db, ctx, "User", docIDs))
 
 	readTxn, err := db.NewTxn(true)
 	require.NoError(t, err)
@@ -198,11 +195,11 @@ func TestTruncateWithFilterPrunesSingleDocumentOverTransactionLimit(t *testing.T
 
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
-	err = truncateDocuments(db, InitContext(ctx, txn), "User", []client.DocID{doc.ID()}, true)
+	err = truncateDocuments(db, InitContext(ctx, txn), "User", []client.DocID{doc.ID()})
 	require.ErrorIs(t, err, ErrFilteredTruncateInTransaction)
 	txn.Discard()
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	requireBlockPresent(
 		t,
 		ctx,
@@ -221,7 +218,7 @@ func TestTruncateWithFilterPrunesSingleDocumentOverTransactionLimit(t *testing.T
 	require.False(t, found)
 }
 
-func TestTruncateWithFilterRejectsBranchableHistoryPruning(t *testing.T) {
+func TestTruncateWithFilterRejectsBranchableCollection(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -233,8 +230,8 @@ func TestTruncateWithFilterRejectsBranchableHistoryPruning(t *testing.T) {
 	require.NoError(t, err)
 	doc := addUserDoc(t, ctx, col, "alice")
 
-	err = truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true)
-	require.ErrorIs(t, err, ErrCannotPruneBranchableCollection)
+	err = truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()})
+	require.ErrorIs(t, err, ErrFilteredTruncateBranchableCollection)
 
 	stored, err := col.GetDocument(ctx, doc.ID())
 	require.NoError(t, err)
@@ -255,27 +252,8 @@ func TestTruncateWithFilterRemovesPrimaryMarker(t *testing.T) {
 	db, col := setupUserCollection(t, ctx)
 	doc := addUserDoc(t, ctx, col, "alice")
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, false))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	require.NoError(t, db.DeleteCollection(ctx, []string{"User"}))
-}
-
-func TestTruncateWithFilterWithoutPruningReleasesBlockOwnership(t *testing.T) {
-	ctx := context.Background()
-	db, col := setupUserCollection(t, ctx)
-	doc := addUserDoc(t, ctx, col, "alice")
-	blockstore := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
-
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, false))
-	requireBlockPresent(t, ctx, blockstore, doc.Head(), true)
-
-	txn, err := db.NewTxn(true)
-	require.NoError(t, err)
-	defer txn.Discard()
-	dbTxn, ok := txn.(*Txn)
-	require.True(t, ok)
-	owners, err := id.GetDocIDsForBlockFromStore(ctx, dbTxn.Systemstore(), doc.Head())
-	require.NoError(t, err)
-	require.Empty(t, owners)
 }
 
 func TestTruncateWithFilterPrunesHistoryOwnedByAlias(t *testing.T) {
@@ -296,7 +274,7 @@ func TestTruncateWithFilterPrunesHistoryOwnedByAlias(t *testing.T) {
 	require.NoError(t, id.SetBlockDocIDMapping(txnCtx, doc.Head(), alias))
 	require.NoError(t, txn.Commit())
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	requireBlockPresent(
 		t,
 		ctx,
@@ -335,7 +313,7 @@ func TestTruncateWithFilterRemovesSearchableEncryptionArtifactsForAliases(t *tes
 	}
 	require.NoError(t, txn.Commit())
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}, false))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}))
 
 	readTxn, err := db.NewTxn(true)
 	require.NoError(t, err)
@@ -414,7 +392,7 @@ func TestTruncateWithFilterRemovesEncryptionBlocks(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, has)
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	has, err = encstore.Has(ctx, encryptionCID)
 	require.NoError(t, err)
 	require.False(t, has)
@@ -436,7 +414,7 @@ func TestTruncateWithFilterReleasesSharedEncryptionOwnership(t *testing.T) {
 	require.NoError(t, id.SetBlockDocIDMapping(setupCtx, encryptionCID, otherDocID))
 	require.NoError(t, setupTxn.Commit())
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	readTxn, err := db.NewTxn(true)
 	require.NoError(t, err)
 	readDBTxn, ok := readTxn.(*Txn)
@@ -463,7 +441,6 @@ func TestTruncateWithFilterReleasesSharedEncryptionOwnership(t *testing.T) {
 		systemstore,
 		[]string{otherDocID},
 		fieldCID,
-		true,
 	))
 	requireBlockPresent(t, ctx, datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize), fieldCID, false)
 	has, err = encstore.Has(ctx, encryptionCID)
@@ -501,14 +478,14 @@ func TestTruncateWithFilterKeepsSharedSignatureWithParentBlock(t *testing.T) {
 	signatureCID := sharedBlock.Signature.Cid
 	blockstore := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}))
 	requireBlockPresent(t, ctx, blockstore, shared, true)
 	has, err := blockstore.Has(ctx, signatureCID)
 	require.NoError(t, err)
 	require.True(t, has)
 	require.NoError(t, db.VerifySignature(ctx, shared.String(), ident.PublicKey()))
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docB.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docB.ID()}))
 	requireBlockPresent(t, ctx, blockstore, shared, false)
 	has, err = blockstore.Has(ctx, signatureCID)
 	require.NoError(t, err)
@@ -530,7 +507,7 @@ func TestTruncateWithFilterRemovesIndexEntries(t *testing.T) {
 	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
 	require.Equal(t, 1, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, false))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID),
 		"truncate must delete the document's index entries")
@@ -553,7 +530,7 @@ func TestTruncateWithFilterRemovesSoftDeletedDocument(t *testing.T) {
 	shortID := getCollectionShortID(t, ctx, db, col.Version().CollectionID)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{doc.ID()}))
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
 	txn, err := db.NewTxn(true)
@@ -621,7 +598,7 @@ func requireBlockPresent(t *testing.T, ctx context.Context, bs datastore.Blockst
 	require.Equal(t, want, found)
 }
 
-func TestTruncateWithFilterPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
+func TestTruncateWithFilterKeepsBlockOwnedByAnotherDoc(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -638,14 +615,14 @@ func TestTruncateWithFilterPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T)
 	bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
 	requireBlockPresent(t, ctx, bs, shared, true)
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docA.ID()}))
 	requireBlockPresent(t, ctx, bs, shared, true)
 
-	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docB.ID()}, true))
+	require.NoError(t, truncateDocuments(db, ctx, "User", []client.DocID{docB.ID()}))
 	requireBlockPresent(t, ctx, bs, shared, false)
 }
 
-func TestTruncateWithFilterPruneHistoryRemovesBlockWhenAllOwnersSelected(t *testing.T) {
+func TestTruncateWithFilterRemovesBlockWhenAllOwnersSelected(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
@@ -666,7 +643,6 @@ func TestTruncateWithFilterPruneHistoryRemovesBlockWhenAllOwnersSelected(t *test
 		ctx,
 		"User",
 		[]client.DocID{docA.ID(), docB.ID()},
-		true,
 	))
 	requireBlockPresent(t, ctx, bs, shared, false)
 }
