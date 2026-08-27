@@ -158,14 +158,14 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Get SourceHub Docker Image Name
-        id: sourcehub-image
-        uses: ./.github/composites/get-sourcehub-image
+      - name: Get Vera Docker Image Name
+        id: vera-image
+        uses: ./.github/composites/get-vera-image
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
         env:
-          DEFRA_SOURCEHUB_IMAGE: ${{ steps.sourcehub-image.outputs.image }}
+          DEFRA_SOURCEHUB_IMAGE: ${{ steps.vera-image.outputs.image }}
         with:
           coverage-artifact-name: "coverage_document_acp\
             _${{ matrix.document-acp-type }}\
