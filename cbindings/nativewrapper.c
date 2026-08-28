@@ -687,13 +687,21 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_TruncateCollectionNative(
     JNIEnv* env,
     jobject thiz,
     jlong nodePtr,
+    jstring filterJSONStr,
     jobject optionsObj,
     jlong identityPtr
 ) {
     int optsOk = 1;
     CollectionOptions opts = convertJavaCollectionOptions(env, optionsObj, &optsOk);
     if (!optsOk) return NULL;
-    Result res = TruncateCollection((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr);
+    const char* filterJSONC = jstring_to_utf8(env, filterJSONStr);
+    Result res;
+    if (filterJSONC == NULL) {
+        res = TruncateCollection((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr);
+    } else {
+        res = TruncateCollectionWithFilter((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr, (char*)filterJSONC);
+    }
+    free((void*)filterJSONC);
     releaseJavaCollectionOptions(env, optionsObj, opts);
     return returnDefraResult(env, res);
 }
@@ -1794,13 +1802,21 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_TruncateCollectionN
     JNIEnv* env,
     jobject thiz,
     jlong nodePtr,
+    jstring filterJSONStr,
     jobject optionsObj,
     jlong identityPtr
 ) {
     int optsOk = 1;
     CollectionOptions opts = convertJavaCollectionOptions(env, optionsObj, &optsOk);
     if (!optsOk) return NULL;
-    Result res = TruncateCollection((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr);
+    const char* filterJSONC = jstring_to_utf8(env, filterJSONStr);
+    Result res;
+    if (filterJSONC == NULL) {
+        res = TruncateCollection((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr);
+    } else {
+        res = TruncateCollectionWithFilter((uintptr_t)nodePtr, opts, (uintptr_t)identityPtr, (char*)filterJSONC);
+    }
+    free((void*)filterJSONC);
     releaseJavaCollectionOptions(env, optionsObj, opts);
     return returnDefraResult(env, res);
 }

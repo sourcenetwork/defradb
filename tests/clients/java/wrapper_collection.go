@@ -190,11 +190,22 @@ func (c *Collection) ListEncryptedIndexes(
 func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions]) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
 
-	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
+	opt := utils.NewOptions(opts...)
+
+	var filterJSON string
+	if opt.Filter != nil {
+		filterJSONBytes, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		filterJSON = string(filterJSONBytes)
+	}
+
+	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "TruncateCollectionNative",
-		newArgs().collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
+		newArgs().argStr(filterJSON).collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return err
 	}

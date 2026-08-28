@@ -37,7 +37,8 @@ extern jobject JNICALL Java_source_defra_DefraNode_DescribeCollectionNative(JNIE
 extern jobject JNICALL Java_source_defra_DefraNode_PatchCollectionNative(
     JNIEnv*, jobject, jlong, jstring, jstring, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_SetActiveCollectionNative(JNIEnv*, jobject, jlong, jobject, jlong);
-extern jobject JNICALL Java_source_defra_DefraNode_TruncateCollectionNative(JNIEnv*, jobject, jlong, jobject, jlong);
+extern jobject JNICALL Java_source_defra_DefraNode_TruncateCollectionNative(
+    JNIEnv*, jobject, jlong, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_AddDocumentNative(
     JNIEnv*, jobject, jlong, jstring, jboolean, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_DeleteDocumentNative(
@@ -117,7 +118,7 @@ extern jobject JNICALL Java_source_defra_DefraTransaction_PatchCollectionNative(
 extern jobject JNICALL Java_source_defra_DefraTransaction_SetActiveCollectionNative(
     JNIEnv*, jobject, jlong, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_TruncateCollectionNative(
-    JNIEnv*, jobject, jlong, jobject, jlong);
+    JNIEnv*, jobject, jlong, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_AddDocumentNative(
     JNIEnv*, jobject, jlong, jstring, jboolean, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_DeleteDocumentNative(
@@ -187,7 +188,8 @@ static JNINativeMethod nodeNativeMethods[] = {
             (void*)Java_source_defra_DefraNode_PatchCollectionNative},
         {"SetActiveCollectionNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_SetActiveCollectionNative},
-        {"TruncateCollectionNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
+        {"TruncateCollectionNative",
+            "(JLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_TruncateCollectionNative},
         {"AddDocumentNative",
             "(JLjava/lang/String;ZLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
@@ -330,7 +332,8 @@ static JNINativeMethod transactionNativeMethods[] = {
         (void*)Java_source_defra_DefraTransaction_PatchCollectionNative},
     {"SetActiveCollectionNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_SetActiveCollectionNative},
-    {"TruncateCollectionNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
+    {"TruncateCollectionNative",
+        "(JLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_TruncateCollectionNative},
     {"AddDocumentNative",
         "(JLjava/lang/String;ZLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
