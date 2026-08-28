@@ -57,11 +57,12 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		defer db.docMergeQueue.done(evt.DocID)
 	}
 
-	// retry the merge process if a conflict occurs
-	//
-	// conficts occur when a user updates a document
-	// while a merge is in progress.
-	for i := 0; i < db.MaxTxnRetries(); i++ {
+	// Conflicts occur when a user updates a document while a merge is in progress.
+	max := db.MaxTxnRetries()
+	if max < 1 {
+		max = 1
+	}
+	for i := 0; i < max; i++ {
 		err = db.executeMerge(ctx, col, evt)
 		if errors.Is(err, corekv.ErrTxnConflict) {
 			continue
@@ -71,7 +72,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		}
 		return nil
 	}
-	return nil
+	return client.NewErrMaxTxnRetries(err)
 }
 
 // MergeBatchWithTxn merges multiple events in a single shared transaction.
@@ -362,7 +363,7 @@ func (mp *mergeProcessor) resolveOrAllocateDocShortID(
 		return docShortID, nil
 	}
 
-	docShortID, err = id.NextDocShortID(ctx)
+	docShortID, err = mp.db.reserveDocShortID(ctx)
 	if err != nil {
 		return 0, err
 	}
