@@ -75,12 +75,21 @@ func (c *Collection) NewIndex(
 		orderedFields[i] = f.Name + ":" + order
 	}
 
+	var vectorJSON string
+	if indexDesc.Vector != nil {
+		vectorJSONBytes, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		vectorJSON = string(vectorJSONBytes)
+	}
+
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "NewIndexNative",
 		newArgs().argStr(indexDesc.Name).argStr(strings.Join(orderedFields, ",")).argBool(indexDesc.Unique).
-			collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
+			argStr(vectorJSON).collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return client.IndexDescription{}, err
 	}

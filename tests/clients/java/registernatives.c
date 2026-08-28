@@ -52,7 +52,7 @@ extern jobject JNICALL Java_source_defra_DefraNode_ListEncryptedIndexesNative(JN
 extern jobject JNICALL Java_source_defra_DefraNode_DeleteEncryptedIndexNative(
     JNIEnv*, jobject, jlong, jstring, jstring, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_NewIndexNative(
-    JNIEnv*, jobject, jlong, jstring, jstring, jboolean, jobject, jlong);
+    JNIEnv*, jobject, jlong, jstring, jstring, jboolean, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_ListIndexesNative(JNIEnv*, jobject, jlong, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_DeleteIndexNative(JNIEnv*, jobject, jlong, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_GetNodeIdentityNative(JNIEnv*, jobject, jlong);
@@ -133,7 +133,7 @@ extern jobject JNICALL Java_source_defra_DefraTransaction_ListEncryptedIndexesNa
 extern jobject JNICALL Java_source_defra_DefraTransaction_DeleteEncryptedIndexNative(
     JNIEnv*, jobject, jlong, jstring, jstring, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_NewIndexNative(
-    JNIEnv*, jobject, jlong, jstring, jstring, jboolean, jobject, jlong);
+    JNIEnv*, jobject, jlong, jstring, jstring, jboolean, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_ListIndexesNative(JNIEnv*, jobject, jlong, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_DeleteIndexNative(
     JNIEnv*, jobject, jlong, jstring, jobject, jlong);
@@ -208,7 +208,8 @@ static JNINativeMethod nodeNativeMethods[] = {
         {"DeleteEncryptedIndexNative", "(JLjava/lang/String;Ljava/lang/String;J)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_DeleteEncryptedIndexNative},
         {"NewIndexNative",
-            "(JLjava/lang/String;Ljava/lang/String;ZLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
+            "(JLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)"
+            "Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_NewIndexNative},
         {"ListIndexesNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_ListIndexesNative},
@@ -350,7 +351,8 @@ static JNINativeMethod transactionNativeMethods[] = {
     {"DeleteEncryptedIndexNative", "(JLjava/lang/String;Ljava/lang/String;J)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_DeleteEncryptedIndexNative},
     {"NewIndexNative",
-        "(JLjava/lang/String;Ljava/lang/String;ZLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
+        "(JLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Lsource/defra/DefraCollectionOptions;J)"
+        "Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_NewIndexNative},
     {"ListIndexesNative", "(JLsource/defra/DefraCollectionOptions;J)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_ListIndexesNative},
