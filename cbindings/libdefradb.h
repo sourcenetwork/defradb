@@ -43,6 +43,7 @@ extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions opts, uint
 extern Result PatchCollection(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions opts, uintptr_t identityPtr);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions opts, uintptr_t identityPtr);
+extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions opts, uintptr_t identityPtr, char* filterJSON);
 extern Result DeleteCollection(uintptr_t nodePtr, char* names, int activeOnly, uintptr_t identityPtr);
 extern Result AddDocument(uintptr_t nodePtr, char* jsonData, int isEncrypted, char* encryptedFields, CollectionOptions opts, uintptr_t identityPtr);
 extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions opts, uintptr_t identityPtr);
