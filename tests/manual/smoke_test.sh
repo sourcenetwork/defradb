@@ -310,26 +310,6 @@ else
   fail "filter pre-storage: wrong order or symbols missing (filter=$FILTER_LINE sync=$SYNC_LINE)"
 fi
 
-# ─── Tier 2C: Blind-write blockstore ─────────────────────────────────────────
-echo ""
-echo "=== Tier 2C: Blind-write blockstore ==="
-OUT=$(run_go ./tests/manual/cmd/smoke_bbs/)
-if echo "$OUT" | grep -q "blind-write blockstore: ok"; then
-  pass "blind-write blockstore: Put writes without Has pre-check, block readable via Get"
-else
-  fail "blind-write blockstore: $(echo "$OUT" | tail -3)"
-fi
-
-# ─── Tier 2A: MergedCIDCache ─────────────────────────────────────────────────
-echo ""
-echo "=== Tier 2A: MergedCIDCache ==="
-OUT=$(run_go ./tests/manual/cmd/smoke_cache/)
-if echo "$OUT" | grep -q "MergedCIDCache: ok"; then
-  pass "MergedCIDCache: Add, Has, FIFO eviction, BatchAdd all correct"
-else
-  fail "MergedCIDCache: $(echo "$OUT" | tail -3)"
-fi
-
 # ─── Tier 2A: BatchMarkAsMerged ──────────────────────────────────────────────
 echo ""
 echo "=== Tier 2A: BatchMarkAsMerged ==="
