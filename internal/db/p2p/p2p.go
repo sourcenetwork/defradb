@@ -93,8 +93,10 @@ type DB interface {
 	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
-	// MergeBatchWithTxn merges multiple events in a single shared transaction.
-	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) error
+	// MergeBatchWithTxn merges events in bounded chunks. The returned slice is parallel
+	// to merges and reports which events committed; the rest are not stored and must not
+	// be relayed onward as merged. The error names every dropped event.
+	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bool, error)
 	// Events returns the event bus for the database.
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
@@ -643,7 +645,9 @@ func (p *P2P) processMessageWorker() {
 				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
 				continue
 			}
-			log.Info("Failed to process pushlog request", corelog.Any("Error", err))
+			// A failed pushlog is a document this node did not store, so it is reported at
+			// error level.
+			log.ErrorE("Failed to process pushlog request", err)
 		}
 	}
 }
@@ -690,10 +694,18 @@ func (p *P2P) processPushlogRequest(
 		for i, r := range results {
 			merges[i] = r.merge
 		}
-		if err := p.db.MergeBatchWithTxn(ctx, merges); err != nil {
-			return err
+		merged, err := p.db.MergeBatchWithTxn(ctx, merges)
+		if err != nil {
+			log.ErrorE("Failed to merge documents in batch", err,
+				corelog.String("PeerID", req.SenderID),
+				corelog.Int("Documents", len(merges)))
 		}
-		for _, r := range results {
+		for i, r := range results {
+			if !merged[i] {
+				// Not stored here, so relaying it would advertise a document this node
+				// cannot serve.
+				continue
+			}
 			updateEvt := event.Update{
 				DocID:        r.merge.DocID,
 				Cid:          r.merge.Cid,
