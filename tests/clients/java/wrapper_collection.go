@@ -192,20 +192,20 @@ func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[op
 
 	opt := utils.NewOptions(opts...)
 
-	var filterJSON string
+	filterJSON := immutable.None[string]()
 	if opt.Filter != nil {
 		filterJSONBytes, err := json.Marshal(opt.Filter)
 		if err != nil {
 			return err
 		}
-		filterJSON = string(filterJSONBytes)
+		filterJSON = immutable.Some(string(filterJSONBytes))
 	}
 
 	idH := identityHandle(opt.GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "TruncateCollectionNative",
-		newArgs().argStr(filterJSON).collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
+		newArgs().argOptStr(filterJSON).collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return err
 	}
