@@ -144,7 +144,17 @@ func (c *collection) purgeOneDoc(
 		}
 	}
 
-	systemstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Systemstore()
+	stores := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize)
+
+	// The primary key is not a DataStoreKey, so the prefix deletes above do not reach it. Left
+	// behind it is a document marker with no document, which anything iterating the primary
+	// prefix then cannot resolve.
+	primaryKey := keys.PrimaryDataStoreKey{CollectionShortID: shortID, DocShortID: docShortID}
+	if err := stores.Datastore().Delete(ctx, primaryKey); err != nil {
+		return err
+	}
+
+	systemstore := stores.Systemstore()
 	if pruneHistory {
 		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, docShortID, prunedOwners); err != nil {
 			return err
