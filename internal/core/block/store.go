@@ -287,7 +287,7 @@ func updateHeads(
 		// else needs to be done for that block.
 		err = txn.Blockstore().MarkAsMerged(ctx, linkCid)
 		if err != nil {
-			return NewErrMarkingAsMerged(blockLink.Cid, err)
+			return NewErrMarkingAsMerged(linkCid, err)
 		}
 
 		if isHead {
