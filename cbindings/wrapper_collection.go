@@ -300,11 +300,12 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
+	opt := utils.NewOptions(opts...)
 
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(opt.GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -318,13 +319,19 @@ func (c *Collection) Truncate(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(
-		C.TruncateCollection(
-			callHandle,
-			copts,
-			cIdentity,
-		),
-	)
+	var result C.Result
+	if opt.Filter == nil {
+		result = C.TruncateCollection(callHandle, copts, cIdentity)
+	} else {
+		filterJSON, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		cFilter := C.CString(string(filterJSON))
+		defer C.free(unsafe.Pointer(cFilter))
+		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter)
+	}
+	res := ConvertAndFreeCResult(result)
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
