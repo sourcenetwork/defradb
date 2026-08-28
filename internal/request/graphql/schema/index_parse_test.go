@@ -454,13 +454,6 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			expectedErr: errIndexInvalidArgument,
 		},
 		{
-			description: "vector kind conflicts with ordered config",
-			sdl: `type user {
-				name: String @index(kind: vector, ordered: {})
-			}`,
-			expectedErr: errIndexInvalidArgument,
-		},
-		{
 			description: "ordered and vector configs are competing kind selectors",
 			sdl: `type user {
 				name: String @index(ordered: {}, vector: {})

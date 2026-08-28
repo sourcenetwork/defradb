@@ -117,10 +117,6 @@ func IndexKindEnum() *gql.Enum {
 				Description: "ordered scalar index",
 				Value:       OrderedIndexKind,
 			},
-			VectorIndexKind: &gql.EnumValueConfig{
-				Description: "vector index",
-				Value:       VectorIndexKind,
-			},
 		},
 	})
 }

@@ -64,7 +64,7 @@ func TestCollectionVersion_VectorIndexOnFloat32ArrayWithoutDimensionsOrEmbedding
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						embedding: [Float32!] @index(kind: vector)
+						embedding: [Float32!] @index(vector: {})
 					}
 				`,
 				ExpectedError: "vector index dimensions must be greater than zero",

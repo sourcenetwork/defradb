@@ -751,13 +751,9 @@ func vectorIndexFromAST(
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 
-	obj := &ast.ObjectValue{}
-	if config != nil {
-		var ok bool
-		obj, ok = config.(*ast.ObjectValue)
-		if !ok {
-			return client.NewIndexRequest{}, ErrIndexWithInvalidArg
-		}
+	obj, ok := config.(*ast.ObjectValue)
+	if !ok {
+		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 
 	var dimensions uint32

@@ -71,48 +71,6 @@ func TestParseVectorIndex_OnField_ParsesArgsAndDefaults(t *testing.T) {
 				},
 			},
 		},
-		{
-			description: "vector kind uses vector and HNSW defaults",
-			sdl: `type user {
-				embedding: [Float32!] @index(kind: vector)
-			}`,
-			targetDescriptions: []client.NewIndexRequest{
-				{
-					Fields: []client.IndexedFieldDescription{
-						{Name: "embedding"},
-					},
-					Vector: &client.VectorIndexDescription{
-						Algorithm: client.VectorAlgorithmHNSW,
-						Metric:    client.DistanceMetricCosine,
-						HNSW: &client.HNSWParams{
-							M:              16,
-							EfConstruction: 128,
-							EfSearch:       64,
-						},
-					},
-				},
-			},
-		},
-		{
-			description: "matching kind and vector config are allowed",
-			sdl: `type user {
-				embedding: [Float32!] @index(kind: vector, vector: {})
-			}`,
-			targetDescriptions: []client.NewIndexRequest{
-				{
-					Fields: []client.IndexedFieldDescription{{Name: "embedding"}},
-					Vector: &client.VectorIndexDescription{
-						Algorithm: client.VectorAlgorithmHNSW,
-						Metric:    client.DistanceMetricCosine,
-						HNSW: &client.HNSWParams{
-							M:              16,
-							EfConstruction: 128,
-							EfSearch:       64,
-						},
-					},
-				},
-			},
-		},
 	}
 
 	for _, test := range cases {
@@ -154,6 +112,13 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 
 func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 	cases := []invalidIndexTestCase{
+		{
+			description: "vector is not an index kind",
+			sdl: `type user {
+				embedding: [Float32!] @index(kind: vector)
+			}`,
+			expectedErr: `Expected type "IndexKind", found vector`,
+		},
 		{
 			description: "unknown algorithm enum",
 			sdl: `type user {
