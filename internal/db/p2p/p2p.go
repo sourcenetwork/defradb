@@ -14,8 +14,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
+	"reflect"
+	"runtime/debug"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -69,7 +73,61 @@ const (
 	// msgQueueSize is the capacity of the incoming pubsub message queue.
 	// Messages that arrive when the queue is full are dropped with a warning.
 	msgQueueSize = 50_000
+
+	// msgQueueMemDivisor sets the queue's byte budget as this fraction of the process
+	// memory limit. A slot count does not bound memory on its own, because a queued
+	// message holds its decoded payload and payload sizes are not uniform. The queue
+	// only has to absorb bursts, so it is given a fraction rather than the whole limit.
+	msgQueueMemDivisor = 4
+
+	// msgQueueFallbackMaxBytes is the byte budget used when the process has no memory
+	// limit set, where a fraction of it would be meaningless.
+	msgQueueFallbackMaxBytes = 1 << 30
+
+	// msgQueueMinBytes floors the budget so a very small memory limit still admits a message.
+	msgQueueMinBytes = maxPubsubMessageSize
+
+	// maxInboundDocuments caps the entries a received batch may carry, sized as headroom over
+	// this node's own batchMaxDocs to hold the per-entry cost under a tenth of a message. The
+	// cap applies while decoding, since the decode allocates before the message can be charged.
+	maxInboundDocuments = 16 * batchMaxDocs
 )
+
+// retainedBytesPerDocument is the fixed cost of one decoded batch entry, whatever it carries.
+// Read from the type so it stays right if a field is added.
+var retainedBytesPerDocument = int64(reflect.TypeFor[protocol.DocumentInfo]().Size())
+
+// pushLogDecMode rejects a batch carrying more than maxInboundDocuments entries. The options
+// are constant, so DecMode can only fail on a rejected option value.
+var pushLogDecMode = func() cbor.DecMode {
+	mode, err := cbor.DecOptions{MaxArrayElements: maxInboundDocuments}.DecMode()
+	if err != nil {
+		panic(err)
+	}
+	return mode
+}()
+
+// queuedMessage is a decoded request paired with the bytes reserved for it, so the queue's
+// accounting can be reversed once the message is processed. The reservation covers the wire
+// bytes, which the decoder copies rather than points into, plus the per-entry cost of a batch.
+type queuedMessage struct {
+	req  *protocol.PushLogRequest
+	size int64
+}
+
+// queueByteBudget returns the byte budget for the incoming message queue, taken as a fraction
+// of the process memory limit so a node with a smaller limit queues proportionally less.
+//
+// The limit comes from GOMEMLIMIT. The Go runtime does not read a container's memory ceiling,
+// so a node without it set gets the fallback, a fixed size that may sit above the ceiling the
+// node runs under. Zero is a limit an operator can set, so only MaxInt64 counts as absent.
+func queueByteBudget() int64 {
+	limit := debug.SetMemoryLimit(-1)
+	if limit == math.MaxInt64 {
+		return msgQueueFallbackMaxBytes
+	}
+	return max(limit/msgQueueMemDivisor, msgQueueMinBytes)
+}
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
 // Implementations can perform additional actions like generating SE artifacts.
@@ -168,8 +226,13 @@ type P2P struct {
 	batcher *pubsubBatcher
 
 	// msgQueue receives incoming pubsub messages for async processing by a fixed worker pool.
-	msgQueue   chan *protocol.PushLogRequest
+	msgQueue   chan queuedMessage
 	msgWorkers sync.WaitGroup
+
+	// msgQueueBytes is the wire size of the messages currently queued or in flight.
+	msgQueueBytes atomic.Int64
+	// msgQueueMaxBytes caps msgQueueBytes. Zero or less disables the byte bound.
+	msgQueueMaxBytes int64
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -225,7 +288,8 @@ func New(
 		replicationFilter:    replicationFilter,
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 		topicPeerCounts:      make(map[string]int),
-		msgQueue:             make(chan *protocol.PushLogRequest, msgQueueSize),
+		msgQueue:             make(chan queuedMessage, msgQueueSize),
+		msgQueueMaxBytes:     queueByteBudget(),
 	}
 
 	for i := 0; i < dagSyncWorkers; i++ {
@@ -618,20 +682,73 @@ func (p *P2P) docIDsForBlockCID(
 // pubSubMessageHandler decodes the incoming wire message and enqueues it for
 // processing by the bounded worker pool. It never blocks the libp2p pubsub
 // dispatcher: if the queue is full the message is dropped with a warning.
+//
+// Most of the budget is claimed before decoding, so a message that cannot be queued does not
+// pay for a decode it will not use. The per-entry cost of a batch is only known after the
+// decode, and is claimed there.
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
+	size := int64(len(msg))
+	if !p.claimQueueBytes(size) {
+		log.Info("pubsub message queue over byte budget, dropping message",
+			corelog.Any("topic", topic),
+			corelog.Int64("bytes", size),
+			corelog.Int64("budget", p.msgQueueMaxBytes))
+		return nil, nil
+	}
+
 	req := &protocol.PushLogRequest{}
-	if err := cbor.Unmarshal(msg, req); err != nil {
+	if err := pushLogDecMode.Unmarshal(msg, req); err != nil {
+		p.releaseQueueBytes(size)
 		return nil, err
 	}
 	req.SenderID = from
 
+	// A batch entry costs a fixed-size struct however little it carries, so the wire size alone
+	// does not bound what the queue holds. It folds into size rather than being tracked apart,
+	// because every release path and the worker give back that one value.
+	if perDocument := retainedBytesPerDocument * int64(len(req.Documents)); perDocument > 0 {
+		if !p.claimQueueBytes(perDocument) {
+			p.releaseQueueBytes(size)
+			log.Info("pubsub message queue over byte budget, dropping message",
+				corelog.Any("topic", topic),
+				corelog.Int64("bytes", size+perDocument),
+				corelog.Int64("documents", int64(len(req.Documents))),
+				corelog.Int64("budget", p.msgQueueMaxBytes))
+			return nil, nil
+		}
+		size += perDocument
+	}
+
 	select {
-	case p.msgQueue <- req:
+	case p.msgQueue <- queuedMessage{req: req, size: size}:
 	case <-p.ctx.Done():
+		p.releaseQueueBytes(size)
 	default:
+		p.releaseQueueBytes(size)
 		log.Info("pubsub message queue full, dropping message", corelog.Any("topic", topic))
 	}
 	return nil, nil
+}
+
+// claimQueueBytes reserves size against the queue's byte budget, reporting whether the
+// reservation fit. A budget of zero or less means the byte bound is disabled.
+func (p *P2P) claimQueueBytes(size int64) bool {
+	if p.msgQueueMaxBytes <= 0 {
+		return true
+	}
+	if p.msgQueueBytes.Add(size) > p.msgQueueMaxBytes {
+		p.msgQueueBytes.Add(-size)
+		return false
+	}
+	return true
+}
+
+// releaseQueueBytes returns a reservation made by claimQueueBytes.
+func (p *P2P) releaseQueueBytes(size int64) {
+	if p.msgQueueMaxBytes <= 0 {
+		return
+	}
+	p.msgQueueBytes.Add(-size)
 }
 
 // processMessageWorker is a long-lived goroutine that drains p.msgQueue and
@@ -639,8 +756,12 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 // concurrently, bounding the goroutine count regardless of inbound message rate.
 func (p *P2P) processMessageWorker() {
 	defer p.msgWorkers.Done()
-	for req := range p.msgQueue {
-		if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
+	for m := range p.msgQueue {
+		err := p.processPushlogRequest(p.ctx, m.req, false)
+		// Released here rather than deferred so the budget frees up per message, not
+		// when the worker exits.
+		p.releaseQueueBytes(m.size)
+		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
 				continue
