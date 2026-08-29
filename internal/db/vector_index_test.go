@@ -24,7 +24,7 @@ import (
 )
 
 // newVectorIndexTestDB opens an in-memory badger-backed DB with a collection carrying a
-// [Float32!] @vectorIndex field, ready for document writes.
+// [Float32!] @index(vector: {...}) field, ready for document writes.
 func newVectorIndexTestDB(t *testing.T, dimensions int) (context.Context, *DB, client.Collection) {
 	t.Helper()
 	ctx := context.Background()
@@ -35,7 +35,7 @@ func newVectorIndexTestDB(t *testing.T, dimensions int) (context.Context, *DB, c
 	_, err = db.AddCollection(ctx, `
 		type Users {
 			name: String
-			embedding: [Float32!] @vectorIndex(dimensions: `+strconv.Itoa(dimensions)+`, HNSW: {metric: COSINE})
+			embedding: [Float32!] @index(vector: {dimensions: `+strconv.Itoa(dimensions)+`, hnsw: {metric: COSINE}})
 		}
 	`)
 	require.NoError(t, err)
@@ -80,6 +80,21 @@ func vectorIndexSearch(
 		docIDs[i] = r.DocID
 	}
 	return docIDs
+}
+
+func TestValidateVectorIndexDescription_EmbeddingRequiresDimensions(t *testing.T) {
+	const fieldName = "embedding"
+	def := client.CollectionVersion{
+		Fields:           []client.CollectionFieldDescription{{Name: fieldName, Kind: client.FieldKind_FLOAT32_ARRAY}},
+		VectorEmbeddings: []client.VectorEmbeddingDescription{{FieldName: fieldName}},
+	}
+	desc := client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: fieldName}},
+		Vector: &client.VectorIndexDescription{},
+	}
+
+	err := validateVectorIndexDescription(def, desc)
+	require.ErrorContains(t, err, "vector index dimensions must be greater than zero")
 }
 
 func TestCollectionVectorIndex_Save_InsertsIntoGraphAndIsSearchable(t *testing.T) {
