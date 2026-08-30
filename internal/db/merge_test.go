@@ -13,6 +13,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -275,28 +276,36 @@ func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T)
 // second writer committing inside the window between this transaction's first read and its commit.
 type conflictingStore struct {
 	corekv.TxnStore
-	armed *atomic.Bool
+
+	// failCommits is decremented unconditionally, so reading and spending the budget is one
+	// step. A spent budget goes negative, which reads the same as zero.
+	failCommits atomic.Int64
 }
 
-func (s conflictingStore) NewTxn(readonly bool) corekv.Txn {
+func (s *conflictingStore) NewTxn(readonly bool) corekv.Txn {
 	txn := s.TxnStore.NewTxn(readonly)
-	if readonly || !s.armed.Load() {
+	if readonly {
 		return txn
 	}
-	return conflictingTxn{Txn: txn}
+	return conflictingTxn{Txn: txn, store: s}
 }
 
 type conflictingTxn struct {
 	corekv.Txn
+	store *conflictingStore
 }
 
 func (t conflictingTxn) Commit() error {
-	return corekv.ErrTxnConflict
+	if t.store.failCommits.Add(-1) >= 0 {
+		return corekv.ErrTxnConflict
+	}
+	return t.Txn.Commit()
 }
 
 // newConflictingBadgerDB returns a database whose write commits can be made to conflict, and the
-// switch that does it. Setup runs with the switch off so collections can still be created.
-func newConflictingBadgerDB(ctx context.Context) (*DB, *atomic.Bool, error) {
+// store holding the budget that does it. Setup runs with an empty budget so collections can still
+// be created.
+func newConflictingBadgerDB(ctx context.Context) (*DB, *conflictingStore, error) {
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	if err != nil {
 		return nil, nil, err
@@ -305,12 +314,12 @@ func newConflictingBadgerDB(ctx context.Context) (*DB, *atomic.Bool, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	armed := &atomic.Bool{}
-	db, err := newDB(ctx, conflictingStore{TxnStore: rootstore, armed: armed}, adminInfo)
+	store := &conflictingStore{TxnStore: rootstore}
+	db, err := newDB(ctx, store, adminInfo)
 	if err != nil {
 		return nil, nil, err
 	}
-	return db, armed, nil
+	return db, store, nil
 }
 
 // stageUnmergedDoc writes a document's blocks to the store without merging them, and returns the
@@ -350,7 +359,7 @@ func TestMerge_ExhaustedRetries_ReportsFailure(t *testing.T) {
 
 	docID, mergeEvent := stageUnmergedDoc(t, ctx, db, col)
 
-	conflict.Store(true)
+	conflict.failCommits.Store(math.MaxInt64)
 	err = db.Merge(ctx, mergeEvent)
 	require.Error(t, err, "a merge that committed nothing must not report success")
 	require.ErrorContains(t, err, "maximum transaction")
@@ -375,7 +384,7 @@ func TestMergeBatch_ExhaustedRetries_ReportsNothingMerged(t *testing.T) {
 
 	docID, mergeEvent := stageUnmergedDoc(t, ctx, db, col)
 
-	conflict.Store(true)
+	conflict.failCommits.Store(math.MaxInt64)
 	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{mergeEvent})
 	require.Error(t, err)
 	require.Equal(t, []bool{false}, merged, "an event that committed nothing must not be reported as merged")
