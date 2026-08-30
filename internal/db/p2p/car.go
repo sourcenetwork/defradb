@@ -15,6 +15,7 @@ import (
 	"context"
 	"io"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	car "github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/storage"
@@ -53,10 +54,13 @@ func (p *P2P) carFailure(reason string, err error) error {
 // carImportFailure records an abandoned import: how it failed and how many blocks it had
 // already written. Those blocks sit in the store owned by no document until a later merge
 // claims them.
-func (p *P2P) carImportFailure(reason string, err error) error {
+func (p *P2P) carImportFailure(reason string, written int64, err error) error {
 	p.statCARImportFailed.Add(1)
+	p.statCARImportOrphanBlocks.Add(written)
 	if p.carImportFailureReason.recordFirst(reason) {
-		log.ErrorE("Failed to import CAR", err, corelog.String("reason", reason))
+		log.ErrorE("Failed to import CAR", err,
+			corelog.String("reason", reason),
+			corelog.Int64("blocksWritten", written))
 	}
 	return err
 }
@@ -209,12 +213,12 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 	reader, err := car.NewBlockReader(bytes.NewReader(carData))
 	if err != nil {
-		return nil, p.carImportFailure(reasonReader, err)
+		return nil, p.carImportFailure(reasonReader, 0, err)
 	}
 
 	roots := reader.Roots
 	if len(roots) == 0 {
-		return nil, p.carImportFailure(reasonNoRoots, ErrEmptyCARRoots)
+		return nil, p.carImportFailure(reasonNoRoots, 0, ErrEmptyCARRoots)
 	}
 
 	// Content-addressed field blocks recur across documents that share a field value, so a
@@ -224,32 +228,39 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
 	var rootBlock *coreblock.Block
 
+	var written int64
+
 	for {
 		carBlock, err := reader.Next()
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return nil, p.carImportFailure(reasonNext, err)
+			return nil, p.carImportFailure(reasonNext, written, err)
 		}
 
 		decodedBlock, err := coreblock.GetFromBytes(carBlock.RawData())
 		if err != nil {
-			_, encErr := coreblock.GetEncryptionBlockFromBytes(carBlock.RawData())
-			if encErr == nil {
-				if putErr := encStore.Put(ctx, carBlock); putErr != nil {
-					return nil, p.carImportFailure(reasonCARPut, putErr)
-				}
-			} else {
-				if putErr := bstore.Put(ctx, carBlock); putErr != nil {
-					return nil, p.carImportFailure(reasonCARPut, putErr)
-				}
+			store := bstore
+			if _, encErr := coreblock.GetEncryptionBlockFromBytes(carBlock.RawData()); encErr == nil {
+				store = encStore
+			}
+			added, putErr := addBlock(ctx, store, carBlock)
+			if putErr != nil {
+				return nil, p.carImportFailure(reasonCARPut, written, putErr)
+			}
+			if added {
+				written++
 			}
 			continue
 		}
 
-		if putErr := bstore.Put(ctx, carBlock); putErr != nil {
-			return nil, p.carImportFailure(reasonCARPut, putErr)
+		added, putErr := addBlock(ctx, bstore, carBlock)
+		if putErr != nil {
+			return nil, p.carImportFailure(reasonCARPut, written, putErr)
+		}
+		if added {
+			written++
 		}
 
 		if carBlock.Cid().Equals(roots[0]) {
@@ -258,8 +269,22 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 	}
 
 	if rootBlock == nil {
-		return nil, p.carImportFailure(reasonNoRootBlock, ErrCARRootBlockNotFound)
+		return nil, p.carImportFailure(reasonNoRootBlock, written, ErrCARRootBlockNotFound)
 	}
 
 	return rootBlock, nil
+}
+
+// addBlock stores the block unless the store already holds it, reporting whether it was added.
+// The blockstores return nil for a block they already have, so Put alone cannot report that.
+//
+// A Has that fails is treated as not held, as Put does.
+func addBlock(ctx context.Context, store datastore.Blockstore, block blocks.Block) (bool, error) {
+	if held, err := store.Has(ctx, block.Cid()); err == nil && held {
+		return false, nil
+	}
+	if err := store.Put(ctx, block); err != nil {
+		return false, err
+	}
+	return true, nil
 }

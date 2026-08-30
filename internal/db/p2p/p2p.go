@@ -257,11 +257,12 @@ type P2P struct {
 	// rest of the batch still commits, so this is not a count of failed batches.
 	statBatchesWithDrops atomic.Int64
 
-	// The inbound CAR path: imports attempted, imports abandoned, and the blocks an
-	// abandoned import had already written. Every document this node stores arrives this
-	// way, so the generation counters below say nothing about it.
-	statCARImports      atomic.Int64
-	statCARImportFailed atomic.Int64
+	// The inbound CAR path: imports attempted, imports abandoned, and the blocks an abandoned
+	// import had already written. Those blocks sit in the store owned by no document until a
+	// later merge claims them.
+	statCARImports            atomic.Int64
+	statCARImportFailed       atomic.Int64
+	statCARImportOrphanBlocks atomic.Int64
 
 	// CAR generation counters. A CAR that carries only the root block gives its receiver
 	// nothing to import, so the receiver falls back to a per-link BitSwap walk.
@@ -826,6 +827,7 @@ func (p *P2P) reportStats() {
 				corelog.Int64("msgsIn", p.statMsgsIn.Swap(0)),
 				corelog.Int64("carImports", p.statCARImports.Swap(0)),
 				corelog.Int64("carImportFailed", p.statCARImportFailed.Swap(0)),
+				corelog.Int64("carImportOrphanBlocks", p.statCARImportOrphanBlocks.Swap(0)),
 				corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
 				corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
 				corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
