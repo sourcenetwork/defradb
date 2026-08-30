@@ -72,7 +72,7 @@ Building DefraDB from source requires significant system resources. If you encou
 
 ### Prerequisites
 
-- [Go](https://golang.org/) 1.24 or later
+- [Go](https://golang.org/) 1.26 or later
 - [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
 - Git
 
