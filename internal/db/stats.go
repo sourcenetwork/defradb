@@ -34,8 +34,8 @@ const mergeStatsInterval = 30 * time.Second
 // mergeStats are the merge-path counters reported once per interval and reset on report,
 // so each line carries the rate for that interval rather than a running total.
 //
-// Counting is an atomic add on paths that already do storage work, so it is not a cost
-// worth gating. Nothing here builds a string or allocates until the reporter runs.
+// Counting is an atomic add on paths that already do storage work, so it is not a cost worth
+// gating. The drop reasons are constants, so counting one costs a map insert and no string.
 type mergeStats struct {
 	// creates and updates split merges by whether the document already had heads locally.
 	// A merge with no local heads is creating the document.
@@ -67,13 +67,16 @@ const (
 
 // mergeDropReason names why an event was dropped: the sender could not supply the DAG,
 // two documents claim one indexed value, or the write kept losing to a concurrent one.
+//
+// Match against the package sentinels. Constructing a defraError captures a stack trace,
+// and this runs once per dropped event.
 func mergeDropReason(err error) string {
 	switch {
 	case errors.Is(err, ipld.ErrNotFound{}):
 		return dropMissingBlock
-	case errors.Is(err, errors.New(errCanNotIndexNonUniqueFields)):
+	case errors.Is(err, ErrCanNotIndexNonUniqueFields):
 		return dropUniqueIndex
-	case errors.Is(err, client.NewErrMaxTxnRetries(nil)):
+	case errors.Is(err, client.ErrMaxTxnRetries):
 		return dropRetryExhausted
 	default:
 		return dropOther

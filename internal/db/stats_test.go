@@ -94,8 +94,12 @@ func TestMergeDropReason(t *testing.T) {
 			want: dropMissingBlock,
 		},
 		{
-			name: "unique index violation",
-			err:  NewErrMergeEventDropped(errors.New(errCanNotIndexNonUniqueFields), "bae-1", "bafy"),
+			name: "unique index violation, carrying the fields the index path attaches",
+			err: NewErrMergeEventDropped(
+				NewErrCanNotIndexNonUniqueFields("bae-1", errors.NewKV("name", "John")),
+				"bae-1",
+				"bafy",
+			),
 			want: dropUniqueIndex,
 		},
 		{

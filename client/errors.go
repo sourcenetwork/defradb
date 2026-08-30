@@ -107,6 +107,7 @@ var (
 	ErrNullValueForNonNillableField          = errors.New(errNullValueForNonNillableField)
 	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
 	ErrTransactionNotFound                   = errors.New(errTransactionNotFound)
+	ErrMaxTxnRetries                         = errors.New(errMaxTxnRetries)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
