@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -190,6 +191,40 @@ func TestMergeStatsCountsCommittedMergeOnce(t *testing.T) {
 	require.Equal(t, int64(0), db.stats.updates.Load())
 }
 
+// existingDocUpdates creates count documents and returns an update event for each. They are
+// committed up front so the caller's budget can only fail the merge itself: creating a document
+// commits the short ID it reserves first, which would spend the budget before the merge.
+func existingDocUpdates(ctx context.Context, t *testing.T, db *DB, col client.Collection, count int) []event.Merge {
+	t.Helper()
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+	updates := make([]event.Merge, count)
+	for i := range updates {
+		state := map[string]any{"name": fmt.Sprintf("user-%d", i)}
+		builder, _ := newDagBuilder(ctx, col, state)
+
+		genesis, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+		require.NoError(t, err)
+		docID := client.NewDocIDV0(genesis.link.Cid)
+		require.NoError(t, db.Merge(ctx, event.Merge{
+			DocID:        docID.String(),
+			Cid:          genesis.link.Cid,
+			CollectionID: col.CollectionID(),
+		}))
+
+		update, err := builder.generateCompositeUpdate(&lsys, map[string]any{"name": "renamed"}, genesis)
+		require.NoError(t, err)
+		updates[i] = event.Merge{
+			DocID:        docID.String(),
+			Cid:          update.link.Cid,
+			CollectionID: col.CollectionID(),
+		}
+	}
+	return updates
+}
+
 // drainedDrops drains the drop reasons into a map.
 func drainedDrops(s *mergeStats) map[string]int64 {
 	drops := map[string]int64{}
@@ -197,6 +232,105 @@ func drainedDrops(s *mergeStats) map[string]int64 {
 		drops[attr.Key] = attr.Value.Int64()
 	}
 	return drops
+}
+
+// The single-event path has no fallback, so exhausting its retry budget is a dropped
+// document rather than chunk exhaustion.
+func TestMergeStatsSingleDocumentExhaustion(t *testing.T) {
+	ctx := context.Background()
+	db, store, err := newConflictingBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(db.Close)
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	updates := existingDocUpdates(ctx, t, db, col, 1)
+
+	store.failCommits.Store(int64(db.txnAttempts()))
+	err = db.Merge(ctx, updates[0])
+	require.ErrorIs(t, err, client.ErrMaxTxnRetries)
+
+	require.Equal(t, int64(db.txnAttempts()), db.stats.txnConflicts.Load(),
+		"each abandoned transaction is one conflict")
+	require.Equal(t, int64(0), db.stats.chunkExhausted.Load(),
+		"there is no chunk on this path")
+	require.Equal(t, map[string]int64{dropRetryExhausted: 1}, drainedDrops(db.stats))
+}
+
+// A chunk that runs out of attempts is counted once, whether or not the per-event re-runs
+// that follow succeed. A chunk of one event has no smaller write set and is not counted.
+func TestMergeStatsChunkExhaustion(t *testing.T) {
+	attempts := int64(defaultMaxTxnRetries)
+
+	for _, tc := range []struct {
+		name string
+		// failCommits is spent in full by every case, so it also states how many transactions
+		// the batch and isolation passes together are expected to abandon.
+		failCommits   int64
+		documents     int
+		wantMerged    bool
+		wantExhausted int64
+		wantDrops     map[string]int64
+	}{
+		{
+			name:          "a chunk is counted when it exhausts, even though its re-runs recover",
+			failCommits:   attempts,
+			documents:     mergeChunkSize,
+			wantMerged:    true,
+			wantExhausted: 1,
+			wantDrops:     map[string]int64{},
+		},
+		{
+			name:          "a chunk is counted once however many of its re-runs are lost",
+			failCommits:   attempts * (1 + mergeChunkSize),
+			documents:     mergeChunkSize,
+			wantMerged:    false,
+			wantExhausted: 1,
+			wantDrops:     map[string]int64{dropRetryExhausted: mergeChunkSize},
+		},
+		{
+			name:          "a chunk of one is not counted",
+			failCommits:   attempts * 2,
+			documents:     1,
+			wantMerged:    false,
+			wantExhausted: 0,
+			wantDrops:     map[string]int64{dropRetryExhausted: 1},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			db, store, err := newConflictingBadgerDB(ctx)
+			require.NoError(t, err)
+			t.Cleanup(db.Close)
+
+			_, err = db.AddCollection(ctx, userSchema)
+			require.NoError(t, err)
+			col, err := db.GetCollectionByName(ctx, "User")
+			require.NoError(t, err)
+
+			updates := existingDocUpdates(ctx, t, db, col, tc.documents)
+
+			store.failCommits.Store(tc.failCommits)
+			merged, err := db.MergeBatchWithTxn(ctx, updates)
+			if tc.wantMerged {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+			require.Len(t, merged, tc.documents)
+			for i, ok := range merged {
+				require.Equal(t, tc.wantMerged, ok, "event %d", i)
+			}
+
+			require.Equal(t, tc.failCommits, db.stats.txnConflicts.Load(),
+				"every abandoned transaction is one conflict")
+			require.Equal(t, tc.wantExhausted, db.stats.chunkExhausted.Load())
+			require.Equal(t, tc.wantDrops, drainedDrops(db.stats))
+		})
+	}
 }
 
 // The collection lookup can fail without the collection being missing.

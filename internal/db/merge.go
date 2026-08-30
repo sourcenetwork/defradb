@@ -63,7 +63,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	for i := 0; i < db.txnAttempts(); i++ {
 		err = db.executeMerge(ctx, col, evt)
 		if errors.Is(err, corekv.ErrTxnConflict) {
-			db.stats.chunkConflicts.Add(1)
+			db.stats.txnConflicts.Add(1)
 			continue
 		}
 		if err != nil {
@@ -253,7 +253,7 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(mergeErr, corekv.ErrTxnConflict) {
 				conflictErr = mergeErr
-				db.stats.chunkConflicts.Add(1)
+				db.stats.txnConflicts.Add(1)
 				continue
 			}
 			return mergeErr
@@ -263,7 +263,7 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(err, corekv.ErrTxnConflict) {
 				conflictErr = err
-				db.stats.chunkConflicts.Add(1)
+				db.stats.txnConflicts.Add(1)
 				phase = phaseCommit
 				continue
 			}
@@ -276,16 +276,17 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		return nil
 	}
 
-	// The chunk used its whole retry budget without committing. The caller then re-runs it
-	// one event at a time, so this counts conflict pressure rather than loss. What was
-	// actually lost is named in the caller's error.
-	db.stats.markExhausted()
+	// A chunk of one has no smaller write set for the caller to fall back to, so its exhaustion
+	// is a drop the caller records rather than a chunk to count here.
+	if len(entries) > 1 {
+		db.stats.chunkExhausted.Add(1)
 
-	log.InfoContext(ctx, "merge chunk exhausted its retries",
-		corelog.Int("attempts", db.txnAttempts()),
-		corelog.String("phase", phase),
-		corelog.String("docIDs", namedDocs(entries)),
-	)
+		log.InfoContext(ctx, "merge chunk exhausted its retries",
+			corelog.Int("attempts", db.txnAttempts()),
+			corelog.String("phase", phase),
+			corelog.String("docIDs", namedDocs(entries)),
+		)
+	}
 	return client.NewErrMaxTxnRetries(conflictErr)
 }
 

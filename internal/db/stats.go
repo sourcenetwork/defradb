@@ -42,10 +42,13 @@ type mergeStats struct {
 	creates atomic.Int64
 	updates atomic.Int64
 
-	// chunkConflicts counts merge attempts abandoned for a transaction conflict, whether
-	// or not a later attempt succeeded. chunkExhausted counts the chunks that ran out of
-	// attempts, which is where a conflict becomes a dropped document.
-	chunkConflicts atomic.Int64
+	// txnConflicts counts merge transactions abandoned for a conflict, whether or not a
+	// later attempt succeeded.
+	//
+	// chunkExhausted counts chunks of more than one event that used their whole retry budget.
+	// Such a chunk is re-run one event at a time; an event that then fails is counted under
+	// dropRetryExhausted, as is a chunk of one that exhausts.
+	txnConflicts   atomic.Int64
 	chunkExhausted atomic.Int64
 
 	// dropReasons counts dropped events by cause. A dropped event is a document this node
@@ -138,14 +141,6 @@ func (s *mergeStats) markCreateOrUpdate(isCreate bool) {
 	s.updates.Add(1)
 }
 
-// markExhausted records a chunk that ran out of attempts.
-func (s *mergeStats) markExhausted() {
-	if s == nil {
-		return
-	}
-	s.chunkExhausted.Add(1)
-}
-
 // reportMergeStats logs the merge counters once per interval until the database context is
 // cancelled. Rates are reported per interval rather than per event, which keeps the merge
 // path quiet under load where per-event logging would dominate the output.
@@ -165,7 +160,7 @@ func (db *DB) reportMergeStats(ctx context.Context) {
 func (s *mergeStats) report() {
 	creates := s.creates.Swap(0)
 	updates := s.updates.Swap(0)
-	conflicts := s.chunkConflicts.Swap(0)
+	conflicts := s.txnConflicts.Swap(0)
 	exhausted := s.chunkExhausted.Swap(0)
 
 	// Nothing to report on an idle database, or one doing only local writes.
@@ -173,8 +168,8 @@ func (s *mergeStats) report() {
 		log.Info("merge stats",
 			corelog.Int64("creates", creates),
 			corelog.Int64("updates", updates),
-			corelog.Int64("chunkConflicts", conflicts),
-			corelog.Int64("exhausted", exhausted),
+			corelog.Int64("txnConflicts", conflicts),
+			corelog.Int64("chunkExhausted", exhausted),
 		)
 	}
 
