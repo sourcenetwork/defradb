@@ -189,3 +189,86 @@ func TestMergeStatsCountsCommittedMergeOnce(t *testing.T) {
 	require.Equal(t, int64(1), db.stats.creates.Load(), "the committed merge is counted once")
 	require.Equal(t, int64(0), db.stats.updates.Load())
 }
+
+// drainedDrops drains the drop reasons into a map.
+func drainedDrops(s *mergeStats) map[string]int64 {
+	drops := map[string]int64{}
+	for _, attr := range s.drainDropReasons() {
+		drops[attr.Key] = attr.Value.Int64()
+	}
+	return drops
+}
+
+// The collection lookup can fail without the collection being missing.
+func TestMergeStatsCollectionLookupCauses(t *testing.T) {
+	newMergeEvent := func(ctx context.Context, t *testing.T, db *DB, collectionID string) event.Merge {
+		t.Helper()
+
+		col, err := db.GetCollectionByName(ctx, "User")
+		require.NoError(t, err)
+
+		lsys := cidlink.DefaultLinkSystem()
+		lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
+
+		state := map[string]any{"name": "John"}
+		builder, _ := newDagBuilder(ctx, col, state)
+		genesis, err := builder.generateCompositeUpdate(&lsys, state, compositeInfo{})
+		require.NoError(t, err)
+
+		return event.Merge{
+			DocID:        client.NewDocIDV0(genesis.link.Cid).String(),
+			Cid:          genesis.link.Cid,
+			CollectionID: collectionID,
+		}
+	}
+
+	t.Run("a collection this node does not hold", func(t *testing.T) {
+		ctx := context.Background()
+		db, err := newBadgerDB(ctx)
+		require.NoError(t, err)
+		t.Cleanup(db.Close)
+
+		_, err = db.AddCollection(ctx, userSchema)
+		require.NoError(t, err)
+
+		require.ErrorIs(t, db.Merge(ctx, newMergeEvent(ctx, t, db, "not-a-collection")),
+			client.ErrCollectionNotFound)
+		require.Equal(t, map[string]int64{dropCollection: 1}, drainedDrops(db.stats))
+	})
+
+	// closedDB returns a database that can no longer open a transaction, and an event for a
+	// collection it holds, so the lookup fails before reading any collection.
+	closedDB := func(t *testing.T) (*DB, event.Merge) {
+		t.Helper()
+
+		ctx := context.Background()
+		db, err := newBadgerDB(ctx)
+		require.NoError(t, err)
+		t.Cleanup(db.Close)
+
+		_, err = db.AddCollection(ctx, userSchema)
+		require.NoError(t, err)
+		col, err := db.GetCollectionByName(ctx, "User")
+		require.NoError(t, err)
+
+		evt := newMergeEvent(ctx, t, db, col.CollectionID())
+		db.ctxCancel()
+		return db, evt
+	}
+
+	t.Run("a lookup that fails for any other reason", func(t *testing.T) {
+		db, evt := closedDB(t)
+
+		require.ErrorIs(t, db.Merge(context.Background(), evt), context.Canceled)
+		require.Equal(t, map[string]int64{dropContext: 1}, drainedDrops(db.stats))
+	})
+
+	t.Run("a lookup that fails for any other reason, in a batch", func(t *testing.T) {
+		db, evt := closedDB(t)
+
+		merged, err := db.MergeBatchWithTxn(context.Background(), []event.Merge{evt})
+		require.ErrorIs(t, err, context.Canceled)
+		require.Equal(t, []bool{false}, merged)
+		require.Equal(t, map[string]int64{dropContext: 1}, drainedDrops(db.stats))
+	})
+}

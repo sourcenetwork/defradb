@@ -43,7 +43,7 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
-		db.stats.markDropped(dropCollection)
+		db.stats.markDropped(collectionDropReason(err))
 		return err
 	}
 
@@ -117,7 +117,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 		if err != nil {
 			errs = append(errs, NewErrMergeEventDropped(err, evt.DocID, evt.Cid.String()))
-			db.stats.markDropped(dropCollection)
+			db.stats.markDropped(collectionDropReason(err))
 			continue
 		}
 		entries = append(entries, mergeEntry{evt: evt, col: col, index: i})

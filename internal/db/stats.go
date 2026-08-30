@@ -62,6 +62,7 @@ const (
 	dropUniqueIndex    = "uniqueIndex"
 	dropRetryExhausted = "retryExhausted"
 	dropCollection     = "collectionNotFound"
+	dropContext        = "contextDone"
 	dropOther          = "other"
 )
 
@@ -78,9 +79,21 @@ func mergeDropReason(err error) string {
 		return dropUniqueIndex
 	case errors.Is(err, client.ErrMaxTxnRetries):
 		return dropRetryExhausted
+	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+		return dropContext
 	default:
 		return dropOther
 	}
+}
+
+// collectionDropReason names why an event was dropped before its collection was resolved.
+// The lookup opens a transaction and reads the collection store, so not every failure here
+// is a missing collection.
+func collectionDropReason(err error) string {
+	if errors.Is(err, client.ErrCollectionNotFound) {
+		return dropCollection
+	}
+	return mergeDropReason(err)
 }
 
 // markDropped records an event that did not merge, under the given cause.
