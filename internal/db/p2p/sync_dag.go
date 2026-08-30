@@ -73,7 +73,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 // syncDAGFailure records an abandoned walk: how it failed and how far it had got. The
 // first occurrence of each reason gets a log line; the rest are counted only.
 func (p *P2P) syncDAGFailure(reason string, loaded int64, err error) {
-	if p.syncDAGFailureReason.record(reason) {
+	if p.syncDAGFailureReason.recordFirst(reason) {
 		log.ErrorE("DAG sync abandoned", err,
 			corelog.String("reason", reason),
 			corelog.Int64("blocksLoaded", loaded))

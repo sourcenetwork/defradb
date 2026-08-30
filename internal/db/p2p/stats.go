@@ -38,21 +38,34 @@ const (
 	reasonNoRootBlock = "carNoRootBlock"
 )
 
-// failureReasons counts failures by reason and remembers which reasons it has already
-// logged. A repeated failure costs a counter increment rather than a log line; the first
-// occurrence of each reason gets one line carrying the underlying error.
+// failureReasons counts occurrences by reason, drained once per report interval. Callers
+// that also log keep the set of reasons already logged, so a repeated occurrence costs a
+// counter increment rather than a line.
 type failureReasons struct {
 	mu      sync.Mutex
 	counts  map[string]int64
 	flagged map[string]struct{}
 }
 
-// record counts one failure and reports whether this reason has not been logged yet.
-func (f *failureReasons) record(reason string) (firstSeen bool) {
+// record counts one occurrence of reason.
+func (f *failureReasons) record(reason string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.counts == nil {
 		f.counts = make(map[string]int64)
+	}
+	f.counts[reason]++
+}
+
+// recordFirst counts one occurrence and reports whether this reason has not been seen before,
+// so the caller can log the first and count the rest.
+func (f *failureReasons) recordFirst(reason string) (firstSeen bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.counts == nil {
+		f.counts = make(map[string]int64)
+	}
+	if f.flagged == nil {
 		f.flagged = make(map[string]struct{})
 	}
 	f.counts[reason]++
@@ -93,9 +106,10 @@ func (p *P2P) dropDoc(reason string) {
 	p.docDropReason.record(reason)
 }
 
-// skipDoc counts an inbound document deliberately not merged: already held, or excluded
-// by access or the replication filter. Kept apart from drops, which are losses.
+// skipDoc counts an inbound document deliberately not merged: already held, already in
+// flight, repeated within one document-sync round, or excluded by access or the replication
+// filter. Kept apart from drops, which are losses.
 func (p *P2P) skipDoc(reason string) {
 	p.statSkippedDocs.Add(1)
-	p.docDropReason.record("skip:" + reason)
+	p.docSkipReason.record(reason)
 }

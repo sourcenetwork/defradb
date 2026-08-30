@@ -248,8 +248,9 @@ type P2P struct {
 	statDroppedFull   atomic.Int64
 	statMergedDocs    atomic.Int64
 	statDroppedDocs   atomic.Int64
-	// statSkippedDocs counts documents deliberately not merged: already held, or
-	// excluded by access or the replication filter. Not a loss, so kept apart.
+	// statSkippedDocs counts documents deliberately not merged: already held, already in
+	// flight, repeated within one document-sync round, or excluded by access or the
+	// replication filter. Not a loss, so kept apart.
 	statSkippedDocs atomic.Int64
 	statBatches     atomic.Int64
 	// statBatchesWithDrops counts batches in which at least one document dropped. The
@@ -275,9 +276,11 @@ type P2P struct {
 	statSyncDAGCalls     atomic.Int64
 	syncDAGFailureReason failureReasons
 
-	// docDropReason names why an inbound document never reached the merge. The set is
-	// fixed: a reason taken from an error string would let a peer grow the map.
+	// docDropReason names why an inbound document never reached the merge, and docSkipReason
+	// why one was deliberately not merged. Both sets are fixed: a reason taken from an error
+	// string would let a peer grow the map.
 	docDropReason failureReasons
+	docSkipReason failureReasons
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -839,6 +842,7 @@ func (p *P2P) reportStats() {
 			reportFailureReasons("car failures", p.carFailureReason.drain())
 			reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
 			reportFailureReasons("document drops", p.docDropReason.drain())
+			reportFailureReasons("document skips", p.docSkipReason.drain())
 			reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
 		}
 	}

@@ -44,7 +44,7 @@ func (p *P2P) generateCAR(ctx context.Context, rootBlock *coreblock.Block) ([]by
 // carFailure records the reason a CAR could not be built and logs the first occurrence of
 // that reason, so a persistent failure shows up as a count rather than a line per call.
 func (p *P2P) carFailure(reason string, err error) error {
-	if p.carFailureReason.record(reason) {
+	if p.carFailureReason.recordFirst(reason) {
 		log.ErrorE("Failed to generate CAR", err, corelog.String("reason", reason))
 	}
 	return err
@@ -55,7 +55,7 @@ func (p *P2P) carFailure(reason string, err error) error {
 // claims them.
 func (p *P2P) carImportFailure(reason string, err error) error {
 	p.statCARImportFailed.Add(1)
-	if p.carImportFailureReason.record(reason) {
+	if p.carImportFailureReason.recordFirst(reason) {
 		log.ErrorE("Failed to import CAR", err, corelog.String("reason", reason))
 	}
 	return err

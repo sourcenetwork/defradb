@@ -16,8 +16,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// reasonMap renders drained reasons as a map, which is the shape an assertion reads.
+func reasonMap(counts []reasonCount) map[string]int64 {
+	out := map[string]int64{}
+	for _, rc := range counts {
+		out[rc.reason] = rc.count
+	}
+	return out
+}
+
 // A drop is a document that was meant to be stored and was not; a skip is one deliberately
-// not merged. Counting them together would report policy decisions as data loss.
+// not merged. Reporting them on one line would read policy decisions as data loss.
 func TestDropAndSkipAreCountedApart(t *testing.T) {
 	p := &P2P{}
 
@@ -25,17 +34,13 @@ func TestDropAndSkipAreCountedApart(t *testing.T) {
 	p.dropDoc("importCAR")
 	p.dropDoc("syncDAG")
 	p.skipDoc("alreadyMerged")
+	p.skipDoc("filtered")
 
 	require.Equal(t, int64(3), p.statDroppedDocs.Load(), "drops")
-	require.Equal(t, int64(1), p.statSkippedDocs.Load(), "skips")
+	require.Equal(t, int64(2), p.statSkippedDocs.Load(), "skips")
 
-	counts := map[string]int64{}
-	for _, rc := range p.docDropReason.drain() {
-		counts[rc.reason] = rc.count
-	}
-	require.Equal(t, int64(2), counts["importCAR"])
-	require.Equal(t, int64(1), counts["syncDAG"])
-	require.Equal(t, int64(1), counts["skip:alreadyMerged"], "skips carry a distinct prefix")
+	require.Equal(t, map[string]int64{"importCAR": 2, "syncDAG": 1}, reasonMap(p.docDropReason.drain()))
+	require.Equal(t, map[string]int64{"alreadyMerged": 1, "filtered": 1}, reasonMap(p.docSkipReason.drain()))
 }
 
 // The reason set is fixed so a peer cannot grow the map, and drain resets it so each
