@@ -252,6 +252,8 @@ func TestMergeStatsSingleDocumentExhaustion(t *testing.T) {
 	store.failCommits.Store(int64(db.txnAttempts()))
 	err = db.Merge(ctx, updates[0])
 	require.ErrorIs(t, err, client.ErrMaxTxnRetries)
+	require.ErrorContains(t, err, "DocID: "+updates[0].DocID, "the error must name the document")
+	require.ErrorContains(t, err, "CID: "+updates[0].Cid.String(), "the error must name the commit")
 
 	require.Equal(t, int64(db.txnAttempts()), db.stats.txnConflicts.Load(),
 		"each abandoned transaction is one conflict")

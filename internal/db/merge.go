@@ -72,8 +72,10 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		}
 		return nil
 	}
+	// A single event has no smaller write set to retry over, so exhaustion is a drop rather than
+	// a fallback into per-event isolation.
 	db.stats.markDropped(dropRetryExhausted)
-	return client.NewErrMaxTxnRetries(err)
+	return NewErrMergeEventDropped(client.NewErrMaxTxnRetries(err), evt.DocID, evt.Cid.String())
 }
 
 // mergeChunkSize bounds how many events share a transaction. Badger re-sorts the
