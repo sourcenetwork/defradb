@@ -101,9 +101,6 @@ func collectionDropReason(err error) string {
 
 // markDropped records an event that did not merge, under the given cause.
 func (s *mergeStats) markDropped(reason string) {
-	if s == nil {
-		return
-	}
 	s.dropMu.Lock()
 	defer s.dropMu.Unlock()
 	if s.dropReasons == nil {
@@ -131,9 +128,6 @@ func (s *mergeStats) drainDropReasons() []slog.Attr {
 // markCreateOrUpdate records whether a merge is creating the document or updating one that
 // already exists locally.
 func (s *mergeStats) markCreateOrUpdate(isCreate bool) {
-	if s == nil {
-		return
-	}
 	if isCreate {
 		s.creates.Add(1)
 		return
