@@ -36,6 +36,12 @@ type Truncate struct {
 	// CollectionIndex is the index of the collection to truncate.
 	CollectionIndex int
 
+	// Filter limits the truncate to matching documents.
+	Filter any
+
+	// DocIndexes builds a DocID filter from documents in the test state.
+	DocIndexes []int
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -75,6 +81,19 @@ func (a *Truncate) Execute() {
 		collection := collections[a.CollectionIndex]
 
 		opts := options.TruncateCollection()
+		filter := a.Filter
+		if len(a.DocIndexes) > 0 {
+			values := make([]any, len(a.DocIndexes))
+			a.s.DocIDsLock.RLock()
+			for i, docIndex := range a.DocIndexes {
+				values[i] = a.s.DocIDs[a.CollectionIndex][docIndex].String()
+			}
+			a.s.DocIDsLock.RUnlock()
+			filter = map[string]any{"_docID": map[string]any{"_in": values}}
+		}
+		if filter != nil {
+			opts.SetFilter(filter)
+		}
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())

@@ -911,7 +911,7 @@ enum CRDTType {
     Positive Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pcounter
@@ -919,7 +919,7 @@ enum CRDTType {
     Positive-Negative Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pncounter
@@ -1490,6 +1490,18 @@ input Float64OperatorBlock {
     _nin: [Float64]
 }
 
+"HNSW (Hierarchical Navigable Small World) vector index parameters."
+input HNSWIndexConfig {
+    "Max connections per node. Higher improves recall at the cost of memory and build time."
+    M: Int = 16
+    "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time."
+    efConstruction: Int = 128
+    "Default query-time exploration factor. Higher improves recall at the cost of query latency."
+    efSearch: Int = 64
+    "Distance metric used to compare vectors."
+    metric: VectorDistanceMetric = "COSINE"
+}
+
 """
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 """
@@ -1533,6 +1545,11 @@ input IDOperatorBlock {
 input IndexField {
     direction: Ordering
     field: String
+}
+
+enum IndexKind {
+    "ordered scalar index"
+    ordered
 }
 
 "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. "
@@ -1753,6 +1770,16 @@ type Mutation {
         """
         filter: BookFilterArg
     ): [Book]
+    "Remove all or matching documents from this node. Returns true when complete."
+    truncate_Author(
+        "Filter documents to truncate"
+        filter: AuthorFilterArg
+    ): Boolean!
+    "Remove all or matching documents from this node. Returns true when complete."
+    truncate_Book(
+        "Filter documents to truncate"
+        filter: BookFilterArg
+    ): Boolean!
     """
     
     Updates documents in this collection using the data provided. Only documents
@@ -2543,6 +2570,26 @@ input NotNullStringOperatorBlock {
     _nlike: String
 }
 
+"Configures an ordered index over one or more scalar fields."
+input OrderedIndexConfig {
+    """
+    Sets the default index ordering for all fields.
+
+    If a field in the includes list does not specify a direction
+    the default ordering from this value will be used instead.
+    """
+    direction: Ordering
+    """
+    Sets the fields the index is added on.
+
+    When used on a field definition and the field is not in the includes list
+    it will be implicitly added as the first entry.
+    """
+    includes: [IndexField]
+    "Makes the index unique."
+    unique: Boolean
+}
+
 enum Ordering {
     """
     
@@ -3148,6 +3195,30 @@ type Subscription {
     ): [Commit]
 }
 
+enum VectorDistanceMetric {
+    "Cosine distance on normalised vectors. Compares direction only."
+    COSINE
+    "Dot product. Grows with magnitude, so a longer vector pointing the same way is nearer."
+    DOT
+    "Straight-line (L2) distance. Compares direction and magnitude."
+    EUCLIDEAN
+}
+
+enum VectorIndexAlgorithm {
+    "HNSW (Hierarchical Navigable Small World)"
+    hnsw
+}
+
+"Configures an approximate-nearest-neighbour index over a vector field."
+input VectorIndexConfig {
+    "Selects the vector index algorithm using its default configuration."
+    alg: VectorIndexAlgorithm
+    "Vector dimensions; must be greater than zero."
+    dimensions: Int
+    "Configures the HNSW algorithm."
+    hnsw: HNSWIndexConfig
+}
+
 """
 A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document. 
 
@@ -3452,7 +3523,7 @@ directive @explain(
 directive @index(
     """
     Sets the default index ordering for all fields.
-    			
+
     If a field in the includes list does not specify a direction
     the default ordering from this value will be used instead.
     """
@@ -3464,10 +3535,16 @@ directive @index(
     it will be implicitly added as the first entry.
     """
     includes: [IndexField]
+    "Selects an index kind using its default configuration."
+    kind: IndexKind
     "Sets the index name."
     name: String
+    "Configures an ordered index."
+    ordered: OrderedIndexConfig
     "Makes the index unique."
     unique: Boolean
+    "Configures a vector index."
+    vector: VectorIndexConfig
 ) on OBJECT | FIELD_DEFINITION
 
 """

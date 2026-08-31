@@ -420,24 +420,27 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 			}
 		}
 
-		var mcrdt crdt.ReplicatedData
 		switch {
 		case block.Delta.IsCollection():
-			mcrdt = crdt.NewCollection(
-				vf.col.Version().VersionID,
-				keys.NewHeadstoreColKey(collectionShortID),
-			)
+			// no-op: collection value blocks are not merged
 
 		case block.Delta.IsComposite():
-			mcrdt = crdt.NewDocComposite(
+			mcrdt := crdt.NewDocComposite()
+
+			// Merge the block without worrying about updating the headstore - they are not used
+			// by this store/fetcher.
+			err = mcrdt.Merge(
+				vf.ctx,
 				vf.store.Datastore(),
-				block.Delta.GetCollectionVersionID(),
-				keys.DataStoreKey{
+				keys.PrimaryDataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        blockDocShortID,
-					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 				},
+				block.Delta.GetDelta(),
 			)
+			if err != nil {
+				return err
+			}
 
 		default:
 			field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
@@ -450,33 +453,27 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return err
 			}
 
-			mcrdt, err = crdt.FieldLevelCRDTWithStore(
+			mcrdt, ok := crdt.TryGetFieldCRDT(field.Typ)
+			if !ok {
+				return client.NewErrUnknownCRDT(field.Typ)
+			}
+
+			// Merge the block without worrying about updating the headstore - they are not used
+			// by this store/fetcher.
+			err = mcrdt.Merge(
+				vf.ctx,
 				vf.store.Datastore(),
-				block.Delta.GetCollectionVersionID(),
-				field.Typ,
-				field.Kind,
 				keys.DataStoreKey{
 					CollectionShortID: collectionShortID,
 					DocShortID:        blockDocShortID,
 					FieldID:           fmt.Sprint(fieldShortID),
 				},
-				field.Name,
+				field.Kind,
+				block.Delta.GetDelta(),
 			)
 			if err != nil {
 				return err
 			}
-		}
-
-		err = coreblock.ProcessBlock(
-			vf.ctx,
-			mcrdt,
-			block,
-			cidlink.Link{
-				Cid: current.cid,
-			},
-		)
-		if err != nil {
-			return err
 		}
 
 		for i := len(block.Links) - 1; i >= 0; i-- {

@@ -11,6 +11,7 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"maps"
@@ -28,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -349,6 +351,21 @@ func (c *collection) deleteIndexedDocWithID(
 	ctx context.Context,
 	docID client.DocID,
 ) error {
+	return c.deleteIndexedDocByID(ctx, docID, false)
+}
+
+func (c *collection) truncateIndexedDocWithID(
+	ctx context.Context,
+	docID client.DocID,
+) error {
+	return c.deleteIndexedDocByID(ctx, docID, true)
+}
+
+func (c *collection) deleteIndexedDocByID(
+	ctx context.Context,
+	docID client.DocID,
+	forTruncate bool,
+) error {
 	indexes, err := c.currentIndexes(ctx)
 	if err != nil {
 		return err
@@ -361,26 +378,49 @@ func (c *collection) deleteIndexedDocWithID(
 	if err != nil {
 		return err
 	}
+	if forTruncate {
+		isDeleted, err := c.isDocumentDeleted(ctx, primaryKey)
+		if err != nil {
+			return err
+		}
+		if isDeleted {
+			return nil
+		}
+	}
 
-	// we need to fetch the document to delete it from the indexes, because in order to do so
-	// we need to know the values of the fields that are indexed. Fields come from the resolved
-	// indexes so a stale handle still fetches a concurrently-created index's field.
-	doc, err := c.get(
-		ctx,
-		primaryKey,
-		c.collectIndexedFields(indexes),
-		false,
-	)
+	fields := c.collectIndexedFields(indexes)
+	var doc *client.Document
+	if forTruncate {
+		// Truncate is authorized at the node level and does not require document read access.
+		doc, err = c.getInternal(ctx, primaryKey, fields, true)
+	} else {
+		doc, err = c.get(ctx, primaryKey, fields, false)
+	}
 	if err != nil {
 		return err
 	}
 	if doc == nil {
-		// If the document cannot be fetched (e.g., due to ACP restrictions),
-		// skip index deletion. The caller (Delete) will handle the authorization
-		// error in applyDelete.
 		return nil
 	}
 	return c.deleteFromIndexes(ctx, indexes, doc)
+}
+
+func (c *collection) isDocumentDeleted(
+	ctx context.Context,
+	primaryKey keys.PrimaryDataStoreKey,
+) (bool, error) {
+	if primaryKey.DocShortID == 0 {
+		return false, nil
+	}
+
+	value, err := datastore.CtxMustGetTxn(ctx).Datastore().Get(ctx, primaryKey)
+	if errors.Is(err, corekv.ErrNotFound) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return bytes.Equal(value, []byte{base.DeletedObjectMarker}), nil
 }
 
 // NewIndex makes a new index on the collection.
@@ -468,6 +508,13 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
+	if desc.Vector != nil {
+		err = validateVectorIndexDescription(def, desc)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+	}
+
 	indexName, err := generateIndexNameIfNeeded(def, desc)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -489,12 +536,130 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	return client.IndexDescription{
-		Name:   indexName,
-		ID:     uint32(indexID),
-		Fields: desc.Fields,
-		Unique: desc.Unique,
-	}, nil
+	// Turn the flat request into the kind + kind-specific config: a Vector request is a vector
+	// index, else an ordered index carrying the unique flag.
+	kind := client.IndexKindOrdered
+	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: desc.Unique}
+	if desc.Vector != nil {
+		kind = client.IndexKindVector
+		kindDescription = desc.Vector
+	}
+
+	res := client.IndexDescription{
+		Name:            indexName,
+		ID:              uint32(indexID),
+		Fields:          desc.Fields,
+		Kind:            kind,
+		KindDescription: kindDescription,
+		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
+		Unique: desc.Vector == nil && desc.Unique,
+	}
+
+	return res, nil
+}
+
+// validateVectorIndexDescription checks and fills in the vector-specific parts of an index request.
+// The field must hold a float32 array, and dimensions must be greater than zero. It also defaults
+// the algorithm, metric, and any missing params (mutating desc.Vector), so a request made through
+// the index API works the same as one from the @index directive's vector configuration.
+//
+// The field is guaranteed to exist here because validateIndexDescription and
+// checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
+func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
+	// The rest of the vector index code only ever reads the first field, so more than one would be
+	// stored but never indexed. Uniqueness has no meaning for a vector index and is likewise ignored
+	// downstream. Reject both rather than half-honour the request.
+	if len(desc.Fields) != 1 {
+		return NewErrVectorIndexRequiresSingleField(len(desc.Fields))
+	}
+	if desc.Unique {
+		return NewErrVectorIndexCannotBeUnique(desc.Fields[0].Name)
+	}
+
+	fieldName := desc.Fields[0].Name
+	field, _ := def.GetFieldByName(fieldName)
+
+	if !client.IsVectorEmbeddingCompatible(field.Kind) {
+		return NewErrUnsupportedVectorIndexFieldType(field.Kind)
+	}
+	if desc.Vector.Dimensions == 0 {
+		return NewErrVectorIndexMissingDimensions(fieldName)
+	}
+
+	// The algorithm config object present is what picks the algorithm, so the caller never sets one
+	// directly. Fill in the algorithm, metric, and any missing params with defaults. A nil HNSW config
+	// means an empty one, so a caller can leave it out and still get a working HNSW index.
+	if desc.Vector.HNSW == nil {
+		desc.Vector.HNSW = &client.HNSWParams{}
+	}
+	desc.Vector.Algorithm = client.VectorAlgorithmHNSW
+	if desc.Vector.Metric == "" {
+		desc.Vector.Metric = client.DistanceMetricCosine
+	}
+	if desc.Vector.HNSW.M == 0 {
+		desc.Vector.HNSW.M = client.DefaultHNSWM
+	}
+	if desc.Vector.HNSW.EfConstruction == 0 {
+		desc.Vector.HNSW.EfConstruction = client.DefaultHNSWEfConstruction
+	}
+	if desc.Vector.HNSW.EfSearch == 0 {
+		desc.Vector.HNSW.EfSearch = client.DefaultHNSWEfSearch
+	}
+
+	if err := validateHNSWParams(desc.Vector.HNSW); err != nil {
+		return err
+	}
+
+	if err := validateNoConflictingVectorIndexMetric(def, fieldName, desc.Vector.Metric); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateNoConflictingVectorIndexMetric rejects creating a vector index on a field that another
+// vector index already covers with a different metric.
+//
+// There is no operation that changes an existing index, so this is about two indexes coexisting. The
+// planner uses the first vector index it finds on a field, so which metric answered a query would be
+// arbitrary. A different metric also means a differently built graph, which is why the fix is to drop
+// and recreate rather than to keep both.
+//
+// We don't have a way to query with a specific metric. So until then we have time limit
+// https://github.com/sourcenetwork/defradb/issues/5072
+func validateNoConflictingVectorIndexMetric(
+	def client.CollectionVersion,
+	fieldName string,
+	metric client.DistanceMetric,
+) error {
+	for _, index := range def.Indexes {
+		vector, ok := index.GetVector()
+		if !ok || index.Fields[0].Name != fieldName {
+			continue
+		}
+		if vector.Metric != metric {
+			return NewErrVectorIndexMetricConflict(fieldName, vector.Metric, metric)
+		}
+	}
+	return nil
+}
+
+// validateHNSWParams rejects HNSW parameters above their allowed maximum. See the Max* constants in
+// the client package for why the caps exist. A nil params is a non-HNSW request and passes.
+func validateHNSWParams(params *client.HNSWParams) error {
+	if params == nil {
+		return nil
+	}
+	if params.M > client.MaxHNSWM {
+		return NewErrVectorIndexParamOutOfRange("M", params.M, client.MaxHNSWM)
+	}
+	if params.EfConstruction > client.MaxHNSWEfConstruction {
+		return NewErrVectorIndexParamOutOfRange("efConstruction", params.EfConstruction, client.MaxHNSWEfConstruction)
+	}
+	if params.EfSearch > client.MaxHNSWEfSearch {
+		return NewErrVectorIndexParamOutOfRange("efSearch", params.EfSearch, client.MaxHNSWEfSearch)
+	}
+	return nil
 }
 
 // allocateIndexEpoch advances the index's epoch sequence and returns the new epoch.

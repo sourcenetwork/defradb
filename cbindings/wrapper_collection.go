@@ -16,7 +16,7 @@ package cbindings
 #include "defra_structs.h"
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-CollectionOptions options, uintptr_t identityPtr);
+char* vectorJSON, CollectionOptions options, uintptr_t identityPtr);
 extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, char* indexType,
@@ -24,12 +24,15 @@ uintptr_t identity);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr,
+char* filterJSON);
 extern void FreeIdentity(uintptr_t identityPtr);
 */
 import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"unsafe"
@@ -105,12 +108,25 @@ func (c *Collection) NewIndex(
 		cUnique = 1
 	}
 
+	// An empty string means no vector index; a non-empty one is the VectorIndexDescription as JSON.
+	vectorJSON := ""
+	if indexDesc.Vector != nil {
+		b, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		vectorJSON = string(b)
+	}
+	cVectorJSON := C.CString(vectorJSON)
+	defer C.free(unsafe.Pointer(cVectorJSON))
+
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
 		callHandle,
 		cIndexDescName,
 		fields,
 		cUnique,
+		cVectorJSON,
 		copts,
 		cIdentity,
 	))
@@ -301,11 +317,12 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
+	opt := utils.NewOptions(opts...)
 
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(opt.GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -319,13 +336,19 @@ func (c *Collection) Truncate(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(
-		C.TruncateCollection(
-			callHandle,
-			copts,
-			cIdentity,
-		),
-	)
+	var result C.Result
+	if opt.Filter == nil {
+		result = C.TruncateCollection(callHandle, copts, cIdentity)
+	} else {
+		filterJSON, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		cFilter := C.CString(string(filterJSON))
+		defer C.free(unsafe.Pointer(cFilter))
+		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter)
+	}
+	res := ConvertAndFreeCResult(result)
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

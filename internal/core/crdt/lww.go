@@ -23,8 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// LWWDelta is a single delta operation for an LWWRegister
-// @todo: Expand delta metadata (investigate if needed)
 type LWWDelta struct {
 	FieldName string
 	Priority  uint64
@@ -55,110 +53,106 @@ func (d *LWWDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-// SetPriority will set the priority for this delta.
-func (d *LWWDelta) SetPriority(prio uint64) {
-	d.Priority = prio
+type LWW struct{}
+
+var _ FieldValueCRDT = (*LWW)(nil)
+
+func NewLWW() *LWW {
+	return &LWW{}
 }
 
-// LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
-type LWW struct {
-	store               datastore.Keyedstore
-	key                 keys.DataStoreKey
-	collectionVersionID string
-	fieldName           string
+func (l *LWW) CType() client.CType {
+	return client.LWW_REGISTER
 }
 
-var _ FieldLevelCRDT = (*LWW)(nil)
-var _ ReplicatedData = (*LWW)(nil)
+func (l *LWW) String() string {
+	return "lww"
+}
 
-// NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
-// backed by a LWWRegister CRDT.
-func NewLWW(
-	store datastore.Keyedstore,
+func (l *LWW) Description() string {
+	return "Last Write Wins register"
+}
+
+func (l *LWW) Set(
+	ctx context.Context,
 	collectionVersionID string,
-	key keys.DataStoreKey,
-	fieldName string,
-) *LWW {
-	return &LWW{
-		key:                 key,
-		store:               store,
-		collectionVersionID: collectionVersionID,
-		fieldName:           fieldName,
-	}
-}
-
-func (l *LWW) HeadstorePrefix() keys.HeadstoreKey {
-	return l.key.ToHeadStoreKey()
-}
-
-// Save the value of the register to the DAG.
-func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
+	data *DocField,
+	priority uint64,
+) (*LWWDelta, error) {
 	bytes, err := data.FieldValue.Bytes()
 	if err != nil {
-		return nil, NewErrSerializeLWWValue(err, l.fieldName)
+		return nil, NewErrSerializeLWWValue(err, data.FieldName)
 	}
 
 	return &LWWDelta{
 		Data:                bytes,
-		FieldName:           l.fieldName,
-		CollectionVersionID: l.collectionVersionID,
+		FieldName:           data.FieldName,
+		CollectionVersionID: collectionVersionID,
+		Priority:            priority,
 	}, nil
 }
 
-// Merge implements ReplicatedData interface
-// Merge two LWWRegisty based on the order of the timestamp (ts),
-// if they are equal, compare IDs
-// MUTATE STATE
-func (l *LWW) Merge(ctx context.Context, delta Delta) error {
+func (l *LWW) Merge(
+	ctx context.Context,
+	store datastore.Keyedstore,
+	key keys.DataStoreKey,
+	kind client.FieldKind,
+	delta Delta,
+) error {
 	d, ok := delta.(*LWWDelta)
 	if !ok {
 		return ErrMismatchedMergeType
 	}
 
-	return l.setValue(ctx, d.Data, d.GetPriority())
+	return l.setValue(ctx, store, key, d)
 }
 
-func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
-	key := l.key.WithValueFlag()
+func (l *LWW) setValue(
+	ctx context.Context,
+	store datastore.Keyedstore,
+	key keys.DataStoreKey,
+	delta *LWWDelta,
+) error {
+	valueKey := key.WithValueFlag()
 
-	curPrio, err := getPriority(ctx, l.store, l.key)
+	curPrio, err := getPriority(ctx, store, key)
 	if err != nil {
 		return NewErrFailedToGetPriority(err)
 	}
 
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
+	marker, err := store.Get(ctx, key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return NewErrGetRegisterStatus(err, l.fieldName)
+		return NewErrGetRegisterStatus(err, delta.FieldName)
 	}
 	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
-		key = key.WithDeletedFlag()
+		valueKey = valueKey.WithDeletedFlag()
 	}
-	if priority < curPrio {
+	if delta.Priority < curPrio {
 		return nil
-	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key)
+	} else if delta.Priority == curPrio {
+		curValue, err := store.Get(ctx, valueKey)
 		if err != nil {
-			return NewErrGetRegisterValue(err, l.fieldName)
+			return NewErrGetRegisterValue(err, delta.FieldName)
 		}
 
-		if bytes.Compare(curValue, val) >= 0 {
+		if bytes.Compare(curValue, delta.Data) >= 0 {
 			return nil
 		}
 	}
 
-	if bytes.Equal(val, client.CborNil) {
+	if bytes.Equal(delta.Data, client.CborNil) {
 		// If len(val) is 1 or less the property is nil and there is no reason for
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		if err := l.store.Delete(ctx, key); err != nil {
-			return NewErrDeleteRegisterValue(err, l.fieldName)
+		if err := store.Delete(ctx, valueKey); err != nil {
+			return NewErrDeleteRegisterValue(err, delta.FieldName)
 		}
 	} else {
-		if err := l.store.Set(ctx, key, val); err != nil {
+		if err := store.Set(ctx, valueKey, delta.Data); err != nil {
 			return NewErrFailedToStoreValue(err)
 		}
 	}
 
-	return setPriority(ctx, l.store, l.key, priority)
+	return setPriority(ctx, store, key, delta.Priority)
 }

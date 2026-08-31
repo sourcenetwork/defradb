@@ -9,7 +9,7 @@
 //
 // See tests/LICENSE for details.
 
-package tests
+package action
 
 import (
 	"github.com/stretchr/testify/require"
@@ -23,26 +23,26 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// setupNode returns the database implementation for the current
+// SetupNode returns the database implementation for the current
 // testing state. The database type on the test state is used to
 // select the datastore implementation to use.
 //
 // ver is unused: external (cross-version) nodes are not supported under js.
-func setupNode(
+func SetupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
-	testCase TestCase,
+	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
 ) (*state.NodeState, error) {
 	if opts == nil {
-		opts = defaultNodeOpts()
+		opts = DefaultNodeOpts(cfg)
 	}
 	opts.DB().
-		SetEnableSigning(testCase.EnableSigning).
+		SetEnableSigning(cfg.EnableSigning).
 		SetLensRuntime(options.NodeJSLensRuntime)
-	if testCase.HTTP.HasValue() {
-		applyHTTPOptions(opts, testCase.HTTP.Value())
+	if cfg.HTTP.HasValue() {
+		applyHTTPOptions(opts, cfg.HTTP.Value())
 	}
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
@@ -50,14 +50,14 @@ func setupNode(
 	// [skipJSClientIfUnsupportedDBType]
 	opts.Store().SetBadgerInMemory(true)
 
-	switch documentACPType {
+	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			var err error
-			s.DocumentACPOptions, err = setupSourceHub(s)
+			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().

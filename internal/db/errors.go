@@ -61,6 +61,8 @@ const (
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
+	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
+	errVectorIndexMissingDimensions              string = "vector index dimensions must be greater than zero"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
@@ -106,6 +108,10 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errFilteredTruncateBranchable          string = "filtered truncate is not supported for branchable collections"
+	errFilteredTruncateInTransaction       string = "filtered truncate cannot run in a transaction"
+	errTruncateMutationMustBeStandalone    string = "truncate mutation must be the only field in an operation"
+	errTruncateMutationInTransaction       string = "truncate mutation cannot run in a transaction"
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
@@ -138,6 +144,14 @@ const (
 	errIndexWithIDDoesNotExist             string = "index with id does not exist"
 	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
 	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
+	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
+	errVectorDimensionMismatch             string = "vector dimension mismatch"
+	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
+	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
+	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
+	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errVectorIndexMetricConflict           string = "field already has a vector index with a different " +
+		"distance metric; drop the existing index and create it again with the new metric"
 
 	errCreateMergeTxn               string = "failed to create merge transaction"
 	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
@@ -179,6 +193,7 @@ const (
 	errTruncateDatastoreKey       string = "failed to delete key during truncate"
 	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
 	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errUnsafeDatastoreWriter      string = "datastore does not expose unsafe writer"
 	errDeleteViewCacheItem        string = "failed to delete view cache item"
 	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"
@@ -241,6 +256,10 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
+	ErrFilteredTruncateBranchableCollection      = errors.New(errFilteredTruncateBranchable)
+	ErrFilteredTruncateInTransaction             = errors.New(errFilteredTruncateInTransaction)
+	ErrTruncateMutationMustBeStandalone          = errors.New(errTruncateMutationMustBeStandalone)
+	ErrTruncateMutationInTransaction             = errors.New(errTruncateMutationInTransaction)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                        = errors.New(errGetDocForEmbedding)
@@ -540,6 +559,16 @@ func NewErrCorruptedIndex(indexName string) error {
 	)
 }
 
+// NewErrCorruptedVectorIndex is NewErrCorruptedIndex plus the id of the document that exposed the
+// drift, so the bad record can be found.
+func NewErrCorruptedVectorIndex(indexName, docID string) error {
+	return errors.New(
+		errCorruptedIndex,
+		errors.NewKV("Name", indexName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
 // NewErrCannotCreateNewIndexWithPatch returns a new error indicating that making a new index
 // via patch is not supported.
 func NewErrCannotCreateNewIndexWithPatch(proposedName string) error {
@@ -574,6 +603,24 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 	return errors.New(
 		errUnsupportedIndexFieldType,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrUnsupportedVectorIndexFieldType returns a new error indicating that the given field kind is
+// not supported for a vector (ANN) index.
+func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
+	return errors.New(
+		errUnsupportedVectorIndexFieldType,
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request has
+// no dimensions.
+func NewErrVectorIndexMissingDimensions(fieldName string) error {
+	return errors.New(
+		errVectorIndexMissingDimensions,
+		errors.NewKV("Field", fieldName),
 	)
 }
 
@@ -1202,5 +1249,82 @@ func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
 		errIndexWithIDDoesNotExist,
 		errors.NewKV("IndexID", indexID),
 		errors.NewKV("CollectionID", collectionID),
+	)
+}
+
+// NewErrVectorIndexFieldNotFloat32Array returns a new error indicating that a vector index's
+// indexed field held a value that could not be read as a float32 array. The doc id is attached so
+// the bad record can be found during a large async backfill.
+func NewErrVectorIndexFieldNotFloat32Array(fieldName, docID string) error {
+	return errors.New(
+		errVectorIndexFieldNotFloat32Array,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorDimensionMismatch returns a new error indicating that a vector's length did not
+// match the dimensions configured on the vector index. The doc id is attached so the bad record
+// can be found during a large async backfill.
+func NewErrVectorDimensionMismatch(expected, actual int, docID string) error {
+	return errors.New(
+		errVectorDimensionMismatch,
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexRequiresSingleField returns a new error indicating that a vector index request
+// named a number of fields other than one. Only the first field would be indexed, so extra fields
+// are rejected rather than silently stored.
+func NewErrVectorIndexRequiresSingleField(fieldCount int) error {
+	return errors.New(
+		errVectorIndexRequiresSingleField,
+		errors.NewKV("FieldCount", fieldCount),
+	)
+}
+
+// NewErrVectorIndexCannotBeUnique returns a new error indicating that a vector index request asked
+// for uniqueness, which vector indexes do not support. Without this the flag is silently dropped.
+func NewErrVectorIndexCannotBeUnique(fieldName string) error {
+	return errors.New(
+		errVectorIndexCannotBeUnique,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexMetricConflict returns a new error indicating that a vector index was requested
+// with a different metric than the one already indexing that field.
+func NewErrVectorIndexMetricConflict(
+	fieldName string,
+	existing, requested client.DistanceMetric,
+) error {
+	return errors.New(
+		errVectorIndexMetricConflict,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Existing", existing),
+		errors.NewKV("Requested", requested),
+	)
+}
+
+// NewErrVectorIndexEmptyVector returns a new error indicating that a document's vector field held an
+// empty vector, which cannot be indexed. The doc id is attached so the bad record can be found.
+func NewErrVectorIndexEmptyVector(fieldName, docID string) error {
+	return errors.New(
+		errVectorIndexEmptyVector,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexParamOutOfRange returns a new error indicating that an HNSW parameter on a
+// vector index request exceeded its allowed maximum.
+func NewErrVectorIndexParamOutOfRange(param string, value, max uint32) error {
+	return errors.New(
+		errVectorIndexParamOutOfRange,
+		errors.NewKV("Param", param),
+		errors.NewKV("Value", value),
+		errors.NewKV("Max", max),
 	)
 }

@@ -26,6 +26,7 @@ var openApiSchemas = map[string]any{
 	"create_tx":                                &CreateTxResponse{},
 	"update_collection":                        &UpdateCollectionRequest{},
 	"delete_collection":                        &DeleteCollectionRequest{},
+	"truncate_collection":                      &TruncateCollectionRequest{},
 	"get_peer_info":                            &client.PeerInfo{},
 	"request_graphql":                          &GraphQLRequest{},
 	"backup_config":                            &client.BackupConfig{},
