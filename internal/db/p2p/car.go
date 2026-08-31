@@ -209,8 +209,8 @@ func peekCARRootBlock(carData []byte) (*coreblock.Block, error) {
 // importCAR extracts all blocks from a CAR byte slice and stores them in the blockstore.
 // Returns the root block for further processing.
 func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, error) {
-	// This is the path every inbound document takes, so it is where blocks actually enter
-	// the store. The generateCAR counters describe the outbound side and say nothing about it.
+	// An arrival carrying a CAR takes this path, one without it takes syncDAG. The generateCAR
+	// counters describe what this node sends, not what it receives.
 	p.statCARImports.Add(1)
 
 	reader, err := car.NewBlockReader(bytes.NewReader(carData))

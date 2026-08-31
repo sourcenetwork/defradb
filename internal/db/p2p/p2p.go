@@ -273,8 +273,8 @@ type P2P struct {
 	carFailureReason       failureReasons
 	carImportFailureReason failureReasons
 
-	// statSyncDAGCalls counts walks started, which is how often a document could not be
-	// merged from the CAR alone and needed blocks fetched.
+	// statSyncDAGCalls counts walks started. A walk fetches blocks link by link, and is taken
+	// when an arrival carries no CAR, and by document and branchable-collection sync.
 	statSyncDAGCalls     atomic.Int64
 	syncDAGFailureReason failureReasons
 

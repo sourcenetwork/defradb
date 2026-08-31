@@ -83,8 +83,8 @@ func (p *P2P) syncDAGFailure(reason string, loaded int64, err error) {
 // loadBlockLinks traverses the DAG rooted at block and syncs all linked blocks.
 // Uses an explicit stack to avoid goroutine stack overflow on deep DAGs (#2722).
 //
-// written is incremented for each block the walk pulls into the blockstore. On error the
-// returned reason names the step that failed, for the caller's counters.
+// written is incremented for each link the walk loads. On error the returned reason names the
+// step that failed, for the caller's counters.
 func (p *P2P) loadBlockLinks(
 	ctx context.Context,
 	linkSys *linking.LinkSystem,
@@ -153,8 +153,6 @@ func (p *P2P) loadBlockLinks(
 			if err != nil {
 				return reasonLoadLink, NewErrLoadLinkedBlock(err)
 			}
-			// The link system writes what it fetches, so a successful load is one more
-			// block in the store.
 			*written++
 
 			linkBlock, err := coreblock.GetFromNode(nd)
