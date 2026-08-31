@@ -215,8 +215,10 @@ func (c *Collection) NewEncryptedIndex(
 
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
+	indexType := C.CString(string(req.Type))
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(fieldName))
+	defer C.free(unsafe.Pointer(indexType))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
@@ -226,6 +228,7 @@ func (c *Collection) NewEncryptedIndex(
 		callHandle,
 		name,
 		fieldName,
+		indexType,
 		cIdentity,
 	))
 

@@ -22,9 +22,9 @@ import (
 func TestParseVectorIndex_OnField_ParsesArgsAndDefaults(t *testing.T) {
 	cases := []indexTestCase{
 		{
-			description: "vector index with explicit args",
+			description: "alg selector uses the default HNSW configuration",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+				embedding: [Float32!] @index(vector: {dimensions: 3, alg: hnsw})
 			}`,
 			targetDescriptions: []client.NewIndexRequest{
 				{
@@ -45,18 +45,22 @@ func TestParseVectorIndex_OnField_ParsesArgsAndDefaults(t *testing.T) {
 			},
 		},
 		{
-			description: "vector index with custom HNSW params",
+			description: "matching alg and HNSW config are allowed",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {M: 32, efConstruction: 200, efSearch: 100})
+				embedding: [Float32!] @index(
+					name: "embeddingIndex",
+					vector: {dimensions: 3, alg: hnsw, hnsw: {metric: EUCLIDEAN, M: 32, efConstruction: 200, efSearch: 100}}
+				)
 			}`,
 			targetDescriptions: []client.NewIndexRequest{
 				{
+					Name: "embeddingIndex",
 					Fields: []client.IndexedFieldDescription{
 						{Name: "embedding"},
 					},
 					Vector: &client.VectorIndexDescription{
 						Algorithm:  client.VectorAlgorithmHNSW,
-						Metric:     client.DistanceMetricCosine,
+						Metric:     client.DistanceMetricEuclidean,
 						Dimensions: 3,
 						HNSW: &client.HNSWParams{
 							M:              32,
@@ -79,7 +83,7 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 	require.NoError(t, err)
 
 	parseResult, err := schemaManager.ParseSDL(`type user {
-		embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+		embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 	}`)
 	require.NoError(t, err)
 	require.Len(t, parseResult, 1)
@@ -109,32 +113,67 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 	cases := []invalidIndexTestCase{
 		{
-			description: "unknown algorithm is an unknown argument (algorithm is the argument key)",
+			description: "vector is not an index kind",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, IVFFlat: {})
+				embedding: [Float32!] @index(kind: vector)
 			}`,
-			expectedErr: `Unknown argument "IVFFlat" on directive "@vectorIndex".`,
+			expectedErr: `Expected type "IndexKind", found vector`,
+		},
+		{
+			description: "unknown algorithm enum",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, alg: IVFFlat})
+			}`,
+			expectedErr: `Expected type "VectorIndexAlgorithm", found IVFFlat`,
+		},
+		{
+			description: "unknown algorithm config field",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, IVFFlat: {}})
+			}`,
+			expectedErr: `In field "IVFFlat": Unknown field.`,
 		},
 		{
 			description: "unsupported metric inside the HNSW config",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: MANHATTAN})
+				embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: MANHATTAN}})
 			}`,
 			expectedErr: `Expected type "VectorDistanceMetric", found MANHATTAN`,
 		},
 		{
 			description: "unknown top-level argument",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(unknown: "something", dimensions: 3)
+				embedding: [Float32!] @index(unknown: "something", vector: {dimensions: 3})
 			}`,
-			expectedErr: `Unknown argument "unknown" on directive "@vectorIndex".`,
+			expectedErr: `Unknown argument "unknown" on directive "@index".`,
+		},
+		{
+			description: "unknown field inside the vector config",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, unknown: 1})
+			}`,
+			expectedErr: `In field "unknown": Unknown field.`,
 		},
 		{
 			description: "unknown field inside the HNSW config",
 			sdl: `type user {
-				embedding: [Float32!] @vectorIndex(dimensions: 3, HNSW: {unknown: 1})
+				embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {unknown: 1}})
 			}`,
 			expectedErr: `In field "unknown": Unknown field.`,
+		},
+		{
+			description: "vector and legacy ordered configs are competing kind selectors",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {}, unique: false)
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "vector config is invalid on an object directive",
+			sdl: `type user @index(vector: {dimensions: 3, alg: hnsw}) {
+				embedding: [Float32!]
+			}`,
+			expectedErr: errIndexInvalidArgument,
 		},
 	}
 

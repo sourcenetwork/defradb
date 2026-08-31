@@ -164,7 +164,7 @@ enum CRDTType {
     Positive Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pcounter
@@ -172,7 +172,7 @@ enum CRDTType {
     Positive-Negative Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pncounter
@@ -798,6 +798,11 @@ input IDOperatorBlock {
 input IndexField {
     direction: Ordering
     field: String
+}
+
+enum IndexKind {
+    "ordered scalar index"
+    ordered
 }
 
 "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1. "
@@ -1712,6 +1717,26 @@ input NotNullStringOperatorBlock {
     _nlike: String
 }
 
+"Configures an ordered index over one or more scalar fields."
+input OrderedIndexConfig {
+    """
+    Sets the default index ordering for all fields.
+
+    If a field in the includes list does not specify a direction
+    the default ordering from this value will be used instead.
+    """
+    direction: Ordering
+    """
+    Sets the fields the index is added on.
+
+    When used on a field definition and the field is not in the includes list
+    it will be implicitly added as the first entry.
+    """
+    includes: [IndexField]
+    "Makes the index unique."
+    unique: Boolean
+}
+
 enum Ordering {
     """
     
@@ -2552,6 +2577,21 @@ enum VectorDistanceMetric {
     EUCLIDEAN
 }
 
+enum VectorIndexAlgorithm {
+    "HNSW (Hierarchical Navigable Small World)"
+    hnsw
+}
+
+"Configures an approximate-nearest-neighbour index over a vector field."
+input VectorIndexConfig {
+    "Selects the vector index algorithm using its default configuration."
+    alg: VectorIndexAlgorithm
+    "Vector dimensions; must be greater than zero."
+    dimensions: Int
+    "Configures the HNSW algorithm."
+    hnsw: HNSWIndexConfig
+}
+
 """
 A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document. 
 
@@ -2856,7 +2896,7 @@ directive @explain(
 directive @index(
     """
     Sets the default index ordering for all fields.
-    			
+
     If a field in the includes list does not specify a direction
     the default ordering from this value will be used instead.
     """
@@ -2868,10 +2908,16 @@ directive @index(
     it will be implicitly added as the first entry.
     """
     includes: [IndexField]
+    "Selects an index kind using its default configuration."
+    kind: IndexKind
     "Sets the index name."
     name: String
+    "Configures an ordered index."
+    ordered: OrderedIndexConfig
     "Makes the index unique."
     unique: Boolean
+    "Configures a vector index."
+    vector: VectorIndexConfig
 ) on OBJECT | FIELD_DEFINITION
 
 """
@@ -2909,12 +2955,4 @@ directive @relation(
 
     """
     name: String
-) on FIELD_DEFINITION
-
-"@vectorIndex builds an approximate-nearest-neighbour index over a vector field."
-directive @vectorIndex(
-    "Build the index with the HNSW algorithm using these parameters."
-    HNSW: HNSWIndexConfig
-    "Vector dimensions; required unless inferable from an @embedding."
-    dimensions: Int
 ) on FIELD_DEFINITION
