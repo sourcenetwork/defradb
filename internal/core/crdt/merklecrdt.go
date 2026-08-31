@@ -27,6 +27,10 @@ var FieldCRDTs = []FieldValueCRDT{
 	NewCounter(false),
 }
 
+// TryGetFieldCRDT returns the cached instance of the given crdt.
+//
+// A `NONE_CRDT` will return `nil`.  If nothing is found, `false` will
+// be returned, else `true`.
 func TryGetFieldCRDT(ct client.CType) (FieldValueCRDT, bool) {
 	if ct == client.NONE_CRDT {
 		return nil, true
