@@ -78,6 +78,7 @@ var (
 	ErrCollectionNotBranchable     = errors.New("collection is not branchable")
 	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
 	ErrBlockCIDMismatch            = errors.New("pushed block does not match the advertised CID")
+	ErrEmptyPushLog                = errors.New("push log request carries no document")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

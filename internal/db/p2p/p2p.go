@@ -974,6 +974,11 @@ func (p *P2P) processPushlogRequest(
 		return nil
 	}
 
+	// A request with no CID offered no document, so refusing it is not a loss.
+	if len(req.CID) == 0 {
+		return ErrEmptyPushLog
+	}
+
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
 		p.dropDoc("invalidCID")

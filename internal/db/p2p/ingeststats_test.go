@@ -140,6 +140,16 @@ func TestSingleDocumentOutcomesAreCounted(t *testing.T) {
 		require.Equal(t, int64(1), p.statSkippedDocs.Load())
 		require.Equal(t, int64(0), p.statDroppedDocs.Load(), "a held document is not a loss")
 	})
+
+	// Counting a request that offered no document as a drop would let a peer move the loss count.
+	t.Run("a request carrying no document is neither a drop nor a skip", func(t *testing.T) {
+		p := &P2P{}
+		req := &protocol.PushLogRequest{CollectionID: "col"}
+
+		require.ErrorIs(t, p.processPushlogRequest(context.Background(), req, false), ErrEmptyPushLog)
+		require.Equal(t, int64(0), p.statDroppedDocs.Load())
+		require.Equal(t, int64(0), p.statSkippedDocs.Load())
+	})
 }
 
 // emptyIPLDHost satisfies Host for the doc-sync path, backed by a store holding no blocks
