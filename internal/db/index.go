@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -448,7 +449,17 @@ func saveUniqueKey(
 			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
 			}
-			return newUniqueIndexError(ctx, doc, fieldsDescs, existing)
+			// The holder stays on this node: the error is rendered to whoever asked for the
+			// write, and on the merge path that is the peer that pushed it. An empty holder
+			// means the entry could not be resolved to a document.
+			var heldBy string
+			if shortID, decodeErr := keys.DecodeDocShortID(existing); decodeErr == nil {
+				heldBy, _, _ = id.GetDocID(ctx, shortID)
+			}
+			log.InfoContext(ctx, "unique index violation",
+				corelog.String("docID", doc.ID().String()),
+				corelog.String("heldBy", heldBy))
+			return newUniqueIndexError(doc, fieldsDescs)
 		}
 	}
 
@@ -458,33 +469,8 @@ func saveUniqueKey(
 	return nil
 }
 
-// incumbentDocID resolves the document already holding a unique index entry, from the
-// short ID the entry stores. Returns an empty string if it cannot be resolved, since this
-// only decorates an error that is being returned either way.
-func incumbentDocID(ctx context.Context, encodedShortID []byte) string {
-	shortID, err := keys.DecodeDocShortID(encodedShortID)
-	if err != nil {
-		return ""
-	}
-	docID, found, err := id.GetDocID(ctx, shortID)
-	if err != nil || !found {
-		return ""
-	}
-	return docID
-}
-
-func newUniqueIndexError(
-	ctx context.Context,
-	doc *client.Document,
-	fieldsDescs []client.CollectionFieldDescription,
-	existing []byte,
-) error {
-	kvs := make([]errors.KV, 0, len(fieldsDescs)+1)
-	// Naming the document that already holds the value is what makes the two comparable;
-	// without it the error only says which one lost.
-	if incumbent := incumbentDocID(ctx, existing); incumbent != "" {
-		kvs = append(kvs, errors.NewKV("HeldBy", incumbent))
-	}
+func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
+	kvs := make([]errors.KV, 0, len(fieldsDescs))
 	for iter := range fieldsDescs {
 		fieldVal, err := doc.TryGetValue(fieldsDescs[iter].Name)
 		var val any

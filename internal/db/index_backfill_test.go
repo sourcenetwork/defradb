@@ -371,10 +371,10 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 		"expected ErrTxnConflict but got: %v", commitErr)
 }
 
-// A unique violation names the document that lost. Naming the one that already holds the
-// value is what lets the two be compared, which is the only way to tell a genuine duplicate
-// from two documents that disagree on a field they do not share an index on.
-func TestSaveUniqueKey_ErrorNamesTheDocumentHoldingTheValue(t *testing.T) {
+// The document already holding a contested value is one the writer never named and, under
+// document access control, may not be allowed to read. The error goes back to the writer,
+// and on the merge path to the peer that pushed the log, so it names only the writer.
+func TestSaveUniqueKey_DoesNotNameTheDocumentHoldingTheValue(t *testing.T) {
 	ctx := context.Background()
 
 	db, err := newBadgerDB(ctx)
@@ -392,16 +392,17 @@ func TestSaveUniqueKey_ErrorNamesTheDocumentHoldingTheValue(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	incumbent, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":1}`), col.Version())
+	holder, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":1}`), col.Version())
 	require.NoError(t, err)
-	require.NoError(t, col.AddDocument(ctx, incumbent))
+	require.NoError(t, col.AddDocument(ctx, holder))
 
 	// Same indexed value, different age, so a different document that cannot have the slot.
 	duplicate, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":2}`), col.Version())
 	require.NoError(t, err)
-	require.NotEqual(t, incumbent.ID().String(), duplicate.ID().String())
+	require.NotEqual(t, holder.ID().String(), duplicate.ID().String())
 
 	err = col.AddDocument(ctx, duplicate)
-	require.ErrorContains(t, err, "violates unique index")
-	require.ErrorContains(t, err, incumbent.ID().String())
+	require.ErrorIs(t, err, ErrCanNotIndexNonUniqueFields)
+	require.Contains(t, err.Error(), duplicate.ID().String(), "the writer is named")
+	require.NotContains(t, err.Error(), holder.ID().String(), "the holder is not")
 }
