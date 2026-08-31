@@ -32,6 +32,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	lwwDelta, err := lww.Set(
 		ctx,
 		"collection-version",
+		//nolint:staticcheck
 		NewDocField("name", client.NewFieldValue(client.LWW_REGISTER, client.NewNormalString("Alice"))),
 		1,
 	)
@@ -42,6 +43,7 @@ func TestDocumentDeltasDoNotEncodeDocID(t *testing.T) {
 	counterDelta, err := counter.Increment(
 		ctx,
 		"collection-version",
+		//nolint:staticcheck
 		NewDocField("age", client.NewFieldValue(client.P_COUNTER, client.NewNormalInt(1))),
 		false,
 		1,
