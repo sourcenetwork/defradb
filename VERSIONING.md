@@ -24,7 +24,7 @@ We will not make significant changes to the structure of errors returned by any 
 
 ## The C embedded client
 
-We made a mistake when designing many of the function signatures that form the [C client](./cbindings).  Many of the functions have parameters that do not pair up with their Go equivalents - they take individual shallow parameters, where the Go function takes an [options](./client/options) struct.
+We made a mistake when designing many of the function signatures that form the [C client](./cbindings).  Many of the functions have parameters that do not pair up with their Go equivalents - they take individual formal parameters, where the Go function takes an [options](./client/options) struct.
 
 This creates significant friction for us when introducing new function options, as adding a new parameter to a semver-protected function requires a `MAJOR` version increment.
 
