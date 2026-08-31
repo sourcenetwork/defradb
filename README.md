@@ -40,6 +40,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Embedded DefraDB](#embedded-defradb)
+   * [Versioning](#versioning)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -548,6 +549,10 @@ make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=21
 The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
 
 For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
+
+## Versioning
+
+Please refer to our [versioning policy](./VERSIONING.md).
 
 ## Community
 
