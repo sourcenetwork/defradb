@@ -51,3 +51,15 @@ func TestDropReasonsDrainResets(t *testing.T) {
 	require.Len(t, p.docDropReason.drain(), 1)
 	require.Empty(t, p.docDropReason.drain(), "a drained reason set starts the next interval empty")
 }
+
+// Drops and skips are reported on separate lines, so one report has to drain both maps.
+func TestReportDrainsDropsAndSkips(t *testing.T) {
+	p := &P2P{}
+	p.dropDoc("syncDAG")
+	p.skipDoc("alreadyMerged")
+
+	p.report()
+
+	require.Empty(t, p.docDropReason.drain(), "the drops were reported")
+	require.Empty(t, p.docSkipReason.drain(), "the skips were reported")
+}

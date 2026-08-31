@@ -813,42 +813,47 @@ func (p *P2P) reportStats() {
 		case <-p.ctx.Done():
 			return
 		case <-ticker.C:
-			droppedOverBudget := p.statDroppedBudget.Swap(0)
-			droppedQueueFull := p.statDroppedFull.Swap(0)
-			log.Info("p2p stats",
-				corelog.Int("queueDepth", len(p.msgQueue)),
-				corelog.Int64("queueBytes", p.msgQueueBytes.Load()),
-				corelog.Int64("droppedOverBudget", droppedOverBudget),
-				corelog.Int64("droppedQueueFull", droppedQueueFull),
-				corelog.Int64("batches", p.statBatches.Swap(0)),
-				corelog.Int64("batchesWithDrops", p.statBatchesWithDrops.Swap(0)),
-				corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
-				corelog.Int64("docsDropped", p.statDroppedDocs.Swap(0)),
-				corelog.Int64("docsSkipped", p.statSkippedDocs.Swap(0)),
-				corelog.Int64("msgsIn", p.statMsgsIn.Swap(0)),
-				corelog.Int64("carImports", p.statCARImports.Swap(0)),
-				corelog.Int64("carImportFailed", p.statCARImportFailed.Swap(0)),
-				corelog.Int64("carImportOrphanBlocks", p.statCARImportOrphanBlocks.Swap(0)),
-				corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
-				corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
-				corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
-				corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
-			)
-			// A drop at the door is data this node will not hold. The stats line above is at
-			// info, so a node running at error level sees only this.
-			if droppedOverBudget != 0 || droppedQueueFull != 0 {
-				log.Error("dropped inbound pubsub messages",
-					corelog.Int64("overBudget", droppedOverBudget),
-					corelog.Int64("queueFull", droppedQueueFull))
-			}
-
-			reportFailureReasons("car failures", p.carFailureReason.drain())
-			reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
-			reportFailureReasons("document drops", p.docDropReason.drain())
-			reportFailureReasons("document skips", p.docSkipReason.drain())
-			reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
+			p.report()
 		}
 	}
+}
+
+// report logs one interval's counters and resets them.
+func (p *P2P) report() {
+	droppedOverBudget := p.statDroppedBudget.Swap(0)
+	droppedQueueFull := p.statDroppedFull.Swap(0)
+	log.Info("p2p stats",
+		corelog.Int("queueDepth", len(p.msgQueue)),
+		corelog.Int64("queueBytes", p.msgQueueBytes.Load()),
+		corelog.Int64("droppedOverBudget", droppedOverBudget),
+		corelog.Int64("droppedQueueFull", droppedQueueFull),
+		corelog.Int64("batches", p.statBatches.Swap(0)),
+		corelog.Int64("batchesWithDrops", p.statBatchesWithDrops.Swap(0)),
+		corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
+		corelog.Int64("docsDropped", p.statDroppedDocs.Swap(0)),
+		corelog.Int64("docsSkipped", p.statSkippedDocs.Swap(0)),
+		corelog.Int64("msgsIn", p.statMsgsIn.Swap(0)),
+		corelog.Int64("carImports", p.statCARImports.Swap(0)),
+		corelog.Int64("carImportFailed", p.statCARImportFailed.Swap(0)),
+		corelog.Int64("carImportOrphanBlocks", p.statCARImportOrphanBlocks.Swap(0)),
+		corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
+		corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
+		corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
+		corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
+	)
+	// A drop at the door is data this node will not hold. The stats line above is at
+	// info, so a node running at error level sees only this.
+	if droppedOverBudget != 0 || droppedQueueFull != 0 {
+		log.Error("dropped inbound pubsub messages",
+			corelog.Int64("overBudget", droppedOverBudget),
+			corelog.Int64("queueFull", droppedQueueFull))
+	}
+
+	reportFailureReasons("car failures", p.carFailureReason.drain())
+	reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
+	reportFailureReasons("document drops", p.docDropReason.drain())
+	reportFailureReasons("document skips", p.docSkipReason.drain())
+	reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
 }
 
 // reportFailureReasons logs one line naming every reason that occurred in the interval,
