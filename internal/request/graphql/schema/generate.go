@@ -285,9 +285,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 	}
 
-	// final resolve
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
+	if err := g.manager.FinalizeTypes(); err != nil {
 		return nil, err
 	}
 
@@ -602,71 +600,65 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 			return NewErrMutationInputTypeAlreadyExist(mutationInputName)
 		}
 
-		mutationObjConf := gql.InputObjectConfig{
-			Name: mutationInputName,
-		}
-
-		// Wrap mutation input object definition in a thunk so we can
-		// handle any embedded object which is defined
-		// at a future point in time.
-		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
-			fields := make(gql.InputObjectConfigFieldMap)
-
-			for _, field := range collection.Fields {
-				if field.Kind == client.FieldKind_DocID {
-					if field.Name == request.DocIDFieldName {
-						// This is the system _docID field, users cannot set its value
-						continue
-					}
-					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
-					if isRelationID {
-						ofd, exists := collection.GetFieldByName(objFieldName)
-						if exists && !ofd.IsPrimary {
-							// We do not allow the mutation of relations from the secondary side,
-							// they must not be included in the input type(s)
-							continue
-						}
-					}
-				} else if field.Kind.IsObject() && !field.IsPrimary {
-					// We do not allow the mutation of relations from the secondary side,
-					// they must not be included in the input type(s)
+		fields := make(gql.InputObjectConfigFieldMap)
+		for _, field := range collection.Fields {
+			if field.Kind == client.FieldKind_DocID {
+				if field.Name == request.DocIDFieldName {
+					// This is the system _docID field, users cannot set its value
 					continue
 				}
-
-				var ttype gql.Type
-				if field.Kind.IsObject() {
-					if field.Kind.IsArray() {
-						ttype = gql.NewList(gql.ID)
-					} else {
-						ttype = gql.ID
-					}
-				} else {
-					var ok bool
-					ttype, ok = fieldKindToGQLType[field.Kind]
-					if !ok {
-						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
-					}
-					// Mutation inputs must be nullable even for non-nillable fields so
-					// that application code handles null validation and produces
-					// consistent error messages regardless of mutation type.
-					if nonNull, isNonNull := ttype.(*gql.NonNull); isNonNull {
-						ttype = nonNull.OfType
-					} else if list, isList := ttype.(*gql.List); isList {
-						if nonNull, isNonNull := list.OfType.(*gql.NonNull); isNonNull {
-							ttype = gql.NewList(nonNull.OfType)
-						}
+				objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
+				if isRelationID {
+					ofd, exists := collection.GetFieldByName(objFieldName)
+					if exists && !ofd.IsPrimary {
+						// We do not allow the mutation of relations from the secondary side,
+						// they must not be included in the input type(s)
+						continue
 					}
 				}
+			} else if field.Kind.IsObject() && !field.IsPrimary {
+				// We do not allow the mutation of relations from the secondary side,
+				// they must not be included in the input type(s)
+				continue
+			}
 
-				fields[field.Name] = &gql.InputObjectFieldConfig{
-					Type: ttype,
+			var ttype gql.Type
+			if field.Kind.IsObject() {
+				if field.Kind.IsArray() {
+					ttype = gql.NewList(gql.ID)
+				} else {
+					ttype = gql.ID
+				}
+			} else {
+				var ok bool
+				ttype, ok = fieldKindToGQLType[field.Kind]
+				if !ok {
+					return NewErrTypeNotFound(fmt.Sprint(field.Kind))
+				}
+				// Mutation inputs must be nullable even for non-nillable fields so
+				// that application code handles null validation and produces
+				// consistent error messages regardless of mutation type.
+				if nonNull, isNonNull := ttype.(*gql.NonNull); isNonNull {
+					ttype = nonNull.OfType
+				} else if list, isList := ttype.(*gql.List); isList {
+					if nonNull, isNonNull := list.OfType.(*gql.NonNull); isNonNull {
+						ttype = gql.NewList(nonNull.OfType)
+					}
 				}
 			}
 
-			return fields, nil
-		})
+			fields[field.Name] = &gql.InputObjectFieldConfig{
+				Type: ttype,
+			}
+		}
 
-		mutationObj := gql.NewInputObject(mutationObjConf)
+		if len(fields) == 0 {
+			continue
+		}
+		mutationObj := gql.NewInputObject(gql.InputObjectConfig{
+			Name:   mutationInputName,
+			Fields: fields,
+		})
 		g.manager.schema.TypeMap()[mutationObj.Name()] = mutationObj
 	}
 
@@ -1234,13 +1226,30 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, NewErrTypeNotFound(filterInputName)
 	}
 
+	delete := &gql.Field{
+		Name:        "delete_" + obj.Name(),
+		Description: deleteDocumentsDescription,
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
+			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
+		},
+	}
+
+	truncate := &gql.Field{
+		Name:        "truncate_" + obj.Name(),
+		Description: "Remove all or matching documents from this node. Returns true when complete.",
+		Type:        gql.NewNonNull(gql.Boolean),
+		Args: gql.FieldConfigArgument{
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
+		},
+	}
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
 	if !ok {
-		return nil, NewErrTypeNotFound(mutationInputName)
+		return []*gql.Field{delete, truncate}, nil
 	}
 
 	explicitUserFieldsEnum := g.genUserExplicitTypeFieldsEnum(obj)
-
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
 	add := &gql.Field{
@@ -1267,16 +1276,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	delete := &gql.Field{
-		Name:        "delete_" + obj.Name(),
-		Description: deleteDocumentsDescription,
-		Type:        gql.NewList(obj),
-		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
-			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
-		},
-	}
-
 	upsert := &gql.Field{
 		Name:        "upsert_" + obj.Name(),
 		Description: upsertDocumentDescription,
@@ -1285,15 +1284,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 			request.FilterClause: schemaTypes.NewArgConfig(gql.NewNonNull(filterInput), upsertFilterArgDescription),
 			request.AddInput:     schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Add field values"),
 			request.UpdateInput:  schemaTypes.NewArgConfig(gql.NewNonNull(mutationInput), "Update field values"),
-		},
-	}
-
-	truncate := &gql.Field{
-		Name:        "truncate_" + obj.Name(),
-		Description: "Remove all or matching documents from this node. Returns true when complete.",
-		Type:        gql.NewNonNull(gql.Boolean),
-		Args: gql.FieldConfigArgument{
-			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
 		},
 	}
 

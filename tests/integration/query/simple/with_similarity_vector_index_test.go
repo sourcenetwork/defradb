@@ -19,7 +19,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// A _similarity + order DESC + limit query on a ready @vectorIndex returns the k nearest documents
+// A _similarity + order DESC + limit query on a ready @index(vector: {...}) returns the k nearest documents
 // (nearest to [1,0,0] is "x", then "xy") and reads only those k, not the whole collection. The
 // explain variant asserts two doc fetches (a full scan would read four).
 func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
@@ -28,7 +28,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReturnsKNearest(t *testing.T) {
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
@@ -73,7 +73,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ReflectsUpdatedVector(t *testin
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			// a sits off the query axis; b starts even further off. After the update b lands exactly on
@@ -114,7 +114,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_ExcludesDeletedDoc(t *testing.T
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			// x is nearest to the query [1,0,0], xy is second nearest.
@@ -152,7 +152,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_IsMagnitudeInvariant(t *testing
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "unit", "vector": []float32{1, 0, 0}}},
@@ -194,7 +194,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_AscendingOrderFullScans(t *test
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 		}, append(docs,
@@ -238,7 +238,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_RespectsOffset(t *testing.T) {
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
@@ -273,7 +273,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_WrongLengthQueryErrors(t *testi
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
@@ -302,7 +302,7 @@ func TestQuerySimple_WithSimilarityOnVectorIndex_NoOrderDoesNotUseIndex(t *testi
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},

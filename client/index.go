@@ -82,9 +82,9 @@ type HNSWParams struct {
 	EfSearch uint32
 }
 
-// Default HNSW parameters, applied when the corresponding @vectorIndex directive argument is
-// omitted. These are the single source of truth: both the GraphQL directive definition and the
-// directive parser reference them, so the documented defaults cannot drift apart.
+// Default HNSW parameters, applied when the corresponding @index vector configuration is omitted.
+// These are the single source of truth: both the GraphQL directive definition and parser reference
+// them, so the documented defaults cannot drift apart.
 const (
 	// DefaultHNSWM is the default maximum number of connections per node. Higher values improve
 	// recall at the cost of memory and build time.
@@ -121,8 +121,7 @@ type VectorIndexDescription struct {
 	Algorithm VectorAlgorithm
 	// Metric is the distance metric used to compare vectors.
 	Metric DistanceMetric
-	// Dimensions is the length of the vectors being indexed. It must be set, except on an @embedding
-	// field, where the embedding model fixes the length and Dimensions may be left 0.
+	// Dimensions is the length of the vectors being indexed. It must be greater than zero.
 	Dimensions uint32
 	// HNSW holds HNSW-specific parameters. Non-nil when Algorithm == VectorAlgorithmHNSW.
 	HNSW *HNSWParams

@@ -62,7 +62,7 @@ const (
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
 	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
-	errVectorIndexMissingDimensions              string = "vector index requires dimensions unless field is an embedding"
+	errVectorIndexMissingDimensions              string = "vector index dimensions must be greater than zero"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
@@ -615,8 +615,8 @@ func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
 	)
 }
 
-// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request is
-// missing its dimensions, and dimensions could not be inferred from a generated embedding.
+// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request has
+// no dimensions.
 func NewErrVectorIndexMissingDimensions(fieldName string) error {
 	return errors.New(
 		errVectorIndexMissingDimensions,

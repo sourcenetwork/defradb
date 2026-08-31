@@ -44,8 +44,8 @@ func TestVectorIndex_QueryOnAnyMetric_ShouldUseIndexAndScoreByItsMetric(t *testi
 				&action.AddCollection{
 					SDL: `type User {
 						name: String
-						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` +
-						testCase.sdlMetric + `})
+						vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: ` +
+						testCase.sdlMetric + `}})
 					}`,
 				},
 				&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
@@ -141,8 +141,8 @@ func TestVectorIndex_SameQueryUsingIndexAndFullScan_ReturnsSameResults(t *testin
 				&action.AddCollection{
 					SDL: `type User {
 						name: String
-						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: ` +
-						testCase.sdlMetric + `})
+						vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: ` +
+						testCase.sdlMetric + `}})
 					}`,
 				},
 				&action.AddDoc{DocMap: map[string]any{"name": "short", "vector": vectors["short"]}},
@@ -188,7 +188,7 @@ func TestVectorIndex_SecondIndexOnFieldWithDifferentMetric_IsRejected(t *testing
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.NewIndex{
@@ -215,7 +215,7 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 			&action.AddCollection{
 				SDL: `type User {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			&action.AddDoc{DocMap: map[string]any{"name": "x", "vector": []float32{1, 0, 0}}},
