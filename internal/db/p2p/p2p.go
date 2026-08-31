@@ -264,8 +264,9 @@ type P2P struct {
 	statCARImportFailed       atomic.Int64
 	statCARImportOrphanBlocks atomic.Int64
 
-	// CAR generation counters. A CAR that carries only the root block gives its receiver
-	// nothing to import, so the receiver falls back to a per-link BitSwap walk.
+	// CAR generation counters. A failed generation is not a lost document: the block is sent
+	// either way, so the receiver walks the DAG instead. statCARMissing counts links the build
+	// could not follow in a CAR it returned.
 	statCARBuilt           atomic.Int64
 	statCARFailed          atomic.Int64
 	statCARMissing         atomic.Int64

@@ -65,12 +65,13 @@ func (p *P2P) carImportFailure(reason string, written int64, err error) error {
 	return err
 }
 
-// buildCAR walks the DAG rooted at rootBlock and serialises every block it reaches.
+// buildCAR serialises the root block and the blocks it links, following Links only. Heads are
+// not followed, so a CAR carries one commit and none of the document's history.
 //
-// The walk skips links it cannot load rather than failing, so a CAR can be short of the
-// full DAG. missingLinks counts those skips and a CAR holding only the root block is
-// counted separately: its receiver has nothing to import and falls back to a per-link
-// BitSwap walk.
+// A link that will not load is not followed, and if its block cannot be read either the whole
+// CAR is abandoned: a receiver given a CAR imports it instead of walking the DAG, so a block
+// absent from the CAR is one it never fetches. missingLinks is counted only for a CAR the
+// build returns.
 func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte, error) {
 	txn := p.db.Rootstore().NewTxn(true)
 	defer txn.Discard()
@@ -89,8 +90,6 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 	if err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs, &missingLinks); err != nil {
 		return nil, p.carFailure(reasonWalk, err)
 	}
-
-	p.statCARMissing.Add(missingLinks)
 
 	var buf bytes.Buffer
 	carWriter, err := storage.NewWritable(&buf, []cid.Cid{rootLink.Cid}, car.WriteAsCarV1(true))
@@ -123,11 +122,13 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 		}
 	}
 
+	p.statCARMissing.Add(missingLinks)
 	return buf.Bytes(), nil
 }
 
-// collectDAGBlocks recursively collects all block CIDs in the DAG by following Links.
-// missing is incremented for every link that could not be loaded and was skipped.
+// collectDAGBlocks recursively collects block CIDs by following Links.
+// missing is incremented for every link whose block could not be loaded. The CID stays in the
+// write set either way, so the block is still read when the CAR is written.
 func (p *P2P) collectDAGBlocks(
 	ctx context.Context,
 	linkSystem *linking.LinkSystem,
@@ -147,8 +148,9 @@ func (p *P2P) collectDAGBlocks(
 		coreblock.BlockSchemaPrototype,
 	)
 	if err != nil {
-		// Block may have been pruned locally; it was already pushed to replicators before
-		// pruning so they already hold it. Skip rather than aborting the CAR.
+		// A block that will not load leaves its links unknown, but its CID is already in the
+		// write set, so the write loop still has to read it: if it cannot, the whole CAR is
+		// abandoned.
 		*missing++
 		return nil
 	}
