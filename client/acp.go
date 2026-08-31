@@ -43,19 +43,19 @@ type DeleteActorRelationshipResult struct {
 	RecordFound bool
 }
 
-// NACStatus represents the current state/status of the Node ACP system.
+// NACStatus represents the current state of the Local NAC system.
 type NACStatus int
 
 const (
-	// NACNotConfigured indicates that NAC system is in a clean state, meaning it has not been started/configured yet.
+	// NACNotConfigured indicates that Local NAC has not been configured yet.
 	//
 	// Note: Upon purge or reset, NAC will be set back to this state as well.
 	NACNotConfigured NACStatus = iota
 
-	// NACEnabled indicates that NAC system was started and is currently enabled.
+	// NACEnabled indicates that Local NAC was started and is currently enabled.
 	NACEnabled
 
-	// NACDisabledTemporarily indicates that NAC system was started but is temporarily disabled.
+	// NACDisabledTemporarily indicates that Local NAC was started but is temporarily disabled.
 	NACDisabledTemporarily
 )
 
@@ -72,7 +72,7 @@ func (status NACStatus) String() string {
 	}
 }
 
-// NACStatusResult wraps the result of current node acp status.
+// NACStatusResult wraps the current Local NAC status.
 type NACStatusResult struct {
 	Status string
 }

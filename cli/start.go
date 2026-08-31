@@ -368,7 +368,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		&enableNAC,
 		"node-acp-enable",
 		false,
-		"Enable the node access control system.",
+		"Enable the Local Node Access Control (NAC) system.",
 	)
 	cmd.PersistentFlags().String(
 		"document-acp-type",

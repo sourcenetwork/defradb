@@ -87,7 +87,7 @@ type NodeOptions struct {
 	Store NodeStoreOptions
 	// DocumentACP contains document ACP configuration.
 	DocumentACP NodeDocumentACPOptions
-	// NodeACP contains node ACP configuration.
+	// NodeACP contains Local NAC configuration.
 	NodeACP NodeACPOptions
 	// DB contains database configuration.
 	DB NodeDBOptions
@@ -167,11 +167,11 @@ type NodeDocumentACPOptions struct {
 	RemoteDACCometRPCAddress string
 }
 
-// NodeACPOptions contains node ACP configuration values.
+// NodeACPOptions contains Local NAC configuration values.
 type NodeACPOptions struct {
-	// IsEnabled specifies whether node ACP is enabled.
+	// IsEnabled specifies whether Local NAC is enabled.
 	IsEnabled bool
-	// Path is the filesystem path for the node ACP system.
+	// Path is the filesystem path for the Local NAC system.
 	Path string
 }
 
@@ -700,19 +700,19 @@ func NodeACP() *NodeACPOptionsBuilder {
 	return &NodeACPOptionsBuilder{}
 }
 
-// SetEnabled sets whether node ACP is enabled.
+// SetEnabled sets whether Local NAC is enabled.
 func (sb *NodeACPOptionsBuilder) SetEnabled(enabled bool) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { opts.IsEnabled = enabled })
 	return sb
 }
 
-// SetPath sets the node ACP system path.
+// SetPath sets the Local NAC system path.
 func (sb *NodeACPOptionsBuilder) SetPath(path string) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { opts.Path = path })
 	return sb
 }
 
-// SetAll sets all node ACP options from a plain data struct.
+// SetAll sets all Local NAC options from a plain data struct.
 func (sb *NodeACPOptionsBuilder) SetAll(nacOpts NodeACPOptions) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { *opts = nacOpts })
 	return sb
