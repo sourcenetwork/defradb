@@ -143,7 +143,7 @@ func (c *Collection) NewEncryptedIndex(
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "NewEncryptedIndexNative",
-		newArgs().argStr(c.def.Name).argStr(req.FieldName).argLong(idH))
+		newArgs().argStr(c.def.Name).argStr(req.FieldName).argStr(string(req.Type)).argLong(idH))
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}

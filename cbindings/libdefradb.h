@@ -51,7 +51,7 @@ extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted, Co
 extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, char* updaterStr, CollectionOptions opts, uintptr_t identityPtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identityPtr);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identityPtr);
+extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, char* indexType, uintptr_t identityPtr);
 extern Result ExportIdentityPrivateKey(uintptr_t identityPtr);
 extern void FreeIdentity(uintptr_t identityPtr);
 extern NewIdentityResult NewIdentity(char* keyType);

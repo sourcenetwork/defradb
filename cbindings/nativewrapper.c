@@ -800,13 +800,17 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_NewEncryptedIndexNative(
     jlong nodePtr,
     jstring collectionNameStr,
     jstring fieldNameStr,
+    jstring indexTypeStr,
     jlong identityPtr
 ) {
     const char* collectionNameC = jstring_to_utf8(env, collectionNameStr);
     const char* fieldNameC = jstring_to_utf8(env, fieldNameStr);
-    Result res = NewEncryptedIndex((uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (uintptr_t)identityPtr);
+    const char* indexTypeC = jstring_to_utf8(env, indexTypeStr);
+    Result res = NewEncryptedIndex(
+        (uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (char*)indexTypeC, (uintptr_t)identityPtr);
     free((void*)collectionNameC);
     free((void*)fieldNameC);
+    free((void*)indexTypeC);
     return returnDefraResult(env, res);
 }
 
@@ -1827,13 +1831,17 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_NewEncryptedIndexNa
     jlong nodePtr,
     jstring collectionNameStr,
     jstring fieldNameStr,
+    jstring indexTypeStr,
     jlong identityPtr
 ) {
     const char* collectionNameC = jstring_to_utf8(env, collectionNameStr);
     const char* fieldNameC = jstring_to_utf8(env, fieldNameStr);
-    Result res = NewEncryptedIndex((uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (uintptr_t)identityPtr);
+    const char* indexTypeC = jstring_to_utf8(env, indexTypeStr);
+    Result res = NewEncryptedIndex(
+        (uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (char*)indexTypeC, (uintptr_t)identityPtr);
     free((void*)collectionNameC);
     free((void*)fieldNameC);
+    free((void*)indexTypeC);
     return returnDefraResult(env, res);
 }
 
@@ -2027,13 +2035,17 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraCollection_NewEncryptedIndexNat
     jlong nodePtr,
     jstring collectionNameStr,
     jstring fieldNameStr,
+    jstring indexTypeStr,
     jlong identityPtr
 ) {
     const char* collectionNameC = jstring_to_utf8(env, collectionNameStr);
     const char* fieldNameC = jstring_to_utf8(env, fieldNameStr);
-    Result res = NewEncryptedIndex((uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (uintptr_t)identityPtr);
+    const char* indexTypeC = jstring_to_utf8(env, indexTypeStr);
+    Result res = NewEncryptedIndex(
+        (uintptr_t)nodePtr, (char*)collectionNameC, (char*)fieldNameC, (char*)indexTypeC, (uintptr_t)identityPtr);
     free((void*)collectionNameC);
     free((void*)fieldNameC);
+    free((void*)indexTypeC);
     return returnDefraResult(env, res);
 }
 
