@@ -13,12 +13,16 @@ package p2p
 import (
 	"context"
 	"strconv"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
@@ -190,4 +194,104 @@ func TestDocSyncOutcomesAreCounted(t *testing.T) {
 		require.Equal(t, int64(1), p.statDroppedDocs.Load(), "a document that could not be fetched is a loss")
 		require.Equal(t, int64(0), p.statMergedDocs.Load())
 	})
+}
+
+// blockingStore holds reads open once armed, so a test can keep one arrival inside the
+// handler while further arrivals are made.
+type blockingStore struct {
+	corekv.TxnStore
+
+	armed   atomic.Bool
+	once    sync.Once
+	reached chan struct{}
+	release chan struct{}
+}
+
+func (s *blockingStore) Has(ctx context.Context, key []byte) (bool, error) {
+	if s.armed.Load() {
+		s.once.Do(func() { close(s.reached) })
+		<-s.release
+	}
+	return s.TxnStore.Has(ctx, key)
+}
+
+// pushRequest returns a single-document request for head whose block does not decode, so an
+// arrival that reaches the handler ends as a drop.
+func pushRequest(docID string, head cid.Cid) *protocol.PushLogRequest {
+	return &protocol.PushLogRequest{
+		DocID:        docID,
+		CollectionID: "col",
+		CID:          head.Bytes(),
+		Block:        []byte("not a block"),
+	}
+}
+
+// awaitClose fails the test rather than hanging the package, so a change that makes an
+// arrival wait on another reports which wait it was.
+func awaitClose(t *testing.T, c <-chan struct{}, what string) {
+	t.Helper()
+	select {
+	case <-c:
+	case <-time.After(5 * time.Second):
+		t.Fatalf("timed out waiting for %s", what)
+	}
+}
+
+// The counters record arrivals, not documents. An arrival for a document already in flight is
+// deduplicated on its head, so it is a skip while the arrival that is running reports its own
+// outcome later. An arrival for a different head is not deduplicated.
+func TestArrivalForAHeadAlreadyInFlightIsSkipped(t *testing.T) {
+	ctx := context.Background()
+	store := &blockingStore{
+		TxnStore: memory.NewDatastore(ctx),
+		reached:  make(chan struct{}),
+		release:  make(chan struct{}),
+	}
+	stores := datastore.NewMultistore(store, lock.NewLockSet(), immutable.None[int]())
+	p := &P2P{db: multistoreDB{stores: stores}, processQueue: newProcessQueue()}
+	t.Cleanup(p.processQueue.close)
+
+	// Released on any exit, so a failed assertion cannot leave an arrival parked.
+	var releaseOnce sync.Once
+	release := func() { releaseOnce.Do(func() { close(store.release) }) }
+	defer release()
+
+	// Two heads of one document, so the queue key is what decides whether the second is
+	// deduplicated against the first.
+	held := pushRequest("d", blocks.NewBlock([]byte("held head")).Cid())
+	other := pushRequest("d", blocks.NewBlock([]byte("other head")).Cid())
+
+	store.armed.Store(true)
+	running := make(chan error, 2)
+	go func() { running <- p.processPushlogRequest(ctx, held, false) }()
+	awaitClose(t, store.reached, "the first arrival to reach the store")
+
+	require.NoError(t, p.processPushlogRequest(ctx, held, false), "a deduplicated arrival is not an error")
+	go func() { running <- p.processPushlogRequest(ctx, other, false) }()
+
+	require.Equal(t, map[string]int64{"inFlight": 1}, reasonMap(p.docSkipReason.drain()))
+	require.Equal(t, int64(0), p.statDroppedDocs.Load(), "no arrival has reported an outcome yet")
+
+	release()
+	require.Error(t, <-running)
+	require.Error(t, <-running)
+	require.Equal(t, map[string]int64{"blockDecode": 2}, reasonMap(p.docDropReason.drain()),
+		"the arrival for a different head was not deduplicated")
+	require.Empty(t, reasonMap(p.docSkipReason.drain()), "only the repeated head was skipped")
+}
+
+// A document the sync queue refuses is one this node will not hold, so it counts as a loss.
+func TestArrivalRefusedByAFullSyncQueueIsDropped(t *testing.T) {
+	p := &P2P{
+		// An unserved queue with no capacity refuses on arrival.
+		processQueue: &processQueue{inFlight: map[string]struct{}{}, queue: make(chan syncRequest)},
+	}
+	req := pushRequest("d", blocks.NewBlock([]byte("a head")).Cid())
+
+	// Refused twice, because a document the queue turned away is not left marked in flight.
+	require.ErrorIs(t, p.processPushlogRequest(context.Background(), req, false), ErrSyncQueueFull)
+	require.ErrorIs(t, p.processPushlogRequest(context.Background(), req, false), ErrSyncQueueFull)
+
+	require.Equal(t, map[string]int64{"syncQueueFull": 2}, reasonMap(p.docDropReason.drain()))
+	require.Empty(t, reasonMap(p.docSkipReason.drain()), "a refused document is not a skip")
 }
