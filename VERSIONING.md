@@ -2,7 +2,7 @@
 
 This document outlines our versioning policy.
 
-Generally, we will be incrementing the Defra release version in strict accordance with [semver](https://semver.org/):
+Generally, we will be incrementing the DefraDB release version in strict accordance with [semver](https://semver.org/):
 
 > Given a version number MAJOR.MINOR.PATCH, increment the:
 >
@@ -28,4 +28,4 @@ We made a mistake when designing many of the function signatures that form the [
 
 This creates significant friction for us when introducing new function options, as adding a new parameter to a semver-protected function requires a `MAJOR` version increment.
 
-At the time of writing, we do not have any known external users of the C bindings, and have chosen to temporarily omit the C bindings from our semver protection. We expect this problem to be resolved early within the development of Defra v1.2, and expect to protect the C bindings with our usual semver guarantees from v1.2 onwards.
+At the time of writing, we do not have any known external users of the C bindings, and have chosen to temporarily omit the C bindings from our semver protection. We expect this problem to be resolved early within the development of DefraDB v1.2, and expect to protect the C bindings with our usual semver guarantees from v1.2 onwards.
