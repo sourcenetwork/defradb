@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/keyring"
@@ -37,6 +38,9 @@ func unsetEnvForTest(t *testing.T, key string) {
 // setConfigValueForTest is a helper that unsets a value from the wizard's config.yaml file,
 // but which will restore the original value after the test.
 func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value any) {
+	if ctx.RootDir == "" {
+		ctx.RootDir = t.TempDir()
+	}
 	originalValue, ok := getConfigValue(ctx, key).(string)
 	if !ok {
 		t.Fatal("failed to get original value")
@@ -45,6 +49,15 @@ func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value a
 		_ = setConfigValue(ctx, key, originalValue)
 	})
 	_ = setConfigValue(ctx, key, value)
+}
+
+func TestSetConfigValueForTestUsesTemporaryRoot(t *testing.T) {
+	ctx := &WizardContext{}
+	setConfigValueForTest(t, ctx, "keyring.namespace", "test")
+
+	if _, err := os.Stat(filepath.Join(ctx.RootDir, "config.yaml")); err != nil {
+		t.Fatalf("expected config in temporary root: %v", err)
+	}
 }
 
 // setupWorkingDirectoryForTest is a helper that temporarily changes the working directory to a
