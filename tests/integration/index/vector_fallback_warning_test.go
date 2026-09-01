@@ -27,7 +27,7 @@ func vectorWarningSetup() []any {
 			SDL: `type User {
 				name: String
 				age: Int
-				vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+				vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 			}`,
 		},
 		&action.AddDoc{DocMap: map[string]any{"name": "x", "age": 10, "vector": []float32{1, 0, 0}}},

@@ -20,6 +20,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -139,6 +140,14 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		// An external node generates its own node identity on every start, so the
+		// signatures it writes carry a key the test cannot predict. The key type is
+		// honoured, the identity is not.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
@@ -239,6 +248,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 
 func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *testing.T) {
 	test := testUtils.TestCase{
+		// An external node generates its own node identity on every start, so the
+		// signatures it writes carry a key the test cannot predict. The key type is
+		// honoured, the identity is not.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		EnableSigning: true,
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeSecp256k1,
