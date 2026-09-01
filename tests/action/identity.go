@@ -55,10 +55,11 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 
 		// Generate/regenerate the token if:
 		// - No token exists yet, OR
-		// - An audience is now available but the token was generated without one
-		//   (this can happen when the token is created during node setup before the
-		//    HTTP wrapper is ready, causing the audience to be unavailable at that time).
-		if !ok || (audience.HasValue() && !state.TokenHasAudience(token)) {
+		// - The token does not carry this node's current audience. It may have been
+		//   generated during node setup before the HTTP wrapper was ready, or for an
+		//   address the node no longer listens on: an external node binds a new port
+		//   every start, and the node rejects a token minted for the old one.
+		if !ok || (audience.HasValue() && !state.TokenHasAudience(token, audience.Value())) {
 			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
 				err := fullIdent.UpdateToken(
 					AuthTokenExpiration,

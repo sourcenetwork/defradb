@@ -16,6 +16,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/multiformats/go-multiaddr"
@@ -74,7 +75,7 @@ func SetupNode(
 	ver string,
 ) (*state.NodeState, error) {
 	if ver != "" {
-		return setupExternalNode(s, ver)
+		return setupExternalNode(s, cfg, ver)
 	}
 
 	if opts == nil {
@@ -260,7 +261,7 @@ func discoverPeerAddresses(s *state.State, peers peerInfoProvider, isExternal bo
 //
 // If no release asset exists for this platform, the test is skipped (not
 // failed) and a nil error is returned.
-func setupExternalNode(s *state.State, ver string) (*state.NodeState, error) {
+func setupExternalNode(s *state.State, cfg NodeSetupConfig, ver string) (*state.NodeState, error) {
 	path, skip, err := version.BinaryPath(s.Ctx, ver)
 	if err != nil {
 		return nil, err
@@ -270,7 +271,14 @@ func setupExternalNode(s *state.State, ver string) (*state.NodeState, error) {
 		return nil, nil
 	}
 
-	w, err := external.NewWrapper(s.Ctx, s.T, path)
+	flags, unsupported := externalNodeFlags(s, cfg)
+	if len(unsupported) > 0 {
+		s.T.Skipf("external node cannot be given this test's configuration: %s",
+			strings.Join(unsupported, "; "))
+		return nil, nil
+	}
+
+	w, err := external.NewWrapper(s.Ctx, s.T, path, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +286,63 @@ func setupExternalNode(s *state.State, ver string) (*state.NodeState, error) {
 	// An external node has no in-process DB, so it discovers its addresses over
 	// the HTTP client.
 	return newNodeState(s, w, w, "", true)
+}
+
+// externalNodeFlags translates the configuration a native node would be given
+// into command line flags for an external one, so both run the same setup.
+//
+// The second return holds the settings that cannot be expressed as flags. Those
+// are not skippable details: the node would start with a default the test did
+// not ask for and the test would still pass, so the caller skips instead.
+func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, unsupported []string) {
+	// The node signs by default, so not signing has to be asked for.
+	if !cfg.EnableSigning {
+		flags = append(flags, "--no-signing")
+	}
+
+	// Listen on the same interface a native node would. The addresses a node
+	// reports are asserted by some tests, so a node listening on loopback while
+	// its peers listen on the LAN address reports something different from them.
+	flags = append(flags, "--p2paddr", "/ip4/"+getIPString()+"/tcp/0")
+
+	// The store flag takes badger or memory, so the in-memory badger the tests
+	// usually run is not offered. Badger on disk is what the node starts with.
+	switch s.DbType {
+	case "", BadgerIMType, BadgerFileType:
+		flags = append(flags, "--store", "badger")
+	case DefraIMType:
+		flags = append(flags, "--store", "memory")
+	default:
+		unsupported = append(unsupported, "store type "+string(s.DbType))
+	}
+
+	if s.DocumentACPType != "" && s.DocumentACPType != state.LocalDocumentACPType {
+		// source-hub needs an address and a signer the test holds in process.
+		unsupported = append(unsupported, "document ACP type "+string(s.DocumentACPType))
+	}
+
+	// The encryption flags only turn generation off. The tests pass their own
+	// keys, which there is no flag for, so a test that sets one cannot run.
+	if s.EnableSearchableEncryption {
+		unsupported = append(unsupported, "searchable encryption: the test supplies a key, and no flag sets one")
+	} else {
+		flags = append(flags, "--no-searchable-encryption")
+	}
+	if cfg.BadgerEncryption {
+		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
+	}
+
+	// The wrapper picks the API address itself so it knows where to reach the
+	// node, so a test cannot choose one.
+	if cfg.HTTP.HasValue() {
+		unsupported = append(unsupported, "custom HTTP options: the wrapper picks the address")
+	}
+	// There is no flag for the KMS.
+	if s.KMS != "" && s.KMS != NoneKMSType {
+		unsupported = append(unsupported, "KMS "+string(s.KMS))
+	}
+
+	return flags, unsupported
 }
 
 func removePeerIDFromAddr(addr []string) ([]string, error) {

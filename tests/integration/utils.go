@@ -224,7 +224,7 @@ func ExecuteTestCase(
 						kms,
 						dbt,
 						ct,
-						documentACPType,
+						action.DocumentACPType,
 					)
 				}
 
@@ -801,6 +801,11 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
+	if name, ok := externalNodeMultiplierUnsupported(testCase, activeMultipliers); ok {
+		t.Skipf("test supports client types %v, but the %q multiplier runs a node over HTTP",
+			testCase.SupportedClientTypes.Value(), name)
+	}
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -808,6 +813,28 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	}
 
 	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
+}
+
+// externalNodeMultiplierUnsupported reports whether an active multiplier would run
+// a node the test cannot drive, and names it.
+//
+// A node in another process is reached over HTTP whatever the run-wide client type,
+// so a test that lists its clients without HTTP cannot run under such a multiplier.
+// Listing no clients means any client will do.
+func externalNodeMultiplierUnsupported(testCase *TestCase, activeNames string) (string, bool) {
+	if !testCase.SupportedClientTypes.HasValue() ||
+		slices.Contains(testCase.SupportedClientTypes.Value(), state.HTTPClientType) {
+		return "", false
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		if defraMultiplier.MakesNodeExternal(name) {
+			return name, true
+		}
+	}
+
+	return "", false
 }
 
 // applyTestCaseLevelMultipliers mutates TestCase fields based on the given
@@ -2300,14 +2327,14 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == documentACPType {
+			if supportedType == action.DocumentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
+			t.Skipf("test does not support given acp type. Type: %s", action.DocumentACPType)
 		}
 	}
 }

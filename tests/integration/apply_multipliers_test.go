@@ -16,7 +16,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/immutable"
+
 	defraMultiplier "github.com/sourcenetwork/defradb/tests/multiplier"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestApplyTestCaseLevelMultipliers_WithSignedDocs_EnablesSigning(t *testing.T) {
@@ -84,4 +87,63 @@ func TestApplyTestCaseLevelMultipliers_NeverDowngradesEnableSigning(t *testing.T
 
 	applyTestCaseLevelMultipliers(tc, "secondary-index")
 	assert.True(t, tc.EnableSigning, "unrelated multipliers must not touch the flag")
+}
+
+func TestExternalNodeMultiplierUnsupported(t *testing.T) {
+	goOnly := immutable.Some([]state.ClientType{state.GoClientType})
+
+	tests := []struct {
+		name        string
+		clientTypes immutable.Option[[]state.ClientType]
+		activeNames string
+		wantName    string
+		wantSkip    bool
+	}{
+		{
+			name:        "no supported client types runs",
+			activeNames: defraMultiplier.CrossVersionOldSource,
+		},
+		{
+			name: "http client supported runs",
+			clientTypes: immutable.Some(
+				[]state.ClientType{state.GoClientType, state.HTTPClientType},
+			),
+			activeNames: defraMultiplier.CrossVersionOldSource,
+		},
+		{
+			name:        "go client only skips",
+			clientTypes: goOnly,
+			activeNames: defraMultiplier.CrossVersionNewSource,
+			wantName:    defraMultiplier.CrossVersionNewSource,
+			wantSkip:    true,
+		},
+		{
+			name:        "in process multiplier runs",
+			clientTypes: goOnly,
+			activeNames: defraMultiplier.SignedDocs,
+		},
+		{
+			// The name is reported so the skip message can say which multiplier it was.
+			name:        "cross version among others skips",
+			clientTypes: goOnly,
+			activeNames: defraMultiplier.SignedDocs + ", " + defraMultiplier.CrossVersionOldSource,
+			wantName:    defraMultiplier.CrossVersionOldSource,
+			wantSkip:    true,
+		},
+		{
+			name:        "no active multipliers runs",
+			clientTypes: goOnly,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tc := &TestCase{SupportedClientTypes: test.clientTypes}
+
+			name, skip := externalNodeMultiplierUnsupported(tc, test.activeNames)
+
+			assert.Equal(t, test.wantSkip, skip)
+			assert.Equal(t, test.wantName, name)
+		})
+	}
 }

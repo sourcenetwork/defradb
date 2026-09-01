@@ -18,11 +18,19 @@ import (
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestNAC_AdminRelation_CanConnectP2PPeer(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

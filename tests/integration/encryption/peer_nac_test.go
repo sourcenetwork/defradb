@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -25,6 +26,13 @@ import (
 // authorized identity. Sync must succeed end-to-end.
 func TestDocEncryptionNAC_SyncBranchableCollection_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -76,6 +84,13 @@ func TestDocEncryptionNAC_SyncBranchableCollection_AuthorizedIdentity_AllowAcces
 // unauthorized identity. Sync must be denied.
 func TestDocEncryptionNAC_SyncBranchableCollection_UnauthorizedIdentity_DenyAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -127,6 +142,13 @@ func TestDocEncryptionNAC_SyncBranchableCollection_UnauthorizedIdentity_DenyAcce
 // identity. Sync must be denied.
 func TestDocEncryptionNAC_SyncBranchableCollection_NoIdentity_DenyAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -179,6 +201,13 @@ func TestDocEncryptionNAC_SyncBranchableCollection_NoIdentity_DenyAccess(t *test
 // succeeds end-to-end.
 func TestDocEncryptionNAC_SyncBranchableCollection_GrantedRelation_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -247,6 +276,13 @@ func TestDocEncryptionNAC_SyncBranchableCollection_GrantedRelation_AllowAccess(t
 // revoked. The subsequent sync must be denied.
 func TestDocEncryptionNAC_SyncBranchableCollection_RevokedRelation_DenyAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -319,6 +355,13 @@ func TestDocEncryptionNAC_SyncBranchableCollection_RevokedRelation_DenyAccess(t 
 // publishing peer.
 func TestDocEncryptionNAC_GossipSync_AuthorizedNodeIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		KMS: testUtils.KMS{Activated: true},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
