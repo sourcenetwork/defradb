@@ -421,7 +421,62 @@ type GQLResult struct {
 	//
 	// It will be nil if any errors were raised during execution.
 	Data any `json:"data"`
+
+	// Extensions holds extra information about the request, such as warnings.
+	//
+	// It is nil when there is nothing to report, and is then left out of the response.
+	Extensions *GQLExtensions `json:"extensions,omitempty"`
 }
+
+// GQLExtensions sits next to data and errors in a response. It holds anything we want
+// to tell the caller that is neither a result nor an error.
+//
+// Callers skip anything in here they do not recognise.
+type GQLExtensions struct {
+	// Warnings holds things the caller should know about a request that worked.
+	Warnings []GQLWarning `json:"warnings,omitempty"`
+}
+
+// IsEmpty returns true if there is nothing to send. An empty value is left out of the
+// response rather than sent as `{}`.
+//
+// It turns the value into JSON and looks at the result, so a field added later is
+// covered without changing this. A value that cannot be turned into JSON counts as
+// empty, so a bad warning is dropped instead of breaking the whole response.
+func (e *GQLExtensions) IsEmpty() bool {
+	if e == nil {
+		return true
+	}
+
+	data, err := json.Marshal(e)
+	return err != nil || string(data) == "{}"
+}
+
+// GQLWarning describes something that happened during a request that still worked.
+type GQLWarning struct {
+	// Code names the warning. Callers check this. It does not change once released.
+	Code string `json:"code"`
+
+	// Message explains the warning to a person. The wording can change, so do not
+	// read it in code.
+	Message string `json:"message"`
+
+	// Detail holds values that belong to this warning. Optional.
+	//
+	// It is sent to the caller and may be logged, so keep secrets and keys out of it.
+	// Be careful with counts too: saying how many documents were looked at can tell
+	// the caller about documents they are not allowed to see.
+	Detail map[string]any `json:"detail,omitempty"`
+}
+
+// Warning codes. Callers match on these, so they do not change once released.
+const (
+	// WarningCodeVectorIndexUnused means a similarity query read the whole collection even though
+	// the field it scored has a vector index. The results are correct, but the query costs more as
+	// the collection grows. The `reason` detail says which part of the query shape ruled the index
+	// out.
+	WarningCodeVectorIndexUnused = "VECTOR_INDEX_UNUSED"
+)
 
 // gqlError represents an error that was encountered during a GQL request.
 //
@@ -439,6 +494,8 @@ type gqlResult struct {
 	Errors []gqlError `json:"errors,omitempty"`
 	// Data contains the result data
 	Data any `json:"data"`
+	// Extensions contains the result extensions
+	Extensions *GQLExtensions `json:"extensions,omitempty"`
 }
 
 func (res *GQLResult) UnmarshalJSON(data []byte) error {
@@ -449,6 +506,12 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	res.Data = out.Data
+	res.Extensions = out.Extensions
+	// A peer may send `"extensions":{}`, which decodes to a non nil empty value. Callers
+	// are told the field is nil when there is nothing to report, so make that true.
+	if res.Extensions.IsEmpty() {
+		res.Extensions = nil
+	}
 	res.Errors = make([]error, len(out.Errors))
 	for i, e := range out.Errors {
 		res.Errors[i] = ReviveError(e.Message)
@@ -458,6 +521,9 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 
 func (res GQLResult) MarshalJSON() ([]byte, error) {
 	out := gqlResult{Data: res.Data}
+	if !res.Extensions.IsEmpty() {
+		out.Extensions = res.Extensions
+	}
 	out.Errors = make([]gqlError, len(res.Errors))
 	for i, e := range res.Errors {
 		out.Errors[i] = gqlError{Message: e.Error()}

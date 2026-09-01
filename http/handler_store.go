@@ -801,6 +801,16 @@ func (h *storeHandler) bindRoutes(router *Router) {
 				}),
 			),
 			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+			// Left out unless there is something to report. See client.GQLExtensions.
+			"extensions": openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+				"warnings": openapi3.NewArraySchema().WithItems(
+					openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+						"code":    openapi3.NewStringSchema(),
+						"message": openapi3.NewStringSchema(),
+						"detail":  openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+					}),
+				),
+			}),
 		})
 
 	collectionArraySchema := openapi3.NewArraySchema()
