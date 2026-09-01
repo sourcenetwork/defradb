@@ -62,7 +62,7 @@ const (
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
 	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
-	errVectorIndexMissingDimensions              string = "vector index requires dimensions unless field is an embedding"
+	errVectorIndexMissingDimensions              string = "vector index dimensions must be greater than zero"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
@@ -108,6 +108,10 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errFilteredTruncateBranchable          string = "filtered truncate is not supported for branchable collections"
+	errFilteredTruncateInTransaction       string = "filtered truncate cannot run in a transaction"
+	errTruncateMutationMustBeStandalone    string = "truncate mutation must be the only field in an operation"
+	errTruncateMutationInTransaction       string = "truncate mutation cannot run in a transaction"
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
@@ -189,6 +193,7 @@ const (
 	errTruncateDatastoreKey       string = "failed to delete key during truncate"
 	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
 	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errUnsafeDatastoreWriter      string = "datastore does not expose unsafe writer"
 	errDeleteViewCacheItem        string = "failed to delete view cache item"
 	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"
@@ -251,6 +256,10 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
+	ErrFilteredTruncateBranchableCollection      = errors.New(errFilteredTruncateBranchable)
+	ErrFilteredTruncateInTransaction             = errors.New(errFilteredTruncateInTransaction)
+	ErrTruncateMutationMustBeStandalone          = errors.New(errTruncateMutationMustBeStandalone)
+	ErrTruncateMutationInTransaction             = errors.New(errTruncateMutationInTransaction)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                        = errors.New(errGetDocForEmbedding)
@@ -606,8 +615,8 @@ func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
 	)
 }
 
-// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request is
-// missing its dimensions, and dimensions could not be inferred from a generated embedding.
+// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request has
+// no dimensions.
 func NewErrVectorIndexMissingDimensions(fieldName string) error {
 	return errors.New(
 		errVectorIndexMissingDimensions,

@@ -392,7 +392,7 @@ jobs:
   # changes that break compatibility with it. Both directions are run because they
   # fail differently: old-source has the older node sending, new-source receiving.
   #
-  # The release binary is downloaded over plain HTTP, so no token is needed.
+  # The release binary is a public download over HTTPS, so no token is needed.
   test-coverage-cross-version-old-source:
     name: Test coverage cross version old source job
 

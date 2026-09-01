@@ -78,7 +78,18 @@ func sharedFieldSyncTestCase(grantedAge, otherAge int) testUtils.TestCase {
 		),
 		// Signing/encryption change block cids per document, which would break the
 		// shared-block premise this test relies on.
-		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
+		//
+		// This test withholds one document from node 1 on purpose, so one of the
+		// heads never arrives. An external node is polled for its commits instead
+		// of read from its event bus, and that poll cannot express a head that is
+		// not coming.
+		// https://github.com/sourcenetwork/defradb/issues/5193
+		MultiplierExcludes: []string{
+			multiplier.SignedDocs,
+			multiplier.EncryptedDocs,
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

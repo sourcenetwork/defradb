@@ -134,7 +134,7 @@ func TestPatchCollection_ModifyVectorIndexMetric_ShouldError(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+						vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 					}
 				`,
 			},

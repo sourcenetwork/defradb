@@ -550,9 +550,9 @@ func (mp *mergeProcessor) mergeBlock(
 			return false, nil, resolvedDocRef{}, NewErrGetShortFieldIDMerge(err, fd.FieldID, field)
 		}
 
-		fieldCRDT, err := crdt.FieldLevelCRDT(fd.Typ)
-		if err != nil {
-			return false, nil, resolvedDocRef{}, err
+		fieldCRDT, ok := crdt.TryGetFieldCRDT(fd.Typ)
+		if !ok {
+			return false, nil, resolvedDocRef{}, client.NewErrUnknownCRDT(fd.Typ)
 		}
 
 		err = fieldCRDT.Merge(

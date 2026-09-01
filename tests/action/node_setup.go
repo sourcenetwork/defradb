@@ -324,7 +324,7 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 	// The encryption flags only turn generation off. The tests pass their own
 	// keys, which there is no flag for, so a test that sets one cannot run.
 	if s.EnableSearchableEncryption {
-		unsupported = append(unsupported, "searchable encryption: the test supplies a key, and only --no-searchable-encryption exists")
+		unsupported = append(unsupported, "searchable encryption: the test supplies a key, and no flag sets one")
 	} else {
 		flags = append(flags, "--no-searchable-encryption")
 	}

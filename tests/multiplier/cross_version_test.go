@@ -24,6 +24,16 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 )
 
+// nodeAt returns the node action at index i, failing the test if the action is
+// not a node. Keeps the assertions checked rather than panicking on a bad index.
+func nodeAt(t *testing.T, actions action.Actions, i int) *action.NewNode {
+	t.Helper()
+	require.Greater(t, len(actions), i, "no action at index %d", i)
+	node, ok := actions[i].(*action.NewNode)
+	require.True(t, ok, "action %d is %T, not a node", i, actions[i])
+	return node
+}
+
 func oldSource() *crossVersion {
 	return &crossVersion{name: CrossVersionOldSource, oldNodeFirst: true}
 }
@@ -79,8 +89,8 @@ func TestCrossVersionApply_OldSource_VersionsFirstNode(t *testing.T) {
 	result := oldSource().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, CrossVersionTargetVersion, result[0].(*action.NewNode).Version)
-	assert.Equal(t, "", result[1].(*action.NewNode).Version)
+	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 0).Version)
+	assert.Equal(t, "", nodeAt(t, result, 1).Version)
 }
 
 func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
@@ -91,8 +101,8 @@ func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
 	result := newSource().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, "", result[0].(*action.NewNode).Version)
-	assert.Equal(t, CrossVersionTargetVersion, result[1].(*action.NewNode).Version)
+	assert.Equal(t, "", nodeAt(t, result, 0).Version)
+	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 1).Version)
 }
 
 func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
@@ -105,9 +115,9 @@ func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
 	result := newSource().Apply(source)
 
 	require.Len(t, result, 3)
-	assert.Equal(t, "", result[0].(*action.NewNode).Version)
-	assert.Equal(t, "", result[1].(*action.NewNode).Version)
-	assert.Equal(t, CrossVersionTargetVersion, result[2].(*action.NewNode).Version)
+	assert.Equal(t, "", nodeAt(t, result, 0).Version)
+	assert.Equal(t, "", nodeAt(t, result, 1).Version)
+	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 2).Version)
 }
 
 func TestCrossVersionApply_LeavesOtherActionsUntouched(t *testing.T) {
@@ -143,7 +153,7 @@ func TestCrossVersionApply_PreservesNetworkingConfig(t *testing.T) {
 
 	result := oldSource().Apply(source)
 
-	versioned := result[0].(*action.NewNode)
+	versioned := nodeAt(t, result, 0)
 	assert.NotNil(t, versioned.Network, "networking config must survive the rewrite")
 }
 
@@ -152,7 +162,7 @@ func TestCrossVersionApply_WithSingleNode_ReturnsSourceUnchanged(t *testing.T) {
 
 	result := oldSource().Apply(source)
 
-	assert.Equal(t, "", result[0].(*action.NewNode).Version)
+	assert.Equal(t, "", nodeAt(t, result, 0).Version)
 }
 
 func TestCrossVersionShouldSkip_WithSingleNode_Skips(t *testing.T) {
@@ -214,4 +224,18 @@ func TestCrossVersionShouldSkip_WithVersionAlreadySet_Skips(t *testing.T) {
 	}
 
 	assert.True(t, oldSource().ShouldSkip(actions))
+}
+
+func TestMakesNodeExternal_WithCrossVersionMultipliers_ReturnsTrue(t *testing.T) {
+	assert.True(t, MakesNodeExternal(CrossVersionOldSource))
+	assert.True(t, MakesNodeExternal(CrossVersionNewSource))
+}
+
+func TestMakesNodeExternal_WithOtherMultipliers_ReturnsFalse(t *testing.T) {
+	// These run every node in process, so a test's supported client types still hold.
+	assert.False(t, MakesNodeExternal(SignedDocs))
+	assert.False(t, MakesNodeExternal(SecondaryIndex))
+	assert.False(t, MakesNodeExternal(EncryptedDocs))
+	assert.False(t, MakesNodeExternal(Name("")))
+	assert.False(t, MakesNodeExternal(Name("not-a-multiplier")))
 }
