@@ -23,7 +23,7 @@ import (
 
 // A document written on one peer and synced to another is added to the replica's graph, so a
 // similarity query on the replica finds it. This proves the P2P merge maintains the vector index,
-// not just direct writes. The @vectorIndex is in the schema so both peers build it the same way.
+// not just direct writes. The vector @index directive is in the schema so both peers build it the same way.
 func TestVectorIndexP2P_ReplicatedDoc_IsSearchableOnReplica(t *testing.T) {
 	test := testUtils.TestCase{
 		// The vectorIndex directive does not exist in the older release.
@@ -38,7 +38,7 @@ func TestVectorIndexP2P_ReplicatedDoc_IsSearchableOnReplica(t *testing.T) {
 			&action.AddCollection{
 				SDL: `type Users {
 					name: String
-					vector: [Float32!] @vectorIndex(dimensions: 3, HNSW: {metric: COSINE})
+					vector: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}})
 				}`,
 			},
 			testUtils.ConnectPeers{
