@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/extensions"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -78,6 +79,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			ctx := InitContext(ctx, txn)
 
+			// One accumulator per event, not per subscription. A shared one would
+			// make each event repeat every warning before it.
+			ctx = extensions.WithAccumulator(ctx)
+
 			p := planner.New(
 				ctx,
 				identity.FromContext(ctx),
@@ -131,6 +136,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				continue
 			}
 			res.Data = result
+			res.Extensions = extensions.Collect(ctx)
 
 			select {
 			case <-ctx.Done():

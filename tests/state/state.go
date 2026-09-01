@@ -375,7 +375,18 @@ type State struct {
 	SkipTest string
 }
 
+// GetClientType returns the client type used to reach the node currently being
+// asserted.
+//
+// A node running in another process is always reached over HTTP, whatever client
+// the run selected, so its results need the same relaxed comparison the HTTP
+// client gets. Reporting the run-wide type here would compare its values
+// strictly and fail on equal values of a different Go type.
 func (s *State) GetClientType() ClientType {
+	nodeID := s.CurrentAssertingNodeID
+	if nodeID >= 0 && nodeID < len(s.Nodes) && s.Nodes[nodeID].IsExternal {
+		return HTTPClientType
+	}
 	return s.ClientType
 }
 

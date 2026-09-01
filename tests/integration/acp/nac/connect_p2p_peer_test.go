@@ -18,11 +18,19 @@ import (
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestNAC_GatesConnectP2PPeer_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -56,6 +64,13 @@ func TestNAC_GatesConnectP2PPeer_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesConnectP2PPeer_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),
@@ -82,6 +97,13 @@ func TestNAC_GatesConnectP2PPeer_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesConnectP2PPeer_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
 			testUtils.RandomNetworkingConfig(),

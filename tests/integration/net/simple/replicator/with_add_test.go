@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -593,6 +594,13 @@ func TestP2POneToOneReplicatorOrderIndependentDirectAdd(t *testing.T) {
 
 func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// Restarting a node re-creates the external node as a new process on a new
+		// port, and its auth token is still bound to the old address.
+		// https://github.com/sourcenetwork/defradb/issues/5170
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
