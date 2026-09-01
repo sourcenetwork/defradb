@@ -156,7 +156,7 @@ func assertRequestResults(
 		default:
 			assertResultsEqual(
 				s.T,
-				s.ClientType,
+				clientTypeForNode(s, nodeID),
 				expect,
 				actual,
 				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
@@ -273,14 +273,14 @@ func assertRequestResultDoc(
 			if ordered {
 				assertResultsEqual(
 					s.T,
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedDocID,
 					actualValue,
 					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			} else {
 				ok := isResultsEqual(
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedDocID,
 					actualValue,
 				)
@@ -323,14 +323,14 @@ func assertRequestResultDoc(
 			if ordered {
 				assertResultsEqual(
 					s.T,
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedValue,
 					actualValue,
 					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			} else {
 				ok := isResultsEqual(
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedValue,
 					actualValue,
 				)

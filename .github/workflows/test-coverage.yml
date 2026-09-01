@@ -388,6 +388,65 @@ jobs:
           coverage-artifact-name: "coverage_signed_docs"
           coverage-path: coverage.txt
 
+  # These jobs run the networked tests with one node on an older release, to catch
+  # changes that break compatibility with it. Both directions are run because they
+  # fail differently: old-source has the older node sending, new-source receiving.
+  #
+  # The release binary is a public download over HTTPS, so no token is needed.
+  test-coverage-cross-version-old-source:
+    name: Test coverage cross version old source job
+
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+
+    env:
+      DEFRA_MULTIPLIERS: cross-version-old-source
+
+    steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_cross_version_old_source"
+          coverage-path: coverage.txt
+
+  test-coverage-cross-version-new-source:
+    name: Test coverage cross version new source job
+
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+
+    env:
+      DEFRA_MULTIPLIERS: cross-version-new-source
+
+    steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_cross_version_new_source"
+          coverage-path: coverage.txt
+
   # This job tests the leveldb datastore.
   test-coverage-leveldb:
     name: Test coverage leveldb job
@@ -431,6 +490,8 @@ jobs:
       - test-coverage-js              #  1 test(s)
       - test-coverage-secondary-index #  1 test(s)
       - test-coverage-signed-docs     #  1 test(s)
+      - test-coverage-cross-version-old-source  #  1 test(s)
+      - test-coverage-cross-version-new-source  #  1 test(s)
       - test-coverage-leveldb         #  1 test(s)
 
     # Important to know:
