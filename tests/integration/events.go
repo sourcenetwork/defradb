@@ -289,7 +289,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				}
 				evt = msg.Data.(event.MergeComplete)
 
-			case <-time.After(60 * eventTimeout):
+			case <-time.After(30 * eventTimeout):
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
@@ -360,7 +360,7 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 
 				delete(expectedSyncs, evt.DocID)
 
-			case <-time.After(60 * eventTimeout):
+			case <-time.After(30 * eventTimeout):
 				require.Fail(s.T,
 					"timeout waiting for SE sync complete event",
 					"node %d remaining: %v", nodeID, expectedSyncs,

@@ -376,7 +376,6 @@ func performAction(
 
 	case Start:
 		startNodes(s, testCase, action)
-		reconnectPeers(s)
 
 	case ConnectPeers:
 		connectPeers(s, action)
@@ -1085,7 +1084,6 @@ func restartNodes(
 	}
 	closeNodes(s, Close{})
 	startNodes(s, testCase, Start{})
-	reconnectPeers(s)
 }
 
 // refreshTokens refreshes all the existing tokens, preserving order.

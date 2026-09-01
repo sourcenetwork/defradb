@@ -13,7 +13,6 @@ package signature
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -73,24 +72,14 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 		return false, err
 	}
 
-	switch matcher.s.GetClientType() {
-	case state.GoClientType:
+	if matcher.s.GetClientType() == state.GoClientType {
 		actualSigBytes, ok := actual.([]byte)
 		if !ok {
 			matcher.castFailed = true
 			return false, nil
 		}
 		return bytes.Equal(expectedSigBytes, actualSigBytes), nil
-	case state.RustFFIClientType:
-		// Rust FFI returns signature.value as hex-encoded string
-		actualSigString, ok := actual.(string)
-		if !ok {
-			matcher.castFailed = true
-			return false, nil
-		}
-		expectedSigHex := hex.EncodeToString(expectedSigBytes)
-		return actualSigString == expectedSigHex, nil
-	default:
+	} else {
 		actualSigString, ok := actual.(string)
 		if !ok {
 			matcher.castFailed = true
