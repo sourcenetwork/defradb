@@ -50,8 +50,7 @@ func TestReclaimOrphanBlocks(t *testing.T) {
 	stale := putMarkedBlock(t, ctx, blockNS, []byte("stale"), newToMergeValue(cutoff.Add(-time.Hour)))
 	// Marker newer than the cutoff: a fetch still in flight, must be kept.
 	fresh := putMarkedBlock(t, ctx, blockNS, []byte("fresh"), newToMergeValue(cutoff.Add(time.Hour)))
-	// A marker with no timestamp cannot be aged, and comes from a store with no owner edges
-	// to fall back on, so it is left alone.
+	// Marker with no timestamp: neither age nor ownership can decide it, so it is left alone.
 	legacy := putMarkedBlock(t, ctx, blockNS, []byte("legacy"), []byte{0xff})
 	// A merged block has no marker and must never be touched.
 	merged := putUnmarkedBlock(t, ctx, blockNS, []byte("merged"))
@@ -70,9 +69,8 @@ func TestReclaimOrphanBlocks(t *testing.T) {
 	requireKept(t, ctx, blockNS, merged, false)
 }
 
-// A store upgraded in place carries single-byte markers over blocks that merged before the
-// index recorded fetch times, and that merge wrote no owner edge, so an age-only decision
-// deletes blocks a live document still links to.
+// A build that wrote untimestamped markers stored a signed block's signature without
+// indexing its owner, so deciding one on ownership alone deletes a block a document links to.
 func TestReclaimOrphanBlocksNeverReclaimsUntimestampedMarker(t *testing.T) {
 	ctx := context.Background()
 	blockNS, _, rootstore := newTestBlockstore(t)

@@ -56,10 +56,9 @@ type SweepResult struct {
 // without mutating the iterator, then reclaimBatch re-decides each one under the
 // transaction that deletes it.
 //
-// Only markers carrying a timestamp are eligible. A marker without one was written before
-// the index recorded fetch times, by a store that also predates the block-owner edges this
-// sweep reads, so neither the age check nor the ownership check holds for it and its block
-// is left in place.
+// Only markers carrying a timestamp are eligible. An untimestamped marker was written by a
+// build that stored a signed block's signature without indexing its owner, so for those
+// markers a missing owner does not prove the block went unmerged.
 func ReclaimOrphanBlocks(
 	ctx context.Context,
 	rootstore corekv.TxnReaderWriter,
