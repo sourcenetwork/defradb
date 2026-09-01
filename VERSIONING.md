@@ -22,6 +22,12 @@ We as a team have decided that, whilst the exact strings are user-visible via th
 
 We will not make significant changes to the structure of errors returned by any of our functions.  For example, if a function returns an `client.ErrValueTypeMismatch` wrapped by an `client.ErrInvalidJSONPayload` - removing or replacing either one of these will only be done as part of a `MAJOR` version increment.
 
+## Go version bumps
+
+Raising the minimum supported Go version can prevent developers and downstream source consumers from building DefraDB with an older Go toolchain. Although this is technically a compatibility break for those environments, we do not treat Go version bumps as breaking changes under DefraDB's semver policy, and they do not require a `MAJOR` version increment.
+
+Consumers building DefraDB from source are expected to use a supported Go version. We schedule these bumps according to our [Go Version Bumping Policy](./CONTRIBUTING_INTERNAL.md#-go-version-bumping-policy).
+
 ## The C embedded client
 
 We made a mistake when designing many of the function signatures that form the [C client](./cbindings).  Many of the functions have parameters that do not pair up with their Go equivalents - they take individual formal parameters, where the Go function takes an [options](./client/options) struct.
