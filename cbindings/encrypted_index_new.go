@@ -29,6 +29,7 @@ func NewEncryptedIndex(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
+	indexType *C.char,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
@@ -37,9 +38,12 @@ func NewEncryptedIndex(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	typeStr := C.GoString(indexType)
 	desc := client.EncryptedIndexDescription{
 		FieldName: C.GoString(fieldName),
+		Type:      client.EncryptedIndexType(typeStr),
 	}
+
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

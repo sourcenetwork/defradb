@@ -40,6 +40,7 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Embedded DefraDB](#embedded-defradb)
+   * [Versioning](#versioning)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -549,6 +550,10 @@ The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` int
 
 For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
 
+## Versioning
+
+Please refer to our [versioning policy](./VERSIONING.md).
+
 ## Community
 
 Discuss on [Discord](https://source.network/discord) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [X](https://x.com/edgeofsource).
@@ -559,7 +564,7 @@ Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 
-DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
+DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make production and non-production use of it provided such use is not in connection with the operation or provision of a Managed Service. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete [license](licenses/BSL.txt) before usage.
 
 ## Contributors
 
