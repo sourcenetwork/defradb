@@ -262,3 +262,37 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Squaring a large vector component overflows a float32, which used to leave every distance equal
+// and the results in an arbitrary order. The query matches "john" exactly, so it comes first and the
+// rest follow by how far they are.
+// https://github.com/sourcenetwork/defradb/issues/5220
+func TestVectorIndex_EuclideanOnLargeVectors_OrdersByDistance(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 1, hnsw: {metric: EUCLIDEAN}})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "alice", "vector": []float32{-0.9}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "bob", "vector": []float32{90}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "john", "vector": []float32{-3.4028235e+38}}},
+			&action.WaitForIndexReady{CollectionID: 0},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 1){
+						name
+						sim: SIMILARITY(vector: {vector: [-3.4028235e+38]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{{"name": "john", "sim": float64(0)}},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
