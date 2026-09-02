@@ -11,6 +11,7 @@
 package http
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -215,4 +217,89 @@ func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 	responseJSON(rw, http.StatusOK, docMap)
+}
+
+func (h *collectionHandler) SaveDocument(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	ctx := req.Context()
+	q := req.URL.Query()
+	encConf := encryption.DocEncConfig{}
+	if q.Get(docEncryptParam) == "true" {
+		encConf.IsDocEncrypted = true
+	}
+	if q.Get(docEncryptFieldsParam) != "" {
+		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
+	}
+
+	saveOpt := options.WithIdentity(
+		options.SaveDocument().
+			SetEncryptDoc(encConf.IsDocEncrypted).
+			SetEncryptedFields(encConf.EncryptedFields),
+		identity.FromContext(ctx),
+	)
+	if err := setSaveSigningOption(req, saveOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	var doc *client.Document
+	docIDParam := chi.URLParam(req, "docID")
+	if docIDParam != "" {
+		docID, err := client.NewDocIDFromString(docIDParam)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		doc, err = client.NewDocWithID(ctx, docID, col.Version())
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		if len(data) > 0 {
+			if err := doc.SetWithJSON(ctx, data); err != nil {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return
+			}
+		}
+	} else {
+		var rawMap map[string]any
+		if err := json.Unmarshal(data, &rawMap); err == nil && rawMap != nil {
+			if _, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
+				doc, err = client.NewDocFromMap(ctx, rawMap, col.Version())
+				if err != nil {
+					responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+					return
+				}
+			}
+		}
+		if doc == nil {
+			doc, err = client.NewDocFromJSON(ctx, data, col.Version())
+			if err != nil {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return
+			}
+		}
+	}
+
+	if err := col.SaveDocument(ctx, doc, saveOpt); err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, client.DocumentIDs([]*client.Document{doc}))
+}
+
+func setSaveSigningOption(req *http.Request, opt *options.SaveDocumentOptionsBuilder) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
 }
