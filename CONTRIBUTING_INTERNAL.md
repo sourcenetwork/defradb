@@ -279,7 +279,8 @@ For significant architectural changes or major new features, write a **[Source I
 >
 > 1. Include the `BREAKING CHANGE` keyword in the **commit message body** (not the title)
 > 2. Follow it with a description of what changed and why
-> 3. Document the changes in [`docs/data_format_changes/`](./docs/data_format_changes/) for the change detector to pass
+> 3. For an intentional one-off breaking change outside a major release, add the affected interfaces and migration guidance to [`BREAKLOG.md`](./BREAKLOG.md)
+> 4. If the stored data format changes, document it in [`docs/data_format_changes/`](./docs/data_format_changes/) for the change detector to pass
 
 ---
 
