@@ -263,9 +263,9 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Squaring a large vector component overflows a float32, which used to leave every distance equal
-// and the results in an arbitrary order. The query matches "john" exactly, so it comes first and the
-// rest follow by how far they are.
+// Vectors whose squared distance exceeds a float32 are searchable and scored correctly. The graph's
+// own ordering is covered by the engine tests; this covers the query path end to end, where the
+// score is computed separately and was never affected.
 // https://github.com/sourcenetwork/defradb/issues/5220
 func TestVectorIndex_EuclideanOnLargeVectors_OrdersByDistance(t *testing.T) {
 	test := testUtils.TestCase{
@@ -276,19 +276,21 @@ func TestVectorIndex_EuclideanOnLargeVectors_OrdersByDistance(t *testing.T) {
 					vector: [Float32!] @index(vector: {dimensions: 1, hnsw: {metric: EUCLIDEAN}})
 				}`,
 			},
-			&action.AddDoc{DocMap: map[string]any{"name": "alice", "vector": []float32{-0.9}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "bob", "vector": []float32{90}}},
-			&action.AddDoc{DocMap: map[string]any{"name": "john", "vector": []float32{-3.4028235e+38}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "mid", "vector": []float32{2e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "far", "vector": []float32{3e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "farthest", "vector": []float32{4e19}}},
 			&action.WaitForIndexReady{CollectionID: 0},
 			&action.Request{
 				Request: `query {
 					User(order: {_alias: {sim: DESC}}, limit: 1){
 						name
-						sim: SIMILARITY(vector: {vector: [-3.4028235e+38]})
+						sim: SIMILARITY(vector: {vector: [0]})
 					}
 				}`,
 				Results: map[string]any{
-					"User": []map[string]any{{"name": "john", "sim": float64(0)}},
+					"User": []map[string]any{
+						{"name": "mid", "sim": -3.999999984405158e+38},
+					},
 				},
 			},
 		},
