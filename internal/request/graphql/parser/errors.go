@@ -28,4 +28,5 @@ var (
 	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
+	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
 )
