@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestDB_Connect_WithoutP2P_ReturnsError tests that an error will be returned if 
+// TestDB_Connect_WithoutP2P_ReturnsError tests that an error will be returned if
 // Conneect is called with P2P disabled.
 func TestDB_Connect_WithoutP2P_ReturnsError(t *testing.T) {
 	db := &DB{} // P2P is nil
