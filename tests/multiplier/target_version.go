@@ -66,6 +66,8 @@ func ResolveTargetVersion(name Name, supportedFrom string, exact bool) (string, 
 		return "", VersionNotTargeted
 	}
 
+	// Compared as semver rather than as strings: "v1.10.0" sorts before "v1.9.0"
+	// lexically, which would read a newer target as older than the requirement.
 	if supportedFrom != "" && semver.Compare(target, supportedFrom) < 0 {
 		if exact {
 			return "", VersionSkip
