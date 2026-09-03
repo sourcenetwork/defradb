@@ -136,7 +136,11 @@ func dot(a, b []float32) float64 {
 // distance returns the distance between two vectors under the given metric, smaller being nearer.
 // Both must have come through vectorForMetric for this metric. An unrecognised metric is a
 // programming error rather than a silent fallback, so it panics.
-func distance(metric Metric, a, b []float32) float32 {
+//
+// The result is float64 even though vectors are stored as float32. Squaring a float32 can exceed
+// what a float32 holds, and every such distance would land on +Inf and compare equal, leaving the
+// documents in an arbitrary order. Float64 has the range to keep them apart.
+func distance(metric Metric, a, b []float32) float64 {
 	switch metric {
 	case Cosine:
 		return cosineDistance(a, b)
@@ -150,28 +154,25 @@ func distance(metric Metric, a, b []float32) float32 {
 }
 
 // cosineDistance computes 1 - dot(a, b) for unit-length vectors a and b.
-func cosineDistance(a, b []float32) float32 {
-	return float32(1 - dot(a, b))
+func cosineDistance(a, b []float32) float64 {
+	return 1 - dot(a, b)
 }
 
 // squaredEuclideanDistance computes the squared straight-line distance between a and b. The square
 // root is skipped: it is monotonic, and distances are only ever compared against each other. If the
 // lengths differ, only the shared leading elements are used, matching dot.
-//
-// Squaring costs range: the sum is held in float64, but the result narrows to float32, so components
-// beyond roughly 1e19 saturate to +Inf. Such a vector still sorts as the farthest, so ordering holds.
-func squaredEuclideanDistance(a, b []float32) float32 {
+func squaredEuclideanDistance(a, b []float32) float64 {
 	var sum float64
 	n := min(len(a), len(b))
 	for i := range n {
 		d := float64(a[i]) - float64(b[i])
 		sum += d * d
 	}
-	return float32(sum)
+	return sum
 }
 
 // dotProductDistance computes -dot(a, b). The dot product is a similarity (bigger is nearer), so the
 // sign is flipped to keep smaller nearer.
-func dotProductDistance(a, b []float32) float32 {
-	return float32(-dot(a, b))
+func dotProductDistance(a, b []float32) float64 {
+	return -dot(a, b)
 }
