@@ -186,9 +186,6 @@ func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// The argument chooses the kind of index, so a vector argument and an ordered one ask for two
-// different kinds at once. The error names both rather than saying only that an argument was
-// invalid.
 func TestCollectionVersion_VectorIndexWithDirection_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
