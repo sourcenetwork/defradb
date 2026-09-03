@@ -96,7 +96,7 @@ func (a *AddDACCollectionActorRelationship) Execute() {
 			require.Equal(a.s.T, a.ExpectedExistence, exists.ExistedAlready)
 		}
 
-		// The relationship should only be added to a Vera chain once - there is no need to loop
+		// The relationship should only be added to a Vera log once - there is no need to loop
 		// through the nodes.
 		if a.s.DocumentACPType == state.RemoteDocumentACPType {
 			break

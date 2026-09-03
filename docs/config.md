@@ -136,9 +136,9 @@ Possible values:
 - `local` (default): Local DAC
 - `remote`: Remote DAC (backed by [Vera](https://github.com/sourcenetwork/vera))
 
-## `acp.document.remote.ChainID`
+## `acp.document.remote.LogID`
 
-The ID of the Vera chain to store ACP data in. Required when using `acp.document.type`:`remote`.
+The ID of the Vera log in which to store ACP data. Required when using `acp.document.type`:`remote`.
 
 ## `acp.document.remote.GRPCAddress`
 

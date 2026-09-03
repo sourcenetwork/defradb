@@ -34,12 +34,12 @@ import (
 
 // NewRemoteDocumentACP returns a Vera-backed Remote DAC instance.
 func NewRemoteDocumentACP(
-	chainID string,
+	logID string,
 	grpcAddress string,
 	cometRPCAddress string,
 	signer vera.TxSigner,
 ) (DocumentACP, error) {
-	remoteDAC, err := NewRemoteDocumentACPClient(chainID, grpcAddress, cometRPCAddress, signer)
+	remoteDAC, err := NewRemoteDocumentACPClient(logID, grpcAddress, cometRPCAddress, signer)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ type RemoteDocumentACP struct {
 
 // NewRemoteDocumentACPClient returns a Vera-backed Remote DAC client.
 func NewRemoteDocumentACPClient(
-	chainID string,
+	logID string,
 	grpcAddress string,
 	cometRPCAddress string,
 	signer vera.TxSigner,
@@ -74,7 +74,7 @@ func NewRemoteDocumentACPClient(
 
 	txBuilder, err := vera.NewTxBuilder(
 		vera.WithSDKClient(client),
-		vera.WithChainID(chainID),
+		vera.WithChainID(logID),
 		vera.WithGasLimit(400000),
 	)
 	if err != nil {

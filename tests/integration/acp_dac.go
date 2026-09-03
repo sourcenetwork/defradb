@@ -103,7 +103,7 @@ func addDACPolicy(
 			s.PolicyIDs[nodeID] = append(s.PolicyIDs[nodeID], policyResult.PolicyID)
 		}
 
-		// The policy should only be added to a Vera chain once - there is no need to loop through
+		// The policy should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
 		if s.DocumentACPType == state.RemoteDocumentACPType {
 			// Note: If we break here the state will only preserve the policyIDs result on the
@@ -195,7 +195,7 @@ func addDACActorRelationship(
 			require.Equal(s.T, action.ExpectedExistence, exists.ExistedAlready)
 		}
 
-		// The relationship should only be added to a Vera chain once - there is no need to loop through
+		// The relationship should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
 		if s.DocumentACPType == state.RemoteDocumentACPType {
 			actionNodeID = immutable.Some(0)
@@ -288,7 +288,7 @@ func deleteDACActorRelationship(
 			require.Equal(s.T, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
 		}
 
-		// The relationship should only be added to a Vera chain once - there is no need to loop through
+		// The relationship should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
 		if s.DocumentACPType == state.RemoteDocumentACPType {
 			break

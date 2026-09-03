@@ -123,7 +123,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetCertPath(tlsCertPath).
 				SetKeyPath(tlsKeyPath)
 			opts.DocumentACP().
-				SetChainID(cfg.GetString("acp.document.remote.ChainID")).
+				SetLogID(cfg.GetString("acp.document.remote.LogID")).
 				SetGRPCAddress(cfg.GetString("acp.document.remote.GRPCAddress")).
 				SetCometRPCAddress(cfg.GetString("acp.document.remote.CometRPCAddress"))
 			opts.NodeACP().

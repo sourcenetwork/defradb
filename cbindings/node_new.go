@@ -157,8 +157,8 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	if gocOptions.DocumentACPPath != "" {
 		opts.DocumentACP().SetPath(gocOptions.DocumentACPPath)
 	}
-	if gocOptions.RemoteDACChainID != "" {
-		opts.DocumentACP().SetChainID(gocOptions.RemoteDACChainID)
+	if gocOptions.RemoteDACLogID != "" {
+		opts.DocumentACP().SetLogID(gocOptions.RemoteDACLogID)
 	}
 	if gocOptions.RemoteDACGRPCAddress != "" {
 		opts.DocumentACP().SetGRPCAddress(gocOptions.RemoteDACGRPCAddress)

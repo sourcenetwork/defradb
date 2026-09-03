@@ -25,7 +25,7 @@ func TestDocEncryptionACP_BranchableCollection_AuthorizedPeerCanFetch(t *testing
 	test := testUtils.TestCase{
 		KMS: testUtils.KMS{Activated: true},
 		// Like the other multi-node branchable tests, this is restricted to Local DAC: the
-		// collection object is registered per node, whereas a shared Vera chain would reject the
+		// collection object is registered per node, whereas a shared Vera log would reject the
 		// second node re-registering the same collection object.
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

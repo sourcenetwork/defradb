@@ -49,7 +49,7 @@ const (
 	// faucetAddr is the account address matching the faucetMnemonic
 	faucetAddr = "vera12d9hjf0639k995venpv675sju9ltsvf8v73hjv"
 
-	veraTestChainID string = "vera-dev"
+	remoteDACTestLogID string = "vera-dev"
 )
 
 func setupRemoteDAC(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
@@ -70,8 +70,7 @@ func setupRemoteDAC(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentA
 		testcontainers.WithExposedPorts("9090/tcp"),
 		testcontainers.WithLogger(testLogger),
 		testcontainers.WithEnv(map[string]string{
-			// STANDALONE configures the Vera container to create an isolated chain,
-			// instead of connecting to an existing one.
+			// STANDALONE configures the container to create an isolated Vera instance.
 			"STANDALONE": "1",
 		}),
 	)
@@ -134,7 +133,7 @@ func setupRemoteDAC(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentA
 	return &options.NodeDocumentACPOptions{
 		DocumentACPType:          options.NodeRemoteDocumentACPType,
 		Signer:                   immutable.Some[options.NodeTxSigner](signer),
-		RemoteDACChainID:         veraTestChainID,
+		RemoteDACLogID:           remoteDACTestLogID,
 		RemoteDACGRPCAddress:     grpcEndpoint,
 		RemoteDACCometRPCAddress: rpcEndpoint,
 	}, nil

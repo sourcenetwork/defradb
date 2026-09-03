@@ -159,8 +159,8 @@ type NodeDocumentACPOptions struct {
 	Path string
 	// Signer signs Vera transactions made by the Remote DAC.
 	Signer immutable.Option[NodeTxSigner]
-	// RemoteDACChainID is the chain ID for Vera.
-	RemoteDACChainID string
+	// RemoteDACLogID is the log ID for Vera.
+	RemoteDACLogID string
 	// RemoteDACGRPCAddress is the gRPC address for Vera.
 	RemoteDACGRPCAddress string
 	// RemoteDACCometRPCAddress is the Comet RPC address for Vera.
@@ -665,9 +665,9 @@ func (sb *NodeDocumentACPOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *Node
 	return sb
 }
 
-// SetChainID sets the chainID of the Vera chain.
-func (sb *NodeDocumentACPOptionsBuilder) SetChainID(chainID string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACChainID = chainID })
+// SetLogID sets the Vera log ID used by Remote DAC.
+func (sb *NodeDocumentACPOptionsBuilder) SetLogID(logID string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACLogID = logID })
 	return sb
 }
 

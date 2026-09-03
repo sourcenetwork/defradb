@@ -149,7 +149,7 @@ func convertNodeInitOptionsToGoNodeInitOptions(cOptions C.NodeInitOptions) (GoNo
 		HTTPIdleTimeoutMs:         int64(cOptions.httpIdleTimeoutMs),
 		DocumentACPType:           C.GoString(cOptions.documentACPType),
 		DocumentACPPath:           C.GoString(cOptions.documentACPPath),
-		RemoteDACChainID:          C.GoString(cOptions.remoteDACChainID),
+		RemoteDACLogID:            C.GoString(cOptions.remoteDACLogID),
 		RemoteDACGRPCAddress:      C.GoString(cOptions.remoteDACGRPCAddress),
 		RemoteDACCometRPCAddress:  C.GoString(cOptions.remoteDACCometRPCAddress),
 		NodeACPPath:               C.GoString(cOptions.nodeACPPath),

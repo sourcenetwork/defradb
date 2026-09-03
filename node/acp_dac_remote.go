@@ -29,7 +29,7 @@ func newRemoteDocumentACP(
 		return dac.NoDocumentACP, ErrSignerMissingForRemoteDAC
 	}
 	remoteDAC, err := dac.NewRemoteDocumentACP(
-		opts.RemoteDACChainID,
+		opts.RemoteDACLogID,
 		opts.RemoteDACGRPCAddress,
 		opts.RemoteDACCometRPCAddress,
 		opts.Signer.Value(),

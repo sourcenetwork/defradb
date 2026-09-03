@@ -81,7 +81,7 @@ typedef struct {
     // Document ACP options
     const char* documentACPType;        // "none" | "local" | "remote" | "" (default)
     const char* documentACPPath;
-    const char* remoteDACChainID;
+    const char* remoteDACLogID;
     const char* remoteDACGRPCAddress;
     const char* remoteDACCometRPCAddress;
 
