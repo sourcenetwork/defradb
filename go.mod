@@ -3,7 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.26.7
 
 require (
-	github.com/bits-and-blooms/bitset v1.24.6
+	github.com/bits-and-blooms/bitset v1.25.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
