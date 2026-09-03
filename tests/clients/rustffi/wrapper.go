@@ -34,6 +34,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -124,6 +125,30 @@ func execRequestWithIdentity(ident immutable.Option[identity.Identity]) options.
 		b.SetIdentity(ident.Value())
 	}
 	return b
+}
+
+// withSigningOverride records a per-operation block signing override on the
+// context. Wrapper.ExecRequest and TxnWrapper.ExecRequest must keep the
+// client.Store signature, so the override rides the context the same way the
+// active transaction already does.
+func withSigningOverride(ctx context.Context, enableSigning immutable.Option[bool]) context.Context {
+	if !enableSigning.HasValue() {
+		return ctx
+	}
+	return coreblock.ContextWithSigning(ctx, enableSigning.Value())
+}
+
+// signingOverrideFromContext maps the context override onto the Rust FFI
+// convention documented in defra.go.
+func signingOverrideFromContext(ctx context.Context) int {
+	enabled, ok := coreblock.SigningConfigFromContext(ctx)
+	if !ok {
+		return signingUseNodeDefault
+	}
+	if enabled {
+		return signingEnabled
+	}
+	return signingDisabled
 }
 
 // Verify interface compliance at compile time
@@ -829,7 +854,9 @@ func (w *Wrapper) ExecRequest(
 	if opt.OperationName.HasValue() {
 		operationName = opt.OperationName.Value()
 	}
-	execResult, err := w.node.ExecRequestFull(identityDID, request, operationName, varsJSON)
+	execResult, err := w.node.ExecRequestFull(
+		identityDID, request, operationName, varsJSON, signingOverrideFromContext(ctx),
+	)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -2319,7 +2346,9 @@ func (t *TxnWrapper) ExecRequest(
 	if opt.OperationName.HasValue() {
 		operationName = opt.OperationName.Value()
 	}
-	responseJSON, err := t.txn.ExecRequest(identityDID, request, operationName, varsJSON)
+	responseJSON, err := t.txn.ExecRequest(
+		identityDID, request, operationName, varsJSON, signingOverrideFromContext(ctx),
+	)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -2886,6 +2915,7 @@ func (c *CollectionWrapper) AddDocument(ctx context.Context, doc *client.Documen
 
 	// Extract encryption options
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 
 	// Convert JSON to GraphQL input format (unquoted keys)
 	gqlInput := jsonToGraphQLInput(string(docJSON))
@@ -2942,6 +2972,7 @@ func (c *CollectionWrapper) AddManyDocuments(
 
 func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.UpdateDocumentOptions]) error {
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 	docJSON, err := doc.ToJSONPatch()
 	if err != nil {
 		return fmt.Errorf("failed to convert document to JSON: %w", err)
@@ -2961,6 +2992,7 @@ func (c *CollectionWrapper) UpdateDocument(ctx context.Context, doc *client.Docu
 
 func (c *CollectionWrapper) SaveDocument(ctx context.Context, doc *client.Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error {
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 	// Check if doc exists in the database by querying for it.
 	// Pass identity so ACP-protected documents are visible to the owner.
 	existsOpt := options.ExistsDocument()
@@ -3022,6 +3054,7 @@ func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.
 
 func (c *CollectionWrapper) DeleteDocument(ctx context.Context, docID client.DocID, opts ...options.Enumerable[options.DeleteDocumentOptions]) (bool, error) {
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 	mutation := fmt.Sprintf(`mutation { delete_%s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
 	result := c.execRequest(ctx, mutation, execRequestWithIdentity(opt.GetIdentity()))
 	if len(result.GQL.Errors) > 0 {
@@ -3086,6 +3119,7 @@ func (c *CollectionWrapper) UpdateDocumentsWithFilter(
 	}
 
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 	gqlUpdater := jsonToGraphQLInput(updater)
 	mutation := fmt.Sprintf(`mutation { update_%s(filter: %s, input: %s) { _docID } }`,
 		c.version.Name, gqlFilter, gqlUpdater)
@@ -3414,6 +3448,7 @@ func decodeBase64Deltas(v any) any {
 
 func (c *CollectionWrapper) DeleteDocumentsWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions]) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
+	ctx = withSigningOverride(ctx, opt.EnableSigning)
 	gqlFilter, err := mutationFilterToGraphQLInput(filter)
 	if err != nil {
 		return nil, err

@@ -44,6 +44,14 @@ var (
 	initOnce sync.Once
 )
 
+// Block signing overrides understood by the Rust FFI's
+// exec_request_with_signing and exec_request_in_txn_with_signing.
+const (
+	signingUseNodeDefault = -1
+	signingDisabled       = 0
+	signingEnabled        = 1
+)
+
 // cargs is a scratch arena for the C strings passed to a single FFI call.
 // Every allocation is released by one `defer a.free()` at function exit,
 // which is where the per-allocation defers it replaces used to run.
@@ -351,7 +359,7 @@ type ExecRequestResult struct {
 // Returns the raw JSON response string.
 // identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
 func (n *Node) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
-	result, err := n.ExecRequestFull(identityDID, query, operationName, variables)
+	result, err := n.ExecRequestFull(identityDID, query, operationName, variables, signingUseNodeDefault)
 	if err != nil {
 		return "", err
 	}
@@ -363,11 +371,20 @@ func (n *Node) ExecRequest(identityDID string, query string, operationName strin
 
 // ExecRequestFull executes a GraphQL query, mutation, or subscription.
 // Returns an ExecRequestResult that indicates whether the result is a subscription.
-func (n *Node) ExecRequestFull(identityDID string, query string, operationName string, variables string) (*ExecRequestResult, error) {
+// signingOverride is one of signingUseNodeDefault, signingDisabled or signingEnabled.
+func (n *Node) ExecRequestFull(
+	identityDID string,
+	query string,
+	operationName string,
+	variables string,
+	signingOverride int,
+) (*ExecRequestResult, error) {
 	var a cargs
 	defer a.free()
 
-	result := C.exec_request(n.ptr, a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""))
+	result := C.exec_request_with_signing(
+		n.ptr, a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""), C.int(signingOverride),
+	)
 
 	switch result.status {
 	case 0: // Success - query/mutation result
@@ -532,18 +549,27 @@ func (t *Transaction) Rollback() error {
 
 // ExecRequest executes a GraphQL query or mutation within the transaction.
 // identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
-func (t *Transaction) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
+// signingOverride is one of signingUseNodeDefault, signingDisabled or signingEnabled.
+func (t *Transaction) ExecRequest(
+	identityDID string,
+	query string,
+	operationName string,
+	variables string,
+	signingOverride int,
+) (string, error) {
 	var a cargs
 	defer a.free()
 
-	result := C.exec_request_in_txn(t.node.ptr, a.s(t.id), a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""))
+	result := C.exec_request_in_txn_with_signing(
+		t.node.ptr, a.s(t.id), a.opt(identityDID), a.s(query), a.opt(operationName), a.opt(variables), a.s(""), C.int(signingOverride),
+	)
 
 	return unwrap(result.status, result.error, result.value, "exec_request_in_txn")
 }
 
 // Query executes a GraphQL query within the transaction.
 func (t *Transaction) Query(query string) (*QueryResult, error) {
-	responseJSON, err := t.ExecRequest("", query, "", "")
+	responseJSON, err := t.ExecRequest("", query, "", "", signingUseNodeDefault)
 	if err != nil {
 		return nil, err
 	}
