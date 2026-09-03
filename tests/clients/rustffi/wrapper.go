@@ -358,8 +358,10 @@ func NewWrapper(
 		opts.InMemory = true
 	}
 
-	// If signing is enabled and we have a full identity with a private key, use it
-	if enableSigning && nodeIdentity != nil {
+	// Go configures the node identity at construction independently of block
+	// signing; the Rust node derives its P2P and KMS identity from this key.
+	// EnableSigning stays a separate flag.
+	if nodeIdentity != nil {
 		if fullIdent, ok := nodeIdentity.(identity.FullIdentity); ok {
 			privKey := fullIdent.PrivateKey()
 			opts.SigningKeyType = string(privKey.Type())
@@ -496,8 +498,10 @@ func NewWrapperWithP2P(
 		opts.InMemory = true
 	}
 
-	// If signing is enabled and we have a full identity with a private key, use it
-	if enableSigning && nodeIdentity != nil {
+	// Go configures the node identity at construction independently of block
+	// signing; the Rust node derives its P2P and KMS identity from this key.
+	// EnableSigning stays a separate flag.
+	if nodeIdentity != nil {
 		if fullIdent, ok := nodeIdentity.(identity.FullIdentity); ok {
 			privKey := fullIdent.PrivateKey()
 			opts.SigningKeyType = string(privKey.Type())
