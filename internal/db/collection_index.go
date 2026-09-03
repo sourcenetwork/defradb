@@ -567,13 +567,16 @@ func processNewIndexRequest(
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
 func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
 	// The rest of the vector index code only ever reads the first field, so more than one would be
-	// stored but never indexed. Uniqueness has no meaning for a vector index and is likewise ignored
-	// downstream. Reject both rather than half-honour the request.
+	// stored but never indexed. Uniqueness and direction have no meaning for a vector index and are
+	// likewise ignored downstream. Reject them rather than half-honour the request.
 	if len(desc.Fields) != 1 {
 		return NewErrVectorIndexRequiresSingleField(len(desc.Fields))
 	}
 	if desc.Unique {
 		return NewErrVectorIndexCannotBeUnique(desc.Fields[0].Name)
+	}
+	if desc.Fields[0].Descending {
+		return NewErrVectorIndexCannotBeDescending(desc.Fields[0].Name)
 	}
 
 	fieldName := desc.Fields[0].Name

@@ -150,6 +150,7 @@ const (
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errVectorIndexCannotBeDescending       string = "vector index cannot have a direction"
 	errVectorIndexMetricConflict           string = "field already has a vector index with a different " +
 		"distance metric; drop the existing index and create it again with the new metric"
 
@@ -1290,6 +1291,16 @@ func NewErrVectorIndexRequiresSingleField(fieldCount int) error {
 func NewErrVectorIndexCannotBeUnique(fieldName string) error {
 	return errors.New(
 		errVectorIndexCannotBeUnique,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexCannotBeDescending returns a new error indicating that a vector index request
+// asked for a direction. A graph is searched by nearness, not read in key order, so the flag has
+// nothing to act on and would otherwise be stored and ignored.
+func NewErrVectorIndexCannotBeDescending(fieldName string) error {
+	return errors.New(
+		errVectorIndexCannotBeDescending,
 		errors.NewKV("Field", fieldName),
 	)
 }

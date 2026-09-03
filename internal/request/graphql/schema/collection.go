@@ -280,9 +280,11 @@ type indexDirectiveConfig struct {
 	vector  ast.Value
 }
 
+// selectKind records which kind of index the arguments seen so far ask for. The argument chooses the
+// kind, so two arguments belonging to different kinds are a conflict, not an unknown argument.
 func (c *indexDirectiveConfig) selectKind(kind string) error {
 	if c.kind != "" && c.kind != kind {
-		return ErrIndexWithInvalidArg
+		return NewErrIndexKindConflict(c.kind, kind)
 	}
 	c.kind = kind
 	return nil

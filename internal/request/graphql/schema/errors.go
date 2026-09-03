@@ -30,6 +30,7 @@ const (
 	errIndexMissingFields               string = "index missing fields"
 	errIndexUnknownArgument             string = "index with unknown argument"
 	errIndexInvalidArgument             string = "index with invalid argument"
+	errIndexKindConflict                string = "index arguments ask for two different kinds of index"
 	errIndexInvalidName                 string = "index with invalid name"
 	errPolicyUnknownArgument            string = "policy with unknown argument"
 	errPolicyInvalidIDProp              string = "policy directive with invalid id property"
@@ -87,6 +88,17 @@ func NewErrDuplicateField(objectName, fieldName string) error {
 
 func NewErrIndexWithInvalidName(name string) error {
 	return errors.New(errIndexInvalidName, errors.NewKV("Name", name))
+}
+
+// NewErrIndexKindConflict returns a new error indicating that the arguments given to the index
+// directive belong to different kinds of index. The argument chooses the kind, so naming a vector
+// argument and an ordered one asks for both at once.
+func NewErrIndexKindConflict(selected, requested string) error {
+	return errors.New(
+		errIndexKindConflict,
+		errors.NewKV("Selected", selected),
+		errors.NewKV("Requested", requested),
+	)
 }
 
 func NewErrFieldMissingRelation(objectName, fieldName string, objectType string) error {

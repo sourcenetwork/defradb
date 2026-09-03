@@ -66,6 +66,86 @@ func TestVectorIndex_CreateAsUnique_IsRejected(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// A direction has no meaning for a vector index: the graph is searched by nearness, not read in key
+// order. The index API can request one, so it must be rejected rather than stored and ignored.
+func TestVectorIndex_CreateWithDirection_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!]
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields: []client.IndexedFieldDescription{
+					{Name: "vector", Descending: true},
+				},
+				Vector: &client.VectorIndexDescription{
+					Algorithm:  client.VectorAlgorithmHNSW,
+					Metric:     client.DistanceMetricCosine,
+					Dimensions: 3,
+					HNSW:       &client.HNSWParams{},
+				},
+				ExpectedError: "vector index cannot have a direction",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Ascending is the default, so asking for it explicitly is what the index already does and is
+// accepted. Only a direction the index cannot honour is rejected.
+func TestVectorIndex_CreateWithAscendingDirection_IsAllowed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!]
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields: []client.IndexedFieldDescription{
+					{Name: "vector", Descending: false},
+				},
+				Vector: &client.VectorIndexDescription{
+					Algorithm:  client.VectorAlgorithmHNSW,
+					Metric:     client.DistanceMetricCosine,
+					Dimensions: 3,
+					HNSW:       &client.HNSWParams{},
+				},
+			},
+			&action.ListIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "User_vector_ASC",
+						ID:     1,
+						Fields: []client.IndexedFieldDescription{{Name: "vector"}},
+						Kind:   client.IndexKindVector,
+						KindDescription: &client.VectorIndexDescription{
+							Algorithm:  client.VectorAlgorithmHNSW,
+							Metric:     client.DistanceMetricCosine,
+							Dimensions: 3,
+							HNSW: &client.HNSWParams{
+								M:              client.DefaultHNSWM,
+								EfConstruction: client.DefaultHNSWEfConstruction,
+								EfSearch:       client.DefaultHNSWEfSearch,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 // A vector index can be created through the index API (not just the SDL directive) on a populated
 // collection, and a similarity query then routes to it. This exercises the vector path of the index
 // API on every client, including the CLI and C bindings that carry the config as JSON.

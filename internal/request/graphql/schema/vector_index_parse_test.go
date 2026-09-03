@@ -166,7 +166,7 @@ func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {}, unique: false)
 			}`,
-			expectedErr: errIndexInvalidArgument,
+			expectedErr: errIndexKindConflict,
 		},
 		{
 			description: "vector config is invalid on an object directive",
