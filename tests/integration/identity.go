@@ -91,11 +91,11 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 		//   address the node no longer listens on: an external node binds a new port
 		//   every start, and the node rejects a token minted for the old one.
 		if !ok || (audience.HasValue() && !state.TokenHasAudience(token, audience.Value())) {
-			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
+			if s.DocumentACPType == state.RemoteDocumentACPType || audience.HasValue() {
 				err := fullIdent.UpdateToken(
 					action.AuthTokenExpiration,
 					audience,
-					immutable.Some(s.SourcehubAddress),
+					immutable.Some(s.RemoteDACAddress),
 				)
 				require.NoError(s.T, err)
 				identHolder.NodeTokens[nodeIndex] = fullIdent.BearerToken()

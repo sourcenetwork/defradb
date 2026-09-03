@@ -133,7 +133,7 @@ func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
 		EnableSigning:     tc.EnableSigning,
 		HTTP:              tc.HTTP,
 		IsDocumentACPTest: hasDocumentACPActions(tc.Actions),
-		SourceHubImage:    sourcehubImage,
+		VeraImage:         veraImage,
 		DatabaseDir:       databaseDir,
 		BadgerEncryption:  badgerEncryption,
 		LensRuntime:       lensType,
@@ -143,8 +143,8 @@ func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
 
 // hasDocumentACPActions reports whether the action set uses document ACP.
 //
-// Spinning up a SourceHub instance is slow, so tests that do not need one are
-// skipped when SourceHub ACP is selected.
+// Spinning up a Vera instance is slow, so tests that do not need one are
+// skipped when Remote DAC is selected.
 func hasDocumentACPActions(actions []any) bool {
 	for _, a := range actions {
 		switch a.(type) {

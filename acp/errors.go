@@ -84,20 +84,20 @@ func NewErrInitializationOfACPFailed(
 
 func NewErrFailedToAddPolicy(
 	inner error,
-	Type string,
+	acpType string,
 	creatorID string,
 ) error {
 	return errors.Wrap(
 		errFailedToAddPolicy,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("CreatorID", creatorID),
 	)
 }
 
 func NewErrFailedToRegisterDoc(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	creatorID string,
 	resourceName string,
@@ -106,7 +106,7 @@ func NewErrFailedToRegisterDoc(
 	return errors.Wrap(
 		errFailedToRegisterDoc,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("CreatorID", creatorID),
 		errors.NewKV("ResourceName", resourceName),
@@ -116,7 +116,7 @@ func NewErrFailedToRegisterDoc(
 
 func NewErrFailedToCheckIfDocIsRegistered(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -124,7 +124,7 @@ func NewErrFailedToCheckIfDocIsRegistered(
 	return errors.Wrap(
 		errFailedToCheckIfDocIsRegistered,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -152,7 +152,7 @@ func NewErrFailedToVerifyNodeAccess(
 
 func NewErrFailedToVerifyDocAccess(
 	inner error,
-	Type string,
+	acpType string,
 	permission string,
 	policyID string,
 	actorID string,
@@ -162,7 +162,7 @@ func NewErrFailedToVerifyDocAccess(
 	return errors.Wrap(
 		errFailedToVerifyDocAccess,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("Permission", permission),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ActorID", actorID),
@@ -173,7 +173,7 @@ func NewErrFailedToVerifyDocAccess(
 
 func NewErrFailedToAddDocActorRelationship(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -184,7 +184,7 @@ func NewErrFailedToAddDocActorRelationship(
 	return errors.Wrap(
 		errFailedToAddDocActorRelationship,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -196,7 +196,7 @@ func NewErrFailedToAddDocActorRelationship(
 
 func NewErrFailedToDeleteDocActorRelationship(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -207,7 +207,7 @@ func NewErrFailedToDeleteDocActorRelationship(
 	return errors.Wrap(
 		errFailedToDeleteDocActorRelationship,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),

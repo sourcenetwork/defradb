@@ -126,7 +126,7 @@ jobs:
             "
           coverage-path: coverage.txt
 
-  # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
+  # The document ACP matrix job tests the combinations of document ACP types and client types on Linux.
   test-coverage-document-acp:
     name: Test coverage document acp job
 
@@ -134,7 +134,7 @@ jobs:
       fail-fast: false
       matrix:
         client-type: [go, http, cli, c]
-        document-acp-type: [source-hub]
+        document-acp-type: [remote]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
@@ -158,14 +158,14 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Get SourceHub Docker Image Name
-        id: sourcehub-image
-        uses: ./.github/composites/get-sourcehub-image
+      - name: Get Vera Docker Image Name
+        id: vera-image
+        uses: ./.github/composites/get-vera-image
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
         env:
-          DEFRA_SOURCEHUB_IMAGE: ${{ steps.sourcehub-image.outputs.image }}
+          DEFRA_VERA_IMAGE: ${{ steps.vera-image.outputs.image }}
         with:
           coverage-artifact-name: "coverage_document_acp\
             _${{ matrix.document-acp-type }}\

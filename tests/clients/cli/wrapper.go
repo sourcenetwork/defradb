@@ -49,10 +49,10 @@ type Wrapper struct {
 	serverCancel context.CancelFunc
 }
 
-// NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
+// NewWrapper takes a Node and a Remote DAC address used to pay for Vera transactions.
 //
-// sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
-func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
+// remoteDACAddress can be empty when testing configurations other than Remote DAC.
+func NewWrapper(node *node.Node, remoteDACAddress string) (*Wrapper, error) {
 	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	handlerWithCtx := http.InjectServerContext(ctx)(handler)
 	httpServer := httptest.NewServer(handlerWithCtx)
-	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
+	cmd := newCliWrapper(httpServer.URL, remoteDACAddress)
 
 	return &Wrapper{
 		node:         node,

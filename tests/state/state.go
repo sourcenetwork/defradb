@@ -73,8 +73,8 @@ type KMSType string
 type DocumentACPType string
 
 const (
-	SourceHubDocumentACPType DocumentACPType = "source-hub"
-	LocalDocumentACPType     DocumentACPType = "local"
+	RemoteDocumentACPType DocumentACPType = "remote"
+	LocalDocumentACPType  DocumentACPType = "local"
 )
 
 type ColDocIndex struct {
@@ -278,7 +278,7 @@ type State struct {
 	// The type of Document ACP
 	DocumentACPType DocumentACPType
 
-	// The Document ACP options to share between each node (currently only used for sourcehub).
+	// The Document ACP options to share between each node (currently only used for Remote DAC).
 	DocumentACPOptions *options.NodeDocumentACPOptions
 
 	// Any explicit transactions active in this test.
@@ -305,7 +305,7 @@ type State struct {
 
 	// Policy IDs, by node index, by policyID index (in the order they were added).
 	//
-	// Note: In case acp type is sourcehub, all nodes will have the same state of PolicyIDs.
+	// When Remote DAC is selected, all nodes share the same policy ID state.
 	PolicyIDs [][]string
 
 	// Will receive an item once all actions have finished processing.
@@ -342,8 +342,8 @@ type State struct {
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
 
-	// The SourceHub address used to pay for SourceHub transactions.
-	SourcehubAddress string
+	// RemoteDACAddress is the Vera address used by Remote DAC to pay for transactions.
+	RemoteDACAddress string
 
 	// IsNetworkEnabled indicates whether the network is enabled.
 	IsNetworkEnabled bool

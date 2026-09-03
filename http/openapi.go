@@ -113,8 +113,8 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		"- `exp`: token expiration UNIX timestamp.\n" +
 		"- `nbf`: not-before UNIX timestamp.\n" +
 		"- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\n" +
-		"For SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and " +
-		"`authorized_account` (the SourceHub address).\n\n" +
+		"For Remote DAC policies, also include `iss` (the identity's `did:key`), `iat`, and " +
+		"`authorized_account` (the Vera address).\n\n" +
 		"Generate an identity with `defradb identity new`. Authentication is optional unless " +
 		"Document Access Control or Node Access Control is enabled, in which case requests on " +
 		"restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\n" +

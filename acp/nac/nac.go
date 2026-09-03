@@ -22,7 +22,7 @@ const localStoreName = "local_node_acp"
 
 var _ acp.ACPSystemClient = (*NodeACP)(nil)
 
-// NodeACP represents a node acp (local to the node) implementation that makes no remote calls.
+// NodeACP represents the Local NAC implementation, which makes no remote calls.
 type NodeACP struct {
 	*local.LocalACP
 }
