@@ -59,7 +59,7 @@ func TestNetInfoPeers(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestNetInfoConnectPeers_SourceP2PDisabled tests that a node started with P2P disabled 
+// TestNetInfoConnectPeers_SourceP2PDisabled tests that a node started with P2P disabled
 // will return an error instead of panicking when the Connect function gets called.
 func TestNetInfoConnectPeers_SourceP2PDisabled(t *testing.T) {
 	test := testUtils.TestCase{
