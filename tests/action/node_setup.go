@@ -106,9 +106,9 @@ func SetupNode(
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
-	case state.SourceHubDocumentACPType:
+	case state.RemoteDocumentACPType:
 		if s.DocumentACPOptions == nil {
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
+			s.DocumentACPOptions, err = setupRemoteDAC(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
@@ -317,7 +317,7 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 	}
 
 	if s.DocumentACPType != "" && s.DocumentACPType != state.LocalDocumentACPType {
-		// source-hub needs an address and a signer the test holds in process.
+		// Remote DAC needs an address and a signer the test holds in process.
 		unsupported = append(unsupported, "document ACP type "+string(s.DocumentACPType))
 	}
 

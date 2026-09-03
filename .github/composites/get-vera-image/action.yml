@@ -1,0 +1,51 @@
+# Copyright 2026 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: 'Get Vera Docker Image Tag'
+
+description: 'Composite action to determine the Vera Docker image matching go.mod'
+
+outputs:
+  image:
+    description: "Vera image to use"
+    value: ${{ steps.image-name.outputs.image }}
+
+runs:
+  # This is a composite action, setting this is required.
+  using: "composite"
+
+  steps:
+    # Go pseudo-versions contain the short commit for the required Vera revision.
+    - name: Get Vera short commit
+      id: vera-commit
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERA_COMMIT=$(sed -En \
+          's|^[[:space:]]*github.com/sourcenetwork/vera[[:space:]]+v[^[:space:]]+-([0-9a-f]+)[[:space:]]*$|\1|p' \
+          go.mod)
+        test -n "$VERA_COMMIT"
+        echo "short=$VERA_COMMIT" >> "$GITHUB_OUTPUT"
+
+    # Fetch Vera to resolve the short pseudo-version commit to its full SHA.
+    - name: Checkout Vera code into the directory
+      uses: actions/checkout@v6
+      with:
+        repository: sourcenetwork/vera
+        path: _vera
+        fetch-depth: 0
+
+    - name: Build Vera image name
+      id: image-name
+      working-directory: _vera
+      shell: bash
+      run: |
+        commit=$(git rev-parse "${{ steps.vera-commit.outputs.short }}^{commit}")
+        echo "image=ghcr.io/sourcenetwork/vera:sha-$commit" >> "$GITHUB_OUTPUT"

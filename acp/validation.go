@@ -54,7 +54,7 @@ func ValidateResourceInterface(
 
 	var requiredResourcePermissions []string
 	switch acpType {
-	case acpTypes.LocalDocumentACP, acpTypes.SourceHubDocumentACP:
+	case acpTypes.LocalDocumentACP, acpTypes.RemoteDocumentACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForDocument
 	case acpTypes.NodeACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForNode

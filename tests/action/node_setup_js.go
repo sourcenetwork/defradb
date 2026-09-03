@@ -54,14 +54,14 @@ func SetupNode(
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
-	case state.SourceHubDocumentACPType:
+	case state.RemoteDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			var err error
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
+			s.DocumentACPOptions, err = setupRemoteDAC(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().
-			SetType(options.NodeSourceHubDocumentACPType).
+			SetType(options.NodeRemoteDocumentACPType).
 			SetAll(*s.DocumentACPOptions)
 
 	default:
