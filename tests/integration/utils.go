@@ -877,30 +877,21 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
-// applyTestCaseVersion points each active version-targeting multiplier at the
-// release this test should run against, returning a function that restores the
+// applyTestCaseVersion points each active multiplier that targets a release at
+// the one this test should run against, and returns a function restoring the
 // previous values.
 //
-// A test declaring [TestCase.SupportedFromVersion] cannot run against an older
-// release, so rather than dropping it, the multiplier runs it against the oldest
-// release it does support. Skipping would mean a test that names a version
-// contributes nothing to compatibility coverage.
+// A test declaring [TestCase.SupportedFromVersion] cannot run against anything
+// older, so it runs against the oldest release it does support rather than being
+// skipped, which would leave it checking nothing. exact skips it instead, for
+// runs covering several releases, where the release it needs has its own run.
 //
-// exact turns that off, skipping such a test instead. Runs covering several
-// releases set it so the release a test needs is exercised by its own run rather
-// than twice, once by that release and again by an older one promoting the test.
-//
-// This is done here rather than in the multiplier because testo hands
-// [multiplier.Multiplier] only the action set, and the required version is
-// TestCase-level configuration it cannot see.
-//
-// activeNames is passed in rather than read from testo's package-level state so
-// this function is directly unit-testable.
+// It lives here because a multiplier only sees the action set, not the version
+// the test declared.
 func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string, exact bool) func() {
 	if supportedFrom != "" {
-		// A malformed value would compare as older than every target and silently
-		// leave the default in place, running the test against a release that
-		// cannot support it.
+		// A malformed value compares as older than every release, so the test
+		// would quietly run against one that cannot support it.
 		require.True(t, semver.IsValid(supportedFrom),
 			"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
 	}
