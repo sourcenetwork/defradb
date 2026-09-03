@@ -91,8 +91,8 @@ func SetTargetVersion(name Name, version string) func() {
 }
 
 // TargetVersionInEffect returns the release the named multiplier currently runs
-// against, which is [CrossVersionTargetVersion] unless [SetTargetVersion] has
-// pointed it elsewhere.
+// against, which is [DefaultTargetVersion] unless [SetTargetVersion] has pointed
+// it elsewhere. A multiplier that targets no release returns an empty string.
 func TargetVersionInEffect(name Name) string {
 	targetVersionOverride.Lock()
 	defer targetVersionOverride.Unlock()
@@ -101,7 +101,7 @@ func TargetVersionInEffect(name Name) string {
 		return v
 	}
 
-	return CrossVersionTargetVersion
+	return DefaultTargetVersion(name)
 }
 
 var _ Multiplier = (*crossVersion)(nil)

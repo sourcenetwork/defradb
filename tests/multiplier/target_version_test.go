@@ -30,35 +30,29 @@ func twoNodeActions() action.Actions {
 	}
 }
 
-func TestTargetVersionFor_CrossVersionMultipliers(t *testing.T) {
+func TestDefaultTargetVersion_CrossVersionMultipliers(t *testing.T) {
 	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
-		version, ok := TargetVersionFor(name)
-		assert.True(t, ok, "%s should target a version", name)
-		assert.Equal(t, CrossVersionTargetVersion, version)
+		assert.Equal(t, CrossVersionTargetVersion, DefaultTargetVersion(name))
 	}
 }
 
-func TestTargetVersionFor_NonVersionMultipliers(t *testing.T) {
+func TestDefaultTargetVersion_NonVersionMultipliers(t *testing.T) {
 	// These multipliers say nothing about the release under test, so a test
 	// declaring SupportedFromVersion must still run under them.
 	for _, name := range []Name{SignedDocs, SecondaryIndex, EncryptedDocs} {
-		version, ok := TargetVersionFor(name)
-		assert.False(t, ok, "%s should not target a version", name)
-		assert.Equal(t, "", version)
+		assert.Equal(t, "", DefaultTargetVersion(name), "%s should not target a version", name)
 	}
 }
 
-func TestTargetVersionFor_UnknownName(t *testing.T) {
-	version, ok := TargetVersionFor("no-such-multiplier")
-	assert.False(t, ok)
-	assert.Equal(t, "", version)
+func TestDefaultTargetVersion_UnknownName(t *testing.T) {
+	assert.Equal(t, "", DefaultTargetVersion("no-such-multiplier"))
 }
 
-func TestTargetVersionFor_ReturnsComparableSemver(t *testing.T) {
+func TestDefaultTargetVersion_ReturnsComparableSemver(t *testing.T) {
 	// The harness feeds this straight into semver.Compare, so a target that is not
 	// valid semver would compare as older than everything and skip every gated test.
 	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
-		version, _ := TargetVersionFor(name)
+		version := DefaultTargetVersion(name)
 		assert.True(t, semver.IsValid(version), "%s targets %q which is not valid semver", name, version)
 	}
 }
@@ -121,6 +115,13 @@ func TestResolveTargetVersion_Exact_NonVersionMultiplier_TargetsNothing(t *testi
 
 	assert.Equal(t, VersionNotTargeted, resolution)
 	assert.Equal(t, "", version)
+}
+
+func TestTargetVersionInEffect_NonVersionMultiplier_TargetsNothing(t *testing.T) {
+	// Without an override this falls back to the default, which must stay empty
+	// for a multiplier that pins no release rather than claiming the
+	// cross-version one.
+	assert.Equal(t, "", TargetVersionInEffect(SignedDocs))
 }
 
 func TestSetTargetVersion_AppliesToNodeAndRestores(t *testing.T) {

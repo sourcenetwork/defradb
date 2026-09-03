@@ -15,17 +15,17 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-// TargetVersionFor returns the release a version-targeting multiplier runs
-// against, and whether the named multiplier targets one at all.
+// DefaultTargetVersion returns the release the named multiplier runs against
+// unless overridden, or an empty string if it targets none.
 //
 // The name to version mapping lives here rather than in the harness so adding a
 // version pair does not require touching the harness.
-func TargetVersionFor(name Name) (string, bool) {
+func DefaultTargetVersion(name Name) string {
 	switch name {
 	case CrossVersionOldSource, CrossVersionNewSource:
-		return CrossVersionTargetVersion, true
+		return CrossVersionTargetVersion
 	default:
-		return "", false
+		return ""
 	}
 }
 
@@ -61,8 +61,8 @@ const (
 //
 // supportedFrom must be valid semver; callers validate it first.
 func ResolveTargetVersion(name Name, supportedFrom string, exact bool) (string, VersionResolution) {
-	target, targetsVersion := TargetVersionFor(name)
-	if !targetsVersion {
+	target := DefaultTargetVersion(name)
+	if target == "" {
 		return "", VersionNotTargeted
 	}
 

@@ -914,9 +914,8 @@ func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string
 		case defraMultiplier.VersionSkip:
 			// Skipf ends the test, so anything already set has to be put back first.
 			restoreAll()
-			target, _ := defraMultiplier.TargetVersionFor(name)
 			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
-				name, target, supportedFrom)
+				name, defraMultiplier.DefaultTargetVersion(name), supportedFrom)
 
 		case defraMultiplier.VersionRun:
 			restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
