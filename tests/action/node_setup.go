@@ -155,10 +155,6 @@ func SetupNode(
 		opts.SetKMS(options.NodeKMSType(kms.PubSubServiceType))
 	}
 
-	if s.IsNetworkEnabled {
-		opts.SetDisableP2P(false)
-	}
-
 	opts.SetEnableDevelopment(true)
 
 	nodeObj, err := node.New(s.Ctx, opts)
