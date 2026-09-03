@@ -250,6 +250,11 @@ func parseSimilarity(
 		v := arguments[target].(map[string]any)
 		vector = v[types.SimilarityArgVector]
 	}
+	// The argument names the field to compare against, so without one there is nothing to
+	// compare. The mapper looks the target up by name and would panic on the empty name.
+	if target == "" {
+		return nil, ErrSimilarityMissingTarget
+	}
 
 	return &request.Similarity{
 		Field: request.Field{

@@ -1181,7 +1181,7 @@ func refreshTokens(
 					err := fullIdentityToUpdate.UpdateToken(
 						action.AuthTokenExpiration,
 						audience,
-						immutable.Some(s.SourcehubAddress),
+						immutable.Some(s.RemoteDACAddress),
 					)
 					require.NoError(s.T, err)
 					nodeTokensToUpdate[nodeKey] = fullIdentityToUpdate.BearerToken()

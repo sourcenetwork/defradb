@@ -517,3 +517,26 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQuerySimple_WithSimilarityAndNoArguments_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Int!]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						SIMILARITY
+					}
+				}`,
+				ExpectedError: "similarity requires a target field argument",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

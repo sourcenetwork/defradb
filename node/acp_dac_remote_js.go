@@ -21,10 +21,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func newSourceHubDocumentACP(
+func newRemoteDocumentACP(
 	ctx context.Context,
 	opts *options.NodeDocumentACPOptions,
 ) (immutable.Option[dac.DocumentACP], error) {
-	acpSourceHub := dac.NewSourceHubDocumentACP()
-	return immutable.Some(acpSourceHub), nil
+	remoteDAC := dac.NewRemoteDocumentACP()
+	return immutable.Some(remoteDAC), nil
 }

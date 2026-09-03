@@ -9,10 +9,10 @@
 // licenses/APL.txt.
 
 /*
-This package implements local and sourcehub document access control systems.
+This package implements Local and Remote Document Access Control (DAC) systems.
 
-Local document access control provides acp local to a node.
+Local DAC provides access control local to a node.
 
-SourceHub document access control enables acp beyond just the local node.
+Remote DAC, backed by Vera, provides access control shared across nodes.
 */
 package dac
