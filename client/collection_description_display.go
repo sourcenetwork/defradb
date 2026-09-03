@@ -73,3 +73,16 @@ func (col CollectionVersion) Display() (json.RawMessage, error) {
 	}
 	return json.Marshal(collectionVersionDisplay{CollectionVersion: col, Fields: fields})
 }
+
+// DisplayCollectionVersions applies [CollectionVersion.Display] to each of the given versions.
+func DisplayCollectionVersions(cols []CollectionVersion) ([]json.RawMessage, error) {
+	display := make([]json.RawMessage, len(cols))
+	for i, col := range cols {
+		raw, err := col.Display()
+		if err != nil {
+			return nil, err
+		}
+		display[i] = raw
+	}
+	return display, nil
+}
