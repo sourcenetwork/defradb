@@ -451,14 +451,14 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(kind: ordered, vector: {})
 			}`,
-			expectedErr: errIndexKindConflict,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "ordered and vector configs are competing kind selectors",
 			sdl: `type user {
 				name: String @index(ordered: {}, vector: {})
 			}`,
-			expectedErr: errIndexKindConflict,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "nested and legacy ordered configs cannot set the same property",
