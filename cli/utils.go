@@ -145,10 +145,10 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 
 	cfg := mustGetContextConfig(cmd)
 
-	sourcehubAddressString := cfg.GetString("acp.document.sourceHub.address")
-	var sourcehubAddress immutable.Option[string]
-	if sourcehubAddressString != "" {
-		sourcehubAddress = immutable.Some(sourcehubAddressString)
+	addressString := cfg.GetString("acp.document.remote.address")
+	var address immutable.Option[string]
+	if addressString != "" {
+		address = immutable.Some(addressString)
 	}
 
 	// Default the audience to the host of --url (the Host the server checks
@@ -169,7 +169,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 	err = ident.UpdateToken(
 		authTokenExpiration,
 		immutable.Some(audience),
-		sourcehubAddress)
+		address)
 	if err != nil {
 		return err
 	}

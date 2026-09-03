@@ -40,7 +40,7 @@ require (
 	github.com/onsi/gomega v1.42.1
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.8.1
+	github.com/sourcenetwork/acp_core v0.8.2
 	github.com/sourcenetwork/corekv v0.3.2
 	github.com/sourcenetwork/corekv/badger v0.3.1
 	github.com/sourcenetwork/corekv/blockstore v0.3.1
@@ -54,8 +54,8 @@ require (
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.11.0
-	github.com/sourcenetwork/sourcehub v0.4.1-0.20260128164915-1bce44032618
 	github.com/sourcenetwork/testo v0.2.0
+	github.com/sourcenetwork/vera v0.4.1-0.20260827134642-8c1a760f2f83
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -176,6 +176,7 @@ require (
 	github.com/cockroachdb/tokenbucket v0.0.0-20250429170803-42689b6311bb // indirect
 	github.com/cometbft/cometbft v0.38.21 // indirect
 	github.com/cometbft/cometbft-db v0.14.1 // indirect
+	github.com/consensys/gnark-crypto v0.19.2 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -209,7 +210,7 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/ethereum/go-ethereum v1.17.0 // indirect
+	github.com/ethereum/go-ethereum v1.17.2 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/filecoin-project/go-clock v0.1.0 // indirect
@@ -332,6 +333,7 @@ require (
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mizufinance/decaf377-go v0.2.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.3.0 // indirect
 	github.com/moby/moby/api v1.55.0 // indirect
@@ -406,15 +408,16 @@ require (
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 // indirect
 	github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b // indirect
-	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
+	github.com/sourcenetwork/raccoondb v0.2.1-0.20260514175348-017fdf639300 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
-	github.com/sourcenetwork/zanzi v0.3.1-0.20251104182341-4b1bd0f7be5a // indirect
+	github.com/sourcenetwork/zanzi v0.3.1-0.20260731133738-53cb4f16fe3e // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/supranational/blst v0.3.16 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
 	github.com/tendermint/tendermint v0.35.9 // indirect
