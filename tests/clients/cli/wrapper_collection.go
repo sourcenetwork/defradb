@@ -97,12 +97,13 @@ func (c *Collection) NewIndex(
 	}
 
 	//nolint:staticcheck // a request has no accessor; the deprecated field is the only source
-	fields := make([]string, len(indexDesc.Fields))
-	orders := make([]bool, len(indexDesc.Fields))
+	requested := indexDesc.Fields
+	fields := make([]string, len(requested))
+	orders := make([]bool, len(requested))
 
-	for i := range indexDesc.Fields {
-		fields[i] = indexDesc.Fields[i].Name
-		orders[i] = indexDesc.Fields[i].Descending
+	for i := range requested {
+		fields[i] = requested[i].Name
+		orders[i] = requested[i].Descending
 	}
 
 	orderedFields := make([]string, len(fields))
