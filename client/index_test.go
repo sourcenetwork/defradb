@@ -143,7 +143,11 @@ func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
 	assert.True(t, actual.GetUnique())
 	assert.True(t, actual.Unique) // compat field synced from the resolved config
 	assert.Equal(t, IndexKindOrdered, actual.Kind)
-	assert.Equal(t, &OrderedIndexDescription{Unique: true}, actual.KindDescription)
+	// The legacy top-level fields are upgraded onto the config.
+	assert.Equal(t, &OrderedIndexDescription{
+		Unique: true,
+		Fields: []IndexedFieldDescription{{Name: "age"}},
+	}, actual.KindDescription)
 }
 
 // An embedded caller that predates Kind builds the struct with only the top-level Unique. It must

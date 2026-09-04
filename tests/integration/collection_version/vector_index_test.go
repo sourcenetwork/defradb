@@ -44,6 +44,7 @@ func TestCollectionVersion_VectorIndexOnRawFloat32Array_ShouldSucceed(t *testing
 						},
 						Kind: client.IndexKindVector,
 						KindDescription: &client.VectorIndexDescription{
+							Fields:     []string{"embedding"},
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     client.DistanceMetricCosine,
 							Dimensions: 3,
@@ -157,6 +158,7 @@ func vectorIndexMetricTest(sdlMetric string, expected client.DistanceMetric) tes
 						Fields: []client.IndexedFieldDescription{{Name: "embedding"}},
 						Kind:   client.IndexKindVector,
 						KindDescription: &client.VectorIndexDescription{
+							Fields:     []string{"embedding"},
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     expected,
 							Dimensions: 3,
@@ -226,6 +228,7 @@ func TestCollectionVersion_VectorIndexWithAscendingDirection_ShouldSucceed(t *te
 						Fields: []client.IndexedFieldDescription{{Name: "embedding"}},
 						Kind:   client.IndexKindVector,
 						KindDescription: &client.VectorIndexDescription{
+							Fields:     []string{"embedding"},
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     client.DistanceMetricCosine,
 							Dimensions: 3,

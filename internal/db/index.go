@@ -117,20 +117,21 @@ func buildIndexBase(
 	desc client.IndexDescription,
 	building bool,
 ) (collectionBaseIndex, error) {
-	if len(desc.Fields) == 0 {
+	fields := indexFields(desc)
+	if len(fields) == 0 {
 		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
 		building:        building,
-		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
-		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(fields)),
+		fieldGenerators: make([]FieldIndexGenerator, len(fields)),
 	}
-	for i := range desc.Fields {
-		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
+	for i := range fields {
+		field, foundField := collection.Version().GetFieldByName(fields[i].Name)
 		if !foundField {
-			return collectionBaseIndex{}, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
 		if !isSupportedKind(field.Kind) {
@@ -747,9 +748,9 @@ func (index *collectionUniqueIndex) Update(
 }
 
 func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
-	for _, indexedFields := range index.Description().Fields {
-		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
-		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+	for _, name := range indexFieldNames(index.Description()) {
+		oldVal, getOldValErr := oldDoc.GetValue(name)
+		newVal, getNewValErr := newDoc.GetValue(name)
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set
