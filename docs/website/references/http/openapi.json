@@ -572,6 +572,15 @@
                     "Name": {
                         "type": "string"
                     },
+                    "Ordered": {
+                        "nullable": true,
+                        "properties": {
+                            "Unique": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "Unique": {
                         "type": "boolean"
                     },
