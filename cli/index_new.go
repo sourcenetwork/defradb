@@ -91,6 +91,7 @@ existing documents are indexed. The index starts "building" and becomes "ready" 
 				}
 				desc.Vector = &vectorDesc
 				// No ordered config to carry it, so the db rejects the combination.
+				//nolint:staticcheck // set deliberately so the db reports the conflict
 				desc.Unique = uniqueArg
 			} else {
 				desc.Ordered = &client.OrderedIndexDescription{Unique: uniqueArg}

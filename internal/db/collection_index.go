@@ -537,6 +537,7 @@ func processNewIndexRequest(
 	}
 
 	// Ordered wins when set; validation has already rejected the two disagreeing.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
 	unique := desc.Unique
 	if desc.Ordered != nil {
 		unique = desc.Ordered.Unique
@@ -1364,9 +1365,11 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 	}
 	// Honouring one spelling silently over the other would make the request mean something the
 	// caller did not write.
+	//nolint:staticcheck // these checks exist to police the deprecated field
 	if desc.Unique && desc.Ordered != nil && !desc.Ordered.Unique {
 		return ErrIndexUniqueConflict
 	}
+	//nolint:staticcheck // these checks exist to police the deprecated field
 	if desc.Unique && desc.Vector != nil {
 		return NewErrNonOrderedIndexCannotBeUnique(desc.Fields[0].Name, "vector")
 	}

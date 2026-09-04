@@ -14,10 +14,21 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// structRequestClientTypes restricts a test to the clients that send the index request as a struct.
+// The CLI and C clients translate it into flags, collapsing Ordered and the deprecated Unique into a
+// single --unique, so they cannot tell the two spellings apart.
+var structRequestClientTypes = immutable.Some([]state.ClientType{
+	state.GoClientType,
+	state.HTTPClientType,
+})
 
 func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
@@ -354,6 +365,7 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 
 func TestUniqueIndexNew_SetThroughOrderedConfig_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -386,6 +398,7 @@ func TestUniqueIndexNew_SetThroughOrderedConfig_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexNew_BothSpellingsAgree_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -406,6 +419,7 @@ func TestUniqueIndexNew_BothSpellingsAgree_ShouldSucceed(t *testing.T) {
 
 func TestUniqueIndexNew_SpellingsDisagree_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {
@@ -427,6 +441,7 @@ func TestUniqueIndexNew_SpellingsDisagree_ShouldError(t *testing.T) {
 
 func TestIndexNew_BothOrderedAndVectorConfig_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `type User {

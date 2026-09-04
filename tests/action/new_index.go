@@ -130,6 +130,7 @@ func (a *NewIndex) Execute() {
 			}
 		}
 
+		//nolint:staticcheck // the action exposes both spellings so tests can cover each
 		indexDesc.Unique = a.Unique
 		indexDesc.Ordered = a.Ordered
 		indexDesc.Vector = a.Vector
