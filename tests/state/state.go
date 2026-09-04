@@ -226,6 +226,8 @@ type NodeState struct {
 	P2P *P2PState
 	// The P2P network configurations for the node, cached for restarts.
 	P2POpts options.NodeP2POptions
+	// Whether P2P was disabled for the node, cached for restarts.
+	DisableP2P bool
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
