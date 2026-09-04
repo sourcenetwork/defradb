@@ -116,7 +116,22 @@ func (n *operationNode) Next() (bool, error) {
 				}
 				docs = append(docs, child.Value())
 			}
-			n.currentValue.Fields[i] = docs
+
+			if topNode, ok := child.(*selectTopNode); ok && topNode.cursor != nil {
+				wrapperMap := n.documentMapping.ChildMappings[i]
+				wrapperDoc := wrapperMap.NewDoc()
+				wrapperMap.SetFirstOfName(&wrapperDoc, topNode.selectNode.selectReq.Name, docs)
+				pageInfo, err := topNode.cursor.PageInfo()
+				if err != nil {
+					return false, err
+				}
+				if len(pageInfo) > 0 {
+					wrapperMap.TrySetFirstOfName(&wrapperDoc, request.PageInfoFieldName, pageInfo)
+				}
+				n.currentValue.Fields[i] = wrapperDoc
+			} else {
+				n.currentValue.Fields[i] = docs
+			}
 		}
 	}
 

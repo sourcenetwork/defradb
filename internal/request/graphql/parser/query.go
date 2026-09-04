@@ -38,6 +38,18 @@ func parseQueryOperationDefinition(
 				}
 
 				parsedSelection = parsed
+			} else if field.Name.Value == request.CursorFieldName {
+				parsed, err := parseCursorSelect(exe, exe.Schema.QueryType(), field)
+				if err != nil {
+					return nil, []error{err}
+				}
+
+				errors := parsed.Validate()
+				if len(errors) > 0 {
+					return nil, errors
+				}
+
+				parsedSelection = parsed
 			} else if _, isAggregate := request.Aggregates[field.Name.Value]; isAggregate {
 				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), field)
 				if err != nil {
