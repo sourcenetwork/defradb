@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -52,7 +53,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, defs)
+			display, err := client.DisplayCollectionVersions(defs)
+			if err != nil {
+				return err
+			}
+
+			return writeJSON(cmd, display)
 		},
 	}
 	cmd.Flags().StringVarP(&query, "query", "", "", "Query")

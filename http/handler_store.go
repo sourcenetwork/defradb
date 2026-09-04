@@ -128,7 +128,13 @@ func (h *storeHandler) AddCollection(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	responseJSON(rw, http.StatusOK, cols)
+	display, err := client.DisplayCollectionVersions(cols)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, display)
 }
 
 // patchCollectionRequestBody mirrors patchCollectionRequest, but defers decoding Migration
@@ -278,7 +284,13 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	responseJSON(rw, http.StatusOK, defs)
+	display, err := client.DisplayCollectionVersions(defs)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, display)
 }
 
 type SetMigrationResponse struct {
@@ -420,13 +432,14 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
 		return
 	}
-	display := make([]json.RawMessage, len(cols))
+	versions := make([]client.CollectionVersion, len(cols))
 	for i, col := range cols {
-		display[i], err = col.Version().Display()
-		if err != nil {
-			responseJSON(rw, httpStatusFromError(err), errorResponse{err})
-			return
-		}
+		versions[i] = col.Version()
+	}
+	display, err := client.DisplayCollectionVersions(versions)
+	if err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
 	}
 	responseJSON(rw, http.StatusOK, display)
 }
