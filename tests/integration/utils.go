@@ -1048,6 +1048,7 @@ func setStartingNodes(
 		)
 
 		require.Nil(s.T, err)
+		st.DisableP2P = true
 		s.Nodes = append(s.Nodes, st)
 	}
 }
