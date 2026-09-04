@@ -116,6 +116,7 @@ func (a *NewIndex) Execute() {
 		}
 
 		if a.FieldName != "" {
+			//nolint:staticcheck // the action exposes both spellings so tests can cover each
 			indexDesc.Fields = []client.IndexedFieldDescription{
 				{
 					Name: a.FieldName,

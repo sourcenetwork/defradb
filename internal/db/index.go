@@ -126,6 +126,7 @@ func buildIndexBase(
 		desc:            desc,
 		building:        building,
 		fieldsDescs:     make([]client.CollectionFieldDescription, len(fields)),
+		descending:      make([]bool, len(fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(fields)),
 	}
 	for i := range fields {
@@ -134,6 +135,7 @@ func buildIndexBase(
 			return collectionBaseIndex{}, client.NewErrFieldNotExist(fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
+		base.descending[i] = fields[i].Descending
 		if !isSupportedKind(field.Kind) {
 			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
@@ -233,7 +235,10 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.CollectionFieldDescription
+	fieldsDescs []client.CollectionFieldDescription
+	// descending is each field's direction, positionally aligned with fieldsDescs. Resolved once at
+	// construction so the write path never reads the deprecated top-level fields.
+	descending      []bool
 	fieldGenerators []FieldIndexGenerator
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
@@ -278,7 +283,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	fields := make([]keys.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
 		fields[i].Value = fieldValues[i]
-		fields[i].Descending = index.desc.Fields[i].Descending
+		fields[i].Descending = index.descending[i]
 	}
 
 	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)

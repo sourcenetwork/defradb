@@ -212,12 +212,17 @@ func (d IndexDescription) GetUnique() bool {
 	return d.Unique
 }
 
-// fields returns the index's fields with their directions. Only an ordered index has them, so a
-// vector index's entries come back ascending. Only [IndexDescription.normalize] needs the
-// directions; fieldNames serves the rest.
-func (d IndexDescription) fields() []IndexedFieldDescription {
+// GetFields returns the index's fields with their directions, reading the kind's own config and
+// falling back to the deprecated [IndexDescription.Fields]. Only an ordered index has directions, so
+// a vector index's entries come back ascending.
+func (d IndexDescription) GetFields() []IndexedFieldDescription {
 	if ordered, ok := d.KindDescription.(*OrderedIndexDescription); ok && len(ordered.Fields) > 0 {
 		return ordered.Fields
+	}
+	// The deprecated field is the only one carrying directions for a descriptor built in memory, so
+	// it is returned whole rather than reduced to names.
+	if len(d.Fields) > 0 {
+		return d.Fields
 	}
 	names := d.fieldNames()
 	fields := make([]IndexedFieldDescription, len(names))
@@ -235,9 +240,7 @@ func (d IndexDescription) fieldNames() []string {
 			return names
 		}
 	}
-	//nolint:staticcheck // the fallback this helper exists to hide
 	names := make([]string, len(d.Fields))
-	//nolint:staticcheck // the fallback this helper exists to hide
 	for i, field := range d.Fields {
 		names[i] = field.Name
 	}
@@ -249,27 +252,29 @@ func (d IndexDescription) fieldNames() []string {
 // config. Both (un)marshalling paths run it, so a stored descriptor is always consistent.
 func (d IndexDescription) normalize() IndexDescription {
 	if d.Kind == IndexKindOrdered && d.KindDescription == nil {
-		//nolint:staticcheck // reading it is how a legacy descriptor is upgraded
 		d.KindDescription = &OrderedIndexDescription{Unique: d.Unique, Fields: d.Fields}
 	}
-	// A caller that set only the old spelling still gets a complete config.
+	// A caller that set only the old spelling still gets a complete config. The config is replaced
+	// rather than written through: the pointer may be shared, and marshalling must not mutate its
+	// caller's descriptor.
 	switch config := d.KindDescription.(type) {
 	case *OrderedIndexDescription:
 		if len(config.Fields) == 0 {
-			//nolint:staticcheck // upgrading a descriptor that predates the kind carrying fields
-			config.Fields = d.Fields
+			upgraded := *config
+			upgraded.Fields = d.Fields
+			d.KindDescription = &upgraded
 		}
 	case *VectorIndexDescription:
 		if len(config.Fields) == 0 {
-			//nolint:staticcheck // upgrading a descriptor that predates the kind carrying fields
+			upgraded := *config
 			for _, field := range d.Fields {
-				config.Fields = append(config.Fields, field.Name)
+				upgraded.Fields = append(upgraded.Fields, field.Name)
 			}
+			d.KindDescription = &upgraded
 		}
 	}
 	d.Unique = d.GetUnique()
-	if fields := d.fields(); len(fields) > 0 {
-		//nolint:staticcheck // kept in sync so old readers still see it
+	if fields := d.GetFields(); len(fields) > 0 {
 		d.Fields = fields
 	}
 	return d

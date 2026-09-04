@@ -76,7 +76,7 @@ func (a *ListIndexes) Execute() {
 					require.Equal(a.s.T, expected.ID, actual.ID)
 				}
 				require.Equal(a.s.T, expected.Name, actual.Name)
-				require.Equal(a.s.T, expected.Fields, actual.Fields)
+				require.Equal(a.s.T, expected.GetFields(), actual.GetFields())
 				require.Equal(a.s.T, expected.GetUnique(), actual.GetUnique())
 
 				if a.ExpectedCollectionName != "" {
@@ -112,7 +112,7 @@ func (a *ListIndexes) Execute() {
 						require.Equal(a.s.T, expected.ID, actual.ID)
 					}
 					require.Equal(a.s.T, expected.Name, actual.Name)
-					require.Equal(a.s.T, expected.Fields, actual.Fields)
+					require.Equal(a.s.T, expected.GetFields(), actual.GetFields())
 					require.Equal(a.s.T, expected.GetUnique(), actual.GetUnique())
 
 					// Each element must name its own collection, matching the key it was filed under.

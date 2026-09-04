@@ -191,7 +191,14 @@ func TestIndexDescription_OrderedDescriptor_RoundTrips(t *testing.T) {
 
 	assert.False(t, actual.IsVector())
 	assert.True(t, actual.GetUnique())
-	assert.Equal(t, original, actual)
+	// The round trip upgrades the config with the fields; original is left untouched, since
+	// marshalling must not mutate its argument.
+	assert.Nil(t, original.KindDescription.(*OrderedIndexDescription).Fields)
+	assert.Equal(t, original.Fields, actual.KindDescription.(*OrderedIndexDescription).Fields)
+	assert.Equal(t, original.Fields, actual.Fields)
+	assert.Equal(t, original.Name, actual.Name)
+	assert.Equal(t, original.ID, actual.ID)
+	assert.Equal(t, original.Kind, actual.Kind)
 }
 
 func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
@@ -220,7 +227,13 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 	require.NoError(t, err)
 
 	require.True(t, actual.IsVector())
-	assert.Equal(t, original, actual)
+	// The round trip upgrades the config with the field names; original is left untouched.
+	assert.Nil(t, original.KindDescription.(*VectorIndexDescription).Fields)
+	assert.Equal(t, []string{"embedding"}, actual.KindDescription.(*VectorIndexDescription).Fields)
+	assert.Equal(t, original.Fields, actual.Fields)
+	assert.Equal(t, original.Name, actual.Name)
+	assert.Equal(t, original.ID, actual.ID)
+	assert.Equal(t, original.Kind, actual.Kind)
 }
 
 // Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not

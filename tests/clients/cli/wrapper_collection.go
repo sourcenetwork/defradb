@@ -96,6 +96,7 @@ func (c *Collection) NewIndex(
 		args = append(args, "--vector", string(vectorJSON))
 	}
 
+	//nolint:staticcheck // a request has no accessor; the deprecated field is the only source
 	fields := make([]string, len(indexDesc.Fields))
 	orders := make([]bool, len(indexDesc.Fields))
 

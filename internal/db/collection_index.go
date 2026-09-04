@@ -638,9 +638,9 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 	if len(fields) != 1 {
 		return NewErrVectorIndexRequiresSingleField(len(fields))
 	}
-	// Only the deprecated spelling can carry a direction; Vector.Fields is names only.
-	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
-	if len(desc.Vector.Fields) == 0 && len(desc.Fields) > 0 && desc.Fields[0].Descending {
+	// Vector.Fields cannot carry a direction, but the deprecated spelling can, and a request may set
+	// both. Check the resolved fields so neither route slips past.
+	if fields[0].Descending {
 		return NewErrVectorIndexCannotBeDescending(fields[0].Name)
 	}
 
@@ -702,7 +702,7 @@ func validateNoConflictingVectorIndexMetric(
 ) error {
 	for _, index := range def.Indexes {
 		vector, ok := index.GetVector()
-		if !ok || index.Fields[0].Name != fieldName {
+		if !ok || index.GetFields()[0].Name != fieldName {
 			continue
 		}
 		if vector.Metric != metric {
@@ -1002,8 +1002,8 @@ func (c *collection) indexExistingDocs(
 	ctx context.Context,
 	index client.CollectionIndex,
 ) error {
-	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
-	for _, field := range index.Description().Fields {
+	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().GetFields()))
+	for _, field := range index.Description().GetFields() {
 		colField, ok := c.Version().GetFieldByName(field.Name)
 		if ok {
 			fields = append(fields, colField)
@@ -1439,6 +1439,37 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 	//nolint:staticcheck // these checks exist to police the deprecated field
 	if desc.Unique && desc.Vector != nil {
 		return NewErrNonOrderedIndexCannotBeUnique(fields[0].Name, "vector")
+	}
+	if err := validateRequestFieldsAgree(desc); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateRequestFieldsAgree rejects a request whose kind config and deprecated Fields name
+// different things. Preferring one silently would index a field the caller did not ask for.
+func validateRequestFieldsAgree(desc client.NewIndexRequest) error {
+	//nolint:staticcheck // this check exists to police the deprecated field
+	deprecated := desc.Fields
+	if len(deprecated) == 0 {
+		return nil
+	}
+
+	var current []client.IndexedFieldDescription
+	switch {
+	case desc.Ordered != nil && len(desc.Ordered.Fields) > 0:
+		current = desc.Ordered.Fields
+	case desc.Vector != nil && len(desc.Vector.Fields) > 0:
+		current = make([]client.IndexedFieldDescription, len(desc.Vector.Fields))
+		for i, name := range desc.Vector.Fields {
+			current[i] = client.IndexedFieldDescription{Name: name}
+		}
+	default:
+		return nil
+	}
+
+	if !slices.Equal(deprecated, current) {
+		return ErrIndexFieldsConflict
 	}
 	return nil
 }

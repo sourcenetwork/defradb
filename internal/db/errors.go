@@ -50,7 +50,9 @@ const (
 	errNonZeroIndexIDProvided               string = "non-zero index ID provided"
 	errIndexFieldMissingName                string = "index field missing name"
 	errIndexKindConflict                    string = "index request has more than one kind config"
-	errIndexUniqueConflict                  string = "index request sets both the deprecated " +
+	errIndexFieldsConflict                  string = "index request sets both the deprecated " +
+		"fields and a kind config naming different fields"
+	errIndexUniqueConflict string = "index request sets both the deprecated " +
 		"unique field and an ordered config that disagrees with it"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
@@ -232,6 +234,7 @@ var (
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
 	ErrIndexKindConflict                         = errors.New(errIndexKindConflict)
+	ErrIndexFieldsConflict                       = errors.New(errIndexFieldsConflict)
 	ErrIndexUniqueConflict                       = errors.New(errIndexUniqueConflict)
 	ErrCorruptedIndex                            = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject                        = errors.New(errExpectedJSONObject)
