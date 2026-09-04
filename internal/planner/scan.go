@@ -11,7 +11,7 @@
 package planner
 
 import (
-"context"
+	"context"
 	"maps"
 	"time"
 
@@ -76,7 +76,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
-filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filter)
+	filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filter)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ filter, err := filterWithDocIDAliases(n.p.ctx, n.col, n.documentMapping, n.filte
 		n.index,
 		n.col,
 		n.fields,
-filter,
+		filter,
 		n.fetcherOrdering(),
 		n.slct.DocumentMapping,
 		n.showDeleted,
@@ -538,7 +538,7 @@ func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 		}
 	}
 
-key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, epoch, fields)
+	key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, epoch, fields)
 	key.DocShortID = docShortID
 	if n.reversedIteration {
 		key.Offset = 0

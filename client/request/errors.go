@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	errSelectOfNonGroupField    string = "cannot select a non-group-by field at group-level"
-	errCursorMustContainQuery   string = "_cursor block must contain exactly one collection query"
-	errMultipleQueriesInCursor  string = "_cursor block cannot contain multiple collection queries"
-	errFirstMustBeNonNegative   string = "first must be non-negative"
-	errLastMustBeNonNegative    string = "last must be non-negative"
-	errForwardBackwardConflict  string = "forward parameters (first/after) cannot be combined with backward parameters (last/before)"
-	errInvalidCursor            string = "invalid cursor"
+	errSelectOfNonGroupField   string = "cannot select a non-group-by field at group-level"
+	errCursorMustContainQuery  string = "_cursor block must contain exactly one collection query"
+	errMultipleQueriesInCursor string = "_cursor block cannot contain multiple collection queries"
+	errFirstMustBeNonNegative  string = "first must be non-negative"
+	errLastMustBeNonNegative   string = "last must be non-negative"
+	errForwardBackwardConflict string = "forward parameters (first/after) cannot be combined with backward parameters (last/before)"
+	errInvalidCursor           string = "invalid cursor"
 )
 
 // Errors returnable from this package.

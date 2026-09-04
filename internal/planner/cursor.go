@@ -384,7 +384,7 @@ func appendDocIDToNilUniqueIndexKey(ctx context.Context, key *keys.IndexDataStor
 			return
 		}
 	}
-	}
+}
 
 func (n *cursorNode) initBackwardBuffer(buf []core.Doc) bool {
 	n.backwardBuffer = buf

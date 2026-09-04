@@ -263,12 +263,12 @@ type Targetable struct {
 
 func (t *Targetable) cloneTo(index int) *Targetable {
 	return &Targetable{
-		Field:       *t.Field.cloneTo(index),
-		DocIDs:      t.DocIDs,
-		Filter:      t.Filter,
-		Limit:       t.Limit,
-		GroupBy:     t.GroupBy,
-		OrderBy:     t.OrderBy,
+		Field:        *t.Field.cloneTo(index),
+		DocIDs:       t.DocIDs,
+		Filter:       t.Filter,
+		Limit:        t.Limit,
+		GroupBy:      t.GroupBy,
+		OrderBy:      t.OrderBy,
 		CursorFirst:  t.CursorFirst,
 		CursorAfter:  t.CursorAfter,
 		CursorLast:   t.CursorLast,

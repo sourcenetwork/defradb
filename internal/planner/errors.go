@@ -52,7 +52,7 @@ var (
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
-	ErrNoSupportingIndexForCursor = errors.New(errNoSupportingIndexForCursor)
+	ErrNoSupportingIndexForCursor          = errors.New(errNoSupportingIndexForCursor)
 )
 
 func NewErrUnknownDependency(name string) error {

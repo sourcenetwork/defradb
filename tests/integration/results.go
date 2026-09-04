@@ -26,7 +26,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )

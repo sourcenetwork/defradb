@@ -206,4 +206,3 @@ func (a *Request) resolveVariables(nodeID int) map[string]any {
 	}
 	return resolved
 }
-
