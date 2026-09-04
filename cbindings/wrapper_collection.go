@@ -92,8 +92,10 @@ func (c *Collection) NewIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
-	orderedFields := make([]string, len(indexDesc.Fields))
-	for i, f := range indexDesc.Fields {
+	//nolint:staticcheck // a request has no accessor; the deprecated field is the only source
+	requested := indexDesc.Fields
+	orderedFields := make([]string, len(requested))
+	for i, f := range requested {
 		order := "ASC"
 		if f.Descending {
 			order = "DESC"
