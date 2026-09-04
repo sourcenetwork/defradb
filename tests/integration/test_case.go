@@ -124,6 +124,9 @@ type SetupComplete struct{}
 // RandomNetworkingConfig returns a node configured with random networking.
 var RandomNetworkingConfig = action.RandomNetworkingConfig
 
+// NoNetworkingConfig returns a node configured with P2P disabled entirely.
+var NoNetworkingConfig = action.NoNetworkingConfig
+
 // nodeSetupConfig returns the node setup settings for this test case.
 func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
 	return action.NodeSetupConfig{
