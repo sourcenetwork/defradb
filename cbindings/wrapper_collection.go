@@ -104,7 +104,8 @@ func (c *Collection) NewIndex(
 	defer C.free(unsafe.Pointer(fields))
 
 	var cUnique C.int = 0
-	if indexDesc.Unique {
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	if indexDesc.Unique || (indexDesc.Ordered != nil && indexDesc.Ordered.Unique) {
 		cUnique = 1
 	}
 

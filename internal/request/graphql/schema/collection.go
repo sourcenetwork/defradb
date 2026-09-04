@@ -280,6 +280,10 @@ type indexDirectiveConfig struct {
 	vector  ast.Value
 }
 
+// selectKind records which kind of index the arguments seen so far ask for.
+//
+// Direction is shared: it is an ordered-index argument, but a vector index has to receive it too so
+// that the db layer can reject it with a message about direction rather than about arguments.
 func (c *indexDirectiveConfig) selectKind(kind string) error {
 	if c.kind != "" && c.kind != kind {
 		return ErrIndexWithInvalidArg
@@ -293,7 +297,7 @@ func (c indexDirectiveConfig) newIndex(fieldDef *ast.FieldDefinition) (client.Ne
 	case "", types.OrderedIndexKind:
 		return orderedIndexFromConfig(c.name, c.ordered, fieldDef)
 	case types.VectorIndexKind:
-		return vectorIndexFromAST(c.name, c.vector, fieldDef)
+		return vectorIndexFromAST(c.name, c.vector, c.ordered.direction, fieldDef)
 	default:
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
@@ -336,6 +340,13 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 				return client.NewIndexRequest{}, err
 			}
 			config.vector = arg.Value
+
+		case types.IndexDirectivePropDirection:
+			// Direction does not choose a kind. A vector index cannot honour one, but it has to reach
+			// the db layer to be rejected there, where the error can say so.
+			if err := parseOrderedIndexProperty(arg.Name.Value, arg.Value, &config.ordered); err != nil {
+				return client.NewIndexRequest{}, err
+			}
 
 		default:
 			if err := config.selectKind(types.OrderedIndexKind); err != nil {
@@ -745,6 +756,7 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 func vectorIndexFromAST(
 	name string,
 	config ast.Value,
+	direction *ast.EnumValue,
 	fieldDef *ast.FieldDefinition,
 ) (client.NewIndexRequest, error) {
 	if fieldDef == nil {
@@ -800,9 +812,14 @@ func vectorIndexFromAST(
 		vectorDesc.HNSW = &hnswParams
 	}
 
+	field := client.IndexedFieldDescription{Name: fieldDef.Name.Value}
+	if direction != nil {
+		field.Descending = direction.Value == types.FieldOrderDESC
+	}
+
 	return client.NewIndexRequest{
 		Name:   name,
-		Fields: []client.IndexedFieldDescription{{Name: fieldDef.Name.Value}},
+		Fields: []client.IndexedFieldDescription{field},
 		Vector: &vectorDesc,
 	}, nil
 }
