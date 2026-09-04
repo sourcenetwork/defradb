@@ -78,7 +78,7 @@ var (
 	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
 	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
 	// suitable for browser environments).
-	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType}
+	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType, state.JavaClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -172,6 +172,9 @@ func ExecuteTestCase(
 	}
 	if cClient {
 		clients = append(clients, state.CClientType)
+	}
+	if javaClient {
+		clients = append(clients, state.JavaClientType)
 	}
 
 	var databases []state.DatabaseType

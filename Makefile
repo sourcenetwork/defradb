@@ -321,6 +321,24 @@ test\:cli:
 test\:c:
 	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
+# Builds defradb.jar (via build-java-client) and runs the integration tests against the Java
+# client. CGO_CFLAGS is derived from JAVA_HOME here (rather than left to the caller) since cgo
+# can't expand it itself inside a #cgo directive - see tests/clients/java/doc.go. DEFRA_JAVA_JAR
+# is likewise derived from DEFRA_JAVA_WRAPPER_DIR so an overridden checkout location is still
+# found (tests/clients/java/jvm.go's own default lookup only knows the standard .javaclient/
+# location). Linux/WSL only - see tools/scripts/build-java-client.sh.
+.PHONY: test\:java
+test\:java:
+ifeq ($(JAVA_HOME),)
+	$(error JAVA_HOME must be set to a JDKa installation)
+endif
+	@$(MAKE) build-java-client
+	CGO_ENABLED=1 \
+	CGO_CFLAGS="-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux" \
+	DEFRA_CLIENT_JAVA=true \
+	DEFRA_JAVA_JAR="$(or $(DEFRA_JAVA_WRAPPER_DIR),$(CURDIR)/.javaclient/defradb-java-sdk)/build/libs/defradb.jar" \
+	go test -tags javaclient ./tests/integration/... $(TEST_FLAGS)
+
 .PHONY: test\:names
 test\:names:
 	gotestsum --format testname -- $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
@@ -502,3 +520,10 @@ API_LEVEL ?= 21
 .PHONY: build-c-shared-android
 build-c-shared-android:
 	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
+
+# Clones (or updates) defradb-java-sdk into .javaclient/ and builds
+# defradb.jar from it, for use by tests/clients/java (-tags javaclient).
+# Linux/WSL only - see tools/scripts/build-java-client.sh.
+.PHONY: build-java-client
+build-java-client:
+	@tools/scripts/build-java-client.sh

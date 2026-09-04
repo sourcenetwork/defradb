@@ -14,11 +14,14 @@
 package tests
 
 func init() {
-	if !goClient && !httpClient && !cliClient && !cClient {
+	if !goClient && !httpClient && !cliClient && !cClient && !javaClient {
 		// Default is to test go client type.
 		goClient = true
 	}
 	if cClient {
+		skipNetworkTests = false
+	}
+	if javaClient {
 		skipNetworkTests = false
 	}
 }
