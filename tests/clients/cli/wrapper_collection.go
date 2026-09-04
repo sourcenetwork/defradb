@@ -84,7 +84,8 @@ func (c *Collection) NewIndex(
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
 	}
-	if indexDesc.Unique {
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	if indexDesc.Unique || (indexDesc.Ordered != nil && indexDesc.Ordered.Unique) {
 		args = append(args, "--unique")
 	}
 	if indexDesc.Vector != nil {
