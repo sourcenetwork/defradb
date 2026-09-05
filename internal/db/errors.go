@@ -42,13 +42,16 @@ const (
 	errCannotDeleteField             string = "deleting an existing field is not supported"
 	errCannotAddNonNillableField     string = "adding a non-nillable field to an existing collection " +
 		"is not supported"
-	errFieldKindNotFound                         string = "no type found for given name"
-	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
-	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
-	errDocumentDeleted                           string = "a document with the given ID has been deleted"
-	errIndexMissingFields                        string = "index missing fields"
-	errNonZeroIndexIDProvided                    string = "non-zero index ID provided"
-	errIndexFieldMissingName                     string = "index field missing name"
+	errFieldKindNotFound                    string = "no type found for given name"
+	errFieldKindDoesNotMatchFieldDefinition string = "field Kind does not match field definition"
+	errDocumentAlreadyExists                string = "a document with the given ID already exists"
+	errDocumentDeleted                      string = "a document with the given ID has been deleted"
+	errIndexMissingFields                   string = "index missing fields"
+	errNonZeroIndexIDProvided               string = "non-zero index ID provided"
+	errIndexFieldMissingName                string = "index field missing name"
+	errIndexKindConflict                    string = "index request has more than one kind config"
+	errIndexUniqueConflict                  string = "index request sets both the deprecated " +
+		"unique field and an ordered config that disagrees with it"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
@@ -149,7 +152,8 @@ const (
 	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
-	errVectorIndexCannotBeUnique           string = "vector index cannot be unique"
+	errNonOrderedIndexCannotBeUnique       string = "only an ordered index can be unique"
+	errVectorIndexCannotBeDescending       string = "vector index cannot have a direction"
 	errVectorIndexMetricConflict           string = "field already has a vector index with a different " +
 		"distance metric; drop the existing index and create it again with the new metric"
 
@@ -227,6 +231,8 @@ var (
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
+	ErrIndexKindConflict                         = errors.New(errIndexKindConflict)
+	ErrIndexUniqueConflict                       = errors.New(errIndexUniqueConflict)
 	ErrCorruptedIndex                            = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject                        = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray                         = errors.New(errExpectedJSONArray)
@@ -1285,11 +1291,23 @@ func NewErrVectorIndexRequiresSingleField(fieldCount int) error {
 	)
 }
 
-// NewErrVectorIndexCannotBeUnique returns a new error indicating that a vector index request asked
-// for uniqueness, which vector indexes do not support. Without this the flag is silently dropped.
-func NewErrVectorIndexCannotBeUnique(fieldName string) error {
+// NewErrNonOrderedIndexCannotBeUnique returns a new error indicating that an index request asked for
+// uniqueness on a kind that does not have it. Uniqueness is enforced by the ordered index's keys, so
+// no other kind can offer it, and without this the flag is silently dropped.
+func NewErrNonOrderedIndexCannotBeUnique(fieldName string, kind string) error {
 	return errors.New(
-		errVectorIndexCannotBeUnique,
+		errNonOrderedIndexCannotBeUnique,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrVectorIndexCannotBeDescending returns a new error indicating that a vector index request
+// asked for a direction. A graph is searched by nearness, not read in key order, so the flag has
+// nothing to act on and would otherwise be stored and ignored.
+func NewErrVectorIndexCannotBeDescending(fieldName string) error {
+	return errors.New(
+		errVectorIndexCannotBeDescending,
 		errors.NewKV("Field", fieldName),
 	)
 }

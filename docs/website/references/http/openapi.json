@@ -229,7 +229,33 @@
                                 "IsPrimary": {
                                     "type": "boolean"
                                 },
-                                "Kind": {},
+                                "Kind": {
+                                    "description": "Field type, e.g. \"String\" or \"[Int!]\". Relations are an object, and a type with no name falls back to its numeric id.",
+                                    "oneOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "properties": {
+                                                "Array": {
+                                                    "type": "boolean"
+                                                },
+                                                "CollectionID": {
+                                                    "type": "string"
+                                                },
+                                                "RelativeID": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "maximum": 255,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        }
+                                    ]
+                                },
                                 "Name": {
                                     "type": "string"
                                 },
@@ -238,9 +264,8 @@
                                     "type": "integer"
                                 },
                                 "Typ": {
-                                    "maximum": 255,
-                                    "minimum": 0,
-                                    "type": "integer"
+                                    "description": "CRDT used to merge the field, e.g. \"lww\".",
+                                    "type": "string"
                                 }
                             },
                             "type": "object"
@@ -571,6 +596,15 @@
                     },
                     "Name": {
                         "type": "string"
+                    },
+                    "Ordered": {
+                        "nullable": true,
+                        "properties": {
+                            "Unique": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
                     },
                     "Unique": {
                         "type": "boolean"
