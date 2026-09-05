@@ -26,6 +26,15 @@ type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
 	CheckCIDFilter(cid string) bool
 	CheckDocIDFilter(docID string) bool
+	CheckCollectionFilter(collectionID string) bool
+}
+
+// targetCollectionSetter is implemented by subscription selectors whose
+// target collection can be resolved at subscribe-time. The subscription
+// handler uses this to inject the root CollectionID so CheckCollectionFilter
+// can drop events from other collections without opening a transaction.
+type targetCollectionSetter interface {
+	SetTargetCollectionID(id string)
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -38,6 +47,22 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	subRequest, ok := r.Subscription[0].Selections[0].(subscriptionSelector)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
+	}
+
+	// Resolve the target collection's root CollectionID once at subscribe-time
+	// so the event loop can reject events from other collections without
+	// opening a transaction. If the target isn't a request.Select we skip the
+	// stamping; CheckCollectionFilter will default to "allow" for such cases.
+	if setter, ok := subRequest.(targetCollectionSetter); ok {
+		selection, ok := r.Subscription[0].Selections[0].(*request.Select)
+		if !ok {
+			return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
+		}
+		col, err := db.GetCollectionByName(ctx, selection.Name)
+		if err != nil {
+			return nil, err
+		}
+		setter.SetTargetCollectionID(col.Version().CollectionID)
 	}
 
 	sub, err := db.events.Subscribe(event.UpdateName)
@@ -66,10 +91,13 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-			// Skip events that do not pass the subscription's docID and cid filters
-			// This is an optimization to avoid running the selection planner and
-			// related query logic when we know the event will not be relevant to the subscription.
-			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
+			// Skip events that do not pass the subscription's collection, docID,
+			// and cid filters. This is an optimization to avoid running the
+			// selection planner and related query logic when we know the event
+			// will not be relevant to the subscription.
+			if !subRequest.CheckCollectionFilter(evt.CollectionID) ||
+				!subRequest.CheckDocIDFilter(evt.DocID) ||
+				!subRequest.CheckCIDFilter(evt.Cid.String()) {
 				continue
 			}
 			txn, err := db.NewTxn(false)

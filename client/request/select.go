@@ -39,6 +39,20 @@ type Select struct {
 	// IsEncrypted indicates that this is an encrypted query that should
 	// use searchable encryption to query remote nodes.
 	IsEncrypted bool
+
+	// targetCollectionID is the resolved root CollectionID for this select's
+	// target collection. It is set by the subscription event loop via
+	// SetTargetCollectionID at subscribe-time and consulted via
+	// CheckCollectionFilter to drop events from other collections without
+	// opening a transaction. Outside the subscription path this remains "".
+	targetCollectionID string
+}
+
+// SetTargetCollectionID records the resolved root CollectionID this select
+// targets, so subsequent CheckCollectionFilter calls can reject events from
+// other collections. Intended only for the subscription handler.
+func (s *Select) SetTargetCollectionID(id string) {
+	s.targetCollectionID = id
 }
 
 // ChildSelect represents a type with selectable child properties.
@@ -145,6 +159,14 @@ func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 // If no CID filter is set, it always passes.
 func (s *Select) CheckCIDFilter(cid string) bool {
 	return !s.CIDs.HasValue() || slices.Contains(s.CIDs.Value(), cid)
+}
+
+// CheckCollectionFilter checks if the given root CollectionID matches the
+// select's resolved target collection. Returns true if the IDs match, or if
+// no target has been recorded (preserving current behaviour for callers
+// outside the subscription path).
+func (s *Select) CheckCollectionFilter(collectionID string) bool {
+	return s.targetCollectionID == "" || s.targetCollectionID == collectionID
 }
 
 // CheckDocIDFilter checks if the given docID passes the DocID filter.
