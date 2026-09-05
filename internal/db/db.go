@@ -179,7 +179,7 @@ func newDB(
 		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
 		lockSet:                 lockSet,
 		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
-		stats:                   &mergeStats{},
+		stats:                   newMergeStats(),
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))

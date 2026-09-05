@@ -28,6 +28,13 @@ type SimpleMockHost struct {
 	client.Host
 }
 
+// withReasonMaps gives p the counters New builds, so a test can construct a P2P from a literal
+// and still record.
+func withReasonMaps(p *P2P) *P2P {
+	p.initReasonCounters()
+	return p
+}
+
 func (m *SimpleMockHost) ID() string {
 	return "peerID"
 }

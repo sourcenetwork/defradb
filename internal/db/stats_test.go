@@ -123,7 +123,7 @@ func TestMergeDropReason(t *testing.T) {
 // The reasons have to survive the drain that reports them, and reset afterwards so each
 // line carries the interval rather than a running total.
 func TestMergeStatsDrainDropReasons(t *testing.T) {
-	var s mergeStats
+	s := newMergeStats()
 	s.markDropped(dropMissingBlock)
 	s.markDropped(dropMissingBlock)
 	s.markDropped(dropUniqueIndex)

@@ -60,7 +60,7 @@ func heldDocuments(t *testing.T, n int) (*P2P, []protocol.DocumentInfo) {
 
 		docs = append(docs, protocol.DocumentInfo{DocID: "held-" + strconv.Itoa(i), CID: block.Cid().Bytes()})
 	}
-	return &P2P{db: multistoreDB{stores: stores}}, docs
+	return withReasonMaps(&P2P{db: multistoreDB{stores: stores}}), docs
 }
 
 // badDocuments returns batch entries whose CIDs do not parse. That is the first check a
@@ -79,7 +79,7 @@ func badDocuments(n int) []protocol.DocumentInfo {
 // The drop counts are read against the batch count, so a batch that loses every document
 // it carries still has to be counted.
 func TestBatchIsCountedWhenNoDocumentSurvives(t *testing.T) {
-	p := &P2P{}
+	p := withReasonMaps(&P2P{})
 	req := &protocol.PushLogRequest{CollectionID: "col", Documents: badDocuments(40)}
 
 	require.NoError(t, p.processPushlogRequest(context.Background(), req, false))
@@ -123,7 +123,7 @@ func TestBatchAccountsForEveryDocument(t *testing.T) {
 // counted under the same reasons.
 func TestSingleDocumentOutcomesAreCounted(t *testing.T) {
 	t.Run("a CID that does not parse is a drop", func(t *testing.T) {
-		p := &P2P{}
+		p := withReasonMaps(&P2P{})
 		req := &protocol.PushLogRequest{DocID: "d", CollectionID: "col", CID: []byte{0xff, 0xff, 0xff}}
 
 		require.Error(t, p.processPushlogRequest(context.Background(), req, false))
@@ -143,7 +143,7 @@ func TestSingleDocumentOutcomesAreCounted(t *testing.T) {
 
 	// Counting a request that offered no document as a drop would let a peer move the loss count.
 	t.Run("a request carrying no document is neither a drop nor a skip", func(t *testing.T) {
-		p := &P2P{}
+		p := withReasonMaps(&P2P{})
 		req := &protocol.PushLogRequest{CollectionID: "col"}
 
 		require.ErrorIs(t, p.processPushlogRequest(context.Background(), req, false), ErrEmptyPushLog)
@@ -173,7 +173,7 @@ func TestDocSyncOutcomesAreCounted(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("a head that does not parse is a drop", func(t *testing.T) {
-		p := &P2P{}
+		p := withReasonMaps(&P2P{})
 		item := docSyncItem{DocID: "d", Heads: [][]byte{{0xff, 0xff, 0xff}}}
 
 		p.handleDocSyncItem(ctx, item, "sender", "col", map[string][]cid.Cid{})
@@ -183,7 +183,7 @@ func TestDocSyncOutcomesAreCounted(t *testing.T) {
 	})
 
 	t.Run("a head already seen in the response is a skip", func(t *testing.T) {
-		p := &P2P{}
+		p := withReasonMaps(&P2P{})
 		_, head, err := cid.CidFromBytes(blocks.NewBlock([]byte("a block")).Cid().Bytes())
 		require.NoError(t, err)
 		item := docSyncItem{DocID: "d", Heads: [][]byte{head.Bytes()}}
@@ -195,7 +195,7 @@ func TestDocSyncOutcomesAreCounted(t *testing.T) {
 	})
 
 	t.Run("a DAG that cannot be walked is a drop", func(t *testing.T) {
-		p := &P2P{host: newEmptyIPLDHost(ctx)}
+		p := withReasonMaps(&P2P{host: newEmptyIPLDHost(ctx)})
 		head := blocks.NewBlock([]byte("a block")).Cid()
 		item := docSyncItem{DocID: "d", Heads: [][]byte{head.Bytes()}}
 
@@ -258,7 +258,7 @@ func TestArrivalForAHeadAlreadyInFlightIsSkipped(t *testing.T) {
 		release:  make(chan struct{}),
 	}
 	stores := datastore.NewMultistore(store, lock.NewLockSet(), immutable.None[int]())
-	p := &P2P{db: multistoreDB{stores: stores}, processQueue: newProcessQueue()}
+	p := withReasonMaps(&P2P{db: multistoreDB{stores: stores}, processQueue: newProcessQueue()})
 	t.Cleanup(p.processQueue.close)
 
 	// Released on any exit, so a failed assertion cannot leave an arrival parked.
@@ -292,10 +292,10 @@ func TestArrivalForAHeadAlreadyInFlightIsSkipped(t *testing.T) {
 
 // A document the sync queue refuses is one this node will not hold, so it counts as a loss.
 func TestArrivalRefusedByAFullSyncQueueIsDropped(t *testing.T) {
-	p := &P2P{
+	p := withReasonMaps(&P2P{
 		// An unserved queue with no capacity refuses on arrival.
 		processQueue: &processQueue{inFlight: map[string]struct{}{}, queue: make(chan syncRequest)},
-	}
+	})
 	req := pushRequest("d", blocks.NewBlock([]byte("a head")).Cid())
 
 	// Refused twice, because a document the queue turned away is not left marked in flight.

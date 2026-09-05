@@ -73,7 +73,7 @@ func compositeBlock(t *testing.T, priority uint64) blocks.Block {
 func TestImportCAR_DoesNotUnmergeABlockTheNodeAlreadyHas(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
-	p := &P2P{db: rootstoreDB{store: rootstore}}
+	p := withReasonMaps(&P2P{db: rootstoreDB{store: rootstore}})
 
 	coreBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
 	raw, err := coreBlock.Marshal()
@@ -115,7 +115,7 @@ func TestImportCAR_CountsTheBlocksAnAbandonedImportWrote(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			rootstore := memory.NewDatastore(ctx)
-			p := &P2P{db: rootstoreDB{store: rootstore}}
+			p := withReasonMaps(&P2P{db: rootstoreDB{store: rootstore}})
 
 			carried := []blocks.Block{compositeBlock(t, 1), compositeBlock(t, 2)}
 

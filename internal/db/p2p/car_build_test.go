@@ -36,7 +36,7 @@ func carFixture(t *testing.T, held ...blocks.Block) *P2P {
 	for _, block := range held {
 		require.NoError(t, bstore.Put(ctx, block))
 	}
-	return &P2P{db: rootstoreDB{store: rootstore}}
+	return withReasonMaps(&P2P{db: rootstoreDB{store: rootstore}})
 }
 
 // compositeLinking returns a composite block linking to children, in the decoded form the CAR

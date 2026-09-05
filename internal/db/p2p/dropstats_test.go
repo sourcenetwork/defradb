@@ -28,7 +28,7 @@ func reasonMap(counts []reasonCount) map[string]int64 {
 // A drop is a document that was meant to be stored and was not; a skip is one deliberately
 // not merged. Reporting them on one line would read policy decisions as data loss.
 func TestDropAndSkipAreCountedApart(t *testing.T) {
-	p := &P2P{}
+	p := withReasonMaps(&P2P{})
 
 	p.dropDoc("importCAR")
 	p.dropDoc("importCAR")
@@ -46,7 +46,7 @@ func TestDropAndSkipAreCountedApart(t *testing.T) {
 // The reason set is fixed so a peer cannot grow the map, and drain resets it so each
 // reported interval is a rate rather than a running total.
 func TestDropReasonsDrainResets(t *testing.T) {
-	p := &P2P{}
+	p := withReasonMaps(&P2P{})
 	p.dropDoc("blockDecode")
 	require.Len(t, p.docDropReason.drain(), 1)
 	require.Empty(t, p.docDropReason.drain(), "a drained reason set starts the next interval empty")
@@ -54,7 +54,7 @@ func TestDropReasonsDrainResets(t *testing.T) {
 
 // Drops and skips are reported on separate lines, so one report has to drain both maps.
 func TestReportDrainsDropsAndSkips(t *testing.T) {
-	p := &P2P{}
+	p := withReasonMaps(&P2P{})
 	p.dropDoc("syncDAG")
 	p.skipDoc("alreadyMerged")
 

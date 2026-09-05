@@ -341,6 +341,7 @@ func New(
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
 	}
+	p.initReasonCounters()
 
 	// The bounds are fixed for the life of the process, and queueBytes and the drop
 	// counters cannot be read without them.

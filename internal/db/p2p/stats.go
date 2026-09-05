@@ -103,13 +103,28 @@ type failureReasons struct {
 	flagged map[string]struct{}
 }
 
+// initReasonCounters allocates p's failure-reason maps. The zero value of failureReasons is not
+// usable, so every P2P has to pass through here.
+func (p *P2P) initReasonCounters() {
+	p.carFailureReason = newFailureReasons()
+	p.carImportFailureReason = newFailureReasons()
+	p.syncDAGFailureReason = newFailureReasons()
+	p.docDropReason = newFailureReasons()
+	p.docSkipReason = newFailureReasons()
+}
+
+// newFailureReasons returns counters ready to record.
+func newFailureReasons() failureReasons {
+	return failureReasons{
+		counts:  make(map[string]int64),
+		flagged: make(map[string]struct{}),
+	}
+}
+
 // record counts one occurrence of reason.
 func (f *failureReasons) record(reason string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.counts == nil {
-		f.counts = make(map[string]int64)
-	}
 	f.counts[reason]++
 }
 
@@ -118,12 +133,6 @@ func (f *failureReasons) record(reason string) {
 func (f *failureReasons) recordFirst(reason string) (firstSeen bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.counts == nil {
-		f.counts = make(map[string]int64)
-	}
-	if f.flagged == nil {
-		f.flagged = make(map[string]struct{})
-	}
 	f.counts[reason]++
 	if _, seen := f.flagged[reason]; seen {
 		return false

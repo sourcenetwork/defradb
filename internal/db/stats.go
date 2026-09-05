@@ -99,13 +99,15 @@ func collectionDropReason(err error) string {
 	return mergeDropReason(err)
 }
 
+// newMergeStats returns stats ready to record. The zero value is not usable.
+func newMergeStats() *mergeStats {
+	return &mergeStats{dropReasons: make(map[string]int64)}
+}
+
 // markDropped records an event that did not merge, under the given cause.
 func (s *mergeStats) markDropped(reason string) {
 	s.dropMu.Lock()
 	defer s.dropMu.Unlock()
-	if s.dropReasons == nil {
-		s.dropReasons = make(map[string]int64)
-	}
 	s.dropReasons[reason]++
 }
 
