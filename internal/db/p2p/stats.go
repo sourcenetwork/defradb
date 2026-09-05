@@ -50,19 +50,19 @@ const (
 // failure than as a cancellation.
 func syncDAGReason(err error) string {
 	switch {
-	case errors.Is(err, ErrStoreBlockDAGSync):
+	case errors.Is(err, errStoreRoot):
 		return reasonStoreRoot
-	case errors.Is(err, ErrGenerateBlockLink):
+	case errors.Is(err, errBlockLink):
 		return reasonBlockLink
-	case errors.Is(err, ErrCheckBlockMerged):
+	case errors.Is(err, errIsMerged):
 		return reasonIsMerged
-	case errors.Is(err, ErrVerifyBlockSig):
+	case errors.Is(err, errVerifySig):
 		return reasonVerifySig
-	case errors.Is(err, ErrGetEncKeysForBlock), errors.Is(err, ErrRetrieveEncKey):
+	case errors.Is(err, errEncKeys), errors.Is(err, errRetrieveKey):
 		return reasonEncKeys
-	case errors.Is(err, ErrLoadLinkedBlock):
+	case errors.Is(err, errLoadLink):
 		return reasonLoadLink
-	case errors.Is(err, ErrDecodeLinkedBlock):
+	case errors.Is(err, errDecodeLink):
 		return reasonDecodeLink
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		return reasonContext

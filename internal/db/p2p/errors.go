@@ -80,16 +80,16 @@ var (
 	ErrBlockCIDMismatch            = errors.New("pushed block does not match the advertised CID")
 	ErrEmptyPushLog                = errors.New("push log request carries no document")
 
-	// Failures a DAG sync can end on. syncDAGReason matches against these, so each shares the
-	// message constant its wrapping constructor uses.
-	ErrStoreBlockDAGSync  = errors.New(errStoreBlockDAGSync)
-	ErrGenerateBlockLink  = errors.New(errGenerateBlockLink)
-	ErrCheckBlockMerged   = errors.New(errCheckBlockMerged)
-	ErrVerifyBlockSig     = errors.New(errVerifyBlockSig)
-	ErrGetEncKeysForBlock = errors.New(errGetEncKeysForBlock)
-	ErrLoadLinkedBlock    = errors.New(errLoadLinkedBlock)
-	ErrDecodeLinkedBlock  = errors.New(errDecodeLinkedBlock)
-	ErrRetrieveEncKey     = errors.New(errRetrieveEncKey)
+	// Steps a DAG sync can fail on, matched by syncDAGReason. Each shares the message constant
+	// its wrapping constructor uses.
+	errStoreRoot   = errors.New(errStoreBlockDAGSync)
+	errBlockLink   = errors.New(errGenerateBlockLink)
+	errIsMerged    = errors.New(errCheckBlockMerged)
+	errVerifySig   = errors.New(errVerifyBlockSig)
+	errEncKeys     = errors.New(errGetEncKeysForBlock)
+	errRetrieveKey = errors.New(errRetrieveEncKey)
+	errLoadLink    = errors.New(errLoadLinkedBlock)
+	errDecodeLink  = errors.New(errDecodeLinkedBlock)
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
