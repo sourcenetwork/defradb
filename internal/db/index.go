@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -438,6 +439,8 @@ func saveUniqueKey(
 	}
 
 	if len(val) != 0 {
+		// This read puts the unique key in the transaction's read set, so two transactions
+		// writing the same index value conflict at commit rather than at this check.
 		existing, err := txn.Datastore().Get(ctx, &key)
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return NewErrCheckUniqueIndexConstraint(err)
@@ -446,6 +449,16 @@ func saveUniqueKey(
 			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
 			}
+			// The holder stays on this node: the error is rendered to whoever asked for the
+			// write, and on the merge path that is the peer that pushed it. An empty holder
+			// means the entry could not be resolved to a document.
+			var heldBy string
+			if shortID, decodeErr := keys.DecodeDocShortID(existing); decodeErr == nil {
+				heldBy, _, _ = id.GetDocID(ctx, shortID)
+			}
+			log.InfoContext(ctx, "unique index violation",
+				corelog.String("docID", doc.ID().String()),
+				corelog.String("heldBy", heldBy))
 			return newUniqueIndexError(doc, fieldsDescs)
 		}
 	}

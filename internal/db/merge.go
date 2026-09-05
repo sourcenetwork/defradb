@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/ipfs/go-cid"
@@ -42,6 +43,7 @@ import (
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
+		db.stats.markDropped(collectionDropReason(err))
 		return err
 	}
 
@@ -61,20 +63,31 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	for i := 0; i < db.txnAttempts(); i++ {
 		err = db.executeMerge(ctx, col, evt)
 		if errors.Is(err, corekv.ErrTxnConflict) {
+			db.stats.txnConflicts.Add(1)
 			continue
 		}
 		if err != nil {
+			db.stats.markDropped(mergeDropReason(err))
 			return err
 		}
 		return nil
 	}
-	return client.NewErrMaxTxnRetries(err)
+	// A single event has no smaller write set to retry over, so exhaustion is a drop rather than
+	// a fallback into per-event isolation.
+	db.stats.markDropped(dropRetryExhausted)
+	return NewErrMergeEventDropped(client.NewErrMaxTxnRetries(err), evt.DocID, evt.Cid.String())
 }
 
 // mergeChunkSize bounds how many events share a transaction. Badger re-sorts the
 // transaction's pending writes on every iterator open, and each merged document opens
 // several, so a bigger chunk sorts a bigger set more times.
 const mergeChunkSize = 8
+
+// Phases a merge chunk can fail in, reported on the retry-exhaustion log line.
+const (
+	phaseRead   = "read"
+	phaseCommit = "commit"
+)
 
 type mergeEntry struct {
 	evt event.Merge
@@ -106,6 +119,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 		if err != nil {
 			errs = append(errs, NewErrMergeEventDropped(err, evt.DocID, evt.Cid.String()))
+			db.stats.markDropped(collectionDropReason(err))
 			continue
 		}
 		entries = append(entries, mergeEntry{evt: evt, col: col, index: i})
@@ -178,6 +192,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		for i := range chunk {
 			if err := db.mergeChunk(ctx, chunk[i:i+1]); err != nil {
 				errs = append(errs, NewErrMergeEventDropped(err, chunk[i].evt.DocID, chunk[i].evt.Cid.String()))
+				db.stats.markDropped(mergeDropReason(err))
 				continue
 			}
 			db.publishMergeComplete(chunk[i : i+1])
@@ -197,11 +212,27 @@ func (db *DB) txnAttempts() int {
 	return 1
 }
 
+// namedDocs renders the documents a transaction touched, as collection/docID. Badger
+// reports conflicts without naming the contended key, so this is the only lead available
+// for working out which documents contend with each other.
+func namedDocs(entries []mergeEntry) string {
+	docIDs := make([]string, len(entries))
+	for i, e := range entries {
+		docIDs[i] = e.col.Name() + "/" + e.evt.DocID
+	}
+	return strings.Join(docIDs, ",")
+}
+
 // mergeChunk merges every event of the chunk inside one transaction, retrying the
 // whole chunk on transaction conflict. Isolating a failing event is the caller's job.
 func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
-	// Held so that exhausting the retry budget can report the conflict that caused it.
+	// Held so that exhausting the retry budget can report the conflict that caused it and
+	// where the last one was raised.
 	var conflictErr error
+	var phase string
+	// Whether each event created its document, kept until the transaction commits so a
+	// retried attempt does not count its events twice.
+	creates := make([]bool, 0, len(entries))
 	for i := 0; i < db.txnAttempts(); i++ {
 		txn, err := db.NewTxn(false)
 		if err != nil {
@@ -209,17 +240,22 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		}
 		txnCtx := InitContext(ctx, txn)
 
+		creates = creates[:0]
 		var mergeErr error
 		for _, e := range entries {
-			if mergeErr = db.mergeInTxn(txnCtx, e.col, e.evt); mergeErr != nil {
+			created, err := db.mergeInTxn(txnCtx, e.col, e.evt)
+			if err != nil {
+				mergeErr, phase = err, phaseRead
 				break
 			}
+			creates = append(creates, created)
 		}
 
 		if mergeErr != nil {
 			txn.Discard()
 			if errors.Is(mergeErr, corekv.ErrTxnConflict) {
 				conflictErr = mergeErr
+				db.stats.txnConflicts.Add(1)
 				continue
 			}
 			return mergeErr
@@ -229,15 +265,30 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			txn.Discard()
 			if errors.Is(err, corekv.ErrTxnConflict) {
 				conflictErr = err
+				db.stats.txnConflicts.Add(1)
+				phase = phaseCommit
 				continue
 			}
 			return err
 		}
 
+		for _, created := range creates {
+			db.stats.markCreateOrUpdate(created)
+		}
 		return nil
 	}
 
-	// Nothing was committed, so callers must not treat the events as merged.
+	// A chunk of one has no smaller write set for the caller to fall back to, so its exhaustion
+	// is a drop the caller records rather than a chunk to count here.
+	if len(entries) > 1 {
+		db.stats.chunkExhausted.Add(1)
+
+		log.InfoContext(ctx, "merge chunk exhausted its retries",
+			corelog.Int("attempts", db.txnAttempts()),
+			corelog.String("phase", phase),
+			corelog.String("docIDs", namedDocs(entries)),
+		)
+	}
 	return client.NewErrMaxTxnRetries(conflictErr)
 }
 
@@ -254,13 +305,15 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	}
 	defer txn.Discard()
 
-	if err := db.mergeInTxn(ctx, col, dagMerge); err != nil {
+	created, err := db.mergeInTxn(ctx, col, dagMerge)
+	if err != nil {
 		return err
 	}
 
 	if err := txn.Commit(); err != nil {
 		return err
 	}
+	db.stats.markCreateOrUpdate(created)
 
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: dagMerge}))
@@ -269,40 +322,47 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 
 // mergeInTxn executes the merge logic for a single event using the transaction already
 // present on ctx.  It does not commit; the caller is responsible for committing.
-func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Merge) error {
+//
+// Reports whether the event created the document rather than updating one already held,
+// which the caller counts once the transaction commits.
+func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Merge) (bool, error) {
 	key, exists, err := getDocHeadstoreKey(ctx, col, dagMerge.DocID)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	mt := newMergeTarget()
 	if exists {
 		mt, err = getHeadsAsMergeTarget(ctx, key)
 		if err != nil {
-			return NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
+			return false, NewErrGetMergeTargetHeads(err, dagMerge.DocID, string(key.Bytes()))
 		}
 	}
 
-	mp, err := db.newMergeProcessor(ctx, col, len(mt.heads) == 0)
+	// No local heads means the merge is creating the document rather than updating one
+	// that already exists here.
+	newDocCreateMode := len(mt.heads) == 0
+
+	mp, err := db.newMergeProcessor(ctx, col, newDocCreateMode)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if err = mp.loadComposites(ctx, dagMerge.Cid, mt); err != nil {
-		return NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
+		return false, NewErrLoadComposites(err, dagMerge.Cid.String(), dagMerge.DocID)
 	}
 
 	if err = mp.mergeComposites(ctx); err != nil {
-		return NewErrMergeComposites(err, dagMerge.DocID)
+		return false, NewErrMergeComposites(err, dagMerge.DocID)
 	}
 
 	for docID, oldDoc := range mp.docIDs {
 		if err = syncIndexedDoc(ctx, docID, mp.col, oldDoc); err != nil {
-			return NewErrSyncIndexedDoc(err, docID.String())
+			return false, NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
 
-	return nil
+	return newDocCreateMode, nil
 }
 
 const maxConcurrentMerges = 32
