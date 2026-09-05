@@ -12,6 +12,7 @@ package p2p
 
 import (
 	"context"
+	crand "crypto/rand"
 	"fmt"
 	"slices"
 	"time"
@@ -40,6 +41,11 @@ const docSyncTopic = "doc-sync"
 // docSyncRequest represents a request to synchronize specific documents.
 type docSyncRequest struct {
 	DocIDs []string `json:"docIDs"`
+	// RequestID is a random nonce that makes each request's marshalled bytes unique. The
+	// pubsub-rpc layer keys its response channel by a hash of the request bytes, so without this
+	// two concurrent syncs for the same docIDs would collide on that key and one would time out
+	// while the other succeeds. Mirrors the KMS pubsub fix (fetchEncryptionKeyRequest).
+	RequestID []byte `json:"requestID"`
 }
 
 // docSyncReply represents the response to a document sync request.
@@ -109,6 +115,13 @@ func (p *P2P) syncDocuments(
 	}
 
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
+
+	// Attach a random nonce so concurrent syncs for the same docIDs marshal to distinct bytes and
+	// therefore get distinct pubsub-rpc response-channel keys.
+	pubsubReq.RequestID = make([]byte, 16)
+	if _, err := crand.Read(pubsubReq.RequestID); err != nil {
+		return nil, err
+	}
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
