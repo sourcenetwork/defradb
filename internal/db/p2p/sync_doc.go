@@ -212,7 +212,7 @@ func (p *P2P) handleDocSyncItem(
 		if err != nil {
 			log.ErrorE("Failed to parse CID from bytes", err,
 				corelog.String("DocID", item.DocID))
-			p.dropDoc("invalidCID")
+			p.dropDoc(dropInvalidCID)
 			continue
 		}
 
@@ -221,7 +221,7 @@ func (p *P2P) handleDocSyncItem(
 				results[item.DocID] = append(heads, docCid)
 			} else {
 				// we've seen this head already, just skip
-				p.skipDoc("duplicateHead")
+				p.skipDoc(skipDuplicateHead)
 				continue
 			}
 		} else {
@@ -247,7 +247,7 @@ func (p *P2P) syncDocumentAndMerge(
 ) error {
 	err := p.syncDocumentDAG(ctx, head)
 	if err != nil {
-		p.dropDoc("syncDAG")
+		p.dropDoc(dropSyncDAG)
 		return err
 	}
 
@@ -260,7 +260,7 @@ func (p *P2P) syncDocumentAndMerge(
 	}
 
 	if err := p.db.Merge(ctx, evt); err != nil {
-		p.dropDoc("mergeFailed")
+		p.dropDoc(dropMergeFailed)
 		return err
 	}
 	p.statMergedDocs.Add(1)

@@ -941,7 +941,7 @@ func (p *P2P) processPushlogRequest(
 				if ok {
 					p.statMergedDocs.Add(1)
 				} else {
-					p.dropDoc("mergeFailed")
+					p.dropDoc(dropMergeFailed)
 					dropped++
 				}
 			}
@@ -986,7 +986,7 @@ func (p *P2P) processPushlogRequest(
 
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
-		p.dropDoc("invalidCID")
+		p.dropDoc(dropInvalidCID)
 		return err
 	}
 
@@ -999,11 +999,11 @@ func (p *P2P) processPushlogRequest(
 		// Check if we've already merged this block. If so, skip the sink process.
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
-			p.dropDoc("isMergedError")
+			p.dropDoc(dropIsMergedError)
 			return err
 		}
 		if isMerged {
-			p.skipDoc("alreadyMerged")
+			p.skipDoc(skipAlreadyMerged)
 			return nil
 		}
 
@@ -1017,7 +1017,7 @@ func (p *P2P) processPushlogRequest(
 			block, err = coreblock.GetFromBytes(req.Block)
 		}
 		if err != nil {
-			p.dropDoc("blockDecode")
+			p.dropDoc(dropBlockDecode)
 			return err
 		}
 
@@ -1025,11 +1025,11 @@ func (p *P2P) processPushlogRequest(
 		// arbitrary content under a CID of its choosing.
 		blockLink, err := block.GenerateLink()
 		if err != nil {
-			p.dropDoc("generateLink")
+			p.dropDoc(dropGenerateLink)
 			return err
 		}
 		if blockLink.Cid != headCID {
-			p.dropDoc("cidMismatch")
+			p.dropDoc(dropCIDMismatch)
 			return ErrBlockCIDMismatch
 		}
 
@@ -1038,19 +1038,19 @@ func (p *P2P) processPushlogRequest(
 		if !isReplicator {
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 			if err != nil {
-				p.dropDoc("accessError")
+				p.dropDoc(dropAccessError)
 				return err
 			}
 			if !mightHaveAccess {
 				// If we know we don't have access, we can skip the rest of the processing.
-				p.skipDoc("noAccess")
+				p.skipDoc(skipNoAccess)
 				return nil
 			}
 		}
 
 		// Run the replication filter before writing any blocks to storage.
 		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
-			p.skipDoc("filtered")
+			p.skipDoc(skipFiltered)
 			return nil
 		}
 
@@ -1058,12 +1058,12 @@ func (p *P2P) processPushlogRequest(
 		if len(req.CAR) > 0 {
 			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
 			if _, err = p.importCAR(ctx, req.CAR); err != nil {
-				p.dropDoc("importCAR")
+				p.dropDoc(dropImportCAR)
 				return err
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
-				p.dropDoc("syncDAG")
+				p.dropDoc(dropSyncDAG)
 				return err
 			}
 		}
@@ -1076,7 +1076,7 @@ func (p *P2P) processPushlogRequest(
 			CollectionID: req.CollectionID,
 		}
 		if err = p.db.Merge(ctx, mergeEvt); err != nil {
-			p.dropDoc("mergeFailed")
+			p.dropDoc(dropMergeFailed)
 			return err
 		}
 		p.statMergedDocs.Add(1)
@@ -1101,9 +1101,9 @@ func (p *P2P) processPushlogRequest(
 
 	if !handled {
 		if err == nil {
-			p.skipDoc("inFlight")
+			p.skipDoc(skipInFlight)
 		} else {
-			p.dropDoc("syncQueueFull")
+			p.dropDoc(dropSyncQueueFull)
 		}
 	}
 	return err
@@ -1140,18 +1140,18 @@ func (p *P2P) processBatchedDocuments(
 				slog.String("DocID", doc.DocID),
 				slog.String("CollectionID", req.CollectionID),
 			)
-			drop("invalidCID")
+			drop(dropInvalidCID)
 			continue
 		}
 
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
 			log.ErrorE("Batch: IsMerged check failed", err, slog.String("DocID", doc.DocID))
-			drop("isMergedError")
+			drop(dropIsMergedError)
 			continue
 		}
 		if isMerged {
-			p.skipDoc("alreadyMerged")
+			p.skipDoc(skipAlreadyMerged)
 			continue
 		}
 
@@ -1163,19 +1163,19 @@ func (p *P2P) processBatchedDocuments(
 		}
 		if err != nil {
 			log.ErrorE("Batch: block decode failed", err, slog.String("DocID", doc.DocID))
-			drop("blockDecode")
+			drop(dropBlockDecode)
 			continue
 		}
 
 		blockLink, err := block.GenerateLink()
 		if err != nil {
 			log.ErrorE("Batch: GenerateLink failed", err, slog.String("DocID", doc.DocID))
-			drop("generateLink")
+			drop(dropGenerateLink)
 			continue
 		}
 		if blockLink.Cid != headCID {
 			log.Error("Batch: CID mismatch", slog.String("DocID", doc.DocID))
-			drop("cidMismatch")
+			drop(dropCIDMismatch)
 			continue
 		}
 
@@ -1183,30 +1183,30 @@ func (p *P2P) processBatchedDocuments(
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, doc.DocID)
 			if err != nil {
 				log.ErrorE("Batch: access check failed", err, slog.String("DocID", doc.DocID))
-				drop("accessError")
+				drop(dropAccessError)
 				continue
 			}
 			if !mightHaveAccess {
-				p.skipDoc("noAccess")
+				p.skipDoc(skipNoAccess)
 				continue
 			}
 		}
 
 		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
-			p.skipDoc("filtered")
+			p.skipDoc(skipFiltered)
 			continue
 		}
 
 		if len(doc.CAR) > 0 {
 			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
 				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
-				drop("importCAR")
+				drop(dropImportCAR)
 				continue
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
 				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
-				drop("syncDAG")
+				drop(dropSyncDAG)
 				continue
 			}
 		}

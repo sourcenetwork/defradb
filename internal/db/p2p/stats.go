@@ -71,6 +71,29 @@ func syncDAGReason(err error) string {
 	}
 }
 
+// Causes a document can be dropped for.
+const (
+	dropAccessError   = "accessError"
+	dropBlockDecode   = "blockDecode"
+	dropCIDMismatch   = "cidMismatch"
+	dropGenerateLink  = "generateLink"
+	dropImportCAR     = "importCAR"
+	dropInvalidCID    = "invalidCID"
+	dropIsMergedError = "isMergedError"
+	dropMergeFailed   = "mergeFailed"
+	dropSyncDAG       = "syncDAG"
+	dropSyncQueueFull = "syncQueueFull"
+)
+
+// Reasons a document was skipped.
+const (
+	skipAlreadyMerged = "alreadyMerged"
+	skipDuplicateHead = "duplicateHead"
+	skipFiltered      = "filtered"
+	skipInFlight      = "inFlight"
+	skipNoAccess      = "noAccess"
+)
+
 // failureReasons counts occurrences by reason, drained once per report interval. Callers
 // that also log keep the set of reasons already logged, so a repeated occurrence costs a
 // counter increment rather than a line.
