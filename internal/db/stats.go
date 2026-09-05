@@ -129,8 +129,8 @@ func (s *mergeStats) drainDropReasons() []slog.Attr {
 
 // markCreateOrUpdate records whether a merge is creating the document or updating one that
 // already exists locally.
-func (s *mergeStats) markCreateOrUpdate(isCreate bool) {
-	if isCreate {
+func (s *mergeStats) markCreateOrUpdate(created bool) {
+	if created {
 		s.creates.Add(1)
 		return
 	}

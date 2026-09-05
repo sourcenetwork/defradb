@@ -243,12 +243,12 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 		creates = creates[:0]
 		var mergeErr error
 		for _, e := range entries {
-			isCreate, err := db.mergeInTxn(txnCtx, e.col, e.evt)
+			created, err := db.mergeInTxn(txnCtx, e.col, e.evt)
 			if err != nil {
 				mergeErr, phase = err, phaseRead
 				break
 			}
-			creates = append(creates, isCreate)
+			creates = append(creates, created)
 		}
 
 		if mergeErr != nil {
@@ -272,8 +272,8 @@ func (db *DB) mergeChunk(ctx context.Context, entries []mergeEntry) error {
 			return err
 		}
 
-		for _, isCreate := range creates {
-			db.stats.markCreateOrUpdate(isCreate)
+		for _, created := range creates {
+			db.stats.markCreateOrUpdate(created)
 		}
 		return nil
 	}
@@ -305,7 +305,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	}
 	defer txn.Discard()
 
-	isCreate, err := db.mergeInTxn(ctx, col, dagMerge)
+	created, err := db.mergeInTxn(ctx, col, dagMerge)
 	if err != nil {
 		return err
 	}
@@ -313,7 +313,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	if err := txn.Commit(); err != nil {
 		return err
 	}
-	db.stats.markCreateOrUpdate(isCreate)
+	db.stats.markCreateOrUpdate(created)
 
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{Merge: dagMerge}))
