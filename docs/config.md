@@ -63,7 +63,7 @@ Whether PubSub is enabled. Defaults to `true`.
 
 ## `net.peers`
 
-List of peers to boostrap with, specified as multiaddresses.
+List of peers to bootstrap with, specified as multiaddresses.
 
 https://docs.libp2p.io/concepts/addressing/
 

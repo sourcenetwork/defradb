@@ -115,7 +115,7 @@ You can further filter results with the `filter` argument.
 ```shell
 defradb client query '
   query {
-    User(filter: {points: {_ge: 50}}) {
+    User(filter: {points: {_geq: 50}}) {
       _docID
       age
       name
@@ -125,7 +125,7 @@ defradb client query '
 '
 ```
 
-This returns only user documents which have a value for the `points` field *Greater Than or Equal to* (`_ge`) 50.
+This returns only user documents which have a value for the `points` field *Greater Than or Equal to* (`_geq`) 50.
 
 ## Obtain document commits
 
@@ -218,7 +218,7 @@ Each node has a unique `Peer ID` generated from its public key. This ID allows o
 
 There are two types of peer-to-peer relationships supported: **pubsub** peering and **replicator** peering.
 
-Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* have share a document and want to keep them in sync.
+Pubsub peering *passively* synchronizes data between nodes by broadcasting *Document Commit* updates to the topic of the commit's document key. Nodes need to be listening on the pubsub channel to receive updates. This is for when two nodes *already* share a document and want to keep them in sync.
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
