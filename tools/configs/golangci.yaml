@@ -409,6 +409,12 @@ linters:
           - goheader
         path: (net|connor|encoding|tests)
 
+      # The debug package is intentionally a print-based diagnostics tool;
+      # fmt.Printf is its job, not an accident.
+      - linters:
+          - forbidigo
+        path: internal/debug/
+
       - linters:
           - forcetypeassert
     # Exclude running force type assert check in these file paths, we are ignoring these files for now
