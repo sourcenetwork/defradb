@@ -17,10 +17,14 @@ import (
 	"time"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -65,12 +69,17 @@ func TestBadgerStoreCloseStopsGCAndIsIdempotent(t *testing.T) {
 	store, err := newBadgerStore(t.TempDir(), badgerds.DefaultOptions(""))
 	require.NoError(t, err)
 
-	require.NoError(t, store.Close())
-
+	// Close waits for the background goroutines, so it returning is the proof they
+	// stopped; the timeout turns a stuck goroutine into a failure instead of a hang.
+	done := make(chan struct{})
+	go func() {
+		_ = store.Close()
+		close(done)
+	}()
 	select {
-	case <-store.done:
-	default:
-		t.Fatal("value log GC goroutine did not stop on Close")
+	case <-done:
+	case <-time.After(30 * time.Second):
+		t.Fatal("Close did not stop the background goroutines")
 	}
 
 	// A second Close must not panic on the already-closed stop channel.
@@ -86,7 +95,7 @@ func TestBadgerStoreReclaimValueLogTerminates(t *testing.T) {
 	// the first call, so reclaimValueLog must return rather than spin on the error.
 	done := make(chan struct{})
 	go func() {
-		store.reclaimValueLog()
+		store.reclaimValueLog(context.Background())
 		close(done)
 	}()
 
@@ -94,5 +103,148 @@ func TestBadgerStoreReclaimValueLogTerminates(t *testing.T) {
 	case <-done:
 	case <-time.After(30 * time.Second):
 		t.Fatal("reclaimValueLog did not terminate")
+	}
+}
+
+func TestDurationFromEnvFallsBackWhenUnsetOrInvalid(t *testing.T) {
+	const fallback = 7 * time.Minute
+
+	require.Equal(t, fallback, durationFromEnv(envOrphanBlockTTL, fallback))
+
+	// A malformed or non-positive value falls back rather than failing the store open.
+	for _, val := range []string{"", "not-a-duration", "0", "-5m"} {
+		t.Setenv(envOrphanBlockTTL, val)
+		require.Equal(t, fallback, durationFromEnv(envOrphanBlockTTL, fallback), val)
+	}
+
+	t.Setenv(envOrphanBlockTTL, "90s")
+	require.Equal(t, 90*time.Second, durationFromEnv(envOrphanBlockTTL, fallback))
+}
+
+func TestBoolFromEnv(t *testing.T) {
+	require.False(t, boolFromEnv(envOrphanGCDisabled))
+
+	for _, val := range []string{"true", "1", "TRUE", "T"} {
+		t.Setenv(envOrphanGCDisabled, val)
+		require.True(t, boolFromEnv(envOrphanGCDisabled), val)
+	}
+
+	// The variable names a boolean, so "false" must read as false rather than as set.
+	for _, val := range []string{"false", "0", "FALSE", "F"} {
+		t.Setenv(envOrphanGCDisabled, val)
+		require.False(t, boolFromEnv(envOrphanGCDisabled), val)
+	}
+
+	for _, val := range []string{"", "yes", "off", "maybe"} {
+		t.Setenv(envOrphanGCDisabled, val)
+		require.False(t, boolFromEnv(envOrphanGCDisabled), val)
+	}
+}
+
+func TestNewBadgerStoreResolvesOrphanGCDisabled(t *testing.T) {
+	for val, want := range map[string]bool{"true": true, "false": false} {
+		t.Run(val, func(t *testing.T) {
+			t.Setenv(envOrphanGCDisabled, val)
+
+			dir := t.TempDir()
+			store, err := newBadgerStore(dir, badgerds.DefaultOptions(dir))
+			require.NoError(t, err)
+			defer func() { require.NoError(t, store.Close()) }()
+
+			require.Equal(t, want, store.orphanGCDisabled)
+		})
+	}
+}
+
+func TestNewBadgerStoreAppliesEnvOverrides(t *testing.T) {
+	t.Setenv(envOrphanGCInterval, "3m")
+	t.Setenv(envOrphanBlockTTL, "45m")
+
+	dir := t.TempDir()
+	store, err := newBadgerStore(dir, badgerds.DefaultOptions(dir))
+	require.NoError(t, err)
+	defer func() { require.NoError(t, store.Close()) }()
+
+	require.Equal(t, 3*time.Minute, store.orphanGCInterval)
+	require.Equal(t, 45*time.Minute, store.orphanBlockTTL)
+}
+
+func TestNewBadgerStoreDefaultsOrphanGCSettings(t *testing.T) {
+	dir := t.TempDir()
+	store, err := newBadgerStore(dir, badgerds.DefaultOptions(dir))
+	require.NoError(t, err)
+	defer func() { require.NoError(t, store.Close()) }()
+
+	require.Equal(t, defaultOrphanBlockGCInterval, store.orphanGCInterval)
+	require.Equal(t, defaultOrphanBlockTTL, store.orphanBlockTTL)
+
+	// Pinned by value: the TTL decides when a block is deleted, so changing it should
+	// take a deliberate test update rather than passing silently.
+	require.Equal(t, 5*time.Minute, defaultOrphanBlockGCInterval)
+	require.Equal(t, 30*time.Minute, defaultOrphanBlockTTL)
+}
+
+// The switch is the only way to stop a background job that deletes blocks, so it is asserted
+// on the sweep's effect rather than on the field it sets. The enabled arm is what shows the
+// disabled arm is measuring something.
+func TestNewBadgerStoreOrphanGCDisabledLeavesOrphansAlone(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		disabled string
+		reclaims bool
+	}{
+		{name: "enabled", disabled: "false", reclaims: true},
+		{name: "disabled", disabled: "true", reclaims: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// Short enough that a sweep would have run many times over within the windows below.
+			t.Setenv(envOrphanGCDisabled, tc.disabled)
+			t.Setenv(envOrphanBlockTTL, "50ms")
+			t.Setenv(envOrphanGCInterval, "20ms")
+
+			dir := t.TempDir()
+			store, err := newBadgerStore(dir, badgerds.DefaultOptions(dir))
+			require.NoError(t, err)
+			defer func() { require.NoError(t, store.Close()) }()
+
+			// The P2P blockstore is what stamps a to-merge marker, which is what makes an
+			// unmerged block look like an orphan once the marker ages past the TTL.
+			ctx := context.Background()
+			orphan := blocks.NewBlock([]byte("never merged"))
+			require.NoError(t, datastore.P2PBlockstoreFrom(store, immutable.None[int]()).Put(ctx, orphan))
+
+			blockstore := datastore.BlockstoreFrom(store, immutable.None[int]())
+			reclaimed := func() bool {
+				has, err := blockstore.Has(ctx, orphan.Cid())
+				return err == nil && !has
+			}
+
+			if tc.reclaims {
+				require.Eventually(t, reclaimed, 5*time.Second, 20*time.Millisecond,
+					"an aged orphan should be reclaimed")
+			} else {
+				require.Never(t, reclaimed, 2*time.Second, 20*time.Millisecond,
+					"no block should be deleted while the sweep is switched off")
+			}
+		})
+	}
+}
+
+// Close waits on the maintenance goroutines, so a miscounted WaitGroup when the sweep is
+// disabled would hang here rather than fail an assertion.
+func TestNewBadgerStoreClosesCleanlyWithOrphanGCDisabled(t *testing.T) {
+	t.Setenv(envOrphanGCDisabled, "1")
+
+	dir := t.TempDir()
+	store, err := newBadgerStore(dir, badgerds.DefaultOptions(dir))
+	require.NoError(t, err)
+
+	done := make(chan error, 1)
+	go func() { done <- store.Close() }()
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		t.Fatal("Close hung with the orphan sweep disabled")
 	}
 }

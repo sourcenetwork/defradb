@@ -26,7 +26,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
-	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -156,7 +156,7 @@ func (db *DB) docIDsForSignatureBlock(
 	if block.Delta.IsCollection() {
 		return []string{""}, nil
 	}
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	docIDs, err := blockowner.DocIDs(
 		ctx,
 		systemstore,
 		blockCID,

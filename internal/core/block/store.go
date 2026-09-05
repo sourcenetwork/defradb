@@ -276,6 +276,15 @@ func updateHeads(
 		return NewErrMarkingAsMerged(blockLink.Cid, err)
 	}
 
+	// A signature block is not in AllLinks, so nothing below clears its marker. Taking
+	// ownership and clearing the marker in one transaction is what lets a concurrent
+	// sweep conflict rather than reclaim the block.
+	if block.Signature != nil {
+		if err := txn.Blockstore().MarkAsMerged(ctx, block.Signature.Cid); err != nil {
+			return NewErrMarkingAsMerged(block.Signature.Cid, err)
+		}
+	}
+
 	for _, l := range block.AllLinks() {
 		linkCid := l.Cid
 		isHead, err := headset.IsHead(ctx, linkCid)

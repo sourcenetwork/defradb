@@ -25,6 +25,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/action"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -521,7 +522,7 @@ func (c *collection) deleteBlocks(
 			ownerCtx = readCtx
 		}
 
-		hasOwners, err := id.BlockHasOwnersExcept(ownerCtx, systemstore, blockCID, prunedOwners)
+		hasOwners, err := blockowner.HasOwnersExcept(ownerCtx, systemstore, blockCID, prunedOwners)
 		if err != nil {
 			return false, err
 		}

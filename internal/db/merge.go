@@ -35,6 +35,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -644,9 +645,25 @@ func (mp *mergeProcessor) processBlock(
 			return NewErrInitCRDTForMerge(err, blockLink.String())
 		}
 
+		// A signature block is not in AllLinks, so nothing else records who owns it.
+		if dagBlock.Signature != nil {
+			if err := mp.setBlockDocIDMapping(ctx, docRef.docID, dagBlock.Signature.Cid); err != nil {
+				return err
+			}
+		}
+
 		// If the CRDT is nil, it means the field is not part
 		// of the collection definition and we can safely ignore it.
 		if crdt == nil {
+			// The block is owned from here on but never reaches updateHeads, so its marker
+			// is cleared here. Taking ownership and clearing the marker in one transaction
+			// is what lets a concurrent sweep conflict rather than reclaim the block.
+			if dagBlock.Signature != nil {
+				txn := datastore.CtxMustGetTxn(ctx)
+				if err := txn.Blockstore().MarkAsMerged(ctx, dagBlock.Signature.Cid); err != nil {
+					return err
+				}
+			}
 			return nil
 		}
 
@@ -797,8 +814,10 @@ func (mp *mergeProcessor) initCRDTForType(
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
-			// If the field is not part of the collection definition, we can safely ignore it.
-			return nil, resolvedDocRef{}, nil
+			// The field is not part of the collection definition, so there is no delta to
+			// merge. The document is still returned: the block belongs to it either way, and
+			// the caller records that ownership.
+			return nil, docRef, nil
 		}
 
 		fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
@@ -838,7 +857,7 @@ func (mp *mergeProcessor) resolveCompositeBlockDocRef(
 	// path only when it is unambiguous; otherwise determine the DocID from the block itself:
 	// a genesis composite's CID is the DocID, an update inherits it from the genesis reached
 	// through its heads.
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,
@@ -880,7 +899,7 @@ func (mp *mergeProcessor) resolveDocRefForCompositeCID(
 	// A composite block is owned by exactly one document. Use the recorded owner as a fast
 	// path only when it is unambiguous; otherwise load the block and determine the DocID from
 	// the composite itself.
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		ctx,
 		datastore.CtxMustGetTxn(ctx).Systemstore(),
 		blockCID,

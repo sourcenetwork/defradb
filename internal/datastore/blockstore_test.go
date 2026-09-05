@@ -13,6 +13,7 @@ package datastore
 import (
 	"context"
 	"testing"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/stretchr/testify/require"
@@ -32,7 +33,7 @@ func TestIsMerged_RolledBackTxnLeavesBlockUnmerged(t *testing.T) {
 
 	// A fetched but unmerged block: stored, with its to-merge marker set.
 	blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
-	block := putMarkedBlock(t, ctx, blockNS, []byte("rolled back"), []byte{objectMarker})
+	block := putMarkedBlock(t, ctx, blockNS, []byte("rolled back"), newToMergeValue(time.Unix(1_700_000_000, 0)))
 
 	txn := NewTxnFrom(rootstore, lock.NewLockSet(), 1, false, immutable.None[int]())
 	require.NoError(t, txn.Blockstore().MarkAsMerged(ctx, block.Cid()))
@@ -48,7 +49,7 @@ func TestIsMerged_CommittedTxnMarksBlockMerged(t *testing.T) {
 	rootstore := memory.NewDatastore(ctx)
 
 	blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
-	block := putMarkedBlock(t, ctx, blockNS, []byte("committed"), []byte{objectMarker})
+	block := putMarkedBlock(t, ctx, blockNS, []byte("committed"), newToMergeValue(time.Unix(1_700_000_000, 0)))
 
 	txn := NewTxnFrom(rootstore, lock.NewLockSet(), 1, false, immutable.None[int]())
 	require.NoError(t, txn.Blockstore().MarkAsMerged(ctx, block.Cid()))
@@ -64,7 +65,7 @@ func TestIsMerged_DeletedBlockIsNotMerged(t *testing.T) {
 	rootstore := memory.NewDatastore(ctx)
 
 	blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
-	block := putMarkedBlock(t, ctx, blockNS, []byte("deleted"), []byte{objectMarker})
+	block := putMarkedBlock(t, ctx, blockNS, []byte("deleted"), newToMergeValue(time.Unix(1_700_000_000, 0)))
 
 	blockstore := BlockstoreFrom(rootstore, immutable.None[int]())
 	require.NoError(t, blockstore.MarkAsMerged(ctx, block.Cid()))
@@ -107,7 +108,7 @@ func TestIsMerged_ReputtingAMergedBlockLeavesItMerged(t *testing.T) {
 
 			blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
 			block := putMarkedBlock(t, ctx, blockNS, []byte("merged then re-imported"),
-				[]byte{objectMarker})
+				newToMergeValue(time.Unix(1_700_000_000, 0)))
 
 			blockstore := BlockstoreFrom(rootstore, immutable.None[int]())
 			require.NoError(t, blockstore.MarkAsMerged(ctx, block.Cid()))
@@ -130,7 +131,7 @@ func TestIsMerged_UnmergedAndAbsentBlocks(t *testing.T) {
 	blockNS := namespace.Wrap(rootstore, []byte{blockStoreKey})
 	blockstore := BlockstoreFrom(rootstore, immutable.None[int]())
 
-	marked := putMarkedBlock(t, ctx, blockNS, []byte("still marked"), []byte{objectMarker})
+	marked := putMarkedBlock(t, ctx, blockNS, []byte("still marked"), newToMergeValue(time.Unix(1_700_000_000, 0)))
 	merged, err := blockstore.IsMerged(ctx, marked.Cid())
 	require.NoError(t, err)
 	require.False(t, merged, "a block still carrying its to-merge marker is not merged")
