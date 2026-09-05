@@ -79,6 +79,17 @@ var (
 	ErrNoHeadsForBranchableCol     = errors.New("no heads found for branchable collection")
 	ErrBlockCIDMismatch            = errors.New("pushed block does not match the advertised CID")
 	ErrEmptyPushLog                = errors.New("push log request carries no document")
+
+	// Failures a DAG sync can end on. syncDAGReason matches against these, so each shares the
+	// message constant its wrapping constructor uses.
+	ErrStoreBlockDAGSync  = errors.New(errStoreBlockDAGSync)
+	ErrGenerateBlockLink  = errors.New(errGenerateBlockLink)
+	ErrCheckBlockMerged   = errors.New(errCheckBlockMerged)
+	ErrVerifyBlockSig     = errors.New(errVerifyBlockSig)
+	ErrGetEncKeysForBlock = errors.New(errGetEncKeysForBlock)
+	ErrLoadLinkedBlock    = errors.New(errLoadLinkedBlock)
+	ErrDecodeLinkedBlock  = errors.New(errDecodeLinkedBlock)
+	ErrRetrieveEncKey     = errors.New(errRetrieveEncKey)
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

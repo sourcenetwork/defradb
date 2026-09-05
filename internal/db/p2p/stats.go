@@ -11,8 +11,11 @@
 package p2p
 
 import (
+	"context"
 	"sort"
 	"sync"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // Reasons a CAR could not be generated or a DAG walk could not finish. They are a fixed
@@ -36,7 +39,37 @@ const (
 	reasonNoRoots     = "carNoRoots"
 	reasonNext        = "carNextBlock"
 	reasonNoRootBlock = "carNoRootBlock"
+
+	// An unrecognised failure counts as reasonOther, so that staying non-zero means
+	// syncDAGReason has fallen behind the code.
+	reasonOther = "other"
 )
+
+// syncDAGReason names the step a DAG sync failed on. The specific failures come first: a
+// load that failed because the context was cancelled is more usefully reported as a load
+// failure than as a cancellation.
+func syncDAGReason(err error) string {
+	switch {
+	case errors.Is(err, ErrStoreBlockDAGSync):
+		return reasonStoreRoot
+	case errors.Is(err, ErrGenerateBlockLink):
+		return reasonBlockLink
+	case errors.Is(err, ErrCheckBlockMerged):
+		return reasonIsMerged
+	case errors.Is(err, ErrVerifyBlockSig):
+		return reasonVerifySig
+	case errors.Is(err, ErrGetEncKeysForBlock), errors.Is(err, ErrRetrieveEncKey):
+		return reasonEncKeys
+	case errors.Is(err, ErrLoadLinkedBlock):
+		return reasonLoadLink
+	case errors.Is(err, ErrDecodeLinkedBlock):
+		return reasonDecodeLink
+	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+		return reasonContext
+	default:
+		return reasonOther
+	}
+}
 
 // failureReasons counts occurrences by reason, drained once per report interval. Callers
 // that also log keep the set of reasons already logged, so a repeated occurrence costs a

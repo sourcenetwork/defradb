@@ -44,17 +44,16 @@ func (p *P2P) generateCAR(ctx context.Context, rootBlock *coreblock.Block) ([]by
 
 // carFailure records the reason a CAR could not be built and logs the first occurrence of
 // that reason, so a persistent failure shows up as a count rather than a line per call.
-func (p *P2P) carFailure(reason string, err error) error {
+func (p *P2P) carFailure(reason string, err error) {
 	if p.carFailureReason.recordFirst(reason) {
 		log.ErrorE("Failed to generate CAR", err, corelog.String("reason", reason))
 	}
-	return err
 }
 
 // carImportFailure records an abandoned import: how it failed and how many blocks it had
 // already written. Those blocks sit in the store owned by no document until a later merge
 // claims them.
-func (p *P2P) carImportFailure(reason string, written int64, err error) error {
+func (p *P2P) carImportFailure(reason string, written int64, err error) {
 	p.statCARImportFailed.Add(1)
 	p.statCARImportOrphanBlocks.Add(written)
 	if p.carImportFailureReason.recordFirst(reason) {
@@ -62,7 +61,6 @@ func (p *P2P) carImportFailure(reason string, written int64, err error) error {
 			corelog.String("reason", reason),
 			corelog.Int64("blocksWritten", written))
 	}
-	return err
 }
 
 // buildCAR serialises the root block and the blocks it links, following Links only. Heads are
@@ -79,7 +77,8 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 
 	rootLink, err := rootBlock.GenerateLink()
 	if err != nil {
-		return nil, p.carFailure(reasonRootLink, err)
+		p.carFailure(reasonRootLink, err)
+		return nil, err
 	}
 
 	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
@@ -88,13 +87,15 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 	blockCIDs := make(map[string]struct{})
 	var missingLinks int64
 	if err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs, &missingLinks); err != nil {
-		return nil, p.carFailure(reasonWalk, err)
+		p.carFailure(reasonWalk, err)
+		return nil, err
 	}
 
 	var buf bytes.Buffer
 	carWriter, err := storage.NewWritable(&buf, []cid.Cid{rootLink.Cid}, car.WriteAsCarV1(true))
 	if err != nil {
-		return nil, p.carFailure(reasonCARWriter, err)
+		p.carFailure(reasonCARWriter, err)
+		return nil, err
 	}
 
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
@@ -102,7 +103,8 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 	for cidStr := range blockCIDs {
 		c, err := cid.Decode(cidStr)
 		if err != nil {
-			return nil, p.carFailure(reasonBlockRead, err)
+			p.carFailure(reasonBlockRead, err)
+			return nil, err
 		}
 
 		var blockBytes []byte
@@ -110,7 +112,8 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 		if err != nil {
 			encBlock, encErr := encStore.Get(txnCtx, c)
 			if encErr != nil {
-				return nil, p.carFailure(reasonBlockRead, err)
+				p.carFailure(reasonBlockRead, err)
+				return nil, err
 			}
 			blockBytes = encBlock.RawData()
 		} else {
@@ -118,7 +121,8 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 		}
 
 		if err := carWriter.Put(txnCtx, c.KeyString(), blockBytes); err != nil {
-			return nil, p.carFailure(reasonCARPut, err)
+			p.carFailure(reasonCARPut, err)
+			return nil, err
 		}
 	}
 
@@ -215,12 +219,14 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 	reader, err := car.NewBlockReader(bytes.NewReader(carData))
 	if err != nil {
-		return nil, p.carImportFailure(reasonReader, 0, err)
+		p.carImportFailure(reasonReader, 0, err)
+		return nil, err
 	}
 
 	roots := reader.Roots
 	if len(roots) == 0 {
-		return nil, p.carImportFailure(reasonNoRoots, 0, ErrEmptyCARRoots)
+		p.carImportFailure(reasonNoRoots, 0, ErrEmptyCARRoots)
+		return nil, ErrEmptyCARRoots
 	}
 
 	// Content-addressed field blocks recur across documents that share a field value, so a
@@ -238,7 +244,8 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 			break
 		}
 		if err != nil {
-			return nil, p.carImportFailure(reasonNext, written, err)
+			p.carImportFailure(reasonNext, written, err)
+			return nil, err
 		}
 
 		decodedBlock, err := coreblock.GetFromBytes(carBlock.RawData())
@@ -249,7 +256,8 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 			}
 			added, putErr := addBlock(ctx, store, carBlock)
 			if putErr != nil {
-				return nil, p.carImportFailure(reasonCARPut, written, putErr)
+				p.carImportFailure(reasonCARPut, written, putErr)
+				return nil, putErr
 			}
 			if added {
 				written++
@@ -259,7 +267,8 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 
 		added, putErr := addBlock(ctx, bstore, carBlock)
 		if putErr != nil {
-			return nil, p.carImportFailure(reasonCARPut, written, putErr)
+			p.carImportFailure(reasonCARPut, written, putErr)
+			return nil, putErr
 		}
 		if added {
 			written++
@@ -271,7 +280,8 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 	}
 
 	if rootBlock == nil {
-		return nil, p.carImportFailure(reasonNoRootBlock, written, ErrCARRootBlockNotFound)
+		p.carImportFailure(reasonNoRootBlock, written, ErrCARRootBlockNotFound)
+		return nil, ErrCARRootBlockNotFound
 	}
 
 	return rootBlock, nil
