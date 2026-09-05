@@ -85,8 +85,8 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 	linkSystem := makeLinkSystem(blockstore.NewIPLDStore(bstore))
 
 	blockCIDs := make(map[string]struct{})
-	var missingLinks int64
-	if err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs, &missingLinks); err != nil {
+	missingLinks, err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs)
+	if err != nil {
 		p.carFailure(reasonWalk, err)
 		return nil, err
 	}
@@ -130,19 +130,17 @@ func (p *P2P) buildCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte,
 	return buf.Bytes(), nil
 }
 
-// collectDAGBlocks recursively collects block CIDs by following Links.
-// missing is incremented for every link whose block could not be loaded. The CID stays in the
-// write set either way, so the block is still read when the CAR is written.
+// collectDAGBlocks recursively collects block CIDs by following Links, and returns how many
+// links did not load.
 func (p *P2P) collectDAGBlocks(
 	ctx context.Context,
 	linkSystem *linking.LinkSystem,
 	blockCID cid.Cid,
 	visited map[string]struct{},
-	missing *int64,
-) error {
+) (int64, error) {
 	cidStr := blockCID.String()
 	if _, seen := visited[cidStr]; seen {
-		return nil
+		return 0, nil
 	}
 	visited[cidStr] = struct{}{}
 
@@ -155,13 +153,12 @@ func (p *P2P) collectDAGBlocks(
 		// A block that will not load leaves its links unknown, but its CID is already in the
 		// write set, so the write loop still has to read it: if it cannot, the whole CAR is
 		// abandoned.
-		*missing++
-		return nil
+		return 1, nil
 	}
 
 	block, err := coreblock.GetFromNode(node)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Include Signature block CID if present.
@@ -174,13 +171,16 @@ func (p *P2P) collectDAGBlocks(
 		visited[block.Encryption.Cid.String()] = struct{}{}
 	}
 
+	var missing int64
 	for _, dagLink := range block.Links {
-		if err := p.collectDAGBlocks(ctx, linkSystem, dagLink.Link.Cid, visited, missing); err != nil {
-			return err
+		linkMissing, err := p.collectDAGBlocks(ctx, linkSystem, dagLink.Link.Cid, visited)
+		missing += linkMissing
+		if err != nil {
+			return missing, err
 		}
 	}
 
-	return nil
+	return missing, nil
 }
 
 // peekCARRootBlock reads only the root block from a CAR byte slice and decodes it
