@@ -438,3 +438,45 @@ func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *tes
 
 	executeTestCase(t, test)
 }
+
+func TestQueryOneToManyWithGroupByGenreAndNonGroupAuthorSelected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Person {
+						name: String!
+						authoredBooks: [Book]
+					}
+
+					type Company {
+						name: String!
+						sells: [Book]
+					}
+
+					type Book {
+						title: String!
+						genre: String
+						plot: String
+						rating: Float
+						author: Person
+						seller: Company
+					}
+				`,
+			},
+			&action.Request{
+				Request: `query {
+					Book(groupBy: [genre]) {
+						genre
+						author {
+							name
+						}
+					}
+				}`,
+				ExpectedError: "cannot select a non-group-by field at group-level",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
