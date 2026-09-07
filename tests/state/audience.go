@@ -28,6 +28,10 @@ type hostedClient interface {
 }
 
 func GetNodeAudience(s *State, nodeIndex int) immutable.Option[string] {
+	// Only the setup knows where a node being set up answers, so prefer it.
+	if s.CurrentSetupHost != "" && nodeIndex == s.CurrentSetupNodeID {
+		return immutable.Some(strings.TrimPrefix(s.CurrentSetupHost, "http://"))
+	}
 	if nodeIndex >= len(s.Nodes) {
 		return immutable.None[string]()
 	}

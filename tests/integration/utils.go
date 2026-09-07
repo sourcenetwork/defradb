@@ -1075,10 +1075,13 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts.P2P().SetAll(p2pOpts)
 			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
 			opts.NodeACP().SetEnabled(start.EnableNAC)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.EnableNAC = start.EnableNAC
+			setupConfig.NACOwner = start.Identity
 			return action.SetupNode(
 				s,
 				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)

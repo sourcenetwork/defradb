@@ -57,6 +57,10 @@ type NodeSetupConfig struct {
 	// instantiated. A zero pool size leaves the node default in place.
 	LensRuntime  options.NodeLensRuntimeType
 	LensPoolSize int
+	// EnableNAC turns on node access control, owned by NACOwner. While it is on the
+	// node lets through no one else.
+	EnableNAC bool
+	NACOwner  immutable.Option[state.Identity]
 }
 
 func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {

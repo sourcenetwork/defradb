@@ -356,6 +356,14 @@ type State struct {
 	// node, for example finding a specific node's NodeIdentity inorder to bypass NAC.
 	CurrentSetupNodeID int
 
+	// CurrentSetupHost is the address to mint auth tokens from while a node is being
+	// set up.
+	//
+	// A restarting node gets a new port, and the node rejects tokens minted for the
+	// port it had before. Its entry on Nodes cannot be replaced any earlier, since
+	// setting the node up reads the old entry to build the new one.
+	CurrentSetupHost string
+
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different
