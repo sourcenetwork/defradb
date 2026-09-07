@@ -1,18 +1,21 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package cursor
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -55,8 +58,15 @@ func extractUsers(usersRaw any) []map[string]any {
 
 func appendCursorUsers(docs *[]map[string]any) action.ResultAsserter {
 	return testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-		cursor := result["_cursor"].(map[string]any)
+		cursor := requireType[map[string]any](t, result["_cursor"])
 		*docs = append(*docs, extractUsers(cursor["User"])...)
 		return true, ""
 	})
+}
+
+func requireType[T any](t testing.TB, value any) T {
+	t.Helper()
+	result, ok := value.(T)
+	require.True(t, ok, "unexpected value type: %T", value)
+	return result
 }

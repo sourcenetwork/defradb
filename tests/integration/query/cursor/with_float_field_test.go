@@ -1,12 +1,13 @@
 // Copyright 2026 Democratized Data Foundation
 //
-// Use of this software is governed by the Business Source License
-// included in the file licenses/BSL.txt.
+// This file is part of the DefraDB test suite.
 //
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
 
 package cursor
 
@@ -107,7 +108,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 					}
 				}`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
+					cursor := requireType[map[string]any](t, result["_cursor"])
 					users := extractUsers(cursor["User"])
 					allDocs = append(allDocs, users...)
 					return true, ""
@@ -146,7 +147,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 					}
 				}`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
+					cursor := requireType[map[string]any](t, result["_cursor"])
 					users := extractUsers(cursor["User"])
 					allDocs = append(allDocs, users...)
 					return true, ""
@@ -185,7 +186,7 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 					}
 				}`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor := result["_cursor"].(map[string]any)
+					cursor := requireType[map[string]any](t, result["_cursor"])
 					users := extractUsers(cursor["User"])
 					allDocs = append(allDocs, users...)
 
@@ -194,8 +195,8 @@ func TestCursorWithFloatField_MultiRoundTrip(t *testing.T) {
 						return false, fmt.Sprintf("expected 5 docs total, got %d", len(allDocs))
 					}
 					for i := 1; i < len(allDocs); i++ {
-						prevScore := allDocs[i-1]["score"].(float64)
-						currScore := allDocs[i]["score"].(float64)
+						prevScore := requireType[float64](t, allDocs[i-1]["score"])
+						currScore := requireType[float64](t, allDocs[i]["score"])
 						if currScore <= prevScore {
 							return false, fmt.Sprintf("order violation at index %d: %f <= %f", i, currScore, prevScore)
 						}

@@ -20,8 +20,9 @@ const (
 	errMultipleQueriesInCursor string = "_cursor block cannot contain multiple collection queries"
 	errFirstMustBeNonNegative  string = "first must be non-negative"
 	errLastMustBeNonNegative   string = "last must be non-negative"
-	errForwardBackwardConflict string = "forward parameters (first/after) cannot be combined with backward parameters (last/before)"
-	errInvalidCursor           string = "invalid cursor"
+	errForwardBackwardConflict string = "forward parameters (first/after) cannot be combined with " +
+		"backward parameters (last/before)"
+	errInvalidCursor string = "invalid cursor"
 )
 
 // Errors returnable from this package.

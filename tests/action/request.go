@@ -39,7 +39,11 @@ type VariableResolver interface {
 type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
 
 func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
-	f(t, result)
+	t.Helper()
+	asserted, message := f(t, result)
+	if !asserted {
+		t.Error(message)
+	}
 }
 
 // Request represents a standard Defra (GQL) request.
@@ -155,31 +159,6 @@ nodeLoop:
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
-}
-
-// getTransaction returns the transaction for this request, creating one if needed.
-func (a *Request) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
-		return nil
-	}
-
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
-	}
-
-	if a.s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
-			txn.Discard()
-			return nil
-		}
-
-		a.s.Txns[transactionID] = txn
-	}
-
-	return a.s.Txns[transactionID]
 }
 
 // resolveVariables creates a copy of the Variables map with variable resolvers
