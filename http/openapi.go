@@ -89,6 +89,13 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		WithDescription("Transaction id").
 		WithSchema(openapi3.NewInt64Schema())
 
+	// The collection endpoints render each field's Kind and Typ as their display strings
+	// rather than the numeric form held on the struct, so the generated schema (which
+	// reflects the Go types) has to be corrected to match what is actually sent.
+	if err := setCollectionFieldDisplaySchema(schemas); err != nil {
+		return nil, err
+	}
+
 	// add common schemas, responses, and params so we can reference them
 	schemas["document"] = &openapi3.SchemaRef{
 		Value: openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
@@ -210,4 +217,46 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 		},
 	}, nil
+}
+
+// setCollectionFieldDisplaySchema corrects the generated collection schema so that each
+// field's Kind and Typ describe the display form the collection endpoints emit.
+//
+// The generator reflects the Go types: Typ comes out as the byte it is stored as, and Kind
+// as an empty schema because it is an interface. Both are sent as their readable form
+// instead - see [client.CollectionVersion.Display].
+func setCollectionFieldDisplaySchema(schemas openapi3.Schemas) error {
+	collection, ok := schemas["collection"]
+	if !ok || collection.Value == nil {
+		return ErrCollectionSchemaNotGenerated
+	}
+	fields, ok := collection.Value.Properties["Fields"]
+	if !ok || fields.Value == nil || fields.Value.Items == nil || fields.Value.Items.Value == nil {
+		return ErrCollectionSchemaNotGenerated
+	}
+
+	// A relation kind is sent as an object naming the collection it points at, or, for a
+	// relation within the same collection set, its position relative to this one.
+	relationKind := openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+		"Array":        openapi3.NewBoolSchema(),
+		"CollectionID": openapi3.NewStringSchema(),
+		"RelativeID":   openapi3.NewStringSchema(),
+	})
+
+	kind := openapi3.NewSchema()
+	kind.Description = "Field type, e.g. \"String\" or \"[Int!]\". Relations are an object, and a " +
+		"type with no name falls back to its numeric id."
+	kind.OneOf = openapi3.SchemaRefs{
+		openapi3.NewSchemaRef("", openapi3.NewStringSchema()),
+		openapi3.NewSchemaRef("", relationKind),
+		openapi3.NewSchemaRef("", openapi3.NewIntegerSchema().WithMin(0).WithMax(255)),
+	}
+
+	typ := openapi3.NewStringSchema()
+	typ.Description = "CRDT used to merge the field, e.g. \"lww\"."
+
+	fields.Value.Items.Value.Properties["Kind"] = openapi3.NewSchemaRef("", kind)
+	fields.Value.Items.Value.Properties["Typ"] = openapi3.NewSchemaRef("", typ)
+
+	return nil
 }
