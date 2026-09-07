@@ -382,9 +382,18 @@ func externalNodeFlags(
 		// The identity given here owns NAC, so it has to be the one the test uses.
 		full, ok := identityWithPrivateKey(
 			getIdentityForRequestSpecificToNode(s, cfg.NACOwner, s.CurrentSetupNodeID))
-		if !ok {
+		switch {
+		case !ok:
 			unsupported = append(unsupported, "node access control: no private key for the starting identity")
-		} else {
+
+		// The key is sent as bare hex and the node reads every key as secp256k1, so
+		// another type would silently give NAC to an owner the test cannot use.
+		case full.PrivateKey().Type() != crypto.KeyTypeSecp256k1:
+			unsupported = append(unsupported,
+				"node access control: the owner key is "+string(full.PrivateKey().Type())+
+					", and the node reads the key it is given as secp256k1")
+
+		default:
 			flags = append(flags, "--node-acp-enable", "--identity", full.PrivateKey().String())
 		}
 	}
