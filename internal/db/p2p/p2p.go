@@ -1274,23 +1274,25 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			}
 		}
 
-		// Route collection-topic publishes through the batcher so multiple doc updates
-		// within the flush window are coalesced into a single pubsub message.
-		p.batcher.Add(evt.CollectionID, protocol.DocumentInfo{
-			DocID: evt.DocID,
-			CID:   evt.Cid.Bytes(),
-			Block: evt.Block,
-			CAR:   carData,
-		})
-		p.topicPeerMu.RLock()
-		noPeers := p.topicPeerCounts[evt.CollectionID] == 0
-		p.topicPeerMu.RUnlock()
-		if noPeers {
-			p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
-				DocID:        evt.DocID,
-				CollectionID: evt.CollectionID,
-				Topic:        evt.CollectionID,
-			}))
+		if !evt.IsRelay {
+			// Route collection-topic publishes through the batcher so multiple doc updates
+			// within the flush window are coalesced into a single pubsub message.
+			p.batcher.Add(evt.CollectionID, protocol.DocumentInfo{
+				DocID: evt.DocID,
+				CID:   evt.Cid.Bytes(),
+				Block: evt.Block,
+				CAR:   carData,
+			})
+			p.topicPeerMu.RLock()
+			noPeers := p.topicPeerCounts[evt.CollectionID] == 0
+			p.topicPeerMu.RUnlock()
+			if noPeers {
+				p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
+					DocID:        evt.DocID,
+					CollectionID: evt.CollectionID,
+					Topic:        evt.CollectionID,
+				}))
+			}
 		}
 	}
 
