@@ -43,7 +43,7 @@ var setupFields = map[string]setupFieldHandling{
 	"EnableSigning":    fieldFlagged,
 	"HTTP":             fieldFlagged,
 	"BadgerEncryption": fieldFlagged,
-	"EnableNAC":        fieldFlagged,
+	"NodeACP":          fieldFlagged,
 	"NACOwner":         fieldFlagged,
 
 	// The external node keeps its store under the rootdir the wrapper owns, so it
@@ -92,19 +92,23 @@ func TestExternalNodeFlags_ReadsEveryFlaggedField(t *testing.T) {
 	}
 }
 
-// readNodeSetupSource returns the body of externalNodeFlags.
+// readNodeSetupSource returns the body of externalNodeFlags, plus the helpers it
+// reads config through, so a field reached by one of those still counts as read.
 func readNodeSetupSource(t *testing.T) string {
 	t.Helper()
 
-	source, err := os.ReadFile("node_setup.go")
+	setup, err := os.ReadFile("node_setup.go")
 	require.NoError(t, err)
 
-	start := strings.Index(string(source), "func externalNodeFlags(")
+	start := strings.Index(string(setup), "func externalNodeFlags(")
 	require.NotEqual(t, -1, start, "externalNodeFlags was renamed or moved")
 
-	body := string(source)[start:]
+	body := string(setup)[start:]
 	end := strings.Index(body, "\n}\n")
 	require.NotEqual(t, -1, end, "could not find the end of externalNodeFlags")
 
-	return body[:end]
+	helpers, err := os.ReadFile("node_options.go")
+	require.NoError(t, err)
+
+	return body[:end] + string(helpers)
 }

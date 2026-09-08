@@ -303,7 +303,7 @@ func setupExternalNode(
 	defer func() { s.CurrentSetupHost = "" }()
 
 	nacIdentity := immutable.None[state.Identity]()
-	if cfg.EnableNAC {
+	if nacEnabled(cfg) {
 		// The node ignores a flag it does not know, so a test could assert an access
 		// rule against a node that never enforced one.
 		require.Contains(s.T, w.StartupLog(), nacEnabledLog,
@@ -378,7 +378,7 @@ func externalNodeFlags(
 		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
 	}
 
-	if cfg.EnableNAC {
+	if nacEnabled(cfg) {
 		// The identity given here owns NAC, so it has to be the one the test uses.
 		full, ok := identityWithPrivateKey(
 			getIdentityForRequestSpecificToNode(s, cfg.NACOwner, s.CurrentSetupNodeID))
