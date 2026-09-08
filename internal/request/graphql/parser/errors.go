@@ -30,3 +30,15 @@ var (
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
 	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
 )
+
+const errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"
+
+// NewErrSimilarityOnNonVectorField returns an error indicating that similarity was given a field
+// that exists but cannot hold a vector.
+func NewErrSimilarityOnNonVectorField(fieldName string, fieldType string) error {
+	return errors.New(
+		errSimilarityOnNonVectorField,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Type", fieldType),
+	)
+}
