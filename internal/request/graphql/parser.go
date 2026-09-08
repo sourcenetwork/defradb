@@ -119,6 +119,12 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 		}
 	}
 
+	// Checked before validation because the generic "unknown argument" error the library would
+	// otherwise produce hides what is actually wrong.
+	if errs := validateSimilarityArgs(schema, ast); len(errs) > 0 {
+		return nil, errs
+	}
+
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))
@@ -198,4 +204,93 @@ func (p *parser) NewFilterFromString(
 		}
 	}
 	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
+}
+
+// validateSimilarityArgs reports SIMILARITY arguments naming a field that exists but is not a
+// numeric array. SIMILARITY only gets an argument per numeric-array field, so the library reports
+// those as unknown arguments, which reads as if the field itself does not exist.
+func validateSimilarityArgs(schema *gql.Schema, doc *ast.Document) []error {
+	queryType := schema.QueryType()
+	if queryType == nil {
+		return nil
+	}
+
+	var errs []error
+	for _, definition := range doc.Definitions {
+		operation, isOperation := definition.(*ast.OperationDefinition)
+		if !isOperation || operation.SelectionSet == nil {
+			continue
+		}
+		for _, selection := range operation.SelectionSet.Selections {
+			field, isField := selection.(*ast.Field)
+			if !isField {
+				continue
+			}
+			errs = append(errs, checkSimilarityArgs(objectOf(queryType, field.Name.Value), field)...)
+		}
+	}
+	return errs
+}
+
+// checkSimilarityArgs checks the SIMILARITY selections directly under obj, then recurses into the
+// related objects selected alongside them.
+func checkSimilarityArgs(obj *gql.Object, selection *ast.Field) []error {
+	if obj == nil || selection.SelectionSet == nil {
+		return nil
+	}
+
+	similarityArgs := map[string]struct{}{}
+	if similarity, exists := obj.Fields()[request.SimilarityFieldName]; exists {
+		for _, arg := range similarity.Args {
+			similarityArgs[arg.Name()] = struct{}{}
+		}
+	}
+
+	var errs []error
+	for _, childSelection := range selection.SelectionSet.Selections {
+		field, isField := childSelection.(*ast.Field)
+		if !isField {
+			continue
+		}
+		if field.Name.Value != request.SimilarityFieldName {
+			errs = append(errs, checkSimilarityArgs(objectOf(obj, field.Name.Value), field)...)
+			continue
+		}
+		for _, arg := range field.Arguments {
+			name := arg.Name.Value
+			if _, isSimilarityArg := similarityArgs[name]; isSimilarityArg {
+				continue
+			}
+			objField, exists := obj.Fields()[name]
+			if !exists {
+				// Not a field at all, so the library's "unknown argument" error is already right.
+				continue
+			}
+			errs = append(errs, NewErrSimilarityOnNonVectorField(name, objField.Type.String()))
+		}
+	}
+	return errs
+}
+
+// objectOf resolves the object type behind the named field of obj, looking through the list and
+// non-null wrappers a collection or relation field is built from.
+func objectOf(obj *gql.Object, fieldName string) *gql.Object {
+	field, exists := obj.Fields()[fieldName]
+	if !exists {
+		return nil
+	}
+
+	typ := field.Type
+	for {
+		switch unwrapped := typ.(type) {
+		case *gql.List:
+			typ = unwrapped.OfType
+		case *gql.NonNull:
+			typ = unwrapped.OfType
+		case *gql.Object:
+			return unwrapped
+		default:
+			return nil
+		}
+	}
 }

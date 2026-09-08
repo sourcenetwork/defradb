@@ -903,7 +903,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SimilarityFieldName,
-		Description: "Returns the cosine similarity between the specified field and the provided vector.",
+		Description: schemaTypes.SimilarityFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
@@ -920,7 +920,7 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 			Fields: gql.InputObjectConfigFieldMap{
 				schemaTypes.SimilarityArgVector: &gql.InputObjectFieldConfig{
 					Type:        gql.NewNonNull(gql.NewList(listType.OfType)),
-					Description: "A vector of the same type as the field to compute the cosine similarity with.",
+					Description: schemaTypes.SimilarityArgDescription,
 				},
 			},
 		})
@@ -928,7 +928,12 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 		if err != nil {
 			return gql.Field{}, err
 		}
-		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
+		// objectField.Description is whatever the user wrote in their schema, usually nothing, which
+		// is why clients showed this argument undocumented.
+		field.Args[objectField.Name] = schemaTypes.NewArgConfig(
+			inputObject,
+			fmt.Sprintf("Compares the given vector against the %s field.", objectField.Name),
+		)
 	}
 
 	return field, nil
