@@ -2342,7 +2342,13 @@ type User {
         """
         points: ScalarAggregateNumericBlock
     ): Float
-    "Returns the cosine similarity between the specified field and the provided vector."
+    """
+    
+    Returns how similar the given vector is to the specified field's value. The metric is
+     whichever one the field's vector index was created with, defaulting to cosine similarity
+     when the field has no vector index. Higher values are more similar for every metric.
+
+    """
     SIMILARITY: Float
     """
     

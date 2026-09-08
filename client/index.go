@@ -96,7 +96,7 @@ const (
 	// graph quality (recall) at the cost of build time.
 	DefaultHNSWEfConstruction uint32 = 128
 	// DefaultHNSWEfSearch is the default query-time exploration factor. Higher values improve recall
-	// at the cost of query latency; it may be overridden per query.
+	// at the cost of query latency. It is set per index and cannot be changed per query.
 	DefaultHNSWEfSearch uint32 = 64
 
 	// Upper bounds, checked at index creation. Build cost grows with these, and any client can set
