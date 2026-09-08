@@ -661,7 +661,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	serverCtx, hasServerCtx := tryGetContexCtx(req)
+	serverCtx, hasServerCtx := tryGetContextCtx(req)
 	var serverDone <-chan struct{}
 	if hasServerCtx {
 		serverDone = serverCtx.Done()
