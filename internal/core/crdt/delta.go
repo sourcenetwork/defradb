@@ -14,5 +14,4 @@ package crdt
 // They are serialized to and from Protobuf (or CBOR).
 type Delta interface {
 	GetPriority() uint64
-	SetPriority(uint64)
 }

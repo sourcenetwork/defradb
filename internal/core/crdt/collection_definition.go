@@ -12,14 +12,12 @@ package crdt
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type CollectionDefinitionDelta struct {
@@ -46,35 +44,16 @@ func (d *CollectionDefinitionDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *CollectionDefinitionDelta) SetPriority(priority uint64) {
-	d.Priority = priority
+type CollectionDefinition struct{}
+
+func NewCollectionDefinition() *CollectionDefinition {
+	return &CollectionDefinition{}
 }
 
-type CollectionDefinition struct {
-	headstorePrefix keys.HeadstoreCollectionDefinition
-}
-
-var _ ReplicatedData = (*Collection)(nil)
-
-func NewCollectionDefinition(
-	name string,
-) *CollectionDefinition {
-	return &CollectionDefinition{
-		// WARNING: This prefix will need to be rebuilt if/when we allow the mutation of collection
-		// name.
-		headstorePrefix: keys.HeadstoreCollectionDefinition{
-			CollectionName: name,
-		},
-	}
-}
-
-func (c *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return c.headstorePrefix
-}
-
-func (c *CollectionDefinition) Delta(
+func (c *CollectionDefinition) Mutate(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
+	priority uint64,
 ) (*CollectionDefinitionDelta, bool, error) {
 	var name *string
 	if new.Name != old.Name {
@@ -123,16 +102,15 @@ func (c *CollectionDefinition) Delta(
 	}
 
 	if name == nil && queryDelta == nil && transformDelta == nil {
-		return &CollectionDefinitionDelta{}, false, nil
+		return &CollectionDefinitionDelta{
+			Priority: priority,
+		}, false, nil
 	}
 
 	return &CollectionDefinitionDelta{
 		Name:           name,
 		QuerySelect:    queryDelta,
 		QueryTransform: transformDelta,
+		Priority:       priority,
 	}, true, nil
-}
-
-func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {
-	return nil
 }

@@ -14,8 +14,12 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestDeleteWithFilter_Succeeds(t *testing.T) {
@@ -55,6 +59,211 @@ func TestDeleteWithFilter_Succeeds(t *testing.T) {
 					"User": []map[string]any{
 						{"name": "Fred"},
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithMapFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Fred",
+					"age": 25
+				}`,
+			},
+			testUtils.DeleteWithFilter{
+				CollectionID: 0,
+				Filter: map[string]any{
+					"name": map[string]any{"_eq": "John"},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithMapFilter_LargeIntegerStraddling2To53_DeletesOnlyExactMatch(t *testing.T) {
+	test := testUtils.TestCase{
+		// JS numbers are IEEE-754 doubles, so an integer filter condition above 2^53 has
+		// already lost precision before it reaches Go. Unlike the other clients.
+		// To do: https://github.com/sourcenetwork/defradb/issues/5176.
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
+				state.CClientType,
+			},
+		),
+		// The gql mutation type embeds the doc as a literal in a GraphQL mutation, and
+		// GraphQL's Int scalar is 32-bit, too small for the values used here.
+		SupportedMutationTypes: immutable.Some(
+			[]state.MutationType{
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+			},
+		),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Fred",
+					"age": 9007199254740992
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 9007199254740993
+				}`,
+			},
+			testUtils.DeleteWithFilter{
+				CollectionID: 0,
+				Filter: map[string]any{
+					"age": map[string]any{"_eq": int64(9007199254740993)},
+				},
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithSomeOptionFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Fred",
+					"age": 25
+				}`,
+			},
+			testUtils.DeleteWithFilter{
+				CollectionID: 0,
+				Filter: immutable.Some(request.Filter{
+					Conditions: map[string]any{
+						"name": map[string]any{"_eq": "John"},
+					},
+				}),
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteWithNoneOptionFilter_DeletesAllDocuments(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			&action.AddDoc{
+				Doc: `{
+					"name": "Fred",
+					"age": 25
+				}`,
+			},
+			testUtils.DeleteWithFilter{
+				CollectionID: 0,
+				Filter:       immutable.None[request.Filter](),
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{},
 				},
 			},
 		},

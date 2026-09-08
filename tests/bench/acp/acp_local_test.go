@@ -80,7 +80,7 @@ func newLocalDocumentACPSetup(b *testing.B, inMem bool) dac.DocumentACP {
 	return localACP
 }
 
-// resetLocalDocumentACPKeepPolicy resets the local document acp instance then adds our desired policy back.
+// resetLocalDocumentACPKeepPolicy resets the Local DAC instance then adds our desired policy back.
 func resetLocalDocumentACPKeepPolicy(b *testing.B, ctx context.Context, localACP dac.DocumentACP) {
 	resetErr := localACP.ResetState(ctx)
 	require.Nil(b, resetErr)

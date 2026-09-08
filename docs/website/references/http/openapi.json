@@ -229,7 +229,33 @@
                                 "IsPrimary": {
                                     "type": "boolean"
                                 },
-                                "Kind": {},
+                                "Kind": {
+                                    "description": "Field type, e.g. \"String\" or \"[Int!]\". Relations are an object, and a type with no name falls back to its numeric id.",
+                                    "oneOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "properties": {
+                                                "Array": {
+                                                    "type": "boolean"
+                                                },
+                                                "CollectionID": {
+                                                    "type": "string"
+                                                },
+                                                "RelativeID": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "maximum": 255,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        }
+                                    ]
+                                },
                                 "Name": {
                                     "type": "string"
                                 },
@@ -238,9 +264,8 @@
                                     "type": "integer"
                                 },
                                 "Typ": {
-                                    "maximum": 255,
-                                    "minimum": 0,
-                                    "type": "integer"
+                                    "description": "CRDT used to merge the field, e.g. \"lww\".",
+                                    "type": "string"
                                 }
                             },
                             "type": "object"
@@ -269,6 +294,12 @@
                                     "minimum": 0,
                                     "type": "integer"
                                 },
+                                "Kind": {
+                                    "maximum": 255,
+                                    "minimum": 0,
+                                    "type": "integer"
+                                },
+                                "KindDescription": {},
                                 "Name": {
                                     "type": "string"
                                 },
@@ -492,6 +523,12 @@
                         "minimum": 0,
                         "type": "integer"
                     },
+                    "Kind": {
+                        "maximum": 255,
+                        "minimum": 0,
+                        "type": "integer"
+                    },
+                    "KindDescription": {},
                     "Name": {
                         "type": "string"
                     },
@@ -560,8 +597,55 @@
                     "Name": {
                         "type": "string"
                     },
+                    "Ordered": {
+                        "nullable": true,
+                        "properties": {
+                            "Unique": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "Unique": {
                         "type": "boolean"
+                    },
+                    "Vector": {
+                        "nullable": true,
+                        "properties": {
+                            "Algorithm": {
+                                "type": "string"
+                            },
+                            "Dimensions": {
+                                "maximum": 4294967295,
+                                "minimum": 0,
+                                "type": "integer"
+                            },
+                            "HNSW": {
+                                "nullable": true,
+                                "properties": {
+                                    "EfConstruction": {
+                                        "maximum": 4294967295,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                    },
+                                    "EfSearch": {
+                                        "maximum": 4294967295,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                    },
+                                    "M": {
+                                        "maximum": 4294967295,
+                                        "minimum": 0,
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "Metric": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -627,6 +711,12 @@
                 },
                 "type": "object"
             },
+            "truncate_collection": {
+                "properties": {
+                    "filter": {}
+                },
+                "type": "object"
+            },
             "update_collection": {
                 "properties": {
                     "filter": {},
@@ -655,7 +745,7 @@
         "securitySchemes": {
             "bearerToken": {
                 "bearerFormat": "JWT",
-                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the SourceHub address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
+                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor Remote DAC policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the Vera address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
                 "scheme": "bearer",
                 "type": "http"
             }
@@ -1875,7 +1965,7 @@
         },
         "/collections/{name}/truncate": {
             "delete": {
-                "description": "Truncate a collection, removing all document data within it from the server. Does not propagate the deletion to other Defra nodes in the network.",
+                "description": "Permanently remove all or filtered document data from a collection on this server. Does not propagate the deletion to other Defra nodes in the network.",
                 "operationId": "truncate",
                 "parameters": [
                     {
@@ -1888,6 +1978,15 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/truncate_collection"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -1981,6 +2080,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2008,6 +2130,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2053,6 +2198,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2080,6 +2248,29 @@
                                                 "type": "object"
                                             },
                                             "type": "array"
+                                        },
+                                        "extensions": {
+                                            "properties": {
+                                                "warnings": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "additionalProperties": true,
+                                                                "type": "object"
+                                                            },
+                                                            "message": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2390,7 +2581,21 @@
         },
         "/p2p/connect": {
             "post": {
+                "description": "Connect to peers",
                 "operationId": "connect",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"
@@ -2406,7 +2611,21 @@
         },
         "/p2p/disconnect": {
             "post": {
+                "description": "Disconnect from peers",
                 "operationId": "disconnect",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        }
+                    },
+                    "required": true
+                },
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/success"

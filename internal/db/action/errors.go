@@ -16,10 +16,15 @@ import (
 )
 
 const (
-	errActionInProgress string = "multiple actions of the same kind and collection cannot be submitted concurrently"
+	errActionInProgress string = "multiple actions of the same kind and collection " +
+		"cannot be submitted concurrently"
+	errInvalidActionStatusEncoding string = "invalid action status encoding"
 )
 
-var ErrActionInProgress = errors.New(errActionInProgress)
+var (
+	ErrActionInProgress            = errors.New(errActionInProgress)
+	ErrInvalidActionStatusEncoding = errors.New(errInvalidActionStatusEncoding)
+)
 
 func NewErrActionInProgress(collectionID string, action client.Action) error {
 	return errors.New(

@@ -34,13 +34,14 @@ func SyncP2PBranchableCollection(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	if timeoutStr != nil {
-		timeout, err := time.ParseDuration(C.GoString(timeoutStr))
+	timeout := C.GoString(timeoutStr)
+	if timeout != "" {
+		timeoutDuration, err := time.ParseDuration(timeout)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, timeout)
+		ctx, cancel = context.WithTimeout(ctx, timeoutDuration)
 		defer cancel()
 	}
 	node, err := getNodeFromPointer(nodePtr)

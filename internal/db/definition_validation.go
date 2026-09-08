@@ -14,12 +14,14 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -721,8 +723,17 @@ func validateTypeAndKindCompatible(
 	var errs []error
 	for _, col := range newState.collections {
 		for _, newField := range col.Fields {
-			if !newField.Typ.IsCompatibleWith(newField.Kind) {
-				errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ.String(), newField.Kind.String()))
+			ct, ok := crdt.TryGetFieldCRDT(newField.Typ)
+			if !ok {
+				// If the configured crdt is not found, ingore it here and let other validation raise any
+				// appropriate errors
+				continue
+			}
+
+			if kindLimitedCrdt, ok := ct.(crdt.KindLimitedCRDT); ok {
+				if !slices.Contains(kindLimitedCrdt.SupportedKinds(), newField.Kind) {
+					errs = append(errs, client.NewErrCRDTKindMismatch(newField.Typ, newField.Kind.String()))
+				}
 			}
 		}
 	}
@@ -834,8 +845,8 @@ func validateTypeSupported(
 	var errs []error
 	for _, col := range newState.collections {
 		for _, newField := range col.Fields {
-			if !newField.Typ.IsSupportedFieldCType() {
-				errs = append(errs, client.NewErrInvalidCRDTType(newField.Name, newField.Typ.String()))
+			if _, ok := crdt.TryGetFieldCRDT(newField.Typ); !ok {
+				errs = append(errs, client.NewErrInvalidCRDTTypeV(newField.Name, newField.Typ))
 			}
 		}
 	}

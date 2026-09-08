@@ -402,16 +402,38 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	activePeers.AddResponse(200, activePeersResponse)
 	activePeers.Responses.Set("400", errorResponse)
 
+	connectSchema := openapi3.NewArraySchema().
+		WithItems(openapi3.NewStringSchema())
+
+	connectRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(connectSchema))
+
 	connect := openapi3.NewOperation()
+	connect.Description = "Connect to peers"
 	connect.OperationID = "connect"
 	connect.Tags = []string{"p2p"}
+	connect.RequestBody = &openapi3.RequestBodyRef{
+		Value: connectRequest,
+	}
 	connect.Responses = openapi3.NewResponses()
 	connect.Responses.Set("200", successResponse)
 	connect.Responses.Set("400", errorResponse)
 
+	disconnectSchema := openapi3.NewArraySchema().
+		WithItems(openapi3.NewStringSchema())
+
+	disconnectRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(disconnectSchema))
+
 	disconnect := openapi3.NewOperation()
+	disconnect.Description = "Disconnect from peers"
 	disconnect.OperationID = "disconnect"
 	disconnect.Tags = []string{"p2p"}
+	disconnect.RequestBody = &openapi3.RequestBodyRef{
+		Value: disconnectRequest,
+	}
 	disconnect.Responses = openapi3.NewResponses()
 	disconnect.Responses.Set("200", successResponse)
 	disconnect.Responses.Set("400", errorResponse)

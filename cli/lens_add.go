@@ -59,6 +59,7 @@ will return the same CID without duplicating storage.`,
 
 			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 			decoder.DisallowUnknownFields()
+			decoder.UseNumber()
 
 			var lensCfg model.Lens
 			if err := decoder.Decode(&lensCfg); err != nil {

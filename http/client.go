@@ -48,8 +48,32 @@ type Client struct {
 	http *httpClient
 }
 
-func NewClient(rawURL string) (*Client, error) {
-	httpClient, err := newHttpClient(rawURL)
+type clientOptions struct {
+	httpClient *http.Client
+	identity   acpIdentity.TokenIdentity
+}
+
+// ClientOption configures an HTTP client.
+type ClientOption func(*clientOptions)
+
+// WithHTTPClient uses client for HTTP requests.
+func WithHTTPClient(client *http.Client) ClientOption {
+	return func(opts *clientOptions) {
+		if client != nil {
+			opts.httpClient = client
+		}
+	}
+}
+
+// WithIdentity authenticates requests with identity's bearer token.
+func WithIdentity(identity acpIdentity.TokenIdentity) ClientOption {
+	return func(opts *clientOptions) {
+		opts.identity = identity
+	}
+}
+
+func NewClient(rawURL string, opts ...ClientOption) (*Client, error) {
+	httpClient, err := newHttpClient(rawURL, opts...)
 	if err != nil {
 		return nil, err
 	}

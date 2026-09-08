@@ -19,9 +19,14 @@ import (
 // defaultSchema returns a new gql.Schema containing the default type definitions.
 func defaultSchema() (gql.Schema, error) {
 	orderEnum := types.OrderingEnum()
+	indexKindEnum := types.IndexKindEnum()
 	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
+	vectorDistanceMetricEnum := types.VectorDistanceMetricEnum()
+	vectorIndexAlgorithmEnum := types.VectorIndexAlgorithmEnum()
+	hnswIndexConfigInput := types.HNSWIndexConfigInputObject(vectorDistanceMetricEnum)
+	vectorIndexInput := types.VectorIndexInputObject(hnswIndexConfigInput, vectorIndexAlgorithmEnum)
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -32,6 +37,7 @@ func defaultSchema() (gql.Schema, error) {
 	encryptedSearchResult := types.EncryptedSearchResultObject()
 
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
+	orderedIndexInput := types.OrderedIndexInputObject(orderEnum, indexFieldInput)
 
 	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg, commitsEnum)
 
@@ -41,14 +47,28 @@ func defaultSchema() (gql.Schema, error) {
 			commitsOrderArg,
 			commitsEnum,
 			orderEnum,
+			indexKindEnum,
 			crdtEnum,
 			explainEnum,
 			indexFieldInput,
+			orderedIndexInput,
 			encryptedSearchResult,
+			vectorIndexAlgorithmEnum,
+			vectorDistanceMetricEnum,
+			hnswIndexConfigInput,
+			vectorIndexInput,
 		),
-		Query:        defaultQueryType(queryCommits),
-		Mutation:     defaultMutationType(),
-		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
+		Query:    defaultQueryType(queryCommits),
+		Mutation: defaultMutationType(),
+		Directives: defaultDirectivesType(
+			crdtEnum,
+			explainEnum,
+			orderEnum,
+			indexFieldInput,
+			indexKindEnum,
+			orderedIndexInput,
+			vectorIndexInput,
+		),
 		Subscription: defaultSubscriptionType(queryCommits),
 	})
 
@@ -93,6 +113,9 @@ func defaultDirectivesType(
 	explainEnum *gql.Enum,
 	orderEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	indexKindEnum *gql.Enum,
+	orderedIndexInput *gql.InputObject,
+	vectorIndexInput *gql.InputObject,
 ) []*gql.Directive {
 	return []*gql.Directive{
 		types.CRDTFieldDirective(crdtEnum),
@@ -100,7 +123,7 @@ func defaultDirectivesType(
 		types.ExhaustiveDirective(),
 		types.ExplainDirective(explainEnum),
 		types.PolicyDirective(),
-		types.IndexDirective(orderEnum, indexFieldInput),
+		types.IndexDirective(orderEnum, indexFieldInput, indexKindEnum, orderedIndexInput, vectorIndexInput),
 		types.PrimaryDirective(),
 		types.RelationDirective(),
 		types.MaterializedDirective(),
@@ -134,10 +157,16 @@ func defaultTypes(
 	commitsOrderArg *gql.InputObject,
 	commitsEnum *gql.Enum,
 	orderEnum *gql.Enum,
+	indexKindEnum *gql.Enum,
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	orderedIndexInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
+	vectorIndexAlgorithmEnum *gql.Enum,
+	vectorDistanceMetricEnum *gql.Enum,
+	hnswIndexConfigInput *gql.InputObject,
+	vectorIndexInput *gql.InputObject,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -177,6 +206,7 @@ func defaultTypes(
 
 		// Sort/Order enum
 		orderEnum,
+		indexKindEnum,
 
 		// Filter scalar blocks
 		idOpBlock,
@@ -224,6 +254,12 @@ func defaultTypes(
 		explainEnum,
 
 		indexFieldInput,
+		orderedIndexInput,
 		encryptedSearchResult,
+
+		vectorIndexAlgorithmEnum,
+		vectorDistanceMetricEnum,
+		hnswIndexConfigInput,
+		vectorIndexInput,
 	}
 }

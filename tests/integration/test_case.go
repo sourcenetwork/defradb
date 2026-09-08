@@ -121,48 +121,42 @@ type KMS struct {
 // the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
-// ConfigureNode allows the explicit configuration of new Defra nodes.
-//
-// If no nodes are explicitly configured, a default one will be setup.  There is no
-// upper limit to the number that can be configured.
-//
-// Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
-// If the action has a `NodeID` property and it is not specified, the action will be
-// effected on all nodes.
-type ConfigureNode func() options.NodeP2POptions
+// RandomNetworkingConfig returns a node configured with random networking.
+var RandomNetworkingConfig = action.RandomNetworkingConfig
 
-func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {
-	httpBuilder := opts.HTTP()
-	if httpOpts.Address != "" {
-		httpBuilder.SetAddress(httpOpts.Address)
+// NoNetworkingConfig returns a node configured with P2P disabled entirely.
+var NoNetworkingConfig = action.NoNetworkingConfig
+
+// nodeSetupConfig returns the node setup settings for this test case.
+func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
+	return action.NodeSetupConfig{
+		EnableSigning:     tc.EnableSigning,
+		HTTP:              tc.HTTP,
+		IsDocumentACPTest: hasDocumentACPActions(tc.Actions),
+		VeraImage:         veraImage,
+		DatabaseDir:       databaseDir,
+		BadgerEncryption:  badgerEncryption,
+		LensRuntime:       lensType,
+		LensPoolSize:      lensPoolSize,
 	}
-	if len(httpOpts.AllowedOrigins) > 0 {
-		httpBuilder.SetAllowedOrigins(httpOpts.AllowedOrigins...)
+}
+
+// hasDocumentACPActions reports whether the action set uses document ACP.
+//
+// Spinning up a Vera instance is slow, so tests that do not need one are
+// skipped when Remote DAC is selected.
+func hasDocumentACPActions(actions []any) bool {
+	for _, a := range actions {
+		switch a.(type) {
+		case
+			AddDACPolicy,
+			AddDACActorRelationship,
+			*action.AddDACCollectionActorRelationship,
+			DeleteDACActorRelationship:
+			return true
+		}
 	}
-	if httpOpts.TLSCertPath != "" {
-		httpBuilder.SetCertPath(httpOpts.TLSCertPath)
-	}
-	if httpOpts.TLSKeyPath != "" {
-		httpBuilder.SetKeyPath(httpOpts.TLSKeyPath)
-	}
-	if httpOpts.ReadTimeout != 0 {
-		httpBuilder.SetReadTimeout(httpOpts.ReadTimeout)
-	}
-	if httpOpts.WriteTimeout != 0 {
-		httpBuilder.SetWriteTimeout(httpOpts.WriteTimeout)
-	}
-	if httpOpts.IdleTimeout != 0 {
-		httpBuilder.SetIdleTimeout(httpOpts.IdleTimeout)
-	}
-	if httpOpts.TxnTTL != 0 {
-		httpBuilder.SetTxnTTL(httpOpts.TxnTTL)
-	}
-	if httpOpts.TxnTTLTick != 0 {
-		httpBuilder.SetTxnTTLTick(httpOpts.TxnTTLTick)
-	}
-	if httpOpts.TxnTTLBuckets != 0 {
-		httpBuilder.SetTxnTTLBuckets(httpOpts.TxnTTLBuckets)
-	}
+	return false
 }
 
 // Restart is an action that will close and then start all nodes.

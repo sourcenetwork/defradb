@@ -301,9 +301,9 @@ test\:gql-mutations:
 test\:col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
-.PHONY: test\:source-hub
-test\:source-hub:
-	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+.PHONY: test\:remote-dac
+test\:remote-dac:
+	DEFRA_DOCUMENT_ACP_TYPE=remote gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
@@ -381,6 +381,16 @@ test\:coverage-js:
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
+
+# Fails if a node-to-node wire type changed shape without the golden being updated.
+.PHONY: test\:wire-snapshot
+test\:wire-snapshot:
+	go test ./internal/wire/snapshottest/...
+
+# Regenerate the wire snapshot golden after an intentional wire-format change.
+.PHONY: test\:wire-snapshot-update
+test\:wire-snapshot-update:
+	WIRE_SNAPSHOT_UPDATE=1 go test ./internal/wire/snapshottest/...
 
 .PHONY: test\:js
 test\:js:

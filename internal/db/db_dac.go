@@ -41,8 +41,8 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 		documentACP := db.documentACP.Value()
 		err := documentACP.ResetState(ctx)
 		if err != nil {
-			// for now we will just log this error, since SourceHub ACP doesn't yet
-			// implement the ResetState.
+			// For now we only log this error because Remote DAC does not yet
+			// implement ResetState.
 			log.ErrorE("Failed to reset document ACP state", err)
 		}
 	}

@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -31,6 +32,7 @@ func NewIndex(
 	indexName *C.char,
 	fieldsStr *C.char,
 	isUnique C.int,
+	vectorJSON *C.char,
 	options C.CollectionOptions,
 	identityPtr C.uintptr_t,
 ) C.Result {
@@ -71,6 +73,13 @@ func NewIndex(
 		Name:   C.GoString(indexName),
 		Fields: fields,
 		Unique: isUnique != 0,
+	}
+	if vectorStr := C.GoString(vectorJSON); vectorStr != "" {
+		var vectorDesc client.VectorIndexDescription
+		if err := json.Unmarshal([]byte(vectorStr), &vectorDesc); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		desc.Vector = &vectorDesc
 	}
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {

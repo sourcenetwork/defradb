@@ -20,6 +20,7 @@ var (
 	ErrFailedToParseConditionValue    = errors.New("failed to parse condition value from query filter statement")
 	ErrEmptyDataPayload               = errors.New("given data payload is empty")
 	ErrUnknownMutationName            = errors.New("unknown mutation name")
+	ErrTruncateFilterNull             = errors.New("truncate filter cannot be null")
 	ErrInvalidExplainTypeArg          = errors.New("invalid explain request type argument")
 	ErrInvalidNumberOfExplainArgs     = errors.New("invalid number of arguments to an explain request")
 	ErrUnknownExplainType             = errors.New("invalid / unknown explain type")
@@ -27,4 +28,17 @@ var (
 	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
+	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
 )
+
+const errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"
+
+// NewErrSimilarityOnNonVectorField returns an error indicating that similarity was given a field
+// that cannot hold a vector.
+func NewErrSimilarityOnNonVectorField(fieldName string, fieldType string) error {
+	return errors.New(
+		errSimilarityOnNonVectorField,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Type", fieldType),
+	)
+}

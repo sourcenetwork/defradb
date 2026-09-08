@@ -31,7 +31,7 @@ type AddDACCollectionActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add the collection actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
-	// sourcehub ACP, in which case the relationship will only be defined once.
+	// Remote DAC, in which case the relationship will only be defined once.
 	NodeID immutable.Option[int]
 
 	// The collection whose commit DAG we want to add a relationship for.
@@ -96,9 +96,9 @@ func (a *AddDACCollectionActorRelationship) Execute() {
 			require.Equal(a.s.T, a.ExpectedExistence, exists.ExistedAlready)
 		}
 
-		// The relationship should only be added to a SourceHub chain once - there is no need to loop
+		// The relationship should only be added to a Vera log once - there is no need to loop
 		// through the nodes.
-		if a.s.DocumentACPType == state.SourceHubDocumentACPType {
+		if a.s.DocumentACPType == state.RemoteDocumentACPType {
 			break
 		}
 	}

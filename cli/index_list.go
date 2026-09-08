@@ -27,7 +27,10 @@ func MakeIndexListCommand(ctx context.Context) *cobra.Command {
 		Long: `Shows the list indexes in the database or for a specific collection.
 
 If the --collection flag is provided, only the indexes for that collection will be shown.
-Otherwise, all indexes in the database will be shown.`,
+Otherwise, all indexes in the database will be shown.
+
+Each index reports a status: "building" while existing documents are being indexed, "ready" once
+complete, or "failed" if the build could not finish.`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)

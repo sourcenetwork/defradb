@@ -73,8 +73,8 @@ type KMSType string
 type DocumentACPType string
 
 const (
-	SourceHubDocumentACPType DocumentACPType = "source-hub"
-	LocalDocumentACPType     DocumentACPType = "local"
+	RemoteDocumentACPType DocumentACPType = "remote"
+	LocalDocumentACPType  DocumentACPType = "local"
 )
 
 type ColDocIndex struct {
@@ -226,6 +226,8 @@ type NodeState struct {
 	P2P *P2PState
 	// The P2P network configurations for the node, cached for restarts.
 	P2POpts options.NodeP2POptions
+	// Whether P2P was disabled for the node, cached for restarts.
+	DisableP2P bool
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -241,6 +243,16 @@ type NodeState struct {
 	CompositesLock sync.RWMutex
 	// Map of docIDs to their field-level CIDs by field name.
 	FieldCIDs map[string]map[string][]cid.Cid
+	// IsExternal indicates this node runs as a separate process (an older
+	// released version driven black-box), rather than natively in-process.
+	// Its event bus lives in that other process and cannot be observed here,
+	// so event-based waits must skip it. The replicator/merge/update/SE waits
+	// already do; WaitForPeersEvents, Wait{Action} and node restart do not yet
+	// handle external nodes, so avoid them with an external node for now.
+	IsExternal bool
+	// Version is the released version this node runs, e.g. "v1.0.0", cached
+	// for restarts. Empty for native in-process nodes.
+	Version string
 }
 
 // State contains all testing State.
@@ -266,7 +278,7 @@ type State struct {
 	// The type of Document ACP
 	DocumentACPType DocumentACPType
 
-	// The Document ACP options to share between each node (currently only used for sourcehub).
+	// The Document ACP options to share between each node (currently only used for Remote DAC).
 	DocumentACPOptions *options.NodeDocumentACPOptions
 
 	// Any explicit transactions active in this test.
@@ -293,7 +305,7 @@ type State struct {
 
 	// Policy IDs, by node index, by policyID index (in the order they were added).
 	//
-	// Note: In case acp type is sourcehub, all nodes will have the same state of PolicyIDs.
+	// When Remote DAC is selected, all nodes share the same policy ID state.
 	PolicyIDs [][]string
 
 	// Will receive an item once all actions have finished processing.
@@ -330,8 +342,8 @@ type State struct {
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
 
-	// The SourceHub address used to pay for SourceHub transactions.
-	SourcehubAddress string
+	// RemoteDACAddress is the Vera address used by Remote DAC to pay for transactions.
+	RemoteDACAddress string
 
 	// IsNetworkEnabled indicates whether the network is enabled.
 	IsNetworkEnabled bool
@@ -365,7 +377,18 @@ type State struct {
 	SkipTest string
 }
 
+// GetClientType returns the client type used to reach the node currently being
+// asserted.
+//
+// A node running in another process is always reached over HTTP, whatever client
+// the run selected, so its results need the same relaxed comparison the HTTP
+// client gets. Reporting the run-wide type here would compare its values
+// strictly and fail on equal values of a different Go type.
 func (s *State) GetClientType() ClientType {
+	nodeID := s.CurrentAssertingNodeID
+	if nodeID >= 0 && nodeID < len(s.Nodes) && s.Nodes[nodeID].IsExternal {
+		return HTTPClientType
+	}
 	return s.ClientType
 }
 

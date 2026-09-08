@@ -22,6 +22,16 @@ import (
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
+// setForTest sets *p to v for the duration of the test, restoring the previous value on cleanup.
+// It collapses the orig := X; X = v; defer func() { X = orig }() dance used to tune package vars
+// (indexBackfillBatchSize, indexBuildConcurrency, indexBuildRetryDelay) into a single line.
+func setForTest[T any](t *testing.T, p *T, v T) {
+	t.Helper()
+	orig := *p
+	*p = v
+	t.Cleanup(func() { *p = orig })
+}
+
 func newBadgerDB(ctx context.Context) (*DB, error) {
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	if err != nil {
@@ -33,6 +43,20 @@ func newBadgerDB(ctx context.Context) (*DB, error) {
 		return nil, err
 	}
 	return newDB(ctx, rootstore, adminInfo)
+}
+
+// newBadgerDBNoIndexWorker opens an in-memory DB whose index build worker is constructed but not
+// started, so a test can drive draining via db.indexBuildWorker.drainSync without the background
+// loop racing its hand-seeded records.
+func newBadgerDBNoIndexWorker(t *testing.T, ctx context.Context) *DB {
+	t.Helper()
+	suppressIndexWorkerRun = true
+	defer func() { suppressIndexWorkerRun = false }()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	return db
 }
 
 func TestNewDB(t *testing.T) {

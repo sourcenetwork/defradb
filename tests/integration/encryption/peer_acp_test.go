@@ -64,7 +64,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{
@@ -144,7 +144,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{
@@ -233,7 +233,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{
@@ -373,7 +373,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 		KMS: testUtils.KMS{Activated: true},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{

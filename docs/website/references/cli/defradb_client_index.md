@@ -24,8 +24,8 @@ Manage (new, delete, or list) collection indexes on a DefraDB node.
       --log-source                  Include source location in logs
       --log-stacktrace              Include stacktrace in error and fatal logs
       --no-log-color                Disable colored log output
+      --remote-dac-address string   Vera address authorized to make Remote DAC transactions on behalf of the actor
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
@@ -35,5 +35,5 @@ Manage (new, delete, or list) collection indexes on a DefraDB node.
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client index delete](defradb_client_index_delete.md)	 - Delete a collection's secondary index
 * [defradb client index list](defradb_client_index_list.md)	 - Shows the list indexes in the database or for a specific collection
-* [defradb client index new](defradb_client_index_new.md)	 - Make a new secondary index on a collection's field(s)
+* [defradb client index new](defradb_client_index_new.md)	 - Make a new index on a collection's field(s)
 

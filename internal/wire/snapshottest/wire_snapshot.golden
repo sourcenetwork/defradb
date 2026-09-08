@@ -1,0 +1,203 @@
+github.com/sourcenetwork/defradb/internal/core/block.Block ipld
+	type Block struct {
+	delta CRDT
+	heads optional [Link]
+	links optional [DAGLink]
+	encryption optional Link
+	signature optional Link
+	}
+github.com/sourcenetwork/defradb/internal/core/block.DAGLink ipld
+	type DAGLink struct {
+	name String
+	link Link
+	}
+github.com/sourcenetwork/defradb/internal/core/block.Encryption ipld
+	type Encryption struct {
+	key Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/block.Signature ipld
+	type Signature struct {
+	header SignatureHeader
+	value Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/block.SignatureHeader ipld
+	type SignatureHeader struct {
+	type String
+	identity Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CRDT ipld
+	type CRDT union {
+	| LWWDelta "lww"
+	| DocCompositeDelta "composite"
+	| CounterDelta "counter"
+	| CollectionDelta "collection"
+	| CollectionSetDelta "collectionSet"
+	| CollectionDefinitionDelta "collectionDefinition"
+	| FieldDefinitionDelta "fieldDefinition"
+	} representation keyed
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionDefinitionDelta ipld
+	type CollectionDefinitionDelta struct {
+	priority Int
+	name optional String
+	querySelect optional Bytes
+	queryTransform optional Link
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionDelta ipld
+	type CollectionDelta struct {
+	priority Int
+	collectionVersionID String
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CollectionSetDelta ipld
+	type CollectionSetDelta struct {
+	priority Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.CounterDelta ipld
+	type CounterDelta struct {
+	fieldName String
+	priority Int
+	nonce Int
+	collectionVersionID String
+	data Bytes
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.DocCompositeDelta ipld
+	type DocCompositeDelta struct {
+	priority Int
+	collectionVersionID String
+	status Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.FieldDefinitionDelta ipld
+	type FieldDefinitionDelta struct {
+	priority Int
+	name optional String
+	crdt optional Int
+	scalarKind optional Int
+	collectionID optional String
+	relativeID optional Int
+	}
+github.com/sourcenetwork/defradb/internal/core/crdt.LWWDelta ipld
+	type LWWDelta struct {
+	fieldName String
+	priority Int
+	collectionVersionID String
+	data Bytes
+	}
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem struct
+	docID string
+	heads [][]uint8
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncReply struct
+	results []github.com/sourcenetwork/defradb/internal/db/p2p.docSyncItem
+	sender string
+github.com/sourcenetwork/defradb/internal/db/p2p.docSyncRequest struct
+	docIDs []string
+github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionReply struct
+	collectionID string
+	heads [][]uint8
+	sender string
+github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionRequest struct
+	collectionID string
+github.com/sourcenetwork/defradb/internal/db/p2p/message.Message interface
+	GetErrMessage func() string
+	GetMessageID func() string
+	GetPubkey func() []uint8
+	GetSenderID func() string
+	GetSignature func() []uint8
+	GetVersion func() string
+	SetErrMessage func(string)
+	SetMessageID func(string)
+	SetPubkey func([]uint8)
+	SetSenderID func(string)
+	SetSignature func([]uint8)
+	SetVersion func()
+github.com/sourcenetwork/defradb/internal/db/p2p/message.MetaData struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityRequest struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	PeerID string
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.IdentityResponse struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	IdentityToken []uint8
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogReply struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+github.com/sourcenetwork/defradb/internal/db/p2p/protocol.PushLogRequest struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	DocID string
+	CID []uint8
+	CollectionID string
+	Creator string
+	Block []uint8
+github.com/sourcenetwork/defradb/internal/kms.fetchEncryptionKeyReply struct
+	Links [][]uint8
+	Blocks [][]uint8
+	EphemeralPublicKey []uint8
+	Sender string
+github.com/sourcenetwork/defradb/internal/kms.fetchEncryptionKeyRequest struct
+	Identity []uint8
+	Links [][]uint8
+	EphemeralPublicKey []uint8
+	RequestID []uint8
+github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsReply struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+github.com/sourcenetwork/defradb/internal/se.PushSEArtifactsRequest struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	CollectionID string
+	Artifacts []github.com/sourcenetwork/defradb/internal/se.SEArtifact
+github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsReply struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	DocIDs []string
+github.com/sourcenetwork/defradb/internal/se.QuerySEArtifactsRequest struct
+	Version string
+	MessageID string
+	SenderID string
+	Pubkey []uint8
+	Signature []uint8 [omitempty]
+	ErrMessage string [omitempty]
+	CollectionID string
+	Queries []github.com/sourcenetwork/defradb/internal/se.SEFieldQuery
+github.com/sourcenetwork/defradb/internal/se.SEArtifact struct
+	DocID string
+	IndexID string
+	SearchTag []uint8
+github.com/sourcenetwork/defradb/internal/se.SEFieldQuery struct
+	FieldName string
+	IndexID string
+	SearchTag []uint8

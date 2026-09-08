@@ -83,12 +83,12 @@ func TestIndexStatus_ReadyAndFailedInOneCollection_EachReportsOwnStatus(t *testi
 				CollectionID: 0,
 				FieldName:    "name",
 			},
-			// This unique index fails because of the duplicate age values.
+			// The unique backfill fails on the duplicate ages. The failure is not returned from
+			// NewIndex; the action waits for the failed state, asserted via ListIndexes below.
 			&action.NewIndex{
-				CollectionID:  0,
-				FieldName:     "age",
-				Unique:        true,
-				ExpectedError: "can not index a doc's field(s) that violates unique index",
+				CollectionID: 0,
+				FieldName:    "age",
+				Unique:       true,
 			},
 			// ListIndexes must return both indexes: name=ready, age=failed.
 			&action.ListIndexes{

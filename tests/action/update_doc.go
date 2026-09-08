@@ -117,7 +117,7 @@ func (a *UpdateDoc) Execute() {
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
 		}
 
-		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue

@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -129,7 +128,7 @@ func (c *collection) getDocument(
 		return nil, err
 	}
 
-	collectionShortID, err := id.GetCollectionShortID(ctx, c.Version().CollectionID)
+	collectionShortID, err := c.collectionShortID(ctx)
 	if err != nil {
 		return nil, err
 	}
