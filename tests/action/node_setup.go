@@ -69,7 +69,7 @@ func createBadgerEncryptionKey(enabled bool) error {
 // the js client build may fail (the failure might not be obvious to find).
 func SetupNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
@@ -162,7 +162,7 @@ func SetupNode(
 		return nil, err
 	}
 
-	ctx := iIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, resolveIdentity(s, identity))
 	err = nodeObj.Start(ctx)
 
 	if err != nil {
@@ -272,7 +272,7 @@ const nacEnabledLog = "Starting with nac"
 // failed) and a nil error is returned.
 func setupExternalNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	ver string,
 ) (*state.NodeState, error) {
@@ -310,7 +310,7 @@ func setupExternalNode(
 			"node %d was started with node access control, but did not enable it",
 			s.CurrentSetupNodeID)
 
-		nacIdentity = cfg.NACOwner
+		nacIdentity = identity
 	}
 
 	// An external node has no in-process DB, so it discovers its addresses over
@@ -338,7 +338,7 @@ func identityWithPrivateKey(
 // the test did not ask for, and the test still passes.
 func externalNodeFlags(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 ) (flags []string, unsupported []string) {
 	// The node signs by default, so not signing has to be asked for.
@@ -381,7 +381,7 @@ func externalNodeFlags(
 	if nacEnabled(cfg) {
 		// The identity given here owns NAC, so it has to be the one the test uses.
 		full, ok := identityWithPrivateKey(
-			getIdentityForRequestSpecificToNode(s, cfg.NACOwner, s.CurrentSetupNodeID))
+			getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID))
 		switch {
 		case !ok:
 			unsupported = append(unsupported, "node access control: no private key for the starting identity")

@@ -16,7 +16,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -110,7 +111,7 @@ func (a *NewNode) Execute() {
 		opts.SetDisableP2P(a.DisableP2P)
 	}
 
-	node, err := SetupNode(s, acpIdentity.None, a.SetupConfig, opts, a.Version)
+	node, err := SetupNode(s, immutable.None[state.Identity](), a.SetupConfig, opts, a.Version)
 	require.NoError(s.T, err)
 	if node == nil {
 		// SetupNode already skipped the test (no release asset for this platform).

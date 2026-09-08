@@ -44,7 +44,6 @@ var setupFields = map[string]setupFieldHandling{
 	"HTTP":             fieldFlagged,
 	"BadgerEncryption": fieldFlagged,
 	"NodeACP":          fieldFlagged,
-	"NACOwner":         fieldFlagged,
 
 	// The external node keeps its store under the rootdir the wrapper owns, so it
 	// cannot reopen one the harness chose.

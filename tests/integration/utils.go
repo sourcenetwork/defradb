@@ -1041,7 +1041,7 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
@@ -1078,10 +1078,9 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts.NodeACP().SetAll(nacOpts)
 			setupConfig := testCase.nodeSetupConfig()
 			setupConfig.NodeACP = immutable.Some(nacOpts)
-			setupConfig.NACOwner = start.Identity
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
+				start.Identity,
 				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,

@@ -57,13 +57,9 @@ type NodeSetupConfig struct {
 	// instantiated. A zero pool size leaves the node default in place.
 	LensRuntime  options.NodeLensRuntimeType
 	LensPoolSize int
-	// NodeACP overrides the node's access control settings when set. While access
-	// control is on the node lets through no one but NACOwner.
+	// NodeACP overrides the node's access control settings when set. While it is on
+	// the node lets through no one but the identity it was started with.
 	NodeACP immutable.Option[options.NodeACPOptions]
-	// NACOwner is the identity access control is set up under. The node takes it
-	// from the identity it is started with, so this is a reference to that one
-	// rather than a setting of its own.
-	NACOwner immutable.Option[state.Identity]
 }
 
 // nacEnabled reports whether the test asked for node access control.
