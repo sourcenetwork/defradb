@@ -86,7 +86,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithNestedSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
+func TestQuerySimple_WithSimilarityInFragmentAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -104,9 +104,12 @@ func TestQuerySimple_WithNestedSimilarityAndWrongFieldType_ShouldError(t *testin
 				Request: `query {
 					User {
 						books {
-							SIMILARITY(tags: {vector: [1.1, 1.2, 0.9]})
+							...similarity
 						}
 					}
+				}
+				fragment similarity on Book {
+					SIMILARITY(tags: {vector: [1.1, 1.2, 0.9]})
 				}`,
 				ExpectedError: "similarity can only target a numeric array field. Field: tags, Type: [String!]",
 			},
@@ -116,7 +119,7 @@ func TestQuerySimple_WithNestedSimilarityAndWrongFieldType_ShouldError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQuerySimple_WithSimilarityInFragmentAndWrongFieldType_ShouldError(t *testing.T) {
+func TestQuerySimple_WithSimilarityInInlineFragmentAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddCollection{
@@ -128,11 +131,10 @@ func TestQuerySimple_WithSimilarityInFragmentAndWrongFieldType_ShouldError(t *te
 			&action.Request{
 				Request: `query {
 					User {
-						...similarity
+						... on User {
+							SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
+						}
 					}
-				}
-				fragment similarity on User {
-					SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
 				}`,
 				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
 			},

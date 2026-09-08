@@ -928,8 +928,8 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 		if err != nil {
 			return gql.Field{}, err
 		}
-		// objectField.Description is whatever the user wrote in their schema, usually nothing, which
-		// is why clients showed this argument undocumented.
+		// The field's own description is whatever the user wrote in their schema, usually nothing,
+		// which is why clients showed this argument undocumented.
 		field.Args[objectField.Name] = schemaTypes.NewArgConfig(
 			inputObject,
 			fmt.Sprintf("Compares the given vector against the %s field.", objectField.Name),

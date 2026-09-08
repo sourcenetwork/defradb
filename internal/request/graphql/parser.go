@@ -119,8 +119,6 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 		}
 	}
 
-	// Checked before validation because the generic "unknown argument" error the library would
-	// otherwise produce hides what is actually wrong.
 	if errs := defrap.ValidateSimilarityArgs(*schema, ast); len(errs) > 0 {
 		return nil, errs
 	}

@@ -616,7 +616,7 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 // not supported for a vector (ANN) index.
 //
 // Wider numeric arrays are rejected rather than narrowed, because the index stores float32 and
-// narrowing would quietly lose precision the field had. Letting the user opt into that is
+// narrowing would lose precision the field had. Opting into that is
 // https://github.com/sourcenetwork/defradb/issues/5252
 func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
 	return errors.New(

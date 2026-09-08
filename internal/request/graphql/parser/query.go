@@ -357,12 +357,9 @@ func parseAggregateTarget(
 	}, nil
 }
 
-// ValidateSimilarityArgs reports similarity arguments naming a field that exists but is not a
-// numeric array. Similarity only gets an argument per numeric-array field, so the GraphQL library
-// reports those as unknown arguments, which reads as if the field itself does not exist.
-//
-// This runs before the library validates the document, because that validation is what would
-// otherwise reject the request with the unhelpful error.
+// ValidateSimilarityArgs reports similarity arguments naming a field that cannot hold a vector.
+// Such a field has no similarity argument, so the GraphQL library calls it an unknown argument,
+// which reads as if the field did not exist. Must run before that validation rejects the request.
 func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
 	fragments := map[string]*ast.FragmentDefinition{}
 	for _, definition := range doc.Definitions {
@@ -377,8 +374,7 @@ func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
 		if !isOperation {
 			continue
 		}
-		// Similarity is generated on every object type, so it can be selected from a mutation's
-		// result set as readily as from a query.
+		// Similarity exists on every object type, so a mutation's result set can select it too.
 		root := schema.QueryType()
 		switch operation.Operation {
 		case ast.OperationTypeMutation:
@@ -394,8 +390,8 @@ func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
 	return errs
 }
 
-// validateSimilarityArgs checks the similarity selections made on obj, then recurses into the
-// related objects selected alongside them. visited guards against a fragment cycle.
+// validateSimilarityArgs checks obj's similarity selections, then recurses into the related objects
+// selected alongside them. visited guards against a fragment cycle.
 func validateSimilarityArgs(
 	obj *gql.Object,
 	selectionSet *ast.SelectionSet,
@@ -441,7 +437,6 @@ func validateSimilarityArgs(
 	return errs
 }
 
-// validateSimilarityFieldArgs checks one similarity selection's arguments against obj's fields.
 func validateSimilarityFieldArgs(
 	obj *gql.Object,
 	similarity *ast.Field,
@@ -455,7 +450,7 @@ func validateSimilarityFieldArgs(
 		}
 		field, exists := obj.Fields()[name]
 		if !exists {
-			// Not a field at all, so the library's "unknown argument" error is already right.
+			// Not a field at all, so the library's error is already right.
 			continue
 		}
 		errs = append(errs, NewErrSimilarityOnNonVectorField(name, field.Type.String()))
@@ -463,8 +458,8 @@ func validateSimilarityFieldArgs(
 	return errs
 }
 
-// objectOf resolves the object type behind the named field of obj, looking through the list and
-// non-null wrappers a collection or relation field is built from.
+// objectOf resolves the object type behind a field, through the list and non-null wrappers a
+// collection or relation field is built from.
 func objectOf(obj *gql.Object, fieldName string) *gql.Object {
 	field, exists := obj.Fields()[fieldName]
 	if !exists {
