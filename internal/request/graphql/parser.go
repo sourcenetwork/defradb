@@ -210,32 +210,45 @@ func (p *parser) NewFilterFromString(
 // numeric array. SIMILARITY only gets an argument per numeric-array field, so the library reports
 // those as unknown arguments, which reads as if the field itself does not exist.
 func validateSimilarityArgs(schema *gql.Schema, doc *ast.Document) []error {
-	queryType := schema.QueryType()
-	if queryType == nil {
-		return nil
+	fragments := map[string]*ast.FragmentDefinition{}
+	for _, definition := range doc.Definitions {
+		if fragment, isFragment := definition.(*ast.FragmentDefinition); isFragment {
+			fragments[fragment.Name.Value] = fragment
+		}
 	}
 
 	var errs []error
 	for _, definition := range doc.Definitions {
 		operation, isOperation := definition.(*ast.OperationDefinition)
-		if !isOperation || operation.SelectionSet == nil {
+		if !isOperation {
 			continue
 		}
-		for _, selection := range operation.SelectionSet.Selections {
-			field, isField := selection.(*ast.Field)
-			if !isField {
-				continue
-			}
-			errs = append(errs, checkSimilarityArgs(objectOf(queryType, field.Name.Value), field)...)
+		// SIMILARITY is generated on every object type, so it can be selected from a mutation's
+		// result set as readily as from a query.
+		root := schema.QueryType()
+		switch operation.Operation {
+		case ast.OperationTypeMutation:
+			root = schema.MutationType()
+		case ast.OperationTypeSubscription:
+			root = schema.SubscriptionType()
 		}
+		if root == nil {
+			continue
+		}
+		errs = append(errs, checkSimilarityArgs(root, operation.SelectionSet, fragments, map[string]bool{})...)
 	}
 	return errs
 }
 
-// checkSimilarityArgs checks the SIMILARITY selections directly under obj, then recurses into the
-// related objects selected alongside them.
-func checkSimilarityArgs(obj *gql.Object, selection *ast.Field) []error {
-	if obj == nil || selection.SelectionSet == nil {
+// checkSimilarityArgs checks the SIMILARITY selections made on obj, then recurses into the related
+// objects selected alongside them. visited guards against a fragment cycle.
+func checkSimilarityArgs(
+	obj *gql.Object,
+	selectionSet *ast.SelectionSet,
+	fragments map[string]*ast.FragmentDefinition,
+	visited map[string]bool,
+) []error {
+	if obj == nil || selectionSet == nil {
 		return nil
 	}
 
@@ -247,27 +260,51 @@ func checkSimilarityArgs(obj *gql.Object, selection *ast.Field) []error {
 	}
 
 	var errs []error
-	for _, childSelection := range selection.SelectionSet.Selections {
-		field, isField := childSelection.(*ast.Field)
-		if !isField {
-			continue
-		}
-		if field.Name.Value != request.SimilarityFieldName {
-			errs = append(errs, checkSimilarityArgs(objectOf(obj, field.Name.Value), field)...)
-			continue
-		}
-		for _, arg := range field.Arguments {
-			name := arg.Name.Value
-			if _, isSimilarityArg := similarityArgs[name]; isSimilarityArg {
+	for _, selection := range selectionSet.Selections {
+		switch node := selection.(type) {
+		case *ast.InlineFragment:
+			errs = append(errs, checkSimilarityArgs(obj, node.SelectionSet, fragments, visited)...)
+
+		case *ast.FragmentSpread:
+			name := node.Name.Value
+			if visited[name] {
 				continue
 			}
-			objField, exists := obj.Fields()[name]
-			if !exists {
-				// Not a field at all, so the library's "unknown argument" error is already right.
+			visited[name] = true
+			if fragment, exists := fragments[name]; exists {
+				errs = append(errs, checkSimilarityArgs(obj, fragment.SelectionSet, fragments, visited)...)
+			}
+
+		case *ast.Field:
+			if node.Name.Value != request.SimilarityFieldName {
+				errs = append(errs, checkSimilarityArgs(
+					objectOf(obj, node.Name.Value), node.SelectionSet, fragments, visited)...)
 				continue
 			}
-			errs = append(errs, NewErrSimilarityOnNonVectorField(name, objField.Type.String()))
+			errs = append(errs, checkSimilarityFieldArgs(obj, node, similarityArgs)...)
 		}
+	}
+	return errs
+}
+
+// checkSimilarityFieldArgs checks one SIMILARITY selection's arguments against obj's fields.
+func checkSimilarityFieldArgs(
+	obj *gql.Object,
+	similarity *ast.Field,
+	similarityArgs map[string]struct{},
+) []error {
+	var errs []error
+	for _, arg := range similarity.Arguments {
+		name := arg.Name.Value
+		if _, isSimilarityArg := similarityArgs[name]; isSimilarityArg {
+			continue
+		}
+		field, exists := obj.Fields()[name]
+		if !exists {
+			// Not a field at all, so the library's "unknown argument" error is already right.
+			continue
+		}
+		errs = append(errs, NewErrSimilarityOnNonVectorField(name, field.Type.String()))
 	}
 	return errs
 }
