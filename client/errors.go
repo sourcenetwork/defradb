@@ -258,7 +258,7 @@ func NewErrInvalidJSONPayload(payload any) error {
 
 func NewErrFailedToParseKind(kind []byte) error {
 	return errors.New(
-		errCRDTKindMismatch,
+		errFailedToParseKind,
 		errors.NewKV("Kind", kind),
 	)
 }
