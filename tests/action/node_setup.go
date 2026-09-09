@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -261,9 +262,6 @@ func discoverPeerAddresses(
 	return removePeerIDFromAddr(addresses)
 }
 
-// nacEnabledLog is what a node logs once node access control is on.
-const nacEnabledLog = "Starting with nac"
-
 // setupExternalNode starts a node as a separate OS process from a downloaded
 // release binary of the given version, and wraps it in the same NodeState
 // shape a native node would produce.
@@ -304,13 +302,8 @@ func setupExternalNode(
 
 	nacIdentity := immutable.None[state.Identity]()
 	if nacEnabled(cfg) {
-		// The node ignores a flag it does not know, so a test could assert an access
-		// rule against a node that never enforced one.
-		require.Contains(s.T, w.StartupLog(), nacEnabledLog,
-			"node %d was started with node access control, but did not enable it",
-			s.CurrentSetupNodeID)
-
 		nacIdentity = identity
+		requireNACEnabled(s, w, identity)
 	}
 
 	// An external node has no in-process DB, so it discovers its addresses over
@@ -328,6 +321,31 @@ func identityWithPrivateKey(
 	}
 	full, ok := identity.Value().(acpIdentity.FullIdentity)
 	return full, ok
+}
+
+// requireNACEnabled fails the test unless the node has node access control on.
+//
+// The node ignores a flag it does not know, so without this a test could assert
+// an access rule against a node that never enforced one. Asking the node is
+// ordered by the response, unlike its startup log, which arrives whenever the
+// process gets around to writing it.
+func requireNACEnabled(
+	s *state.State,
+	c clients.Client,
+	identity immutable.Option[state.Identity],
+) {
+	opts := options.GetNACStatus()
+	identOption := getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
+	status, err := c.GetNACStatus(s.Ctx, opts)
+	require.NoError(s.T, err, "node %d could not report its access control status",
+		s.CurrentSetupNodeID)
+	require.Equal(s.T, client.NACEnabled.String(), status.Status,
+		"node %d was started with node access control, but did not enable it",
+		s.CurrentSetupNodeID)
 }
 
 // externalNodeFlags translates the configuration a native node would be given

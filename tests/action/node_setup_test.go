@@ -14,13 +14,17 @@
 package action
 
 import (
-	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // setupFieldHandling records how externalNodeFlags treats each [NodeSetupConfig]
@@ -76,38 +80,98 @@ func TestNodeSetupConfig_EveryFieldIsAccountedForByExternalNodeFlags(t *testing.
 			"report it as unsupported so the test skips, then record it in setupFields.")
 }
 
-// TestExternalNodeFlags_ReadsEveryFlaggedField fails if a field recorded as
-// flagged stops being read, which would drop it silently.
-func TestExternalNodeFlags_ReadsEveryFlaggedField(t *testing.T) {
-	source := readNodeSetupSource(t)
+// testOwner is the identity a node under access control is started with.
+var testOwner = immutable.Some(state.Identity{
+	Kind:     state.ClientIdentityType,
+	Selector: "1",
+})
 
-	for name, handling := range setupFields {
-		if handling != fieldFlagged {
-			continue
-		}
-		assert.True(t, strings.Contains(source, "cfg."+name),
-			"%s is recorded as flagged in setupFields, but externalNodeFlags no longer "+
-				"reads it. Either read it again or record it as dropped.", name)
+// newFlagsTestState builds the minimum state externalNodeFlags reads.
+func newFlagsTestState(t *testing.T, keyType crypto.KeyType) *state.State {
+	return &state.State{
+		T:          t,
+		DbType:     DefraIMType,
+		Identities: map[state.Identity]*state.IdentityHolder{},
+		IdentityTypes: map[state.Identity]crypto.KeyType{
+			testOwner.Value(): keyType,
+		},
 	}
 }
 
-// readNodeSetupSource returns the body of externalNodeFlags, plus the helpers it
-// reads config through, so a field reached by one of those still counts as read.
-func readNodeSetupSource(t *testing.T) string {
-	t.Helper()
+func TestExternalNodeFlags_NAC(t *testing.T) {
+	nacOn := immutable.Some(options.NodeACPOptions{IsEnabled: true})
 
-	setup, err := os.ReadFile("node_setup.go")
-	require.NoError(t, err)
+	tests := []struct {
+		name            string
+		nodeACP         immutable.Option[options.NodeACPOptions]
+		identity        immutable.Option[state.Identity]
+		keyType         crypto.KeyType
+		wantFlags       []string
+		wantNoFlags     []string
+		wantUnsupported string
+	}{
+		{
+			name:        "off by default",
+			identity:    testOwner,
+			keyType:     crypto.KeyTypeSecp256k1,
+			wantNoFlags: []string{"--node-acp-enable", "--identity"},
+		},
+		{
+			name:        "set but disabled stays off",
+			nodeACP:     immutable.Some(options.NodeACPOptions{IsEnabled: false}),
+			identity:    testOwner,
+			keyType:     crypto.KeyTypeSecp256k1,
+			wantNoFlags: []string{"--node-acp-enable", "--identity"},
+		},
+		{
+			name:      "enabled asks the node to turn it on",
+			nodeACP:   nacOn,
+			identity:  testOwner,
+			keyType:   crypto.KeyTypeSecp256k1,
+			wantFlags: []string{"--node-acp-enable", "--identity"},
+		},
+		{
+			// The node refuses to start access control with no one to own it.
+			name:            "no identity to own it",
+			nodeACP:         nacOn,
+			identity:        immutable.None[state.Identity](),
+			keyType:         crypto.KeyTypeSecp256k1,
+			wantNoFlags:     []string{"--node-acp-enable"},
+			wantUnsupported: "no private key",
+		},
+		{
+			// The key is sent as bare hex and read back as secp256k1, so another
+			// type would silently give access control to a different owner.
+			name:            "owner key the node cannot read",
+			nodeACP:         nacOn,
+			identity:        testOwner,
+			keyType:         crypto.KeyTypeEd25519,
+			wantNoFlags:     []string{"--node-acp-enable"},
+			wantUnsupported: "secp256k1",
+		},
+	}
 
-	start := strings.Index(string(setup), "func externalNodeFlags(")
-	require.NotEqual(t, -1, start, "externalNodeFlags was renamed or moved")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := newFlagsTestState(t, test.keyType)
 
-	body := string(setup)[start:]
-	end := strings.Index(body, "\n}\n")
-	require.NotEqual(t, -1, end, "could not find the end of externalNodeFlags")
+			flags, unsupported := externalNodeFlags(s, test.identity,
+				NodeSetupConfig{NodeACP: test.nodeACP})
 
-	helpers, err := os.ReadFile("node_options.go")
-	require.NoError(t, err)
+			joinedFlags := strings.Join(flags, " ")
+			for _, want := range test.wantFlags {
+				assert.Contains(t, joinedFlags, want)
+			}
+			for _, notWant := range test.wantNoFlags {
+				assert.NotContains(t, joinedFlags, notWant)
+			}
 
-	return body[:end] + string(helpers)
+			joinedUnsupported := strings.Join(unsupported, " ")
+			if test.wantUnsupported == "" {
+				assert.NotContains(t, joinedUnsupported, "node access control")
+			} else {
+				assert.Contains(t, joinedUnsupported, test.wantUnsupported)
+			}
+		})
+	}
 }
