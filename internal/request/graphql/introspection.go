@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
@@ -38,6 +39,11 @@ func executeIntrospection(definition *wgast.Document, source string) *client.Req
 	if report.HasErrors() {
 		return reportResult(&report)
 	}
+	if len(operation.OperationDefinitions) > 1 {
+		return introspectionErrorResult([]error{
+			fmt.Errorf("Must provide operation name if query contains multiple operations."),
+		})
+	}
 	astnormalization.NormalizeOperation(&operation, validationDefinition, &report)
 	if report.HasErrors() {
 		return reportResult(&report)
@@ -54,6 +60,9 @@ func executeIntrospection(definition *wgast.Document, source string) *client.Req
 	introspection.NewGenerator().Generate(definition, &report, &generated)
 	if report.HasErrors() {
 		return reportResult(&report)
+	}
+	if err := addIntrospectionTypes(definition, &generated); err != nil {
+		return introspectionErrorResult([]error{err})
 	}
 	raw, err := json.Marshal(generated)
 	if err != nil {
@@ -80,6 +89,112 @@ func executeIntrospection(definition *wgast.Document, source string) *client.Req
 		return introspectionErrorResult([]error{err})
 	}
 	return &client.RequestResult{GQL: client.GQLResult{Data: data}}
+}
+
+var introspectionTypeAliases = map[string]string{
+	"__Directive":         "DefraIntrospectionDirective",
+	"__DirectiveLocation": "DefraIntrospectionDirectiveLocation",
+	"__EnumValue":         "DefraIntrospectionEnumValue",
+	"__Field":             "DefraIntrospectionField",
+	"__InputValue":        "DefraIntrospectionInputValue",
+	"__Schema":            "DefraIntrospectionSchema",
+	"__Type":              "DefraIntrospectionType",
+	"__TypeKind":          "DefraIntrospectionTypeKind",
+}
+
+// addIntrospectionTypes works around graphql-go-tools intentionally omitting
+// reserved __* types from generated introspection data. Generate a temporary
+// view with non-reserved aliases, then restore their public GraphQL names.
+func addIntrospectionTypes(definition *wgast.Document, data *introspection.Data) error {
+	sdl, err := astprinter.PrintString(definition)
+	if err != nil {
+		return err
+	}
+	replacements := make([]string, 0, len(introspectionTypeAliases)*2)
+	names := make([]string, 0, len(introspectionTypeAliases))
+	for name := range introspectionTypeAliases {
+		names = append(names, name)
+	}
+	sort.Slice(names, func(i, j int) bool { return len(names[i]) > len(names[j]) })
+	for _, name := range names {
+		alias := introspectionTypeAliases[name]
+		replacements = append(replacements, name, alias)
+	}
+	aliased, report := astparser.ParseGraphqlDocumentString(
+		strings.NewReplacer(replacements...).Replace(sdl),
+	)
+	if report.HasErrors() {
+		return report
+	}
+	var generated introspection.Data
+	introspection.NewGenerator().Generate(&aliased, &report, &generated)
+	if report.HasErrors() {
+		return report
+	}
+	aliases := make(map[string]string, len(introspectionTypeAliases))
+	for name, alias := range introspectionTypeAliases {
+		aliases[alias] = name
+	}
+	for _, gqlType := range generated.Schema.Types {
+		name, ok := aliases[gqlType.Name]
+		if !ok {
+			continue
+		}
+		gqlType.Name = name
+		restoreIntrospectionTypeNames(gqlType, aliases)
+		data.Schema.AddType(gqlType)
+	}
+	return nil
+}
+
+func restoreIntrospectionTypeNames(gqlType *introspection.FullType, aliases map[string]string) {
+	replacements := make([]string, 0, len(aliases)*2)
+	aliasNames := make([]string, 0, len(aliases))
+	for alias := range aliases {
+		aliasNames = append(aliasNames, alias)
+	}
+	sort.Slice(aliasNames, func(i, j int) bool { return len(aliasNames[i]) > len(aliasNames[j]) })
+	for _, alias := range aliasNames {
+		name := aliases[alias]
+		replacements = append(replacements, alias, name)
+	}
+	replacer := strings.NewReplacer(replacements...)
+	gqlType.Description = replacer.Replace(gqlType.Description)
+	for index := range gqlType.Fields {
+		field := &gqlType.Fields[index]
+		field.Description = replacer.Replace(field.Description)
+		restoreIntrospectionTypeRef(&field.Type, aliases)
+		for argumentIndex := range field.Args {
+			argument := &field.Args[argumentIndex]
+			argument.Description = replacer.Replace(argument.Description)
+			restoreIntrospectionTypeRef(&argument.Type, aliases)
+		}
+	}
+	for index := range gqlType.EnumValues {
+		gqlType.EnumValues[index].Description = replacer.Replace(gqlType.EnumValues[index].Description)
+	}
+	for index := range gqlType.InputFields {
+		input := &gqlType.InputFields[index]
+		input.Description = replacer.Replace(input.Description)
+		restoreIntrospectionTypeRef(&input.Type, aliases)
+	}
+	for index := range gqlType.Interfaces {
+		restoreIntrospectionTypeRef(&gqlType.Interfaces[index], aliases)
+	}
+	for index := range gqlType.PossibleTypes {
+		restoreIntrospectionTypeRef(&gqlType.PossibleTypes[index], aliases)
+	}
+}
+
+func restoreIntrospectionTypeRef(typeRef *introspection.TypeRef, aliases map[string]string) {
+	if typeRef.Name != nil {
+		if name, ok := aliases[*typeRef.Name]; ok {
+			typeRef.Name = &name
+		}
+	}
+	if typeRef.OfType != nil {
+		restoreIntrospectionTypeRef(typeRef.OfType, aliases)
+	}
 }
 
 // introspectionDefinition returns a disposable schema containing GraphQL's
@@ -132,6 +247,9 @@ func projectIntrospectionSelection(
 			if name == "description" {
 				fieldValue = introspectionDescription(fieldValue)
 			}
+			if introspectionFieldIsInapplicable(name, object["kind"]) {
+				fieldValue = nil
+			}
 			// The introspection generator emits compact type references for nested
 			// __Type values. GraphQL permits clients to traverse those references
 			// as full types (for example, arg.type.inputFields), so resolve a
@@ -143,6 +261,10 @@ func projectIntrospectionSelection(
 					}
 				}
 			}
+		}
+		if (name == "fields" || name == "enumValues") &&
+			!introspectionIncludeDeprecated(operation, fieldRef) {
+			fieldValue = filterDeprecatedIntrospectionValues(fieldValue)
 		}
 		if name == "args" || name == "fields" || name == "inputFields" {
 			fieldValue = sortIntrospectionNamedValues(fieldValue)
@@ -174,11 +296,65 @@ func introspectionDescription(value any) any {
 	if !ok {
 		return value
 	}
+	if description == "" {
+		return nil
+	}
 	var decoded string
 	if json.Unmarshal([]byte(`"`+description+`"`), &decoded) == nil {
 		return decoded
 	}
 	return description
+}
+
+func introspectionFieldIsInapplicable(fieldName string, kind any) bool {
+	typeKind, _ := kind.(string)
+	switch fieldName {
+	case "fields":
+		return typeKind != "OBJECT" && typeKind != "INTERFACE"
+	case "inputFields":
+		return typeKind != "INPUT_OBJECT"
+	case "interfaces":
+		return typeKind != "OBJECT"
+	case "enumValues":
+		return typeKind != "ENUM"
+	case "possibleTypes":
+		return typeKind != "INTERFACE" && typeKind != "UNION"
+	case "ofType":
+		return typeKind != "LIST" && typeKind != "NON_NULL"
+	default:
+		return false
+	}
+}
+
+func introspectionIncludeDeprecated(operation *wgast.Document, fieldRef int) bool {
+	for _, argumentRef := range operation.Fields[fieldRef].Arguments.Refs {
+		if operation.ArgumentNameString(argumentRef) != "includeDeprecated" {
+			continue
+		}
+		value, err := operation.ValueToJSON(operation.ArgumentValue(argumentRef))
+		if err != nil {
+			return false
+		}
+		var include bool
+		return json.Unmarshal(value, &include) == nil && include
+	}
+	return false
+}
+
+func filterDeprecatedIntrospectionValues(value any) any {
+	values, ok := value.([]any)
+	if !ok {
+		return value
+	}
+	filtered := make([]any, 0, len(values))
+	for _, value := range values {
+		item, _ := value.(map[string]any)
+		if deprecated, _ := item["isDeprecated"].(bool); deprecated {
+			continue
+		}
+		filtered = append(filtered, value)
+	}
+	return filtered
 }
 
 func sortIntrospectionNamedValues(value any) any {
