@@ -42,8 +42,8 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -720,7 +720,7 @@ func (p *P2P) docIDsForBlockCID(
 		return []string{""}, nil
 	}
 
-	docIDs, err := id.GetDocIDsForBlockFromStore(
+	docIDs, err := blockowner.DocIDs(
 		ctx,
 		p.db.Multistore().Systemstore(),
 		blockCID,
@@ -1231,7 +1231,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 	p.pushLogToReplicators(evt)
 
 	// Retries are for replicators only and should not pollute the pubsub network.
-	if !evt.IsRetry {
+	if !evt.IsRetry && !evt.IsRelay {
 		// Pre-generate a CAR so receivers import the full DAG without a BitSwap round-trip.
 		var carData []byte
 		if block, err := coreblock.GetFromBytes(evt.Block); err == nil {

@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -54,7 +55,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	blockDocIDs, err := id.GetDocIDsForBlockFromStore(
+	blockDocIDs, err := blockowner.DocIDs(
 		txnCtx,
 		dbTxn.Systemstore(),
 		genesisFieldCID,
@@ -85,7 +86,7 @@ func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	blockDocIDs, err = id.GetDocIDsForBlockFromStore(
+	blockDocIDs, err = blockowner.DocIDs(
 		txnCtx,
 		dbTxn.Systemstore(),
 		genesisFieldCID,
@@ -144,7 +145,7 @@ func TestCollectionDeleteDocIDMappingsRemovesDocAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, found)
 
-	blockDocIDs, err := id.GetDocIDsForBlockFromStore(
+	blockDocIDs, err := blockowner.DocIDs(
 		txnCtx,
 		dbTxn.Systemstore(),
 		genesisFieldCID,

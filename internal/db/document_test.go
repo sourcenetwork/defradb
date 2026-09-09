@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -265,7 +266,7 @@ func TestBlockDocIDMappingSharedFieldBlockHasAllOwners(t *testing.T) {
 	require.True(t, ok)
 	txnCtx := InitContext(ctx, dbTxn)
 
-	docIDs, err := id.GetDocIDsForBlockFromStore(txnCtx, dbTxn.Systemstore(), nameCIDA)
+	docIDs, err := blockowner.DocIDs(txnCtx, dbTxn.Systemstore(), nameCIDA)
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{docA.ID().String(), docB.ID().String()}, docIDs)
 }

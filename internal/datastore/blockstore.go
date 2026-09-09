@@ -12,6 +12,9 @@ package datastore
 
 import (
 	"context"
+	"encoding/binary"
+	"errors"
+	"time"
 
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
@@ -49,8 +52,10 @@ type bstore struct {
 var _ Blockstore = (*bstore)(nil)
 
 const (
-	objectMarker       = byte(0xff)
 	toMergeIndexPrefix = byte('m')
+	// toMergeValueLen is the length of a current-format marker value: an 8-byte
+	// big-endian unix timestamp of when the block was fetched.
+	toMergeValueLen = 8
 )
 
 func newToMergeKey(cid []byte) []byte {
@@ -59,6 +64,24 @@ func newToMergeKey(cid []byte) []byte {
 	copy(key[1:], cid)
 	key[0] = toMergeIndexPrefix
 	return key
+}
+
+// newToMergeValue encodes the time a block was fetched. Only the orphan sweep reads
+// this value, to tell a fetch still in flight from an abandoned one; IsMerged checks
+// the marker's presence, not its contents.
+func newToMergeValue(t time.Time) []byte {
+	v := make([]byte, toMergeValueLen)
+	binary.BigEndian.PutUint64(v, uint64(t.Unix()))
+	return v
+}
+
+// toMergeTime decodes a marker value. A value that is not a full timestamp (an older
+// single-byte marker) decodes as (zero, false), and the sweep leaves those alone.
+func toMergeTime(v []byte) (time.Time, bool) {
+	if len(v) != toMergeValueLen {
+		return time.Time{}, false
+	}
+	return time.Unix(int64(binary.BigEndian.Uint64(v)), 0), true
 }
 
 // IsMerged reports whether the block is stored and carries no to-merge marker. Callers
@@ -97,6 +120,10 @@ func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
 
 type p2pBlockStore struct {
 	*bstore
+
+	// rootstore backs the marker refresh. The refresh reads the marker and writes it back, which
+	// has to happen in one transaction or a merge clearing the marker in between is undone.
+	rootstore corekv.TxnReaderWriter
 }
 
 var _ Blockstore = (*p2pBlockStore)(nil)
@@ -106,9 +133,11 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	// Has is cheaper than Set, so see if we already have it
 	exists, err := bs.store.Has(ctx, block.Cid().Bytes())
 	if err == nil && exists {
-		return nil // already stored.
+		// Already stored, but a block still waiting to merge needs its marker renewed so the
+		// sweep does not treat it as abandoned.
+		return bs.refreshMarker(ctx, block)
 	}
-	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
+	err = bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), newToMergeValue(time.Now()))
 	if err != nil {
 		return NewErrStoreBlock(err)
 	}
@@ -119,14 +148,49 @@ func (bs *p2pBlockStore) Put(ctx context.Context, block blocks.Block) error {
 	return nil
 }
 
+// refreshMarker moves an unmerged block's marker forward so a block that keeps arriving is not
+// treated as abandoned. The read and the write share a transaction: reading the marker puts it in
+// the transaction's read set, so a merge that clears it concurrently makes this commit fail rather
+// than silently marking a merged block unmerged again.
+func (bs *p2pBlockStore) refreshMarker(ctx context.Context, block blocks.Block) error {
+	markerKey := newToMergeKey(block.Cid().Bytes())
+
+	txn := bs.rootstore.NewTxn(false)
+	defer txn.Discard()
+	txnCtx := corekv.SetCtxTxn(ctx, txn)
+
+	stillUnmerged, err := bs.store.Has(txnCtx, markerKey)
+	if err != nil {
+		return NewErrCheckBlockMergeStatus(err)
+	}
+	if !stillUnmerged {
+		return nil
+	}
+	if err := bs.store.Set(txnCtx, markerKey, newToMergeValue(time.Now())); err != nil {
+		return NewErrStoreBlock(err)
+	}
+
+	// A conflict means another transaction wrote the marker after this one read it: a merge
+	// clearing it, another refresh stamping it, or the sweep reclaiming the block along with
+	// it. The first two leave the marker where this refresh would have; the third leaves no
+	// block to mark, and the next fetch writes both again.
+	if err := txn.Commit(); err != nil && !errors.Is(err, corekv.ErrTxnConflict) {
+		return NewErrStoreBlock(err)
+	}
+	return nil
+}
+
 // PutMany stores multiple blocks to the blockstore.
 func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
 		exists, err := bs.store.Has(ctx, b.Cid().Bytes())
 		if err == nil && exists {
+			if err := bs.refreshMarker(ctx, b); err != nil {
+				return err
+			}
 			continue
 		}
-		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
+		err = bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), newToMergeValue(time.Now()))
 		if err != nil {
 			return NewErrStoreBlock(err)
 		}

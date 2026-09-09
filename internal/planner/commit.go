@@ -24,6 +24,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -710,7 +711,7 @@ func (n *dagScanNode) commitDocIDs(
 		}
 	}
 
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		n.planner.ctx,
 		datastore.CtxMustGetTxn(n.planner.ctx).Systemstore(),
 		blockCID,

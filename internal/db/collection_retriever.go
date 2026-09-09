@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -47,7 +48,7 @@ func (r collectionRetriever) ResolveBlockDocIDs(ctx context.Context, blockCID ci
 	}
 	defer txn.Discard()
 
-	return id.GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), blockCID)
+	return blockowner.DocIDs(ctx, txn.Systemstore(), blockCID)
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.

@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/blockowner"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -498,7 +499,7 @@ func (vf *VersionedFetcher) docShortIDForBlock(
 		return 0, nil
 	}
 
-	owners, err := id.GetDocIDsForBlockFromStore(
+	owners, err := blockowner.DocIDs(
 		vf.ctx,
 		vf.txn.Systemstore(),
 		blockCID,
