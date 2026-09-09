@@ -135,6 +135,15 @@ Returns the minimum of the specified field values within the specified child set
  multiple fields/sets are specified, the combined minimum of all items within each set
  will be returned as a single value.
 `
+	SimilarityFieldDescription string = `
+Returns how similar the given vector is to the specified field's value. The metric is
+ whichever one the field's vector index was created with, defaulting to cosine similarity
+ when the field has no vector index. Higher values are more similar for every metric.
+`
+	SimilarityArgDescription string = `
+The vector to compare the field's value against. It must have the same number of
+ dimensions as the values stored in the field.
+`
 	booleanOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on Boolean
  values.

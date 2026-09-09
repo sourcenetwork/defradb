@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -69,7 +70,7 @@ func createBadgerEncryptionKey(enabled bool) error {
 // the js client build may fail (the failure might not be obvious to find).
 func SetupNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
@@ -162,7 +163,7 @@ func SetupNode(
 		return nil, err
 	}
 
-	ctx := iIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, resolveIdentity(s, identity))
 	err = nodeObj.Start(ctx)
 
 	if err != nil {
@@ -261,9 +262,6 @@ func discoverPeerAddresses(
 	return removePeerIDFromAddr(addresses)
 }
 
-// nacEnabledLog is what a node logs once node access control is on.
-const nacEnabledLog = "Starting with nac"
-
 // setupExternalNode starts a node as a separate OS process from a downloaded
 // release binary of the given version, and wraps it in the same NodeState
 // shape a native node would produce.
@@ -272,7 +270,7 @@ const nacEnabledLog = "Starting with nac"
 // failed) and a nil error is returned.
 func setupExternalNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	ver string,
 ) (*state.NodeState, error) {
@@ -303,14 +301,9 @@ func setupExternalNode(
 	defer func() { s.CurrentSetupHost = "" }()
 
 	nacIdentity := immutable.None[state.Identity]()
-	if cfg.EnableNAC {
-		// The node ignores a flag it does not know, so a test could assert an access
-		// rule against a node that never enforced one.
-		require.Contains(s.T, w.StartupLog(), nacEnabledLog,
-			"node %d was started with node access control, but did not enable it",
-			s.CurrentSetupNodeID)
-
-		nacIdentity = cfg.NACOwner
+	if nacEnabled(cfg) {
+		nacIdentity = identity
+		requireNACEnabled(s, w, identity)
 	}
 
 	// An external node has no in-process DB, so it discovers its addresses over
@@ -330,6 +323,31 @@ func identityWithPrivateKey(
 	return full, ok
 }
 
+// requireNACEnabled fails the test unless the node has node access control on.
+//
+// The node ignores a flag it does not know, so without this a test could assert
+// an access rule against a node that never enforced one. Asking the node is
+// ordered by the response, unlike its startup log, which arrives whenever the
+// process gets around to writing it.
+func requireNACEnabled(
+	s *state.State,
+	c clients.Client,
+	identity immutable.Option[state.Identity],
+) {
+	opts := options.GetNACStatus()
+	identOption := getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
+	status, err := c.GetNACStatus(s.Ctx, opts)
+	require.NoError(s.T, err, "node %d could not report its access control status",
+		s.CurrentSetupNodeID)
+	require.Equal(s.T, client.NACEnabled.String(), status.Status,
+		"node %d was started with node access control, but did not enable it",
+		s.CurrentSetupNodeID)
+}
+
 // externalNodeFlags translates the configuration a native node would be given
 // into command line flags for an external one, so both run the same setup.
 //
@@ -338,7 +356,7 @@ func identityWithPrivateKey(
 // the test did not ask for, and the test still passes.
 func externalNodeFlags(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 ) (flags []string, unsupported []string) {
 	// The node signs by default, so not signing has to be asked for.
@@ -378,10 +396,10 @@ func externalNodeFlags(
 		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
 	}
 
-	if cfg.EnableNAC {
+	if nacEnabled(cfg) {
 		// The identity given here owns NAC, so it has to be the one the test uses.
 		full, ok := identityWithPrivateKey(
-			getIdentityForRequestSpecificToNode(s, cfg.NACOwner, s.CurrentSetupNodeID))
+			getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID))
 		switch {
 		case !ok:
 			unsupported = append(unsupported, "node access control: no private key for the starting identity")

@@ -256,12 +256,6 @@ func removeAll(dir string) {
 	_ = os.RemoveAll(dir)
 }
 
-// StartupLog returns the output the node has written so far. Setup reads it to
-// confirm the node started with what the test asked for.
-func (w *Wrapper) StartupLog() string {
-	return w.stderr.String()
-}
-
 // Host returns the base URL the wrapper's HTTP client is talking to.
 func (w *Wrapper) Host() string {
 	return w.apiURL
