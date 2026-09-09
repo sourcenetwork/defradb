@@ -38,6 +38,34 @@ const (
 	IndexKindVector
 )
 
+func (k IndexKind) String() string {
+	switch k {
+	case IndexKindOrdered:
+		return "ordered"
+	case IndexKindVector:
+		return "vector"
+	default:
+		return "unknown"
+	}
+}
+
+func (k IndexKind) MarshalText() ([]byte, error) {
+	return []byte(k.String()), nil
+}
+
+func (k *IndexKind) UnmarshalText(text []byte) error {
+	switch string(text) {
+	case "ordered", "b-tree", "0":
+		*k = IndexKindOrdered
+		return nil
+	case "vector", "1":
+		*k = IndexKindVector
+		return nil
+	default:
+		return NewErrUnknownIndexKind(0)
+	}
+}
+
 // IndexKindDescription is the kind-specific config of an index: an [*OrderedIndexDescription] or a
 // [*VectorIndexDescription]. Which one an index must hold is decided by [IndexDescription.Kind],
 // never by the concrete type itself.
