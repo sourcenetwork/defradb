@@ -1231,7 +1231,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 	p.pushLogToReplicators(evt)
 
 	// Retries are for replicators only and should not pollute the pubsub network.
-	if !evt.IsRetry {
+	if !evt.IsRetry && !evt.IsRelay {
 		// Pre-generate a CAR so receivers import the full DAG without a BitSwap round-trip.
 		var carData []byte
 		if block, err := coreblock.GetFromBytes(evt.Block); err == nil {
