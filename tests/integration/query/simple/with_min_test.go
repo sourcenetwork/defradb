@@ -44,7 +44,7 @@ func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 				Request: `query {
 					MIN(Users: {})
 				}`,
-				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
+				ExpectedError: `Field "Users__NumericSelector.field" of required type "UsersNumericFieldsArg!" was not provided.`,
 			},
 		},
 	}

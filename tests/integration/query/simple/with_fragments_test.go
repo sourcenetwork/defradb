@@ -184,7 +184,7 @@ func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 						...UserInfo
 					}
 				}`,
-				ExpectedError: `Unknown fragment "UserInfo".`,
+				ExpectedError: `fragment: UserInfo undefined`,
 			},
 		},
 	}

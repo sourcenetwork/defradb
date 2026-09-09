@@ -286,7 +286,7 @@ func TestMutationUpsertSimple_WithNullAddInput_ReturnsError(t *testing.T) {
 						age
 					}
 				}`,
-				ExpectedError: `Argument "add" has invalid value <nil>`,
+				ExpectedError: `argument: add on field: upsert_Users must not be null`,
 			},
 		},
 	}
@@ -316,7 +316,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 						age
 					}
 				}`,
-				ExpectedError: `Argument "update" has invalid value <nil>`,
+				ExpectedError: `argument: update on field: upsert_Users must not be null`,
 			},
 		},
 	}
@@ -346,7 +346,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 						age
 					}
 				}`,
-				ExpectedError: `Argument "filter" has invalid value <nil>`,
+				ExpectedError: `argument: filter on field: upsert_Users must not be null`,
 			},
 		},
 	}
