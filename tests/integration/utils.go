@@ -1041,7 +1041,7 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
@@ -1074,11 +1074,14 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 			opts.P2P().SetAll(p2pOpts)
 			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
-			opts.NodeACP().SetEnabled(start.EnableNAC)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				start.Identity,
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)
