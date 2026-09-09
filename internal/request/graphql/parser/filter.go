@@ -11,70 +11,47 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	gqls "github.com/sourcenetwork/graphql-go/language/source"
 	"github.com/sourcenetwork/immutable"
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-// type condition
-
-// NewFilter parses the given GraphQL ObjectValue AST type
-// and extracts all the filter conditions into a usable map.
-func NewFilter(stmt *ast.ObjectValue, inputType gql.Input) (immutable.Option[request.Filter], error) {
-	conditions, err := ParseConditions(stmt, inputType)
-	if err != nil {
-		return immutable.None[request.Filter](), err
-	}
-	return immutable.Some(request.Filter{
-		Conditions: conditions,
-	}), nil
-}
-
 // NewFilterFromString creates a new filter from a string.
 func NewFilterFromString(
-	schema gql.Schema,
+	definition *wgast.Document,
 	collectionType string,
 	body string,
 ) (immutable.Option[request.Filter], error) {
 	if !strings.HasPrefix(body, "{") {
 		body = "{" + body + "}"
 	}
-	src := gqls.NewSource(&gqls.Source{Body: []byte(body)})
-	p, err := gqlp.MakeParser(src, gqlp.ParseOptions{})
+	document, report := astparser.ParseGraphqlDocumentString(fmt.Sprintf(
+		"{ %s(%s: %s) }",
+		collectionType,
+		request.FilterClause,
+		body,
+	))
+	if report.HasErrors() {
+		return immutable.None[request.Filter](), report
+	}
+	operation, err := buildOperation(definition, &document)
 	if err != nil {
 		return immutable.None[request.Filter](), err
 	}
-	obj, err := gqlp.ParseObject(p, false)
-	if err != nil {
-		return immutable.None[request.Filter](), err
-	}
-
-	parentFieldType := gql.GetFieldDef(schema, schema.QueryType(), collectionType)
-	filterType, ok := getArgumentType(parentFieldType, request.FilterClause)
-	if !ok {
+	if len(operation.fields) == 0 || len(operation.fields[0]) == 0 {
 		return immutable.None[request.Filter](), ErrFilterMissingArgumentType
 	}
-	return NewFilter(obj, filterType)
-}
-
-// parseConditions loops over the stmt ObjectValue fields, and extracts
-// all the relevant name/value pairs.
-func ParseConditions(stmt *ast.ObjectValue, inputType gql.Input) (map[string]any, error) {
-	cond := gql.ValueFromAST(stmt, inputType, nil)
-	if cond == nil {
-		return nil, ErrFailedToParseConditionsFromAST
+	conditions, ok := operation.fields[0][0].arguments[request.FilterClause].(map[string]any)
+	if !ok {
+		return immutable.None[request.Filter](), ErrFailedToParseConditionsFromAST
 	}
-	if v, ok := cond.(map[string]any); ok {
-		return v, nil
-	}
-	return nil, client.NewErrUnexpectedType[map[string]any]("condition", cond)
+	return immutable.Some(request.Filter{Conditions: conditions}), nil
 }
 
 // ParseFilterFieldsForDescription parses the fields that are defined in the SchemaDescription

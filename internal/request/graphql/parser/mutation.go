@@ -11,10 +11,10 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
@@ -23,13 +23,13 @@ import (
 // parseMutationOperationDefinition parses the individual GraphQL
 // 'mutation' operations, which there may be multiple of.
 func parseMutationOperationDefinition(
-	exe *gql.ExecutionContext,
-	collectedFields [][]*ast.Field,
+	exe *executionContext,
+	collectedFields [][]*field,
 ) (*request.OperationDefinition, error) {
 	var selections []request.Selection
 	for _, fields := range collectedFields {
 		for _, node := range fields {
-			mut, err := parseMutation(exe, exe.Schema.MutationType(), node)
+			mut, err := parseMutation(exe, node)
 			if err != nil {
 				return nil, err
 			}
@@ -48,11 +48,11 @@ func parseMutationOperationDefinition(
 // parseMutation parses a typed mutation field
 // which includes sub fields, and may include
 // filters, IDs, payloads, etc.
-func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Field) (*request.ObjectMutation, error) {
+func parseMutation(exe *executionContext, field *field) (*request.ObjectMutation, error) {
 	mut := &request.ObjectMutation{
 		Field: request.Field{
-			Name:  field.Name.Value,
-			Alias: getFieldAlias(field),
+			Name:  field.name,
+			Alias: field.alias,
 		},
 	}
 
@@ -76,52 +76,74 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 		mut.Collection = strings.Join(mutNameParts[1:], "_")
 	}
 
-	fieldDef := gql.GetFieldDef(exe.Schema, parent, mut.Name)
-	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-
 	switch typeStr {
 	case "add":
 		mut.Type = request.AddObjects
-		parseAddMutationArgs(mut, arguments)
+		if err := parseAddMutationArgs(mut, field.arguments); err != nil {
+			return nil, err
+		}
 
 	case "update":
 		mut.Type = request.UpdateObjects
-		parseUpdateMutationArgs(mut, arguments)
+		parseUpdateMutationArgs(mut, field.arguments)
 
 	case "delete":
 		mut.Type = request.DeleteObjects
-		parseDeleteMutationArgs(mut, arguments)
+		parseDeleteMutationArgs(mut, field.arguments)
 
 	case "upsert":
 		mut.Type = request.UpsertObjects
-		parseUpsertMutationArgs(mut, arguments)
+		parseUpsertMutationArgs(mut, field.arguments)
 
 	case "truncate":
 		mut.Type = request.TruncateObjects
-		if err := parseTruncateMutationArgs(mut, arguments); err != nil {
+		if err := parseTruncateMutationArgs(mut, field.arguments); err != nil {
 			return nil, err
 		}
 
 	default:
 		return nil, ErrUnknownMutationName
 	}
+	resolveUTCNowMutation(mut, exe.now)
 
 	// if theres no field selections, just return
-	if field.SelectionSet == nil {
+	if len(field.selectionSet) == 0 {
 		return mut, nil
 	}
 
-	fieldObject, err := typeFromFieldDef(fieldDef)
+	fields, err := parseSelectFields(exe, field.selectionSet)
 	if err != nil {
 		return nil, err
 	}
-
-	mut.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
-	if err != nil {
-		return nil, err
-	}
+	mut.Fields = fields
 
 	return mut, err
+}
+
+func resolveUTCNowMutation(mut *request.ObjectMutation, now time.Time) {
+	for _, input := range mut.AddInput {
+		resolveUTCNowMap(input, now)
+	}
+	resolveUTCNowMap(mut.UpdateInput, now)
+}
+
+func resolveUTCNowMap(value map[string]any, now time.Time) {
+	for key, item := range value {
+		switch item := item.(type) {
+		case utcNowValue:
+			value[key] = now
+		case map[string]any:
+			resolveUTCNowMap(item, now)
+		case []any:
+			for index, element := range item {
+				if _, ok := element.(utcNowValue); ok {
+					item[index] = now
+				} else if nested, ok := element.(map[string]any); ok {
+					resolveUTCNowMap(nested, now)
+				}
+			}
+		}
+	}
 }
 
 func parseTruncateMutationArgs(mut *request.ObjectMutation, args map[string]any) error {
@@ -141,7 +163,7 @@ func parseTruncateMutationArgs(mut *request.ObjectMutation, args map[string]any)
 	return nil
 }
 
-func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) error {
 	for name, value := range args {
 		switch name {
 		case request.Input:
@@ -151,7 +173,11 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			}
 			inputs := make([]map[string]any, len(v))
 			for i, v := range v {
-				inputs[i] = v.(map[string]any)
+				input, ok := v.(map[string]any)
+				if !ok {
+					return fmt.Errorf("Expected %q, found null.", mut.Collection+"MutationInputArg!")
+				}
+				inputs[i] = input
 			}
 			mut.AddInput = inputs
 
@@ -172,6 +198,7 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			mut.EncryptFields = fields
 		}
 	}
+	return nil
 }
 
 func parseDeleteMutationArgs(mut *request.ObjectMutation, args map[string]any) {

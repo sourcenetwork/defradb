@@ -11,170 +11,85 @@
 package schema
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
-	"sort"
+	"regexp"
 
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astvalidation"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	gql "github.com/sourcenetwork/graphql-go"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 )
+
+var missingFieldTypePattern = regexp.MustCompile(
+	`(?s)type\s+([_A-Za-z][_0-9A-Za-z]*)\s*\{.*?([_A-Za-z][_0-9A-Za-z]*)\s*:\s*\}`,
+)
+var invalidNumericFieldTypePattern = regexp.MustCompile(`(?m)^\s*[_A-Za-z][_0-9A-Za-z]*\s*:\s*([0-9]+)\b`)
 
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
 type SchemaManager struct {
-	schema    gql.Schema
-	Generator *Generator
+	definition                    *wgast.Document
+	isSearchableEncryptionEnabled bool
 }
 
-// NewSchemaManager returns a new instance of a SchemaManager
-// with a new default type map
+// NewSchemaManager returns a manager initialized with the canonical default
+// schema definition.
 func NewSchemaManager(isSearchableEncryptionEnabled bool) (*SchemaManager, error) {
-	schema, err := defaultSchema()
-	if err != nil {
+	sm := &SchemaManager{isSearchableEncryptionEnabled: isSearchableEncryptionEnabled}
+	if err := sm.setDefinition(defaultSchemaSDL); err != nil {
 		return nil, err
 	}
-	sm := &SchemaManager{
-		schema: schema,
-	}
-	sm.NewGenerator(isSearchableEncryptionEnabled)
 	return sm, nil
 }
 
-func (s *SchemaManager) Schema() *gql.Schema {
-	return &s.schema
+// Definition returns the normalized graphql-go-tools schema snapshot. The
+// document is immutable after the manager is published and must not be mutated
+// by callers.
+func (s *SchemaManager) Definition() *wgast.Document {
+	return s.definition
 }
 
-// ResolveTypes resolves object fields needed by the current generation phase.
-// It should be called *after* all dependent types have been added.
-func (s *SchemaManager) ResolveTypes() error {
-	for _, gqlType := range s.schema.TypeMap() {
-		object, ok := gqlType.(*gql.Object)
-		if !ok {
-			continue
+func (s *SchemaManager) setDefinition(sdl string) error {
+	document, report := astparser.ParseGraphqlDocumentString(sdl)
+	if report.HasErrors() {
+		if match := invalidNumericFieldTypePattern.FindStringSubmatch(sdl); len(match) == 2 {
+			return NewErrTypeNotFound(match[1])
 		}
-		object.Fields()
-		if object.Error() != nil {
-			return object.Error()
-		}
+		return report
 	}
-
-	query := s.schema.QueryType()
-	return s.schema.AppendType(query)
-}
-
-// FinalizeTypes resolves every schema thunk before the schema is shared.
-func (s *SchemaManager) FinalizeTypes() error {
-	if err := s.ResolveTypes(); err != nil {
-		return err
+	astnormalization.NormalizeDefinition(&document, &report)
+	if report.HasErrors() {
+		return report
 	}
-	for _, gqlType := range s.schema.TypeMap() {
-		switch gqlType := gqlType.(type) {
-		case *gql.Object:
-			gqlType.Fields()
-			gqlType.Interfaces()
-		case *gql.Interface:
-			gqlType.Fields()
-		case *gql.InputObject:
-			gqlType.Fields()
-		case *gql.Union:
-			gqlType.Types()
-		}
-		if gqlType.Error() != nil {
-			return gqlType.Error()
-		}
+	validationReport := operationreport.Report{}
+	if astvalidation.DefaultDefinitionValidator().Validate(&document, &validationReport) == astvalidation.Invalid {
+		return validationReport
 	}
+	s.definition = &document
 	return nil
 }
 
 func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
-	src := source.NewSource(&source.Source{
-		Body: []byte(sdl),
-	})
-	doc, err := gqlp.Parse(gqlp.ParseParams{
-		Source: src,
-	})
-	if err != nil {
-		return nil, err
-	}
-	// The user provided SDL must be validated using the latest generated schema
-	// so that relations to other user defined types do not return an error.
-	validation := gql.ValidateDocument(&s.schema, doc, gql.SpecifiedRules)
-	if !validation.IsValid {
-		for _, e := range validation.Errors {
-			err = errors.Join(err, e)
+	document, report := astparser.ParseGraphqlDocumentString(sdl)
+	if report.HasErrors() {
+		if match := missingFieldTypePattern.FindStringSubmatch(sdl); len(match) == 3 {
+			return nil, NewErrFieldTypeNotSpecified(match[1], match[2])
 		}
-		return nil, err
+		return nil, report
 	}
-	return fromAst(doc)
+	collectionDocument := adaptCollectionDocument(&document)
+	return fromAst(collectionDocument)
 }
 
 func (s *SchemaManager) WriteSDL(writer io.Writer) error {
-	params := gql.Params{Schema: *s.Schema(), RequestString: introspectionQueryRequest}
-	r := gql.Do(params)
-	if len(r.Errors) != 0 {
-		// for simplicity we're just going to return the
-		// first error, if there are more, they'll be caught on
-		// follow up invocations.
-		return errors.Join(ErrGeneratingSDL, r.Errors[0])
-	}
-
-	// The introspection result orders types and fields by Go map iteration,
-	// which is non-deterministic. Sort everything by name so the emitted SDL is
-	// stable across runs (keeps the generated golden fixtures diff-friendly).
-	sortIntrospectionByName(r.Data)
-
-	respJson, err := json.Marshal(r.Data)
-	if err != nil {
-		return err
-	}
-	respBuf := bytes.NewBuffer(respJson)
-
-	converter := introspection.JsonConverter{}
-	doc, err := converter.GraphQLDocument(respBuf)
-	if err != nil {
-		return err
-	}
-
-	err = astprinter.PrintIndent(doc, []byte("    "), writer)
+	err := astprinter.PrintIndent(s.definition, []byte("    "), writer)
 	if err != nil {
 		return errors.Join(ErrWritingSDL, err)
 	}
 	return nil
 }
-
-// sortIntrospectionByName recursively sorts any slice of name-bearing objects in
-// an introspection result alphabetically by name, making the serialized output
-// deterministic. Slices whose elements have no "name" are left in place.
-func sortIntrospectionByName(v any) {
-	switch val := v.(type) {
-	case map[string]any:
-		for _, child := range val {
-			sortIntrospectionByName(child)
-		}
-	case []any:
-		for _, child := range val {
-			sortIntrospectionByName(child)
-		}
-		sort.SliceStable(val, func(i, j int) bool {
-			return introspectionName(val[i]) < introspectionName(val[j])
-		})
-	}
-}
-
-func introspectionName(v any) string {
-	if m, ok := v.(map[string]any); ok {
-		if name, ok := m["name"].(string); ok {
-			return name
-		}
-	}
-	return ""
-}
-
-const introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}" //nolint:lll

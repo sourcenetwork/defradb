@@ -21,8 +21,8 @@ func Test_SchemaManager_NewNoErrs(t *testing.T) {
 	assert.NoError(t, err, "NewSchemaManager returned an error")
 }
 
-func Test_SchemaManager_ResolveTypes(t *testing.T) {
-	s, _ := NewSchemaManager(false)
-	err := s.ResolveTypes()
-	assert.NoError(t, err, "Failed to ResolveTypes on a brand new SchemaManager")
+func Test_SchemaManager_HasValidatedDefaultDefinition(t *testing.T) {
+	s, err := NewSchemaManager(false)
+	assert.NoError(t, err)
+	assert.NotNil(t, s.Definition())
 }

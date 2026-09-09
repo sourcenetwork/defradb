@@ -16,10 +16,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	"github.com/sourcenetwork/graphql-go/language/printer"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -45,63 +43,25 @@ const (
 )
 
 type typeDefinition struct {
-	Name        *ast.Name
-	Description *ast.StringValue
-	Directives  []*ast.Directive
-	Fields      []*ast.FieldDefinition
+	Name        *collectionName
+	Directives  []*collectionDirective
+	Fields      []*collectionFieldDefinition
 	IsInterface bool
 }
 
-func newInterfaceDefinition(def *ast.InterfaceDefinition) *typeDefinition {
-	return &typeDefinition{
-		Name:        def.Name,
-		Description: def.Description,
-		Directives:  def.Directives,
-		Fields:      def.Fields,
-		IsInterface: true,
-	}
-}
-
-func newObjectDefinition(def *ast.ObjectDefinition) *typeDefinition {
-	return &typeDefinition{
-		Name:        def.Name,
-		Description: def.Description,
-		Directives:  def.Directives,
-		Fields:      def.Fields,
-	}
-}
-
 // fromAst parses a GQL AST into a set of collection versions.
-func fromAst(doc *ast.Document) (
+func fromAst(doc *collectionDocument) (
 	[]core.Collection,
 	error,
 ) {
 	results := []core.Collection{}
 
 	for _, def := range doc.Definitions {
-		switch defType := def.(type) {
-		case *ast.ObjectDefinition:
-			td := newObjectDefinition(defType)
-			result, err := fromAstDefinition(td)
-			if err != nil {
-				return nil, err
-			}
-
-			results = append(results, result)
-
-		case *ast.InterfaceDefinition:
-			td := newInterfaceDefinition(defType)
-			result, err := fromAstDefinition(td)
-			if err != nil {
-				return nil, err
-			}
-
-			results = append(results, result)
-
-		default:
-			// Do nothing, ignore it and continue
-			continue
+		result, err := fromAstDefinition(def)
+		if err != nil {
+			return nil, err
 		}
+		results = append(results, result)
 	}
 
 	return results, nil
@@ -261,8 +221,8 @@ func IsValidIndexName(name string) bool {
 
 type orderedIndexConfig struct {
 	unique       bool
-	direction    *ast.EnumValue
-	includes     *ast.ListValue
+	direction    *collectionEnumValue
+	includes     *collectionListValue
 	hasUnique    bool
 	hasDirection bool
 	hasIncludes  bool
@@ -274,10 +234,10 @@ type indexDirectiveConfig struct {
 
 	// orderedIndexConfig is broken out to support the legacy and newer config
 	// options. New and future index types should use the same approach as the
-	// `vector` field and just have the single `ast.Value` that is directly
+	// `vector` field and just have the single `collectionValue` that is directly
 	// parsed.
 	ordered orderedIndexConfig
-	vector  ast.Value
+	vector  collectionValue
 }
 
 // selectKind records which kind of index the arguments seen so far ask for.
@@ -292,7 +252,7 @@ func (c *indexDirectiveConfig) selectKind(kind string) error {
 	return nil
 }
 
-func (c indexDirectiveConfig) newIndex(fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
+func (c indexDirectiveConfig) newIndex(fieldDef *collectionFieldDefinition) (client.NewIndexRequest, error) {
 	switch c.kind {
 	case "", types.OrderedIndexKind:
 		return orderedIndexFromConfig(c.name, c.ordered, fieldDef)
@@ -303,13 +263,13 @@ func (c indexDirectiveConfig) newIndex(fieldDef *ast.FieldDefinition) (client.Ne
 	}
 }
 
-func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (client.NewIndexRequest, error) {
+func indexFromAST(directive *collectionDirective, fieldDef *collectionFieldDefinition) (client.NewIndexRequest, error) {
 	var config indexDirectiveConfig
 
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.IndexDirectivePropName:
-			name, ok := arg.Value.(*ast.StringValue)
+			name, ok := arg.Value.(*collectionStringValue)
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
@@ -319,7 +279,7 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 			config.name = name.Value
 
 		case types.IndexDirectivePropKind:
-			kind, ok := arg.Value.(*ast.EnumValue)
+			kind, ok := arg.Value.(*collectionEnumValue)
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
@@ -361,8 +321,8 @@ func indexFromAST(directive *ast.Directive, fieldDef *ast.FieldDefinition) (clie
 	return config.newIndex(fieldDef)
 }
 
-func parseOrderedIndexConfig(value ast.Value, config *orderedIndexConfig) error {
-	obj, ok := value.(*ast.ObjectValue)
+func parseOrderedIndexConfig(value collectionValue, config *orderedIndexConfig) error {
+	obj, ok := value.(*collectionObjectValue)
 	if !ok {
 		return ErrIndexWithInvalidArg
 	}
@@ -374,13 +334,13 @@ func parseOrderedIndexConfig(value ast.Value, config *orderedIndexConfig) error 
 	return nil
 }
 
-func parseOrderedIndexProperty(name string, value ast.Value, config *orderedIndexConfig) error {
+func parseOrderedIndexProperty(name string, value collectionValue, config *orderedIndexConfig) error {
 	switch name {
 	case types.IndexDirectivePropIncludes:
 		if config.hasIncludes {
 			return ErrIndexWithInvalidArg
 		}
-		includes, ok := value.(*ast.ListValue)
+		includes, ok := value.(*collectionListValue)
 		if !ok {
 			return ErrIndexWithInvalidArg
 		}
@@ -391,7 +351,7 @@ func parseOrderedIndexProperty(name string, value ast.Value, config *orderedInde
 		if config.hasDirection {
 			return ErrIndexWithInvalidArg
 		}
-		direction, ok := value.(*ast.EnumValue)
+		direction, ok := value.(*collectionEnumValue)
 		if !ok {
 			return ErrIndexWithInvalidArg
 		}
@@ -402,7 +362,7 @@ func parseOrderedIndexProperty(name string, value ast.Value, config *orderedInde
 		if config.hasUnique {
 			return ErrIndexWithInvalidArg
 		}
-		unique, ok := value.(*ast.BooleanValue)
+		unique, ok := value.(*collectionBooleanValue)
 		if !ok {
 			return ErrIndexWithInvalidArg
 		}
@@ -418,7 +378,7 @@ func parseOrderedIndexProperty(name string, value ast.Value, config *orderedInde
 func orderedIndexFromConfig(
 	name string,
 	config orderedIndexConfig,
-	fieldDef *ast.FieldDefinition,
+	fieldDef *collectionFieldDefinition,
 ) (client.NewIndexRequest, error) {
 	var containsField bool
 	var fields []client.IndexedFieldDescription
@@ -456,26 +416,26 @@ func orderedIndexFromConfig(
 	}, nil
 }
 
-func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client.IndexedFieldDescription, error) {
-	argTypeObject, ok := value.(*ast.ObjectValue)
+func indexFieldFromAST(value collectionValue, defaultDirection *collectionEnumValue) (client.IndexedFieldDescription, error) {
+	argTypeObject, ok := value.(*collectionObjectValue)
 	if !ok {
 		return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 	}
 
 	var name string
-	var direction *ast.EnumValue
+	var direction *collectionEnumValue
 
 	for _, field := range argTypeObject.Fields {
 		switch field.Name.Value {
 		case types.IncludesPropField:
-			nameVal, ok := field.Value.(*ast.StringValue)
+			nameVal, ok := field.Value.(*collectionStringValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
 			name = nameVal.Value
 
 		case types.IncludesPropDirection:
-			directionVal, ok := field.Value.(*ast.EnumValue)
+			directionVal, ok := field.Value.(*collectionEnumValue)
 			if !ok {
 				return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
 			}
@@ -502,10 +462,10 @@ func indexFieldFromAST(value ast.Value, defaultDirection *ast.EnumValue) (client
 }
 
 func defaultFromAST(
-	field *ast.FieldDefinition,
-	directive *ast.Directive,
+	field *collectionFieldDefinition,
+	directive *collectionDirective,
 ) (any, error) {
-	astNamed, ok := field.Type.(*ast.Named)
+	astNamed, ok := field.Type.(*collectionNamed)
 	if !ok {
 		// Non-named types (e.g. lists) cannot have a default value.
 		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, field.Type.String())
@@ -515,36 +475,49 @@ func defaultFromAST(
 	}
 	arg := directive.Arguments[0]
 	if arg.Name.Value != types.DefaultDirectivePropValue {
-		// Defensive: GraphQL validation (KnownArgumentNamesRule) already rejects any
-		// argument other than `value`, but guard anyway.
-		return nil, NewErrDefaultValueOneArg(field.Name.Value)
+		return nil, fmt.Errorf(
+			"Unknown argument %q on directive %q", arg.Name.Value, "@default")
 	}
 	// The value is coerced based on the type of the field the directive is applied to,
 	// reusing each scalar's existing ParseLiteral coercion.
 	var value any
 	switch astNamed.Name.Value {
 	case typeInt:
-		value = gql.Int.ParseLiteral(arg.Value, nil)
+		if literal, ok := arg.Value.(*collectionIntValue); ok {
+			parsed, err := strconv.ParseInt(literal.Value, 10, 32)
+			if err == nil {
+				value = int32(parsed)
+			}
+		}
 	case typeFloat:
-		value = gql.Float.ParseLiteral(arg.Value, nil)
+		value = parseFloatDefault(arg.Value, 64)
 	case typeFloat32:
-		value = types.Float32.ParseLiteral(arg.Value, nil)
+		value = parseFloatDefault(arg.Value, 32)
 	case typeFloat64:
-		value = types.Float64.ParseLiteral(arg.Value, nil)
+		value = parseFloatDefault(arg.Value, 64)
 	case typeBoolean:
-		value = gql.Boolean.ParseLiteral(arg.Value, nil)
+		if literal, ok := arg.Value.(*collectionBooleanValue); ok {
+			value = literal.Value
+		}
 	case typeString:
-		value = gql.String.ParseLiteral(arg.Value, nil)
+		if literal, ok := arg.Value.(*collectionStringValue); ok {
+			value = literal.Value
+		}
 	case typeDateTime:
 		// Handle UTC_NOW as a special case, if that's what the default is
-		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == enum_UTC_NOW {
+		if enum, ok := arg.Value.(*collectionEnumValue); ok && enum.Value == enum_UTC_NOW {
 			value = enum_UTC_NOW
 			break
 		}
 		// Otherwise, parse the value normally as a DateTime
-		value = gql.DateTime.ParseLiteral(arg.Value, nil)
+		if literal, ok := arg.Value.(*collectionStringValue); ok {
+			parsed, err := time.Parse(time.RFC3339Nano, literal.Value)
+			if err == nil {
+				value = parsed
+			}
+		}
 	case typeJSON:
-		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
+		jsonValue := collectionValueToGo(arg.Value)
 		switch v := jsonValue.(type) {
 		case nil:
 			value = nil
@@ -558,13 +531,15 @@ func defaultFromAST(
 					field.Name.Value,
 					astNamed.Name.Value,
 					defaultValueLiteralType(arg.Value),
-					printer.Print(arg.Value),
+					printLegacyValue(arg.Value),
 				)
 			}
 			value = string(jsonBytes)
 		}
 	case typeBlob:
-		value = types.Blob.ParseLiteral(arg.Value, nil)
+		if literal, ok := arg.Value.(*collectionStringValue); ok && types.BlobPattern.MatchString(literal.Value) {
+			value = literal.Value
+		}
 	default:
 		// Field types not present above (e.g. ID, relations) cannot have a default value.
 		return nil, NewErrDefaultValueNotAllowed(field.Name.Value, astNamed.Name.Value)
@@ -577,40 +552,129 @@ func defaultFromAST(
 			field.Name.Value,
 			astNamed.Name.Value,
 			defaultValueLiteralType(arg.Value),
-			printer.Print(arg.Value),
+			printLegacyValue(arg.Value),
 		)
 	}
 	return value, nil
 }
 
-func defaultValueLiteralType(value ast.Value) string {
+func parseFloatDefault(value collectionValue, bitSize int) any {
+	var raw string
+	switch value := value.(type) {
+	case *collectionIntValue:
+		raw = value.Value
+	case *collectionFloatValue:
+		raw = value.Value
+	default:
+		return nil
+	}
+	parsed, err := strconv.ParseFloat(raw, bitSize)
+	if err != nil {
+		return nil
+	}
+	if bitSize == 32 {
+		return float32(parsed)
+	}
+	return parsed
+}
+
+func collectionValueToGo(value collectionValue) any {
+	switch value := value.(type) {
+	case *collectionBooleanValue:
+		return value.Value
+	case *collectionIntValue:
+		parsed, err := strconv.ParseInt(value.Value, 10, 32)
+		if err == nil {
+			return int32(parsed)
+		}
+	case *collectionFloatValue:
+		parsed, err := strconv.ParseFloat(value.Value, 64)
+		if err == nil {
+			return parsed
+		}
+	case *collectionStringValue:
+		return value.Value
+	case *collectionEnumValue:
+		return value.Value
+	case *collectionNullValue:
+		return nil
+	case *collectionListValue:
+		result := make([]any, len(value.Values))
+		for index, item := range value.Values {
+			result[index] = collectionValueToGo(item)
+		}
+		return result
+	case *collectionObjectValue:
+		result := make(map[string]any, len(value.Fields))
+		for _, field := range value.Fields {
+			result[field.Name.Value] = collectionValueToGo(field.Value)
+		}
+		return result
+	}
+	return nil
+}
+
+func defaultValueLiteralType(value collectionValue) string {
 	switch value.(type) {
-	case *ast.BooleanValue:
+	case *collectionBooleanValue:
 		return typeBoolean
-	case *ast.IntValue:
+	case *collectionIntValue:
 		return typeInt
-	case *ast.FloatValue:
+	case *collectionFloatValue:
 		return typeFloat
-	case *ast.StringValue:
+	case *collectionStringValue:
 		return typeString
-	case *ast.EnumValue:
+	case *collectionEnumValue:
 		return "Enum"
-	case *ast.ListValue:
+	case *collectionListValue:
 		return "List"
-	case *ast.ObjectValue:
+	case *collectionObjectValue:
 		return "Object"
-	case *ast.NullValue:
+	case *collectionNullValue:
 		return "Null"
-	case *ast.Variable:
+	case *collectionVariable:
 		return "Variable"
 	default:
 		return "Unknown"
 	}
 }
 
+func printLegacyValue(value collectionValue) string {
+	switch value := value.(type) {
+	case *collectionBooleanValue:
+		return strconv.FormatBool(value.Value)
+	case *collectionIntValue:
+		return value.Value
+	case *collectionFloatValue:
+		return value.Value
+	case *collectionStringValue:
+		return strconv.Quote(value.Value)
+	case *collectionEnumValue:
+		return value.Value
+	case *collectionNullValue:
+		return "null"
+	case *collectionVariable:
+		return "$" + value.Name.Value
+	case *collectionListValue:
+		items := make([]string, len(value.Values))
+		for index, item := range value.Values {
+			items[index] = printLegacyValue(item)
+		}
+		return "[" + strings.Join(items, ", ") + "]"
+	case *collectionObjectValue:
+		fields := make([]string, len(value.Fields))
+		for index, field := range value.Fields {
+			fields[index] = field.Name.Value + ": " + printLegacyValue(field.Value)
+		}
+		return "{" + strings.Join(fields, ", ") + "}"
+	default:
+		return ""
+	}
+}
+
 func encryptedIndexFromAST(
-	directive *ast.Directive,
-	fieldDef *ast.FieldDefinition,
+	directive *collectionDirective,
+	fieldDef *collectionFieldDefinition,
 ) (client.EncryptedIndexDescription, error) {
 	encryptedIndex := client.EncryptedIndexDescription{
 		FieldName: fieldDef.Name.Value,
@@ -620,7 +684,7 @@ func encryptedIndexFromAST(
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.EncryptedIndexDirectivePropType:
-			typeVal, ok := arg.Value.(*ast.StringValue)
+			typeVal, ok := arg.Value.(*collectionStringValue)
 			if !ok {
 				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
 			}
@@ -640,7 +704,7 @@ func encryptedIndexFromAST(
 }
 
 func fieldsFromAST(
-	field *ast.FieldDefinition,
+	field *collectionFieldDefinition,
 	hostObjectName string,
 ) ([]client.CollectionFieldDescription, error) {
 	kind, err := astTypeToKind(hostObjectName, field)
@@ -730,20 +794,22 @@ func fieldsFromAST(
 
 // policyFromAST returns the policy description after parsing but the validation
 // is not done yet on the values that are returned. This is because we need acp to do that.
-func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
+func policyFromAST(directive *collectionDirective) (client.PolicyDescription, error) {
 	policyDesc := client.PolicyDescription{}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.PolicySchemaDirectivePropID:
-			policyIDProp, ok := arg.Value.(*ast.StringValue)
+			policyIDProp, ok := arg.Value.(*collectionStringValue)
 			if !ok {
-				return client.PolicyDescription{}, ErrPolicyInvalidIDProp
+				return client.PolicyDescription{}, fmt.Errorf(
+					"Argument %q has invalid value %v", arg.Name.Value, arg.Value.GetValue())
 			}
 			policyDesc.ID = policyIDProp.Value
 		case types.PolicySchemaDirectivePropResource:
-			policyResourceProp, ok := arg.Value.(*ast.StringValue)
+			policyResourceProp, ok := arg.Value.(*collectionStringValue)
 			if !ok {
-				return client.PolicyDescription{}, ErrPolicyInvalidResourceProp
+				return client.PolicyDescription{}, fmt.Errorf(
+					"Argument %q has invalid value %v", arg.Name.Value, arg.Value.GetValue())
 			}
 			policyDesc.ResourceName = policyResourceProp.Value
 		default:
@@ -755,15 +821,15 @@ func policyFromAST(directive *ast.Directive) (client.PolicyDescription, error) {
 
 func vectorIndexFromAST(
 	name string,
-	config ast.Value,
-	direction *ast.EnumValue,
-	fieldDef *ast.FieldDefinition,
+	config collectionValue,
+	direction *collectionEnumValue,
+	fieldDef *collectionFieldDefinition,
 ) (client.NewIndexRequest, error) {
 	if fieldDef == nil {
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
 
-	obj, ok := config.(*ast.ObjectValue)
+	obj, ok := config.(*collectionObjectValue)
 	if !ok {
 		return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 	}
@@ -786,7 +852,7 @@ func vectorIndexFromAST(
 			dimensions = parsed
 
 		case types.VectorIndexPropAlgorithm:
-			algorithmVal, ok := field.Value.(*ast.EnumValue)
+			algorithmVal, ok := field.Value.(*collectionEnumValue)
 			if !ok || algorithmVal.Value != types.VectorIndexAlgorithmHNSW {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
@@ -799,7 +865,8 @@ func vectorIndexFromAST(
 			}
 
 		default:
-			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
+			return client.NewIndexRequest{}, fmt.Errorf(
+				"In field %q: Unknown field.: %w", field.Name.Value, ErrIndexWithUnknownArg)
 		}
 	}
 
@@ -825,8 +892,8 @@ func vectorIndexFromAST(
 }
 
 // parseHNSWConfig reads the @index vector HNSW config, overwriting only explicitly set defaults.
-func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *client.HNSWParams) error {
-	obj, ok := value.(*ast.ObjectValue)
+func parseHNSWConfig(value collectionValue, metric *client.DistanceMetric, params *client.HNSWParams) error {
+	obj, ok := value.(*collectionObjectValue)
 	if !ok {
 		return ErrIndexWithInvalidArg
 	}
@@ -834,7 +901,7 @@ func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *cli
 	for _, field := range obj.Fields {
 		switch field.Name.Value {
 		case types.VectorIndexConfigPropMetric:
-			metricVal, ok := field.Value.(*ast.EnumValue)
+			metricVal, ok := field.Value.(*collectionEnumValue)
 			if !ok {
 				return ErrIndexWithInvalidArg
 			}
@@ -846,7 +913,9 @@ func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *cli
 			case types.VectorDistanceMetricDot:
 				*metric = client.DistanceMetricDotProduct
 			default:
-				return NewErrVectorIndexUnknownMetric(metricVal.Value)
+				return fmt.Errorf(
+					"Expected type %q, found %s: %w",
+					"VectorDistanceMetric", metricVal.Value, NewErrVectorIndexUnknownMetric(metricVal.Value))
 			}
 
 		case types.VectorIndexHNSWConfigPropM:
@@ -879,8 +948,8 @@ func parseHNSWConfig(value ast.Value, metric *client.DistanceMetric, params *cli
 
 // parseUint32ASTValue reads an AST int literal into a uint32, rejecting non-ints and out-of-range
 // values.
-func parseUint32ASTValue(value ast.Value) (uint32, error) {
-	intVal, ok := value.(*ast.IntValue)
+func parseUint32ASTValue(value collectionValue) (uint32, error) {
+	intVal, ok := value.(*collectionIntValue)
 	if !ok {
 		return 0, ErrIndexWithInvalidArg
 	}
@@ -892,8 +961,8 @@ func parseUint32ASTValue(value ast.Value) (uint32, error) {
 }
 
 func vectorEmbeddingFromAST(
-	directive *ast.Directive,
-	fieldDef *ast.FieldDefinition,
+	directive *collectionDirective,
+	fieldDef *collectionFieldDefinition,
 ) (client.VectorEmbeddingDescription, error) {
 	embedding := client.VectorEmbeddingDescription{
 		FieldName: fieldDef.Name.Value,
@@ -901,20 +970,20 @@ func vectorEmbeddingFromAST(
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.VectorEmbeddingDirectivePropFields:
-			val := arg.Value.(*ast.ListValue)
+			val := arg.Value.(*collectionListValue)
 			fields := make([]string, len(val.Values))
 			for i, untypedField := range val.Values {
-				fields[i] = untypedField.(*ast.StringValue).Value
+				fields[i] = untypedField.(*collectionStringValue).Value
 			}
 			embedding.Fields = fields
 		case types.VectorEmbeddingDirectivePropModel:
-			embedding.Model = arg.Value.(*ast.StringValue).Value
+			embedding.Model = arg.Value.(*collectionStringValue).Value
 		case types.VectorEmbeddingDirectivePropProvider:
-			embedding.Provider = arg.Value.(*ast.StringValue).Value
+			embedding.Provider = arg.Value.(*collectionStringValue).Value
 		case types.VectorEmbeddingDirectivePropTemplate:
-			embedding.Template = arg.Value.(*ast.StringValue).Value
+			embedding.Template = arg.Value.(*collectionStringValue).Value
 		case types.VectorEmbeddingDirectivePropURL:
-			embedding.URL = arg.Value.(*ast.StringValue).Value
+			embedding.URL = arg.Value.(*collectionStringValue).Value
 		}
 	}
 	return embedding, nil
@@ -924,7 +993,7 @@ type constraintDescription struct {
 	Size int
 }
 
-func constraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
+func constraintsFromAST(kind client.FieldKind, directive *collectionDirective) (constraintDescription, error) {
 	constraints := constraintDescription{}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
@@ -932,7 +1001,7 @@ func constraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constr
 			if !kind.IsArray() {
 				return constraintDescription{}, NewErrInvalidTypeForContraint(kind)
 			}
-			size, err := strconv.Atoi(arg.Value.(*ast.IntValue).Value)
+			size, err := strconv.Atoi(arg.Value.(*collectionIntValue).Value)
 			if err != nil {
 				return constraintDescription{}, err
 			}
@@ -942,13 +1011,17 @@ func constraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constr
 	return constraints, nil
 }
 
-func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CType, error) {
+func setCRDTType(field *collectionFieldDefinition, kind client.FieldKind) (client.CType, error) {
 	if directive, exists := findDirective(field, "crdt"); exists {
 		for _, arg := range directive.Arguments {
 			switch arg.Name.Value {
 			case "type":
+				if stringValue, ok := arg.Value.(*collectionStringValue); ok {
+					return 0, fmt.Errorf(
+						"Argument %q has invalid value %q", arg.Name.Value, stringValue.Value)
+				}
 				cTypeString := arg.Value.GetValue().(string)
-				cType, validCRDTEnum := types.CRDTEnum().ParseValue(cTypeString).(client.CType)
+				cType, validCRDTEnum := types.ParseCRDTType(cTypeString)
 				if !validCRDTEnum {
 					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)
 				}
@@ -962,17 +1035,17 @@ func setCRDTType(field *ast.FieldDefinition, kind client.FieldKind) (client.CTyp
 
 func astTypeToKind(
 	hostObjectName string,
-	field *ast.FieldDefinition,
+	field *collectionFieldDefinition,
 ) (client.FieldKind, error) {
 	switch astTypeVal := field.Type.(type) {
-	case *ast.List:
+	case *collectionList:
 		if isNestedListType(astTypeVal.Type) {
 			return client.FieldKind_None, NewErrNestedListTypeNotSupported(hostObjectName, field.Name.Value)
 		}
 
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
-		case *ast.NonNull:
-			switch innerAstTypeVal.Type.(*ast.Named).Name.Value {
+		case *collectionNonNull:
+			switch innerAstTypeVal.Type.(*collectionNamed).Name.Value {
 			case typeBoolean:
 				return client.FieldKind_BOOL_ARRAY, nil
 			case typeInt:
@@ -986,11 +1059,11 @@ func astTypeToKind(
 			case typeDateTime:
 				return client.FieldKind_DATETIME_ARRAY, nil
 			default:
-				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*ast.Named).Name.Value)
+				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*collectionNamed).Name.Value)
 			}
 
 		default:
-			switch astTypeVal.Type.(*ast.Named).Name.Value {
+			switch astTypeVal.Type.(*collectionNamed).Name.Value {
 			case typeBoolean:
 				return client.FieldKind_NILLABLE_BOOL_ARRAY, nil
 			case typeInt:
@@ -1004,11 +1077,11 @@ func astTypeToKind(
 			case typeDateTime:
 				return client.FieldKind_NILLABLE_DATETIME_ARRAY, nil
 			default:
-				return client.NewNamedKind(astTypeVal.Type.(*ast.Named).Name.Value, true), nil
+				return client.NewNamedKind(astTypeVal.Type.(*collectionNamed).Name.Value, true), nil
 			}
 		}
 
-	case *ast.Named:
+	case *collectionNamed:
 		switch astTypeVal.Name.Value {
 		case typeID:
 			return client.FieldKind_DocID, nil
@@ -1032,8 +1105,8 @@ func astTypeToKind(
 			return client.NewNamedKind(astTypeVal.Name.Value, false), nil
 		}
 
-	case *ast.NonNull:
-		namedType, ok := astTypeVal.Type.(*ast.Named)
+	case *collectionNonNull:
+		namedType, ok := astTypeVal.Type.(*collectionNamed)
 		if !ok {
 			return client.FieldKind_None, ErrNonNullNotSupported
 		}
@@ -1066,19 +1139,19 @@ func astTypeToKind(
 	}
 }
 
-func isNestedListType(fieldType ast.Type) bool {
+func isNestedListType(fieldType collectionType) bool {
 	switch typeVal := fieldType.(type) {
-	case *ast.List:
+	case *collectionList:
 		return true
-	case *ast.NonNull:
-		_, isList := typeVal.Type.(*ast.List)
+	case *collectionNonNull:
+		_, isList := typeVal.Type.(*collectionList)
 		return isList
 	default:
 		return false
 	}
 }
 
-func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Directive, bool) {
+func findDirective(field *collectionFieldDefinition, directiveName string) (*collectionDirective, bool) {
 	for _, directive := range field.Directives {
 		if directive.Name.Value == directiveName {
 			return directive, true
@@ -1090,7 +1163,7 @@ func findDirective(field *ast.FieldDefinition, directiveName string) (*ast.Direc
 // Gets the name of the relationship. Will return the provided name if one is specified,
 // otherwise will generate one
 func getRelationshipName(
-	field *ast.FieldDefinition,
+	field *collectionFieldDefinition,
 	hostName string,
 	targetName string,
 ) (string, error) {

@@ -2,31 +2,36 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
-//
-// As of the Change Date specified in that file, in accordance with
-// the Business Source License, use of this software will be governed
-// by the Apache License, Version 2.0, included in the file
-// licenses/APL.txt.
 
+// Package types contains the stable GraphQL names shared by schema intake and
+// request parsing. Executable GraphQL types are defined in the canonical SDL
+// templates rather than constructed in Go.
 package types
 
 import (
-	gql "github.com/sourcenetwork/graphql-go"
+	"regexp"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
 const (
-	ExplainLabel    string = "explain"
-	ExhaustiveLabel string = "exhaustive"
-	PrimaryLabel    string = "primary"
-	RelationLabel   string = "relation"
+	ExplainEnumDescription     = "ExplainType is an enum selecting the type of explanation done by the @explain directive."
+	SimilarityFieldDescription = `
+Returns how similar the given vector is to the specified field's value. The metric is
+ whichever one the field's vector index was created with, defaulting to cosine similarity
+ when the field has no vector index. Higher values are more similar for every metric.
+`
 
-	ExplainArgNameType string = "type"
-	ExplainArgSimple   string = "simple"
-	ExplainArgExecute  string = "execute"
-	ExplainArgDebug    string = "debug"
+	ExplainLabel    = "explain"
+	ExhaustiveLabel = "exhaustive"
+	PrimaryLabel    = "primary"
+	RelationLabel   = "relation"
+
+	ExplainArgNameType = "type"
+	ExplainArgSimple   = "simple"
+	ExplainArgExecute  = "execute"
+	ExplainArgDebug    = "debug"
 
 	CRDTDirectiveLabel    = "crdt"
 	CRDTDirectivePropType = "type"
@@ -68,9 +73,6 @@ const (
 	VectorIndexHNSWConfigPropEfConstruction = "efConstruction"
 	VectorIndexHNSWConfigPropEfSearch       = "efSearch"
 
-	// Values of the VectorDistanceMetric enum. They are the string form of the matching
-	// [client.DistanceMetric], so the two cannot drift apart and the directive parser maps one to the
-	// other without a translation table.
 	VectorDistanceMetricCosine    = string(client.DistanceMetricCosine)
 	VectorDistanceMetricEuclidean = string(client.DistanceMetricEuclidean)
 	VectorDistanceMetricDot       = string(client.DistanceMetricDotProduct)
@@ -93,497 +95,24 @@ const (
 	SimilarityArgVector = "vector"
 )
 
-// OrderingEnum is an enum for the Ordering argument.
-func OrderingEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name: "Ordering",
-		Values: gql.EnumValueConfigMap{
-			"ASC": &gql.EnumValueConfig{
-				Description: ascOrderDescription,
-				Value:       0,
-			},
-			"DESC": &gql.EnumValueConfig{
-				Description: descOrderDescription,
-				Value:       1,
-			},
-		},
-	})
+type enumDescription struct{ description string }
+
+func (e *enumDescription) Description() string { return e.description }
+
+// ExplainEnum retains the small description API used by clients without
+// reintroducing the legacy executable GraphQL type dependency.
+func ExplainEnum() *enumDescription {
+	return &enumDescription{description: ExplainEnumDescription}
 }
 
-func IndexKindEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name: "IndexKind",
-		Values: gql.EnumValueConfigMap{
-			OrderedIndexKind: &gql.EnumValueConfig{
-				Description: "ordered scalar index",
-				Value:       OrderedIndexKind,
-			},
-		},
-	})
-}
+var BlobPattern = regexp.MustCompile("^[0-9a-fA-F]+$")
 
-// VectorIndexAlgorithmEnum identifies the configured vector index algorithm.
-func VectorIndexAlgorithmEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name: "VectorIndexAlgorithm",
-		Values: gql.EnumValueConfigMap{
-			VectorIndexAlgorithmHNSW: &gql.EnumValueConfig{
-				Description: "HNSW (Hierarchical Navigable Small World)",
-				Value:       VectorIndexAlgorithmHNSW,
-			},
-		},
-	})
-}
-
-// VectorDistanceMetricEnum is an enum for a vector index algorithm's metric field.
-func VectorDistanceMetricEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name: "VectorDistanceMetric",
-		Values: gql.EnumValueConfigMap{
-			VectorDistanceMetricCosine: &gql.EnumValueConfig{
-				Description: "Cosine distance on normalised vectors. Compares direction only.",
-				Value:       VectorDistanceMetricCosine,
-			},
-			VectorDistanceMetricEuclidean: &gql.EnumValueConfig{
-				Description: "Straight-line (L2) distance. Compares direction and magnitude.",
-				Value:       VectorDistanceMetricEuclidean,
-			},
-			VectorDistanceMetricDot: &gql.EnumValueConfig{
-				Description: "Dot product. Grows with magnitude, so a longer vector pointing the " +
-					"same way is nearer.",
-				Value: VectorDistanceMetricDot,
-			},
-		},
-	})
-}
-
-// HNSWIndexConfigInputObject is the typed config for a vector index's HNSW argument.
-func HNSWIndexConfigInputObject(metricEnum *gql.Enum) *gql.InputObject {
-	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "HNSWIndexConfig",
-		Description: "HNSW (Hierarchical Navigable Small World) vector index parameters.",
-		Fields: gql.InputObjectConfigFieldMap{
-			VectorIndexConfigPropMetric: &gql.InputObjectFieldConfig{
-				Description:  "Distance metric used to compare vectors.",
-				Type:         metricEnum,
-				DefaultValue: VectorDistanceMetricCosine,
-			},
-			VectorIndexHNSWConfigPropM: &gql.InputObjectFieldConfig{
-				Description:  "Max connections per node. Higher improves recall at the cost of memory and build time.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWM),
-			},
-			VectorIndexHNSWConfigPropEfConstruction: &gql.InputObjectFieldConfig{
-				Description:  "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWEfConstruction),
-			},
-			VectorIndexHNSWConfigPropEfSearch: &gql.InputObjectFieldConfig{
-				Description:  "Default query-time exploration factor. Higher improves recall at the cost of query latency.",
-				Type:         gql.Int,
-				DefaultValue: int(client.DefaultHNSWEfSearch),
-			},
-		},
-	})
-}
-
-func ExplainEnum() *gql.Enum {
-	return gql.NewEnum(gql.EnumConfig{
-		Name:        "ExplainType",
-		Description: "ExplainType is an enum selecting the type of explanation done by the @explain directive.",
-		Values: gql.EnumValueConfigMap{
-			ExplainArgSimple: &gql.EnumValueConfig{
-				Value:       ExplainArgSimple,
-				Description: "Simple explanation - dump of the plan graph.",
-			},
-
-			ExplainArgExecute: &gql.EnumValueConfig{
-				Value:       ExplainArgExecute,
-				Description: "Deeper explanation - insights gathered by executing the plan graph.",
-			},
-
-			ExplainArgDebug: &gql.EnumValueConfig{
-				Value:       ExplainArgDebug,
-				Description: "Like simple explain, but more verbose nodes (no attributes).",
-			},
-		},
-	})
-}
-
-func DefaultDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name: DefaultDirectiveLabel,
-		Description: `@default is a directive that can be used to set a default field value.
-
-		Setting a default value on a field within a view has no effect.`,
-		Args: gql.FieldConfigArgument{
-			DefaultDirectivePropValue: &gql.ArgumentConfig{
-				Type: Any,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-func ExplainDirective(explainEnum *gql.Enum) *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        ExplainLabel,
-		Description: "@explain is a directive that can be used to explain the query.",
-		Args: gql.FieldConfigArgument{
-			ExplainArgNameType: &gql.ArgumentConfig{
-				Type: explainEnum,
-			},
-		},
-
-		// A directive is unique to it's location and the location must be provided for directives.
-		// We limit @explain directive to only be valid at these two locations: `MUTATION`, `QUERY`.
-		Locations: []string{
-			gql.DirectiveLocationQuery,
-			gql.DirectiveLocationMutation,
-		},
-	})
-}
-
-// ExhaustiveDirective @exhaustive signals that complete/exhaustive results are desired
-// even at performance cost. When ordering by a relation field that has an index, orphan
-// parents (parents without children) will be included in results.
-func ExhaustiveDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        ExhaustiveLabel,
-		Description: "@exhaustive signals that complete/exhaustive results are desired even at performance cost.",
-
-		Locations: []string{
-			gql.DirectiveLocationQuery,
-		},
-	})
-}
-
-func PolicyDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        PolicySchemaDirectiveLabel,
-		Description: "@policy is a directive that can be used to link a policy on a collection type.",
-		Args: gql.FieldConfigArgument{
-			PolicySchemaDirectivePropID: &gql.ArgumentConfig{
-				Type: gql.String,
-			},
-			PolicySchemaDirectivePropResource: &gql.ArgumentConfig{
-				Type: gql.String,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationObject,
-		},
-	})
-}
-
-func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
-	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "IndexField",
-		Description: "Used to add an index from a field.",
-		Fields: gql.InputObjectConfigFieldMap{
-			IncludesPropField: &gql.InputObjectFieldConfig{
-				Type: gql.String,
-			},
-			IncludesPropDirection: &gql.InputObjectFieldConfig{
-				Type: orderingEnum,
-			},
-		},
-	})
-}
-
-func IndexDirective(
-	orderingEnum *gql.Enum,
-	indexFieldInputObject *gql.InputObject,
-	indexKindEnum *gql.Enum,
-	orderedIndexInputObject *gql.InputObject,
-	vectorIndexInputObject *gql.InputObject,
-) *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        IndexDirectiveLabel,
-		Description: "@index is a directive that can be used to add an index on a type or a field.",
-		Args: gql.FieldConfigArgument{
-			IndexDirectivePropName: &gql.ArgumentConfig{
-				Description: "Sets the index name.",
-				Type:        gql.String,
-			},
-
-			IndexDirectivePropKind: &gql.ArgumentConfig{
-				Description: "Selects an index kind using its default configuration.",
-				Type:        indexKindEnum,
-			},
-
-			VectorIndexKind: &gql.ArgumentConfig{
-				Description: "Configures a vector index.",
-				Type:        vectorIndexInputObject,
-			},
-
-			OrderedIndexKind: &gql.ArgumentConfig{
-				Description: "Configures an ordered index.",
-				Type:        orderedIndexInputObject,
-			},
-
-			// unique, direction, and includes are kept here at the top level for backwards compat.
-			// They are replicated in the `OrderedIndexInputObject`
-			IndexDirectivePropUnique: &gql.ArgumentConfig{
-				Description: "Makes the index unique.",
-				Type:        gql.Boolean,
-			},
-			IndexDirectivePropDirection: &gql.ArgumentConfig{
-				Description: `Sets the default index ordering for all fields.
-
-	If a field in the includes list does not specify a direction
-	the default ordering from this value will be used instead.`,
-				Type: orderingEnum,
-			},
-			IndexDirectivePropIncludes: &gql.ArgumentConfig{
-				Description: `Sets the fields the index is added on.
-
-	When used on a field definition and the field is not in the includes list
-	it will be implicitly added as the first entry.`,
-				Type: gql.NewList(indexFieldInputObject),
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationObject,
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-func MaterializedDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name: MaterializedDirectiveLabel,
-		Description: `@materialized is a directive that specifies whether a collection is cached or not.
- It will default to true if ommited.  If multiple @materialized directives are provided, they will aggregated
- with OR logic (if any are true, the collection will be cached).`,
-		Args: gql.FieldConfigArgument{
-			MaterializedDirectivePropIf: &gql.ArgumentConfig{
-				Type: gql.Boolean,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationObject,
-		},
-	})
-}
-
-func BranchableDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name: BranchableDirectiveLabel,
-		// Todo: This description will need to be changed with:
-		// https://github.com/sourcenetwork/defradb/issues/3219
-		Description: `@branchable is a directive that defines whether the history of this collection is tracked
- as a single, verifiable entity or not. It will default to false if ommited.
-
- If multiple @branchable directives are provided, they will aggregated with OR logic (if any are true, the
- collection history will be tracked).
-
- The history may be queried like a document history can be queried, for example via 'commits'
- GQL queries.
-
- Currently this property is immutable and can only be set on collection creation, however
- that will change in the future.`,
-		Args: gql.FieldConfigArgument{
-			BranchableDirectivePropIf: &gql.ArgumentConfig{
-				Type: gql.Boolean,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationObject,
-		},
-	})
-}
-
-func CRDTEnum() *gql.Enum {
-	valueMap := gql.EnumValueConfigMap{}
-	for _, fieldCrdt := range crdt.FieldCRDTs {
-		valueMap[fieldCrdt.String()] = &gql.EnumValueConfig{
-			Value:       fieldCrdt.CType(),
-			Description: fieldCrdt.Description(),
+// ParseCRDTType resolves the public GraphQL enum spelling to its DefraDB CType.
+func ParseCRDTType(name string) (client.CType, bool) {
+	for _, fieldCRDT := range crdt.FieldCRDTs {
+		if fieldCRDT.String() == name {
+			return fieldCRDT.CType(), true
 		}
 	}
-
-	return gql.NewEnum(gql.EnumConfig{
-		Name:        "CRDTType",
-		Description: "One of the possible CRDT Types.",
-		Values:      valueMap,
-	})
-}
-
-// CRDTFieldDirective @crdt is used to define the CRDT type of a field
-func CRDTFieldDirective(crdtEnum *gql.Enum) *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        CRDTDirectiveLabel,
-		Description: crdtDirectiveDescription,
-		Args: gql.FieldConfigArgument{
-			CRDTDirectivePropType: &gql.ArgumentConfig{
-				Type: crdtEnum,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-// ConstraintsDirective @constraints is used to define various constraints on a field.
-func ConstraintsDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        ConstraintsDirectiveLabel,
-		Description: constraintsDirectiveDescription,
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-		Args: gql.FieldConfigArgument{
-			ConstraintsDirectivePropSize: &gql.ArgumentConfig{
-				Type:        gql.Int,
-				Description: "The size constraint for array fields.",
-			},
-		},
-	})
-}
-
-// VectorEmbeddingDirective @embedding is used to configure the generation of embedding vectors.
-func VectorEmbeddingDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        VectorEmbeddingDirectiveLabel,
-		Description: embeddingDirectiveDescription,
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-		Args: gql.FieldConfigArgument{
-			VectorEmbeddingDirectivePropProvider: &gql.ArgumentConfig{
-				Type:        gql.String,
-				Description: "The provider to use for embedding. (ollama, openAI, etc.)",
-			},
-			VectorEmbeddingDirectivePropModel: &gql.ArgumentConfig{
-				Type:        gql.String,
-				Description: "The model to use for embedding. (nomic-embed-text, etc.)",
-			},
-			VectorEmbeddingDirectivePropURL: &gql.ArgumentConfig{
-				Type:        gql.String,
-				Description: "The URL of the provider API.",
-			},
-			VectorEmbeddingDirectivePropFields: &gql.ArgumentConfig{
-				Type:        gql.NewList(gql.String),
-				Description: "The fields to pass to the model.",
-			},
-			VectorEmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
-				Type:        gql.String,
-				Description: "The template to use with the fields to create the content to feed the model.",
-			},
-		},
-	})
-}
-
-// EncryptedIndexDirective @encryptedIndex is used to mark fields for searchable encryption
-func EncryptedIndexDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        EncryptedIndexDirectiveLabel,
-		Description: "Marks a field for searchable encryption, allowing queries on encrypted data.",
-		Args: gql.FieldConfigArgument{
-			EncryptedIndexDirectivePropType: &gql.ArgumentConfig{
-				Description:  "The type of searchable encryption (currently only 'equality' is supported).",
-				Type:         gql.String,
-				DefaultValue: string(client.EncryptedIndexTypeEquality),
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-// VectorIndexInputObject configures an approximate-nearest-neighbour index over a vector field.
-func VectorIndexInputObject(
-	hnswConfig *gql.InputObject,
-	algorithmEnum *gql.Enum,
-) *gql.InputObject {
-	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "VectorIndexConfig",
-		Description: "Configures an approximate-nearest-neighbour index over a vector field.",
-		Fields: gql.InputObjectConfigFieldMap{
-			VectorIndexPropDimensions: &gql.InputObjectFieldConfig{
-				Description: "Vector dimensions; must be greater than zero.",
-				Type:        gql.Int,
-			},
-			VectorIndexPropAlgorithm: &gql.InputObjectFieldConfig{
-				Description: "Selects the vector index algorithm using its default configuration.",
-				Type:        algorithmEnum,
-			},
-			VectorIndexPropHNSW: &gql.InputObjectFieldConfig{
-				Description: "Configures the HNSW algorithm.",
-				Type:        hnswConfig,
-			},
-		},
-	})
-}
-
-// OrderedIndexInputObject configures an ordered index over one or more scalar fields.
-func OrderedIndexInputObject(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.InputObject {
-	return gql.NewInputObject(gql.InputObjectConfig{
-		Name:        "OrderedIndexConfig",
-		Description: "Configures an ordered index over one or more scalar fields.",
-		Fields: gql.InputObjectConfigFieldMap{
-			IndexDirectivePropUnique: &gql.InputObjectFieldConfig{
-				Description: "Makes the index unique.",
-				Type:        gql.Boolean,
-			},
-			IndexDirectivePropDirection: &gql.InputObjectFieldConfig{
-				Description: `Sets the default index ordering for all fields.
-
-	If a field in the includes list does not specify a direction
-	the default ordering from this value will be used instead.`,
-				Type: orderingEnum,
-			},
-			IndexDirectivePropIncludes: &gql.InputObjectFieldConfig{
-				Description: `Sets the fields the index is added on.
-
-	When used on a field definition and the field is not in the includes list
-	it will be implicitly added as the first entry.`,
-				Type: gql.NewList(indexFieldInputObject),
-			},
-		},
-	})
-}
-
-// PrimaryDirective @primary is used to indicate the primary
-// side of a one-to-one relationship.
-func PrimaryDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        PrimaryLabel,
-		Description: primaryDirectiveDescription,
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-// RelationDirective @relation is used to explicitly define
-// the attributes of a relationship, specifically, the name
-// if you don't want to use the default generated relationship
-// name.
-func RelationDirective() *gql.Directive {
-	return gql.NewDirective(gql.DirectiveConfig{
-		Name:        RelationLabel,
-		Description: relationDirectiveDescription,
-		Args: gql.FieldConfigArgument{
-			"name": &gql.ArgumentConfig{
-				Description: relationDirectiveNameArgDescription,
-				Type:        gql.String,
-			},
-		},
-		Locations: []string{
-			gql.DirectiveLocationFieldDefinition,
-		},
-	})
-}
-
-func NewArgConfig(t gql.Type, description string) *gql.ArgumentConfig {
-	return &gql.ArgumentConfig{
-		Type:        t,
-		Description: description,
-	}
+	return 0, false
 }

@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	gql "github.com/sourcenetwork/graphql-go"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -43,55 +41,14 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 		},
 	}
 
-	_, err = manager.Generator.Generate(ctx, collections)
+	err = manager.Generate(ctx, collections)
 	require.NoError(t, err)
-	require.NoError(t, manager.ResolveTypes())
 
-	queryType := manager.schema.QueryType()
-	require.NotNil(t, queryType)
-
-	encryptedField, ok := queryType.Fields()["encrypted_User"]
-	require.True(t, ok, "encrypted_User field should exist")
-
-	hasFilter, hasLimit, hasOffset := false, false, false
-	for _, arg := range encryptedField.Args {
-		switch arg.Name() {
-		case "filter":
-			hasFilter = true
-		case "limit":
-			hasLimit = true
-		case "offset":
-			hasOffset = true
-		}
-	}
-	assert.True(t, hasFilter, "should have filter argument")
-	assert.True(t, hasLimit, "should have limit argument")
-	assert.True(t, hasOffset, "should have offset argument")
-
-	returnType := encryptedField.Type
-	if nonNull, ok := returnType.(*gql.NonNull); ok {
-		returnType = nonNull.OfType
-	}
-	assert.Equal(t, request.EncryptedSearchResultName, returnType.Name())
-
-	resultObj, ok := returnType.(*gql.Object)
-	assert.True(t, ok, "returnType should be an Object")
-	docIDsField, ok := resultObj.Fields()["docIDs"]
-	assert.True(t, ok, "EncryptedSearchResult should have docIDs field")
-
-	docIDsType := docIDsField.Type
-	if nonNull, ok := docIDsType.(*gql.NonNull); ok {
-		docIDsType = nonNull.OfType
-	}
-	list, ok := docIDsType.(*gql.List)
-	assert.True(t, ok, "docIDs should be a list")
-	if ok {
-		elementType := list.OfType
-		if nonNull, ok := elementType.(*gql.NonNull); ok {
-			elementType = nonNull.OfType
-		}
-		assert.Equal(t, "ID", elementType.Name())
-	}
+	generated := introspectDocument(t, manager.Definition())
+	querySurface := typeSurface(generated.TypeByName("Query"))
+	assert.Contains(t, querySurface,
+		"encrypted_User(filter:UserEncryptedFilterArg,limit:Int,offset:Int):"+request.EncryptedSearchResultName)
+	assert.Equal(t, []string{"docIDs():[ID!]!"}, typeSurface(generated.TypeByName(request.EncryptedSearchResultName)))
 }
 
 func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
@@ -109,12 +66,9 @@ func TestNoEncryptedQueryFieldWithoutIndexes(t *testing.T) {
 		},
 	}
 
-	_, err = manager.Generator.Generate(ctx, collections)
+	err = manager.Generate(ctx, collections)
 	require.NoError(t, err)
 
-	queryType := manager.schema.QueryType()
-	require.NotNil(t, queryType)
-
-	_, ok := queryType.Fields()["Product_encrypted"]
-	assert.False(t, ok, "Product_encrypted field should not exist without encrypted indexes")
+	generated := introspectDocument(t, manager.Definition())
+	assert.NotContains(t, typeMembers(generated.TypeByName("Query")), "encrypted_Product")
 }

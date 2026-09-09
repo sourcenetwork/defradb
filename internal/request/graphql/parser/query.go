@@ -13,9 +13,8 @@ package parser
 import (
 	"strings"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
@@ -24,22 +23,22 @@ import (
 // parseQueryOperationDefinition parses the individual GraphQL
 // 'query' operations, which there may be multiple of.
 func parseQueryOperationDefinition(
-	exe *gql.ExecutionContext,
-	collectedFields [][]*ast.Field,
+	exe *executionContext,
+	collectedFields [][]*field,
 ) (*request.OperationDefinition, []error) {
 	var selections []request.Selection
 	for _, fields := range collectedFields {
 		for _, field := range fields {
 			var parsedSelection request.Selection
-			if field.Name.Value == request.CommitsName {
-				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), field)
+			if field.name == request.CommitsName {
+				parsed, err := parseCommitSelect(exe, field)
 				if err != nil {
 					return nil, []error{err}
 				}
 
 				parsedSelection = parsed
-			} else if _, isAggregate := request.Aggregates[field.Name.Value]; isAggregate {
-				parsed, err := parseAggregate(exe, exe.Schema.QueryType(), field)
+			} else if _, isAggregate := request.Aggregates[field.name]; isAggregate {
+				parsed, err := parseAggregate(exe, field)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -59,7 +58,7 @@ func parseQueryOperationDefinition(
 			} else {
 				// the query doesn't match a reserve name
 				// so its probably a generated query
-				parsed, err := parseSelect(exe, exe.Schema.QueryType(), field)
+				parsed, err := parseSelect(exe, field)
 				if err != nil {
 					return nil, []error{err}
 				}
@@ -88,26 +87,21 @@ func parseQueryOperationDefinition(
 // which includes sub fields, and may include
 // filters, limits, orders, etc..
 func parseSelect(
-	exe *gql.ExecutionContext,
-	parent *gql.Object,
-	field *ast.Field,
+	exe *executionContext,
+	field *field,
 ) (*request.Select, error) {
-	isEncrypted := strings.HasPrefix(field.Name.Value, request.EncryptedCollectionPrefix)
+	isEncrypted := strings.HasPrefix(field.name, request.EncryptedCollectionPrefix)
 
 	slct := &request.Select{
 		Field: request.Field{
-			Name:  field.Name.Value,
-			Alias: getFieldAlias(field),
+			Name:  field.name,
+			Alias: field.alias,
 		},
 		IsEncrypted: isEncrypted,
 	}
 
-	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
-	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-
-	for _, argument := range field.Arguments {
-		name := argument.Name.Value
-		value := arguments[name]
+	for _, name := range field.argumentOrder {
+		value := field.arguments[name]
 
 		switch name {
 		case request.FilterClause:
@@ -182,37 +176,28 @@ func parseSelect(
 	}
 
 	// if theres no field selections, just return
-	if field.SelectionSet == nil {
+	if len(field.selectionSet) == 0 {
 		return slct, nil
 	}
 
 	// parse field selections
-	fieldObject, err := typeFromFieldDef(fieldDef)
+	selections, err := parseSelectFields(exe, field.selectionSet)
 	if err != nil {
 		return nil, err
 	}
-
-	slct.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
-	if err != nil {
-		return nil, err
-	}
+	slct.Fields = selections
 
 	return slct, err
 }
 
 func parseAggregate(
-	exe *gql.ExecutionContext,
-	parent *gql.Object,
-	field *ast.Field,
+	exe *executionContext,
+	field *field,
 ) (*request.Aggregate, error) {
-	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
-	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-
 	var targets []*request.AggregateTarget
-	for _, argument := range field.Arguments {
-		name := argument.Name.Value
+	for _, name := range field.argumentOrder {
 
-		switch v := arguments[name].(type) {
+		switch v := field.arguments[name].(type) {
 		case string:
 			targets = append(targets, &request.AggregateTarget{
 				HostName: v,
@@ -229,25 +214,22 @@ func parseAggregate(
 
 	return &request.Aggregate{
 		Field: request.Field{
-			Name:  field.Name.Value,
-			Alias: getFieldAlias(field),
+			Name:  field.name,
+			Alias: field.alias,
 		},
 		Targets: targets,
 	}, nil
 }
 
 func parseSimilarity(
-	exe *gql.ExecutionContext,
-	parent *gql.Object,
-	field *ast.Field,
+	exe *executionContext,
+	field *field,
 ) (*request.Similarity, error) {
-	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
-	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
 	var target string
 	var vector any
-	for _, argument := range field.Arguments {
-		target = argument.Name.Value
-		v := arguments[target].(map[string]any)
+	for _, name := range field.argumentOrder {
+		target = name
+		v := field.arguments[target].(map[string]any)
 		vector = v[types.SimilarityArgVector]
 	}
 	// The argument names the field to compare against, so without one there is nothing to
@@ -258,8 +240,8 @@ func parseSimilarity(
 
 	return &request.Similarity{
 		Field: request.Field{
-			Name:  field.Name.Value,
-			Alias: getFieldAlias(field),
+			Name:  field.name,
+			Alias: field.alias,
 		},
 		Target: target,
 		Vector: vector,
@@ -301,6 +283,15 @@ func parseAggregateTarget(
 
 		case request.OrderClause:
 			switch t := value.(type) {
+			case string:
+				dir, err := parseOrderDirectionString(t)
+				if err != nil {
+					return nil, err
+				}
+				order = immutable.Some(request.OrderBy{
+					Conditions: []request.OrderCondition{{Direction: dir}},
+				})
+
 			case int:
 				// For inline arrays the order arg will be a simple enum declaring the order direction
 				dir, err := parseOrderDirection(t)
@@ -360,32 +351,20 @@ func parseAggregateTarget(
 // ValidateSimilarityArgs reports similarity arguments naming a field that cannot hold a vector.
 // Such a field has no similarity argument, so the GraphQL library calls it an unknown argument,
 // which reads as if the field did not exist. Must run before that validation rejects the request.
-func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
-	fragments := map[string]*ast.FragmentDefinition{}
-	for _, definition := range doc.Definitions {
-		if fragment, isFragment := definition.(*ast.FragmentDefinition); isFragment {
-			fragments[fragment.Name.Value] = fragment
-		}
+func ValidateSimilarityArgs(definition, doc *wgast.Document) []error {
+	fragments := make(map[string]int, len(doc.FragmentDefinitions))
+	for ref := range doc.FragmentDefinitions {
+		fragments[doc.FragmentDefinitionNameString(ref)] = doc.FragmentDefinitions[ref].SelectionSet
 	}
-
 	var errs []error
-	for _, definition := range doc.Definitions {
-		operation, isOperation := definition.(*ast.OperationDefinition)
-		if !isOperation {
-			continue
-		}
+	for _, operation := range doc.OperationDefinitions {
 		// Similarity exists on every object type, so a mutation's result set can select it too.
-		root := schema.QueryType()
-		switch operation.Operation {
-		case ast.OperationTypeMutation:
-			root = schema.MutationType()
-		case ast.OperationTypeSubscription:
-			root = schema.SubscriptionType()
-		}
-		if root == nil {
+		root, err := operationRootType(definition, operation.OperationType)
+		if err != nil {
 			continue
 		}
-		errs = append(errs, validateSimilarityArgs(root, operation.SelectionSet, fragments, map[string]bool{})...)
+		errs = append(errs, validateSimilarityArgs(
+			doc, definition, root, operation.SelectionSet, fragments, map[string]bool{})...)
 	}
 	return errs
 }
@@ -393,90 +372,94 @@ func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
 // validateSimilarityArgs checks obj's similarity selections, then recurses into the related objects
 // selected alongside them. visited guards against a fragment cycle.
 func validateSimilarityArgs(
-	obj *gql.Object,
-	selectionSet *ast.SelectionSet,
-	fragments map[string]*ast.FragmentDefinition,
+	doc *wgast.Document,
+	definition *wgast.Document,
+	obj wgast.Node,
+	selectionSet int,
+	fragments map[string]int,
 	visited map[string]bool,
 ) []error {
-	if obj == nil || selectionSet == nil {
-		return nil
-	}
-
 	similarityArgs := map[string]struct{}{}
-	if similarity, exists := obj.Fields()[request.SimilarityFieldName]; exists {
-		for _, arg := range similarity.Args {
-			similarityArgs[arg.Name()] = struct{}{}
+	if similarity, exists := definition.NodeFieldDefinitionByName(obj, []byte(request.SimilarityFieldName)); exists {
+		for _, arg := range definition.FieldDefinitionArgumentsDefinitions(similarity) {
+			similarityArgs[definition.InputValueDefinitionNameString(arg)] = struct{}{}
 		}
 	}
 
 	var errs []error
-	for _, selection := range selectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.InlineFragment:
-			errs = append(errs, validateSimilarityArgs(obj, node.SelectionSet, fragments, visited)...)
+	for _, selectionRef := range doc.SelectionSets[selectionSet].SelectionRefs {
+		selection := doc.Selections[selectionRef]
+		switch selection.Kind {
+		case wgast.SelectionKindInlineFragment:
+			errs = append(errs, validateSimilarityArgs(
+				doc, definition, obj, doc.InlineFragments[selection.Ref].SelectionSet, fragments, visited)...)
 
-		case *ast.FragmentSpread:
-			name := node.Name.Value
+		case wgast.SelectionKindFragmentSpread:
+			name := doc.FragmentSpreadNameString(selection.Ref)
 			if visited[name] {
 				continue
 			}
 			visited[name] = true
 			if fragment, exists := fragments[name]; exists {
-				errs = append(errs, validateSimilarityArgs(obj, fragment.SelectionSet, fragments, visited)...)
+				errs = append(errs, validateSimilarityArgs(doc, definition, obj, fragment, fragments, visited)...)
 			}
 
-		case *ast.Field:
-			if node.Name.Value != request.SimilarityFieldName {
+		case wgast.SelectionKindField:
+			name := doc.FieldNameString(selection.Ref)
+			if name != request.SimilarityFieldName {
+				if !doc.Fields[selection.Ref].HasSelections {
+					continue
+				}
 				errs = append(errs, validateSimilarityArgs(
-					objectOf(obj, node.Name.Value), node.SelectionSet, fragments, visited)...)
+					doc,
+					definition,
+					objectOf(definition, obj, name),
+					doc.Fields[selection.Ref].SelectionSet,
+					fragments,
+					visited,
+				)...)
 				continue
 			}
-			errs = append(errs, validateSimilarityFieldArgs(obj, node, similarityArgs)...)
+			errs = append(errs, validateSimilarityFieldArgs(
+				doc, definition, obj, selection.Ref, similarityArgs)...)
 		}
 	}
 	return errs
 }
 
 func validateSimilarityFieldArgs(
-	obj *gql.Object,
-	similarity *ast.Field,
+	doc *wgast.Document,
+	definition *wgast.Document,
+	obj wgast.Node,
+	similarity int,
 	similarityArgs map[string]struct{},
 ) []error {
 	var errs []error
-	for _, arg := range similarity.Arguments {
-		name := arg.Name.Value
+	for _, arg := range doc.Fields[similarity].Arguments.Refs {
+		name := doc.ArgumentNameString(arg)
 		if _, isSimilarityArg := similarityArgs[name]; isSimilarityArg {
 			continue
 		}
-		field, exists := obj.Fields()[name]
+		field, exists := definition.NodeFieldDefinitionByName(obj, []byte(name))
 		if !exists {
 			// Not a field at all, so the library's error is already right.
 			continue
 		}
-		errs = append(errs, NewErrSimilarityOnNonVectorField(name, field.Type.String()))
+		fieldType, err := definition.PrintTypeBytes(definition.FieldDefinitionType(field), nil)
+		if err != nil {
+			continue
+		}
+		errs = append(errs, NewErrSimilarityOnNonVectorField(name, string(fieldType)))
 	}
 	return errs
 }
 
 // objectOf resolves the object type behind a field, through the list and non-null wrappers a
 // collection or relation field is built from.
-func objectOf(obj *gql.Object, fieldName string) *gql.Object {
-	field, exists := obj.Fields()[fieldName]
+func objectOf(definition *wgast.Document, obj wgast.Node, fieldName string) wgast.Node {
+	field, exists := definition.NodeFieldDefinitionByName(obj, []byte(fieldName))
 	if !exists {
-		return nil
+		return wgast.Node{}
 	}
-
-	typ := field.Type
-	for {
-		switch unwrapped := typ.(type) {
-		case *gql.List:
-			typ = unwrapped.OfType
-		case *gql.NonNull:
-			typ = unwrapped.OfType
-		case *gql.Object:
-			return unwrapped
-		default:
-			return nil
-		}
-	}
+	return definition.FieldDefinitionTypeNode(field)
 }
