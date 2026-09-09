@@ -71,7 +71,7 @@ const (
 	dagSyncWorkers = 32
 
 	// msgQueueSize is the capacity of the incoming pubsub message queue.
-	// Messages that arrive when the queue is full are dropped with a warning.
+	// Messages that arrive when the queue is full are dropped and counted.
 	msgQueueSize = 50_000
 
 	// msgQueueMemDivisor sets the queue's byte budget as this fraction of the process
@@ -91,6 +91,11 @@ const (
 	// this node's own batchMaxDocs to hold the per-entry cost under a tenth of a message. The
 	// cap applies while decoding, since the decode allocates before the message can be charged.
 	maxInboundDocuments = 16 * batchMaxDocs
+
+	// statsInterval is how often queue depth and merge counters are reported. Rates are
+	// reported per interval rather than per event, which keeps the ingest path quiet
+	// under load where per-event logging would dominate the output.
+	statsInterval = 30 * time.Second
 )
 
 // retainedBytesPerDocument is the fixed cost of one decoded batch entry, whatever it carries.
@@ -233,6 +238,51 @@ type P2P struct {
 	msgQueueBytes atomic.Int64
 	// msgQueueMaxBytes caps msgQueueBytes. Zero or less disables the byte bound.
 	msgQueueMaxBytes int64
+
+	// Counters reported by reportStats and reset on each report, so each line carries
+	// the rate for that interval rather than a running total.
+	// statMsgsIn counts every message the dispatcher hands over, including dropped ones,
+	// so the drop counters have a denominator.
+	statMsgsIn        atomic.Int64
+	statDroppedBudget atomic.Int64
+	statDroppedFull   atomic.Int64
+	statMergedDocs    atomic.Int64
+	statDroppedDocs   atomic.Int64
+	// statSkippedDocs counts documents deliberately not merged: already held, already in
+	// flight, repeated within one document-sync round, or excluded by access or the
+	// replication filter. Not a loss, so kept apart.
+	statSkippedDocs atomic.Int64
+	statBatches     atomic.Int64
+	// statBatchesWithDrops counts batches in which at least one document dropped. The
+	// rest of the batch still commits, so this is not a count of failed batches.
+	statBatchesWithDrops atomic.Int64
+
+	// The inbound CAR path: imports attempted, imports abandoned, and the blocks an abandoned
+	// import had already written. Those blocks sit in the store owned by no document until a
+	// later merge claims them.
+	statCARImports            atomic.Int64
+	statCARImportFailed       atomic.Int64
+	statCARImportOrphanBlocks atomic.Int64
+
+	// CAR generation counters. A failed generation is not a lost document: the block is sent
+	// either way, so the receiver walks the DAG instead. statCARMissing counts links the build
+	// could not follow in a CAR it returned.
+	statCARBuilt           atomic.Int64
+	statCARFailed          atomic.Int64
+	statCARMissing         atomic.Int64
+	carFailureReason       failureReasons
+	carImportFailureReason failureReasons
+
+	// statSyncDAGCalls counts walks started. A walk fetches blocks link by link, and is taken
+	// when an arrival carries no CAR, and by document and branchable-collection sync.
+	statSyncDAGCalls     atomic.Int64
+	syncDAGFailureReason failureReasons
+
+	// docDropReason names why an inbound document never reached the merge, and docSkipReason
+	// why one was deliberately not merged. Both sets are fixed: a reason taken from an error
+	// string would let a peer grow the map.
+	docDropReason failureReasons
+	docSkipReason failureReasons
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -291,11 +341,19 @@ func New(
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
 	}
+	p.initReasonCounters()
+
+	// The bounds are fixed for the life of the process, and queueBytes and the drop
+	// counters cannot be read without them.
+	log.Info("p2p queue bounds",
+		corelog.Int("slots", msgQueueSize),
+		corelog.Int64("byteBudget", p.msgQueueMaxBytes))
 
 	for i := 0; i < dagSyncWorkers; i++ {
 		p.msgWorkers.Add(1)
 		go p.processMessageWorker()
 	}
+	go p.reportStats()
 
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 	p.batcher = newPubsubBatcher(host.ID(), func(topic string, data []byte) error {
@@ -681,18 +739,16 @@ func (p *P2P) docIDsForBlockCID(
 
 // pubSubMessageHandler decodes the incoming wire message and enqueues it for
 // processing by the bounded worker pool. It never blocks the libp2p pubsub
-// dispatcher: if the queue is full the message is dropped with a warning.
+// dispatcher: if the queue is full the message is dropped and counted.
 //
 // Most of the budget is claimed before decoding, so a message that cannot be queued does not
 // pay for a decode it will not use. The per-entry cost of a batch is only known after the
 // decode, and is claimed there.
 func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
 	size := int64(len(msg))
+	p.statMsgsIn.Add(1)
 	if !p.claimQueueBytes(size) {
-		log.Info("pubsub message queue over byte budget, dropping message",
-			corelog.Any("topic", topic),
-			corelog.Int64("bytes", size),
-			corelog.Int64("budget", p.msgQueueMaxBytes))
+		p.statDroppedBudget.Add(1)
 		return nil, nil
 	}
 
@@ -709,11 +765,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	if perDocument := retainedBytesPerDocument * int64(len(req.Documents)); perDocument > 0 {
 		if !p.claimQueueBytes(perDocument) {
 			p.releaseQueueBytes(size)
-			log.Info("pubsub message queue over byte budget, dropping message",
-				corelog.Any("topic", topic),
-				corelog.Int64("bytes", size+perDocument),
-				corelog.Int64("documents", int64(len(req.Documents))),
-				corelog.Int64("budget", p.msgQueueMaxBytes))
+			p.statDroppedBudget.Add(1)
 			return nil, nil
 		}
 		size += perDocument
@@ -725,7 +777,7 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 		p.releaseQueueBytes(size)
 	default:
 		p.releaseQueueBytes(size)
-		log.Info("pubsub message queue full, dropping message", corelog.Any("topic", topic))
+		p.statDroppedFull.Add(1)
 	}
 	return nil, nil
 }
@@ -749,6 +801,74 @@ func (p *P2P) releaseQueueBytes(size int64) {
 		return
 	}
 	p.msgQueueBytes.Add(-size)
+}
+
+// reportStats periodically logs queue occupancy and merge outcomes. Queue depth and the
+// split between merged and dropped documents are otherwise only visible from a heap
+// profile, which is too invasive to take routinely.
+func (p *P2P) reportStats() {
+	ticker := time.NewTicker(statsInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-p.ctx.Done():
+			return
+		case <-ticker.C:
+			p.report()
+		}
+	}
+}
+
+// report logs one interval's counters and resets them.
+func (p *P2P) report() {
+	droppedOverBudget := p.statDroppedBudget.Swap(0)
+	droppedQueueFull := p.statDroppedFull.Swap(0)
+	log.Info("p2p stats",
+		corelog.Int("queueDepth", len(p.msgQueue)),
+		corelog.Int64("queueBytes", p.msgQueueBytes.Load()),
+		corelog.Int64("droppedOverBudget", droppedOverBudget),
+		corelog.Int64("droppedQueueFull", droppedQueueFull),
+		corelog.Int64("batches", p.statBatches.Swap(0)),
+		corelog.Int64("batchesWithDrops", p.statBatchesWithDrops.Swap(0)),
+		corelog.Int64("docsMerged", p.statMergedDocs.Swap(0)),
+		corelog.Int64("docsDropped", p.statDroppedDocs.Swap(0)),
+		corelog.Int64("docsSkipped", p.statSkippedDocs.Swap(0)),
+		corelog.Int64("msgsIn", p.statMsgsIn.Swap(0)),
+		corelog.Int64("carImports", p.statCARImports.Swap(0)),
+		corelog.Int64("carImportFailed", p.statCARImportFailed.Swap(0)),
+		corelog.Int64("carImportOrphanBlocks", p.statCARImportOrphanBlocks.Swap(0)),
+		corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
+		corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
+		corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
+		corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
+	)
+	// A drop at the door is data this node will not hold. The stats line above is at
+	// info, so a node running at error level sees only this.
+	if droppedOverBudget != 0 || droppedQueueFull != 0 {
+		log.Error("dropped inbound pubsub messages",
+			corelog.Int64("overBudget", droppedOverBudget),
+			corelog.Int64("queueFull", droppedQueueFull))
+	}
+
+	reportFailureReasons("car failures", p.carFailureReason.drain())
+	reportFailureReasons("syncDAG failures", p.syncDAGFailureReason.drain())
+	reportFailureReasons("document drops", p.docDropReason.drain())
+	reportFailureReasons("document skips", p.docSkipReason.drain())
+	reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
+}
+
+// reportFailureReasons logs one line naming every reason that occurred in the interval,
+// or nothing when there were none. Reasons come from a fixed set, so the line has a
+// bounded width.
+func reportFailureReasons(msg string, counts []reasonCount) {
+	if len(counts) == 0 {
+		return
+	}
+	fields := make([]slog.Attr, 0, len(counts))
+	for _, c := range counts {
+		fields = append(fields, corelog.Int64(c.reason, c.count))
+	}
+	log.Info(msg, fields...)
 }
 
 // processMessageWorker is a long-lived goroutine that drains p.msgQueue and
@@ -804,59 +924,87 @@ func (p *P2P) processPushlogRequest(
 
 	// Handle batched multi-document push using a single shared transaction.
 	if len(req.Documents) > 0 {
-		results, err := p.processBatchedDocuments(ctx, req, isReplicator)
+		// Counted before the documents are processed, so a batch still counts when none
+		// of them survives.
+		p.statBatches.Add(1)
+
+		results, dropped, err := p.processBatchedDocuments(ctx, req, isReplicator)
 		if err != nil {
 			return err
 		}
-		if len(results) == 0 {
-			return nil
-		}
-		merges := make([]event.Merge, len(results))
-		for i, r := range results {
-			merges[i] = r.merge
-		}
-		merged, err := p.db.MergeBatchWithTxn(ctx, merges)
-		if err != nil {
-			log.ErrorE("Failed to merge documents in batch", err,
-				corelog.String("PeerID", req.SenderID),
-				corelog.Int("Documents", len(merges)))
-		}
-		for i, r := range results {
-			if !merged[i] {
-				// Not stored here, so relaying it would advertise a document this node
-				// cannot serve.
-				continue
+		if len(results) > 0 {
+			merges := make([]event.Merge, len(results))
+			for i, r := range results {
+				merges[i] = r.merge
 			}
-			updateEvt := event.Update{
-				DocID:        r.merge.DocID,
-				Cid:          r.merge.Cid,
-				CollectionID: r.merge.CollectionID,
-				Block:        r.block,
-				IsRelay:      true,
+			merged, err := p.db.MergeBatchWithTxn(ctx, merges)
+			for _, ok := range merged {
+				if ok {
+					p.statMergedDocs.Add(1)
+				} else {
+					p.dropDoc(dropMergeFailed)
+					dropped++
+				}
 			}
-			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
-			if err := p.SendUpdate(updateEvt); err != nil {
-				log.ErrorE("Failed to send update after batch sync", err,
-					slog.String("DocID", r.merge.DocID),
-					slog.Any("PeerID", p.host.ID()),
-				)
+			if err != nil {
+				log.ErrorE("Failed to merge documents in batch", err,
+					corelog.String("PeerID", req.SenderID),
+					corelog.Int("Documents", len(merges)))
 			}
+			for i, r := range results {
+				if !merged[i] {
+					// Not stored here, so relaying it would advertise a document this node
+					// cannot serve.
+					continue
+				}
+				updateEvt := event.Update{
+					DocID:        r.merge.DocID,
+					Cid:          r.merge.Cid,
+					CollectionID: r.merge.CollectionID,
+					Block:        r.block,
+					IsRelay:      true,
+				}
+				p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+				if err := p.SendUpdate(updateEvt); err != nil {
+					log.ErrorE("Failed to send update after batch sync", err,
+						slog.String("DocID", r.merge.DocID),
+						slog.Any("PeerID", p.host.ID()),
+					)
+				}
+			}
+		}
+
+		if dropped > 0 {
+			p.statBatchesWithDrops.Add(1)
 		}
 		return nil
 	}
 
+	// A request with no CID offered no document, so refusing it is not a loss.
+	if len(req.CID) == 0 {
+		return ErrEmptyPushLog
+	}
+
 	headCID, err := cid.Cast(req.CID)
 	if err != nil {
+		p.dropDoc(dropInvalidCID)
 		return err
 	}
 
-	return p.processQueue.enqueue(headCID.String(), func() error {
+	// enqueue returns without running the handler when the same document is already in
+	// flight, or when the queue is full. Neither case reaches the outcomes recorded inside it.
+	handled := false
+	err = p.processQueue.enqueue(headCID.String(), func() error {
+		handled = true
+
 		// Check if we've already merged this block. If so, skip the sink process.
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
+			p.dropDoc(dropIsMergedError)
 			return err
 		}
 		if isMerged {
+			p.skipDoc(skipAlreadyMerged)
 			return nil
 		}
 
@@ -870,6 +1018,7 @@ func (p *P2P) processPushlogRequest(
 			block, err = coreblock.GetFromBytes(req.Block)
 		}
 		if err != nil {
+			p.dropDoc(dropBlockDecode)
 			return err
 		}
 
@@ -877,9 +1026,11 @@ func (p *P2P) processPushlogRequest(
 		// arbitrary content under a CID of its choosing.
 		blockLink, err := block.GenerateLink()
 		if err != nil {
+			p.dropDoc(dropGenerateLink)
 			return err
 		}
 		if blockLink.Cid != headCID {
+			p.dropDoc(dropCIDMismatch)
 			return ErrBlockCIDMismatch
 		}
 
@@ -888,16 +1039,19 @@ func (p *P2P) processPushlogRequest(
 		if !isReplicator {
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 			if err != nil {
+				p.dropDoc(dropAccessError)
 				return err
 			}
 			if !mightHaveAccess {
 				// If we know we don't have access, we can skip the rest of the processing.
+				p.skipDoc(skipNoAccess)
 				return nil
 			}
 		}
 
 		// Run the replication filter before writing any blocks to storage.
 		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
+			p.skipDoc(skipFiltered)
 			return nil
 		}
 
@@ -905,10 +1059,12 @@ func (p *P2P) processPushlogRequest(
 		if len(req.CAR) > 0 {
 			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
 			if _, err = p.importCAR(ctx, req.CAR); err != nil {
+				p.dropDoc(dropImportCAR)
 				return err
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
+				p.dropDoc(dropSyncDAG)
 				return err
 			}
 		}
@@ -921,8 +1077,10 @@ func (p *P2P) processPushlogRequest(
 			CollectionID: req.CollectionID,
 		}
 		if err = p.db.Merge(ctx, mergeEvt); err != nil {
+			p.dropDoc(dropMergeFailed)
 			return err
 		}
+		p.statMergedDocs.Add(1)
 
 		// Notify bus subscribers and the network of peers that we have a new document available.
 		updateEvt := event.Update{
@@ -941,6 +1099,15 @@ func (p *P2P) processPushlogRequest(
 
 		return nil
 	})
+
+	if !handled {
+		if err == nil {
+			p.skipDoc(skipInFlight)
+		} else {
+			p.dropDoc(dropSyncQueueFull)
+		}
+	}
+	return err
 }
 
 // batchedDoc pairs a merge event with its raw block bytes for relay after batch commit.
@@ -957,8 +1124,15 @@ func (p *P2P) processBatchedDocuments(
 	ctx context.Context,
 	req *protocol.PushLogRequest,
 	isReplicator bool,
-) ([]batchedDoc, error) {
+) ([]batchedDoc, int, error) {
 	results := make([]batchedDoc, 0, len(req.Documents))
+
+	// The counters are process-wide, so this batch's own drops are tallied separately.
+	dropped := 0
+	drop := func(reason string) {
+		p.dropDoc(reason)
+		dropped++
+	}
 
 	for _, doc := range req.Documents {
 		headCID, err := cid.Cast(doc.CID)
@@ -967,15 +1141,18 @@ func (p *P2P) processBatchedDocuments(
 				slog.String("DocID", doc.DocID),
 				slog.String("CollectionID", req.CollectionID),
 			)
+			drop(dropInvalidCID)
 			continue
 		}
 
 		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
 			log.ErrorE("Batch: IsMerged check failed", err, slog.String("DocID", doc.DocID))
+			drop(dropIsMergedError)
 			continue
 		}
 		if isMerged {
+			p.skipDoc(skipAlreadyMerged)
 			continue
 		}
 
@@ -987,16 +1164,19 @@ func (p *P2P) processBatchedDocuments(
 		}
 		if err != nil {
 			log.ErrorE("Batch: block decode failed", err, slog.String("DocID", doc.DocID))
+			drop(dropBlockDecode)
 			continue
 		}
 
 		blockLink, err := block.GenerateLink()
 		if err != nil {
 			log.ErrorE("Batch: GenerateLink failed", err, slog.String("DocID", doc.DocID))
+			drop(dropGenerateLink)
 			continue
 		}
 		if blockLink.Cid != headCID {
 			log.Error("Batch: CID mismatch", slog.String("DocID", doc.DocID))
+			drop(dropCIDMismatch)
 			continue
 		}
 
@@ -1004,25 +1184,30 @@ func (p *P2P) processBatchedDocuments(
 			mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, doc.DocID)
 			if err != nil {
 				log.ErrorE("Batch: access check failed", err, slog.String("DocID", doc.DocID))
+				drop(dropAccessError)
 				continue
 			}
 			if !mightHaveAccess {
+				p.skipDoc(skipNoAccess)
 				continue
 			}
 		}
 
 		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
+			p.skipDoc(skipFiltered)
 			continue
 		}
 
 		if len(doc.CAR) > 0 {
 			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
 				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
+				drop(dropImportCAR)
 				continue
 			}
 		} else {
 			if err = p.syncDAG(ctx, block); err != nil {
 				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
+				drop(dropSyncDAG)
 				continue
 			}
 		}
@@ -1039,7 +1224,7 @@ func (p *P2P) processBatchedDocuments(
 		})
 	}
 
-	return results, nil
+	return results, dropped, nil
 }
 func (p *P2P) SendUpdate(evt event.Update) error {
 	// push to each peer (replicator)

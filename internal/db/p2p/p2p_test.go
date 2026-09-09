@@ -28,6 +28,13 @@ type SimpleMockHost struct {
 	client.Host
 }
 
+// withReasonMaps gives p the counters New builds, so a test can construct a P2P from a literal
+// and still record.
+func withReasonMaps(p *P2P) *P2P {
+	p.initReasonCounters()
+	return p
+}
+
 func (m *SimpleMockHost) ID() string {
 	return "peerID"
 }
@@ -77,6 +84,8 @@ func TestPubSubMessageHandler_OverBudgetDropsBeforeDecode(t *testing.T) {
 	assert.Nil(t, resp)
 	assert.Empty(t, p.msgQueue)
 	assert.Equal(t, int64(0), p.msgQueueBytes.Load())
+	assert.Equal(t, int64(1), p.statDroppedBudget.Load())
+	assert.Equal(t, int64(0), p.statDroppedFull.Load())
 }
 
 func TestPubSubMessageHandler_ByteBudgetReleasedAfterProcessing(t *testing.T) {
@@ -140,6 +149,32 @@ func TestProcessMessageWorker_ReleasesByteBudget(t *testing.T) {
 	assert.Eventually(t, func() bool { return p.msgQueueBytes.Load() == 0 },
 		5*time.Second, 5*time.Millisecond,
 		"the worker must return the budget the handler reserved")
+}
+
+// A full queue and an exhausted budget are separate drop reasons, and the stats line is
+// only useful if a drop is attributed to the one that caused it.
+func TestPubSubMessageHandler_QueueFullCountedSeparately(t *testing.T) {
+	msg, err := cbor.Marshal(protocol.PushLogRequest{DocID: "docID"})
+	assert.NoError(t, err)
+
+	// Budget large enough to stay out of the way, so only the slot count can reject.
+	p := &P2P{
+		ctx:              context.Background(),
+		host:             &SimpleMockHost{},
+		msgQueue:         make(chan queuedMessage, 1),
+		msgQueueMaxBytes: 1 << 20,
+	}
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+
+	_, err = p.pubSubMessageHandler("sender", "topic", msg)
+	assert.NoError(t, err)
+
+	assert.Equal(t, int64(1), p.statDroppedFull.Load())
+	assert.Equal(t, int64(0), p.statDroppedBudget.Load())
+	// The dropped message must not keep holding its reservation.
+	assert.Equal(t, int64(len(msg)), p.msgQueueBytes.Load())
 }
 
 func TestQueueByteBudget_DerivesFromMemoryLimit(t *testing.T) {

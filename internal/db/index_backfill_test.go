@@ -370,3 +370,39 @@ func TestBackfillBatchTxn_ConflictsWhenReadDocIsModified(t *testing.T) {
 	require.True(t, errors.Is(commitErr, corekv.ErrTxnConflict),
 		"expected ErrTxnConflict but got: %v", commitErr)
 }
+
+// The document already holding a contested value is one the writer never named and, under
+// document access control, may not be allowed to read. The error goes back to the writer,
+// and on the merge path to the peer that pushed the log, so it names only the writer.
+func TestSaveUniqueKey_DoesNotNameTheDocumentHoldingTheValue(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, userSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	_, err = col.NewIndex(ctx, client.NewIndexRequest{
+		Fields: []client.IndexedFieldDescription{{Name: "name"}},
+		Unique: true,
+	})
+	require.NoError(t, err)
+
+	holder, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":1}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, holder))
+
+	// Same indexed value, different age, so a different document that cannot have the slot.
+	duplicate, err := client.NewDocFromJSON(ctx, []byte(`{"name":"alice","age":2}`), col.Version())
+	require.NoError(t, err)
+	require.NotEqual(t, holder.ID().String(), duplicate.ID().String())
+
+	err = col.AddDocument(ctx, duplicate)
+	require.ErrorIs(t, err, ErrCanNotIndexNonUniqueFields)
+	require.Contains(t, err.Error(), duplicate.ID().String(), "the writer is named")
+	require.NotContains(t, err.Error(), holder.ID().String(), "the holder is not")
+}
