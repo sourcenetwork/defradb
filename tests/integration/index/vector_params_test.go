@@ -183,3 +183,23 @@ func TestVectorIndex_CreateWithDefaultParams_Works(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Both spellings set, naming different fields: rejected.
+func TestIndexNew_FieldsDisagreeBetweenSpellings_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{SDL: `type User { name: String
+				vector: [Float32!] }`},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields:       []client.IndexedFieldDescription{{Name: "name"}},
+				Vector: &client.VectorIndexDescription{
+					Fields: []string{"vector"}, Metric: client.DistanceMetricCosine,
+					Dimensions: 3, HNSW: &client.HNSWParams{},
+				},
+				ExpectedError: "naming different fields",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

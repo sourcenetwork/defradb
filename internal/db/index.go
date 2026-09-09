@@ -117,22 +117,25 @@ func buildIndexBase(
 	desc client.IndexDescription,
 	building bool,
 ) (collectionBaseIndex, error) {
-	if len(desc.Fields) == 0 {
+	fields := indexFields(desc)
+	if len(fields) == 0 {
 		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
 		building:        building,
-		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
-		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(fields)),
+		descending:      make([]bool, len(fields)),
+		fieldGenerators: make([]FieldIndexGenerator, len(fields)),
 	}
-	for i := range desc.Fields {
-		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
+	for i := range fields {
+		field, foundField := collection.Version().GetFieldByName(fields[i].Name)
 		if !foundField {
-			return collectionBaseIndex{}, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
+		base.descending[i] = fields[i].Descending
 		if !isSupportedKind(field.Kind) {
 			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
@@ -232,7 +235,10 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.CollectionFieldDescription
+	fieldsDescs []client.CollectionFieldDescription
+	// descending is each field's direction, positionally aligned with fieldsDescs. Resolved once at
+	// construction so the write path never reads the deprecated top-level fields.
+	descending      []bool
 	fieldGenerators []FieldIndexGenerator
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
@@ -277,7 +283,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	fields := make([]keys.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
 		fields[i].Value = fieldValues[i]
-		fields[i].Descending = index.desc.Fields[i].Descending
+		fields[i].Descending = index.descending[i]
 	}
 
 	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
@@ -747,9 +753,9 @@ func (index *collectionUniqueIndex) Update(
 }
 
 func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
-	for _, indexedFields := range index.Description().Fields {
-		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
-		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+	for _, name := range indexFieldNames(index.Description()) {
+		oldVal, getOldValErr := oldDoc.GetValue(name)
+		newVal, getNewValErr := newDoc.GetValue(name)
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set
