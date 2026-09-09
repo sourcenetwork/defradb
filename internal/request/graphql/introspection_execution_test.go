@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 )
 
 func TestExecuteIntrospectionWithGraphQLGoTools(t *testing.T) {
@@ -54,6 +56,32 @@ func TestExecuteStandardIntrospectionQueryWithGraphQLGoTools(t *testing.T) {
 	require.True(t, ok)
 	require.NotEmpty(t, schema["types"])
 	require.NotEmpty(t, schema["directives"])
+}
+
+func TestExecuteIntrospectionDecodesAllDescriptions(t *testing.T) {
+	definition, report := astparser.ParseGraphqlDocumentString(`
+		schema { query: Query }
+		type Query {
+			"A description with a newline.\nAnd a quoted \"value\"."
+			described: String
+		}
+	`)
+	require.False(t, report.HasErrors(), report.Error())
+	astnormalization.NormalizeDefinition(&definition, &report)
+	require.False(t, report.HasErrors(), report.Error())
+
+	result := executeIntrospection(&definition, `{
+		__type(name: "Query") { fields { name description } }
+	}`)
+	require.Empty(t, result.GQL.Errors)
+	require.Equal(t, map[string]any{
+		"__type": map[string]any{
+			"fields": []any{map[string]any{
+				"name":        "described",
+				"description": "A description with a newline.\nAnd a quoted \"value\".",
+			}},
+		},
+	}, result.GQL.Data)
 }
 
 const standardIntrospectionQuery = `

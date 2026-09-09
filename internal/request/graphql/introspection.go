@@ -129,10 +129,8 @@ func projectIntrospectionSelection(
 			fieldValue = introspectionTypeByArgument(operation, fieldRef, root)
 		default:
 			fieldValue = object[name]
-			if name == "description" && object["name"] == "SIMILARITY" {
-				fieldValue = "\nReturns how similar the given vector is to the specified field's value. The metric is\n" +
-					" whichever one the field's vector index was created with, defaulting to cosine similarity\n" +
-					" when the field has no vector index. Higher values are more similar for every metric.\n"
+			if name == "description" {
+				fieldValue = introspectionDescription(fieldValue)
 			}
 			// The introspection generator emits compact type references for nested
 			// __Type values. GraphQL permits clients to traverse those references
@@ -165,6 +163,22 @@ func projectIntrospectionSelection(
 		result[responseName] = projected
 	}
 	return result, nil
+}
+
+// introspectionDescription converts a description from its SDL source
+// representation to its semantic string value. graphql-go-tools currently
+// exposes escaped quoted descriptions verbatim (for example, "\\n" instead of
+// a newline), unlike the original GraphQL implementation.
+func introspectionDescription(value any) any {
+	description, ok := value.(string)
+	if !ok {
+		return value
+	}
+	var decoded string
+	if json.Unmarshal([]byte(`"`+description+`"`), &decoded) == nil {
+		return decoded
+	}
+	return description
 }
 
 func sortIntrospectionNamedValues(value any) any {
