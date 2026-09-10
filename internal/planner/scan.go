@@ -13,6 +13,7 @@ package planner
 import (
 	"context"
 	"maps"
+	"time"
 
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/immutable"
@@ -21,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/cursor"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -61,6 +63,10 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
+	cursorPayload        *cursor.CursorPayload
+	reversedIteration    bool
+	cursorDrivenOrdering bool
+
 	execInfo scanExecInfo
 }
 
@@ -85,7 +91,7 @@ func (n *scanNode) Init() error {
 		n.col,
 		n.fields,
 		filter,
-		n.ordering,
+		n.fetcherOrdering(),
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {
@@ -437,12 +443,109 @@ func (n *scanNode) initScan() error {
 		n.prefixes = []keys.Walkable{prefix}
 	}
 
+	if n.cursorPayload != nil && len(n.cursorPayload.Keys) > 0 && n.index.HasValue() {
+		if seekKey := n.buildCursorSeekKey(); seekKey != nil {
+			n.prefixes = append(n.prefixes, seekKey)
+		}
+	}
+
 	err := n.fetcher.Start(n.p.ctx, n.prefixes...)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (n *scanNode) fetcherOrdering() []mapper.OrderCondition {
+	if !n.cursorDrivenOrdering || !n.index.HasValue() || len(n.ordering) == 0 {
+		return n.ordering
+	}
+
+	ordered, reverse := fetcher.CanBeOrderedByIndex(n.ordering, n.index.Value(), n.documentMapping)
+	if !ordered || reverse == n.reversedIteration {
+		return n.ordering
+	}
+
+	ordering := make([]mapper.OrderCondition, len(n.ordering))
+	copy(ordering, n.ordering)
+	for i := range ordering {
+		if ordering[i].Direction == mapper.ASC {
+			ordering[i].Direction = mapper.DESC
+		} else {
+			ordering[i].Direction = mapper.ASC
+		}
+	}
+	return ordering
+}
+
+func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
+	if n.cursorPayload == nil || len(n.cursorPayload.Keys) == 0 || !n.index.HasValue() {
+		return nil
+	}
+
+	indexDesc := n.index.Value()
+
+	shortID, err := id.GetCollectionShortID(n.p.ctx, n.col.Version().CollectionID)
+	if err != nil {
+		return nil
+	}
+
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	epoch, err := fetcher.ReadIndexEpoch(n.p.ctx, txn, n.col.Version().CollectionID, indexDesc.ID)
+	if err != nil {
+		return nil
+	}
+	fields := make([]keys.IndexedField, 0, len(indexDesc.Fields)+1)
+	for _, idxField := range indexDesc.Fields {
+		val, ok := n.cursorPayload.Keys[idxField.Name]
+		if !ok {
+			break
+		}
+
+		if colField, found := n.col.Version().GetFieldByName(idxField.Name); found {
+			switch colField.Kind {
+			case client.FieldKind_NILLABLE_INT:
+				if floatVal, isFloat := val.(float64); isFloat {
+					val = int64(floatVal)
+				}
+			case client.FieldKind_NILLABLE_DATETIME:
+				if strVal, isString := val.(string); isString {
+					if parsed, err := time.Parse(time.RFC3339, strVal); err == nil {
+						val = parsed
+					}
+				}
+			}
+		}
+
+		normVal, err := client.NewNormalValue(val)
+		if err != nil {
+			return nil
+		}
+
+		fields = append(fields, keys.IndexedField{
+			Value:      normVal,
+			Descending: idxField.Descending,
+		})
+	}
+
+	var docShortID uint64
+	if !indexDesc.Unique {
+		var found bool
+		docShortID, found, err = id.GetDocShortID(n.p.ctx, shortID, n.cursorPayload.DocID)
+		if err != nil || !found {
+			return nil
+		}
+	}
+
+	key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, epoch, fields)
+	key.DocShortID = docShortID
+	if n.reversedIteration {
+		key.Offset = 0
+	} else {
+		key.Offset = 1
+	}
+	return &key
 }
 
 // Next gets the next result.

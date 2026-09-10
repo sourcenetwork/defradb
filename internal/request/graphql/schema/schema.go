@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -35,6 +36,21 @@ func defaultSchema() (gql.Schema, error) {
 
 	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg, commitsEnum)
 
+	pageInfoObject := types.PageInfoObject()
+
+	// CursorQuery mirrors Query but with cursor-specific arguments.
+	// Collection fields are added dynamically during schema generation.
+	cursorQueryType := gql.NewObject(gql.ObjectConfig{
+		Name:        request.CursorQueryTypeName,
+		Description: "Cursor-based pagination query type",
+		Fields: gql.Fields{
+			request.PageInfoFieldName: &gql.Field{
+				Type:        pageInfoObject,
+				Description: "Pagination metadata for the cursor query",
+			},
+		},
+	})
+
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
 			commitObject,
@@ -45,8 +61,10 @@ func defaultSchema() (gql.Schema, error) {
 			explainEnum,
 			indexFieldInput,
 			encryptedSearchResult,
+			pageInfoObject,
+			cursorQueryType,
 		),
-		Query:        defaultQueryType(queryCommits),
+		Query:        defaultQueryType(cursorQueryType, queryCommits),
 		Mutation:     defaultMutationType(),
 		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
 		Subscription: defaultSubscriptionType(queryCommits),
@@ -55,8 +73,21 @@ func defaultSchema() (gql.Schema, error) {
 	return sch, err
 }
 
-func defaultQueryType(fields ...*gql.Field) *gql.Object {
-	return defaultOperationType("Query", fields...)
+func defaultQueryType(cursorQueryType *gql.Object, fields ...*gql.Field) *gql.Object {
+	fieldsCfg := make(gql.Fields, len(fields)+1)
+	for _, field := range fields {
+		fieldsCfg[field.Name] = field
+	}
+
+	fieldsCfg[request.CursorFieldName] = &gql.Field{
+		Type:        cursorQueryType,
+		Description: "Cursor-based pagination wrapper",
+	}
+
+	return gql.NewObject(gql.ObjectConfig{
+		Name:   "Query",
+		Fields: fieldsCfg,
+	})
 }
 
 func defaultMutationType() *gql.Object {
@@ -138,6 +169,8 @@ func defaultTypes(
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
+	pageInfoObject *gql.Object,
+	cursorQueryType *gql.Object,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -225,5 +258,9 @@ func defaultTypes(
 
 		indexFieldInput,
 		encryptedSearchResult,
+
+		// Cursor pagination types
+		pageInfoObject,
+		cursorQueryType,
 	}
 }

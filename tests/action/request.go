@@ -29,11 +29,21 @@ type ResultAsserter interface {
 	Assert(t testing.TB, result map[string]any)
 }
 
+// VariableResolver resolves a request variable value at execution time.
+type VariableResolver interface {
+	// ResolveVariable returns the value to use for the given node.
+	ResolveVariable(t testing.TB, nodeID int) any
+}
+
 // ResultAsserterFunc is a function that can be used to implement the ResultAsserter
 type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
 
 func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
-	f(t, result)
+	t.Helper()
+	asserted, message := f(t, result)
+	if !asserted {
+		t.Error(message)
+	}
 }
 
 // Request represents a standard Defra (GQL) request.
@@ -118,7 +128,7 @@ nodeLoop:
 			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			reqOption.SetVariables(resolveVariables(a.s, a.Variables.Value()))
+			reqOption.SetVariables(a.resolveVariables(nodeID))
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
@@ -151,17 +161,25 @@ nodeLoop:
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
-// resolveVariables resolves any DocIndex values in the variables map to their
-// corresponding document ID strings.
-func resolveVariables(s *state.State, vars map[string]any) map[string]any {
+// resolveVariables creates a copy of the Variables map with variable resolvers
+// and DocIndex values resolved for the node currently executing the request.
+func (a *Request) resolveVariables(nodeID int) map[string]any {
+	if !a.Variables.HasValue() {
+		return nil
+	}
+
+	vars := a.Variables.Value()
 	resolved := make(map[string]any, len(vars))
 	for k, v := range vars {
-		if index, ok := v.(DocIndex); ok {
-			s.DocIDsLock.RLock()
-			docID := s.DocIDs[index.CollectionIndex][index.Index]
-			s.DocIDsLock.RUnlock()
+		switch ref := v.(type) {
+		case DocIndex:
+			a.s.DocIDsLock.RLock()
+			docID := a.s.DocIDs[ref.CollectionIndex][ref.Index]
+			a.s.DocIDsLock.RUnlock()
 			resolved[k] = docID.String()
-		} else {
+		case VariableResolver:
+			resolved[k] = ref.ResolveVariable(a.s.T, nodeID)
+		default:
 			resolved[k] = v
 		}
 	}

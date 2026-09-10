@@ -90,13 +90,14 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	}
 
 	dsPrefixes := make([]keys.DataStoreKey, 0, len(prefixes))
+	var indexStartKey immutable.Option[keys.Walkable]
 	for _, prefix := range prefixes {
-		dsPrefix, ok := prefix.(keys.DataStoreKey)
-		if !ok {
-			continue
+		switch p := prefix.(type) {
+		case keys.DataStoreKey:
+			dsPrefixes = append(dsPrefixes, p)
+		case *keys.IndexDataStoreKey:
+			indexStartKey = immutable.Some[keys.Walkable](p)
 		}
-
-		dsPrefixes = append(dsPrefixes, dsPrefix)
 	}
 
 	if f.filter != nil && len(f.fields) > 0 {
@@ -143,7 +144,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	var top fetcher
 	if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
-			f.docMapper, &f.execInfo, f.ordering)
+			f.docMapper, &f.execInfo, f.ordering, indexStartKey)
 		if err != nil {
 			return err
 		}

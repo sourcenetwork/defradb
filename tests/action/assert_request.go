@@ -49,6 +49,13 @@ type assertStack struct {
 	isMap []bool
 }
 
+// CurrentNodeMatcher is a matcher that needs the node currently being asserted.
+type CurrentNodeMatcher interface {
+	gomega.OmegaMatcher
+	// SetCurrentNodeID sets the current node being asserted.
+	SetCurrentNodeID(nodeID int)
+}
+
 func (a *assertStack) pushMap(key string) {
 	a.stack = append(a.stack, key)
 	a.isMap = append(a.isMap, true)
@@ -110,7 +117,11 @@ func assertRequestResults(
 
 	if asserter != nil {
 		asserter.Assert(s.T, resultantData)
-		return true
+		// If no expected results, we're done after running the asserter
+		if expectedResults == nil {
+			return true
+		}
+		// Continue to process expected results (for cursor capture, etc.)
 	}
 
 	// merge all keys so we can check for missing values
@@ -152,6 +163,15 @@ func assertRequestResults(
 
 		case gomega.OmegaMatcher:
 			execGomegaMatcher(exp, s, actual, stack)
+
+		case map[string]any:
+			actualMap, ok := actual.(map[string]any)
+			if ordered {
+				require.True(s.T, ok, "expected value to be a map %v. Path: %s", actual, stack)
+			} else if !ok {
+				return false
+			}
+			assertRequestResultDoc(s, nodeID, actualMap, exp, stack, ordered)
 
 		default:
 			assertResultsEqual(
@@ -380,6 +400,7 @@ func isResultsEqual(client state.ClientType, expected any, actual any) bool {
 // execGomegaMatcher executes the given gomega matcher and asserts the result.
 func execGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any, stack *assertStack) {
 	traverseGomegaMatchers(exp, s, func(m state.TestStateMatcher) { m.SetTestState(s) })
+	traverseGomegaMatchers(exp, s, func(m CurrentNodeMatcher) { m.SetCurrentNodeID(s.CurrentAssertingNodeID) })
 
 	success, err := exp.Match(actual)
 	if err != nil {
@@ -400,6 +421,7 @@ func execGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any, stac
 // checkGomegaMatcher executes the given gomega matcher and returns true if successful.
 func checkGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any) bool {
 	traverseGomegaMatchers(exp, s, func(m state.TestStateMatcher) { m.SetTestState(s) })
+	traverseGomegaMatchers(exp, s, func(m CurrentNodeMatcher) { m.SetCurrentNodeID(s.CurrentAssertingNodeID) })
 
 	success, err := exp.Match(actual)
 	if err != nil || !success {

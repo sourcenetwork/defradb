@@ -1,3 +1,14 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
 // smoke_addmany exercises SaveManyDocuments on an in-memory DefraDB node.
 // Run from the repo root:  go run ./tests/manual/cmd/smoke_addmany/
 package main

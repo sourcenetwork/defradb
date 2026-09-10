@@ -40,6 +40,7 @@ const (
 	scanNodeProp      = "scanNode"
 	limitNodeProp     = "limitNode"
 	orderNodeProp     = "orderNode"
+	cursorNodeProp    = "cursorNode"
 	typeIndexJoinProp = "typeIndexJoin"
 	typeJoinManyProp  = "typeJoinMany"
 	typeJoinOneProp   = "typeJoinOne"
@@ -280,7 +281,7 @@ func formatPath(path []string) string {
 
 // navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
 func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
-	node = unwrapNode(node, limitNodeProp, orderNodeProp)
+	node = unwrapNode(node, cursorNodeProp, limitNodeProp, orderNodeProp)
 	selectNode, ok := node[selectNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 	return selectNode

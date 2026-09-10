@@ -35,6 +35,9 @@ type Operation struct {
 	// Exhaustive is the @exhaustive directive flag from the query.
 	// When true, orphan parents are included when ordering by relation fields.
 	Exhaustive bool
+
+	// CursorSelects is the list of cursor-wrapped selections in the operation.
+	CursorSelects []*Select
 }
 
 // addSelection adds a new selection to the operation's document mapping.
@@ -45,6 +48,38 @@ func (o *Operation) addSelection(i int, f request.Field, s Select) {
 	o.DocumentMapping.SetChildAt(i, s.DocumentMapping)
 	o.DocumentMapping.RenderKeys = append(o.DocumentMapping.RenderKeys, core.RenderKey{
 		Key:   getRenderKey(&f),
+		Index: s.Index,
+	})
+}
+
+func (o *Operation) addCursorSelection(
+	i int,
+	cursorField request.Field,
+	innerField request.Field,
+	pageInfo *request.PageInfoSelect,
+	s Select,
+) {
+	wrapperMapping := core.NewDocumentMapping()
+	wrapperMapping.Add(0, s.Name)
+	wrapperMapping.SetChildAt(0, s.DocumentMapping)
+	wrapperMapping.RenderKeys = append(wrapperMapping.RenderKeys, core.RenderKey{
+		Key:   getRenderKey(&innerField),
+		Index: 0,
+	})
+
+	if pageInfo != nil {
+		pageInfoIndex := wrapperMapping.GetNextIndex()
+		wrapperMapping.Add(pageInfoIndex, request.PageInfoFieldName)
+		wrapperMapping.RenderKeys = append(wrapperMapping.RenderKeys, core.RenderKey{
+			Key:   request.PageInfoFieldName,
+			Index: pageInfoIndex,
+		})
+	}
+
+	o.DocumentMapping.Add(i, s.Name)
+	o.DocumentMapping.SetChildAt(i, wrapperMapping)
+	o.DocumentMapping.RenderKeys = append(o.DocumentMapping.RenderKeys, core.RenderKey{
+		Key:   getRenderKey(&cursorField),
 		Index: s.Index,
 	})
 }

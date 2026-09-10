@@ -15,9 +15,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	internalCursor "github.com/sourcenetwork/defradb/internal/cursor"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -251,4 +253,26 @@ func TestValidCID_WithNonStringValue_Errors(t *testing.T) {
 	_, err := matcher.Match(42)
 
 	assert.Error(t, err)
+}
+
+func TestCapturedCursor_StoresValuesPerNode(t *testing.T) {
+	node0Cursor, err := internalCursor.Encode(internalCursor.CursorPayload{DocID: "node0"})
+	require.NoError(t, err)
+	node1Cursor, err := internalCursor.Encode(internalCursor.CursorPayload{DocID: "node1"})
+	require.NoError(t, err)
+
+	matcher := NewCapturedCursor()
+
+	matcher.SetCurrentNodeID(0)
+	got, err := matcher.Match(node0Cursor)
+	require.NoError(t, err)
+	require.True(t, got)
+
+	matcher.SetCurrentNodeID(1)
+	got, err = matcher.Match(node1Cursor)
+	require.NoError(t, err)
+	require.True(t, got)
+
+	assert.Equal(t, node0Cursor, matcher.ResolveVariable(t, 0))
+	assert.Equal(t, node1Cursor, matcher.ResolveVariable(t, 1))
 }

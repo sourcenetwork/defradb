@@ -1,3 +1,14 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
 // smoke_batchmark exercises BatchMarkAsMerged on the P2P blockstore.
 // Run from the repo root:  go run ./tests/manual/cmd/smoke_batchmark/
 package main
