@@ -146,3 +146,100 @@ func TestGetCollectionVersion_RendersAndRoundTripsStringifiedKinds(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestAddCollection_WithStringifiedKinds_RoundTripsToOriginalVersions(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						boss: User @primary
+						minion: User
+					}
+					type Dog {
+						name: String
+						tags: [Int!]
+						owner: User @primary
+					}
+				`,
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "User",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name:         "_bossID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "_minionID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								RelationName: immutable.Some("user_user"),
+							},
+							{
+								// *SelfKind: relation back into the same collection set,
+								// encoded as an object carrying a RelativeID.
+								Name:         "boss",
+								Kind:         client.NewSelfKind("", false),
+								RelationName: immutable.Some("user_user"),
+								IsPrimary:    true,
+							},
+							{
+								Name:         "minion",
+								Kind:         client.NewSelfKind("", false),
+								RelationName: immutable.Some("user_user"),
+							},
+						},
+					},
+					{
+						Name:           "Dog",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name:         "_ownerID",
+								Kind:         client.FieldKind_DocID,
+								Typ:          client.LWW_REGISTER,
+								RelationName: immutable.Some("dog_user"),
+								IsPrimary:    true,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								// *CollectionKind: relation to a distinct collection, encoded
+								// as an object carrying the related CollectionID.
+								Name:         "owner",
+								Kind:         client.NewCollectionKind("bafyreicuxpdrri4wwdknhbchhdii6tu4myqlhspv3s2c3pci7jt7qc3zua", false),
+								RelationName: immutable.Some("dog_user"),
+								IsPrimary:    true,
+							},
+							{
+								Name: "tags",
+								Kind: client.FieldKind_INT_ARRAY,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

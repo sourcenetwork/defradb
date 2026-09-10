@@ -250,6 +250,11 @@ func parseSimilarity(
 		v := arguments[target].(map[string]any)
 		vector = v[types.SimilarityArgVector]
 	}
+	// The argument names the field to compare against, so without one there is nothing to
+	// compare. The mapper looks the target up by name and would panic on the empty name.
+	if target == "" {
+		return nil, ErrSimilarityMissingTarget
+	}
 
 	return &request.Similarity{
 		Field: request.Field{
@@ -350,4 +355,128 @@ func parseAggregateTarget(
 			GroupBy: groupBy,
 		},
 	}, nil
+}
+
+// ValidateSimilarityArgs reports similarity arguments naming a field that cannot hold a vector.
+// Such a field has no similarity argument, so the GraphQL library calls it an unknown argument,
+// which reads as if the field did not exist. Must run before that validation rejects the request.
+func ValidateSimilarityArgs(schema gql.Schema, doc *ast.Document) []error {
+	fragments := map[string]*ast.FragmentDefinition{}
+	for _, definition := range doc.Definitions {
+		if fragment, isFragment := definition.(*ast.FragmentDefinition); isFragment {
+			fragments[fragment.Name.Value] = fragment
+		}
+	}
+
+	var errs []error
+	for _, definition := range doc.Definitions {
+		operation, isOperation := definition.(*ast.OperationDefinition)
+		if !isOperation {
+			continue
+		}
+		// Similarity exists on every object type, so a mutation's result set can select it too.
+		root := schema.QueryType()
+		switch operation.Operation {
+		case ast.OperationTypeMutation:
+			root = schema.MutationType()
+		case ast.OperationTypeSubscription:
+			root = schema.SubscriptionType()
+		}
+		if root == nil {
+			continue
+		}
+		errs = append(errs, validateSimilarityArgs(root, operation.SelectionSet, fragments, map[string]bool{})...)
+	}
+	return errs
+}
+
+// validateSimilarityArgs checks obj's similarity selections, then recurses into the related objects
+// selected alongside them. visited guards against a fragment cycle.
+func validateSimilarityArgs(
+	obj *gql.Object,
+	selectionSet *ast.SelectionSet,
+	fragments map[string]*ast.FragmentDefinition,
+	visited map[string]bool,
+) []error {
+	if obj == nil || selectionSet == nil {
+		return nil
+	}
+
+	similarityArgs := map[string]struct{}{}
+	if similarity, exists := obj.Fields()[request.SimilarityFieldName]; exists {
+		for _, arg := range similarity.Args {
+			similarityArgs[arg.Name()] = struct{}{}
+		}
+	}
+
+	var errs []error
+	for _, selection := range selectionSet.Selections {
+		switch node := selection.(type) {
+		case *ast.InlineFragment:
+			errs = append(errs, validateSimilarityArgs(obj, node.SelectionSet, fragments, visited)...)
+
+		case *ast.FragmentSpread:
+			name := node.Name.Value
+			if visited[name] {
+				continue
+			}
+			visited[name] = true
+			if fragment, exists := fragments[name]; exists {
+				errs = append(errs, validateSimilarityArgs(obj, fragment.SelectionSet, fragments, visited)...)
+			}
+
+		case *ast.Field:
+			if node.Name.Value != request.SimilarityFieldName {
+				errs = append(errs, validateSimilarityArgs(
+					objectOf(obj, node.Name.Value), node.SelectionSet, fragments, visited)...)
+				continue
+			}
+			errs = append(errs, validateSimilarityFieldArgs(obj, node, similarityArgs)...)
+		}
+	}
+	return errs
+}
+
+func validateSimilarityFieldArgs(
+	obj *gql.Object,
+	similarity *ast.Field,
+	similarityArgs map[string]struct{},
+) []error {
+	var errs []error
+	for _, arg := range similarity.Arguments {
+		name := arg.Name.Value
+		if _, isSimilarityArg := similarityArgs[name]; isSimilarityArg {
+			continue
+		}
+		field, exists := obj.Fields()[name]
+		if !exists {
+			// Not a field at all, so the library's error is already right.
+			continue
+		}
+		errs = append(errs, NewErrSimilarityOnNonVectorField(name, field.Type.String()))
+	}
+	return errs
+}
+
+// objectOf resolves the object type behind a field, through the list and non-null wrappers a
+// collection or relation field is built from.
+func objectOf(obj *gql.Object, fieldName string) *gql.Object {
+	field, exists := obj.Fields()[fieldName]
+	if !exists {
+		return nil
+	}
+
+	typ := field.Type
+	for {
+		switch unwrapped := typ.(type) {
+		case *gql.List:
+			typ = unwrapped.OfType
+		case *gql.NonNull:
+			typ = unwrapped.OfType
+		case *gql.Object:
+			return unwrapped
+		default:
+			return nil
+		}
+	}
 }

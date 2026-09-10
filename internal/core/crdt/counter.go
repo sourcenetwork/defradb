@@ -74,6 +74,7 @@ type Counter struct {
 }
 
 var _ FieldValueCRDT = (*Counter)(nil)
+var _ KindLimitedCRDT = (*Counter)(nil)
 
 // NewCounter creates a new Counter CRDT.
 func NewCounter(
@@ -85,7 +86,7 @@ func NewCounter(
 }
 
 // WARNING: Incrementing an integer and causing it to overflow the int64 max value
-// will cause the value to roll over to the int64 min value. Incremeting a float and
+// will cause the value to roll over to the int64 min value. Incrementing a float and
 // causing it to overflow the float64 max value will act like a no-op.
 func (c *Counter) Increment(
 	ctx context.Context,
@@ -194,6 +195,37 @@ func (c *Counter) CType() client.CType {
 		return client.PN_COUNTER
 	}
 	return client.P_COUNTER
+}
+
+func (c *Counter) SupportedKinds() []client.FieldKind {
+	return []client.FieldKind{
+		client.FieldKind_NILLABLE_INT,
+		client.FieldKind_NILLABLE_FLOAT64,
+		client.FieldKind_NILLABLE_FLOAT32,
+	}
+}
+
+func (c *Counter) String() string {
+	if c.allowDecrement {
+		return "pncounter"
+	}
+	return "pcounter"
+}
+
+func (c *Counter) Description() string {
+	if c.allowDecrement {
+		return `Positive-Negative Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incrementing a float and
+	causing it to overflow the float64 max value will act like a no-op.`
+	}
+
+	return `Positive Counter.
+	
+	WARNING: Incrementing an integer and causing it to overflow the int64 max value
+	will cause the value to roll over to the int64 min value. Incrementing a float and
+	causing it to overflow the float64 max value will act like a no-op.`
 }
 
 func validateAndIncrement[T Incrementable](

@@ -51,6 +51,7 @@ var (
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
 	ErrInvalidTTL                   = errors.New("invalid ttl value")
+	ErrCollectionSchemaNotGenerated = errors.New("collection schema was not generated")
 )
 
 type errorResponse struct {

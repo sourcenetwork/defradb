@@ -63,6 +63,14 @@ func (a *WaitForPeersEvents) Execute() {
 	}
 
 	sourceNode := a.s.Nodes[a.NodeID]
+
+	// A node in another process emits its peer events on a bus we cannot read,
+	// so there is nothing to wait for. The connection itself is still made, and
+	// the actions that follow verify it by talking to the node.
+	if sourceNode.IsExternal {
+		return
+	}
+
 	expectedPeers := make(map[string]map[string]bool)
 
 	addExpectedPeers := func(topic string, peerNodeIDs []int) {

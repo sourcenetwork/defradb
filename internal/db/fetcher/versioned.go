@@ -453,9 +453,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid, docShortID uint64) error {
 				return err
 			}
 
-			mcrdt, err := crdt.FieldLevelCRDT(field.Typ)
-			if err != nil {
-				return err
+			mcrdt, ok := crdt.TryGetFieldCRDT(field.Typ)
+			if !ok {
+				return client.NewErrUnknownCRDT(field.Typ)
 			}
 
 			// Merge the block without worrying about updating the headstore - they are not used

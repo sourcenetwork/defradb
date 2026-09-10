@@ -28,4 +28,17 @@ var (
 	ErrInvalidFilterConditions        = errors.New("invalid filter condition type, expected map")
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
+	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
 )
+
+const errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"
+
+// NewErrSimilarityOnNonVectorField returns an error indicating that similarity was given a field
+// that cannot hold a vector.
+func NewErrSimilarityOnNonVectorField(fieldName string, fieldType string) error {
+	return errors.New(
+		errSimilarityOnNonVectorField,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Type", fieldType),
+	)
+}

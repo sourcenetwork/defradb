@@ -9,10 +9,10 @@
 // licenses/APL.txt.
 
 /*
-This package implements admin and document access control systems.
+This package implements node and document access control systems.
 
 Document access control systems provide acp for individual documents of a collection.
 
-Admin access control systems provide acp for a node's operations.
+Node access control systems provide acp for a node's operations.
 */
 package acp

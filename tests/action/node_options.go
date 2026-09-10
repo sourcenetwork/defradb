@@ -44,10 +44,10 @@ type NodeSetupConfig struct {
 	// HTTP overrides the node's HTTP server settings when set.
 	HTTP immutable.Option[options.NodeHTTPOptions]
 	// IsDocumentACPTest reports whether the test uses document ACP, which
-	// decides whether a SourceHub instance is needed at all.
+	// decides whether a Vera instance is needed at all.
 	IsDocumentACPTest bool
-	// SourceHubImage is the container image used to run SourceHub.
-	SourceHubImage string
+	// VeraImage is the container image used to run Vera.
+	VeraImage string
 	// DatabaseDir, when set, is the path a restarting node reopens its store
 	// from. Empty means a fresh directory.
 	DatabaseDir string
@@ -57,6 +57,14 @@ type NodeSetupConfig struct {
 	// instantiated. A zero pool size leaves the node default in place.
 	LensRuntime  options.NodeLensRuntimeType
 	LensPoolSize int
+	// NodeACP overrides the node's access control settings when set. While it is on
+	// the node lets through no one but the identity it was started with.
+	NodeACP immutable.Option[options.NodeACPOptions]
+}
+
+// nacEnabled reports whether the test asked for node access control.
+func nacEnabled(cfg NodeSetupConfig) bool {
+	return cfg.NodeACP.HasValue() && cfg.NodeACP.Value().IsEnabled
 }
 
 func applyHTTPOptions(opts *options.NodeOptionsBuilder, httpOpts options.NodeHTTPOptions) {

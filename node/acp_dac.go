@@ -22,8 +22,8 @@ import (
 // NewDocumentACP returns a new document ACP module for the given options.
 //
 // Document ACP is always enabled and can not be disabled; an unspecified type
-// defaults to the local implementation. The source-hub implementation is chosen at
-// build time (see acp_dac_source_hub.go and acp_dac_source_hub_js.go).
+// defaults to Local DAC. The Remote DAC implementation is chosen at
+// build time (see acp_dac_remote.go and acp_dac_remote_js.go).
 func NewDocumentACP(
 	ctx context.Context,
 	opts *options.NodeDocumentACPOptions,
@@ -31,8 +31,8 @@ func NewDocumentACP(
 	switch opts.DocumentACPType {
 	case "", options.NodeLocalDocumentACPType:
 		return newLocalDocumentACP(ctx, opts)
-	case options.NodeSourceHubDocumentACPType:
-		return newSourceHubDocumentACP(ctx, opts)
+	case options.NodeRemoteDocumentACPType:
+		return newRemoteDocumentACP(ctx, opts)
 	default:
 		return immutable.None[dac.DocumentACP](), NewErrACPTypeNotSupported(opts.DocumentACPType)
 	}

@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
@@ -136,7 +137,8 @@ func buildIndexBase(
 			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
-			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
+			ct, _ := crdt.TryGetFieldCRDT(field.Typ)
+			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, ct.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}

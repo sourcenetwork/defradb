@@ -44,7 +44,7 @@ func (g *HNSWIndex) SearchWithDistance(query []float32, k, efSearch int) ([]Neig
 	}
 	out := make([]Neighbor, len(w))
 	for i, c := range w {
-		out[i] = Neighbor{ID: c.id, Distance: float64(c.dist)}
+		out[i] = Neighbor{ID: c.id, Distance: c.dist}
 	}
 	return out, nil
 }

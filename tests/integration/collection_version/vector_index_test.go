@@ -84,7 +84,26 @@ func TestCollectionVersion_VectorIndexOnStringField_ShouldError(t *testing.T) {
 						embedding: String @index(vector: {dimensions: 3})
 					}
 				`,
-				ExpectedError: "unsupported field type for vector index",
+				ExpectedError: "vector index requires a [Float32!] field",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Int arrays are rejected even though the distance maths would work on them, because float32 holds
+// integers exactly only up to ~16.7 million, so larger values would silently collide and rank wrong.
+func TestCollectionVersion_VectorIndexOnIntArrayField_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embedding: [Int!] @index(vector: {dimensions: 3})
+					}
+				`,
+				ExpectedError: "vector index requires a [Float32!] field",
 			},
 		},
 	}
@@ -101,7 +120,7 @@ func TestCollectionVersion_VectorIndexOnFloat64ArrayField_ShouldError(t *testing
 						embedding: [Float64!] @index(vector: {dimensions: 3})
 					}
 				`,
-				ExpectedError: "unsupported field type for vector index",
+				ExpectedError: "vector index requires a [Float32!] field",
 			},
 		},
 	}
@@ -179,6 +198,60 @@ func TestCollectionVersion_VectorIndexWithUnsupportedMetric_ShouldError(t *testi
 					}
 				`,
 				ExpectedError: `Expected type "VectorDistanceMetric", found MANHATTAN`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// A vector index is searched by nearness, not read in key order, so it cannot honour a descending
+// direction. The direction reaches the db layer so the error can say that, rather than only that an
+// argument was invalid.
+func TestCollectionVersion_VectorIndexWithDescendingDirection_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}}, direction: DESC)
+					}
+				`,
+				ExpectedError: "vector index cannot have a direction",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Ascending is what a vector index already does, so asking for it explicitly is accepted.
+func TestCollectionVersion_VectorIndexWithAscendingDirection_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: COSINE}}, direction: ASC)
+					}
+				`,
+			},
+			&action.ListIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:   "Users_embedding_ASC",
+						ID:     1,
+						Fields: []client.IndexedFieldDescription{{Name: "embedding"}},
+						Kind:   client.IndexKindVector,
+						KindDescription: &client.VectorIndexDescription{
+							Algorithm:  client.VectorAlgorithmHNSW,
+							Metric:     client.DistanceMetricCosine,
+							Dimensions: 3,
+							HNSW:       &client.HNSWParams{M: 16, EfConstruction: 128, EfSearch: 64},
+						},
+					},
+				},
 			},
 		},
 	}

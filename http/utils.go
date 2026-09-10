@@ -78,10 +78,10 @@ func isDevMode(req *http.Request) bool {
 	return opts != nil && opts.EnableDevelopment
 }
 
-// tryGetContexCtx returns the server context if it exists.
+// tryGetContextCtx returns the server context if it exists.
 //
 // This should only be called from functions within the http package.
-func tryGetContexCtx(req *http.Request) (context.Context, bool) {
+func tryGetContextCtx(req *http.Request) (context.Context, bool) {
 	ctx, ok := req.Context().Value(ctxContextKey).(context.Context)
 	return ctx, ok
 }

@@ -88,37 +88,31 @@ func addDelta(
 
 	block := New(crdt.NewCRDT(delta), links, heads...)
 
-	fieldName := immutable.None[string]()
-	if block.Delta.GetFieldName() != "" {
-		fieldName = immutable.Some(block.Delta.GetFieldName())
-	}
-	var encBlock *Encryption
-	var encLink cidlink.Link
-	var err error
-	if !block.Delta.IsCollection() {
-		encBlock, encLink, err = determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
+	if block.Delta.IsField() {
+		fieldName := immutable.Some(block.Delta.GetFieldName())
+		encBlock, encLink, err := determineBlockEncryption(ctx, options.EncryptionDocKey, fieldName, heads)
 		if err != nil {
 			return cidlink.Link{}, nil, NewErrDetermineBlockEncryption(err)
 		}
-	}
 
-	dagBlock := block
-	if encBlock != nil {
-		dagBlock, err = encryptBlock(ctx, block, encBlock)
-		if err != nil {
-			return cidlink.Link{}, nil, NewErrEncryptBlock(err)
+		// encBlock will be nil if the field is not configured to be encrypted
+		if encBlock != nil {
+			block, err = encryptBlock(ctx, block, encBlock)
+			if err != nil {
+				return cidlink.Link{}, nil, NewErrEncryptBlock(err)
+			}
+			block.Encryption = &encLink
 		}
-		dagBlock.Encryption = &encLink
 	}
 
 	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
+		err := signBlock(ctx, txn.Blockstore(), block, ident.Value())
 		if err != nil {
 			return cidlink.Link{}, nil, NewErrSignBlock(err)
 		}
 	}
 
-	link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
+	link, err := putBlock(ctx, txn.Blockstore(), block)
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrStoreBlock(err)
 	}
@@ -128,7 +122,7 @@ func addDelta(
 		return cidlink.Link{}, nil, NewErrProcessBlock(err)
 	}
 
-	b, err := dagBlock.Marshal()
+	b, err := block.Marshal()
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrMarshalBlock(err)
 	}

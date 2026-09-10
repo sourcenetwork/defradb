@@ -123,7 +123,13 @@ type Author {
         """
         age: ScalarAggregateNumericBlock
     ): Float
-    "Returns the cosine similarity between the specified field and the provided vector."
+    """
+    
+    Returns how similar the given vector is to the specified field's value. The metric is
+     whichever one the field's vector index was created with, defaulting to cosine similarity
+     when the field has no vector index. Higher values are more similar for every metric.
+
+    """
     SIMILARITY: Float
     """
     
@@ -539,7 +545,13 @@ type Book {
         """
         rating: ScalarAggregateNumericBlock
     ): Float
-    "Returns the cosine similarity between the specified field and the provided vector."
+    """
+    
+    Returns how similar the given vector is to the specified field's value. The metric is
+     whichever one the field's vector index was created with, defaulting to cosine similarity
+     when the field has no vector index. Higher values are more similar for every metric.
+
+    """
     SIMILARITY: Float
     """
     
@@ -854,7 +866,7 @@ enum CRDTType {
     Positive Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pcounter
@@ -862,7 +874,7 @@ enum CRDTType {
     Positive-Negative Counter.
 
     WARNING: Incrementing an integer and causing it to overflow the int64 max value
-    will cause the value to roll over to the int64 min value. Incremeting a float and
+    will cause the value to roll over to the int64 min value. Incrementing a float and
     causing it to overflow the float64 max value will act like a no-op.
     """
     pncounter

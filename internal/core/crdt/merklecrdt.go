@@ -21,7 +21,40 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+var FieldCRDTs = []FieldValueCRDT{
+	NewLWW(),
+	NewCounter(true),
+	NewCounter(false),
+}
+
+// TryGetFieldCRDT returns the cached instance of the given crdt.
+//
+// A `NONE_CRDT` will return `nil`.  If nothing is found, `false` will
+// be returned, else `true`.
+func TryGetFieldCRDT(ct client.CType) (FieldValueCRDT, bool) {
+	if ct == client.NONE_CRDT {
+		return nil, true
+	}
+
+	for _, crdt := range FieldCRDTs {
+		if crdt.CType() == ct {
+			return crdt, true
+		}
+	}
+	return nil, false
+}
+
+type KindLimitedCRDT interface {
+	SupportedKinds() []client.FieldKind
+}
+
 type FieldValueCRDT interface {
+	CType() client.CType
+
+	String() string
+
+	Description() string
+
 	Merge(
 		ctx context.Context,
 		store datastore.Keyedstore,
@@ -33,18 +66,4 @@ type FieldValueCRDT interface {
 
 type DocumentValueCRDT interface {
 	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
-}
-
-func FieldLevelCRDT(
-	cType client.CType,
-) (FieldValueCRDT, error) {
-	switch cType {
-	case client.LWW_REGISTER:
-		return NewLWW(), nil
-	case client.PN_COUNTER, client.P_COUNTER:
-		return NewCounter(
-			cType == client.PN_COUNTER,
-		), nil
-	}
-	return nil, client.NewErrUnknownCRDT(cType)
 }
