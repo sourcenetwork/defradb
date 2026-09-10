@@ -46,8 +46,10 @@ type Txn struct {
 	txnObj C.jobject // the constructed DefraTransaction Java object
 
 	// We track whether the transaction has been committed or discarded to prevent double-finalization.
-	// We protect this with a mutex to defend against concurrent calls to Commit and Discard.
-	finalizeMu sync.Mutex
+	// We protect this with a mutex to defend against concurrent calls to Commit and Discard, and to
+	// let callStore hold a read lock across its finalized check and its use of txnObj/handle - see
+	// liveHandle.
+	finalizeMu sync.RWMutex
 	finalized  bool
 }
 
@@ -107,11 +109,17 @@ func (txn *Txn) finalize() {
 	txn.txnObj = 0
 }
 
-// isFinalized reports whether Commit or Discard has already run.
-func (txn *Txn) isFinalized() bool {
-	txn.finalizeMu.Lock()
-	defer txn.finalizeMu.Unlock()
-	return txn.finalized
+// liveHandle returns txn's native object/handle for use by fn, holding finalizeMu for read for the
+// duration of fn so that a concurrent Commit/Discard cannot finalize (and zero txnObj/handle - see
+// finalize) between the finalized check and fn's use of them. Returns client.ErrTransactionNotFound
+// without calling fn if the transaction is already finalized.
+func (txn *Txn) liveHandle(fn func(obj C.jobject, handle uintptr) (defraResult, error)) (defraResult, error) {
+	txn.finalizeMu.RLock()
+	defer txn.finalizeMu.RUnlock()
+	if txn.finalized {
+		return defraResult{}, client.ErrTransactionNotFound
+	}
+	return fn(txn.txnObj, txn.handle)
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {

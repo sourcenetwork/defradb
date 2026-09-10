@@ -279,7 +279,8 @@ func callTxnRaw(txnObj C.jobject, name string, b *argBuilder) (defraResult, erro
 // txn's handle/txnObj are zeroed on finalization (see Txn.finalize), so without this check a call
 // made through a finished transaction would either look up a stale native handle (already reused
 // or deleted, since 0 is never a valid cgo.Handle) or silently fall back to operating on the whole
-// node instead of failing clearly.
+// node instead of failing clearly. The finalized check and the subsequent use of txnObj/handle are
+// done under a single Txn.liveHandle call so Commit/Discard can't finalize the txn in between.
 func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (defraResult, error) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
@@ -289,16 +290,16 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 
 	if activeTxn, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
 		if t, ok := activeTxn.(*Txn); ok {
-			if t.isFinalized() {
-				return defraResult{}, client.ErrTransactionNotFound
-			}
-			if _, hasMethod := transactionMethodIDs[name]; hasMethod {
-				return callTxn(t.txnObj, name, t.handle, b)
-			}
+			_, hasMethod := transactionMethodIDs[name]
+			return t.liveHandle(func(txnObj C.jobject, handle uintptr) (defraResult, error) {
+				if hasMethod {
+					return callTxn(txnObj, name, handle, b)
+				}
+				return callNode(w.nodeObj, name, handle, b)
+			})
 		}
 	}
-	handle := getNodeOrTxnHandle(w.handle, ctx)
-	return callNode(w.nodeObj, name, handle, b)
+	return callNode(w.nodeObj, name, w.handle, b)
 }
 
 // callGuarded invokes a DefraNode native method directly on this Wrapper's own node object,
