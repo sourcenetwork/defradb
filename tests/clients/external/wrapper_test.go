@@ -44,7 +44,7 @@ func TestExternalWrapper(t *testing.T) {
 		t.Skip("no v1.0.0 asset for this platform")
 	}
 
-	w, err := NewWrapper(ctx, t, path)
+	w, err := NewWrapper(ctx, t, path, nil)
 	require.NoError(t, err)
 	defer w.Close()
 

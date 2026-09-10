@@ -18,7 +18,7 @@ import "container/heap"
 // by the neighbour-selection heuristic).
 type candidate struct {
 	id     NodeID
-	dist   float32
+	dist   float64
 	vector []float32
 }
 

@@ -27,10 +27,10 @@ func CloseNode(nodePtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.Close(context.Background())
-	if err != nil {
+	defer cgo.Handle(nodePtr).Delete()
+
+	if err := node.Close(context.Background()); err != nil {
 		return returnC(GoCResult{1, err.Error(), ""})
 	}
-	cgo.Handle(nodePtr).Delete()
 	return returnC(GoCResult{0, "", ""})
 }

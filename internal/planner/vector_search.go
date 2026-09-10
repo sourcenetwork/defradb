@@ -16,9 +16,36 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
+	"github.com/sourcenetwork/defradb/internal/extensions"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
+
+// Sent as the `reason` detail of a [client.WarningCodeVectorIndexUnused] warning. Callers match on
+// them, so they do not change once released.
+const (
+	reasonNoLimit = "noLimit"
+	// Lifting this is https://github.com/sourcenetwork/defradb/issues/5071
+	reasonFilter                     = "filter"
+	reasonNotOrderedBySimilarityDesc = "notOrderedBySimilarityDesc"
+	// Lifting this is https://github.com/sourcenetwork/defradb/issues/5072
+	reasonMultipleSimilarityFields = "multipleSimilarityFields"
+)
+
+// warnVectorIndexUnused reports that the query reads the whole collection even though the field has
+// a vector index. The results are still correct, so this is a warning and not an error.
+func (n *selectNode) warnVectorIndexUnused(sim *mapper.Similarity, reason string) {
+	fieldName := sim.SimilarityTarget.Field.Name
+	extensions.AddWarning(n.planner.ctx, client.GQLWarning{
+		Code: client.WarningCodeVectorIndexUnused,
+		Message: "similarity query on field '" + fieldName +
+			"' did not use the vector index and read the whole collection",
+		Detail: map[string]any{
+			"field":  fieldName,
+			"reason": reason,
+		},
+	})
+}
 
 // tryRouteSimilarityToVectorIndex narrows an otherwise-full scan to the k nearest documents when the
 // query is a nearest-neighbour search (a single `_similarity` ordered descending, with a limit) and
@@ -26,30 +53,54 @@ import (
 // prefixes; the similarity/order/limit nodes are left to score, sort and cap as usual. When the query
 // does not match, it leaves the full-scan path in place.
 func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
-	if n.selectReq.Limit == nil || n.selectReq.Limit.Limit <= 0 {
+	// The index is looked up before the query shape is checked. Without one there is nothing to fall
+	// back from, so warning would be noise.
+	sims := n.similarityFields()
+	if len(sims) == 0 {
 		return nil
 	}
-	// A filter can drop some of the k nearest, so the graph would need to return more than k to
-	// backfill. That is filtered KNN: https://github.com/sourcenetwork/defradb/issues/5071
-	if n.filter != nil {
+	if len(sims) > 1 {
+		// Which one drives the search is ambiguous, so the query full-scans. Letting the query say
+		// which it means is https://github.com/sourcenetwork/defradb/issues/5072
+		//
+		// Reported against the first field that has an index, since the warning is one per query.
+		for _, sim := range sims {
+			if _, ok := n.readyVectorIndexOnField(sim.SimilarityTarget.Field.Name); ok {
+				n.warnVectorIndexUnused(sim, reasonMultipleSimilarityFields)
+				return nil
+			}
+		}
 		return nil
 	}
-
-	sim := n.singleSimilarityField()
-	if sim == nil {
-		return nil
-	}
-	if !n.isOrderedBySimilarityDesc(sim) {
-		return nil
-	}
+	sim := sims[0]
 
 	index, ok := n.readyVectorIndexOnField(sim.SimilarityTarget.Field.Name)
 	if !ok {
 		return nil
 	}
+
+	if n.selectReq.Limit == nil || n.selectReq.Limit.Limit <= 0 {
+		n.warnVectorIndexUnused(sim, reasonNoLimit)
+		return nil
+	}
+	// A filter can drop some of the k nearest, so the graph would need to return more than k to
+	// backfill. That is filtered KNN: https://github.com/sourcenetwork/defradb/issues/5071
+	//
+	// Read from the scan, not n.filter: initSource moves the filter there and leaves n.filter nil
+	// unless the collection has migrations.
+	if origScan.filter != nil {
+		n.warnVectorIndexUnused(sim, reasonFilter)
+		return nil
+	}
+	if !n.isOrderedBySimilarityDesc(sim) {
+		n.warnVectorIndexUnused(sim, reasonNotOrderedBySimilarityDesc)
+		return nil
+	}
 	// readyVectorIndexOnField only returns a vector index, so GetVector always succeeds here.
 	vectorDesc, _ := index.GetVector()
 
+	// No warning here: the vector is malformed rather than the query shape being wrong, so there is
+	// nothing to rewrite. The full-scan path reports its own error.
 	query, ok := similarityQueryVector(sim.Vector)
 	if !ok {
 		return nil
@@ -78,16 +129,12 @@ func (n *selectNode) tryRouteSimilarityToVectorIndex(origScan *scanNode) error {
 	return nil
 }
 
-// singleSimilarityField returns the sole `_similarity` field, or nil if there are none or several:
-// with two, which one drives the search is ambiguous, so such a query keeps the full-scan path.
-func (n *selectNode) singleSimilarityField() *mapper.Similarity {
-	var found *mapper.Similarity
+// similarityFields returns every `_similarity` field on the request, in the order they appear.
+func (n *selectNode) similarityFields() []*mapper.Similarity {
+	var found []*mapper.Similarity
 	for _, field := range n.selectReq.Fields {
 		if sim, ok := field.(*mapper.Similarity); ok {
-			if found != nil {
-				return nil
-			}
-			found = sim
+			found = append(found, sim)
 		}
 	}
 	return found

@@ -26,7 +26,7 @@ import (
 func bruteForceKNN(metric Metric, query []float32, vectors map[NodeID][]float32, k int) []NodeID {
 	type scored struct {
 		id   NodeID
-		dist float32
+		dist float64
 	}
 	scoredList := make([]scored, 0, len(vectors))
 	for id, v := range vectors {
@@ -398,4 +398,39 @@ func TestGraph_DotProduct_RanksLongerVectorNearer(t *testing.T) {
 // An unrecognised metric is a programming error, not a silent fallback.
 func TestDistance_UnknownMetric_Panics(t *testing.T) {
 	assert.Panics(t, func() { distance(Metric(99), []float32{1}, []float32{1}) })
+}
+
+// Squaring a large float32 exceeds what a float32 holds. Held in one, every distance here would be
+// +Inf and compare equal, leaving the order to chance. The query sits next to the largest vector, so
+// that one has to come first and the rest follow by how far they are.
+// https://github.com/sourcenetwork/defradb/issues/5220
+func TestGraph_Euclidean_LargeVectors_OrderByDistanceNotOverflow(t *testing.T) {
+	g := New(NewMemStore(), Euclidean, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{-3.4028235e+38}))
+	require.NoError(t, g.Insert(2, []float32{0}))
+	require.NoError(t, g.Insert(3, []float32{90}))
+
+	result, err := g.Search([]float32{-3.4028235e+38}, 3, 64)
+	require.NoError(t, err)
+	require.Equal(t, []NodeID{1, 2, 3}, result)
+}
+
+// The distances themselves must stay finite, not just come out in the right order. Held in a float32
+// these all collapse onto +Inf, which reports every document as equally near and is what left the
+// order to chance.
+func TestGraph_Euclidean_LargeVectors_DistancesStayFinite(t *testing.T) {
+	g := New(NewMemStore(), Euclidean, DefaultParams(8), 1)
+
+	require.NoError(t, g.Insert(1, []float32{0}))
+	require.NoError(t, g.Insert(2, []float32{3.4028235e+38}))
+
+	neighbors, err := g.SearchWithDistance([]float32{-3.4028235e+38}, 2, 64)
+	require.NoError(t, err)
+	require.Len(t, neighbors, 2)
+	for _, n := range neighbors {
+		require.False(t, math.IsInf(n.Distance, 1), "distance overflowed to +Inf")
+	}
+	// The far vector is twice the distance away, so squared it is four times as far.
+	require.Less(t, neighbors[0].Distance, neighbors[1].Distance)
 }

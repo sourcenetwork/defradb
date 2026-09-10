@@ -38,25 +38,25 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/sourcehub/sdk"
+	"github.com/sourcenetwork/vera/sdk"
 )
 
 const (
 	// faucetMnemonic is the mnemonic for a static faucet account present in the
-	// STANDALONE version of the SourceHub image
+	// STANDALONE version of the Vera image.
 	faucetMnemonic = "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold" //nolint:lll
 
 	// faucetAddr is the account address matching the faucetMnemonic
-	faucetAddr = "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
+	faucetAddr = "vera12d9hjf0639k995venpv675sju9ltsvf8v73hjv"
 
-	sourcehubTestChainID string = "sourcehub-dev"
+	remoteDACTestLogID string = "vera-dev"
 )
 
-func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
+func setupRemoteDAC(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
 	if !cfg.IsDocumentACPTest {
-		// Spinning up SourceHub instances is a bit slow, so we should be quite aggressive in trimming down the
-		// runtime of the test suite when SourceHub ACP is selected.
-		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
+		// Spinning up Vera instances is a bit slow, so we should be quite aggressive in trimming down the
+		// runtime of the test suite when Remote DAC is selected.
+		s.T.Skipf("test has no document ACP elements when testing with Remote DAC")
 	}
 
 	ctx := context.Background()
@@ -64,14 +64,13 @@ func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentA
 
 	name := uuid.New()
 	container, err := testcontainers.Run(ctx,
-		cfg.SourceHubImage,
+		cfg.VeraImage,
 		testcontainers.WithName(name.String()),
 		testcontainers.WithExposedPorts("26657/tcp"),
 		testcontainers.WithExposedPorts("9090/tcp"),
 		testcontainers.WithLogger(testLogger),
 		testcontainers.WithEnv(map[string]string{
-			// STANDALONE configures the SH container to create an isolated chain,
-			// instead of connecting to an existing one.
+			// STANDALONE configures the container to create an isolated Vera instance.
 			"STANDALONE": "1",
 		}),
 	)
@@ -103,11 +102,11 @@ func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentA
 	if err != nil {
 		return nil, err
 	}
-	s.T.Logf("sourcehub endpoints: grpc=%v, rpc=%v", grpcEndpoint, rpcEndpoint)
+	s.T.Logf("Vera endpoints: grpc=%v, rpc=%v", grpcEndpoint, rpcEndpoint)
 
-	s.SourcehubAddress = faucetAddr
+	s.RemoteDACAddress = faucetAddr
 
-	err = waitForSourceHub(s.T, grpcEndpoint, rpcEndpoint, faucetAddr)
+	err = waitForVera(s.T, grpcEndpoint, rpcEndpoint, faucetAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -132,15 +131,15 @@ func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentA
 	}
 
 	return &options.NodeDocumentACPOptions{
-		DocumentACPType:          options.NodeSourceHubDocumentACPType,
+		DocumentACPType:          options.NodeRemoteDocumentACPType,
 		Signer:                   immutable.Some[options.NodeTxSigner](signer),
-		SourceHubChainID:         sourcehubTestChainID,
-		SourceHubGRPCAddress:     grpcEndpoint,
-		SourceHubCometRPCAddress: rpcEndpoint,
+		RemoteDACLogID:           remoteDACTestLogID,
+		RemoteDACGRPCAddress:     grpcEndpoint,
+		RemoteDACCometRPCAddress: rpcEndpoint,
 	}, nil
 }
 
-func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAddr string) error {
+func waitForVera(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAddr string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -152,23 +151,23 @@ func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAd
 		i++
 		select {
 		case <-ctx.Done():
-			t.Logf("time out waiting for sourcehub to start")
-			return fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
+			t.Logf("timed out waiting for Vera to start")
+			return fmt.Errorf("error setting up Vera: connection not ready after deadline")
 		case <-timer:
-			ok := probeSourceHub(ctx, grpcEndpoint, cometRpcEndpoint, accAddr)
+			ok := probeVera(ctx, grpcEndpoint, cometRpcEndpoint, accAddr)
 			if ok {
 				elapsed := time.Since(startTs)
-				t.Logf("sourcehub ready to receive connections: after %v", elapsed)
+				t.Logf("Vera ready to receive connections after %v", elapsed)
 				return nil
 			}
 		}
 	}
 }
 
-// probeSourceHub is a readiness probe which tries to connect to SourceHub's
+// probeVera is a readiness probe which tries to connect to Vera's
 // RPC endpoint to determine if it is ready to receive connections.
 // Returns true if the probe succeeded.
-func probeSourceHub(ctx context.Context, grpcAddr, cometRpcAddr, knownAddr string) bool {
+func probeVera(ctx context.Context, grpcAddr, cometRpcAddr, knownAddr string) bool {
 	client, err := sdk.NewClient(
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
@@ -193,8 +192,8 @@ func probeSourceHub(ctx context.Context, grpcAddr, cometRpcAddr, knownAddr strin
 }
 
 // getAccountDataFromMnemonic returns the private key bytes
-// from a given sourcehub mnemonic.
-// assumes the mnemonic is for a secp256k1 key
+// from a given Vera mnemonic.
+// It assumes the mnemonic is for a secp256k1 key.
 func getAccountDataFromMnemonic(t testing.TB, mnemonic string) []byte {
 	registry := cdctypes.NewInterfaceRegistry()
 	cryptocdc.RegisterInterfaces(registry)

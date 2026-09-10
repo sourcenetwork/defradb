@@ -21,15 +21,15 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// ReEnableNAC will attempt to re-enable a temporarily disabled Node ACP system.
+// ReEnableNAC will attempt to re-enable a temporarily disabled Local NAC system.
 type ReEnableNAC struct {
-	// NodeID may hold the ID (index) of the node we want to re-enable the node acp on.
+	// NodeID may hold the ID (index) of the node on which we want to re-enable Local NAC.
 	//
-	// If a value is not provided, then will start node acp on all nodes.
+	// If a value is not provided, Local NAC will be re-enabled on all nodes.
 	NodeID immutable.Option[int]
 
-	// The identity of the user that is re-enabling node acp, this user must be authorized
-	// to re-enable node acp, otherwise error will be returned.
+	// The identity of the user re-enabling Local NAC. The user must be authorized,
+	// otherwise an error will be returned.
 	Identity immutable.Option[state.Identity]
 
 	// Any error expected from the action. Optional.
@@ -39,7 +39,7 @@ type ReEnableNAC struct {
 	ExpectedError string
 }
 
-// reEnableNAC will attempt to re-enable the node access control system.
+// reEnableNAC will attempt to re-enable the Local NAC system.
 func reEnableNAC(
 	s *state.State,
 	action ReEnableNAC,
@@ -58,16 +58,15 @@ func reEnableNAC(
 	}
 }
 
-// DisableNAC will attempt to temporarily disable DefraDB's Node ACP system.
+// DisableNAC will attempt to temporarily disable DefraDB's Local NAC system.
 type DisableNAC struct {
-	// NodeID may hold the ID (index) of the node we want to disable the node acp on.
+	// NodeID may hold the ID (index) of the node on which we want to disable Local NAC.
 	//
-	// If a value is not provided, then will disable node acp on all nodes.
+	// If a value is not provided, Local NAC will be disabled on all nodes.
 	NodeID immutable.Option[int]
 
-	// The identity of a user that is authorized to disable the node acp.
-	// The identity of the user that is disabling node acp, this user must be authorized
-	// to disable node acp, otherwise error will be returned.
+	// The identity of the user disabling Local NAC. The user must be authorized,
+	// otherwise an error will be returned.
 	Identity immutable.Option[state.Identity]
 
 	// Any error expected from the action. Optional.
@@ -77,7 +76,7 @@ type DisableNAC struct {
 	ExpectedError string
 }
 
-// disableNAC will attempt to start the node access control system.
+// disableNAC will attempt to disable the Local NAC system.
 func disableNAC(
 	s *state.State,
 	action DisableNAC,

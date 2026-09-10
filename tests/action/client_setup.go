@@ -34,7 +34,7 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 		return http.NewWrapper(nodeObj)
 
 	case state.CLIClientType:
-		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
+		return cli.NewWrapper(nodeObj, s.RemoteDACAddress)
 
 	case state.GoClientType:
 		return newGoClientWrapper(nodeObj), nil

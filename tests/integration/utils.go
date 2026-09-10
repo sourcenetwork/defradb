@@ -227,7 +227,7 @@ func ExecuteTestCase(
 						kms,
 						dbt,
 						ct,
-						documentACPType,
+						action.DocumentACPType,
 					)
 				}
 
@@ -804,6 +804,11 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
+	if name, ok := externalNodeMultiplierUnsupported(testCase, activeMultipliers); ok {
+		t.Skipf("test supports client types %v, but the %q multiplier runs a node over HTTP",
+			testCase.SupportedClientTypes.Value(), name)
+	}
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -811,6 +816,28 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	}
 
 	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
+}
+
+// externalNodeMultiplierUnsupported reports whether an active multiplier would run
+// a node the test cannot drive, and names it.
+//
+// A node in another process is reached over HTTP whatever the run-wide client type,
+// so a test that lists its clients without HTTP cannot run under such a multiplier.
+// Listing no clients means any client will do.
+func externalNodeMultiplierUnsupported(testCase *TestCase, activeNames string) (string, bool) {
+	if !testCase.SupportedClientTypes.HasValue() ||
+		slices.Contains(testCase.SupportedClientTypes.Value(), state.HTTPClientType) {
+		return "", false
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		if defraMultiplier.MakesNodeExternal(name) {
+			return name, true
+		}
+	}
+
+	return "", false
 }
 
 // applyTestCaseLevelMultipliers mutates TestCase fields based on the given
@@ -1017,13 +1044,14 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
 		)
 
 		require.Nil(s.T, err)
+		st.DisableP2P = true
 		s.Nodes = append(s.Nodes, st)
 	}
 }
@@ -1048,11 +1076,15 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts := action.DefaultNodeOpts(testCase.nodeSetupConfig())
 			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 			opts.P2P().SetAll(p2pOpts)
-			opts.NodeACP().SetEnabled(start.EnableNAC)
+			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				start.Identity,
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)
@@ -1105,7 +1137,7 @@ func refreshTokens(
 					err := fullIdentityToUpdate.UpdateToken(
 						action.AuthTokenExpiration,
 						audience,
-						immutable.Some(s.SourcehubAddress),
+						immutable.Some(s.RemoteDACAddress),
 					)
 					require.NoError(s.T, err)
 					nodeTokensToUpdate[nodeKey] = fullIdentityToUpdate.BearerToken()
@@ -2303,14 +2335,14 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == documentACPType {
+			if supportedType == action.DocumentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
+			t.Skipf("test does not support given acp type. Type: %s", action.DocumentACPType)
 		}
 	}
 }
