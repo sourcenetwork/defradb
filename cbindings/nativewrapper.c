@@ -362,9 +362,9 @@ NodeInitOptions convertJavaNodeInitOptions(JNIEnv* env, jobject optionsObj, int*
     // Document ACP options
     opts.documentACPType = ctx_get_utf(&ctx, "documentACPType");
     opts.documentACPPath = ctx_get_utf(&ctx, "documentACPPath");
-    opts.sourceHubChainID = ctx_get_utf(&ctx, "sourceHubChainID");
-    opts.sourceHubGRPCAddress = ctx_get_utf(&ctx, "sourceHubGRPCAddress");
-    opts.sourceHubCometRPCAddress = ctx_get_utf(&ctx, "sourceHubCometRPCAddress");
+    opts.remoteDACLogID = ctx_get_utf(&ctx, "remoteDACLogID");
+    opts.remoteDACGRPCAddress = ctx_get_utf(&ctx, "remoteDACGRPCAddress");
+    opts.remoteDACCometRPCAddress = ctx_get_utf(&ctx, "remoteDACCometRPCAddress");
 
     // Node ACP options
     opts.nodeACPPath = ctx_get_utf(&ctx, "nodeACPPath");
@@ -457,9 +457,9 @@ void releaseJavaNodeInitOptions(JNIEnv* env, jobject optionsObj, NodeInitOptions
     free((void*)opts.tlsKeyPath);
     free((void*)opts.documentACPType);
     free((void*)opts.documentACPPath);
-    free((void*)opts.sourceHubChainID);
-    free((void*)opts.sourceHubGRPCAddress);
-    free((void*)opts.sourceHubCometRPCAddress);
+    free((void*)opts.remoteDACLogID);
+    free((void*)opts.remoteDACGRPCAddress);
+    free((void*)opts.remoteDACCometRPCAddress);
     free((void*)opts.nodeACPPath);
 
     jclass cls = (*env)->GetObjectClass(env, optionsObj);
