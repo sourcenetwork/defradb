@@ -416,7 +416,10 @@ func orderedIndexFromConfig(
 	}, nil
 }
 
-func indexFieldFromAST(value collectionValue, defaultDirection *collectionEnumValue) (client.IndexedFieldDescription, error) {
+func indexFieldFromAST(
+	value collectionValue,
+	defaultDirection *collectionEnumValue,
+) (client.IndexedFieldDescription, error) {
 	argTypeObject, ok := value.(*collectionObjectValue)
 	if !ok {
 		return client.IndexedFieldDescription{}, ErrIndexWithInvalidArg
@@ -475,8 +478,7 @@ func defaultFromAST(
 	}
 	arg := directive.Arguments[0]
 	if arg.Name.Value != types.DefaultDirectivePropValue {
-		return nil, fmt.Errorf(
-			"Unknown argument %q on directive %q", arg.Name.Value, "@default")
+		return nil, newErrUnknownDirectiveArgument(arg.Name.Value, "@default")
 	}
 	// The value is coerced based on the type of the field the directive is applied to,
 	// reusing each scalar's existing ParseLiteral coercion.
@@ -627,7 +629,7 @@ func defaultValueLiteralType(value collectionValue) string {
 	case *collectionEnumValue:
 		return "Enum"
 	case *collectionListValue:
-		return "List"
+		return collectionListName
 	case *collectionObjectValue:
 		return "Object"
 	case *collectionNullValue:
@@ -801,15 +803,13 @@ func policyFromAST(directive *collectionDirective) (client.PolicyDescription, er
 		case types.PolicySchemaDirectivePropID:
 			policyIDProp, ok := arg.Value.(*collectionStringValue)
 			if !ok {
-				return client.PolicyDescription{}, fmt.Errorf(
-					"Argument %q has invalid value %v", arg.Name.Value, arg.Value.GetValue())
+				return client.PolicyDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
 			}
 			policyDesc.ID = policyIDProp.Value
 		case types.PolicySchemaDirectivePropResource:
 			policyResourceProp, ok := arg.Value.(*collectionStringValue)
 			if !ok {
-				return client.PolicyDescription{}, fmt.Errorf(
-					"Argument %q has invalid value %v", arg.Name.Value, arg.Value.GetValue())
+				return client.PolicyDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
 			}
 			policyDesc.ResourceName = policyResourceProp.Value
 		default:
@@ -865,8 +865,7 @@ func vectorIndexFromAST(
 			}
 
 		default:
-			return client.NewIndexRequest{}, fmt.Errorf(
-				"In field %q: Unknown field.: %w", field.Name.Value, ErrIndexWithUnknownArg)
+			return client.NewIndexRequest{}, newErrUnknownIndexField(field.Name.Value)
 		}
 	}
 
@@ -913,9 +912,7 @@ func parseHNSWConfig(value collectionValue, metric *client.DistanceMetric, param
 			case types.VectorDistanceMetricDot:
 				*metric = client.DistanceMetricDotProduct
 			default:
-				return fmt.Errorf(
-					"Expected type %q, found %s: %w",
-					"VectorDistanceMetric", metricVal.Value, NewErrVectorIndexUnknownMetric(metricVal.Value))
+				return newErrExpectedVectorMetric(metricVal.Value)
 			}
 
 		case types.VectorIndexHNSWConfigPropM:
@@ -1017,8 +1014,7 @@ func setCRDTType(field *collectionFieldDefinition, kind client.FieldKind) (clien
 			switch arg.Name.Value {
 			case "type":
 				if stringValue, ok := arg.Value.(*collectionStringValue); ok {
-					return 0, fmt.Errorf(
-						"Argument %q has invalid value %q", arg.Name.Value, stringValue.Value)
+					return 0, newErrInvalidArgument(arg.Name.Value, stringValue.Value)
 				}
 				cTypeString := arg.Value.GetValue().(string)
 				cType, validCRDTEnum := types.ParseCRDTType(cTypeString)

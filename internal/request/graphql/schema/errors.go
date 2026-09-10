@@ -11,9 +11,53 @@
 package schema
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
+
+type schemaValidationError string
+
+func (e schemaValidationError) Error() string        { return string(e) }
+func (e schemaValidationError) Is(target error) bool { return target == ErrGraphQLValidation }
+
+type wrappedSchemaValidationError struct {
+	message string
+	cause   error
+}
+
+func (e wrappedSchemaValidationError) Error() string        { return e.message }
+func (e wrappedSchemaValidationError) Unwrap() error        { return e.cause }
+func (e wrappedSchemaValidationError) Is(target error) bool { return target == ErrGraphQLValidation }
+
+func newErrUnknownDirectiveArgument(name, directive string) error {
+	return schemaValidationError(fmt.Sprintf("Unknown argument %q on directive %q", name, directive))
+}
+
+func newErrInvalidArgument(name string, value any) error {
+	return schemaValidationError(fmt.Sprintf("Argument %q has invalid value %v", name, value))
+}
+
+func newErrUnknownIndexField(name string) error {
+	return wrappedSchemaValidationError{
+		message: fmt.Sprintf("In field %q: Unknown field.: %s", name, ErrIndexWithUnknownArg),
+		cause:   ErrIndexWithUnknownArg,
+	}
+}
+
+func newErrExpectedVectorMetric(metric string) error {
+	cause := NewErrVectorIndexUnknownMetric(metric)
+	return wrappedSchemaValidationError{
+		message: fmt.Sprintf("Expected type %q, found %s: %s", "VectorDistanceMetric", metric, cause),
+		cause:   cause,
+	}
+}
+
+func newErrInvalidGraphQLName(name string) error {
+	return schemaValidationError(fmt.Sprintf(
+		"Names must match /^[_a-zA-Z][_a-zA-Z0-9]*$/ but %q does not.", name))
+}
 
 const (
 	errDuplicateField                   string = "duplicate field"
@@ -75,6 +119,7 @@ var (
 	ErrWritingSDL                = errors.New("writing SDL")
 	ErrParsingSDL                = errors.New("parsing SDL")
 	ErrGeneratingSDL             = errors.New("generating SDL")
+	ErrGraphQLValidation         = errors.New("graphql validation error")
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {

@@ -56,7 +56,7 @@ type <% .Name %> {
   MIN(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float
 <%- end %><% if .EmitSIMILARITY %>
   "\nReturns how similar the given vector is to the specified field's value. The metric is\n whichever one the field's vector index was created with, defaulting to cosine similarity\n when the field has no vector index. Higher values are more similar for every metric.\n"
-  SIMILARITY(<% range $index, $field := .NumericArrays %><% if $index %>, <% end %>"Compares the given vector against the <% $field.Name %> field." <% $field.Name %>: <% $collection.Name %>__<% $field.Name %>__SimilaritySelector<% end %>): Float
+  SIMILARITY<% if .NumericArrays %>(<% range $index, $field := .NumericArrays %><% if $index %>, <% end %>"Compares the given vector against the <% $field.Name %> field." <% $field.Name %>: <% $collection.Name %>__<% $field.Name %>__SimilaritySelector<% end %>)<% end %>: Float
 <%- end %><% if .EmitSUM %>
   SUM(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float!
 <%- end %>

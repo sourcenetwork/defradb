@@ -13,8 +13,9 @@ package parser
 import (
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
@@ -196,7 +197,6 @@ func parseAggregate(
 ) (*request.Aggregate, error) {
 	var targets []*request.AggregateTarget
 	for _, name := range field.argumentOrder {
-
 		switch v := field.arguments[name].(type) {
 		case string:
 			targets = append(targets, &request.AggregateTarget{

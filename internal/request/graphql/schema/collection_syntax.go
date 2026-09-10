@@ -2,8 +2,15 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package schema
+
+const collectionListName = "List"
 
 type collectionDocument struct {
 	Definitions []*typeDefinition
@@ -42,7 +49,7 @@ func (*collectionNamed) isCollectionType()   {}
 func (*collectionList) isCollectionType()    {}
 func (*collectionNonNull) isCollectionType() {}
 func (*collectionNamed) String() string      { return "Named" }
-func (*collectionList) String() string       { return "List" }
+func (*collectionList) String() string       { return collectionListName }
 func (*collectionNonNull) String() string    { return "NonNull" }
 
 type collectionValue interface {

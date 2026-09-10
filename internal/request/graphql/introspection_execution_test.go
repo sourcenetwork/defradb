@@ -2,6 +2,11 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package graphql
 
@@ -115,11 +120,19 @@ func TestExecuteIntrospectionFieldOrderIsDeterministic(t *testing.T) {
 
 func introspectionFieldNames(t *testing.T, data any) []string {
 	t.Helper()
-	typeData := data.(map[string]any)["__type"].(map[string]any)
-	fields := typeData["fields"].([]any)
+	root, ok := data.(map[string]any)
+	require.True(t, ok)
+	typeData, ok := root["__type"].(map[string]any)
+	require.True(t, ok)
+	fields, ok := typeData["fields"].([]any)
+	require.True(t, ok)
 	names := make([]string, len(fields))
 	for index, field := range fields {
-		names[index] = field.(map[string]any)["name"].(string)
+		item, ok := field.(map[string]any)
+		require.True(t, ok)
+		name, ok := item["name"].(string)
+		require.True(t, ok)
+		names[index] = name
 	}
 	return names
 }
@@ -131,12 +144,19 @@ func TestExecuteIntrospectionPreservesIntrospectionFieldDescriptions(t *testing.
 		__type(name: "__Schema") { fields { name description } }
 	}`)
 	require.Empty(t, result.GQL.Errors)
-	typeData := result.GQL.Data.(map[string]any)["__type"].(map[string]any)
-	fields := typeData["fields"].([]any)
+	root, ok := result.GQL.Data.(map[string]any)
+	require.True(t, ok)
+	typeData, ok := root["__type"].(map[string]any)
+	require.True(t, ok)
+	fields, ok := typeData["fields"].([]any)
+	require.True(t, ok)
 	descriptions := make(map[string]any, len(fields))
 	for _, field := range fields {
-		item := field.(map[string]any)
-		descriptions[item["name"].(string)] = item["description"]
+		item, ok := field.(map[string]any)
+		require.True(t, ok)
+		name, ok := item["name"].(string)
+		require.True(t, ok)
+		descriptions[name] = item["description"]
 	}
 	require.Equal(t, map[string]any{
 		"directives":       "A list of all directives supported by this server.",

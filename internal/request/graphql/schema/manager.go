@@ -12,7 +12,6 @@ package schema
 
 import (
 	"io"
-	"regexp"
 
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
@@ -24,11 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
-
-var missingFieldTypePattern = regexp.MustCompile(
-	`(?s)type\s+([_A-Za-z][_0-9A-Za-z]*)\s*\{.*?([_A-Za-z][_0-9A-Za-z]*)\s*:\s*\}`,
-)
-var invalidNumericFieldTypePattern = regexp.MustCompile(`(?m)^\s*[_A-Za-z][_0-9A-Za-z]*\s*:\s*([0-9]+)\b`)
 
 // SchemaManager creates an instanced management point
 // for schema intake/outtake, and updates.
@@ -57,9 +51,6 @@ func (s *SchemaManager) Definition() *wgast.Document {
 func (s *SchemaManager) setDefinition(sdl string) error {
 	document, report := astparser.ParseGraphqlDocumentString(sdl)
 	if report.HasErrors() {
-		if match := invalidNumericFieldTypePattern.FindStringSubmatch(sdl); len(match) == 2 {
-			return NewErrTypeNotFound(match[1])
-		}
 		return report
 	}
 	astnormalization.NormalizeDefinition(&document, &report)
@@ -77,9 +68,6 @@ func (s *SchemaManager) setDefinition(sdl string) error {
 func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
 	document, report := astparser.ParseGraphqlDocumentString(sdl)
 	if report.HasErrors() {
-		if match := missingFieldTypePattern.FindStringSubmatch(sdl); len(match) == 3 {
-			return nil, NewErrFieldTypeNotSpecified(match[1], match[2])
-		}
 		return nil, report
 	}
 	collectionDocument := adaptCollectionDocument(&document)

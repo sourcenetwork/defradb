@@ -2,6 +2,11 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package parser
 
@@ -9,8 +14,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sourcenetwork/immutable"
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
@@ -185,17 +191,29 @@ func buildArguments(
 			if err := json.Unmarshal(document.Input.Variables, &providedVariables); err != nil {
 				return nil, nil, err
 			}
-			if _, exists := providedVariables[variableName]; !exists {
+			variable, exists := providedVariables[variableName]
+			if !exists {
 				continue
 			}
+			var decodedValue any
+			if err := json.Unmarshal(variable, &decodedValue); err != nil {
+				return nil, nil, err
+			}
+			typeRef := definition.InputValueDefinitionType(argumentDefinition)
+			if err := validateInputValue(definition, typeRef, decodedValue); err != nil {
+				return nil, nil, err
+			}
+			result[name] = coerceInputValue(definition, typeRef, decodedValue)
+			continue
 		}
 		valueJSON, err := document.ValueToJSON(value)
 		if err != nil {
 			return nil, nil, err
 		}
+		valueJSON = repairExponentSeparators(valueJSON)
 		var decodedValue any
 		if err := json.Unmarshal(valueJSON, &decodedValue); err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("decode argument %s from %q: %w", name, valueJSON, err)
 		}
 		typeRef := definition.InputValueDefinitionType(argumentDefinition)
 		if err := validateInputValue(definition, typeRef, decodedValue); err != nil {
@@ -204,6 +222,44 @@ func buildArguments(
 		result[name] = coerceInputValue(definition, typeRef, decodedValue)
 	}
 	return result, order, nil
+}
+
+// repairExponentSeparators works around graphql-go-tools splitting a negative
+// exponent into adjacent list values (for example, 1e-11 becomes 1e,-11).
+func repairExponentSeparators(value []byte) []byte {
+	result := make([]byte, 0, len(value))
+	inString := false
+	escaped := false
+	for index, char := range value {
+		if inString {
+			result = append(result, char)
+			switch {
+			case escaped:
+				escaped = false
+			case char == '\\':
+				escaped = true
+			case char == '"':
+				inString = false
+			}
+			continue
+		}
+		if char == '"' {
+			inString = true
+			result = append(result, char)
+			continue
+		}
+		if char == ',' && len(result) > 0 && (result[len(result)-1] == 'e' || result[len(result)-1] == 'E') {
+			next := index + 1
+			for next < len(value) && (value[next] == ' ' || value[next] == '\t' || value[next] == '\n' || value[next] == '\r') {
+				next++
+			}
+			if next < len(value) && ((value[next] >= '0' && value[next] <= '9') || value[next] == '-' || value[next] == '+') {
+				continue
+			}
+		}
+		result = append(result, char)
+	}
+	return result
 }
 
 func groupFields(fields []*field) [][]*field {

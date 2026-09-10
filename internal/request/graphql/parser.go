@@ -17,13 +17,14 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/sourcenetwork/immutable"
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astvalidation"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/variablesvalidation"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -77,7 +78,7 @@ func (p *parser) BuildRequestAST(ctx context.Context, request string) (core.Requ
 
 	toolsDocument, toolsReport := astparser.ParseGraphqlDocumentString(request)
 	if toolsReport.HasErrors() {
-		return nil, fmt.Errorf("Syntax Error GraphQL: %w", toolsReport)
+		return nil, newErrGraphQLSyntax(toolsReport)
 	}
 
 	return &requestAST{tools: toolsDocument, source: request}, nil
@@ -210,9 +211,9 @@ func selectAndNormalizeOperation(
 
 	switch {
 	case len(operation.OperationDefinitions) == 0:
-		return wgast.Document{}, fmt.Errorf("Must provide an operation.")
+		return wgast.Document{}, newErrMustProvideOperation()
 	case operationName == "" && len(operation.OperationDefinitions) > 1:
-		return wgast.Document{}, fmt.Errorf("Must provide operation name if query contains multiple operations.")
+		return wgast.Document{}, newErrMustProvideOperationName()
 	case operationName == "":
 		operationName = operation.OperationDefinitionNameString(0)
 	default:
@@ -224,7 +225,7 @@ func selectAndNormalizeOperation(
 			}
 		}
 		if !found {
-			return wgast.Document{}, fmt.Errorf("Unknown operation named %q.", operationName)
+			return wgast.Document{}, newErrUnknownOperation(operationName)
 		}
 	}
 

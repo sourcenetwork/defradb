@@ -11,7 +11,6 @@
 package parser
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -175,7 +174,7 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) erro
 			for i, v := range v {
 				input, ok := v.(map[string]any)
 				if !ok {
-					return fmt.Errorf("Expected %q, found null.", mut.Collection+"MutationInputArg!")
+					return newErrExpectedNull(mut.Collection + "MutationInputArg!")
 				}
 				inputs[i] = input
 			}

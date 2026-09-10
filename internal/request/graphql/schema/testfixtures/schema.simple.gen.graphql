@@ -11,67 +11,49 @@ scalar Any
 scalar Blob
 
 """
-
 These are the set of filter operators available for use when filtering on String
- values.
-
+values.
 """
 input BlobOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Blob
     """
-    
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _ilike: String
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Blob]
     """
-    
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _like: String
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Blob
     """
-    
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nilike: String
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Blob]
     """
-    
     The not-like operator - if the target value does not contain the given sub-string the check will
-     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nlike: String
 }
@@ -79,79 +61,50 @@ input BlobOperatorBlock {
 "The `Boolean` scalar type represents `true` or `false`."
 scalar Boolean
 
-input BooleanFilterArg {
-    _and: [BooleanFilterArg!]
-    _eq: Boolean
-    _in: [Boolean]
-    _neq: Boolean
-    _nin: [Boolean]
-    _or: [BooleanFilterArg!]
-}
-
 "These are the set of filter operators available for use when filtering on [Boolean] values."
 input BooleanListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: BooleanOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: BooleanOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Boolean]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Boolean]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: BooleanOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Boolean
- values.
-
+values.
 """
 input BooleanOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Boolean
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Boolean]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Boolean
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Boolean]
 }
@@ -179,165 +132,125 @@ enum CRDTType {
 }
 
 """
-
 Commit represents an individual commit to a MerkleCRDT, every mutation to a
- document will result in a new commit per modified field, and one composite
- commit composed of the field level commits and, in the case of an update,
- the prior composite commit.  If the collection is branchable, there will
- also be a collection-level commit for each mutation.
-
+document will result in a new commit per modified field, and one composite
+commit composed of the field level commits and, in the case of an update,
+the prior composite commit.  If the collection is branchable, there will
+also be a collection-level commit for each mutation.
 """
 type Commit {
     """
-    
     Returns the total number of items within the specified child sets. If multiple child
-     sets are specified, the combined total of all of them will be returned as a single value.
-
+    sets are specified, the combined total of all of them will be returned as a single value.
     """
     COUNT(field: commitCountFieldArg): Int
     """
-    
     The group field may be used to return a set of records belonging to the group.
-     It must be used alongside a 'groupBy' argument on the parent selector. It may
-     contain any field on the type being grouped, including those used by the
-     groupBy.
-
+    It must be used alongside a 'groupBy' argument on the parent selector. It may
+    contain any field on the type being grouped, including those used by the
+    groupBy.
     """
     GROUP: [Commit]
     """
-    
     The unique CID of this commit, and the primary means through which to safely identify
-     a specific commit.
-
+    a specific commit.
     """
     cid: String
     """
-    
     The ID of the collection version that this commit was committed against. This ID allows one
-     to determine the state of the data model at the time of commit.
-
+    to determine the state of the data model at the time of commit.
     """
     collectionVersionId: String
     """
-    
     The CBOR encoded representation of the value that is saved as part of this commit.
-
     """
     delta: String
     """
-    
     The docID of the document that this commit is for.
-
     """
     docID: String
     """
-    
     The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
-
+    or a collection the value will be null.
     """
     fieldName: String
     """
-    
     Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
-
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.  Collection commits will link to composites.
     """
     heads(
         """
-        
         An optional value that specifies the commit IDs of the commits to return. If a
-         matching commit is not found then an empty set will be returned.
-
+        matching commit is not found then an empty set will be returned.
         """
         cid: [ID!]
         """
-        
         An optional docID parameter for this commit query. Only commits for a document
-         with a matching docID will be returned.  If no documents match, the result
-         set will be empty.
-
+        with a matching docID will be returned.  If no documents match, the result
+        set will be empty.
         """
         docID: [ID!]
         "Filter results based on specified conditions."
         filter: CommitsFilterArg
         """
-        
         An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
+        If this argument is provided, only fields used to group may be rendered in
+        the immediate child selector.  Additional fields may be selected by using
+        the 'GROUP' selector within the immediate child selector. If an empty set
+        is provided, the restrictions mentioned still apply, although all results
+        will appear within the same group.
         """
         groupBy: [commitFields!]
         """
-        
         An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
+        empty set will be ignored.
         """
         order: [commitsOrderArg]
     ): [Commit]
     """
-    
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-     and field level) on add will have a height of '1', each subsequent local update
-     will increment this by one for the new commits.
-
+    and field level) on add will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
     """
     height: Int
     """
-    
     Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
-
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.  Collection commits will link to composites.
     """
     links(
         """
-        
         An optional value that specifies the commit IDs of the commits to return. If a
-         matching commit is not found then an empty set will be returned.
-
+        matching commit is not found then an empty set will be returned.
         """
         cid: [ID!]
         """
-        
         An optional docID parameter for this commit query. Only commits for a document
-         with a matching docID will be returned.  If no documents match, the result
-         set will be empty.
-
+        with a matching docID will be returned.  If no documents match, the result
+        set will be empty.
         """
         docID: [ID!]
         "Filter results based on specified conditions."
         filter: CommitsFilterArg
         """
-        
         An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
+        If this argument is provided, only fields used to group may be rendered in
+        the immediate child selector.  Additional fields may be selected by using
+        the 'GROUP' selector within the immediate child selector. If an empty set
+        is provided, the restrictions mentioned still apply, although all results
+        will appear within the same group.
         """
         groupBy: [commitFields!]
         """
-        
         An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
+        empty set will be ignored.
         """
         order: [commitsOrderArg]
     ): [Commit]
     """
-    
     The signature of the commit, if one exists. This is used to verify the integrity
-     of the commit and the data it contains.
-
+    of the commit and the data it contains.
     """
     signature: Signature
 }
@@ -345,28 +258,20 @@ type Commit {
 "Filter operators for commit fieldName."
 input CommitsFieldNameFilterArg {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: String
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [String]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: String
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [String]
 }
@@ -374,15 +279,11 @@ input CommitsFieldNameFilterArg {
 "Filter argument for commits query."
 input CommitsFilterArg {
     """
-    
     The and operator - all checks within this clause must pass in order for this check to pass.
-
     """
     _and: [CommitsFilterArg!]
     """
-    
     The or operator - only one check within this clause must pass in order for this check to pass.
-
     """
     _or: [CommitsFilterArg!]
     """
@@ -394,110 +295,69 @@ input CommitsFilterArg {
 "The `DateTime` scalar type represents a DateTime. The DateTime is serialized as an RFC 3339 quoted string. A literal value of `UTC_NOW` is supported, and will be serialized  as the current UTC time. Note that this will be resolved as the UTC time on the server's side. It may not exactly match the resolution of time.Now().UTC() on the client's machine at the time of sending the request."
 scalar DateTime
 
-input DateTimeFilterArg {
-    _and: [DateTimeFilterArg!]
-    _eq: DateTime
-    _geq: DateTime
-    _gt: DateTime
-    _in: [DateTime]
-    _leq: DateTime
-    _lt: DateTime
-    _neq: DateTime
-    _nin: [DateTime]
-    _or: [DateTimeFilterArg!]
-}
-
 "These are the set of filter operators available for use when filtering on [DateTime] values."
 input DateTimeListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: DateTimeOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: DateTimeOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [DateTime]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [DateTime]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: DateTimeOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on DateTime
- values.
-
+values.
 """
 input DateTimeOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: DateTime
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: DateTime
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: DateTime
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [DateTime]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: DateTime
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: DateTime
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: DateTime
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [DateTime]
 }
@@ -524,110 +384,69 @@ scalar Float
 "The `Float32` scalar type represents signed single-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
 scalar Float32
 
-input Float32FilterArg {
-    _and: [Float32FilterArg!]
-    _eq: Float32
-    _geq: Float32
-    _gt: Float32
-    _in: [Float32]
-    _leq: Float32
-    _lt: Float32
-    _neq: Float32
-    _nin: [Float32]
-    _or: [Float32FilterArg!]
-}
-
 "These are the set of filter operators available for use when filtering on [Float32] values."
 input Float32ListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: Float32OperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: Float32OperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Float32]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Float32]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: Float32OperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Float32
- values.
-
+values.
 """
 input Float32OperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Float32
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Float32
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Float32
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Float32]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Float32
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Float32
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Float32
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Float32]
 }
@@ -635,110 +454,69 @@ input Float32OperatorBlock {
 "The `Float64` scalar type represents signed double-precision fractional values as specified by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). "
 scalar Float64
 
-input Float64FilterArg {
-    _and: [Float64FilterArg!]
-    _eq: Float64
-    _geq: Float64
-    _gt: Float64
-    _in: [Float64]
-    _leq: Float64
-    _lt: Float64
-    _neq: Float64
-    _nin: [Float64]
-    _or: [Float64FilterArg!]
-}
-
 "These are the set of filter operators available for use when filtering on [Float64] values."
 input Float64ListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: Float64OperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: Float64OperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Float64]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Float64]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: Float64OperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Float64
- values.
-
+values.
 """
 input Float64OperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Float64
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Float64
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Float64
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Float64]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Float64
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Float64
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Float64
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Float64]
 }
@@ -761,35 +539,25 @@ The `ID` scalar type represents a unique identifier, often used to refetch an ob
 scalar ID
 
 """
-
 These are the set of filter operators available for use when filtering on ID
- values.
-
+values.
 """
 input IDOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: ID
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [ID!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: ID
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [ID!]
 }
@@ -824,94 +592,66 @@ input IntFilterArg {
 "These are the set of filter operators available for use when filtering on [Int] values."
 input IntListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: IntOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: IntOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Int]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Int]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: IntOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Int
- values.
-
+values.
 """
 input IntOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Int
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Int
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Int
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Int]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Int
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Int
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Int
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Int]
 }
@@ -921,798 +661,445 @@ scalar JSON
 
 type Mutation {
     _: Boolean
-    """
-    
-    Adds one or more documents of this type using the data provided.
-
-    """
-    add_User(
-        """
-        
-        Encrypt flag specifies if the input document(s) needs to be encrypted. If set, 
-         DefraDB will generate a symmetric key for encryption using AES-GCM, and will 
-         use it to encrypt all fields' values.
-
-        """
-        encrypt: Boolean
-        """
-        
-        An optional list of individual fields that should be encrypted. For every field
-         in the list DefraDB will generate a symmetric key for encryption using AES-GCM.
-         If 'encrypt' is set to true, it all fields not listed in 'encryptedFields' will
-         be encrypted with the same key.
-
-        """
-        encryptFields: [UserExplicitField!]
-        "Add User documents"
-        input: [UserMutationInputArg!]
-    ): [User]
-    """
-    
-    Deletes documents in this collection matching any provided criteria. If no
-     criteria are provided all documents in the collection will be deleted.
-
-    """
-    delete_User(
-        """
-        
-        An optional set of docID values that will limit the delete to documents with
-         a matching docID. If no matching documents are found, the operation will
-         succeed, but no documents will be deleted. If an empty set is provided, no
-         documents will be deleted.
-
-        """
-        docID: [ID!]
-        """
-        
-        An optional filter for this delete that will limit the delete to documents
-         matching the given criteria. If no matching documents are found, the operation
-         will succeed, but no documents will be deleted.
-
-        """
-        filter: UserFilterArg
-    ): [User]
-    "Remove all or matching documents from this node. Returns true when complete."
-    truncate_User(
-        "Filter documents to truncate"
-        filter: UserFilterArg
-    ): Boolean!
-    """
-    
-    Updates documents in this collection using the data provided. Only documents
-     matching any provided criteria will be updated, if no criteria are provided
-     the update will be applied to all documents in the collection.
-
-    """
-    update_User(
-        """
-        
-        An optional set of docID values that will limit the update to documents
-         with a matching docID. If no matching documents are found, the operation will
-         succeed, but no documents will be updated.
-
-        """
-        docID: [ID!]
-        """
-        
-        An optional filter for this update that will limit the update to the documents
-         matching the given criteria. If no matching documents are found, the operation
-         will succeed, but no documents will be updated.
-
-        """
-        filter: UserFilterArg
-        "Update field values"
-        input: UserMutationInputArg
-    ): [User]
-    """
-    
-    Update or add a document in this collection using the data provided. The provided filter
-     must match at most one document. The matching document will be updated with the provided
-     update input, or if no matching document is found, a new document will be added with the
-     provided add input.
-
-    NOTE: It is highly recommended to add an index on the fields used to filter.
-    """
-    upsert_User(
-        "Add field values"
-        add: UserMutationInputArg!
-        """
-        
-        A required filter for this upsert that must match one or zero documents.
-         If a matching document is found it will be updated, otherwise a new
-         document will be added.
-
-        """
-        filter: UserFilterArg!
-        "Update field values"
-        update: UserMutationInputArg!
-    ): [User]
+    add_User(encrypt: Boolean, encryptFields: [UserExplicitField!], input: [UserMutationInputArg!]): [User]
+    delete_User(docID: [ID!], filter: UserFilterArg): [User]
+    truncate_User(filter: UserFilterArg): Boolean!
+    update_User(docID: [ID!], filter: UserFilterArg, input: UserMutationInputArg): [User]
+    upsert_User(add: UserMutationInputArg!, filter: UserFilterArg!, update: UserMutationInputArg!): [User]
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Blob!
- values.
-
+values.
 """
 input NotNullBlobOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Blob
     """
-    
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _ilike: String
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Blob!]
     """
-    
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _like: String
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Blob
     """
-    
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nilike: String
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Blob!]
     """
-    
     The not-like operator - if the target value does not contain the given sub-string the check will
-     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nlike: String
-}
-
-input NotNullBooleanFilterArg {
-    _and: [NotNullBooleanFilterArg!]
-    _eq: Boolean
-    _in: [Boolean!]
-    _neq: Boolean
-    _nin: [Boolean!]
-    _or: [NotNullBooleanFilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [Boolean!] values."
 input NotNullBooleanListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullBooleanOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullBooleanOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Boolean!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Boolean!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullBooleanOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Boolean!
- values.
-
+values.
 """
 input NotNullBooleanOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Boolean
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Boolean!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Boolean
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Boolean!]
-}
-
-input NotNullDateTimeFilterArg {
-    _and: [NotNullDateTimeFilterArg!]
-    _eq: DateTime
-    _geq: DateTime
-    _gt: DateTime
-    _in: [DateTime!]
-    _leq: DateTime
-    _lt: DateTime
-    _neq: DateTime
-    _nin: [DateTime!]
-    _or: [NotNullDateTimeFilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [DateTime!] values."
 input NotNullDateTimeListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullDateTimeOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullDateTimeOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [DateTime!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [DateTime!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullDateTimeOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on DateTime
- values.
-
+values.
 """
 input NotNullDateTimeOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: DateTime
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: DateTime
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: DateTime
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [DateTime!]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: DateTime
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: DateTime
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: DateTime
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [DateTime!]
-}
-
-input NotNullFloat32FilterArg {
-    _and: [NotNullFloat32FilterArg!]
-    _eq: Float32
-    _geq: Float32
-    _gt: Float32
-    _in: [Float32!]
-    _leq: Float32
-    _lt: Float32
-    _neq: Float32
-    _nin: [Float32!]
-    _or: [NotNullFloat32FilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [Float32!] values."
 input NotNullFloat32ListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullFloat32OperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullFloat32OperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Float32!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Float32!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullFloat32OperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Float32!
- values.
-
+values.
 """
 input NotNullFloat32OperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Float32
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Float32
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Float32
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Float32!]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Float32
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Float32
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Float32
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Float32!]
-}
-
-input NotNullFloat64FilterArg {
-    _and: [NotNullFloat64FilterArg!]
-    _eq: Float64
-    _geq: Float64
-    _gt: Float64
-    _in: [Float64!]
-    _leq: Float64
-    _lt: Float64
-    _neq: Float64
-    _nin: [Float64!]
-    _or: [NotNullFloat64FilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [Float64!] values."
 input NotNullFloat64ListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullFloat64OperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullFloat64OperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Float64!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Float64!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullFloat64OperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Float64!
- values.
-
+values.
 """
 input NotNullFloat64OperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Float64
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Float64
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Float64
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Float64!]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Float64
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Float64
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Float64
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Float64!]
-}
-
-input NotNullIntFilterArg {
-    _and: [NotNullIntFilterArg!]
-    _eq: Int
-    _geq: Int
-    _gt: Int
-    _in: [Int!]
-    _leq: Int
-    _lt: Int
-    _neq: Int
-    _nin: [Int!]
-    _or: [NotNullIntFilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [Int!] values."
 input NotNullIntListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullIntOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullIntOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [Int!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [Int!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullIntOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on Int!
- values.
-
+values.
 """
 input NotNullIntOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: Int
     """
-    
     The greater than or equal to operator - if the target value is greater than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _geq: Int
     """
-    
     The greater than operator - if the target value is greater than the given value the
-     check will pass.
-
+    check will pass.
     """
     _gt: Int
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [Int!]
     """
-    
     The less than or equal to operator - if the target value is less than or equal to the
-     given value the check will pass.
-
+    given value the check will pass.
     """
     _leq: Int
     """
-    
     The less than operator - if the target value is less than the given value the check will pass.
-
     """
     _lt: Int
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: Int
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [Int!]
-}
-
-input NotNullStringFilterArg {
-    _and: [NotNullStringFilterArg!]
-    _eq: String
-    _ilike: String
-    _in: [String!]
-    _like: String
-    _neq: String
-    _nilike: String
-    _nin: [String!]
-    _nlike: String
-    _or: [NotNullStringFilterArg!]
 }
 
 "These are the set of filter operators available for use when filtering on [String!] values."
 input NotNullStringListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: NotNullStringOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: NotNullStringOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [String!]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [String!]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: NotNullStringOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on String!
- values.
-
+values.
 """
 input NotNullStringOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: String
     """
-    
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _ilike: String
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [String!]
     """
-    
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _like: String
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: String
     """
-    
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nilike: String
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [String!]
     """
-    
     The not-like operator - if the target value does not contain the given sub-string the check will
-     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nlike: String
 }
@@ -1739,214 +1126,88 @@ input OrderedIndexConfig {
 
 enum Ordering {
     """
-    
     Sort the results in ascending order, e.g. null,1,2,3,a,b,c.
-
     """
     ASC
     """
-    
     Sort the results in descending order, e.g. c,b,a,3,2,1,null.
-
     """
     DESC
 }
 
 type Query {
     """
-    
-    Returns the average of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined average of all items within each set
-     (true average, not an average of averages) will be returned as a single value.
-
-    """
-    AVG(User: User__NumericSelector): Float!
-    """
-    
-    Returns the total number of items within the specified child sets. If multiple child
-     sets are specified, the combined total of all of them will be returned as a single value.
-
-    """
-    COUNT(User: User__CountSelector): Int!
-    """
-    
-    Returns the maximum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined maximum of all items within each set
-     will be returned as a single value.
-
-    """
-    MAX(User: User__NumericSelector): Float
-    """
-    
-    Returns the minimum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined minimum of all items within each set
-     will be returned as a single value.
-
-    """
-    MIN(User: User__NumericSelector): Float
-    """
-    
-    Returns the total sum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined sum of all of them will be returned as
-     a single value.
-
-    """
-    SUM(User: User__NumericSelector): Float!
-    User(
-        """
-        
-        An optional value that specifies the commit ID of a document or a branchable collection.
-         This CID does not need to be the most recent. If it corresponds to an older version
-         the document(s) will be returned at the state they were in at the time of that commit.
-         If a matching commit is not found then an empty set will be returned.
-
-        """
-        cid: [ID!]
-        """
-        
-        An optional set of docIDs for this field. Only documents with a docID
-         matching a docID in the given set will be returned.  If no documents match,
-         the result will be null/empty. If an empty set is provided, this argument will
-         be ignored.
-
-        """
-        docID: [ID!]
-        """
-        
-        An optional filter for this select, only documents matching the given criteria
-         will be returned.
-
-        """
-        filter: UserFilterArg
-        """
-        
-        An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
-        """
-        groupBy: [UserField!]
-        """
-        
-        An optional value that caps the number of results to the number provided.
-         A limit of zero will be ignored.
-
-        """
-        limit: Int
-        """
-        
-        An optional value that skips the given number of results that would have
-         otherwise been returned.  Commonly used alongside the 'limit' argument,
-         this argument will still work on its own.
-
-        """
-        offset: Int
-        """
-        
-        An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
-        """
-        order: [UserOrderArg]
-        """
-        
-        An optional value that specifies as to whether deleted documents may be
-         returned. This argument will propagate down through any child selects/joins.
-
-        """
-        showDeleted: Boolean
-    ): [User]
-    """
-    
     Returns a set of commits matching any provided criteria. If no arguments are
-     provided all commits in the system will be returned.
-
+    provided all commits in the system will be returned.
     """
     _commits(
         """
-        
         An optional value that specifies the commit IDs of the commits to return. If a
-         matching commit is not found then an empty set will be returned.
-
+        matching commit is not found then an empty set will be returned.
         """
         cid: [ID!]
         """
-        
         An optional value that specifies the maximum depth to which the commit DAG graph
-         should be traversed from matching commits.
-
+        should be traversed from matching commits.
         """
         depth: Int
         """
-        
         An optional docID parameter for this commit query. Only commits for a document
-         with a matching docID will be returned.  If no documents match, the result
-         set will be empty.
-
+        with a matching docID will be returned.  If no documents match, the result
+        set will be empty.
         """
         docID: [ID!]
         "Filter results based on specified conditions."
         filter: CommitsFilterArg
         """
-        
         An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
+        If this argument is provided, only fields used to group may be rendered in
+        the immediate child selector.  Additional fields may be selected by using
+        the 'GROUP' selector within the immediate child selector. If an empty set
+        is provided, the restrictions mentioned still apply, although all results
+        will appear within the same group.
         """
         groupBy: [commitFields!]
         """
-        
         An optional value that caps the number of results to the number provided.
-         A limit of zero will be ignored.
-
+        A limit of zero will be ignored.
         """
         limit: Int
         """
-        
         An optional value that skips the given number of results that would have
-         otherwise been returned.  Commonly used alongside the 'limit' argument,
-         this argument will still work on its own.
-
+        otherwise been returned.  Commonly used alongside the 'limit' argument,
+        this argument will still work on its own.
         """
         offset: Int
         """
-        
         An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
+        empty set will be ignored.
         """
         order: [commitsOrderArg]
     ): [Commit]
+    AVG(User: User__NumericSelector): Float!
+    COUNT(User: User__CountSelector): Int!
+    MAX(User: User__NumericSelector): Float
+    MIN(User: User__NumericSelector): Float
+    SUM(User: User__NumericSelector): Float!
+    User(cid: [ID!], docID: [ID!], filter: UserFilterArg, groupBy: [UserField!], limit: Int, offset: Int, order: [UserOrderArg], showDeleted: Boolean): [User]
 }
 
 """
-
 The scalar field selection type for aggregate input arguments.
-
 """
 input ScalarAggregateNumericBlock {
     _: Boolean
     """
-    
     An optional filter for this aggregate, only documents matching the given criteria
-     will be aggregated.
-
+    will be aggregated.
     """
     filter: IntFilterArg
 }
 
 """
-
 The signature of the commit, if one exists. This is used to verify the integrity
- of the commit and the data it contains.
-
+of the commit and the data it contains.
 """
 type Signature {
     "The identity of the signer, which is used to determine the public key used to verify the signature."
@@ -1960,618 +1221,129 @@ type Signature {
 "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text."
 scalar String
 
-input StringFilterArg {
-    _and: [StringFilterArg!]
-    _eq: String
-    _ilike: String
-    _in: [String]
-    _like: String
-    _neq: String
-    _nilike: String
-    _nin: [String]
-    _nlike: String
-    _or: [StringFilterArg!]
-}
-
 "These are the set of filter operators available for use when filtering on [String] values."
 input StringListOperatorBlock {
     """
-    
-    The all operator - all checks within this clause must pass on each item in order for this check to pass.	
-
+    The all operator - all checks within this clause must pass on each item in order for this check to pass.
     """
     _all: StringOperatorBlock
     """
-    
-    The any operator - only one check within this clause must pass on each item in order for this check to pass.	
-
+    The any operator - only one check within this clause must pass on each item in order for this check to pass.
     """
     _any: StringOperatorBlock
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: [String]
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: [String]
     """
-    
-    The none operator - only one check within this clause must fail on one item in order for this check to pass.	
-
+    The none operator - only one check within this clause must fail on one item in order for this check to pass.
     """
     _none: StringOperatorBlock
 }
 
 """
-
 These are the set of filter operators available for use when filtering on String
- values.
-
+values.
 """
 input StringOperatorBlock {
     """
-    
     The equality operator - if the target matches the value the check will pass.
-
     """
     _eq: String
     """
-    
     The case insensitive like operator - if the target value contains the given case insensitive sub-string the check
-     will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    will pass. '%' characters may be used as wildcards, for example '_like: "%ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _ilike: String
     """
-    
     The contains operator - if the target value is within the given set the check will pass.
-
     """
     _in: [String]
     """
-    
     The like operator - if the target value contains the given sub-string the check will pass. '%'
-     characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
-     ending in 'Ritchie'.
-
+    characters may be used as wildcards, for example '_like: "%Ritchie"' would match on strings
+    ending in 'Ritchie'.
     """
     _like: String
     """
-    
     The inequality operator - if the target does not matches the value the check will pass.
-
     """
     _neq: String
     """
-    
     The case insensitive not-like operator - if the target value does not contain the given case insensitive sub-string
-     the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    the check will pass. '%' characters may be used as wildcards, for example '_nlike: "%ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nilike: String
     """
-    
     The does not contains operator - if the target value is not within the given set the
-     check will pass.
-
+    check will pass.
     """
     _nin: [String]
     """
-    
     The not-like operator - if the target value does not contain the given sub-string the check will
-     pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
-     the string 'Quentin Tarantino'.
-
+    pass. '%' characters may be used as wildcards, for example '_nlike: "%Ritchie"' would match on
+    the string 'Quentin Tarantino'.
     """
     _nlike: String
 }
 
 type Subscription {
-    User(
-        """
-        
-        An optional value that specifies the commit ID of a document or a branchable collection.
-         This CID does not need to be the most recent. If it corresponds to an older version
-         the document(s) will be returned at the state they were in at the time of that commit.
-         If a matching commit is not found then an empty set will be returned.
-
-        """
-        cid: [ID!]
-        """
-        
-        An optional set of docIDs for this field. Only documents with a docID
-         matching a docID in the given set will be returned.  If no documents match,
-         the result will be null/empty. If an empty set is provided, this argument will
-         be ignored.
-
-        """
-        docID: [ID!]
-        """
-        
-        An optional filter for this select, only documents matching the given criteria
-         will be returned.
-
-        """
-        filter: UserFilterArg
-        """
-        
-        An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
-        """
-        groupBy: [UserField!]
-        """
-        
-        An optional value that caps the number of results to the number provided.
-         A limit of zero will be ignored.
-
-        """
-        limit: Int
-        """
-        
-        An optional value that skips the given number of results that would have
-         otherwise been returned.  Commonly used alongside the 'limit' argument,
-         this argument will still work on its own.
-
-        """
-        offset: Int
-        """
-        
-        An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
-        """
-        order: [UserOrderArg]
-        """
-        
-        An optional value that specifies as to whether deleted documents may be
-         returned. This argument will propagate down through any child selects/joins.
-
-        """
-        showDeleted: Boolean
-    ): [User]
     """
-    
     Returns a set of commits matching any provided criteria. If no arguments are
-     provided all commits in the system will be returned.
-
+    provided all commits in the system will be returned.
     """
     _commits(
         """
-        
         An optional value that specifies the commit IDs of the commits to return. If a
-         matching commit is not found then an empty set will be returned.
-
+        matching commit is not found then an empty set will be returned.
         """
         cid: [ID!]
         """
-        
         An optional value that specifies the maximum depth to which the commit DAG graph
-         should be traversed from matching commits.
-
+        should be traversed from matching commits.
         """
         depth: Int
         """
-        
         An optional docID parameter for this commit query. Only commits for a document
-         with a matching docID will be returned.  If no documents match, the result
-         set will be empty.
-
+        with a matching docID will be returned.  If no documents match, the result
+        set will be empty.
         """
         docID: [ID!]
         "Filter results based on specified conditions."
         filter: CommitsFilterArg
         """
-        
         An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
+        If this argument is provided, only fields used to group may be rendered in
+        the immediate child selector.  Additional fields may be selected by using
+        the 'GROUP' selector within the immediate child selector. If an empty set
+        is provided, the restrictions mentioned still apply, although all results
+        will appear within the same group.
         """
         groupBy: [commitFields!]
         """
-        
         An optional value that caps the number of results to the number provided.
-         A limit of zero will be ignored.
-
+        A limit of zero will be ignored.
         """
         limit: Int
         """
-        
         An optional value that skips the given number of results that would have
-         otherwise been returned.  Commonly used alongside the 'limit' argument,
-         this argument will still work on its own.
-
+        otherwise been returned.  Commonly used alongside the 'limit' argument,
+        this argument will still work on its own.
         """
         offset: Int
         """
-        
         An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
+        empty set will be ignored.
         """
         order: [commitsOrderArg]
     ): [Commit]
-}
-
-type User {
-    """
-    
-    Returns the average of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined average of all items within each set
-     (true average, not an average of averages) will be returned as a single value.
-
-    """
-    AVG(
-        GROUP: User__NumericSelector
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        age: ScalarAggregateNumericBlock
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        points: ScalarAggregateNumericBlock
-    ): Float!
-    """
-    
-    Returns the total number of items within the specified child sets. If multiple child
-     sets are specified, the combined total of all of them will be returned as a single value.
-
-    """
-    COUNT(GROUP: User__CountSelector, _version: User___version__CountSelector): Int!
-    """
-    
-    The group field may be used to return a set of records belonging to the group.
-     It must be used alongside a 'groupBy' argument on the parent selector. It may
-     contain any field on the type being grouped, including those used by the
-     groupBy.
-
-    """
-    GROUP(
-        """
-        
-        An optional set of docIDs for this field. Only documents with a docID
-         matching a docID in the given set will be returned.  If no documents match,
-         the result will be null/empty. If an empty set is provided, this argument will
-         be ignored.
-
-        """
-        docID: [ID!]
-        """
-        
-        An optional filter for this join, if none of the related records meet the filter
-         criteria the host record will still be returned, but the value of this field will
-         be empty.
-
-        """
-        filter: UserFilterArg
-        """
-        
-        An optional set of fields for which to group the contents of this field by.
-         If this argument is provided, only fields used to group may be rendered in
-         the immediate child selector.  Additional fields may be selected by using
-         the 'GROUP' selector within the immediate child selector. If an empty set
-         is provided, the restrictions mentioned still apply, although all results
-         will appear within the same group.
-
-        """
-        groupBy: [UserField!]
-        """
-        
-        An optional value that caps the number of results to the number provided.
-         A limit of zero will be ignored.
-
-        """
-        limit: Int
-        """
-        
-        An optional value that skips the given number of results that would have
-         otherwise been returned.  Commonly used alongside the 'limit' argument,
-         this argument will still work on its own.
-
-        """
-        offset: Int
-        """
-        
-        An optional set of field-orders which may be used to sort the results. An
-         empty set will be ignored.
-
-        """
-        order: [UserOrderArg]
-    ): [User]
-    """
-    
-    Returns the maximum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined maximum of all items within each set
-     will be returned as a single value.
-
-    """
-    MAX(
-        GROUP: User__NumericSelector
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        age: ScalarAggregateNumericBlock
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        points: ScalarAggregateNumericBlock
-    ): Float
-    """
-    
-    Returns the minimum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined minimum of all items within each set
-     will be returned as a single value.
-
-    """
-    MIN(
-        GROUP: User__NumericSelector
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        age: ScalarAggregateNumericBlock
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        points: ScalarAggregateNumericBlock
-    ): Float
-    """
-    
-    Returns how similar the given vector is to the specified field's value. The metric is
-     whichever one the field's vector index was created with, defaulting to cosine similarity
-     when the field has no vector index. Higher values are more similar for every metric.
-
-    """
-    SIMILARITY: Float
-    """
-    
-    Returns the total sum of the specified field values within the specified child sets. If
-     multiple fields/sets are specified, the combined sum of all of them will be returned as
-     a single value.
-
-    """
-    SUM(
-        GROUP: User__NumericSelector
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        age: ScalarAggregateNumericBlock
-        """
-        
-        The scalar field selection type for aggregate input arguments.
-
-        """
-        points: ScalarAggregateNumericBlock
-    ): Float!
-    """
-    
-    Indicates as to whether or not this document has been deleted.
-
-    """
-    _deleted: Boolean
-    """
-    
-    The immutable identifier/docID (primary key) value for this document.
-
-    """
-    _docID: ID
-    """
-    
-    Returns the head commit for this document.
-
-    """
-    _version: [Commit]
-    age: Int
-    name: String
-    points: Int
-    verified: Boolean
-}
-
-enum UserExplicitField {
-    age
-    name
-    points
-    verified
-}
-
-enum UserField {
-    GROUP
-    _deleted
-    _docID
-    _version
-    age
-    name
-    points
-    verified
-}
-
-input UserFilterArg {
-    "The alias operator allows filters to target aliased fields."
-    _alias: JSON
-    """
-    
-    The and operator - all checks within this clause must pass in order for this check to pass.
-
-    """
-    _and: [UserFilterArg!]
-    _docID: IDOperatorBlock
-    """
-    
-    The negative operator - this check will only pass if all checks within it fail.
-
-    """
-    _not: UserFilterArg
-    """
-    
-    The or operator - only one check within this clause must pass in order for this check to pass.
-
-    """
-    _or: [UserFilterArg!]
-    age: IntOperatorBlock
-    name: StringOperatorBlock
-    points: IntOperatorBlock
-    verified: BooleanOperatorBlock
-}
-
-input UserMutationInputArg {
-    age: Int
-    name: String
-    points: Int
-    verified: Boolean
-}
-
-enum UserNumericFieldsArg {
-    AVG
-    COUNT
-    MAX
-    MIN
-    SUM
-    age
-    points
-}
-
-input UserOrderArg {
-    "The alias field allows ordering by aliased fields."
-    _alias: JSON
-    _docID: Ordering
-    age: Ordering
-    name: Ordering
-    points: Ordering
-    verified: Ordering
-}
-
-input User__CountSelector {
-    """
-    
-    An optional filter for this aggregate, only documents matching the given criteria
-     will be aggregated.
-
-    """
-    filter: UserFilterArg
-    """
-    
-    An optional set of fields for which to group the contents of this field by.
-     If this argument is provided, only fields used to group may be rendered in
-     the immediate child selector.  Additional fields may be selected by using
-     the 'GROUP' selector within the immediate child selector. If an empty set
-     is provided, the restrictions mentioned still apply, although all results
-     will appear within the same group.
-
-    """
-    groupBy: [UserField!]
-    """
-    
-    An optional value that caps the number of results to the number provided.
-     A limit of zero will be ignored.
-
-    """
-    limit: Int
-    """
-    
-    An optional value that skips the given number of results that would have
-     otherwise been returned.  Commonly used alongside the 'limit' argument,
-     this argument will still work on its own.
-
-    """
-    offset: Int
-}
-
-input User__GROUP__CountSelector {
-    """
-    
-    An optional value that caps the number of results to the number provided.
-     A limit of zero will be ignored.
-
-    """
-    limit: Int
-    """
-    
-    An optional value that skips the given number of results that would have
-     otherwise been returned.  Commonly used alongside the 'limit' argument,
-     this argument will still work on its own.
-
-    """
-    offset: Int
-}
-
-input User__NumericSelector {
-    field: UserNumericFieldsArg!
-    """
-    
-    An optional filter for this aggregate, only documents matching the given criteria
-     will be aggregated.
-
-    """
-    filter: UserFilterArg
-    """
-    
-    An optional value that caps the number of results to the number provided.
-     A limit of zero will be ignored.
-
-    """
-    limit: Int
-    """
-    
-    An optional value that skips the given number of results that would have
-     otherwise been returned.  Commonly used alongside the 'limit' argument,
-     this argument will still work on its own.
-
-    """
-    offset: Int
-    """
-    
-    An optional set of field-orders which may be used to sort the results. An
-     empty set will be ignored.
-
-    """
-    order: [UserOrderArg]
-}
-
-input User___version__CountSelector {
-    """
-    
-    An optional value that caps the number of results to the number provided.
-     A limit of zero will be ignored.
-
-    """
-    limit: Int
-    """
-    
-    An optional value that skips the given number of results that would have
-     otherwise been returned.  Commonly used alongside the 'limit' argument,
-     this argument will still work on its own.
-
-    """
-    offset: Int
+    User(cid: [ID!], docID: [ID!], filter: UserFilterArg, groupBy: [UserField!], limit: Int, offset: Int, order: [UserOrderArg], showDeleted: Boolean): [User]
 }
 
 enum VectorDistanceMetric {
@@ -2599,7 +1371,7 @@ input VectorIndexConfig {
 }
 
 """
-A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document. 
+A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.
 
 In some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.
 """
@@ -2732,92 +1504,68 @@ enum __TypeKind {
 }
 
 """
-
 Returns the total number of items within the specified child sets. If multiple child
- sets are specified, the combined total of all of them will be returned as a single value.
-
+sets are specified, the combined total of all of them will be returned as a single value.
 """
 enum commitCountFieldArg {
     """
-    
     Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
-
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.  Collection commits will link to composites.
     """
     heads
     """
-    
     Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
-
+    Composite commits will link to the field commits for the fields modified during
+    the single mutation.  Collection commits will link to composites.
     """
     links
 }
 
 """
-
 These are the set of fields supported for grouping by in a _commits query.
-
 """
 enum commitFields {
     """
-    
     The unique CID of this commit, and the primary means through which to safely identify
-     a specific commit.
-
+    a specific commit.
     """
     cid
     """
-    
     The docID of the document that this commit is for.
-
     """
     docID
     """
-    
     The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
-
+    or a collection the value will be null.
     """
     fieldName
     """
-    
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-     and field level) on add will have a height of '1', each subsequent local update
-     will increment this by one for the new commits.
-
+    and field level) on add will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
     """
     height
 }
 
 """
-
 An optional set of field-orders which may be used to sort the results. An
- empty set will be ignored.
-
+empty set will be ignored.
 """
 input commitsOrderArg {
     """
-    
     The unique CID of this commit, and the primary means through which to safely identify
-     a specific commit.
-
+    a specific commit.
     """
     cid: Ordering
     """
-    
     The docID of the document that this commit is for.
-
     """
     docID: Ordering
     """
-    
     Height represents the location of the commit in the DAG. All commits (collection, composite,
-     and field level) on add will have a height of '1', each subsequent local update
-     will increment this by one for the new commits.
-
+    and field level) on add will have a height of '1', each subsequent local update
+    will increment this by one for the new commits.
     """
     height: Ordering
 }
@@ -2840,7 +1588,6 @@ directive @branchable(
 ) on OBJECT
 
 """
-
 Set constrains on a field.
 """
 directive @constraints(
@@ -2849,9 +1596,7 @@ directive @constraints(
 ) on FIELD_DEFINITION
 
 """
-
 Allows the explicit definition of a field's CRDT type. By default it is defined as LWWRegister.
-
 """
 directive @crdt(
     type: CRDTType
@@ -2867,9 +1612,7 @@ directive @default(
 ) on FIELD_DEFINITION
 
 """
-
 Indicate that a [float!] type is used to store embeddings.
-
 """
 directive @embedding(
     "The fields to pass to the model."
@@ -2942,23 +1685,251 @@ directive @policy(
 ) on OBJECT
 
 """
-
 Indicate the primary side of a one-to-one relationship.
-
 """
 directive @primary on FIELD_DEFINITION
 
 """
-
 Allows the explicit definition of relationship attributes instead of using the system generated
- defaults.
-
+defaults.
 """
 directive @relation(
     """
-    
     Explicitly define the name of the relationship instead of using the system generated defaults.
-
     """
     name: String
 ) on FIELD_DEFINITION
+
+input BooleanFilterArg {
+    _and: [BooleanFilterArg!]
+    _eq: Boolean
+    _in: [Boolean]
+    _neq: Boolean
+    _nin: [Boolean]
+    _or: [BooleanFilterArg!]
+}
+
+input DateTimeFilterArg {
+    _and: [DateTimeFilterArg!]
+    _eq: DateTime
+    _geq: DateTime
+    _gt: DateTime
+    _in: [DateTime]
+    _leq: DateTime
+    _lt: DateTime
+    _neq: DateTime
+    _nin: [DateTime]
+    _or: [DateTimeFilterArg!]
+}
+
+input Float32FilterArg {
+    _and: [Float32FilterArg!]
+    _eq: Float32
+    _geq: Float32
+    _gt: Float32
+    _in: [Float32]
+    _leq: Float32
+    _lt: Float32
+    _neq: Float32
+    _nin: [Float32]
+    _or: [Float32FilterArg!]
+}
+
+input Float64FilterArg {
+    _and: [Float64FilterArg!]
+    _eq: Float64
+    _geq: Float64
+    _gt: Float64
+    _in: [Float64]
+    _leq: Float64
+    _lt: Float64
+    _neq: Float64
+    _nin: [Float64]
+    _or: [Float64FilterArg!]
+}
+
+input NotNullBooleanFilterArg {
+    _and: [NotNullBooleanFilterArg!]
+    _eq: Boolean
+    _in: [Boolean!]
+    _neq: Boolean
+    _nin: [Boolean!]
+    _or: [NotNullBooleanFilterArg!]
+}
+
+input NotNullDateTimeFilterArg {
+    _and: [NotNullDateTimeFilterArg!]
+    _eq: DateTime
+    _geq: DateTime
+    _gt: DateTime
+    _in: [DateTime!]
+    _leq: DateTime
+    _lt: DateTime
+    _neq: DateTime
+    _nin: [DateTime!]
+    _or: [NotNullDateTimeFilterArg!]
+}
+
+input NotNullFloat32FilterArg {
+    _and: [NotNullFloat32FilterArg!]
+    _eq: Float32
+    _geq: Float32
+    _gt: Float32
+    _in: [Float32!]
+    _leq: Float32
+    _lt: Float32
+    _neq: Float32
+    _nin: [Float32!]
+    _or: [NotNullFloat32FilterArg!]
+}
+
+input NotNullFloat64FilterArg {
+    _and: [NotNullFloat64FilterArg!]
+    _eq: Float64
+    _geq: Float64
+    _gt: Float64
+    _in: [Float64!]
+    _leq: Float64
+    _lt: Float64
+    _neq: Float64
+    _nin: [Float64!]
+    _or: [NotNullFloat64FilterArg!]
+}
+
+input NotNullIntFilterArg {
+    _and: [NotNullIntFilterArg!]
+    _eq: Int
+    _geq: Int
+    _gt: Int
+    _in: [Int!]
+    _leq: Int
+    _lt: Int
+    _neq: Int
+    _nin: [Int!]
+    _or: [NotNullIntFilterArg!]
+}
+
+input NotNullStringFilterArg {
+    _and: [NotNullStringFilterArg!]
+    _eq: String
+    _ilike: String
+    _in: [String!]
+    _like: String
+    _neq: String
+    _nilike: String
+    _nin: [String!]
+    _nlike: String
+    _or: [NotNullStringFilterArg!]
+}
+
+input StringFilterArg {
+    _and: [StringFilterArg!]
+    _eq: String
+    _ilike: String
+    _in: [String]
+    _like: String
+    _neq: String
+    _nilike: String
+    _nin: [String]
+    _nlike: String
+    _or: [StringFilterArg!]
+}
+
+type User {
+    AVG(GROUP: User__NumericSelector, age: ScalarAggregateNumericBlock, points: ScalarAggregateNumericBlock): Float!
+    COUNT(GROUP: User__CountSelector, _version: User___version__CountSelector): Int!
+    GROUP(docID: [ID!], filter: UserFilterArg, groupBy: [UserField!], limit: Int, offset: Int, order: [UserOrderArg]): [User]
+    MAX(GROUP: User__NumericSelector, age: ScalarAggregateNumericBlock, points: ScalarAggregateNumericBlock): Float
+    MIN(GROUP: User__NumericSelector, age: ScalarAggregateNumericBlock, points: ScalarAggregateNumericBlock): Float
+    "\nReturns how similar the given vector is to the specified field's value. The metric is\n whichever one the field's vector index was created with, defaulting to cosine similarity\n when the field has no vector index. Higher values are more similar for every metric.\n"
+    SIMILARITY: Float
+    SUM(GROUP: User__NumericSelector, age: ScalarAggregateNumericBlock, points: ScalarAggregateNumericBlock): Float!
+    _deleted: Boolean
+    _docID: ID
+    _version: [Commit]
+    age: Int
+    name: String
+    points: Int
+    verified: Boolean
+}
+
+enum UserExplicitField {
+    age
+    name
+    points
+    verified
+}
+
+enum UserField {
+    GROUP
+    _deleted
+    _docID
+    _version
+    age
+    name
+    points
+    verified
+}
+
+input UserFilterArg {
+    _alias: JSON
+    _and: [UserFilterArg!]
+    _docID: IDOperatorBlock
+    _not: UserFilterArg
+    _or: [UserFilterArg!]
+    age: IntOperatorBlock
+    name: StringOperatorBlock
+    points: IntOperatorBlock
+    verified: BooleanOperatorBlock
+}
+
+input UserMutationInputArg {
+    age: Int
+    name: String
+    points: Int
+    verified: Boolean
+}
+
+enum UserNumericFieldsArg {
+    AVG
+    COUNT
+    MAX
+    MIN
+    SUM
+    age
+    points
+}
+
+input UserOrderArg {
+    _alias: JSON
+    _docID: Ordering
+    age: Ordering
+    name: Ordering
+    points: Ordering
+    verified: Ordering
+}
+
+input User__CountSelector {
+    filter: UserFilterArg
+    groupBy: [UserField!]
+    limit: Int
+    offset: Int
+}
+
+input User__GROUP__CountSelector {
+    limit: Int
+    offset: Int
+}
+
+input User__NumericSelector {
+    field: UserNumericFieldsArg!
+    filter: UserFilterArg
+    limit: Int
+    offset: Int
+    order: [UserOrderArg]
+}
+
+input User___version__CountSelector {
+    limit: Int
+    offset: Int
+}

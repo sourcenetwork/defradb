@@ -31,13 +31,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/identity"
-	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 )
 
 var _ client.TxnStore = (*Client)(nil)
@@ -744,7 +745,7 @@ func (c *Client) VerifySignature(
 func parseGraphQLOperation(query string) (wgast.OperationType, error) {
 	document, report := astparser.ParseGraphqlDocumentString(query)
 	if report.HasErrors() {
-		return wgast.OperationTypeUnknown, report
+		return wgast.OperationTypeUnknown, NewErrGraphQLSyntax(report)
 	}
 	if len(document.OperationDefinitions) == 0 {
 		return wgast.OperationTypeUnknown, ErrInvalidGraphQLRequest

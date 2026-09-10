@@ -2,6 +2,11 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package graphql
 
@@ -23,6 +28,17 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
+const (
+	introspectionSchemaField = "__schema"
+	introspectionTypeField   = "__type"
+	introspectionEnumValues  = "enumValues"
+	introspectionFields      = "fields"
+	introspectionInputFields = "inputFields"
+	introspectionInputObject = "INPUT_OBJECT"
+	introspectionInterface   = "INTERFACE"
+	introspectionObject      = "OBJECT"
+)
+
 func executeIntrospection(definition *wgast.Document, source string) *client.RequestResult {
 	reportResult := func(report *operationreport.Report) *client.RequestResult {
 		errs := append([]error(nil), report.InternalErrors...)
@@ -41,7 +57,7 @@ func executeIntrospection(definition *wgast.Document, source string) *client.Req
 	}
 	if len(operation.OperationDefinitions) > 1 {
 		return introspectionErrorResult([]error{
-			fmt.Errorf("Must provide operation name if query contains multiple operations."),
+			newErrMustProvideOperationName(),
 		})
 	}
 	astnormalization.NormalizeOperation(&operation, validationDefinition, &report)
@@ -238,9 +254,9 @@ func projectIntrospectionSelection(
 
 		var fieldValue any
 		switch name {
-		case "__schema":
-			fieldValue = root["__schema"]
-		case "__type":
+		case introspectionSchemaField:
+			fieldValue = root[introspectionSchemaField]
+		case introspectionTypeField:
 			fieldValue = introspectionTypeByArgument(operation, fieldRef, root)
 		default:
 			fieldValue = object[name]
@@ -254,7 +270,7 @@ func projectIntrospectionSelection(
 			// __Type values. GraphQL permits clients to traverse those references
 			// as full types (for example, arg.type.inputFields), so resolve a
 			// compact reference through __schema.types when needed.
-			if fieldValue == nil && name == "inputFields" && object["kind"] == "INPUT_OBJECT" {
+			if fieldValue == nil && name == introspectionInputFields && object["kind"] == introspectionInputObject {
 				if typeName, ok := object["name"].(string); ok {
 					if fullType := introspectionTypeByName(typeName, root); fullType != nil {
 						fieldValue = fullType[name]
@@ -262,11 +278,11 @@ func projectIntrospectionSelection(
 				}
 			}
 		}
-		if (name == "fields" || name == "enumValues") &&
+		if (name == introspectionFields || name == introspectionEnumValues) &&
 			!introspectionIncludeDeprecated(operation, fieldRef) {
 			fieldValue = filterDeprecatedIntrospectionValues(fieldValue)
 		}
-		if name == "args" || name == "fields" || name == "inputFields" {
+		if name == "args" || name == introspectionFields || name == introspectionInputFields {
 			fieldValue = sortIntrospectionNamedValues(fieldValue)
 		}
 		if !operation.Fields[fieldRef].HasSelections || fieldValue == nil {
@@ -309,16 +325,16 @@ func introspectionDescription(value any) any {
 func introspectionFieldIsInapplicable(fieldName string, kind any) bool {
 	typeKind, _ := kind.(string)
 	switch fieldName {
-	case "fields":
-		return typeKind != "OBJECT" && typeKind != "INTERFACE"
-	case "inputFields":
-		return typeKind != "INPUT_OBJECT"
+	case introspectionFields:
+		return typeKind != introspectionObject && typeKind != introspectionInterface
+	case introspectionInputFields:
+		return typeKind != introspectionInputObject
 	case "interfaces":
-		return typeKind != "OBJECT"
-	case "enumValues":
+		return typeKind != introspectionObject
+	case introspectionEnumValues:
 		return typeKind != "ENUM"
 	case "possibleTypes":
-		return typeKind != "INTERFACE" && typeKind != "UNION"
+		return typeKind != introspectionInterface && typeKind != "UNION"
 	case "ofType":
 		return typeKind != "LIST" && typeKind != "NON_NULL"
 	default:

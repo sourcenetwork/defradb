@@ -2,6 +2,11 @@
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
 
 package schema
 
@@ -23,6 +28,11 @@ import (
 var collectionSchemaTemplates embed.FS
 
 var graphQLNamePattern = regexp.MustCompile(`^[_a-zA-Z][_a-zA-Z0-9]*$`)
+
+const (
+	typeOrdering     = "Ordering"
+	typeRequiredJSON = "JSON!"
+)
 
 type collectionTemplateModel struct {
 	Collections      []collectionTemplateCollection
@@ -244,7 +254,7 @@ func newCollectionTemplateModel(
 	}
 	for _, collection := range result.Collections {
 		for _, field := range collection.InlineArrays {
-			if field.ElementFilterType == "JSON" {
+			if field.ElementFilterType == typeJSON {
 				continue
 			}
 			if _, exists := filterNames[field.ElementFilterType]; exists {
@@ -256,7 +266,7 @@ func newCollectionTemplateModel(
 				Name:       field.ElementFilterType,
 				Scalar:     scalar,
 				ListType:   "[" + field.ElementType + "]",
-				Comparable: scalar == "Int" || scalar == "Float32" || scalar == "Float64" || scalar == "DateTime",
+				Comparable: scalar == typeInt || scalar == "Float32" || scalar == "Float64" || scalar == "DateTime",
 				Text:       scalar == "String",
 			})
 		}
@@ -346,9 +356,7 @@ func newCollectionTemplateField(
 		}
 	}
 	if !graphQLNamePattern.MatchString(field.Name) {
-		return collectionTemplateField{}, nil, fmt.Errorf(
-			"Names must match /^[_a-zA-Z][_a-zA-Z0-9]*$/ but %q does not.", field.Name,
-		)
+		return collectionTemplateField{}, nil, newErrInvalidGraphQLName(field.Name)
 	}
 	result := collectionTemplateField{Name: field.Name, Writable: true, Orderable: true}
 	switch kind := field.Kind.(type) {
@@ -359,7 +367,7 @@ func newCollectionTemplateField(
 		result.Type = kind.String()
 		result.MutationType = strings.ReplaceAll(kind.String(), "!", "")
 		result.FilterType = scalarFilterType(kind.String())
-		result.OrderType = "Ordering"
+		result.OrderType = typeOrdering
 	case client.ScalarArrayKind:
 		if _, err := strconv.ParseUint(kind.String(), 10, 8); err == nil {
 			return collectionTemplateField{}, nil, NewErrTypeNotFound(kind.String())
@@ -367,7 +375,7 @@ func newCollectionTemplateField(
 		result.Type = kind.String()
 		result.MutationType = strings.ReplaceAll(kind.String(), "!", "")
 		result.FilterType = scalarListFilterType(kind.String())
-		result.OrderType = "Ordering"
+		result.OrderType = typeOrdering
 		result.ElementType = strings.TrimSuffix(strings.TrimPrefix(kind.String(), "["), "]")
 		result.ElementFilterType = scalarArrayElementFilterType(kind.String())
 	case *client.NamedKind:
@@ -405,7 +413,7 @@ func newCollectionTemplateField(
 		MutationType: "ID",
 		FilterType:   "IDOperatorBlock",
 		Writable:     true,
-		OrderType:    "Ordering",
+		OrderType:    typeOrdering,
 	}
 	return result, foreignID, nil
 }
@@ -426,7 +434,7 @@ func setRelationTemplateField(field *collectionTemplateField, name string, array
 
 func scalarFilterType(typeName string) string {
 	name := strings.TrimSuffix(typeName, "!")
-	if name == "JSON" {
+	if name == typeJSON {
 		return name
 	}
 	return name + "OperatorBlock"
@@ -434,8 +442,8 @@ func scalarFilterType(typeName string) string {
 
 func scalarListFilterType(typeName string) string {
 	inner := strings.TrimSuffix(strings.TrimPrefix(typeName, "["), "]")
-	if inner == "JSON" || inner == "JSON!" {
-		return "JSON"
+	if inner == typeJSON || inner == typeRequiredJSON {
+		return typeJSON
 	}
 	if strings.HasSuffix(inner, "!") {
 		return "NotNull" + strings.TrimSuffix(inner, "!") + "ListOperatorBlock"
@@ -446,8 +454,8 @@ func scalarListFilterType(typeName string) string {
 
 func scalarArrayElementFilterType(typeName string) string {
 	inner := strings.TrimSuffix(strings.TrimPrefix(typeName, "["), "]")
-	if inner == "JSON" || inner == "JSON!" {
-		return "JSON"
+	if inner == typeJSON || inner == typeRequiredJSON {
+		return typeJSON
 	}
 	if strings.HasSuffix(inner, "!") {
 		return "NotNull" + strings.TrimSuffix(inner, "!") + "FilterArg"

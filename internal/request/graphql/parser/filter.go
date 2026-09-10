@@ -14,9 +14,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
+
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
