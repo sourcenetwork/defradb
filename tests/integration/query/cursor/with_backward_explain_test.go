@@ -76,12 +76,11 @@ func TestCursorBackwardExplain_SimpleShowsLastBeforeFields(t *testing.T) {
 					if !ok {
 						return false, "missing explain key"
 					}
-					ops, ok := explain["operationNode"].([]any)
-					if !ok || len(ops) == 0 {
+					ops := testUtils.ConvertToArrayOfMaps(t, explain["operationNode"])
+					if len(ops) == 0 {
 						return false, "missing operationNode"
 					}
-					op := requireType[map[string]any](t, ops[0])
-					selectTop := requireType[map[string]any](t, op["selectTopNode"])
+					selectTop := requireType[map[string]any](t, ops[0]["selectTopNode"])
 					cursorN := requireType[map[string]any](t, selectTop["cursorNode"])
 
 					if cursorN["last"] != uint64(2) {
