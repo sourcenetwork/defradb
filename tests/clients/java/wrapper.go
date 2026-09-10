@@ -858,7 +858,11 @@ const subscriptionPollInterval = 15 * time.Millisecond
 func (w *Wrapper) callNodeIfOpen(name string, b *argBuilder) (res defraResult, err error, open bool) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
+	// Unlike callStore or callGuarded's blanket defer, this can't be a defer covering the whole function. 
+	// callNodeNoHandle passes b straight through rather than moving its cstrs into a separate builder first, 
+	// so freeing it a second time after callNodeRaw already has would be a double free.
 	if w.closed {
+		b.freeCStrings()
 		return defraResult{}, nil, false
 	}
 	res, err = callNodeNoHandle(w.nodeObj, name, b)

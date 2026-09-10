@@ -281,9 +281,16 @@ func callTxnRaw(txnObj C.jobject, name string, b *argBuilder) (defraResult, erro
 // or deleted, since 0 is never a valid cgo.Handle) or silently fall back to operating on the whole
 // node instead of failing clearly. The finalized check and the subsequent use of txnObj/handle are
 // done under a single Txn.liveHandle call so Commit/Discard can't finalize the txn in between.
+//
+// Also frees b's C strings on every return path, including the early ones above (closed/finalized)
+// that never reach callNode/callTxn. This is safe to call unconditionally as callNode and callTxn
+// already move b's cstrs into a separate builder and nil out b.cstrs before freeing it (see their
+// "avoid double free" comments), so by the time this defer runs on a dispatched call, b.cstrs is
+// already nil and freeing it again is a no-op.
 func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (defraResult, error) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
+	defer b.freeCStrings()
 	if w.closed {
 		return defraResult{}, errors.New(ErrWrapperClosed)
 	}
@@ -304,9 +311,14 @@ func callStore(w *Wrapper, ctx context.Context, name string, b *argBuilder) (def
 
 // callGuarded invokes a DefraNode native method directly on this Wrapper's own node object,
 // bypassing callStore's transaction dispatch. Guards against Close the same way callStore does.
+//
+// Also frees b's C strings on the closed early return the same way callStore does. callNode
+// already nils out b.cstrs before this defer would otherwise run, so this is a no-op on the normal
+// path and only actually frees anything on the path that never reaches callNode.
 func (w *Wrapper) callGuarded(name string, handle uintptr, b *argBuilder) (defraResult, error) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
+	defer b.freeCStrings()
 	if w.closed {
 		return defraResult{}, errors.New(ErrWrapperClosed)
 	}
