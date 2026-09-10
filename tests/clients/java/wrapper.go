@@ -58,6 +58,13 @@ type Wrapper struct {
 	// subscription-polling goroutine (which outlives the call that started it) is still using it.
 	nodeMu sync.RWMutex
 	closed bool // set by the first call to Close; guards against reusing the deleted JNI ref
+
+	// subsMu guards subs, the set of subscription IDs this Wrapper currently owns. Close needs this
+	// to proactively release every owned subscription (see closeOwnedSubscription) before it's done.
+	// Once nodeMu's write lock in Close has been taken, a subscription-polling goroutine's own
+	// cleanup can only run after Close releases that lock.
+	subsMu sync.Mutex
+	subs   map[string]struct{}
 }
 
 // NewWrapper wraps an already-constructed *node.Node, reusing its cgo.Handle the same way cbindings.NewCWrapper does
@@ -70,7 +77,7 @@ func NewWrapper(n *node.Node) (*Wrapper, error) {
 		h.Delete()
 		return nil, err
 	}
-	return &Wrapper{node: n, handle: uintptr(h), nodeObj: obj}, nil
+	return &Wrapper{node: n, handle: uintptr(h), nodeObj: obj, subs: make(map[string]struct{})}, nil
 }
 
 func identityHandle(opt immutable.Option[identity.Identity]) uintptr {
@@ -858,8 +865,8 @@ const subscriptionPollInterval = 15 * time.Millisecond
 func (w *Wrapper) callNodeIfOpen(name string, b *argBuilder) (res defraResult, err error, open bool) {
 	w.nodeMu.RLock()
 	defer w.nodeMu.RUnlock()
-	// Unlike callStore or callGuarded's blanket defer, this can't be a defer covering the whole function. 
-	// callNodeNoHandle passes b straight through rather than moving its cstrs into a separate builder first, 
+	// Unlike callStore or callGuarded's blanket defer, this can't be a defer covering the whole function.
+	// callNodeNoHandle passes b straight through rather than moving its cstrs into a separate builder first,
 	// so freeing it a second time after callNodeRaw already has would be a double free.
 	if w.closed {
 		b.freeCStrings()
@@ -867,6 +874,20 @@ func (w *Wrapper) callNodeIfOpen(name string, b *argBuilder) (res defraResult, e
 	}
 	res, err = callNodeNoHandle(w.nodeObj, name, b)
 	return res, err, true
+}
+
+// closeOwnedSubscription removes id from subs, reporting whether the caller is the one that gets to
+// actually tell the native side to release it. Both wrapSubscriptionAsChannel's cleanup and Close's
+// proactive sweep  race to close every subscription id knows about. Whichever one gets here first "wins"
+// (reeturning owned=true) and is responsible for the native call. The other will find that the id is
+// already gone (retuurning owned=false) and does nothing.
+func (w *Wrapper) closeOwnedSubscription(id string) (owned bool) {
+	w.subsMu.Lock()
+	defer w.subsMu.Unlock()
+	if _, owned = w.subs[id]; owned {
+		delete(w.subs, id)
+	}
+	return owned
 }
 
 // wrapSubscriptionAsChannel mirrors cbindings' helper of the same name, polling the subscription via
@@ -879,6 +900,12 @@ func (w *Wrapper) callNodeIfOpen(name string, b *argBuilder) (res defraResult, e
 // gain from polling the same ID again, so status 1 is treated as terminal rather than being retried
 // forever like the "nothing new yet" case (status 2 / empty value).
 func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <-chan client.GQLResult {
+	// Registered before returning the channel to the caller (not inside the goroutine below), so
+	// that even a Close racing immediately after this call returns is guaranteed to see it.
+	w.subsMu.Lock()
+	w.subs[subID] = struct{}{}
+	w.subsMu.Unlock()
+
 	ch := make(chan client.GQLResult)
 	go func() {
 		defer close(ch)
@@ -888,7 +915,9 @@ func (w *Wrapper) wrapSubscriptionAsChannel(ctx context.Context, subID string) <
 		// this, every subscription that isn't explicitly closed by the caller leaks both the C-side
 		// subscription store entry and the live DB subscription driving it.
 		defer func() {
-			_, _, _ = w.callNodeIfOpen("CloseSubscriptionNative", newArgs().argStr(subID))
+			if w.closeOwnedSubscription(subID) {
+				_, _, _ = w.callNodeIfOpen("CloseSubscriptionNative", newArgs().argStr(subID))
+			}
 		}()
 		for {
 			select {
@@ -966,6 +995,9 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 // actually succeeded, mirroring cbindings.CloseNode's handling of a failed node.Close. A failed close
 // here leaves the wrapper exactly as it was, so a caller can call Close again to retry instead of the
 // node/handle becoming unreachable.
+//
+// Also proactively releases every subscription this wrapper still owns, once NodeCloseNative has
+// succeeded.
 func (w *Wrapper) Close() {
 	w.nodeMu.Lock()
 	defer w.nodeMu.Unlock()
@@ -977,6 +1009,19 @@ func (w *Wrapper) Close() {
 		return
 	}
 	w.closed = true
+
+	w.subsMu.Lock()
+	ids := make([]string, 0, len(w.subs))
+	for id := range w.subs {
+		ids = append(ids, id)
+	}
+	w.subsMu.Unlock()
+	for _, id := range ids {
+		if w.closeOwnedSubscription(id) {
+			_, _ = callNodeNoHandle(w.nodeObj, "CloseSubscriptionNative", newArgs().argStr(id))
+		}
+	}
+
 	if env, detach, aerr := attach(); aerr == nil {
 		C.defra_delete_global_ref(env, w.nodeObj)
 		detach()
