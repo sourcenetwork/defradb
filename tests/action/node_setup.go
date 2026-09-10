@@ -290,7 +290,16 @@ func setupExternalNode(
 		return nil, nil
 	}
 
-	w, err := external.NewWrapper(s.Ctx, s.T, path, flags)
+	// Run the node as the identity the harness addresses it by, the same one a
+	// native node is given.
+	nodeKey := immutable.None[crypto.PrivateKey]()
+	nodeIdent, ok := identityWithPrivateKey(
+		getIdentityForRequestSpecificToNode(s, NodeIdentity(s.CurrentSetupNodeID), s.CurrentSetupNodeID))
+	if ok {
+		nodeKey = immutable.Some(nodeIdent.PrivateKey())
+	}
+
+	w, err := external.NewWrapper(s.Ctx, s.T, path, nodeKey, flags)
 	if err != nil {
 		return nil, err
 	}
