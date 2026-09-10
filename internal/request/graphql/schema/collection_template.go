@@ -88,7 +88,9 @@ func renderCollectionSchemaSDLWithEncryption(
 	if err != nil {
 		return "", err
 	}
-	tmpl, err := template.ParseFS(collectionSchemaTemplates, "templates/collection.graphql.tmpl")
+	tmpl, err := template.New("collection.graphql.tmpl").
+		Delims("<%", "%>").
+		ParseFS(collectionSchemaTemplates, "templates/collection.graphql.tmpl")
 	if err != nil {
 		return "", err
 	}
@@ -236,7 +238,7 @@ func newCollectionTemplateModel(
 	// generated schema, even when the current collections did not contain a
 	// matching inline array. Keep that introspection-visible API stable.
 	result.ElementFilters = defaultElementFilters()
-	filterNames := make(map[string]struct{}, len(result.ElementFilters))
+	filterNames := map[string]struct{}{"IntFilterArg": {}}
 	for _, filter := range result.ElementFilters {
 		filterNames[filter.Name] = struct{}{}
 	}
@@ -295,6 +297,11 @@ func defaultElementFilters() []collectionTemplateElementFilter {
 		{name: "String", text: true},
 	} {
 		for _, nonNull := range []bool{false, true} {
+			if scalar.name == "Int" && !nonNull {
+				// IntFilterArg is part of the static schema because it is used by
+				// ScalarAggregateNumericBlock even when no collections exist.
+				continue
+			}
 			prefix := ""
 			element := scalar.name
 			if nonNull {
