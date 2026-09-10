@@ -30,8 +30,8 @@ import (
 //
 // This only checks the process-local effect (the goroutine exits). It can't directly verify from
 // this package that CloseSubscriptionNative actually released the C-side subscription store entry
-// too, since that store is private to the cbindings package. TestSubscriptionJava_
-// ClosingNodeWhileSubscribed_DoesNotRace (located in tests/integration/subscription) covers the
+// too, since that store is private to the cbindings package.
+// TestWrapperClose_WhileSubscribed_NoRace (in wrapper_close_test.go) covers the
 // close-while-subscribed/native-cleanup side under -race instead.
 func TestWrapperSubscription_ContextCancelled_ChannelClosesPromptly(t *testing.T) {
 	w, ctx := newTestWrapper(t)

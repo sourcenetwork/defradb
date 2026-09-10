@@ -90,3 +90,19 @@ func TestWrapperClose_ConcurrentDoubleClose_NoRace(t *testing.T) {
 	_, err := w.NewTxn(false)
 	require.ErrorContains(t, err, javaclient.ErrWrapperClosed)
 }
+
+// TestWrapperClose_WhileSubscribed_NoRace guards against wrapSubscriptionAsChannel's
+// subscription-polling goroutine racing with Close deleting w.nodeObj's JNI global ref. The
+// subscription's context is never cancelled here, so the poll loop is still (or about to be)
+// calling PollSubscriptionNative/CloseSubscriptionNative on w.nodeObj when t.Cleanup's Close runs
+// at the end of this test - Close must not be able to delete the ref out from under an in-flight
+// or about-to-start poll. Run with -race. There is nothing to assert on beyond "this doesn't crash
+// or race": the subscription's own contents aren't the point, so no attempt is made to read from
+// (or cancel) it before the test returns.
+func TestWrapperClose_WhileSubscribed_NoRace(t *testing.T) {
+	w, ctx := newTestWrapper(t)
+
+	result := w.ExecRequest(ctx, `subscription { Users { name } }`, options.ExecRequest())
+	require.Empty(t, result.GQL.Errors)
+	require.NotNil(t, result.Subscription)
+}
