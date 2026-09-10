@@ -379,6 +379,9 @@ func (c *Collection) SaveDocument(
 		if saveOpt.Identity.HasValue() {
 			updateOpts.SetIdentity(saveOpt.Identity.Value())
 		}
+		if saveOpt.EnableSigning.HasValue() {
+			updateOpts.SetEnableSigning(saveOpt.EnableSigning.Value())
+		}
 		err = c.UpdateDocument(ctx, doc, updateOpts)
 	case errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized):
 		err = c.AddDocument(ctx, doc, opts...)
