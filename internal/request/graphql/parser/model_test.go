@@ -15,7 +15,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-func TestParseRequestFromGraphQLGoToolsDocument(t *testing.T) {
+func TestParseRequestFromDocument(t *testing.T) {
 	definition, definitionReport := astparser.ParseGraphqlDocumentString(`
 		type Query { User(limit: Int, showDeleted: Boolean = true): [User] }
 		type User { name: String }

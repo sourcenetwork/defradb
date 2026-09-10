@@ -15,7 +15,7 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
 )
 
-func TestExecuteIntrospectionWithGraphQLGoTools(t *testing.T) {
+func TestExecuteIntrospection(t *testing.T) {
 	parser, err := NewParser(false)
 	require.NoError(t, err)
 
@@ -45,7 +45,7 @@ func TestExecuteIntrospectionWithGraphQLGoTools(t *testing.T) {
 	require.Equal(t, "OBJECT", query["kind"])
 }
 
-func TestExecuteStandardIntrospectionQueryWithGraphQLGoTools(t *testing.T) {
+func TestExecuteStandardIntrospectionQuery(t *testing.T) {
 	parser, err := NewParser(false)
 	require.NoError(t, err)
 
@@ -57,6 +57,71 @@ func TestExecuteStandardIntrospectionQueryWithGraphQLGoTools(t *testing.T) {
 	require.True(t, ok)
 	require.NotEmpty(t, schema["types"])
 	require.NotEmpty(t, schema["directives"])
+}
+
+func TestExecuteIntrospectionReturnsSubscriptionType(t *testing.T) {
+	parser, err := NewParser(false)
+	require.NoError(t, err)
+	result := parser.ExecuteIntrospection(context.Background(), `{
+		__schema { subscriptionType { name } }
+	}`)
+	require.Empty(t, result.GQL.Errors)
+	require.Equal(t, map[string]any{
+		"__schema": map[string]any{
+			"subscriptionType": map[string]any{"name": "Subscription"},
+		},
+	}, result.GQL.Data)
+}
+
+func TestExecuteIntrospectionCommitFields(t *testing.T) {
+	parser, err := NewParser(false)
+	require.NoError(t, err)
+	result := parser.ExecuteIntrospection(context.Background(), `{
+		__type(name: "Commit") { fields { name } }
+	}`)
+	require.Empty(t, result.GQL.Errors)
+	require.Equal(t, []string{
+		"COUNT",
+		"GROUP",
+		"cid",
+		"collectionVersionId",
+		"delta",
+		"docID",
+		"fieldName",
+		"heads",
+		"height",
+		"links",
+		"signature",
+	}, introspectionFieldNames(t, result.GQL.Data))
+}
+
+func TestExecuteIntrospectionFieldOrderIsDeterministic(t *testing.T) {
+	definition := introspectionTestDefinition(t, `
+		type Query {
+			zebra: String
+			alpha: String
+			middle: String
+		}
+	`)
+	for range 20 {
+		result := executeIntrospection(&definition, `{
+			__type(name: "Query") { fields { name } }
+		}`)
+		require.Empty(t, result.GQL.Errors)
+		require.Equal(t, []string{"alpha", "middle", "zebra"},
+			introspectionFieldNames(t, result.GQL.Data))
+	}
+}
+
+func introspectionFieldNames(t *testing.T, data any) []string {
+	t.Helper()
+	typeData := data.(map[string]any)["__type"].(map[string]any)
+	fields := typeData["fields"].([]any)
+	names := make([]string, len(fields))
+	for index, field := range fields {
+		names[index] = field.(map[string]any)["name"].(string)
+	}
+	return names
 }
 
 func TestExecuteIntrospectionPreservesIntrospectionFieldDescriptions(t *testing.T) {
