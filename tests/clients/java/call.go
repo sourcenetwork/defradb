@@ -364,13 +364,15 @@ func createTransactionWithHandle(nodeObj C.jobject, nodePtr uintptr, isReadOnly 
 	return ptr, nil
 }
 
-// commitTransaction commits a transaction by way of the exposed native method
-func commitTransaction(txnObj C.jobject, txnPtr uintptr) error {
+// commitTransaction commits a transaction by way of the exposed native method. dispatched reports
+// whether the call actually reached the native TransactionCommitNative binding. If attach() fails,
+// nothing is dispatched and the caller must not treat the transaction as consumed (see Txn.Commit).
+func commitTransaction(txnObj C.jobject, txnPtr uintptr) (dispatched bool, err error) {
 	// Pin this goroutine to its OS thread.
 	// Doing this prevents a SIGSEGV crash, because a JNIEnv is only valid on the thread that obtained it.
 	env, detach, err := attach()
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer detach()
 
@@ -380,23 +382,25 @@ func commitTransaction(txnObj C.jobject, txnPtr uintptr) error {
 	var errbuf [C.DEFRA_ERRBUF_LEN]C.char
 	obj := C.defra_call_object_method(env, txnObj, mid, &args[0], 1, &errbuf[0], C.int(len(errbuf)))
 	if obj == 0 {
-		// A null resullt means a Java exception was thrown. But, we can examine what it was.
-		return fmt.Errorf(errFmtTransactionCommitFailed, C.GoString(&errbuf[0]))
+		return true, fmt.Errorf(errFmtTransactionCommitFailed, C.GoString(&errbuf[0]))
 	}
 	if status := int(C.defra_get_int_field(env, obj, resultStatusField)); status != 0 {
 		// In this case, there was not a Java exception, but the function call returned an error
-		return client.ReviveError(goStringField(env, obj, resultErrorField))
+		return true, client.ReviveError(goStringField(env, obj, resultErrorField))
 	}
-	return nil
+	return true, nil
 }
 
-// discardTransaction discards a transaction by way of the exposed native method
-func discardTransaction(txnObj C.jobject, txnPtr uintptr) {
+// discardTransaction discards a transaction by way of the exposed native method. The returned
+// dispatched reports whether the call actually reached the native TransactionDiscardNative binding -
+// if attach fails, nothing is dispatched and the caller must not treat the transaction as consumed
+// (see Txn.Discard).
+func discardTransaction(txnObj C.jobject, txnPtr uintptr) (dispatched bool) {
 	// Pin this goroutine to its OS thread.
 	// Doing this prevents a SIGSEGV crash, because a JNIEnv is only valid on the thread that obtained it.
 	env, detach, err := attach()
 	if err != nil {
-		return
+		return false
 	}
 	defer detach()
 
@@ -405,4 +409,5 @@ func discardTransaction(txnObj C.jobject, txnPtr uintptr) {
 	args := []C.DefraArg{{kind: C.DEFRA_ARG_LONG, j: C.jlong(txnPtr)}}
 	var errbuf [C.DEFRA_ERRBUF_LEN]C.char
 	C.defra_call_void_method(env, txnObj, mid, &args[0], 1, &errbuf[0], C.int(len(errbuf)))
+	return true
 }

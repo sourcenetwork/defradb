@@ -63,10 +63,17 @@ func (txn *Txn) StartTS() time.Time {
 
 // Commit commits the transaction.
 //
-// Once this returns, the transaction is always finalized. That mirrors the native CommitTransaction
-// it calls into (see: cbindings/transaction_commit.go), which deletes the underlying cgo.Handle in a
-// deferred call regardless of whether the commit itself succeeded. By the time this method returns,
-// the native handle is gone, so there is nothing left for a later Discard to roll back even on failure.
+// If the native TransactionCommitNative binding is reached (see: cbindings/transaction_commit.go),
+// the transaction is always finalized once this returns: that binding deletes the underlying
+// cgo.Handle in a deferred call regardless of whether the commit itself succeeded, so by the time
+// this method returns, the native handle is gone and there is nothing left for a later Discard to
+// roll back even on failure.
+//
+// commitTransaction can fail before ever reaching that binding, though - e.g. if attach fails to
+// obtain a JNIEnv. In that case nothing has been dispatched, the native handle/transaction are
+// still live, and finalizing anyway would orphan them (no way to commit/discard them, and no way
+// to retry, since a finalized Txn always fails fast). So finalize only runs when commitTransaction
+// reports the call was actually dispatched.
 //
 //	A second call to Commit (or a Commit racing a Discard) does not repeat the native call, which would
 //
@@ -77,22 +84,29 @@ func (txn *Txn) Commit() error {
 	if txn.finalized {
 		return client.ErrTransactionNotFound
 	}
-	err := commitTransaction(txn.txnObj, txn.handle)
-	txn.finalize()
+	dispatched, err := commitTransaction(txn.txnObj, txn.handle)
+	if dispatched {
+		txn.finalize()
+	}
 	return err
 }
 
 // Discard discards the transaction, unless Commit already finalized it (see Commit's comment) -
 // including when Commit failed, since the native side has already released the transaction either
 // way by the time Commit returns.
+//
+// As with Commit, finalize only runs if discardTransaction actually reached the native
+// TransactionDiscardNative binding; if attach failed first, the transaction is left live so a later
+// Discard can retry instead of orphaning the native handle.
 func (txn *Txn) Discard() {
 	txn.finalizeMu.Lock()
 	defer txn.finalizeMu.Unlock()
 	if txn.finalized {
 		return
 	}
-	discardTransaction(txn.txnObj, txn.handle)
-	txn.finalize()
+	if discardTransaction(txn.txnObj, txn.handle) {
+		txn.finalize()
+	}
 }
 
 // finalize marks the transaction finalized, releases txnObj's JNI global reference, and zeroes
