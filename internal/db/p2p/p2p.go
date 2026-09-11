@@ -1050,7 +1050,7 @@ func (p *P2P) processPushlogRequest(
 		}
 
 		// Run the replication filter before writing any blocks to storage.
-		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
+		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block, req.CAR) {
 			p.skipDoc(skipFiltered)
 			return nil
 		}
@@ -1193,7 +1193,7 @@ func (p *P2P) processBatchedDocuments(
 			}
 		}
 
-		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
+		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block, doc.CAR) {
 			p.skipDoc(skipFiltered)
 			continue
 		}
