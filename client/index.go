@@ -50,7 +50,12 @@ func (k IndexKind) String() string {
 }
 
 func (k IndexKind) MarshalText() ([]byte, error) {
-	return []byte(k.String()), nil
+	switch k {
+	case IndexKindOrdered, IndexKindVector:
+		return []byte(k.String()), nil
+	default:
+		return nil, NewErrUnknownIndexKind(uint8(k))
+	}
 }
 
 func (k *IndexKind) UnmarshalText(text []byte) error {
