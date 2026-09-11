@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -69,13 +70,13 @@ func createBadgerEncryptionKey(enabled bool) error {
 // the js client build may fail (the failure might not be obvious to find).
 func SetupNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
 ) (*state.NodeState, error) {
 	if ver != "" {
-		return setupExternalNode(s, cfg, ver)
+		return setupExternalNode(s, identity, cfg, ver)
 	}
 
 	if opts == nil {
@@ -106,9 +107,9 @@ func SetupNode(
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
-	case state.SourceHubDocumentACPType:
+	case state.RemoteDocumentACPType:
 		if s.DocumentACPOptions == nil {
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
+			s.DocumentACPOptions, err = setupRemoteDAC(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
@@ -155,10 +156,6 @@ func SetupNode(
 		opts.SetKMS(options.NodeKMSType(kms.PubSubServiceType))
 	}
 
-	if s.IsNetworkEnabled {
-		opts.SetDisableP2P(false)
-	}
-
 	opts.SetEnableDevelopment(true)
 
 	nodeObj, err := node.New(s.Ctx, opts)
@@ -166,7 +163,7 @@ func SetupNode(
 		return nil, err
 	}
 
-	ctx := iIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, resolveIdentity(s, identity))
 	err = nodeObj.Start(ctx)
 
 	if err != nil {
@@ -179,7 +176,7 @@ func SetupNode(
 	// A native node discovers its addresses through the in-process DB, which
 	// bypasses the HTTP auth middleware. Routing this through the client would
 	// send an unauthenticated request that NAC rejects.
-	st, err := newNodeState(s, c, nodeObj.DB, path, false)
+	st, err := newNodeState(s, c, nodeObj.DB, path, false, immutable.None[state.Identity]())
 	if err != nil {
 		return nil, err
 	}
@@ -201,6 +198,7 @@ func newNodeState(
 	peers peerInfoProvider,
 	path string,
 	isExternal bool,
+	nacOwner immutable.Option[state.Identity],
 ) (*state.NodeState, error) {
 	eventState, err := state.NewEventState(c.Events())
 	require.NoError(s.T, err)
@@ -213,7 +211,7 @@ func newNodeState(
 		IsExternal: isExternal,
 	}
 
-	addresses, err := discoverPeerAddresses(s, peers, isExternal)
+	addresses, err := discoverPeerAddresses(s, peers, isExternal, nacOwner)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +223,12 @@ func newNodeState(
 // discoverPeerAddresses reads the node's listen addresses via PeerInfo and
 // strips the trailing /p2p/<peerID> so they can be reused as listen addresses
 // on restart.
-func discoverPeerAddresses(s *state.State, peers peerInfoProvider, isExternal bool) ([]string, error) {
+func discoverPeerAddresses(
+	s *state.State,
+	peers peerInfoProvider,
+	isExternal bool,
+	nacOwner immutable.Option[state.Identity],
+) ([]string, error) {
 	// Inject node identity to bypass NAC in order to be able to call PeerInfo,
 	// otherwise when NAC is enabled we get an authorization error.
 	//
@@ -237,6 +240,10 @@ func discoverPeerAddresses(s *state.State, peers peerInfoProvider, isExternal bo
 	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
 	peerInfoOpts := options.PeerInfo()
 	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
+	// NAC lets through only the identity that turned it on.
+	if nacOwner.HasValue() {
+		identOption = getIdentityForRequestSpecificToNode(s, nacOwner, s.CurrentSetupNodeID)
+	}
 	if identOption.HasValue() {
 		tokenIdent, ok := identOption.Value().(acpIdentity.TokenIdentity)
 		if !isExternal || !ok || tokenIdent.BearerToken() != "" {
@@ -261,7 +268,12 @@ func discoverPeerAddresses(s *state.State, peers peerInfoProvider, isExternal bo
 //
 // If no release asset exists for this platform, the test is skipped (not
 // failed) and a nil error is returned.
-func setupExternalNode(s *state.State, cfg NodeSetupConfig, ver string) (*state.NodeState, error) {
+func setupExternalNode(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+	cfg NodeSetupConfig,
+	ver string,
+) (*state.NodeState, error) {
 	path, skip, err := version.BinaryPath(s.Ctx, ver)
 	if err != nil {
 		return nil, err
@@ -271,30 +283,91 @@ func setupExternalNode(s *state.State, cfg NodeSetupConfig, ver string) (*state.
 		return nil, nil
 	}
 
-	flags, unsupported := externalNodeFlags(s, cfg)
+	flags, unsupported := externalNodeFlags(s, identity, cfg)
 	if len(unsupported) > 0 {
 		s.T.Skipf("external node cannot be given this test's configuration: %s",
 			strings.Join(unsupported, "; "))
 		return nil, nil
 	}
 
-	w, err := external.NewWrapper(s.Ctx, s.T, path, flags)
+	// Run the node as the identity the harness addresses it by, the same one a
+	// native node is given.
+	nodeKey := immutable.None[crypto.PrivateKey]()
+	nodeIdent, ok := identityWithPrivateKey(
+		getIdentityForRequestSpecificToNode(s, NodeIdentity(s.CurrentSetupNodeID), s.CurrentSetupNodeID))
+	if ok {
+		nodeKey = immutable.Some(nodeIdent.PrivateKey())
+	}
+
+	w, err := external.NewWrapper(s.Ctx, s.T, path, nodeKey, flags)
 	if err != nil {
 		return nil, err
 	}
 
+	// Setup calls this node before it is on Nodes, so its tokens can only be minted
+	// from here.
+	s.CurrentSetupHost = w.Host()
+	defer func() { s.CurrentSetupHost = "" }()
+
+	nacIdentity := immutable.None[state.Identity]()
+	if nacEnabled(cfg) {
+		nacIdentity = identity
+		requireNACEnabled(s, w, identity)
+	}
+
 	// An external node has no in-process DB, so it discovers its addresses over
 	// the HTTP client.
-	return newNodeState(s, w, w, "", true)
+	return newNodeState(s, w, w, "", true, nacIdentity)
+}
+
+// identityWithPrivateKey returns the identity as a [acpIdentity.FullIdentity],
+// the only form holding a private key.
+func identityWithPrivateKey(
+	identity immutable.Option[acpIdentity.Identity],
+) (acpIdentity.FullIdentity, bool) {
+	if !identity.HasValue() {
+		return nil, false
+	}
+	full, ok := identity.Value().(acpIdentity.FullIdentity)
+	return full, ok
+}
+
+// requireNACEnabled fails the test unless the node has node access control on.
+//
+// The node ignores a flag it does not know, so without this a test could assert
+// an access rule against a node that never enforced one. Asking the node is
+// ordered by the response, unlike its startup log, which arrives whenever the
+// process gets around to writing it.
+func requireNACEnabled(
+	s *state.State,
+	c clients.Client,
+	identity immutable.Option[state.Identity],
+) {
+	opts := options.GetNACStatus()
+	identOption := getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
+	status, err := c.GetNACStatus(s.Ctx, opts)
+	require.NoError(s.T, err, "node %d could not report its access control status",
+		s.CurrentSetupNodeID)
+	require.Equal(s.T, client.NACEnabled.String(), status.Status,
+		"node %d was started with node access control, but did not enable it",
+		s.CurrentSetupNodeID)
 }
 
 // externalNodeFlags translates the configuration a native node would be given
 // into command line flags for an external one, so both run the same setup.
 //
-// The second return holds the settings that cannot be expressed as flags. Those
-// are not skippable details: the node would start with a default the test did
-// not ask for and the test would still pass, so the caller skips instead.
-func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, unsupported []string) {
+// Every setting must become a flag or be named in the second return, which the
+// caller skips on. One that is silently dropped leaves the node running a default
+// the test did not ask for, and the test still passes.
+func externalNodeFlags(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+	cfg NodeSetupConfig,
+) (flags []string, unsupported []string) {
 	// The node signs by default, so not signing has to be asked for.
 	if !cfg.EnableSigning {
 		flags = append(flags, "--no-signing")
@@ -317,7 +390,7 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 	}
 
 	if s.DocumentACPType != "" && s.DocumentACPType != state.LocalDocumentACPType {
-		// source-hub needs an address and a signer the test holds in process.
+		// Remote DAC needs an address and a signer the test holds in process.
 		unsupported = append(unsupported, "document ACP type "+string(s.DocumentACPType))
 	}
 
@@ -330,6 +403,26 @@ func externalNodeFlags(s *state.State, cfg NodeSetupConfig) (flags []string, uns
 	}
 	if cfg.BadgerEncryption {
 		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
+	}
+
+	if nacEnabled(cfg) {
+		// The identity given here owns NAC, so it has to be the one the test uses.
+		full, ok := identityWithPrivateKey(
+			getIdentityForRequestSpecificToNode(s, identity, s.CurrentSetupNodeID))
+		switch {
+		case !ok:
+			unsupported = append(unsupported, "node access control: no private key for the starting identity")
+
+		// The key is sent as bare hex and the node reads every key as secp256k1, so
+		// another type would silently give NAC to an owner the test cannot use.
+		case full.PrivateKey().Type() != crypto.KeyTypeSecp256k1:
+			unsupported = append(unsupported,
+				"node access control: the owner key is "+string(full.PrivateKey().Type())+
+					", and the node reads the key it is given as secp256k1")
+
+		default:
+			flags = append(flags, "--node-acp-enable", "--identity", full.PrivateKey().String())
+		}
 	}
 
 	// The wrapper picks the API address itself so it knows where to reach the

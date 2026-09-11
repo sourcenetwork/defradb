@@ -73,7 +73,7 @@ func sharedFieldSyncTestCase(grantedAge, otherAge int) testUtils.TestCase {
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		// Signing/encryption change block cids per document, which would break the

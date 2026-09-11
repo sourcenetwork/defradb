@@ -1041,13 +1041,14 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
 		)
 
 		require.Nil(s.T, err)
+		st.DisableP2P = true
 		s.Nodes = append(s.Nodes, st)
 	}
 }
@@ -1072,11 +1073,15 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts := action.DefaultNodeOpts(testCase.nodeSetupConfig())
 			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 			opts.P2P().SetAll(p2pOpts)
-			opts.NodeACP().SetEnabled(start.EnableNAC)
+			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				start.Identity,
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)
@@ -1129,7 +1134,7 @@ func refreshTokens(
 					err := fullIdentityToUpdate.UpdateToken(
 						action.AuthTokenExpiration,
 						audience,
-						immutable.Some(s.SourcehubAddress),
+						immutable.Some(s.RemoteDACAddress),
 					)
 					require.NoError(s.T, err)
 					nodeTokensToUpdate[nodeKey] = fullIdentityToUpdate.BearerToken()

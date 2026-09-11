@@ -12,6 +12,12 @@ Generally, we will be incrementing the DefraDB release version in strict accorda
 
 However, in some areas the line is blurry and controversial, and very occasionally deemed to be impractical in the short-term.  The rest of this document outlines these special areas and our versioning policy on them.
 
+## One-off breaking changes
+
+In exceptional cases, we may intentionally ship an isolated breaking change without waiting for a major release. These are genuine compatibility breaks and one-off departures from our usual semantic-versioning policy; they do not establish a new category of unprotected API.
+
+Every such change is recorded in the [breaking change log](./BREAKLOG.md), including the affected interfaces and migration guidance. Consumers should review the entries between their current and target versions before every upgrade.
+
 ## Errors
 
 At the moment, our errors are largely string based - they are driven by a single concrete implementation of the standard Go `error` interface [here](./errors/defraError.go#L60).

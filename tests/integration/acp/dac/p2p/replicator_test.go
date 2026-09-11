@@ -75,11 +75,11 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *testing.T) {
+func TestACP_P2POneToOneReplicatorWithPermissionedCollection_RemoteDAC(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{

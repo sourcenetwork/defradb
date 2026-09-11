@@ -102,7 +102,7 @@ type Store interface {
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
 	//
 	// Note:
-	// - The request actor must either be the owner or manager of the document.
+	// - The request actor must either be the owner or manager of the node.
 	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
 	AddNACActorRelationship(
 		ctx context.Context,
@@ -118,7 +118,7 @@ type Store interface {
 	// will be false if the relationship record was not found (no-op).
 	//
 	// Note:
-	// - The request actor must either be the owner or manager of the document.
+	// - The request actor must either be the owner or manager of the node.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
 	DeleteNACActorRelationship(
@@ -128,31 +128,31 @@ type Store interface {
 		opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
-	// ReEnableNAC will re-enable node acp that was temporarily disabled (and configured). This will
-	// recover previously saved nac state with all the relationships formed.
+	// ReEnableNAC will re-enable Local NAC that was temporarily disabled (and configured). This will
+	// recover the previously saved NAC state and all formed relationships.
 	//
-	// If node acp is already enabled, then returns an error reflecting that it is already enabled.
+	// If Local NAC is already enabled, it returns an error reflecting that it is already enabled.
 	//
-	// If node acp is not already configured or the previous state was purged then this will return an error,
-	// as the user must use the node's start command to configure/enable the node acp the first time.
+	// If Local NAC is not already configured or the previous state was purged, this returns an error,
+	// as the user must use the node's start command to configure and enable Local NAC the first time.
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
 	ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error
 
-	// DisableNAC will disable node acp for the users temporarily. This will keep the current node acp
-	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
+	// DisableNAC will temporarily disable Local NAC while preserving its current state so that all
+	// formed relationships can be recovered when it is re-enabled.
 	//
-	// If node acp is already disabled, then returns an error reflecting that it is already disabled.
+	// If Local NAC is already disabled, it returns an error reflecting that it is already disabled.
 	//
-	// If node acp is not already configured or the previous state was purged then this will return an error.
+	// If Local NAC is not already configured or the previous state was purged, this returns an error.
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
 	DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error
 
-	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
-	// or if node acp is currently enabled or temporarily disabled.
+	// GetNACStatus returns whether Local NAC was configured and whether it is currently enabled or
+	// temporarily disabled.
 	GetNACStatus(ctx context.Context, opts ...options.Enumerable[options.GetNACStatusOptions]) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.

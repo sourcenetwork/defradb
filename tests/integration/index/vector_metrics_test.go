@@ -262,3 +262,111 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// Vectors whose squared distance exceeds a float32 are searchable and scored correctly. The graph's
+// own ordering is covered by the engine tests; this covers the query path end to end, where the
+// score is computed separately and was never affected.
+// https://github.com/sourcenetwork/defradb/issues/5220
+func TestVectorIndex_EuclideanOnLargeVectors_OrdersByDistance(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 1, hnsw: {metric: EUCLIDEAN}})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "mid", "vector": []float32{2e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "far", "vector": []float32{3e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "farthest", "vector": []float32{4e19}}},
+			&action.WaitForIndexReady{CollectionID: 0},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 1){
+						name
+						sim: SIMILARITY(vector: {vector: [0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "mid", "sim": -3.999999984405158e+38},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// The dot product of two large vectors also exceeds a float32, so it needs the same float64 handling
+// as euclidean. Cosine cannot overflow because its vectors are normalised first, but it is covered
+// alongside so a future change to either metric is caught here.
+// https://github.com/sourcenetwork/defradb/issues/5220
+func TestVectorIndex_DotProductOnLargeVectors_OrdersByDistance(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 1, hnsw: {metric: DOT}})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "near", "vector": []float32{4e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "mid", "vector": []float32{3e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "far", "vector": []float32{2e19}}},
+			&action.WaitForIndexReady{CollectionID: 0},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 3){
+						name
+						sim: SIMILARITY(vector: {vector: [1e20]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "near", "sim": 4.0000000723660884e+39},
+						{"name": "mid", "sim": 3.000000164225731e+39},
+						{"name": "far", "sim": 2.0000000361830442e+39},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestVectorIndex_CosineOnLargeVectors_OrdersByDistance(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 2, hnsw: {metric: COSINE}})
+				}`,
+			},
+			&action.AddDoc{DocMap: map[string]any{"name": "aligned", "vector": []float32{2e19, 0}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "diagonal", "vector": []float32{2e19, 2e19}}},
+			&action.AddDoc{DocMap: map[string]any{"name": "orthogonal", "vector": []float32{0, 2e19}}},
+			&action.WaitForIndexReady{CollectionID: 0},
+			&action.Request{
+				Request: `query {
+					User(order: {_alias: {sim: DESC}}, limit: 3){
+						name
+						sim: SIMILARITY(vector: {vector: [1e20, 0]})
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "aligned", "sim": 1.0},
+						{"name": "diagonal", "sim": 0.7071067811865476},
+						{"name": "orthogonal", "sim": 0.0},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -83,7 +83,6 @@ existing documents are indexed. The index starts "building" and becomes "ready" 
 			desc := client.NewIndexRequest{
 				Name:   nameArg,
 				Fields: fields,
-				Unique: uniqueArg,
 			}
 			if vectorArg != "" {
 				var vectorDesc client.VectorIndexDescription
@@ -91,6 +90,11 @@ existing documents are indexed. The index starts "building" and becomes "ready" 
 					return NewErrInvalidVectorIndexConfig(err)
 				}
 				desc.Vector = &vectorDesc
+				// No ordered config to carry it, so the db rejects the combination.
+				//nolint:staticcheck // set deliberately so the db reports the conflict
+				desc.Unique = uniqueArg
+			} else {
+				desc.Ordered = &client.OrderedIndexDescription{Unique: uniqueArg}
 			}
 			colOpt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))
 			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, colOpt)

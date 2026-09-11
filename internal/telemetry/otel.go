@@ -65,7 +65,6 @@ func (s *otelSpan) End() {
 // defradb and any dependencies that use the OpenTelemetry SDK.
 func ConfigureTelemetry(ctx context.Context, version string) error {
 	opts := []resource.Option{
-		resource.WithSchemaURL(semconv.SchemaURL),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("DefraDB"),
 			semconv.ServiceVersionKey.String(version),

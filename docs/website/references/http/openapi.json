@@ -229,7 +229,33 @@
                                 "IsPrimary": {
                                     "type": "boolean"
                                 },
-                                "Kind": {},
+                                "Kind": {
+                                    "description": "Field type, e.g. \"String\" or \"[Int!]\". Relations are an object, and a type with no name falls back to its numeric id.",
+                                    "oneOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "properties": {
+                                                "Array": {
+                                                    "type": "boolean"
+                                                },
+                                                "CollectionID": {
+                                                    "type": "string"
+                                                },
+                                                "RelativeID": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "maximum": 255,
+                                            "minimum": 0,
+                                            "type": "integer"
+                                        }
+                                    ]
+                                },
                                 "Name": {
                                     "type": "string"
                                 },
@@ -238,9 +264,8 @@
                                     "type": "integer"
                                 },
                                 "Typ": {
-                                    "maximum": 255,
-                                    "minimum": 0,
-                                    "type": "integer"
+                                    "description": "CRDT used to merge the field, e.g. \"lww\".",
+                                    "type": "string"
                                 }
                             },
                             "type": "object"
@@ -572,6 +597,15 @@
                     "Name": {
                         "type": "string"
                     },
+                    "Ordered": {
+                        "nullable": true,
+                        "properties": {
+                            "Unique": {
+                                "type": "boolean"
+                            }
+                        },
+                        "type": "object"
+                    },
                     "Unique": {
                         "type": "boolean"
                     },
@@ -711,7 +745,7 @@
         "securitySchemes": {
             "bearerToken": {
                 "bearerFormat": "JWT",
-                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor SourceHub policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the SourceHub address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
+                "description": "A JWT signed client-side with an identity's private key (`alg` is `EdDSA` for an `ed25519` key or `ES256K` for a `secp256k1` key).\n\nRequired payload claims:\n- `sub`: the identity's public key, in hex format.\n- `aud`: hostname(s) of the DefraDB HTTP API the token is valid for (string or list of strings).\n- `exp`: token expiration UNIX timestamp.\n- `nbf`: not-before UNIX timestamp.\n- `key_type`: must match the identity's key type (`secp256k1` or `ed25519`).\n\nFor Remote DAC policies, also include `iss` (the identity's `did:key`), `iat`, and `authorized_account` (the Vera address).\n\nGenerate an identity with `defradb identity new`. Authentication is optional unless Document Access Control or Node Access Control is enabled, in which case requests on restricted resources must be authenticated; an invalid token yields `403 Forbidden`.\n\nSee https://docs.source.network/defradb/security/authentication for details.",
                 "scheme": "bearer",
                 "type": "http"
             }

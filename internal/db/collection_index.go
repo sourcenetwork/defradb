@@ -536,10 +536,14 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	// Turn the flat request into the kind + kind-specific config: a Vector request is a vector
-	// index, else an ordered index carrying the unique flag.
+	// Ordered wins when set; validation has already rejected the two disagreeing.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	unique := desc.Unique
+	if desc.Ordered != nil {
+		unique = desc.Ordered.Unique
+	}
 	kind := client.IndexKindOrdered
-	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: desc.Unique}
+	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: unique}
 	if desc.Vector != nil {
 		kind = client.IndexKindVector
 		kindDescription = desc.Vector
@@ -552,7 +556,7 @@ func processNewIndexRequest(
 		Kind:            kind,
 		KindDescription: kindDescription,
 		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
-		Unique: desc.Vector == nil && desc.Unique,
+		Unique: unique,
 	}
 
 	return res, nil
@@ -566,14 +570,13 @@ func processNewIndexRequest(
 // The field is guaranteed to exist here because validateIndexDescription and
 // checkExistingFieldsAndAdjustRelFieldNames run before this and already check that.
 func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
-	// The rest of the vector index code only ever reads the first field, so more than one would be
-	// stored but never indexed. Uniqueness has no meaning for a vector index and is likewise ignored
-	// downstream. Reject both rather than half-honour the request.
+	// The rest of the vector index code only ever reads the first field, and nothing reads direction,
+	// so both would be stored and ignored. Reject them rather than half-honour the request.
 	if len(desc.Fields) != 1 {
 		return NewErrVectorIndexRequiresSingleField(len(desc.Fields))
 	}
-	if desc.Unique {
-		return NewErrVectorIndexCannotBeUnique(desc.Fields[0].Name)
+	if desc.Fields[0].Descending {
+		return NewErrVectorIndexCannotBeDescending(desc.Fields[0].Name)
 	}
 
 	fieldName := desc.Fields[0].Name
@@ -1355,6 +1358,20 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 		if desc.Fields[i].Name == "" {
 			return ErrIndexFieldMissingName
 		}
+	}
+	// The config present is what picks the kind, so two of them ask for two kinds at once.
+	if desc.Ordered != nil && desc.Vector != nil {
+		return ErrIndexKindConflict
+	}
+	// Honouring one spelling silently over the other would make the request mean something the
+	// caller did not write.
+	//nolint:staticcheck // these checks exist to police the deprecated field
+	if desc.Unique && desc.Ordered != nil && !desc.Ordered.Unique {
+		return ErrIndexUniqueConflict
+	}
+	//nolint:staticcheck // these checks exist to police the deprecated field
+	if desc.Unique && desc.Vector != nil {
+		return NewErrNonOrderedIndexCannotBeUnique(desc.Fields[0].Name, "vector")
 	}
 	return nil
 }

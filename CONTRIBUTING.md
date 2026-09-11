@@ -80,7 +80,7 @@ You don't need to be an expert in all of these to contribute - many contribution
 
 | Tool | When You Need It |
 |------|-----------------|
-| **[SourceHub](https://github.com/sourcenetwork/sourcehub)** | Working on access control features |
+| **[Vera](https://github.com/sourcenetwork/vera)** | Working on access control features |
 | **[Ollama](https://ollama.com/download)** | AI/vector embedding tests |
 | **[Make](https://www.gnu.org/software/make/)** | Convenient but not required - you can run `go` commands directly |
 

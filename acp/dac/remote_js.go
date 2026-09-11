@@ -8,10 +8,10 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub ACP implementation for JS/WASM environments.
+// Remote DAC implementation for JS/WASM environments.
 //
 // Client applications must include the acp-js library, which exposes the following
-// bridge functions that interface with SourceHub ACP:
+// bridge functions that interface with the Remote DAC:
 //
 //   - acp_AddPolicy(policy: string, policyMarshalType: number) -> Promise<[string | null, Error | null]>
 //     Adds a new access control policy and returns its ID
@@ -53,12 +53,14 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-type SourceHubDocumentACP struct{}
+// RemoteDocumentACP is the JavaScript bridge client used by Remote DAC.
+type RemoteDocumentACP struct{}
 
-// NewSourceHubDocumentACP returns a new SourceHub ACP instance for JavaScript environments.
-func NewSourceHubDocumentACP() DocumentACP {
+// NewRemoteDocumentACP returns a new Remote DAC instance for JavaScript environments.
+func NewRemoteDocumentACP() DocumentACP {
 	return &bridgeDocumentACP{
-		clientACP: &SourceHubDocumentACP{},
+		clientACP:       &RemoteDocumentACP{},
+		documentACPType: acpTypes.RemoteDocumentACP,
 	}
 }
 
@@ -85,14 +87,14 @@ func callJSFunction(funcName string, args ...interface{}) ([]sysjs.Value, error)
 	return results, nil
 }
 
-// fromSourceHubPolicyJS converts a JavaScript policy object to acpTypes.Policy
-func fromSourceHubPolicyJS(jsPolicy map[string]interface{}) acpTypes.Policy {
+// fromRemoteDACPolicyJS converts a JavaScript policy object to acpTypes.Policy.
+func fromRemoteDACPolicyJS(jsPolicy map[string]interface{}) acpTypes.Policy {
 	resources := make(map[string]*acpTypes.Resource)
 	if resourcesData, ok := jsPolicy["resources"].([]interface{}); ok {
 		for _, resourceData := range resourcesData {
 			if resourceMap, ok := resourceData.(map[string]interface{}); ok {
 				if resourceName, ok := resourceMap["name"].(string); ok {
-					resource := fromSourceHubResourceJS(resourceName, resourceMap)
+					resource := fromRemoteDACResourceJS(resourceName, resourceMap)
 					resources[resource.Name] = resource
 				}
 			}
@@ -100,7 +102,7 @@ func fromSourceHubPolicyJS(jsPolicy map[string]interface{}) acpTypes.Policy {
 	} else if resourcesData, ok := jsPolicy["resources"].(map[string]interface{}); ok {
 		for resourceName, resourceData := range resourcesData {
 			if resourceMap, ok := resourceData.(map[string]interface{}); ok {
-				resource := fromSourceHubResourceJS(resourceName, resourceMap)
+				resource := fromRemoteDACResourceJS(resourceName, resourceMap)
 				resources[resource.Name] = resource
 			}
 		}
@@ -111,14 +113,14 @@ func fromSourceHubPolicyJS(jsPolicy map[string]interface{}) acpTypes.Policy {
 	}
 }
 
-// fromSourceHubResourceJS converts a JavaScript resource object to acpTypes.Resource
-func fromSourceHubResourceJS(resourceName string, resourceMap map[string]interface{}) *acpTypes.Resource {
+// fromRemoteDACResourceJS converts a JavaScript resource object to acpTypes.Resource.
+func fromRemoteDACResourceJS(resourceName string, resourceMap map[string]interface{}) *acpTypes.Resource {
 	perms := make(map[string]*acpTypes.Permission)
 	if permissionsData, ok := resourceMap["permissions"].([]interface{}); ok {
 		for _, permData := range permissionsData {
 			if permMap, ok := permData.(map[string]interface{}); ok {
 				if permName, ok := permMap["name"].(string); ok {
-					perm := fromSourceHubPermissionJS(permName, permMap)
+					perm := fromRemoteDACPermissionJS(permName, permMap)
 					perms[perm.Name] = perm
 				}
 			}
@@ -126,7 +128,7 @@ func fromSourceHubResourceJS(resourceName string, resourceMap map[string]interfa
 	} else if permissionsData, ok := resourceMap["permissions"].(map[string]interface{}); ok {
 		for permName, permData := range permissionsData {
 			if permMap, ok := permData.(map[string]interface{}); ok {
-				perm := fromSourceHubPermissionJS(permName, permMap)
+				perm := fromRemoteDACPermissionJS(permName, permMap)
 				perms[perm.Name] = perm
 			}
 		}
@@ -137,8 +139,8 @@ func fromSourceHubResourceJS(resourceName string, resourceMap map[string]interfa
 	}
 }
 
-// fromSourceHubPermissionJS converts a JavaScript permission object to acpTypes.Permission
-func fromSourceHubPermissionJS(permName string, permMap map[string]interface{}) *acpTypes.Permission {
+// fromRemoteDACPermissionJS converts a JavaScript permission object to acpTypes.Permission.
+func fromRemoteDACPermissionJS(permName string, permMap map[string]interface{}) *acpTypes.Permission {
 	expression := ""
 	if expr, ok := permMap["expr"].(string); ok {
 		expression = expr
@@ -170,12 +172,12 @@ func fromSourceHubPermissionJS(permName string, permMap map[string]interface{}) 
 	}
 }
 
-func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
+func (a *RemoteDocumentACP) Start(ctx context.Context) error {
 	// No-op: client is initialized during node creation
 	return nil
 }
 
-func (a *SourceHubDocumentACP) AddPolicy(
+func (a *RemoteDocumentACP) AddPolicy(
 	ctx context.Context,
 	creator identity.Identity,
 	policy string,
@@ -208,7 +210,7 @@ func (a *SourceHubDocumentACP) AddPolicy(
 	return policyID, nil
 }
 
-func (a *SourceHubDocumentACP) Policy(
+func (a *RemoteDocumentACP) Policy(
 	ctx context.Context,
 	policyID string,
 ) (immutable.Option[acpTypes.Policy], error) {
@@ -249,11 +251,11 @@ func (a *SourceHubDocumentACP) Policy(
 	if err := json.Unmarshal([]byte(policyStr), &jsPolicy); err != nil {
 		return immutable.None[acpTypes.Policy](), err
 	}
-	policy := fromSourceHubPolicyJS(jsPolicy)
+	policy := fromRemoteDACPolicyJS(jsPolicy)
 	return immutable.Some(policy), nil
 }
 
-func (a *SourceHubDocumentACP) RegisterObject(
+func (a *RemoteDocumentACP) RegisterObject(
 	ctx context.Context,
 	id identity.Identity,
 	policyID string,
@@ -261,19 +263,19 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	_, err := callJSFunction("acp_RegisterObject", policyID, resourceName, objectID)
 	return err
 }
 
-func (a *SourceHubDocumentACP) ObjectOwner(
+func (a *RemoteDocumentACP) ObjectOwner(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	results, err := callJSFunction("acp_ObjectOwner", policyID, resourceName, objectID)
 	if err != nil {
@@ -285,7 +287,7 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 	return immutable.None[string](), nil
 }
 
-func (a *SourceHubDocumentACP) VerifyAccessRequest(
+func (a *RemoteDocumentACP) VerifyAccessRequest(
 	ctx context.Context,
 	permission acpTypes.ResourceInterfacePermission,
 	actorID string,
@@ -293,7 +295,7 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	results, err := callJSFunction(
 		"acp_VerifyAccessRequest",
@@ -335,15 +337,15 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	}
 }
 
-func (a *SourceHubDocumentACP) Close() error {
+func (a *RemoteDocumentACP) Close() error {
 	return nil
 }
 
-func (a *SourceHubDocumentACP) ResetState(_ context.Context) error {
+func (a *RemoteDocumentACP) ResetState(_ context.Context) error {
 	return nil
 }
 
-func (a *SourceHubDocumentACP) AddActorRelationship(
+func (a *RemoteDocumentACP) AddActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -353,7 +355,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	results, err := callJSFunction(
 		"acp_AddActorRelationship",
@@ -401,7 +403,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	return false, nil
 }
 
-func (a *SourceHubDocumentACP) DeleteActorRelationship(
+func (a *RemoteDocumentACP) DeleteActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -411,7 +413,7 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	results, err := callJSFunction(
 		"acp_DeleteActorRelationship",

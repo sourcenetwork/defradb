@@ -22,7 +22,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-var _ acp.ACPSystemClient = (*SourceHubDocumentACP)(nil)
+var _ acp.ACPSystemClient = (*RemoteDocumentACP)(nil)
 
 var _ DocumentACP = (*bridgeDocumentACP)(nil)
 
@@ -30,6 +30,9 @@ var _ DocumentACP = (*bridgeDocumentACP)(nil)
 // from ACP client specific code.
 type bridgeDocumentACP struct {
 	clientACP acp.ACPSystemClient
+	// documentACPType must only be set to [acpTypes.LocalDocumentACP] or
+	// [acpTypes.RemoteDocumentACP]. [acpTypes.NodeACP] and future NAC types are invalid.
+	documentACPType acpTypes.ACPSystemType
 }
 
 func (a *bridgeDocumentACP) Start(ctx context.Context) error {
@@ -57,7 +60,7 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	)
 
 	if err != nil {
-		return "", acp.NewErrFailedToAddPolicy(err, "Local", creator.DID())
+		return "", acp.NewErrFailedToAddPolicy(err, a.documentACPType.String(), creator.DID())
 	}
 
 	log.InfoContext(ctx, "Created Policy", corelog.Any("PolicyID", policyID))
@@ -69,29 +72,18 @@ func (a *bridgeDocumentACP) ValidateResourceInterface(
 	policyID string,
 	resourceName string,
 ) error {
-	var err error
-	switch a.clientACP.(type) {
-	case *LocalDocumentACP:
-		err = acp.ValidateResourceInterface(
-			ctx,
-			policyID,
-			resourceName,
-			acpTypes.LocalDocumentACP,
-			a.clientACP,
-		)
-	case *SourceHubDocumentACP:
-		err = acp.ValidateResourceInterface(
-			ctx,
-			policyID,
-			resourceName,
-			acpTypes.SourceHubDocumentACP,
-			a.clientACP,
-		)
-	default:
+	if a.documentACPType != acpTypes.LocalDocumentACP &&
+		a.documentACPType != acpTypes.RemoteDocumentACP {
 		return acp.ErrInvalidACPSystem
 	}
 
-	return err
+	return acp.ValidateResourceInterface(
+		ctx,
+		policyID,
+		resourceName,
+		a.documentACPType,
+		a.clientACP,
+	)
 }
 
 func (a *bridgeDocumentACP) RegisterDocObject(
@@ -117,7 +109,14 @@ func (a *bridgeDocumentACP) RegisterDocObject(
 		if ownerErr == nil && owner.HasValue() && owner.Value() == identity.DID() {
 			return nil
 		}
-		return acp.NewErrFailedToRegisterDoc(err, "Local", policyID, identity.DID(), resourceName, docID)
+		return acp.NewErrFailedToRegisterDoc(
+			err,
+			a.documentACPType.String(),
+			policyID,
+			identity.DID(),
+			resourceName,
+			docID,
+		)
 	}
 
 	return nil
@@ -136,7 +135,13 @@ func (a *bridgeDocumentACP) IsDocRegistered(
 		docID,
 	)
 	if err != nil {
-		return false, acp.NewErrFailedToCheckIfDocIsRegistered(err, "Local", policyID, resourceName, docID)
+		return false, acp.NewErrFailedToCheckIfDocIsRegistered(
+			err,
+			a.documentACPType.String(),
+			policyID,
+			resourceName,
+			docID,
+		)
 	}
 
 	return maybeActor.HasValue(), nil
@@ -169,7 +174,7 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 			if err != nil {
 				return false, acp.NewErrFailedToVerifyDocAccess(
 					err,
-					"Local",
+					a.documentACPType.String(),
 					permissionThatImpliesRead.String(),
 					policyID,
 					actorID,
@@ -198,7 +203,7 @@ func (a *bridgeDocumentACP) CheckDocAccess(
 	if err != nil {
 		return false, acp.NewErrFailedToVerifyDocAccess(
 			err,
-			"Local",
+			a.documentACPType.String(),
 			permission.String(),
 			policyID,
 			actorID,
@@ -253,7 +258,7 @@ func (a *bridgeDocumentACP) AddDocActorRelationship(
 	if err != nil {
 		return false, acp.NewErrFailedToAddDocActorRelationship(
 			err,
-			"Local",
+			a.documentACPType.String(),
 			policyID,
 			resourceName,
 			docID,
@@ -321,7 +326,7 @@ func (a *bridgeDocumentACP) DeleteDocActorRelationship(
 	if err != nil {
 		return false, acp.NewErrFailedToDeleteDocActorRelationship(
 			err,
-			"Local",
+			a.documentACPType.String(),
 			policyID,
 			resourceName,
 			docID,

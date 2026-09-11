@@ -27,18 +27,31 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
+
+// keyringSecret unlocks the node's keyring. The keyring only exists for the
+// lifetime of the node's temporary rootdir, so the value is not a secret.
+const keyringSecret = "test"
+
+// nodeIdentityKeyName is the keyring entry the node reads its identity from.
+// It has to match the name the node looks up, which is not exported.
+const nodeIdentityKeyName = "node-identity-key"
 
 // maxTxnRetries is returned by MaxTxnRetries. There is no in-process node to
 // ask, so this mirrors the default used by db.DB when nothing is configured.
@@ -78,7 +91,17 @@ type Wrapper struct {
 // A temporary rootdir and a free API port are chosen internally. The P2P
 // listener uses port 0 so the node picks a free port at bind time; read its
 // real address back with PeerInfo. Use Host for the API URL.
-func NewWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags []string) (*Wrapper, error) {
+//
+// nodeIdentity is the private key the node runs as. Without it the node
+// generates its own, which the test has no way to name, so anything addressing
+// the node by identity cannot reach it.
+func NewWrapper(
+	ctx context.Context,
+	t testing.TB,
+	binaryPath string,
+	nodeIdentity immutable.Option[crypto.PrivateKey],
+	extraFlags []string,
+) (*Wrapper, error) {
 	// The API port is chosen before start, so another process can grab it in the
 	// gap before the child binds. Retry a few times on a start/health failure.
 	var lastErr error
@@ -91,7 +114,7 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags
 			}
 			return nil, err
 		}
-		w, err := startWrapper(ctx, t, binaryPath, extraFlags)
+		w, err := startWrapper(ctx, t, binaryPath, nodeIdentity, extraFlags)
 		if err == nil {
 			return w, nil
 		}
@@ -101,7 +124,13 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags
 }
 
 // startWrapper makes one attempt to start and reach a node.
-func startWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFlags []string) (*Wrapper, error) {
+func startWrapper(
+	ctx context.Context,
+	t testing.TB,
+	binaryPath string,
+	nodeIdentity immutable.Option[crypto.PrivateKey],
+	extraFlags []string,
+) (*Wrapper, error) {
 	apiPort, err := freePort()
 	if err != nil {
 		return nil, errors.Wrap("failed to find free api port", err)
@@ -113,18 +142,28 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string, extraFla
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
 
+	// The node reads its identity from the keyring, and generates one when the
+	// entry is missing. Seeding it is what lets the test address this node.
+	if nodeIdentity.HasValue() {
+		if err := seedNodeIdentity(rootDir, nodeIdentity.Value()); err != nil {
+			removeAll(rootDir)
+			return nil, err
+		}
+	}
+
 	// The address and rootdir are chosen here because the wrapper needs to know
 	// them. Everything else about the node comes from the caller, so it can
 	// match the configuration a native node would be given.
 	args := []string{"start",
 		"--url", apiURL,
 		"--development",
-		"--no-keyring",
 		"--rootdir", rootDir,
 	}
 	args = append(args, extraFlags...)
 
 	cmd := exec.CommandContext(ctx, binaryPath, args...)
+	// The keyring prompts for its secret on a terminal when this is unset.
+	cmd.Env = append(os.Environ(), "DEFRA_KEYRING_SECRET="+keyringSecret)
 
 	stderr := newRingBuffer(64 * 1024)
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -248,6 +287,23 @@ func killAndWait(cmd *exec.Cmd) {
 		_ = cmd.Process.Kill()
 	}
 	_ = cmd.Wait()
+}
+
+// seedNodeIdentity writes the given key to the node's keyring, so the node
+// starts as that identity instead of generating one.
+//
+// The node stores the key type alongside the key and reads the type back, so
+// the prefix is part of the format rather than decoration.
+func seedNodeIdentity(rootDir string, key crypto.PrivateKey) error {
+	kr, err := keyring.OpenFileKeyring(filepath.Join(rootDir, "keys"), []byte(keyringSecret))
+	if err != nil {
+		return errors.Wrap("failed to open keyring", err)
+	}
+	value := append([]byte(string(key.Type())+":"), key.Raw()...)
+	if err := kr.Set(nodeIdentityKeyName, value); err != nil {
+		return errors.Wrap("failed to seed node identity", err)
+	}
+	return nil
 }
 
 // removeAll removes dir, swallowing errors since this is only used on

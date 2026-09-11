@@ -59,6 +59,9 @@ func (db *DB) Connect(
 		return err
 	}
 
+	if db.p2p == nil {
+		return ErrNoP2P
+	}
 	return db.p2p.Connect(ctx, addresses)
 }
 

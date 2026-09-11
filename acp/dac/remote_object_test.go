@@ -12,14 +12,14 @@ package dac
 
 import "testing"
 
-func TestSourceHubObjectID(t *testing.T) {
+func TestRemoteDACObjectID(t *testing.T) {
 	const docID = "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 
-	if got := sourceHubObjectID(docID); got != "9793af00-a131-5ef2-b2c9-22b8053a11e7" {
-		t.Fatalf("Expected SourceHub object ID to use the DocID UUID, got %q", got)
+	if got := remoteDACObjectID(docID); got != "9793af00-a131-5ef2-b2c9-22b8053a11e7" {
+		t.Fatalf("expected Vera object ID to use the DocID UUID, got %q", got)
 	}
 
-	if got := sourceHubObjectID("custom-object-id"); got != "custom-object-id" {
+	if got := remoteDACObjectID("custom-object-id"); got != "custom-object-id" {
 		t.Fatalf("Expected non-DocID object ID to pass through, got %q", got)
 	}
 }

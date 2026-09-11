@@ -73,8 +73,8 @@ type KMSType string
 type DocumentACPType string
 
 const (
-	SourceHubDocumentACPType DocumentACPType = "source-hub"
-	LocalDocumentACPType     DocumentACPType = "local"
+	RemoteDocumentACPType DocumentACPType = "remote"
+	LocalDocumentACPType  DocumentACPType = "local"
 )
 
 type ColDocIndex struct {
@@ -226,6 +226,8 @@ type NodeState struct {
 	P2P *P2PState
 	// The P2P network configurations for the node, cached for restarts.
 	P2POpts options.NodeP2POptions
+	// Whether P2P was disabled for the node, cached for restarts.
+	DisableP2P bool
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -276,7 +278,7 @@ type State struct {
 	// The type of Document ACP
 	DocumentACPType DocumentACPType
 
-	// The Document ACP options to share between each node (currently only used for sourcehub).
+	// The Document ACP options to share between each node (currently only used for Remote DAC).
 	DocumentACPOptions *options.NodeDocumentACPOptions
 
 	// Any explicit transactions active in this test.
@@ -303,7 +305,7 @@ type State struct {
 
 	// Policy IDs, by node index, by policyID index (in the order they were added).
 	//
-	// Note: In case acp type is sourcehub, all nodes will have the same state of PolicyIDs.
+	// When Remote DAC is selected, all nodes share the same policy ID state.
 	PolicyIDs [][]string
 
 	// Will receive an item once all actions have finished processing.
@@ -340,8 +342,8 @@ type State struct {
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
 
-	// The SourceHub address used to pay for SourceHub transactions.
-	SourcehubAddress string
+	// RemoteDACAddress is the Vera address used by Remote DAC to pay for transactions.
+	RemoteDACAddress string
 
 	// IsNetworkEnabled indicates whether the network is enabled.
 	IsNetworkEnabled bool
@@ -353,6 +355,14 @@ type State struct {
 	// CurrentSetupNodeID is used during setup stage to find specific attributes that are unique to a
 	// node, for example finding a specific node's NodeIdentity inorder to bypass NAC.
 	CurrentSetupNodeID int
+
+	// CurrentSetupHost is the address to mint auth tokens from while a node is being
+	// set up.
+	//
+	// A restarting node gets a new port, and the node rejects tokens minted for the
+	// port it had before. Its entry on Nodes cannot be replaced any earlier, since
+	// setting the node up reads the old entry to build the new one.
+	CurrentSetupHost string
 
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is

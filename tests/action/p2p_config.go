@@ -32,6 +32,14 @@ func RandomNetworkingConfig() *NewNode {
 	}
 }
 
+// NoNetworkingConfig returns a node configured with P2P disabled entirely (the node's
+// internal db.p2p stays nil).
+func NoNetworkingConfig() *NewNode {
+	return &NewNode{
+		DisableP2P: true,
+	}
+}
+
 func getIPString() string {
 	loopbackIP := "127.0.0.1"
 
