@@ -147,6 +147,8 @@ type NodeStoreOptions struct {
 	BadgerFileSize int64
 	// BadgerEncryptionKey is the encryption key for Badger.
 	BadgerEncryptionKey []byte
+	// BadgerSyncWrites requires persistent transaction commits to reach stable storage.
+	BadgerSyncWrites bool
 	// BadgerInMemory specifies whether to run Badger in-memory.
 	BadgerInMemory bool
 }
@@ -715,5 +717,11 @@ func (sb *NodeACPOptionsBuilder) SetPath(path string) *NodeACPOptionsBuilder {
 // SetAll sets all node ACP options from a plain data struct.
 func (sb *NodeACPOptionsBuilder) SetAll(nacOpts NodeACPOptions) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { *opts = nacOpts })
+	return sb
+}
+
+// SetBadgerSyncWrites sets synchronous persistence for Badger commits.
+func (sb *NodeStoreOptionsBuilder) SetBadgerSyncWrites(enabled bool) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.BadgerSyncWrites = enabled })
 	return sb
 }

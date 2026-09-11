@@ -96,3 +96,15 @@ func TestBadgerStoreReclaimValueLogTerminates(t *testing.T) {
 		t.Fatal("reclaimValueLog did not terminate")
 	}
 }
+
+func TestBadgerSynchronousPersistence(t *testing.T) {
+	opts := options.NodeStore().SetType(options.NodeBadgerStore).
+		SetPath(t.TempDir()).SetBadgerFileSize(1 << 20).SetBadgerSyncWrites(true)
+	store, _, err := NewStore(context.Background(), opts)
+	require.NoError(t, err)
+	defer store.Close()
+	require.True(t, store.(*badgerStore).db.Opts().SyncWrites)
+
+	_, _, err = NewStore(context.Background(), opts.SetBadgerInMemory(true))
+	require.ErrorContains(t, err, "synchronous persistence requires a persistent store")
+}

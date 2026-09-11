@@ -36,6 +36,10 @@ func init() {
 
 		badgerOpts := badgerds.DefaultOptions(path)
 		badgerOpts.InMemory = opts.BadgerInMemory
+		if opts.BadgerSyncWrites && opts.BadgerInMemory {
+			return nil, errors.New("synchronous persistence requires a persistent store")
+		}
+		badgerOpts.SyncWrites = opts.BadgerSyncWrites
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
 		badgerOpts.ValueThreshold = 1 << 8

@@ -94,6 +94,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			opts.Store().
 				SetPath(cfg.GetString("datastore.path")).
 				SetBadgerInMemory(inMem).
+				SetBadgerSyncWrites(cfg.GetBool("datastore.badger.syncwrites")).
 				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
@@ -288,6 +289,10 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"store",
 		cfg.GetString(config.ConfigFlags["store"]),
 		"Specify the datastore to use (supported: badger, memory)",
+	)
+	cmd.PersistentFlags().Bool(
+		"syncwrites", cfg.GetBool(config.ConfigFlags["syncwrites"]),
+		"Synchronously persist transaction commits (requires persistent storage)",
 	)
 	cmd.PersistentFlags().Int(
 		"valuelogfilesize",
