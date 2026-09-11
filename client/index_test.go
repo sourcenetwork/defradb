@@ -222,9 +222,28 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 // Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not
 // know cannot be loaded: silently defaulting it would misread the index.
 func TestIndexDescription_UnknownKind_Errors(t *testing.T) {
-	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":42}`
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":"unknown"}`
 
 	var actual IndexDescription
 	err := json.Unmarshal([]byte(json1), &actual)
+	require.ErrorContains(t, err, "unknown index kind")
+}
+
+func TestIndexKind_TextRoundTrip(t *testing.T) {
+	orderedBytes, err := IndexKindOrdered.MarshalText()
+	require.NoError(t, err)
+
+	var ordered IndexKind
+	require.NoError(t, ordered.UnmarshalText(orderedBytes))
+	assert.Equal(t, IndexKindOrdered, ordered)
+
+	vectorBytes, err := IndexKindVector.MarshalText()
+	require.NoError(t, err)
+
+	var vector IndexKind
+	require.NoError(t, vector.UnmarshalText(vectorBytes))
+	assert.Equal(t, IndexKindVector, vector)
+
+	_, err = IndexKind(42).MarshalText()
 	require.ErrorContains(t, err, "unknown index kind")
 }
