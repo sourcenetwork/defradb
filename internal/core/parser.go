@@ -13,12 +13,18 @@ package core
 import (
 	"context"
 
-	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 )
+
+// RequestAST is an opaque, query-language-owned parsed request. Keeping the
+// concrete AST out of the core interface allows a parser implementation to
+// change libraries without coupling the database to either representation.
+type RequestAST interface {
+	Language() string
+}
 
 // SchemaDefinition represents a schema definition.
 type SchemaDefinition struct {
@@ -40,16 +46,16 @@ type Collection struct {
 // This includes schema and request parsing, and introspection.
 type Parser interface {
 	// BuildRequestAST builds and return AST for the given request.
-	BuildRequestAST(ctx context.Context, request string) (*ast.Document, error)
+	BuildRequestAST(ctx context.Context, request string) (RequestAST, error)
 
 	// Returns true if the given request ast is an introspection request.
-	IsIntrospection(*ast.Document) bool
+	IsIntrospection(RequestAST) bool
 
 	// Executes the given introspection request.
 	ExecuteIntrospection(ctx context.Context, request string) *client.RequestResult
 
 	// Parses the given request, returning a strongly typed model of that request.
-	Parse(context.Context, *ast.Document, *client.GQLOptions) (*request.Request, []error)
+	Parse(context.Context, RequestAST, *client.GQLOptions) (*request.Request, []error)
 
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(ctx context.Context, collectionType string, body string) (immutable.Option[request.Filter], error)

@@ -52,7 +52,28 @@ var (
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
 	ErrInvalidTTL                   = errors.New("invalid ttl value")
 	ErrCollectionSchemaNotGenerated = errors.New("collection schema was not generated")
+	ErrGraphQLSyntax                = errors.New("graphql syntax error")
 )
+
+type graphQLSyntaxError struct {
+	cause error
+}
+
+func (e graphQLSyntaxError) Error() string {
+	return "Syntax Error GraphQL: " + e.cause.Error()
+}
+
+func (e graphQLSyntaxError) Unwrap() error {
+	return e.cause
+}
+
+func (e graphQLSyntaxError) Is(target error) bool {
+	return target == ErrGraphQLSyntax
+}
+
+func NewErrGraphQLSyntax(cause error) error {
+	return graphQLSyntaxError{cause: cause}
+}
 
 type errorResponse struct {
 	Error error `json:"error"`

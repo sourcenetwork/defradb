@@ -433,7 +433,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
+				ExpectedError: `Value "_publishedID" does not exist in "AuthorField" enum.`,
 			},
 		},
 	}
@@ -529,7 +529,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
+				ExpectedError: `Value "_publishedID" does not exist in "AuthorField" enum.`,
 			},
 		},
 	}

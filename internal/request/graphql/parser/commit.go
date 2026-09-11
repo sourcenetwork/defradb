@@ -11,31 +11,24 @@
 package parser
 
 import (
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
 func parseCommitSelect(
-	exe *gql.ExecutionContext,
-	parent *gql.Object,
-	field *ast.Field,
+	exe *executionContext,
+	field *field,
 ) (*request.CommitSelect, error) {
 	commit := &request.CommitSelect{
 		Field: request.Field{
-			Name:  field.Name.Value,
-			Alias: getFieldAlias(field),
+			Name:  field.name,
+			Alias: field.alias,
 		},
 	}
 
-	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
-	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-
-	for _, argument := range field.Arguments {
-		name := argument.Name.Value
-		value := arguments[name]
+	for _, name := range field.argumentOrder {
+		value := field.arguments[name]
 
 		switch name {
 		case request.DocIDArgName:
@@ -132,19 +125,15 @@ func parseCommitSelect(
 	}
 
 	// no sub fields (unlikely)
-	if field.SelectionSet == nil {
+	if len(field.selectionSet) == 0 {
 		return commit, nil
 	}
 
-	fieldObject, err := typeFromFieldDef(fieldDef)
+	fields, err := parseSelectFields(exe, field.selectionSet)
 	if err != nil {
 		return nil, err
 	}
-
-	commit.Fields, err = parseSelectFields(exe, fieldObject, field.SelectionSet)
-	if err != nil {
-		return nil, err
-	}
+	commit.Fields = fields
 
 	return commit, err
 }

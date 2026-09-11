@@ -487,7 +487,7 @@ func TestQueryFromSingleSideWithFilterOnRelatedObjectID_Error(t *testing.T) {
 						name
 					}
 				}`,
-				ExpectedError: "Unknown field.",
+				ExpectedError: `Field "_publishedID" is not defined by type "AuthorFilterArg".`,
 			},
 		},
 	}

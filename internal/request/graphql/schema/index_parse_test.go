@@ -152,12 +152,12 @@ func TestParseInvalidIndexOnStruct(t *testing.T) {
 		{
 			description: "unknown argument",
 			sdl:         `type user @index(unknown: "something", includes: [{field: "name"}]) {}`,
-			expectedErr: `Unknown argument "unknown" on directive "@index".`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "invalid index name type",
 			sdl:         `type user @index(name: 1, includes: [{field: "name"}]) {}`,
-			expectedErr: `Argument "name" has invalid value 1`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "index name starts with a number",
@@ -182,17 +182,17 @@ func TestParseInvalidIndexOnStruct(t *testing.T) {
 		{
 			description: "invalid 'unique' value type",
 			sdl:         `type user @index(includes: [{field: "name"}], unique: "true") {}`,
-			expectedErr: `Argument "unique" has invalid value "true"`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'includes' value type (not a list)",
 			sdl:         `type user @index(includes: "name") {}`,
-			expectedErr: `Argument "includes" has invalid value "name"`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "invalid 'includes' value type (not an object list)",
 			sdl:         `type user @index(includes: [1]) {}`,
-			expectedErr: `Argument "includes" has invalid value [1]`,
+			expectedErr: errIndexInvalidArgument,
 		},
 	}
 
@@ -402,14 +402,14 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(field: "name") 
 			}`,
-			expectedErr: `Unknown argument "field" on directive "@index`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "invalid field index name type",
 			sdl: `type user {
 				name: String @index(name: 1) 
 			}`,
-			expectedErr: `Argument "name" has invalid value 1`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "field index name starts with a number",
@@ -444,7 +444,7 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 			sdl: `type user {
 				name: String @index(unique: "true") 
 			}`,
-			expectedErr: `Argument "unique" has invalid value "true"`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "ordered kind conflicts with vector config",

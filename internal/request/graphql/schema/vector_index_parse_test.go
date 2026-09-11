@@ -117,49 +117,49 @@ func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 			sdl: `type user {
 				embedding: [Float32!] @index(kind: vector)
 			}`,
-			expectedErr: `Expected type "IndexKind", found vector`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "unknown algorithm enum",
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {dimensions: 3, alg: IVFFlat})
 			}`,
-			expectedErr: `Expected type "VectorIndexAlgorithm", found IVFFlat`,
+			expectedErr: errIndexInvalidArgument,
 		},
 		{
 			description: "unknown algorithm config field",
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {dimensions: 3, IVFFlat: {}})
 			}`,
-			expectedErr: `In field "IVFFlat": Unknown field.`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "unsupported metric inside the HNSW config",
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: MANHATTAN}})
 			}`,
-			expectedErr: `Expected type "VectorDistanceMetric", found MANHATTAN`,
+			expectedErr: errVectorIndexUnknownMetric,
 		},
 		{
 			description: "unknown top-level argument",
 			sdl: `type user {
 				embedding: [Float32!] @index(unknown: "something", vector: {dimensions: 3})
 			}`,
-			expectedErr: `Unknown argument "unknown" on directive "@index".`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "unknown field inside the vector config",
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {dimensions: 3, unknown: 1})
 			}`,
-			expectedErr: `In field "unknown": Unknown field.`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "unknown field inside the HNSW config",
 			sdl: `type user {
 				embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {unknown: 1}})
 			}`,
-			expectedErr: `In field "unknown": Unknown field.`,
+			expectedErr: errIndexUnknownArgument,
 		},
 		{
 			description: "vector and legacy ordered configs are competing kind selectors",

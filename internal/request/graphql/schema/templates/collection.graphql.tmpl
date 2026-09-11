@@ -1,0 +1,256 @@
+<%/* Scalar array element filters */%>
+<%- range .ElementFilters %>
+input <% .Name %> {
+  _and: [<% .Name %>!]
+  _eq: <% .Scalar %>
+<%- if .Comparable %>
+  _geq: <% .Scalar %>
+  _gt: <% .Scalar %>
+<%- end %>
+<%- if .Text %>
+  _ilike: String
+<%- end %>
+  _in: <% .ListType %>
+<%- if .Text %>
+  _like: String
+<%- end %>
+<%- if .Comparable %>
+  _leq: <% .Scalar %>
+  _lt: <% .Scalar %>
+<%- end %>
+  _neq: <% .Scalar %>
+<%- if .Text %>
+  _nilike: String
+<%- end %>
+  _nin: <% .ListType %>
+<%- if .Text %>
+  _nlike: String
+<%- end %>
+  _or: [<% .Name %>!]
+}
+<% end %>
+
+<%/* Searchable encryption filters */%>
+<%- range .EncryptedFilters %>
+input <% .Name %> {
+  _and: [<% .Name %>!]
+  _eq: <% .Scalar %>
+  _or: [<% .Name %>!]
+}
+<% end %>
+
+<%/* Collection types and their supporting inputs and enums */%>
+<%- range .Collections %><% $collection := . %>
+
+<%/* Collection object and aggregate fields */%>
+type <% .Name %> {
+<%- if .EmitAVG %>
+  AVG(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float!
+<%- end %><% if .EmitCOUNT %>
+  COUNT(GROUP: <% .Name %>__CountSelector<% if and (not .Embedded) (not .ReadOnly) %>, _version: <% .Name %>___version__CountSelector<% end %><% range .InlineArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__CountSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__CountSelector<% end %>): Int!
+<%- end %><% if .EmitGROUP %>
+  GROUP(docID: [ID!], filter: <% .Name %>FilterArg, groupBy: [<% .Name %>Field!], limit: Int, offset: Int, order: [<% .Name %>OrderArg]): [<% .Name %>]
+<%- end %><% if .EmitMAX %>
+  MAX(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float
+<%- end %><% if .EmitMIN %>
+  MIN(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float
+<%- end %><% if .EmitSIMILARITY %>
+  "\nReturns how similar the given vector is to the specified field's value. The metric is\n whichever one the field's vector index was created with, defaulting to cosine similarity\n when the field has no vector index. Higher values are more similar for every metric.\n"
+  SIMILARITY<% if .NumericArrays %>(<% range $index, $field := .NumericArrays %><% if $index %>, <% end %>"Compares the given vector against the <% $field.Name %> field." <% $field.Name %>: <% $collection.Name %>__<% $field.Name %>__SimilaritySelector<% end %>)<% end %>: Float
+<%- end %><% if .EmitSUM %>
+  SUM(GROUP: <% .Name %>__NumericSelector<% range .Numeric %>, <% .Name %>: ScalarAggregateNumericBlock<% end %><% range .NumericArrays %>, <% .Name %>: <% $collection.Name %>__<% .Name %>__NumericSelector<% end %><% range .RelationMany %>, <% .Name %>: <% .RelatedName %>__NumericSelector<% end %>): Float!
+<%- end %>
+<%- range .ForeignIDs %>
+  <% .Name %>: <% .Type %>
+<%- end %>
+<%- if and (not .Embedded) (not .ReadOnly) %>
+  _deleted: Boolean
+  _docID: ID
+  _version: [Commit]
+<%- end %>
+<%- range .Fields %>
+  <% .Name %><% if .Relation %><% if .Orderable %>(filter: <% .FilterType %>)<% else %>(docID: [ID!], filter: <% .FilterType %>, groupBy: [<% .RelatedName %>Field!], limit: Int, offset: Int, order: [<% .OrderType %>])<% end %><% end %>: <% .Type %>
+<%- end %>
+}
+
+<%/* Collection field enums */%>
+<% if .Fields %>enum <% .Name %>ExplicitField {
+<%- range .Fields %>
+  <% .Name %>
+<%- end %>
+}
+<% end %>
+
+enum <% .Name %>Field {
+<%- if .EmitGROUP %>
+  GROUP
+<%- end %>
+<%- range .ForeignIDs %>
+  <% .Name %>
+<%- end %>
+<%- if and (not .Embedded) (not .ReadOnly) %>
+  _deleted
+  _docID
+  _version
+<%- end %>
+<%- range .Fields %>
+  <% .Name %>
+<%- end %>
+}
+
+<%/* Collection filtering and mutation inputs */%>
+input <% .Name %>FilterArg {
+  _alias: JSON
+  _and: [<% .Name %>FilterArg!]
+<%- if and (not .Embedded) (not .ReadOnly) %>
+  _docID: IDOperatorBlock
+<%- end %>
+  _not: <% .Name %>FilterArg
+  _or: [<% .Name %>FilterArg!]
+<%- range .ForeignIDs %>
+  <% .Name %>: <% .FilterType %>
+<%- end %>
+<%- range .Fields %>
+  <% .Name %>: <% .FilterType %>
+<%- end %>
+}
+
+<% if .HasMutationInput %>input <% .Name %>MutationInputArg {
+<%- range .ForeignIDs %><% if .Writable %>
+  <% .Name %>: <% .MutationType %>
+<%- end %><% end %>
+<%- range .Fields %><% if .Writable %>
+  <% .Name %>: <% .MutationType %>
+<%- end %><% end %>
+}
+<% end %>
+
+<%/* Collection ordering and encrypted filtering */%>
+enum <% .Name %>NumericFieldsArg {
+<%- if .EmitAVG %>
+  AVG
+<%- end %><% if .EmitCOUNT %>
+  COUNT
+<%- end %><% if .EmitMAX %>
+  MAX
+<%- end %><% if .EmitMIN %>
+  MIN
+<%- end %><% if .EmitSUM %>
+  SUM
+<%- end %>
+<%- range .Numeric %>
+  <% .Name %>
+<%- end %>
+<%- range .NumericArrays %>
+  <% .Name %>
+<%- end %>
+}
+
+input <% .Name %>OrderArg {
+  _alias: JSON
+<%- if and (not .Embedded) (not .ReadOnly) %>
+  _docID: Ordering
+<%- end %>
+<%- range .ForeignIDs %>
+  <% .Name %>: Ordering
+<%- end %>
+<%- range .Fields %><% if .Orderable %>
+  <% .Name %>: <% .OrderType %>
+<%- end %><% end %>
+}
+
+<% if .Encrypted %>input <% .Name %>EncryptedFilterArg {
+<%- range .Encrypted %>
+  <% .Name %>: <% .FilterType %>
+<%- end %>
+}
+<% end %>
+
+<%/* Collection aggregate selectors */%>
+input <% .Name %>__CountSelector {
+  filter: <% .Name %>FilterArg
+  groupBy: [<% .Name %>Field!]
+  limit: Int
+  offset: Int
+}
+
+input <% .Name %>__GROUP__CountSelector {
+  limit: Int
+  offset: Int
+}
+
+input <% .Name %>__NumericSelector {
+  field: <% .Name %>NumericFieldsArg!
+  filter: <% .Name %>FilterArg
+  limit: Int
+  offset: Int
+  order: [<% .Name %>OrderArg]
+}
+
+<% if and (not .Embedded) (not .ReadOnly) %>input <% .Name %>___version__CountSelector {
+  limit: Int
+  offset: Int
+}
+<% end %>
+
+<%/* Inline-array and relation selectors */%>
+<% range .InlineArrays %>input <% $collection.Name %>__<% .Name %>__CountSelector {
+  filter: <% .ElementFilterType %>
+  limit: Int
+  offset: Int
+}
+<% end %>
+<% range .RelationMany %>input <% $collection.Name %>__<% .Name %>__CountSelector {
+  limit: Int
+  offset: Int
+}
+<% end %>
+<% range .NumericArrays %>input <% $collection.Name %>__<% .Name %>__NumericSelector {
+  filter: <% .ElementFilterType %>
+  limit: Int
+  offset: Int
+  order: Ordering
+}
+
+input <% $collection.Name %>__<% .Name %>__SimilaritySelector {
+  vector: [<% .ElementType %>]!
+}
+<% end %>
+<% end -%>
+
+<%/* Root query fields */%>
+extend type Query {
+  AVG(<%- range .Collections %> <% .Name %>: <% .Name %>__NumericSelector<% end %>): Float!
+  COUNT(<%- range .Collections %> <% .Name %>: <% .Name %>__CountSelector<% end %>): Int!
+  MAX(<%- range .Collections %> <% .Name %>: <% .Name %>__NumericSelector<% end %>): Float
+  MIN(<%- range .Collections %> <% .Name %>: <% .Name %>__NumericSelector<% end %>): Float
+  SUM(<%- range .Collections %> <% .Name %>: <% .Name %>__NumericSelector<% end %>): Float!
+<%- range .Collections %><% if not .Embedded %>
+  <% .Name %>(cid: [ID!], docID: [ID!], filter: <% .Name %>FilterArg, groupBy: [<% .Name %>Field!], limit: Int, offset: Int, order: [<% .Name %>OrderArg], showDeleted: Boolean): [<% .Name %>]
+<%- if .Encrypted %>
+  encrypted_<% .Name %>(filter: <% .Name %>EncryptedFilterArg, limit: Int, offset: Int): EncryptedSearchResult
+<%- end %>
+<%- end %><% end %>
+}
+
+<%/* Root subscription fields */%>
+extend type Subscription {
+<%- range .Collections %><% if not .Embedded %>
+  <% .Name %>(cid: [ID!], docID: [ID!], filter: <% .Name %>FilterArg, groupBy: [<% .Name %>Field!], limit: Int, offset: Int, order: [<% .Name %>OrderArg], showDeleted: Boolean): [<% .Name %>]
+<%- end %><% end %>
+}
+
+<%/* Root mutation fields */%>
+extend type Mutation {
+<%- range .Collections %><% if not .ReadOnly %>
+<%- if and .HasMutationInput (not .Embedded) %>
+  add_<% .Name %>(encrypt: Boolean, encryptFields: [<% .Name %>ExplicitField!], input: [<% .Name %>MutationInputArg!]): [<% .Name %>]
+<%- end %>
+  delete_<% .Name %>(docID: [ID!], filter: <% .Name %>FilterArg): [<% .Name %>]
+  truncate_<% .Name %>(filter: <% .Name %>FilterArg): Boolean!
+<%- if and .HasMutationInput (not .Embedded) %>
+  update_<% .Name %>(docID: [ID!], filter: <% .Name %>FilterArg, input: <% .Name %>MutationInputArg): [<% .Name %>]
+  upsert_<% .Name %>(add: <% .Name %>MutationInputArg!, filter: <% .Name %>FilterArg!, update: <% .Name %>MutationInputArg!): [<% .Name %>]
+<%- end %>
+<%- end %><% end %>
+}

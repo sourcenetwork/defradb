@@ -941,7 +941,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 						}
 					}
 				}`,
-				ExpectedError: "Cannot query field \"_publishedID\" on type \"Author\". ",
+				ExpectedError: "Cannot query field \"_publishedID\" on type \"Author\".",
 			},
 		},
 	}

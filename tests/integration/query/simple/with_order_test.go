@@ -1049,7 +1049,7 @@ func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 						Verified
 					}
 				}`,
-				ExpectedError: `Argument "order" has invalid value {Age: INVALID}`,
+				ExpectedError: `Value "INVALID" does not exist in "Ordering" enum.`,
 			},
 		},
 	}

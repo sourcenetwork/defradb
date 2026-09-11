@@ -134,7 +134,7 @@ func TestDebugExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) 
 					}
 				}`,
 
-				ExpectedError: "Argument \"order\" has invalid value {articles: {name: ASC}}.\nIn field \"articles\": Unknown field.",
+				ExpectedError: `Field "articles" is not defined by type "AuthorOrderArg".`,
 			},
 		},
 	}
