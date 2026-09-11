@@ -277,3 +277,54 @@ func nameFieldBlockCID(t *testing.T, ctx context.Context, db *DB, head cid.Cid) 
 	require.True(t, found)
 	return nameLink.Cid
 }
+
+func TestDocumentFetcher_DoesNotReadAdjacentDocumentKey(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	_, err = db.AddCollection(ctx, userDocIDTestSchema)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+
+	doc0, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":30}`), col.Version())
+	require.NoError(t, err)
+	err = col.CreateDocument(ctx, doc0)
+	require.NoError(t, err)
+
+	doc1, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Bob","age":35}`), col.Version())
+	require.NoError(t, err)
+	err = col.CreateDocument(ctx, doc1)
+	require.NoError(t, err)
+
+	txnA, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txnA.Discard()
+
+	txnB, err := db.NewTxn(false)
+	require.NoError(t, err)
+	defer txnB.Discard()
+
+	ctxA := InitContext(ctx, txnA)
+	ctxB := InitContext(ctx, txnB)
+
+	// txnA reads doc0 and updates doc0
+	colA, err := col.WithTxn(txnA)
+	require.NoError(t, err)
+	_, err = colA.GetDocument(ctxA, doc0.ID())
+	require.NoError(t, err)
+
+	require.NoError(t, colA.UpdateDocument(ctxA, doc0))
+
+	// txnB updates doc1 and commits
+	colB, err := col.WithTxn(txnB)
+	require.NoError(t, err)
+	require.NoError(t, colB.UpdateDocument(ctxB, doc1))
+	require.NoError(t, txnB.Commit())
+
+	// txnA commits without conflict because reading doc0 does not read doc1's key
+	require.NoError(t, txnA.Commit())
+}
+
