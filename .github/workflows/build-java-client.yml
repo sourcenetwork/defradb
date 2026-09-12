@@ -69,4 +69,5 @@ jobs:
           DEFRA_JAVA_JVM_OPTS: "-Xcheck:jni"
         run: |
           export CGO_CFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
-          go test -tags javaclient -race ./tests/integration/... ./tests/clients/java/tests/... 2>&1 | grep -v "for signal chaining was deprecated"
+          go test -tags javaclient -race ./tests/integration/... ./tests/clients/java/tests/... \
+            2>&1 | grep -v "for signal chaining was deprecated"
