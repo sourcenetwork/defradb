@@ -321,23 +321,29 @@ test\:cli:
 test\:c:
 	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
-# Builds defradb.jar (via build-java-client) and runs the integration tests against the Java
-# client. CGO_CFLAGS is derived from JAVA_HOME here (rather than left to the caller) since cgo
-# can't expand it itself inside a #cgo directive - see tests/clients/java/doc.go. DEFRA_JAVA_JAR
-# is likewise derived from DEFRA_JAVA_WRAPPER_DIR so an overridden checkout location is still
-# found (tests/clients/java/jvm.go's own default lookup only knows the standard .javaclient/
-# location). Linux/WSL only - see tools/scripts/build-java-client.sh.
+# Builds defradb.jar (via build-java-client) and runs both the integration tests against the Java
+# client and the wrapper's own lifecycle/JNI tests under tests/clients/java/tests, the latter
+# covering nodeObj ref lifetime, concurrent Close, and subscription teardown (see
+# wrapper_close_test.go/wrapper_tx_test.go) that the integration suite doesn't exercise directly.
+# TEST_FLAGS already carries -race; DEFRA_JAVA_JVM_OPTS=-Xcheck:jni is added too, since that's the
+# JNI-usage check those lifecycle tests are written to be run under, and it's a no-op for any test
+# that never boots the JVM. CGO_CFLAGS is derived from JAVA_HOME here (rather than left to the
+# caller) since cgo can't expand it itself inside a #cgo directive - see tests/clients/java/doc.go.
+# DEFRA_JAVA_JAR is likewise derived from DEFRA_JAVA_WRAPPER_DIR so an overridden checkout location
+# is still found (tests/clients/java/jvm.go's own default lookup only knows the standard
+# .javaclient/ location). Linux/WSL only - see tools/scripts/build-java-client.sh.
 .PHONY: test\:java
 test\:java:
 ifeq ($(JAVA_HOME),)
-	$(error JAVA_HOME must be set to a JDKa installation)
+	$(error JAVA_HOME must be set to a JDK installation)
 endif
 	@$(MAKE) build-java-client
 	CGO_ENABLED=1 \
 	CGO_CFLAGS="-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux" \
 	DEFRA_CLIENT_JAVA=true \
 	DEFRA_JAVA_JAR="$(or $(DEFRA_JAVA_WRAPPER_DIR),$(CURDIR)/.javaclient/defradb-java-sdk)/build/libs/defradb.jar" \
-	go test -tags javaclient ./tests/integration/... $(TEST_FLAGS)
+	DEFRA_JAVA_JVM_OPTS=-Xcheck:jni \
+	go test -tags javaclient ./tests/integration/... ./tests/clients/java/tests/... $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:

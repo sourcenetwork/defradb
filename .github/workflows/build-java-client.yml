@@ -57,9 +57,16 @@ jobs:
       # DEFRA_JAVA_JAR is left unset - it defaults to the exact jar path the previous step just
       # produced (see defaultJarPath in tests/clients/java/jvm.go). CGO_CFLAGS must be set here
       # (not in the job/step env:) since $JAVA_HOME isn't resolved until setup-java has run.
-      - name: Run integration tests against the Java client
+      # Covers both the integration tests against the Java client and the wrapper's own
+      # lifecycle/JNI tests under tests/clients/java/tests (nodeObj ref lifetime, concurrent
+      # Close, subscription teardown - see wrapper_close_test.go/wrapper_tx_test.go), which the
+      # integration suite alone doesn't exercise. Run with -race and -Xcheck:jni, as those
+      # lifecycle tests are documented to require. Both are harmless no-ops for tests that don't
+      # touch that code.
+      - name: Run tests against the Java client
         env:
           DEFRA_CLIENT_JAVA: "true"
+          DEFRA_JAVA_JVM_OPTS: "-Xcheck:jni"
         run: |
           export CGO_CFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
-          go test -tags javaclient ./tests/integration/... 2>&1 | grep -v "for signal chaining was deprecated"
+          go test -tags javaclient -race ./tests/integration/... ./tests/clients/java/tests/... 2>&1 | grep -v "for signal chaining was deprecated"
