@@ -9,15 +9,19 @@
 //
 // See tests/LICENSE for details.
 
-package tests
+#ifndef DEFRA_JVMBOOT_H
+#define DEFRA_JVMBOOT_H
 
-func init() {
-	goClient = false
-	httpClient = false
-	cliClient = false
-	cClient = false
-	javaClient = false
-	jsClient = true
-	// JavaScript networking stack is managed externally
-	skipNetworkTests = true
-}
+#include <jni.h>
+
+int defra_start_jvm(
+    const char* jvmLibPath,
+    const char* classpath,
+    const char* extraOpts,
+    JavaVM** outVM,
+    JNIEnv** outEnv,
+    char* errbuf,
+    int errbufLen
+);
+
+#endif // DEFRA_JVMBOOT_H
