@@ -84,11 +84,15 @@ func parseMutation(exe *executionContext, field *field) (*request.ObjectMutation
 
 	case "update":
 		mut.Type = request.UpdateObjects
-		parseUpdateMutationArgs(mut, field.arguments)
+		if err := parseUpdateMutationArgs(mut, field.arguments); err != nil {
+			return nil, err
+		}
 
 	case "delete":
 		mut.Type = request.DeleteObjects
-		parseDeleteMutationArgs(mut, field.arguments)
+		if err := parseDeleteMutationArgs(mut, field.arguments); err != nil {
+			return nil, err
+		}
 
 	case "upsert":
 		mut.Type = request.UpsertObjects
@@ -186,13 +190,12 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) erro
 			}
 
 		case request.EncryptFieldsArgName:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			fields := make([]string, len(v))
-			for i, v := range v {
-				fields[i] = v.(string)
+			fields, err := parseStringList(name, value)
+			if err != nil {
+				return err
 			}
 			mut.EncryptFields = fields
 		}
@@ -200,17 +203,16 @@ func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) erro
 	return nil
 }
 
-func parseDeleteMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+func parseDeleteMutationArgs(mut *request.ObjectMutation, args map[string]any) error {
 	for name, value := range args {
 		switch name {
 		case request.DocIDArgName:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			docIDs := make([]string, len(v))
-			for i, v := range v {
-				docIDs[i] = v.(string)
+			docIDs, err := parseStringList(name, value)
+			if err != nil {
+				return err
 			}
 			mut.DocIDs = immutable.Some(docIDs)
 
@@ -220,9 +222,10 @@ func parseDeleteMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			}
 		}
 	}
+	return nil
 }
 
-func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
+func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) error {
 	for name, value := range args {
 		switch name {
 		case request.Input:
@@ -231,13 +234,12 @@ func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			}
 
 		case request.DocIDArgName:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			docIDs := make([]string, len(v))
-			for i, v := range v {
-				docIDs[i] = v.(string)
+			docIDs, err := parseStringList(name, value)
+			if err != nil {
+				return err
 			}
 			mut.DocIDs = immutable.Some(docIDs)
 
@@ -247,6 +249,7 @@ func parseUpdateMutationArgs(mut *request.ObjectMutation, args map[string]any) {
 			}
 		}
 	}
+	return nil
 }
 
 func parseUpsertMutationArgs(mut *request.ObjectMutation, args map[string]any) {

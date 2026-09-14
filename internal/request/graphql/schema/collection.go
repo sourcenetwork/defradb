@@ -155,7 +155,11 @@ func fromAstDefinition(
 			explicitIsMaterialized := immutable.None[bool]()
 			for _, arg := range directive.Arguments {
 				if arg.Name.Value == types.MaterializedDirectivePropIf {
-					explicitIsMaterialized = immutable.Some(arg.Value.GetValue().(bool))
+					value, ok := arg.Value.GetValue().(bool)
+					if !ok {
+						return core.Collection{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+					}
+					explicitIsMaterialized = immutable.Some(value)
 					break
 				}
 			}
@@ -175,7 +179,11 @@ func fromAstDefinition(
 
 			for _, arg := range directive.Arguments {
 				if arg.Name.Value == types.BranchableDirectivePropIf {
-					explicitIsBranchable = immutable.Some(arg.Value.GetValue().(bool))
+					value, ok := arg.Value.GetValue().(bool)
+					if !ok {
+						return core.Collection{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+					}
+					explicitIsBranchable = immutable.Some(value)
 					break
 				}
 			}
@@ -1022,7 +1030,11 @@ func constraintsFromAST(kind client.FieldKind, directive *collectionDirective) (
 			if !kind.IsArray() {
 				return constraintDescription{}, NewErrInvalidTypeForContraint(kind)
 			}
-			size, err := strconv.Atoi(arg.Value.(*collectionIntValue).Value)
+			value, ok := arg.Value.(*collectionIntValue)
+			if !ok {
+				return constraintDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
+			size, err := strconv.Atoi(value.Value)
 			if err != nil {
 				return constraintDescription{}, err
 			}
@@ -1069,7 +1081,11 @@ func astTypeToKind(
 
 		switch innerAstTypeVal := astTypeVal.Type.(type) {
 		case *collectionNonNull:
-			switch innerAstTypeVal.Type.(*collectionNamed).Name.Value {
+			namedType, ok := innerAstTypeVal.Type.(*collectionNamed)
+			if !ok {
+				return client.FieldKind_None, ErrNonNullNotSupported
+			}
+			switch namedType.Name.Value {
 			case typeBoolean:
 				return client.FieldKind_BOOL_ARRAY, nil
 			case typeInt:
@@ -1083,11 +1099,15 @@ func astTypeToKind(
 			case typeDateTime:
 				return client.FieldKind_DATETIME_ARRAY, nil
 			default:
-				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(innerAstTypeVal.Type.(*collectionNamed).Name.Value)
+				return client.FieldKind_None, NewErrNonNullForTypeNotSupported(namedType.Name.Value)
 			}
 
 		default:
-			switch astTypeVal.Type.(*collectionNamed).Name.Value {
+			namedType, ok := astTypeVal.Type.(*collectionNamed)
+			if !ok {
+				return client.FieldKind_None, NewErrTypeNotFound(astTypeVal.Type.String())
+			}
+			switch namedType.Name.Value {
 			case typeBoolean:
 				return client.FieldKind_NILLABLE_BOOL_ARRAY, nil
 			case typeInt:
@@ -1101,7 +1121,7 @@ func astTypeToKind(
 			case typeDateTime:
 				return client.FieldKind_NILLABLE_DATETIME_ARRAY, nil
 			default:
-				return client.NewNamedKind(astTypeVal.Type.(*collectionNamed).Name.Value, true), nil
+				return client.NewNamedKind(namedType.Name.Value, true), nil
 			}
 		}
 

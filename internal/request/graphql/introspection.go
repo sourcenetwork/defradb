@@ -380,11 +380,20 @@ func sortIntrospectionNamedValues(value any) any {
 	}
 	values = append([]any(nil), values...)
 	sort.SliceStable(values, func(i, j int) bool {
-		left, _ := values[i].(map[string]any)["name"].(string)
-		right, _ := values[j].(map[string]any)["name"].(string)
+		left := introspectionValueName(values[i])
+		right := introspectionValueName(values[j])
 		return left < right
 	})
 	return values
+}
+
+func introspectionValueName(value any) string {
+	object, ok := value.(map[string]any)
+	if !ok {
+		return ""
+	}
+	name, _ := object["name"].(string)
+	return name
 }
 
 func projectIntrospectionValue(

@@ -41,9 +41,10 @@ func parseCommitSelect(
 					return nil, ErrMultipleDocIDsNotSupported
 				}
 
-				docIDs = make([]string, len(v))
-				for i, value := range v {
-					docIDs[i] = value.(string)
+				var err error
+				docIDs, err = parseStringList(name, v)
+				if err != nil {
+					return nil, err
 				}
 
 			case []string:
@@ -65,14 +66,12 @@ func parseCommitSelect(
 			commit.DocIDs = immutable.Some(docIDs)
 
 		case request.CidFieldName:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-
-			cids := make([]string, len(v))
-			for i, value := range v {
-				cids[i] = value.(string)
+			cids, err := parseStringList(name, value)
+			if err != nil {
+				return nil, err
 			}
 			commit.CIDs = immutable.Some(cids)
 
@@ -105,13 +104,12 @@ func parseCommitSelect(
 			}
 
 		case request.GroupByClause:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			fields := make([]string, len(v))
-			for i, c := range v {
-				fields[i] = c.(string)
+			fields, err := parseStringList(name, value)
+			if err != nil {
+				return nil, err
 			}
 			commit.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,

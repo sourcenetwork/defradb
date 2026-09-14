@@ -111,25 +111,22 @@ func parseSelect(
 			}
 
 		case request.DocIDArgName: // parse single DocID field
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			docIDs := make([]string, len(v))
-			for i, value := range v {
-				docIDs[i] = value.(string)
+			docIDs, err := parseStringList(name, value)
+			if err != nil {
+				return nil, err
 			}
 			slct.DocIDs = immutable.Some(docIDs)
 
 		case request.CidFieldName: // parse single CID query field
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-
-			cids := make([]string, len(v))
-			for i, value := range v {
-				cids[i] = value.(string)
+			cids, err := parseStringList(name, value)
+			if err != nil {
+				return nil, err
 			}
 			slct.CIDs = immutable.Some(cids)
 
@@ -157,13 +154,12 @@ func parseSelect(
 			})
 
 		case request.GroupByClause:
-			v, ok := value.([]any)
-			if !ok {
+			if value == nil {
 				continue // value is nil
 			}
-			fields := make([]string, len(v))
-			for i, c := range v {
-				fields[i] = c.(string)
+			fields, err := parseStringList(name, value)
+			if err != nil {
+				return nil, err
 			}
 			slct.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
@@ -229,7 +225,10 @@ func parseSimilarity(
 	var vector any
 	for _, name := range field.argumentOrder {
 		target = name
-		v := field.arguments[target].(map[string]any)
+		v, ok := field.arguments[target].(map[string]any)
+		if !ok {
+			return nil, ErrSimilarityMissingTarget
+		}
 		vector = v[types.SimilarityArgVector]
 	}
 	// The argument names the field to compare against, so without one there is nothing to

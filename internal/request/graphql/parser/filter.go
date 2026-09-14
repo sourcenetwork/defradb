@@ -72,14 +72,20 @@ func parseFilterFieldsForDescriptionMap(
 	for k, v := range conditions {
 		switch k {
 		case request.FilterOpOr, request.FilterOpAnd:
-			conds := v.([]any)
+			conds, ok := v.([]any)
+			if !ok {
+				return nil, ErrInvalidFilterConditions
+			}
 			parsedFields, err := parseFilterFieldsForDescriptionSlice(conds, col)
 			if err != nil {
 				return nil, err
 			}
 			fields = append(fields, parsedFields...)
 		case request.FilterOpNot, request.AliasFieldName:
-			conds := v.(map[string]any)
+			conds, ok := v.(map[string]any)
+			if !ok {
+				return nil, ErrInvalidFilterConditions
+			}
 			parsedFields, err := parseFilterFieldsForDescriptionMap(conds, col)
 			if err != nil {
 				return nil, err
