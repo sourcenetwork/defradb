@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 
@@ -78,4 +79,32 @@ func TestSend_ReturnsTheReplysErrMessage(t *testing.T) {
 	proto := &nackingProto{host: fakeHost{}, nack: "at capacity: receiver is saturated, back off"}
 	_, err := Send[*MetaData](context.Background(), proto, &MetaData{}, "receiver", "/defradb/rep_req/0.0.1")
 	require.EqualError(t, err, proto.nack)
+}
+
+// capturingProto keeps the response channel Send registered, standing in for an
+// inbound handler goroutine that has already read the channel out of the map
+// (message.go:127) and is about to deliver its reply into it.
+type capturingProto struct {
+	host client.Host
+	ch   chan Message
+}
+
+func (p *capturingProto) Host() client.Host                           { return p.host }
+func (p *capturingProto) SetResponseChan(_ string, ch chan Message)   { p.ch = ch }
+func (p *capturingProto) DeleteResponseChan(string)                   {}
+func (p *capturingProto) GetResponseChan(string) (chan Message, bool) { return nil, false }
+
+// A reply that arrives after Send has given up must not land on a closed
+// channel: Receive sends into a channel it read from the map before the
+// timeout removed the entry, so closing on the timeout path is a send on a
+// closed channel, which is a data race under -race and a panic without it.
+func TestSend_LateReplyAfterTimeoutMustNotPanic(t *testing.T) {
+	proto := &capturingProto{host: fakeHost{}}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	_, err := Send[*MetaData](ctx, proto, &MetaData{}, "receiver", "/defradb/rep_req/0.0.1")
+	require.ErrorIs(t, err, ErrResponseTimeout)
+
+	require.NotPanics(t, func() { proto.ch <- &MetaData{} })
 }

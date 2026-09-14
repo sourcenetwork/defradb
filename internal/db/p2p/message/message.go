@@ -173,7 +173,6 @@ func Send[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
@@ -190,7 +189,6 @@ func Send[ResponseType Message](
 		}
 	case <-ctx.Done():
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, ErrResponseTimeout
 	}
 }
@@ -219,7 +217,6 @@ func SendAsync[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
@@ -237,7 +234,6 @@ func SendAsync[ResponseType Message](
 		case <-ctx.Done():
 			close(funcResponseChan)
 			proto.DeleteResponseChan(m.GetMessageID())
-			close(responseChan)
 		}
 	}()
 
