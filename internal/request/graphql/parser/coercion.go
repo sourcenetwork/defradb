@@ -12,11 +12,15 @@ package parser
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"time"
 
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
 type utcNowValue struct{}
@@ -50,7 +54,13 @@ func validateInputValue(definition *wgast.Document, typeRef int, value any) erro
 		name := definition.TypeNameString(typeRef)
 		node, exists := definition.NodeByNameStr(name)
 		input, ok := value.(map[string]any)
-		if !exists || node.Kind != wgast.NodeKindInputObjectTypeDefinition || !ok {
+		if !exists {
+			return nil
+		}
+		if node.Kind != wgast.NodeKindInputObjectTypeDefinition {
+			return validateScalar(name, value)
+		}
+		if !ok {
 			return nil
 		}
 		for _, fieldRef := range definition.NodeInputFieldDefinitions(node) {
@@ -63,6 +73,66 @@ func validateInputValue(definition *wgast.Document, typeRef int, value any) erro
 		}
 	}
 	return nil
+}
+
+func validateScalar(name string, value any) error {
+	switch name {
+	case "Int":
+		if number, ok := numericValue(value); !ok || math.Trunc(number) != number ||
+			number < math.MinInt32 || number > math.MaxInt32 {
+			return fmt.Errorf("Int cannot represent non 32-bit signed integer value: %v", value)
+		}
+	case "DateTime":
+		text, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("DateTime cannot represent value: %v", value)
+		}
+		if text != "UTC_NOW" {
+			if _, err := time.Parse(time.RFC3339Nano, text); err != nil {
+				return fmt.Errorf("DateTime cannot represent value: %q", text)
+			}
+		}
+	case "Blob":
+		text, ok := value.(string)
+		if !ok || !types.BlobPattern.MatchString(text) {
+			return fmt.Errorf("Blob cannot represent value: %v", value)
+		}
+	}
+	return nil
+}
+
+func numericValue(value any) (float64, bool) {
+	switch value := value.(type) {
+	case float64:
+		return value, true
+	case float32:
+		return float64(value), true
+	case int:
+		return float64(value), true
+	case int8:
+		return float64(value), true
+	case int16:
+		return float64(value), true
+	case int32:
+		return float64(value), true
+	case int64:
+		return float64(value), true
+	case uint:
+		return float64(value), true
+	case uint8:
+		return float64(value), true
+	case uint16:
+		return float64(value), true
+	case uint32:
+		return float64(value), true
+	case uint64:
+		return float64(value), true
+	case json.Number:
+		number, err := strconv.ParseFloat(value.String(), 64)
+		return number, err == nil
+	default:
+		return 0, false
+	}
 }
 
 func coerceInputValue(definition *wgast.Document, typeRef int, value any) any {
