@@ -70,6 +70,12 @@ func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
 	if report.HasErrors() {
 		return nil, report
 	}
+	directiveValidator := astvalidation.NewOperationValidator([]astvalidation.Rule{
+		astvalidation.DirectivesAreDefined(),
+	})
+	if directiveValidator.Validate(&document, s.definition, &report) == astvalidation.Invalid {
+		return nil, report
+	}
 	collectionDocument := adaptCollectionDocument(&document)
 	return fromAst(collectionDocument)
 }

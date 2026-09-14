@@ -967,20 +967,44 @@ func vectorEmbeddingFromAST(
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {
 		case types.VectorEmbeddingDirectivePropFields:
-			val := arg.Value.(*collectionListValue)
+			val, ok := arg.Value.(*collectionListValue)
+			if !ok {
+				return client.VectorEmbeddingDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
 			fields := make([]string, len(val.Values))
 			for i, untypedField := range val.Values {
-				fields[i] = untypedField.(*collectionStringValue).Value
+				field, ok := untypedField.(*collectionStringValue)
+				if !ok {
+					return client.VectorEmbeddingDescription{},
+						newErrInvalidArgument(arg.Name.Value, untypedField.GetValue())
+				}
+				fields[i] = field.Value
 			}
 			embedding.Fields = fields
 		case types.VectorEmbeddingDirectivePropModel:
-			embedding.Model = arg.Value.(*collectionStringValue).Value
+			value, ok := arg.Value.(*collectionStringValue)
+			if !ok {
+				return client.VectorEmbeddingDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
+			embedding.Model = value.Value
 		case types.VectorEmbeddingDirectivePropProvider:
-			embedding.Provider = arg.Value.(*collectionStringValue).Value
+			value, ok := arg.Value.(*collectionStringValue)
+			if !ok {
+				return client.VectorEmbeddingDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
+			embedding.Provider = value.Value
 		case types.VectorEmbeddingDirectivePropTemplate:
-			embedding.Template = arg.Value.(*collectionStringValue).Value
+			value, ok := arg.Value.(*collectionStringValue)
+			if !ok {
+				return client.VectorEmbeddingDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
+			embedding.Template = value.Value
 		case types.VectorEmbeddingDirectivePropURL:
-			embedding.URL = arg.Value.(*collectionStringValue).Value
+			value, ok := arg.Value.(*collectionStringValue)
+			if !ok {
+				return client.VectorEmbeddingDescription{}, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+			}
+			embedding.URL = value.Value
 		}
 	}
 	return embedding, nil
@@ -1016,7 +1040,11 @@ func setCRDTType(field *collectionFieldDefinition, kind client.FieldKind) (clien
 				if stringValue, ok := arg.Value.(*collectionStringValue); ok {
 					return 0, newErrInvalidArgument(arg.Name.Value, stringValue.Value)
 				}
-				cTypeString := arg.Value.GetValue().(string)
+				enumValue, ok := arg.Value.(*collectionEnumValue)
+				if !ok {
+					return 0, newErrInvalidArgument(arg.Name.Value, arg.Value.GetValue())
+				}
+				cTypeString := enumValue.Value
 				cType, validCRDTEnum := types.ParseCRDTType(cTypeString)
 				if !validCRDTEnum {
 					return 0, client.NewErrInvalidCRDTType(field.Name.Value, cTypeString)

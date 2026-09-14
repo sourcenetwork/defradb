@@ -29,3 +29,27 @@ func TestParseSDL_WithNestedListField_ReturnsError(t *testing.T) {
 	require.ErrorContains(t, err, "User")
 	require.ErrorContains(t, err, "name")
 }
+
+func TestParseSDL_WithUnknownDirective_ReturnsError(t *testing.T) {
+	schemaManager, err := NewSchemaManager(false)
+	require.NoError(t, err)
+
+	_, err = schemaManager.ParseSDL(`type User { name: String @notrealdirective }`)
+	require.ErrorContains(t, err, `directive: notrealdirective undefined`)
+}
+
+func TestParseSDL_WithInvalidCRDTArgumentType_ReturnsError(t *testing.T) {
+	schemaManager, err := NewSchemaManager(false)
+	require.NoError(t, err)
+
+	_, err = schemaManager.ParseSDL(`type User { points: Int @crdt(type: true) }`)
+	require.ErrorContains(t, err, `Argument "type" has invalid value true`)
+}
+
+func TestParseSDL_WithInvalidEmbeddingFieldType_ReturnsError(t *testing.T) {
+	schemaManager, err := NewSchemaManager(false)
+	require.NoError(t, err)
+
+	_, err = schemaManager.ParseSDL(`type User { vector: [Float32!] @embedding(fields: [true]) }`)
+	require.ErrorContains(t, err, `Argument "fields" has invalid value true`)
+}
