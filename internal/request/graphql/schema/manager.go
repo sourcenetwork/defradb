@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"context"
 	"io"
 
 	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
@@ -20,6 +21,7 @@ import (
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astvalidation"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
@@ -36,6 +38,20 @@ type SchemaManager struct {
 func NewSchemaManager(isSearchableEncryptionEnabled bool) (*SchemaManager, error) {
 	sm := &SchemaManager{isSearchableEncryptionEnabled: isSearchableEncryptionEnabled}
 	if err := sm.setDefinition(defaultSchemaSDL); err != nil {
+		return nil, err
+	}
+	return sm, nil
+}
+
+// NewSchemaManagerFromCollections returns a manager initialized directly from
+// the supplied collections.
+func NewSchemaManagerFromCollections(
+	ctx context.Context,
+	collections []client.CollectionVersion,
+	isSearchableEncryptionEnabled bool,
+) (*SchemaManager, error) {
+	sm := &SchemaManager{isSearchableEncryptionEnabled: isSearchableEncryptionEnabled}
+	if err := sm.Generate(ctx, collections); err != nil {
 		return nil, err
 	}
 	return sm, nil

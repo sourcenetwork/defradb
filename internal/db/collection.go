@@ -318,11 +318,6 @@ func (db *DB) addCollection(
 		return nil, err
 	}
 
-	err = db.loadCollectionDefinitions(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return result, nil
 }
 

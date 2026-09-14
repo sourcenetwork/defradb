@@ -93,11 +93,6 @@ func (db *DB) addView(
 		return nil, err
 	}
 
-	err = db.loadCollectionDefinitions(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
 			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))

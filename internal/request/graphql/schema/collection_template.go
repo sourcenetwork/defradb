@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -27,7 +28,12 @@ import (
 //go:embed templates/collection.graphql.tmpl
 var collectionSchemaTemplates embed.FS
 
-var graphQLNamePattern = regexp.MustCompile(`^[_a-zA-Z][_a-zA-Z0-9]*$`)
+var (
+	graphQLNamePattern     = regexp.MustCompile(`^[_a-zA-Z][_a-zA-Z0-9]*$`)
+	collectionTemplateOnce sync.Once
+	collectionTemplate     *template.Template
+	collectionTemplateErr  error
+)
 
 const (
 	typeOrdering     = "Ordering"
@@ -98,14 +104,16 @@ func renderCollectionSchemaSDLWithEncryption(
 	if err != nil {
 		return "", err
 	}
-	tmpl, err := template.New("collection.graphql.tmpl").
-		Delims("<%", "%>").
-		ParseFS(collectionSchemaTemplates, "templates/collection.graphql.tmpl")
-	if err != nil {
-		return "", err
+	collectionTemplateOnce.Do(func() {
+		collectionTemplate, collectionTemplateErr = template.New("collection.graphql.tmpl").
+			Delims("<%", "%>").
+			ParseFS(collectionSchemaTemplates, "templates/collection.graphql.tmpl")
+	})
+	if collectionTemplateErr != nil {
+		return "", collectionTemplateErr
 	}
 	var result bytes.Buffer
-	if err := tmpl.Execute(&result, model); err != nil {
+	if err := collectionTemplate.Execute(&result, model); err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(result.String()) + "\n", nil

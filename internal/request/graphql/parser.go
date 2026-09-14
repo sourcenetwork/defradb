@@ -323,12 +323,11 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	schemaManager, err := schema.NewSchemaManager(p.isSearchableEncryptionEnabled)
-	if err != nil {
-		return err
-	}
-
-	err = schemaManager.Generate(ctx, collections)
+	schemaManager, err := schema.NewSchemaManagerFromCollections(
+		ctx,
+		collections,
+		p.isSearchableEncryptionEnabled,
+	)
 	if err != nil {
 		return err
 	}
