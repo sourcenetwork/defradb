@@ -36,6 +36,9 @@ func newErrUnknownDirectiveArgument(name, directive string) error {
 }
 
 func newErrInvalidArgument(name string, value any) error {
+	if stringValue, ok := value.(string); ok {
+		return schemaValidationError(fmt.Sprintf("Argument %q has invalid value %q", name, stringValue))
+	}
 	return schemaValidationError(fmt.Sprintf("Argument %q has invalid value %v", name, value))
 }
 

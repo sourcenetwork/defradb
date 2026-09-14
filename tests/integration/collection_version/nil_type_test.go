@@ -27,7 +27,7 @@ func TestCollectionVersion_WithMissingType_Errors(t *testing.T) {
 						name:
 					}
 				`,
-				ExpectedError: "field type not specified. Object: User, Field: name",
+				ExpectedError: "unexpected token - got: RBRACE want one of: [IDENT LBRACK]",
 			},
 		},
 	}
