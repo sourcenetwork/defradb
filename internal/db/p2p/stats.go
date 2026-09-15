@@ -111,6 +111,8 @@ func (p *P2P) initReasonCounters() {
 	p.syncDAGFailureReason = newFailureReasons()
 	p.docDropReason = newFailureReasons()
 	p.docSkipReason = newFailureReasons()
+	p.carFetchOutcome = newFailureReasons()
+	p.carServeOutcome = newFailureReasons()
 }
 
 // newFailureReasons returns counters ready to record.
@@ -126,6 +128,13 @@ func (f *failureReasons) record(reason string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.counts[reason]++
+}
+
+// recordN counts n occurrences of reason.
+func (f *failureReasons) recordN(reason string, n int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.counts[reason] += n
 }
 
 // recordFirst counts one occurrence and reports whether this reason has not been seen before,

@@ -34,31 +34,41 @@ func (servingDB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return immutable.None[dac.DocumentACP]()
 }
 
-// fakeCARChannel answers CAR requests with its replies in turn, and fails once they run out or
-// when err is set. requested records how many heads each request asked for.
+// carCall is one CAR request a fakeCARChannel received: the peer asked and how many heads.
+type carCall struct {
+	peer  string
+	heads int
+}
+
+// fakeCARChannel answers each peer's CAR requests with that peer's replies in turn. A peer with
+// no replies left, or none at all, fails the request as an unreachable peer would.
 type fakeCARChannel struct {
-	replies   []protocol.CARReply
-	err       error
-	requested []int
+	replies   map[string][]protocol.CARReply
+	requested []carCall
 }
 
 func (f *fakeCARChannel) SendRequest(
 	_ context.Context,
 	req protocol.CARRequest,
-	_ string,
+	peerID string,
 ) (protocol.CARReply, error) {
-	f.requested = append(f.requested, len(req.CIDs))
-	if f.err != nil {
-		return protocol.CARReply{}, f.err
+	f.requested = append(f.requested, carCall{peer: peerID, heads: len(req.CIDs)})
+	queue := f.replies[peerID]
+	if len(queue) == 0 {
+		return protocol.CARReply{}, errors.New("peer unreachable")
 	}
-	if len(f.requested) > len(f.replies) {
-		return protocol.CARReply{}, errors.New("no reply left")
-	}
-	return f.replies[len(f.requested)-1], nil
+	f.replies[peerID] = queue[1:]
+	return queue[0], nil
+}
+
+// fetchFixture returns a P2P, whose own ID is "peerID", that asks channel for CARs.
+func fetchFixture(channel *fakeCARChannel) *P2P {
+	return withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
 }
 
 // A held head is served as a CAR rooted at it. A head this node does not hold, or bytes that
-// are not a CID, get an empty entry without costing the requester the rest of the reply.
+// are not a CID, get an empty entry without costing the requester the rest of the reply, and
+// each is counted under its own reason.
 func TestServeCARs_ServesHeldHeadsAndLeavesTheRestEmpty(t *testing.T) {
 	child := undecodableBlock(t, "field block")
 	_, root := compositeLinking(t, child.Cid())
@@ -77,6 +87,21 @@ func TestServeCARs_ServesHeldHeadsAndLeavesTheRestEmpty(t *testing.T) {
 	require.Empty(t, reply.CARs[1])
 	require.Empty(t, reply.CARs[2])
 	require.Equal(t, int64(1), p.statCARBuilt.Load())
+	require.Equal(t,
+		map[string]int64{serveServed: 1, serveNotHeld: 1, serveBadCID: 1},
+		reasonMap(p.carServeOutcome.drain()))
+}
+
+// A held block that is not a document block is not served.
+func TestServeCARs_DoesNotServeANonDocumentHead(t *testing.T) {
+	notDocument := undecodableBlock(t, "not a block")
+	p := carFixture(t, notDocument)
+	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+
+	reply := p.serveCARs(context.Background(), "peer", [][]byte{notDocument.Cid().Bytes()})
+
+	require.Equal(t, [][]byte{nil}, reply.CARs)
+	require.Equal(t, map[string]int64{serveNotDocument: 1}, reasonMap(p.carServeOutcome.drain()))
 }
 
 // A request for more heads than a batch holds is answered only up to the cap.
@@ -94,86 +119,7 @@ func TestServeCARs_AnswersAtMostTheCap(t *testing.T) {
 	require.Len(t, reply.CARs, maxCARRequestCIDs)
 }
 
-// A served CAR is kept only when rooted at the head it was asked for. One rooted elsewhere, or
-// not served, leaves the entry nil so the caller walks the DAG for it.
-func TestFetchCARs_KeepsOnlyCARsRootedAtTheirHead(t *testing.T) {
-	_, first := compositeLinking(t)
-	second := compositeBlock(t, 2)
-	third := compositeBlock(t, 3)
-
-	channel := &fakeCARChannel{replies: []protocol.CARReply{{CARs: [][]byte{
-		carWith(t, first.Cid(), first),
-		carWith(t, third.Cid(), third), // rooted at the wrong head
-		nil,
-	}}}}
-	p := withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
-
-	cars := p.fetchCARs(context.Background(), "peer", []cid.Cid{first.Cid(), second.Cid(), third.Cid()})
-
-	require.Len(t, cars, 3)
-	require.NotNil(t, cars[0])
-	require.Nil(t, cars[1])
-	require.Nil(t, cars[2])
-	require.Equal(t, int64(1), p.statCARFetched.Load())
-	require.Equal(t, int64(2), p.statCARFetchMissed.Load())
-}
-
-// A peer that predates the exchange fails the request, and every head falls back to the walk.
-func TestFetchCARs_FailedRequestLeavesEveryEntryNil(t *testing.T) {
-	head := compositeBlock(t, 1)
-	channel := &fakeCARChannel{err: errors.New("protocol not supported")}
-	p := withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
-
-	cars := p.fetchCARs(context.Background(), "peer", []cid.Cid{head.Cid()})
-
-	require.Equal(t, [][]byte{nil}, cars)
-	require.Equal(t, int64(1), p.statCARFetchMissed.Load())
-}
-
-// A reply that stops short is followed by a request for the heads past its end, so a batch is
-// fetched whole however many heads one reply covers.
-func TestFetchCARs_AsksAgainForHeadsPastAShortReply(t *testing.T) {
-	first := compositeBlock(t, 1)
-	second := compositeBlock(t, 2)
-	third := compositeBlock(t, 3)
-
-	channel := &fakeCARChannel{replies: []protocol.CARReply{
-		{CARs: [][]byte{carWith(t, first.Cid(), first)}},
-		{CARs: [][]byte{carWith(t, second.Cid(), second), carWith(t, third.Cid(), third)}},
-	}}
-	p := withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
-
-	cars := p.fetchCARs(context.Background(), "peer", []cid.Cid{first.Cid(), second.Cid(), third.Cid()})
-
-	require.Equal(t, []int{3, 2}, channel.requested)
-	for i, head := range []cid.Cid{first.Cid(), second.Cid(), third.Cid()} {
-		require.True(t, carRootIs(cars[i], head))
-	}
-	require.Equal(t, int64(3), p.statCARFetched.Load())
-	require.Zero(t, p.statCARFetchMissed.Load())
-}
-
-// A reply answering nothing ends the fetch, and the heads it left fall back to the walk.
-func TestFetchCARs_StopsOnAReplyThatAnswersNothing(t *testing.T) {
-	first := compositeBlock(t, 1)
-	second := compositeBlock(t, 2)
-
-	channel := &fakeCARChannel{replies: []protocol.CARReply{
-		{CARs: [][]byte{carWith(t, first.Cid(), first)}},
-		{},
-	}}
-	p := withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
-
-	cars := p.fetchCARs(context.Background(), "peer", []cid.Cid{first.Cid(), second.Cid()})
-
-	require.Equal(t, []int{2, 1}, channel.requested)
-	require.NotNil(t, cars[0])
-	require.Nil(t, cars[1])
-	require.Equal(t, int64(1), p.statCARFetched.Load())
-	require.Equal(t, int64(1), p.statCARFetchMissed.Load())
-}
-
-// A batch larger than the old per-message size is served in one reply, not cut to 64.
+// A batch larger than the sender's batch size is served in one reply, not cut to it.
 func TestServeCARs_AnswersABatchLargerThanTheSenderBatchSize(t *testing.T) {
 	child := undecodableBlock(t, "field block")
 	_, root := compositeLinking(t, child.Cid())
@@ -191,16 +137,185 @@ func TestServeCARs_AnswersABatchLargerThanTheSenderBatchSize(t *testing.T) {
 	require.True(t, carRootIs(reply.CARs[len(req)-1], root.Cid()))
 }
 
-// Nothing is asked of a peer when there is nothing to fetch or no peer to ask.
+// A served CAR is kept only when rooted at the head it was asked for. One rooted elsewhere, or
+// not served, leaves the entry nil so the caller walks the DAG for it.
+func TestFetchCARs_KeepsOnlyCARsRootedAtTheirHead(t *testing.T) {
+	_, first := compositeLinking(t)
+	second := compositeBlock(t, 2)
+	third := compositeBlock(t, 3)
+
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{"creator": {{CARs: [][]byte{
+		carWith(t, first.Cid(), first),
+		carWith(t, third.Cid(), third), // rooted at the wrong head
+		nil,
+	}}}}}
+	p := fetchFixture(channel)
+
+	cars := p.fetchCARs(context.Background(), "creator", "creator",
+		[]cid.Cid{first.Cid(), second.Cid(), third.Cid()})
+
+	require.Len(t, cars, 3)
+	require.NotNil(t, cars[0])
+	require.Nil(t, cars[1])
+	require.Nil(t, cars[2])
+	require.Equal(t, int64(1), p.statCARFetched.Load())
+	require.Equal(t, int64(2), p.statCARFetchMissed.Load())
+	require.Equal(t, map[string]int64{
+		"creatorFetched":      1,
+		"creatorRootMismatch": 1,
+		"creatorNotServed":    1,
+	}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// The creator is asked first, and when it serves everything the relay is never asked.
+func TestFetchCARs_AsksTheCreatorBeforeTheRelay(t *testing.T) {
+	head := compositeBlock(t, 1)
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{
+		"creator": {{CARs: [][]byte{carWith(t, head.Cid(), head)}}},
+		"relay":   {{CARs: [][]byte{carWith(t, head.Cid(), head)}}},
+	}}
+	p := fetchFixture(channel)
+
+	cars := p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
+
+	require.NotNil(t, cars[0])
+	require.Equal(t, []carCall{{peer: "creator", heads: 1}}, channel.requested)
+}
+
+// The relay is asked only for the heads the creator did not serve.
+func TestFetchCARs_AsksTheRelayOnlyForHeadsTheCreatorDidNotServe(t *testing.T) {
+	first := compositeBlock(t, 1)
+	second := compositeBlock(t, 2)
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{
+		"creator": {{CARs: [][]byte{carWith(t, first.Cid(), first), nil}}},
+		"relay":   {{CARs: [][]byte{carWith(t, second.Cid(), second)}}},
+	}}
+	p := fetchFixture(channel)
+
+	cars := p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{first.Cid(), second.Cid()})
+
+	require.True(t, carRootIs(cars[0], first.Cid()))
+	require.True(t, carRootIs(cars[1], second.Cid()))
+	require.Equal(t, []carCall{{peer: "creator", heads: 2}, {peer: "relay", heads: 1}}, channel.requested)
+	require.Equal(t, int64(2), p.statCARFetched.Load())
+	require.Zero(t, p.statCARFetchMissed.Load())
+	require.Equal(t, map[string]int64{
+		"creatorFetched":   1,
+		"creatorNotServed": 1,
+		"relayFetched":     1,
+	}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// A creator whose request failed is passed over on the next fetch, which goes straight to the
+// relay rather than holding a worker for another request timeout.
+func TestFetchCARs_PassesOverACreatorWhoseRequestFailed(t *testing.T) {
+	head := compositeBlock(t, 1)
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{
+		"relay": {
+			{CARs: [][]byte{carWith(t, head.Cid(), head)}},
+			{CARs: [][]byte{carWith(t, head.Cid(), head)}},
+		},
+	}}
+	p := fetchFixture(channel)
+
+	p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
+	cars := p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
+
+	require.NotNil(t, cars[0])
+	require.Equal(t, []carCall{
+		{peer: "creator", heads: 1},
+		{peer: "relay", heads: 1},
+		{peer: "relay", heads: 1},
+	}, channel.requested)
+	require.Equal(t, map[string]int64{
+		"creatorRequestFailed": 1,
+		"creatorBackoff":       1,
+		"relayFetched":         2,
+	}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// When no peer answers, every head falls back to the walk.
+func TestFetchCARs_FailedRequestLeavesEveryEntryNil(t *testing.T) {
+	head := compositeBlock(t, 1)
+	p := fetchFixture(&fakeCARChannel{})
+
+	cars := p.fetchCARs(context.Background(), "creator", "creator", []cid.Cid{head.Cid()})
+
+	require.Equal(t, [][]byte{nil}, cars)
+	require.Equal(t, int64(1), p.statCARFetchMissed.Load())
+}
+
+// A reply that stops short is followed by a request for the heads past its end, so a batch is
+// fetched whole however many heads one reply covers.
+func TestFetchCARs_AsksAgainForHeadsPastAShortReply(t *testing.T) {
+	first := compositeBlock(t, 1)
+	second := compositeBlock(t, 2)
+	third := compositeBlock(t, 3)
+
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{"creator": {
+		{CARs: [][]byte{carWith(t, first.Cid(), first)}},
+		{CARs: [][]byte{carWith(t, second.Cid(), second), carWith(t, third.Cid(), third)}},
+	}}}
+	p := fetchFixture(channel)
+
+	heads := []cid.Cid{first.Cid(), second.Cid(), third.Cid()}
+	cars := p.fetchCARs(context.Background(), "creator", "creator", heads)
+
+	require.Equal(t, []carCall{{peer: "creator", heads: 3}, {peer: "creator", heads: 2}}, channel.requested)
+	for i, head := range heads {
+		require.True(t, carRootIs(cars[i], head))
+	}
+	require.Equal(t, int64(3), p.statCARFetched.Load())
+	require.Zero(t, p.statCARFetchMissed.Load())
+}
+
+// A reply answering nothing ends the asking of that peer, and the heads it left fall back to
+// the walk.
+func TestFetchCARs_StopsOnAReplyThatAnswersNothing(t *testing.T) {
+	first := compositeBlock(t, 1)
+	second := compositeBlock(t, 2)
+
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{"creator": {
+		{CARs: [][]byte{carWith(t, first.Cid(), first)}},
+		{},
+	}}}
+	p := fetchFixture(channel)
+
+	cars := p.fetchCARs(context.Background(), "creator", "creator", []cid.Cid{first.Cid(), second.Cid()})
+
+	require.Equal(t, []carCall{{peer: "creator", heads: 2}, {peer: "creator", heads: 1}}, channel.requested)
+	require.NotNil(t, cars[0])
+	require.Nil(t, cars[1])
+	require.Equal(t, int64(1), p.statCARFetched.Load())
+	require.Equal(t, int64(1), p.statCARFetchMissed.Load())
+	require.Equal(t, map[string]int64{
+		"creatorFetched":  1,
+		"creatorBadReply": 1,
+	}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// Nothing is asked when there is nothing to fetch, or no peer other than this node to ask.
 func TestFetchCARs_SkipsTheRequestWithoutHeadsOrPeer(t *testing.T) {
 	head := compositeBlock(t, 1)
 	channel := &fakeCARChannel{}
-	p := withReasonMaps(&P2P{host: &SimpleMockHost{}, carProtocol: channel})
+	p := fetchFixture(channel)
 
-	require.Empty(t, p.fetchCARs(context.Background(), "peer", nil))
-	require.Equal(t, [][]byte{nil}, p.fetchCARs(context.Background(), "", []cid.Cid{head.Cid()}))
-	require.Equal(t, [][]byte{nil}, p.fetchCARs(context.Background(), "peerID", []cid.Cid{head.Cid()}))
+	require.Empty(t, p.fetchCARs(context.Background(), "creator", "relay", nil))
+	require.Equal(t, [][]byte{nil}, p.fetchCARs(context.Background(), "", "", []cid.Cid{head.Cid()}))
+	require.Equal(t, [][]byte{nil}, p.fetchCARs(context.Background(), "peerID", "peerID", []cid.Cid{head.Cid()}))
 	require.Empty(t, channel.requested)
+}
+
+func TestCARSources(t *testing.T) {
+	require.Equal(t,
+		[]carSource{{peerID: "c", label: carSourceCreator}, {peerID: "r", label: carSourceRelay}},
+		carSources("c", "r", "self"))
+	// A relay that is the creator is asked once, as the creator.
+	require.Equal(t, []carSource{{peerID: "c", label: carSourceCreator}}, carSources("c", "c", "self"))
+	// An update naming no creator, as a peer predating Creator would send, asks the relay.
+	require.Equal(t, []carSource{{peerID: "r", label: carSourceRelay}}, carSources("", "r", "self"))
+	// This node is never asked.
+	require.Equal(t, []carSource{{peerID: "r", label: carSourceRelay}}, carSources("self", "r", "self"))
 }
 
 func TestCARRootIs(t *testing.T) {

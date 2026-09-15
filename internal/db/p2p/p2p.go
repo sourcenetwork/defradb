@@ -272,13 +272,19 @@ type P2P struct {
 	// CAR generation counters. A failed generation is not a lost document: the block is sent
 	// either way, so the receiver walks the DAG instead. statCARMissing counts links the build
 	// could not follow in a CAR it returned.
-	statCARBuilt           atomic.Int64
-	statCARFailed          atomic.Int64
-	statCARMissing         atomic.Int64
-	// The pull side of the CAR exchange: heads whose CAR a peer served, and heads asked for
-	// but not served, which fall back to walking the DAG.
-	statCARFetched         atomic.Int64
-	statCARFetchMissed     atomic.Int64
+	statCARBuilt   atomic.Int64
+	statCARFailed  atomic.Int64
+	statCARMissing atomic.Int64
+	// The pull side of the CAR exchange: heads whose CAR a peer served, and heads no peer
+	// served, which fall back to walking the DAG. carFetchOutcome breaks each attempt down by
+	// the peer asked and what came back, and carServeOutcome names what the serving side did
+	// with each head it was asked for.
+	statCARFetched     atomic.Int64
+	statCARFetchMissed atomic.Int64
+	carFetchOutcome    failureReasons
+	carServeOutcome    failureReasons
+	// carBackoff passes over peers whose CAR request recently failed.
+	carBackoff carPeerBackoffs
 	// statCARCacheHits counts CARs served without a build of their own, from the cache or
 	// from another request's build of the same head.
 	statCARCacheHits       atomic.Int64
@@ -872,6 +878,8 @@ func (p *P2P) report() {
 	reportFailureReasons("document drops", p.docDropReason.drain())
 	reportFailureReasons("document skips", p.docSkipReason.drain())
 	reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
+	reportFailureReasons("CAR fetch outcomes", p.carFetchOutcome.drain())
+	reportFailureReasons("CAR serve outcomes", p.carServeOutcome.drain())
 }
 
 // reportFailureReasons logs one line naming every reason that occurred in the interval,
@@ -1076,7 +1084,7 @@ func (p *P2P) processPushlogRequest(
 		// asked for. A peer that predates the exchange still sends it inline.
 		carData := req.CAR
 		if len(carData) == 0 {
-			carData = p.fetchCARs(ctx, req.SenderID, []cid.Cid{headCID})[0]
+			carData = p.fetchCARs(ctx, req.Creator, req.SenderID, []cid.Cid{headCID})[0]
 		}
 
 		// Now write blocks to the blockstore.
@@ -1245,7 +1253,7 @@ func (p *P2P) processBatchedDocuments(
 
 	// Every document still here has passed its checks, so this node needs it. The CARs a peer
 	// predating the exchange did not send inline are asked for in one round trip.
-	for i, data := range p.fetchCARs(ctx, req.SenderID, fetchHeads) {
+	for i, data := range p.fetchCARs(ctx, req.Creator, req.SenderID, fetchHeads) {
 		needed[fetchAt[i]].car = data
 	}
 
