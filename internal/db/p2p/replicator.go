@@ -403,18 +403,8 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 	}
 
 	if exists {
-		// Pre-generate CAR for all replicators (best effort; falls back to block-based sync on failure).
-		var carData []byte
-		if block, err := coreblock.GetFromBytes(lg.Block); err == nil {
-			ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
-			if data, err := p.generateCAR(ctx, block); err == nil {
-				carData = data
-			} else {
-				log.ErrorE("Failed to generate CAR for replication, falling back to block sync", err)
-			}
-			cancel()
-		}
-
+		// The head is pushed without its CAR. A replicator that needs it asks for the CAR over
+		// the car protocol before replying, so the push still returns once the head is stored.
 		for peerID := range reps {
 			go func() {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
@@ -425,7 +415,6 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 					CollectionID: lg.CollectionID,
 					Creator:      p.host.ID(),
 					Block:        lg.Block,
-					CAR:          carData,
 				}
 				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 					log.ErrorE(
