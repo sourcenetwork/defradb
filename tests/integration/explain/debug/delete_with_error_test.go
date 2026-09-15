@@ -36,7 +36,7 @@ func TestDebugExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.T)
 					)
 				}`,
 
-				ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a sub selection.",
+				ExpectedError: "Field \"delete_Author\" of type \"[Author]\" must have a selection of subfields.",
 			},
 		},
 	}

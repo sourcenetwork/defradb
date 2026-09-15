@@ -326,7 +326,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 							docIDs
 						}
 					}`,
-				ExpectedError: "Argument \"filter\" has invalid value",
+				ExpectedError: `Field "age" is not defined by type "UserEncryptedFilterArg".`,
 			},
 		},
 	}

@@ -35,7 +35,7 @@ func TestInvalidExplainRequestTypeReturnsError(t *testing.T) {
 					}
 				}`,
 
-				ExpectedError: "Argument \"type\" has invalid value invalid.\nExpected type \"ExplainType\", found invalid.",
+				ExpectedError: `Value "invalid" does not exist in "ExplainType" enum.`,
 			},
 		},
 	}

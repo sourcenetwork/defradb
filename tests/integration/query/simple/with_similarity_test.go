@@ -53,7 +53,7 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 						SIMILARITY(pointsList: {vector: [1, 2, 3]})
 					}
 				}`,
-				ExpectedError: "Unknown argument \"pointsList\" on field \"SIMILARITY\" of type \"User\".",
+				ExpectedError: "Unknown argument \"pointsList\" on field \"User.SIMILARITY\".",
 			},
 		},
 	}
@@ -76,9 +76,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 						SIMILARITY(pointsList: {vector: [1.1, 1.2, 0.9]})
 					}
 				}`,
-				ExpectedError: "Argument \"pointsList\" has invalid value {vector: [1.1, 1.2, 0.9]}.\nIn field " +
-					"\"vector\": In element #1: Expected type \"Int\", found 1.1.\nIn field \"vector\": In element #1: " +
-					"Expected type \"Int\", found 1.2.\nIn field \"vector\": In element #1: Expected type \"Int\", found 0.9.",
+				ExpectedError: "Int cannot represent non-integer value: 1.1",
 			},
 		},
 	}

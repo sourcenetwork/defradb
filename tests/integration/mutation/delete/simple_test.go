@@ -32,7 +32,7 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 				Request: `mutation {
 					delete_User
 				}`,
-				ExpectedError: "Field \"delete_User\" of type \"[User]\" must have a sub selection.",
+				ExpectedError: "Field \"delete_User\" of type \"[User]\" must have a selection of subfields.",
 			},
 		},
 	}

@@ -23,9 +23,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/operationreport"
 
 	"github.com/sourcenetwork/defradb/client"
-	gql "github.com/sourcenetwork/graphql-go"
 )
 
 func TestIntrospectionResult(t *testing.T) {
@@ -44,18 +45,17 @@ func TestIntrospectionResult(t *testing.T) {
 		},
 	}
 
-	_, err = manager.Generator.Generate(ctx, collections)
+	err = manager.Generate(ctx, collections)
 	require.NoError(t, err)
 
-	schema := manager.Schema()
-	params := gql.Params{Schema: *schema, RequestString: introspectionQueryRequest}
-	r := gql.Do(params)
-
-	require.Empty(t, r.Errors)
+	var report operationreport.Report
+	var data introspection.Data
+	introspection.NewGenerator().Generate(manager.Definition(), &report, &data)
+	require.False(t, report.HasErrors(), report.Error())
 
 	tempDir := t.TempDir()
 	resultFileName := filepath.Join(tempDir, "introspection_data2.json")
-	filebuf, err := json.Marshal(r.Data)
+	filebuf, err := json.Marshal(data)
 	require.NoError(t, err)
 	err = os.WriteFile(resultFileName, filebuf, 0644)
 	require.NoError(t, err)

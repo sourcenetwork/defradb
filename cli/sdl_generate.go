@@ -106,7 +106,7 @@ Accepts multiple input files as well as "-" to use stdin.`,
 				collections[i] = c.Definition
 			}
 
-			_, err = schemaManager.Generator.Generate(ctx, collections)
+			err = schemaManager.Generate(ctx, collections)
 			if err != nil {
 				return errors.Join(ErrGeneratingSDL, err)
 			}

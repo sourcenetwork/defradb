@@ -11,43 +11,29 @@
 package parser
 
 import (
-	"fmt"
+	"time"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	"github.com/sourcenetwork/immutable"
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/errors"
-	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
 
-// ParseRequest parses a root ast.Document, and returns a formatted Request object.
-// Requires a non-nil doc, will error otherwise.
-func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptions) (*request.Request, []error) {
-	if doc == nil {
-		return nil, []error{client.NewErrUninitializeProperty("ParseRequest", "doc")}
+type executionContext struct {
+	now time.Time
+}
+
+// ParseRequest translates a normalized graphql-go-tools operation into a
+// DefraDB request.
+func ParseRequest(definition, document *wgast.Document) (*request.Request, []error) {
+	if document == nil {
+		return nil, []error{client.NewErrUninitializeProperty("ParseRequest", "document")}
 	}
-	exe, err := gql.BuildExecutionContext(gql.BuildExecutionCtxParams{
-		Schema:        schema,
-		AST:           doc,
-		OperationName: options.OperationName,
-		Args:          options.Variables,
-	})
+	operation, err := buildOperation(definition, document)
 	if err != nil {
 		return nil, []error{err}
 	}
-	operationType, err := gql.GetOperationRootType(exe.Schema, exe.Operation)
-	if err != nil {
-		return nil, []error{err}
-	}
-	collectedFields := gql.CollectFields(gql.CollectFieldsParams{
-		ExeContext:   exe,
-		RuntimeType:  operationType,
-		SelectionSet: exe.Operation.GetSelectionSet(),
-	})
-	orderedFields := orderCollectedFields(exe, collectedFields)
+	exe := &executionContext{now: time.Now().UTC()}
 
 	r := &request.Request{
 		Queries:      make([]*request.OperationDefinition, 0),
@@ -55,46 +41,33 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		Subscription: make([]*request.OperationDefinition, 0),
 	}
 
-	astOpDef := exe.Operation.(*ast.OperationDefinition)
-	switch exe.Operation.GetOperation() {
-	case ast.OperationTypeQuery:
-		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
+	switch operation.typ {
+	case wgast.OperationTypeQuery:
+		parsedQueryOpDef, errs := parseQueryOperationDefinition(exe, operation.fields)
 		if errs != nil {
 			return nil, errs
 		}
-		parsedDirectives, err := parseDirectives(astOpDef.Directives)
-		if err != nil {
-			return nil, []error{err}
-		}
-		parsedQueryOpDef.Directives = parsedDirectives
+		parsedQueryOpDef.Directives = operation.directives
 
 		r.Queries = append(r.Queries, parsedQueryOpDef)
 
-	case ast.OperationTypeMutation:
-		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, orderedFields)
+	case wgast.OperationTypeMutation:
+		parsedMutationOpDef, err := parseMutationOperationDefinition(exe, operation.fields)
 		if err != nil {
 			return nil, []error{err}
 		}
 
-		parsedDirectives, err := parseDirectives(astOpDef.Directives)
-		if err != nil {
-			return nil, []error{err}
-		}
-		parsedMutationOpDef.Directives = parsedDirectives
+		parsedMutationOpDef.Directives = operation.directives
 
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
-	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, orderedFields)
+	case wgast.OperationTypeSubscription:
+		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, operation.fields)
 		if errs != nil {
 			return nil, errs
 		}
 
-		parsedDirectives, err := parseDirectives(astOpDef.Directives)
-		if err != nil {
-			return nil, []error{err}
-		}
-		parsedSubscriptionOpDef.Directives = parsedDirectives
+		parsedSubscriptionOpDef.Directives = operation.directives
 
 		r.Subscription = append(r.Subscription, parsedSubscriptionOpDef)
 
@@ -105,219 +78,42 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 	return r, nil
 }
 
-// orderCollectedFields projects the grouped-field-set map produced by
-// [gql.CollectFields] onto the order in which response keys are first
-// encountered while traversing the operation's selection set.
-//
-// There is an important edge case with order for correctly handling Fragments.
-// Specifically, the location of Fragments is reported at their definition not
-// their use. We need to walk and expand the selection set and fragments before
-// determining final order
-func orderCollectedFields(
-	exe *gql.ExecutionContext,
-	collectedFields map[string][]*ast.Field,
-) [][]*ast.Field {
-	responseKeyOrder := collectResponseKeyOrder(
-		exe,
-		exe.Operation.GetSelectionSet(),
-		make(map[string]bool),
-		make(map[string]bool),
-	)
-
-	orderedFields := make([][]*ast.Field, 0, len(collectedFields))
-	for _, responseKey := range responseKeyOrder {
-		// Response keys excluded by @skip / @include or a non-matching fragment
-		// type condition are absent from collectedFields and are skipped here.
-		// The traversal visits a superset of the keys CollectFields collects, so
-		// every collected group is emitted exactly once.
-		if fields, ok := collectedFields[responseKey]; ok {
-			orderedFields = append(orderedFields, fields)
-		}
-	}
-	return orderedFields
-}
-
-// collectResponseKeyOrder walks a selection set in document order, expanding
-// fragment spreads and inline fragments in place, and returns the response keys
-// (alias, else field name) in the order they are first encountered.
-//
-// seenKeys and visitedFragments are shared across the whole traversal so each
-// response key is recorded once at its first occurrence and each fragment is
-// expanded at most once (the latter also guards against cyclic spreads, though
-// validation rejects those before this point).
-func collectResponseKeyOrder(
-	exe *gql.ExecutionContext,
-	selectionSet *ast.SelectionSet,
-	seenKeys map[string]bool,
-	visitedFragments map[string]bool,
-) []string {
-	if selectionSet == nil {
-		return nil
-	}
-
-	var order []string
-	for _, selection := range selectionSet.Selections {
-		switch node := selection.(type) {
-		case *ast.Field:
-			responseKey := node.Name.Value
-			if node.Alias != nil && node.Alias.Value != "" {
-				responseKey = node.Alias.Value
-			}
-			if !seenKeys[responseKey] {
-				seenKeys[responseKey] = true
-				order = append(order, responseKey)
-			}
-
-		case *ast.InlineFragment:
-			order = append(order, collectResponseKeyOrder(exe, node.GetSelectionSet(), seenKeys, visitedFragments)...)
-
-		case *ast.FragmentSpread:
-			name := node.Name.Value
-			if visitedFragments[name] {
-				continue
-			}
-			visitedFragments[name] = true
-			if fragment, ok := exe.Fragments[name]; ok {
-				order = append(order, collectResponseKeyOrder(exe, fragment.GetSelectionSet(), seenKeys, visitedFragments)...)
-			}
-		}
-	}
-	return order
-}
-
-// parseDirectives returns all directives that were found if parsing and validation succeeds,
-// otherwise returns the first error that is encountered.
-func parseDirectives(astDirectives []*ast.Directive) (request.Directives, error) {
-	// Set the default states of the directives if they aren't found and no error(s) occur.
-	explainDirective := immutable.None[request.ExplainType]()
-	exhaustive := false
-
-	// Iterate through all directives and ensure that the directive we find are validated.
-	// - Note: the location we don't need to worry about as the schema takes care of it, as when
-	//         request is made there will be a syntax error for directive usage at the wrong location,
-	//         unless we add another directive with the same name, for example `@explain` is added
-	//         at another location (which we must avoid).
-	for _, astDirective := range astDirectives {
-		if astDirective == nil {
-			return request.Directives{}, errors.New("found a nil directive in the AST")
-		}
-
-		if astDirective.Name.Value == request.ExplainLabel {
-			// Explain directive found, lets parse and validate the directive.
-			parsedExplainDirective, err := parseExplainDirective(astDirective)
-			if err != nil {
-				return request.Directives{}, err
-			}
-			explainDirective = parsedExplainDirective
-		}
-
-		if astDirective.Name.Value == request.ExhaustiveLabel {
-			exhaustive = true
-		}
-	}
-
-	return request.Directives{
-		ExplainType: explainDirective,
-		Exhaustive:  exhaustive,
-	}, nil
-}
-
-// parseExplainDirective parses the explain directive AST and returns an error if the parsing or
-// validation goes wrong, otherwise returns the parsed explain type information.
-func parseExplainDirective(astDirective *ast.Directive) (immutable.Option[request.ExplainType], error) {
-	if len(astDirective.Arguments) == 0 {
-		return immutable.Some(request.SimpleExplain), nil
-	}
-
-	if len(astDirective.Arguments) != 1 {
-		return immutable.None[request.ExplainType](), ErrInvalidNumberOfExplainArgs
-	}
-
-	arg := astDirective.Arguments[0]
-	if arg.Name.Value != schemaTypes.ExplainArgNameType {
-		return immutable.None[request.ExplainType](), ErrInvalidExplainTypeArg
-	}
-
-	switch arg.Value.GetValue() {
-	case schemaTypes.ExplainArgSimple:
-		return immutable.Some(request.SimpleExplain), nil
-
-	case schemaTypes.ExplainArgExecute:
-		return immutable.Some(request.ExecuteExplain), nil
-
-	case schemaTypes.ExplainArgDebug:
-		return immutable.Some(request.DebugExplain), nil
-
-	default:
-		return immutable.None[request.ExplainType](), ErrUnknownExplainType
-	}
-}
-
-func getFieldAlias(field *ast.Field) immutable.Option[string] {
-	if field.Alias == nil {
-		return immutable.None[string]()
-	}
-	return immutable.Some(field.Alias.Value)
-}
-
 func parseSelectFields(
-	exe *gql.ExecutionContext,
-	parent *gql.Object,
-	fields *ast.SelectionSet,
+	exe *executionContext,
+	fields []*field,
 ) ([]request.Selection, error) {
 	var selections []request.Selection
-	for _, selection := range fields.Selections {
-		switch node := selection.(type) {
-		case *ast.InlineFragment:
-			selection, err := parseSelectFields(exe, parent, node.GetSelectionSet())
+	for _, node := range fields {
+		var selection request.Selection
+		if _, isAggregate := request.Aggregates[node.name]; isAggregate {
+			s, err := parseAggregate(exe, node)
 			if err != nil {
 				return nil, err
 			}
-			selections = append(selections, selection...)
-
-		case *ast.FragmentSpread:
-			fragment, ok := exe.Fragments[node.Name.Value]
-			if !ok {
-				return nil, fmt.Errorf("fragment not found %s", node.Name.Value)
-			}
-			selection, err := parseSelectFields(exe, parent, fragment.GetSelectionSet())
+			selection = s
+		} else if node.name == request.SimilarityFieldName {
+			s, err := parseSimilarity(exe, node)
 			if err != nil {
 				return nil, err
 			}
-			selections = append(selections, selection...)
-
-		case *ast.Field:
-			var selection request.Selection
-			if _, isAggregate := request.Aggregates[node.Name.Value]; isAggregate {
-				s, err := parseAggregate(exe, parent, node)
-				if err != nil {
-					return nil, err
-				}
-				selection = s
-			} else if node.Name.Value == request.SimilarityFieldName {
-				s, err := parseSimilarity(exe, parent, node)
-				if err != nil {
-					return nil, err
-				}
-				selection = s
-			} else if node.SelectionSet == nil { // regular field
-				selection = parseField(node)
-			} else if node.Name.Value == request.LinksFieldName ||
-				node.Name.Value == request.HeadsFieldName { // commit links field
-				s, err := parseCommitSelect(exe, parent, node)
-				if err != nil {
-					return nil, err
-				}
-				selection = s
-			} else { // sub type with extra fields
-				s, err := parseSelect(exe, parent, node)
-				if err != nil {
-					return nil, err
-				}
-				selection = s
+			selection = s
+		} else if len(node.selectionSet) == 0 { // regular field
+			selection = parseField(node)
+		} else if node.name == request.LinksFieldName ||
+			node.name == request.HeadsFieldName { // commit links field
+			s, err := parseCommitSelect(exe, node)
+			if err != nil {
+				return nil, err
 			}
-			selections = append(selections, selection)
+			selection = s
+		} else { // sub type with extra fields
+			s, err := parseSelect(exe, node)
+			if err != nil {
+				return nil, err
+			}
+			selection = s
 		}
+		selections = append(selections, selection)
 	}
 
 	return selections, nil
@@ -325,34 +121,9 @@ func parseSelectFields(
 
 // parseField simply parses the Name/Alias
 // into a Field type
-func parseField(field *ast.Field) *request.Field {
+func parseField(field *field) *request.Field {
 	return &request.Field{
-		Name:  field.Name.Value,
-		Alias: getFieldAlias(field),
+		Name:  field.name,
+		Alias: field.alias,
 	}
-}
-
-func getArgumentType(field *gql.FieldDefinition, name string) (gql.Input, bool) {
-	for _, arg := range field.Args {
-		if arg.Name() == name {
-			return arg.Type, true
-		}
-	}
-	return nil, false
-}
-
-// typeFromFieldDef will return the output gql.Object type from the given field.
-// The return type may be a gql.Object or a gql.List, if it is a List type, we
-// need to get the concrete "OfType".
-func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
-	var fieldObject *gql.Object
-	switch ftype := field.Type.(type) {
-	case *gql.Object:
-		fieldObject = ftype
-	case *gql.List:
-		fieldObject = ftype.OfType.(*gql.Object)
-	default:
-		return nil, client.NewErrUnhandledType("field", field)
-	}
-	return fieldObject, nil
 }

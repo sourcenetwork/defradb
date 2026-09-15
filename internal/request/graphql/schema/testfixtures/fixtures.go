@@ -97,7 +97,7 @@ func GenerateSDL(ctx context.Context, sdl string) ([]byte, error) {
 		collections[i] = c.Definition
 	}
 
-	if _, err := manager.Generator.Generate(ctx, collections); err != nil {
+	if err := manager.Generate(ctx, collections); err != nil {
 		return nil, err
 	}
 

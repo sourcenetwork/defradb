@@ -34,7 +34,7 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 					}
 				}`,
 
-				ExpectedError: "Directive \"explain\" may not be used on FIELD.",
+				ExpectedError: "directive: explain not allowed on node of kind: FIELD",
 			},
 		},
 	}

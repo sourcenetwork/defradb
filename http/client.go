@@ -31,14 +31,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	wgast "github.com/wundergraph/graphql-go-tools/v2/pkg/ast"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/identity"
-	"github.com/sourcenetwork/graphql-go/language/ast"
-	"github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
 var _ client.TxnStore = (*Client)(nil)
@@ -573,7 +573,7 @@ func (c *Client) ExecRequest(
 		return result
 	}
 
-	if op == ast.OperationTypeSubscription {
+	if op == wgast.OperationTypeSubscription {
 		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
@@ -742,29 +742,13 @@ func (c *Client) VerifySignature(
 	return err
 }
 
-func parseGraphQLQuery(query string) (*ast.Document, error) {
-	return parser.Parse(parser.ParseParams{
-		Source: &source.Source{
-			Body: []byte(query),
-			Name: "GraphQL",
-		},
-	})
-}
-
-func parseGraphQLOperation(query string) (string, error) {
-	doc, err := parseGraphQLQuery(query)
-	if err != nil {
-		return "", err
+func parseGraphQLOperation(query string) (wgast.OperationType, error) {
+	document, report := astparser.ParseGraphqlDocumentString(query)
+	if report.HasErrors() {
+		return wgast.OperationTypeUnknown, NewErrGraphQLSyntax(report)
 	}
-
-	if len(doc.Definitions) == 0 {
-		return "", ErrInvalidGraphQLRequest
+	if len(document.OperationDefinitions) == 0 {
+		return wgast.OperationTypeUnknown, ErrInvalidGraphQLRequest
 	}
-
-	op, ok := doc.Definitions[0].(*ast.OperationDefinition)
-	if !ok {
-		return "", ErrInvalidGraphQLRequest
-	}
-
-	return op.Operation, nil
+	return document.OperationDefinitions[0].OperationType, nil
 }

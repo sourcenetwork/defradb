@@ -10,7 +10,20 @@
 
 package parser
 
-import "github.com/sourcenetwork/defradb/errors"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
+)
+
+type protocolError string
+
+func (e protocolError) Error() string        { return string(e) }
+func (e protocolError) Is(target error) bool { return target == ErrGraphQLProtocol }
+
+func newErrExpectedNull(expectedType string) error {
+	return protocolError(fmt.Sprintf("Expected %q, found null.", expectedType))
+}
 
 var (
 	ErrFilterMissingArgumentType      = errors.New("couldn't find filter argument type")
@@ -29,6 +42,7 @@ var (
 	ErrMultipleOrderFieldsDefined     = errors.New("each order argument can only define one field")
 	ErrMultipleDocIDsNotSupported     = errors.New("querying by multiple docIDs is not yet supported")
 	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
+	ErrGraphQLProtocol                = errors.New("graphql protocol error")
 )
 
 const errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"

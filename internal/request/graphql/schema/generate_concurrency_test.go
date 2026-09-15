@@ -17,9 +17,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	gql "github.com/sourcenetwork/graphql-go"
-	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
-	"github.com/sourcenetwork/graphql-go/language/source"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astnormalization"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astparser"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astvalidation"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -29,7 +29,7 @@ func TestGenerator_EmptyCollectionDoesNotError(t *testing.T) {
 	manager, err := NewSchemaManager(false)
 	require.NoError(t, err)
 
-	_, err = manager.Generator.Generate(context.Background(), []client.CollectionVersion{{
+	err = manager.Generate(context.Background(), []client.CollectionVersion{{
 		Name: "User",
 		Fields: []client.CollectionFieldDescription{
 			{Name: request.DocIDFieldName, Kind: client.FieldKind_DocID},
@@ -37,19 +37,30 @@ func TestGenerator_EmptyCollectionDoesNotError(t *testing.T) {
 	}})
 	require.NoError(t, err)
 
-	fields := manager.Schema().MutationType().Fields()
-	require.NotContains(t, fields, "add_User")
-	require.NotContains(t, fields, "update_User")
-	require.NotContains(t, fields, "upsert_User")
-	require.Contains(t, fields, "delete_User")
-	require.Contains(t, fields, "truncate_User")
+	mutation, ok := manager.Definition().NodeByNameStr("Mutation")
+	require.True(t, ok)
+	require.False(t, manager.Definition().ObjectTypeDefinitionHasField(mutation.Ref, []byte("add_User")))
+	require.False(t, manager.Definition().ObjectTypeDefinitionHasField(mutation.Ref, []byte("update_User")))
+	require.False(t, manager.Definition().ObjectTypeDefinitionHasField(mutation.Ref, []byte("upsert_User")))
+	require.True(t, manager.Definition().ObjectTypeDefinitionHasField(mutation.Ref, []byte("delete_User")))
+	require.True(t, manager.Definition().ObjectTypeDefinitionHasField(mutation.Ref, []byte("truncate_User")))
+}
+
+func TestGenerator_InvalidSchemaDoesNotReplaceDefinition(t *testing.T) {
+	manager, err := NewSchemaManager(false)
+	require.NoError(t, err)
+	original := manager.Definition()
+
+	err = manager.Generate(context.Background(), []client.CollectionVersion{{Name: "Invalid Name"}})
+	require.Error(t, err)
+	require.Same(t, original, manager.Definition())
 }
 
 func TestGenerator_SchemaIsSafeForConcurrentUse(t *testing.T) {
 	manager, err := NewSchemaManager(false)
 	require.NoError(t, err)
 
-	_, err = manager.Generator.Generate(context.Background(), []client.CollectionVersion{{
+	err = manager.Generate(context.Background(), []client.CollectionVersion{{
 		Name: "User",
 		Fields: []client.CollectionFieldDescription{
 			{Name: "name", Kind: client.FieldKind_NILLABLE_STRING},
@@ -71,16 +82,22 @@ func TestGenerator_SchemaIsSafeForConcurrentUse(t *testing.T) {
 			defer waitGroup.Done()
 			<-start
 
-			document, err := gqlp.Parse(gqlp.ParseParams{Source: source.NewSource(&source.Source{
-				Body: []byte(request),
-			})})
-			if err != nil {
-				errors <- err
+			toolsDocument, report := astparser.ParseGraphqlDocumentString(request)
+			if report.HasErrors() {
+				errors <- report
 				return
 			}
-			result := gql.ValidateDocument(manager.Schema(), document, gql.SpecifiedRules)
-			if !result.IsValid {
-				errors <- result.Errors[0]
+			astnormalization.NormalizeOperation(&toolsDocument, manager.Definition(), &report)
+			if report.HasErrors() {
+				errors <- report
+				return
+			}
+			if astvalidation.DefaultOperationValidator().Validate(
+				&toolsDocument,
+				manager.Definition(),
+				&report,
+			) == astvalidation.Invalid {
+				errors <- report
 			}
 		}(requests[i%len(requests)])
 	}
