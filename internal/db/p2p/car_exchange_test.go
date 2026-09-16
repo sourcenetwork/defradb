@@ -14,6 +14,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
@@ -215,9 +216,9 @@ func TestFetchCARs_AsksTheRelayOnlyForHeadsTheCreatorDidNotServe(t *testing.T) {
 	}, reasonMap(p.carFetchOutcome.drain()))
 }
 
-// A creator whose request failed is passed over on the next fetch, which goes straight to the
-// relay rather than holding a worker for another request timeout.
-func TestFetchCARs_PassesOverACreatorWhoseRequestFailed(t *testing.T) {
+// A creator whose request failed drops behind the relay on the next fetch, so a peer known to be
+// serving is asked first rather than a worker being held for another request timeout.
+func TestFetchCARs_PrefersAReadyRelayOverARecentlyFailedCreator(t *testing.T) {
 	head := compositeBlock(t, 1)
 	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{
 		"relay": {
@@ -231,6 +232,8 @@ func TestFetchCARs_PassesOverACreatorWhoseRequestFailed(t *testing.T) {
 	cars := p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
 
 	require.NotNil(t, cars[0])
+	// The failed creator drops behind the relay, and the relay serving the head means it is
+	// never reached.
 	require.Equal(t, []carCall{
 		{peer: "creator", heads: 1},
 		{peer: "relay", heads: 1},
@@ -238,9 +241,143 @@ func TestFetchCARs_PassesOverACreatorWhoseRequestFailed(t *testing.T) {
 	}, channel.requested)
 	require.Equal(t, map[string]int64{
 		"creatorRequestFailed": 1,
-		"creatorBackoff":       1,
 		"relayFetched":         2,
 	}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// The headline fix: a creator inside a backoff window is still asked once the relay has come up
+// short. The relay usually has not stored the head yet, so passing the creator over entirely sent
+// the head to a DAG walk when the one peer holding it was merely slow a moment ago.
+func TestFetchCARs_AsksABackedOffCreatorTheRelayCannotServe(t *testing.T) {
+	head := compositeBlock(t, 1)
+	channel := &fakeCARChannel{replies: map[string][]protocol.CARReply{
+		// The relay is reachable throughout but holds nothing, as a relay asked at once usually
+		// does not: pubsub hands a message on before the relaying node has stored the head.
+		"relay": {{CARs: [][]byte{nil}}, {CARs: [][]byte{nil}}},
+	}}
+	p := fetchFixture(channel)
+
+	// The creator has no reply queued, so this request fails and backs it off.
+	p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
+	missedBefore := p.statCARFetchMissed.Load()
+
+	channel.replies["creator"] = []protocol.CARReply{{CARs: [][]byte{carWith(t, head.Cid(), head)}}}
+	cars := p.fetchCARs(context.Background(), "creator", "relay", []cid.Cid{head.Cid()})
+
+	require.NotNil(t, cars[0], "a backed-off creator must still be asked when nobody else can serve")
+	require.Equal(t, []carCall{
+		{peer: "creator", heads: 1},
+		{peer: "relay", heads: 1},
+		{peer: "relay", heads: 1},
+		{peer: "creator", heads: 1},
+	}, channel.requested)
+	require.Equal(t, map[string]int64{
+		"creatorRequestFailed": 1,
+		"relayNotServed":       2,
+		"creatorRetryFetched":  1,
+	}, reasonMap(p.carFetchOutcome.drain()))
+	require.Equal(t, missedBefore, p.statCARFetchMissed.Load(), "the head must not fall back to a walk")
+}
+
+// A peer that keeps failing is eventually passed over, so a receiver with no route to it stops
+// spending a request timeout per message.
+func TestFetchCARs_PassesOverAPeerThatKeepsFailing(t *testing.T) {
+	head := compositeBlock(t, 1)
+	channel := &fakeCARChannel{}
+	p := fetchFixture(channel)
+
+	for range carPeerBackoffHardFailures {
+		p.fetchCARs(context.Background(), "creator", "", []cid.Cid{head.Cid()})
+	}
+	require.Len(t, channel.requested, carPeerBackoffHardFailures)
+	p.carFetchOutcome.drain()
+
+	p.fetchCARs(context.Background(), "creator", "", []cid.Cid{head.Cid()})
+
+	require.Len(t, channel.requested, carPeerBackoffHardFailures, "a known-bad peer is not asked")
+	require.Equal(t, map[string]int64{"creatorBackoff": 1}, reasonMap(p.carFetchOutcome.drain()))
+}
+
+// A peer that answers is no longer held back by a failure it has recovered from.
+func TestFetchCARs_ForgetsBackoffOnceThePeerAnswers(t *testing.T) {
+	head := compositeBlock(t, 1)
+	channel := &fakeCARChannel{}
+	p := fetchFixture(channel)
+
+	p.fetchCARs(context.Background(), "creator", "", []cid.Cid{head.Cid()})
+	require.Equal(t, carPeerDeprioritised, p.carPeerAvailability("creator"))
+
+	channel.replies = map[string][]protocol.CARReply{
+		"creator": {{CARs: [][]byte{carWith(t, head.Cid(), head)}}},
+	}
+	p.fetchCARs(context.Background(), "creator", "", []cid.Cid{head.Cid()})
+
+	require.Equal(t, carPeerReady, p.carPeerAvailability("creator"))
+}
+
+// The window grows with consecutive failures and stops at the cap.
+func TestBackOffCARPeer_GrowsTheWindowAndCaps(t *testing.T) {
+	p := withReasonMaps(&P2P{})
+
+	p.backOffCARPeer("peer")
+	first := time.Until(p.carBackoff.peers["peer"].until)
+	require.Greater(t, first, time.Duration(0))
+	require.LessOrEqual(t, first, carPeerBackoffBase)
+
+	p.backOffCARPeer("peer")
+	second := time.Until(p.carBackoff.peers["peer"].until)
+	require.Greater(t, second, carPeerBackoffBase)
+
+	for range 20 {
+		p.backOffCARPeer("peer")
+	}
+	require.LessOrEqual(t, time.Until(p.carBackoff.peers["peer"].until), carPeerBackoffMax)
+	require.Equal(t, carPeerPassedOver, p.carPeerAvailability("peer"))
+}
+
+// An expired window is forgotten rather than left to accumulate failures.
+func TestCARPeerAvailability_ForgetsAnExpiredWindow(t *testing.T) {
+	p := withReasonMaps(&P2P{})
+	p.backOffCARPeer("peer")
+	p.carBackoff.peers["peer"].until = time.Now().Add(-time.Second)
+
+	require.Equal(t, carPeerReady, p.carPeerAvailability("peer"))
+	require.NotContains(t, p.carBackoff.peers, "peer")
+}
+
+// This node giving up on a message is not the peer failing, and must not count against it.
+func TestFetchCARs_DoesNotBackOffAPeerWhenThisNodeCancels(t *testing.T) {
+	head := compositeBlock(t, 1)
+	p := fetchFixture(&fakeCARChannel{})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	p.fetchCARs(ctx, "creator", "", []cid.Cid{head.Cid()})
+
+	require.Equal(t, map[string]int64{"creatorCanceled": 1}, reasonMap(p.carFetchOutcome.drain()))
+	require.Equal(t, carPeerReady, p.carPeerAvailability("creator"))
+}
+
+func TestCARRequestFailure(t *testing.T) {
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	require.Equal(t, fetchCanceled, carRequestFailure(cancelled, errors.New("any")))
+	require.Equal(t, fetchTimeout,
+		carRequestFailure(context.Background(), context.DeadlineExceeded))
+	require.Equal(t, fetchDialFailed,
+		carRequestFailure(context.Background(), errors.New("failed to dial peer")))
+	require.Equal(t, fetchRequestFailed,
+		carRequestFailure(context.Background(), errors.New("stream reset")))
+}
+
+func TestCARFetchFailedPeer(t *testing.T) {
+	for _, outcome := range []string{fetchRequestFailed, fetchTimeout, fetchDialFailed} {
+		require.True(t, carFetchFailedPeer(outcome), outcome)
+	}
+	for _, outcome := range []string{fetchCanceled, fetchBadReply, fetchNotServed, fetchFetched} {
+		require.False(t, carFetchFailedPeer(outcome), outcome)
+	}
 }
 
 // When no peer answers, every head falls back to the walk.

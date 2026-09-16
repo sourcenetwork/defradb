@@ -13,6 +13,7 @@ package p2p
 import (
 	"bytes"
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	car "github.com/ipld/go-car/v2"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/errors"
@@ -45,10 +47,20 @@ const (
 	// and the requester walks the DAG for that head.
 	maxCARReplyBytes = 8 << 20
 
-	// carPeerBackoff is how long a peer whose CAR request failed is passed over. A receiver
-	// with no route to an update's creator would otherwise hold a worker for the whole request
-	// timeout on every message from it.
-	carPeerBackoff = 30 * time.Second
+	// carPeerBackoffBase is the first window after a peer's CAR request fails. Heads arrive far
+	// faster than a window measured in seconds: at ~8 heads/second a 30s pass-over covers about
+	// 240 of them, so one failure must cost only the next few.
+	carPeerBackoffBase = 250 * time.Millisecond
+
+	// carPeerBackoffMax caps the window, which doubles with each consecutive failure.
+	carPeerBackoffMax = 30 * time.Second
+
+	// carPeerBackoffHardFailures is how many consecutive failures make a peer known-bad rather
+	// than merely slow. Below it a backed-off peer is still asked, after every other source,
+	// because the creator is usually the only peer holding the head. At or above it the peer is
+	// passed over, so a receiver with no route to it stops spending a request timeout per
+	// message.
+	carPeerBackoffHardFailures = 3
 )
 
 // Which peer a CAR was asked of. The creator published the update, and the relay is the peer
@@ -65,9 +77,17 @@ const (
 	fetchNotServed     = "NotServed"
 	fetchRootMismatch  = "RootMismatch"
 	fetchRequestFailed = "RequestFailed"
+	fetchTimeout       = "Timeout"
+	fetchDialFailed    = "DialFailed"
+	fetchCanceled      = "Canceled"
 	fetchBadReply      = "BadReply"
 	fetchBackoff       = "Backoff"
 )
+
+// carSourceRetrySuffix marks a source asked only after every other source came up short, because
+// it is inside a backoff window. Its outcomes count under their own labels, so heads recovered
+// from a backed-off creator are visible as creatorRetryFetched rather than hidden.
+const carSourceRetrySuffix = "Retry"
 
 // What the serving side did with one requested head.
 const (
@@ -188,6 +208,9 @@ func (p *P2P) carForHead(ctx context.Context, head cid.Cid) ([]byte, error) {
 			if ipld.IsNotFound(err) {
 				return nil, errCARHeadNotHeld
 			}
+			// Counted as buildFailed by the serve outcomes, which alone say nothing about the
+			// cause. Every other build failure records a reason; this one did not.
+			p.carFailure(reasonBlockRead, err)
 			return nil, err
 		}
 		block, err := coreblock.GetFromBytes(raw.RawData())
@@ -242,11 +265,20 @@ func (p *P2P) fetchCARs(ctx context.Context, creator, relay string, heads []cid.
 	for i := range pending {
 		pending[i] = i
 	}
-	for _, source := range carSources(creator, relay, p.host.ID()) {
+	ordered, passedOver := p.orderCARSources(carSources(creator, relay, p.host.ID()))
+	for _, source := range ordered {
 		if len(pending) == 0 {
 			break
 		}
 		pending = p.fetchCARsFrom(ctx, source, heads, cars, pending)
+	}
+	// Heads still without a CAR that a passed-over peer was never asked for are what its backoff
+	// cost this message.
+	for _, source := range passedOver {
+		if len(pending) == 0 {
+			break
+		}
+		p.carFetchOutcome.recordN(source.label+fetchBackoff, int64(len(pending)))
 	}
 
 	p.statCARFetched.Add(int64(len(heads) - len(pending)))
@@ -254,9 +286,31 @@ func (p *P2P) fetchCARs(ctx context.Context, creator, relay string, heads []cid.
 	return cars
 }
 
+// orderCARSources splits sources into the order to ask them in and those to pass over. A peer
+// inside a backoff window is moved behind every ready peer rather than dropped: the relay has
+// usually not stored the head yet, so excluding a backed-off creator sends the head to a DAG walk
+// when the one peer holding it was merely slow a moment ago. Only a peer that has failed
+// carPeerBackoffHardFailures times in a row is dropped.
+func (p *P2P) orderCARSources(sources []carSource) (ordered, passedOver []carSource) {
+	var retry []carSource
+	for _, source := range sources {
+		switch p.carPeerAvailability(source.peerID) {
+		case carPeerReady:
+			ordered = append(ordered, source)
+		case carPeerDeprioritised:
+			source.label += carSourceRetrySuffix
+			retry = append(retry, source)
+		default:
+			passedOver = append(passedOver, source)
+		}
+	}
+	return append(ordered, retry...), passedOver
+}
+
 // fetchCARsFrom asks source for the heads at the pending indexes, fills what it serves into cars,
 // and returns the indexes still without a CAR. It normally takes one round trip, and another each
-// time a reply stops short. A failed request passes the peer over for carPeerBackoff.
+// time a reply stops short. A request that fails through the peer's own fault backs it off; the
+// caller has already decided whether a backed-off peer is asked at all.
 func (p *P2P) fetchCARsFrom(
 	ctx context.Context,
 	source carSource,
@@ -264,11 +318,6 @@ func (p *P2P) fetchCARsFrom(
 	cars [][]byte,
 	pending []int,
 ) []int {
-	if p.carPeerBackingOff(source.peerID) {
-		p.carFetchOutcome.recordN(source.label+fetchBackoff, int64(len(pending)))
-		return pending
-	}
-
 	var unserved []int
 	// Each reply answers at least one head or ends the loop, so it runs at most len(pending) times.
 	for answered := 0; answered < len(pending); {
@@ -276,11 +325,13 @@ func (p *P2P) fetchCARsFrom(
 		got, outcome := p.requestCARs(ctx, source.peerID, heads, ask)
 		if outcome != "" {
 			p.carFetchOutcome.recordN(source.label+outcome, int64(len(ask)))
-			if outcome == fetchRequestFailed {
+			if carFetchFailedPeer(outcome) {
 				p.backOffCARPeer(source.peerID)
 			}
 			return append(unserved, ask...)
 		}
+		// The peer answered, so whatever it failed on before has passed.
+		p.clearCARPeerBackoff(source.peerID)
 		for i, data := range got {
 			idx := ask[i]
 			switch {
@@ -309,11 +360,22 @@ func (p *P2P) requestCARs(ctx context.Context, peerID string, heads []cid.Cid, a
 		req.CIDs[i] = heads[idx].Bytes()
 	}
 
+	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 	defer cancel()
 	reply, err := p.carProtocol.SendRequest(ctx, req, peerID)
 	if err != nil {
-		return nil, fetchRequestFailed
+		outcome := carRequestFailure(parent, err)
+		// The counters say how often a request failed but not which peer or why, and a timeout
+		// under load needs a different fix from a peer with no route. Logged once per distinct
+		// outcome, so a persistent failure is a count rather than a line per call.
+		if p.carFetchFailureReason.recordFirst(outcome) {
+			log.ErrorE("CAR request failed", err,
+				corelog.String("outcome", outcome),
+				corelog.String("peer", peerID),
+				corelog.Int("heads", len(ask)))
+		}
+		return nil, outcome
 	}
 	if reply.GetErrMessage() != "" || len(reply.CARs) == 0 || len(reply.CARs) > len(ask) {
 		return nil, fetchBadReply
@@ -321,36 +383,109 @@ func (p *P2P) requestCARs(ctx context.Context, peerID string, heads []cid.Cid, a
 	return reply.CARs, ""
 }
 
-// carPeerBackoffs records peers whose CAR request failed, and until when they are passed over.
-type carPeerBackoffs struct {
-	mu    sync.Mutex
-	until map[string]time.Time
+// carRequestFailure names why a request did not come back. The parent context ending is the local
+// node shutting down or giving up on the message, which is not the peer's doing and must not be
+// reported or counted as the peer failing.
+func carRequestFailure(parent context.Context, err error) string {
+	switch {
+	case parent.Err() != nil:
+		return fetchCanceled
+	case errors.Is(err, context.DeadlineExceeded):
+		return fetchTimeout
+	// libp2p wraps dial failures rather than exporting a sentinel for them.
+	case strings.Contains(err.Error(), "dial"):
+		return fetchDialFailed
+	default:
+		return fetchRequestFailed
+	}
 }
 
-// carPeerBackingOff reports whether peerID is still being passed over, and forgets it once it
-// is not.
-func (p *P2P) carPeerBackingOff(peerID string) bool {
-	p.carBackoff.mu.Lock()
-	defer p.carBackoff.mu.Unlock()
-	until, ok := p.carBackoff.until[peerID]
-	if !ok {
+// carFetchFailedPeer reports whether an outcome should count against the peer. A reply that came
+// back malformed, and a request this node abandoned, are not the peer failing to answer.
+func carFetchFailedPeer(outcome string) bool {
+	switch outcome {
+	case fetchRequestFailed, fetchTimeout, fetchDialFailed:
+		return true
+	default:
 		return false
 	}
-	if time.Now().Before(until) {
-		return true
-	}
-	delete(p.carBackoff.until, peerID)
-	return false
 }
 
-// backOffCARPeer passes peerID over for carPeerBackoff.
+// carPeerBackoffs records peers whose CAR request failed: until when they are held back, and how
+// many times in a row they have failed.
+type carPeerBackoffs struct {
+	mu    sync.Mutex
+	peers map[string]*carPeerBackoff
+}
+
+// carPeerBackoff is one peer's consecutive failures and the window they bought.
+type carPeerBackoff struct {
+	until    time.Time
+	failures int
+}
+
+// carPeerAvailability is how a peer should be treated for one fetch.
+type carPeerAvailability int
+
+const (
+	// carPeerReady is asked in the normal order.
+	carPeerReady carPeerAvailability = iota
+	// carPeerDeprioritised recently failed, so is asked only after every ready source.
+	carPeerDeprioritised
+	// carPeerPassedOver has failed repeatedly, so is not asked until its window expires.
+	carPeerPassedOver
+)
+
+// carPeerAvailability reports how peerID should be treated now, and forgets a peer whose window
+// has expired.
+func (p *P2P) carPeerAvailability(peerID string) carPeerAvailability {
+	p.carBackoff.mu.Lock()
+	defer p.carBackoff.mu.Unlock()
+	entry, ok := p.carBackoff.peers[peerID]
+	if !ok {
+		return carPeerReady
+	}
+	if !time.Now().Before(entry.until) {
+		delete(p.carBackoff.peers, peerID)
+		return carPeerReady
+	}
+	if entry.failures >= carPeerBackoffHardFailures {
+		return carPeerPassedOver
+	}
+	return carPeerDeprioritised
+}
+
+// backOffCARPeer records a failed request against peerID. The window doubles with each
+// consecutive failure, so an isolated failure costs the next few heads and a peer that is
+// genuinely gone reaches carPeerBackoffMax quickly.
 func (p *P2P) backOffCARPeer(peerID string) {
 	p.carBackoff.mu.Lock()
 	defer p.carBackoff.mu.Unlock()
-	if p.carBackoff.until == nil {
-		p.carBackoff.until = make(map[string]time.Time)
+	if p.carBackoff.peers == nil {
+		p.carBackoff.peers = make(map[string]*carPeerBackoff)
 	}
-	p.carBackoff.until[peerID] = time.Now().Add(carPeerBackoff)
+	entry, ok := p.carBackoff.peers[peerID]
+	if !ok {
+		entry = &carPeerBackoff{}
+		p.carBackoff.peers[peerID] = entry
+	}
+	entry.failures++
+	window := carPeerBackoffMax
+	// Bounded so the shift cannot overflow; base<<7 is already past the cap.
+	if shift := entry.failures - 1; shift < 8 {
+		if grown := carPeerBackoffBase << shift; grown < carPeerBackoffMax {
+			window = grown
+		}
+	}
+	entry.until = time.Now().Add(window)
+}
+
+// clearCARPeerBackoff forgets peerID's failures once it answers, so a peer that is serving again
+// is not left deprioritised by a failure it has recovered from.
+func (p *P2P) clearCARPeerBackoff(peerID string) {
+	p.carBackoff.mu.Lock()
+	defer p.carBackoff.mu.Unlock()
+	delete(p.carBackoff.peers, peerID)
 }
 
 // carRootIs reports whether data is a CAR whose sole root is head. A fetched CAR is imported in

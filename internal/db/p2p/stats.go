@@ -112,6 +112,7 @@ func (p *P2P) initReasonCounters() {
 	p.docDropReason = newFailureReasons()
 	p.docSkipReason = newFailureReasons()
 	p.carFetchOutcome = newFailureReasons()
+	p.carFetchFailureReason = newFailureReasons()
 	p.carServeOutcome = newFailureReasons()
 }
 

@@ -283,6 +283,9 @@ type P2P struct {
 	statCARFetchMissed atomic.Int64
 	carFetchOutcome    failureReasons
 	carServeOutcome    failureReasons
+	// carFetchFailureReason logs the first of each distinct CAR request failure, with the peer
+	// and the underlying error, which the outcome counters alone do not carry.
+	carFetchFailureReason failureReasons
 	// carBackoff passes over peers whose CAR request recently failed.
 	carBackoff carPeerBackoffs
 	// statCARCacheHits counts CARs served without a build of their own, from the cache or
