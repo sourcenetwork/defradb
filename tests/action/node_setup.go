@@ -403,6 +403,10 @@ func externalNodeFlags(
 	}
 	if cfg.BadgerEncryption {
 		unsupported = append(unsupported, "badger encryption: the test supplies a key, and only --no-encryption exists")
+	} else {
+		// The node encrypts at rest by default once it has a keyring, which a
+		// native node running the same test does not do.
+		flags = append(flags, "--no-encryption")
 	}
 
 	if nacEnabled(cfg) {
