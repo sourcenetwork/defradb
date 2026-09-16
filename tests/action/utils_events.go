@@ -216,7 +216,7 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 // head through an event, which no identity is needed to read.
 //
 // ident is the identity the document was written with. Under document ACP a
-// reader that cannot see the document gets nothing back, so this falls back to
+// reader that cannot see the commits gets nothing back, so this falls back to
 // the identity that created the collection.
 func latestCompositeCID(
 	s *state.State,
@@ -230,10 +230,11 @@ func latestCompositeCID(
 		return head, true
 	}
 
-	// The write had no identity, or one that cannot read what it wrote. Ask
-	// again as whoever created the collection, who can always read it.
-	owner, ok := s.CollectionOwners[collectionIDForIndex(s, nodeID, collectionIndex)]
-	if !ok {
+	// The write had no identity, or one that cannot read what it wrote. A
+	// branchable collection gates its commits on an object owned by whoever
+	// created the collection, so ask again as them.
+	owner, hasOwner := s.CollectionOwners[collectionIDForIndex(s, nodeID, collectionIndex)]
+	if !hasOwner {
 		return cid.Cid{}, false
 	}
 	return compositeCIDAs(s, nodeID, docID, owner)

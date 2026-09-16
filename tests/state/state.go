@@ -335,8 +335,9 @@ type State struct {
 	// The identity each collection was created with, by collection ID.
 	//
 	// A node in another process emits no events the test can read, so the head of
-	// a document it wrote has to be queried over its API instead. That query needs
-	// an identity that can see the collection, and the creator always can.
+	// a document it wrote has to be queried over its API instead. A branchable
+	// collection gates its commits on an object owned by whoever created it, so
+	// that query has to be made as them.
 	//
 	// Stored as a reference because the identity it resolves to differs per node.
 	CollectionOwners map[string]immutable.Option[Identity]

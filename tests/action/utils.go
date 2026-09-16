@@ -152,6 +152,9 @@ func appendCollectionVersion(s *state.State, versionID string) {
 
 // recordCollectionOwner remembers the identity a collection was created with, so
 // a later read of that collection can be made as someone allowed to see it.
+//
+// Keyed by collection ID, which a patch or a rename keeps, so the entry made here
+// stays correct for the life of the collection.
 func recordCollectionOwner(
 	s *state.State,
 	collectionID string,
