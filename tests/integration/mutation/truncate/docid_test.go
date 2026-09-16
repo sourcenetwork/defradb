@@ -42,6 +42,30 @@ func TestMutationTruncateWithDocID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationTruncateWithScalarDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{SDL: `type User { name: String }`},
+			&action.AddDoc{CollectionID: 0, Doc: `{"name":"Alice"}`},
+			&action.AddDoc{CollectionID: 0, Doc: `{"name":"Bob"}`},
+			&action.Request{
+				Request: `mutation {
+					truncate_User(docID: "{{.DocID0_0}}")
+				}`,
+				Results: map[string]any{"truncate_User": true},
+			},
+			&action.Request{
+				Request: `query { User { name } }`,
+				Results: map[string]any{
+					"User": []map[string]any{{"name": "Bob"}},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationTruncateWithMultipleDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
