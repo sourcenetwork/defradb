@@ -12,12 +12,15 @@ package node
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/go-p2p"
 	"github.com/sourcenetwork/immutable"
 
@@ -79,6 +82,11 @@ func (n *Node) startP2P(ctx context.Context, store corekv.TxnReaderWriter, chunk
 // memory and not the container's limit, so a node can end up with limits its cgroup cannot honour.
 // Exceeding a limit resets the stream with StreamResourceLimitExceeded, which the peer that opened
 // it sees as a failed request.
+// maxProtocolPeers is how many peers one protocol is budgeted to serve at the per-peer limit at
+// once. It only sizes the protocol-wide stream ceiling, which exists to stop a single protocol
+// starving the others, not to limit any one peer.
+const maxProtocolPeers = 8
+
 func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, error) {
 	if opts.ResourceMemoryMiB <= 0 && opts.MaxStreamsPerPeer <= 0 {
 		return nil, nil
@@ -93,6 +101,18 @@ func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, e
 		limits.PeerBaseLimit.StreamsInbound = opts.MaxStreamsPerPeer
 		limits.PeerBaseLimit.StreamsOutbound = opts.MaxStreamsPerPeer
 		limits.PeerBaseLimit.Streams = 2 * opts.MaxStreamsPerPeer
+
+		// The peer scope is not the binding one. Each protocol also has its own budget per peer,
+		// which defaults to far less: a node serving CARs to three peers was refused at 68 inbound
+		// streams on protocol:/defradb/car_req/0.0.1.peer:..., resetting the rest with
+		// StreamResourceLimitExceeded while the peer scope sat far below its limit. A protocol may
+		// use the whole per-peer budget, and across all peers a multiple of it.
+		limits.ProtocolPeerBaseLimit.StreamsInbound = opts.MaxStreamsPerPeer
+		limits.ProtocolPeerBaseLimit.StreamsOutbound = opts.MaxStreamsPerPeer
+		limits.ProtocolPeerBaseLimit.Streams = 2 * opts.MaxStreamsPerPeer
+		limits.ProtocolBaseLimit.StreamsInbound = maxProtocolPeers * opts.MaxStreamsPerPeer
+		limits.ProtocolBaseLimit.StreamsOutbound = maxProtocolPeers * opts.MaxStreamsPerPeer
+		limits.ProtocolBaseLimit.Streams = 2 * maxProtocolPeers * opts.MaxStreamsPerPeer
 	}
 
 	scaled := limits.AutoScale()
@@ -103,5 +123,48 @@ func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, e
 		}
 		scaled = limits.Scale(int64(opts.ResourceMemoryMiB)*mib, fds)
 	}
-	return rcmgr.NewResourceManager(rcmgr.NewFixedLimiter(scaled))
+	return rcmgr.NewResourceManager(
+		rcmgr.NewFixedLimiter(scaled),
+		rcmgr.WithTraceReporter(newBlockedScopeReporter()),
+	)
+}
+
+// blockedScopeReporter names the resource-manager scope that refused a stream, connection or
+// memory reservation. A peer whose request fails only sees a reset stream, so without this the
+// limit that caused it — system, transient, peer, protocol or service — is invisible.
+type blockedScopeReporter struct {
+	mu   sync.Mutex
+	seen map[string]int64
+}
+
+func newBlockedScopeReporter() *blockedScopeReporter {
+	return &blockedScopeReporter{seen: make(map[string]int64)}
+}
+
+// ConsumeEvent is called synchronously by the resource manager, so it only counts, and logs the
+// first of each scope and event, then every thousandth, which names the limit without flooding.
+func (r *blockedScopeReporter) ConsumeEvent(evt rcmgr.TraceEvt) {
+	switch evt.Type {
+	case rcmgr.TraceBlockAddStreamEvt, rcmgr.TraceBlockAddConnEvt, rcmgr.TraceBlockReserveMemoryEvt:
+	default:
+		return
+	}
+
+	key := string(evt.Type) + " " + evt.Name
+	r.mu.Lock()
+	r.seen[key]++
+	count := r.seen[key]
+	r.mu.Unlock()
+
+	if count != 1 && count%1000 != 0 {
+		return
+	}
+	log.Info("resource manager blocked",
+		corelog.String("event", string(evt.Type)),
+		corelog.String("scope", evt.Name),
+		corelog.String("limit", fmt.Sprintf("%v", evt.Limit)),
+		corelog.Int64("blocked", count),
+		corelog.Int("streamsIn", evt.StreamsIn),
+		corelog.Int("streamsOut", evt.StreamsOut),
+		corelog.Int64("memory", evt.Memory))
 }
