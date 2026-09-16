@@ -153,7 +153,7 @@ func TestServeCARs_SecondRequestForAHeadIsACacheHit(t *testing.T) {
 	child := undecodableBlock(t, "field block")
 	_, root := compositeLinking(t, child.Cid())
 	p := carFixture(t, root, child)
-	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+	serveEveryBlock(t, p)
 	p.carCache = newCARCache(carCacheMaxBytes)
 
 	first := p.serveCARs(context.Background(), "peer-a", [][]byte{root.Cid().Bytes()})

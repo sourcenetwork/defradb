@@ -84,8 +84,8 @@ const (
 )
 
 var (
-	errCARHeadNotHeld     = errors.New("CAR head not held")
-	errCARHeadNotDocument = errors.New("CAR head is not a document block")
+	errCARHeadNotHeld     = errors.New("requested CAR head is not held")
+	errCARHeadNotDocument = errors.New("requested CAR head is not a document block")
 )
 
 // carCommProcessor serves CAR requests from peers.

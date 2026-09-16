@@ -77,7 +77,8 @@ func (c *carCache) getOrBuild(
 	if el, ok := c.entries[key]; ok {
 		c.order.MoveToFront(el)
 		c.mu.Unlock()
-		return el.Value.(*carEntry).data, true, nil
+		// entries only ever holds elements whose Value is a *carEntry.
+		return el.Value.(*carEntry).data, true, nil //nolint:forcetypeassert
 	}
 	if b, ok := c.building[key]; ok {
 		c.mu.Unlock()
@@ -115,7 +116,8 @@ func (c *carCache) add(key string, data []byte) {
 	c.entries[key] = c.order.PushFront(&carEntry{key: key, data: data})
 	c.bytes += len(data)
 	for c.bytes > c.maxBytes {
-		oldest := c.order.Remove(c.order.Back()).(*carEntry)
+		// order only ever holds *carEntry values, pushed by add.
+		oldest := c.order.Remove(c.order.Back()).(*carEntry) //nolint:forcetypeassert
 		delete(c.entries, oldest.key)
 		c.bytes -= len(oldest.data)
 	}

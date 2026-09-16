@@ -34,6 +34,15 @@ func (servingDB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return immutable.None[dac.DocumentACP]()
 }
 
+// serveEveryBlock swaps p's DB for one without document ACP, so the serving side reads every
+// block. carFixture always builds p with a rootstoreDB.
+func serveEveryBlock(t *testing.T, p *P2P) {
+	t.Helper()
+	store, ok := p.db.(rootstoreDB)
+	require.True(t, ok, "expected carFixture to provide a rootstoreDB, got %T", p.db)
+	p.db = servingDB{rootstoreDB: store}
+}
+
 // carCall is one CAR request a fakeCARChannel received: the peer asked and how many heads.
 type carCall struct {
 	peer  string
@@ -73,7 +82,7 @@ func TestServeCARs_ServesHeldHeadsAndLeavesTheRestEmpty(t *testing.T) {
 	child := undecodableBlock(t, "field block")
 	_, root := compositeLinking(t, child.Cid())
 	p := carFixture(t, root, child)
-	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+	serveEveryBlock(t, p)
 
 	absent := compositeBlock(t, 7)
 	reply := p.serveCARs(context.Background(), "peer", [][]byte{
@@ -96,7 +105,7 @@ func TestServeCARs_ServesHeldHeadsAndLeavesTheRestEmpty(t *testing.T) {
 func TestServeCARs_DoesNotServeANonDocumentHead(t *testing.T) {
 	notDocument := undecodableBlock(t, "not a block")
 	p := carFixture(t, notDocument)
-	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+	serveEveryBlock(t, p)
 
 	reply := p.serveCARs(context.Background(), "peer", [][]byte{notDocument.Cid().Bytes()})
 
@@ -107,7 +116,7 @@ func TestServeCARs_DoesNotServeANonDocumentHead(t *testing.T) {
 // A request for more heads than a batch holds is answered only up to the cap.
 func TestServeCARs_AnswersAtMostTheCap(t *testing.T) {
 	p := carFixture(t)
-	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+	serveEveryBlock(t, p)
 
 	absent := compositeBlock(t, 1)
 	req := make([][]byte, maxCARRequestCIDs+5)
@@ -124,7 +133,7 @@ func TestServeCARs_AnswersABatchLargerThanTheSenderBatchSize(t *testing.T) {
 	child := undecodableBlock(t, "field block")
 	_, root := compositeLinking(t, child.Cid())
 	p := carFixture(t, root, child)
-	p.db = servingDB{rootstoreDB: p.db.(rootstoreDB)}
+	serveEveryBlock(t, p)
 	p.carCache = newCARCache(carCacheMaxBytes)
 
 	req := make([][]byte, 4*batchMaxDocs)
