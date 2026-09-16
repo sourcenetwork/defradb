@@ -111,6 +111,18 @@ type NodeP2POptions struct {
 	EnableClearBackoffOnRetry bool
 	// PrivateKey is the private key for the P2P node.
 	PrivateKey []byte
+	// ResourceMemoryMiB is the memory budget the libp2p resource manager may allot across all
+	// connections, streams and peers. Zero autoscales it from the memory the process can see,
+	// which inside a container is the host's memory rather than the container's own limit, so a
+	// containerised node should set this explicitly.
+	ResourceMemoryMiB int
+	// ResourceFileDescriptors is the file descriptor budget for the resource manager. It is only
+	// read when ResourceMemoryMiB is set, and falls back to defaultResourceFileDescriptors.
+	ResourceFileDescriptors int
+	// MaxStreamsPerPeer caps the concurrent streams a single peer may open in each direction.
+	// Past the cap libp2p resets the stream with StreamResourceLimitExceeded rather than queueing
+	// it. Zero keeps libp2p's own default, which scales with the memory budget.
+	MaxStreamsPerPeer int
 }
 
 // NodeHTTPOptions contains HTTP API server configuration values.
@@ -532,6 +544,24 @@ func (sb *NodeP2POptionsBuilder) SetBootstrapPeers(peers ...string) *NodeP2POpti
 // SetEnablePubSub sets whether PubSub is enabled.
 func (sb *NodeP2POptionsBuilder) SetEnablePubSub(enable bool) *NodeP2POptionsBuilder {
 	sb.append(func(opts *NodeP2POptions) { opts.EnablePubSub = enable })
+	return sb
+}
+
+// SetResourceMemoryMiB sets the resource manager's memory budget in MiB. Zero autoscales it.
+func (sb *NodeP2POptionsBuilder) SetResourceMemoryMiB(mib int) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.ResourceMemoryMiB = mib })
+	return sb
+}
+
+// SetResourceFileDescriptors sets the resource manager's file descriptor budget.
+func (sb *NodeP2POptionsBuilder) SetResourceFileDescriptors(fds int) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.ResourceFileDescriptors = fds })
+	return sb
+}
+
+// SetMaxStreamsPerPeer sets the concurrent streams a single peer may open in each direction.
+func (sb *NodeP2POptionsBuilder) SetMaxStreamsPerPeer(streams int) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.MaxStreamsPerPeer = streams })
 	return sb
 }
 
