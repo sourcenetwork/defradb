@@ -365,6 +365,8 @@ func TestCARRequestFailure(t *testing.T) {
 	require.Equal(t, fetchCanceled, carRequestFailure(cancelled, errors.New("any")))
 	require.Equal(t, fetchTimeout,
 		carRequestFailure(context.Background(), context.DeadlineExceeded))
+	require.Equal(t, fetchResourceLimited,
+		carRequestFailure(context.Background(), errors.New("stream reset by remote, error code: 4098")))
 	require.Equal(t, fetchDialFailed,
 		carRequestFailure(context.Background(), errors.New("failed to dial peer")))
 	require.Equal(t, fetchRequestFailed,
@@ -372,12 +374,101 @@ func TestCARRequestFailure(t *testing.T) {
 }
 
 func TestCARFetchFailedPeer(t *testing.T) {
-	for _, outcome := range []string{fetchRequestFailed, fetchTimeout, fetchDialFailed} {
+	// A resource limit counts against the peer: it is asking to be left alone for a moment.
+	for _, outcome := range []string{
+		fetchRequestFailed, fetchTimeout, fetchDialFailed, fetchResourceLimited,
+	} {
 		require.True(t, carFetchFailedPeer(outcome), outcome)
 	}
-	for _, outcome := range []string{fetchCanceled, fetchBadReply, fetchNotServed, fetchFetched} {
+	// A slot this node could not get is its own throttle, not the peer's.
+	for _, outcome := range []string{
+		fetchCanceled, fetchQueueFull, fetchBadReply, fetchNotServed, fetchFetched,
+	} {
 		require.False(t, carFetchFailedPeer(outcome), outcome)
 	}
+}
+
+// The reset a peer's resource manager sends is recognised in both the renderings it reaches this
+// node in, so it is never mistaken for an ordinary request failure.
+func TestCARStreamResourceLimited(t *testing.T) {
+	require.True(t, carStreamResourceLimited(
+		errors.New("stream reset by remote, error code: 4098")))
+	require.True(t, carStreamResourceLimited(
+		errors.New("stream reset (remote): code: 0x1002")))
+
+	require.False(t, carStreamResourceLimited(errors.New("stream reset")))
+	require.False(t, carStreamResourceLimited(
+		errors.New("stream reset by remote, error code: 4097")))
+}
+
+// A peer's slots are handed out up to the limit and no further, so this node never opens more
+// streams to one peer than its resource manager will accept.
+func TestAcquireCARSlot_HandsOutUpToTheLimit(t *testing.T) {
+	p := withReasonMaps(&P2P{})
+
+	releases := make([]func(), 0, maxInFlightCARRequestsPerPeer)
+	for range maxInFlightCARRequestsPerPeer {
+		release, outcome := p.acquireCARSlot(context.Background(), "peer")
+		require.Empty(t, outcome)
+		releases = append(releases, release)
+	}
+
+	// Another peer is limited separately.
+	release, outcome := p.acquireCARSlot(context.Background(), "other")
+	require.Empty(t, outcome)
+	release()
+
+	for _, release := range releases {
+		release()
+	}
+}
+
+// A request past the limit waits rather than being refused, and proceeds as soon as one of the
+// requests ahead of it finishes.
+func TestAcquireCARSlot_WaitsForASlotToComeFree(t *testing.T) {
+	p := withReasonMaps(&P2P{})
+
+	var release func()
+	for range maxInFlightCARRequestsPerPeer {
+		var outcome string
+		release, outcome = p.acquireCARSlot(context.Background(), "peer")
+		require.Empty(t, outcome)
+	}
+
+	queued := make(chan string, 1)
+	go func() {
+		got, outcome := p.acquireCARSlot(context.Background(), "peer")
+		if outcome == "" {
+			got()
+		}
+		queued <- outcome
+	}()
+
+	select {
+	case <-queued:
+		t.Fatal("a request past the limit must wait, not proceed")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	release()
+	require.Empty(t, <-queued)
+}
+
+// This node giving up on the message releases a queued request, which is its own doing rather
+// than the peer's and is not counted against it.
+func TestAcquireCARSlot_ReturnsCanceledWhenThisNodeGivesUp(t *testing.T) {
+	p := withReasonMaps(&P2P{})
+	for range maxInFlightCARRequestsPerPeer {
+		_, outcome := p.acquireCARSlot(context.Background(), "peer")
+		require.Empty(t, outcome)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, outcome := p.acquireCARSlot(ctx, "peer")
+
+	require.Equal(t, fetchCanceled, outcome)
+	require.False(t, carFetchFailedPeer(outcome))
 }
 
 // When no peer answers, every head falls back to the walk.
