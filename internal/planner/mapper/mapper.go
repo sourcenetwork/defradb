@@ -1521,9 +1521,27 @@ func toMutation(
 	if mutationRequest.Type == request.TruncateObjects {
 		mapping := core.NewDocumentMapping()
 		mapping.Add(0, "result")
-		filter := immutable.None[map[string]any]()
+
+		var conditions map[string]any
 		if mutationRequest.Filter.HasValue() {
-			filter = immutable.Some(mutationRequest.Filter.Value().Conditions)
+			conditions = mutationRequest.Filter.Value().Conditions
+		}
+		if mutationRequest.DocIDs.HasValue() {
+			docIDs := mutationRequest.DocIDs.Value()
+			ids := make([]any, len(docIDs))
+			for i, docID := range docIDs {
+				ids[i] = docID
+			}
+			docIDCondition := map[string]any{request.DocIDFieldName: map[string]any{"_in": ids}}
+			if conditions != nil {
+				conditions = map[string]any{"_and": []any{docIDCondition, conditions}}
+			} else {
+				conditions = docIDCondition
+			}
+		}
+		filter := immutable.None[map[string]any]()
+		if conditions != nil {
+			filter = immutable.Some(conditions)
 		}
 		return &Mutation{
 			Select: Select{
