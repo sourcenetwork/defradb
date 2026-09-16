@@ -286,6 +286,9 @@ type P2P struct {
 	// carFetchFailureReason logs the first of each distinct CAR request failure, with the peer
 	// and the underlying error, which the outcome counters alone do not carry.
 	carFetchFailureReason failureReasons
+	// carSlots bounds the CAR requests in flight to each peer, so this node queues rather than
+	// having the peer's resource manager reset the streams it opened.
+	carSlots carRequestSlots
 	// carBackoff passes over peers whose CAR request recently failed.
 	carBackoff carPeerBackoffs
 	// statCARCacheHits counts CARs served without a build of their own, from the cache or

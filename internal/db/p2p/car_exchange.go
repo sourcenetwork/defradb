@@ -13,6 +13,7 @@ package p2p
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 	car "github.com/ipld/go-car/v2"
+	"github.com/libp2p/go-libp2p/core/network"
 
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
@@ -55,6 +57,17 @@ const (
 	// carPeerBackoffMax caps the window, which doubles with each consecutive failure.
 	carPeerBackoffMax = 30 * time.Second
 
+	// maxInFlightCARRequestsPerPeer bounds how many CAR requests this node has open to one peer
+	// at a time. Each request is its own stream, and a peer's resource manager caps the streams
+	// it will accept: past that it resets them rather than queueing, so the queue belongs here.
+	// Requests wait for a slot instead of being refused at the other end.
+	maxInFlightCARRequestsPerPeer = 4
+
+	// carQueueWait is how long a request waits for a slot before giving up, leaving the head to
+	// another source or to the DAG walk. It is well inside networkRequestTimeout so that queueing
+	// and then requesting still fits inside a replicator push's budget.
+	carQueueWait = 2 * time.Second
+
 	// carPeerBackoffHardFailures is how many consecutive failures make a peer known-bad rather
 	// than merely slow. Below it a backed-off peer is still asked, after every other source,
 	// because the creator is usually the only peer holding the head. At or above it the peer is
@@ -73,15 +86,17 @@ const (
 // What became of one head asked of one peer, recorded as source and outcome together, for
 // example "creatorNotServed". Both halves are fixed sets.
 const (
-	fetchFetched       = "Fetched"
-	fetchNotServed     = "NotServed"
-	fetchRootMismatch  = "RootMismatch"
-	fetchRequestFailed = "RequestFailed"
-	fetchTimeout       = "Timeout"
-	fetchDialFailed    = "DialFailed"
-	fetchCanceled      = "Canceled"
-	fetchBadReply      = "BadReply"
-	fetchBackoff       = "Backoff"
+	fetchFetched         = "Fetched"
+	fetchNotServed       = "NotServed"
+	fetchRootMismatch    = "RootMismatch"
+	fetchRequestFailed   = "RequestFailed"
+	fetchTimeout         = "Timeout"
+	fetchDialFailed      = "DialFailed"
+	fetchCanceled        = "Canceled"
+	fetchResourceLimited = "ResourceLimited"
+	fetchQueueFull       = "QueueFull"
+	fetchBadReply        = "BadReply"
+	fetchBackoff         = "Backoff"
 )
 
 // carSourceRetrySuffix marks a source asked only after every other source came up short, because
@@ -106,6 +121,14 @@ const (
 var (
 	errCARHeadNotHeld     = errors.New("requested CAR head is not held")
 	errCARHeadNotDocument = errors.New("requested CAR head is not a document block")
+)
+
+// Two renderings of network.StreamResourceLimitExceeded: yamux prints the code in decimal and
+// does not export a type this package can assert on, while libp2p's own stream error prints it
+// in hex. Both are derived from the constant so neither can drift from it.
+var (
+	carResourceLimitDecimal = fmt.Sprintf("error code: %d", network.StreamResourceLimitExceeded)
+	carResourceLimitHex     = fmt.Sprintf("code: 0x%x", network.StreamResourceLimitExceeded)
 )
 
 // carCommProcessor serves CAR requests from peers.
@@ -360,6 +383,12 @@ func (p *P2P) requestCARs(ctx context.Context, peerID string, heads []cid.Cid, a
 		req.CIDs[i] = heads[idx].Bytes()
 	}
 
+	release, queued := p.acquireCARSlot(ctx, peerID)
+	if queued != "" {
+		return nil, queued
+	}
+	defer release()
+
 	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 	defer cancel()
@@ -390,6 +419,8 @@ func carRequestFailure(parent context.Context, err error) string {
 	switch {
 	case parent.Err() != nil:
 		return fetchCanceled
+	case carStreamResourceLimited(err):
+		return fetchResourceLimited
 	case errors.Is(err, context.DeadlineExceeded):
 		return fetchTimeout
 	// libp2p wraps dial failures rather than exporting a sentinel for them.
@@ -400,15 +431,71 @@ func carRequestFailure(parent context.Context, err error) string {
 	}
 }
 
+// carStreamResourceLimited reports whether the peer reset the stream because its resource manager
+// was at its limit. That is backpressure rather than a fault: the peer is up and serving, and is
+// telling this node it has too many streams open.
+func carStreamResourceLimited(err error) bool {
+	text := err.Error()
+	return strings.Contains(text, carResourceLimitDecimal) || strings.Contains(text, carResourceLimitHex)
+}
+
 // carFetchFailedPeer reports whether an outcome should count against the peer. A reply that came
 // back malformed, and a request this node abandoned, are not the peer failing to answer.
 func carFetchFailedPeer(outcome string) bool {
 	switch outcome {
-	case fetchRequestFailed, fetchTimeout, fetchDialFailed:
+	// A resource limit counts: the peer is asking to be left alone for a moment, and backing off
+	// is how this node obliges. A queue slot this node could not get is its own throttle, not the
+	// peer's, so it does not.
+	case fetchRequestFailed, fetchTimeout, fetchDialFailed, fetchResourceLimited:
 		return true
 	default:
 		return false
 	}
+}
+
+// carRequestSlots bounds the CAR requests this node has in flight to each peer, one buffered
+// channel per peer used as a semaphore.
+type carRequestSlots struct {
+	mu    sync.Mutex
+	slots map[string]chan struct{}
+}
+
+// acquireCARSlot takes one of peerID's in-flight slots, waiting up to carQueueWait for one to come
+// free. It returns the release function, or a fetch outcome naming why no slot was taken.
+func (p *P2P) acquireCARSlot(ctx context.Context, peerID string) (release func(), outcome string) {
+	slots := p.carSlotsFor(peerID)
+	// The common case is a free slot, which costs neither a timer nor a park.
+	select {
+	case slots <- struct{}{}:
+		return func() { <-slots }, ""
+	default:
+	}
+
+	timer := time.NewTimer(carQueueWait)
+	defer timer.Stop()
+	select {
+	case slots <- struct{}{}:
+		return func() { <-slots }, ""
+	case <-ctx.Done():
+		return nil, fetchCanceled
+	case <-timer.C:
+		return nil, fetchQueueFull
+	}
+}
+
+// carSlotsFor returns peerID's semaphore, creating it on first use.
+func (p *P2P) carSlotsFor(peerID string) chan struct{} {
+	p.carSlots.mu.Lock()
+	defer p.carSlots.mu.Unlock()
+	if p.carSlots.slots == nil {
+		p.carSlots.slots = make(map[string]chan struct{})
+	}
+	slots, ok := p.carSlots.slots[peerID]
+	if !ok {
+		slots = make(chan struct{}, maxInFlightCARRequestsPerPeer)
+		p.carSlots.slots[peerID] = slots
+	}
+	return slots
 }
 
 // carPeerBackoffs records peers whose CAR request failed: until when they are held back, and how
