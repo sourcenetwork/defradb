@@ -76,9 +76,10 @@ func (c *carCache) getOrBuild(
 	c.mu.Lock()
 	if el, ok := c.entries[key]; ok {
 		c.order.MoveToFront(el)
-		c.mu.Unlock()
 		// entries only ever holds elements whose Value is a *carEntry.
-		return el.Value.(*carEntry).data, true, nil //nolint:forcetypeassert
+		data := el.Value.(*carEntry).data //nolint:forcetypeassert
+		c.mu.Unlock()
+		return data, true, nil
 	}
 	if b, ok := c.building[key]; ok {
 		c.mu.Unlock()
