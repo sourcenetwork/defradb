@@ -26,28 +26,28 @@ type heapUnderTest struct {
 	// new returns a fresh, empty heap.Interface backed by the concrete heap type.
 	new func() heap.Interface
 	// root reads h[0].dist from the concrete heap value.
-	root func(h heap.Interface) float32
+	root func(h heap.Interface) float64
 	// popOrder returns the distances in the order Pop yields them: ascending for minHeap,
 	// descending for maxHeap.
-	popOrder func(sorted []float32) []float32
+	popOrder func(sorted []float64) []float64
 	// extreme returns the element this heap would pop next from the given contents: the minimum
 	// for minHeap, the maximum for maxHeap. Panics on empty input (never called that way).
-	extreme func(contents []float32) float32
+	extreme func(contents []float64) float64
 }
 
 func minHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "minHeap",
 		new:  func() heap.Interface { return newMinHeap() },
-		root: func(h heap.Interface) float32 {
+		root: func(h heap.Interface) float64 {
 			mh, _ := h.(*candidateHeap)
 			return mh.items[0].dist
 		},
-		popOrder: func(sorted []float32) []float32 {
-			out := append([]float32(nil), sorted...) // sorted is ascending → min pops ascending
+		popOrder: func(sorted []float64) []float64 {
+			out := append([]float64(nil), sorted...) // sorted is ascending → min pops ascending
 			return out
 		},
-		extreme: func(contents []float32) float32 {
+		extreme: func(contents []float64) float64 {
 			m := contents[0]
 			for _, v := range contents {
 				if v < m {
@@ -63,18 +63,18 @@ func maxHeapUT() heapUnderTest {
 	return heapUnderTest{
 		name: "maxHeap",
 		new:  func() heap.Interface { return newMaxHeap() },
-		root: func(h heap.Interface) float32 {
+		root: func(h heap.Interface) float64 {
 			mh, _ := h.(*candidateHeap)
 			return mh.items[0].dist
 		},
-		popOrder: func(sorted []float32) []float32 {
-			out := make([]float32, len(sorted)) // sorted is ascending → max pops descending
+		popOrder: func(sorted []float64) []float64 {
+			out := make([]float64, len(sorted)) // sorted is ascending → max pops descending
 			for i, v := range sorted {
 				out[len(sorted)-1-i] = v
 			}
 			return out
 		},
-		extreme: func(contents []float32) float32 {
+		extreme: func(contents []float64) float64 {
 			m := contents[0]
 			for _, v := range contents {
 				if v > m {
@@ -94,9 +94,9 @@ func popCandidate(t *testing.T, h heap.Interface) candidate {
 	return c
 }
 
-func popAllDists(t *testing.T, h heap.Interface) []float32 {
+func popAllDists(t *testing.T, h heap.Interface) []float64 {
 	t.Helper()
-	out := make([]float32, 0, h.Len())
+	out := make([]float64, 0, h.Len())
 	for h.Len() > 0 {
 		out = append(out, popCandidate(t, h).dist)
 	}
@@ -106,7 +106,7 @@ func popAllDists(t *testing.T, h heap.Interface) []float32 {
 func TestHeap_PushThenPopAll_YieldsOrderedDistances(t *testing.T) {
 	// A representative unordered input; sorted ascending is the reference the per-heap popOrder
 	// derives its expectation from.
-	inputs := map[string][]float32{
+	inputs := map[string][]float64{
 		"unordered distinct":  {5, 1, 4, 2, 3},
 		"already ascending":   {1, 2, 3, 4},
 		"already descending":  {4, 3, 2, 1},
@@ -134,7 +134,7 @@ func TestHeap_PushThenPopAll_YieldsOrderedDistances(t *testing.T) {
 }
 
 func TestHeap_Root_IsExtremeElement(t *testing.T) {
-	in := []float32{5, 1, 4, 2, 3}
+	in := []float64{5, 1, 4, 2, 3}
 
 	for _, ut := range []heapUnderTest{minHeapUT(), maxHeapUT()} {
 		t.Run(ut.name, func(t *testing.T) {
@@ -157,9 +157,9 @@ func TestHeap_InterleavedPushPop_ReturnsCurrentExtreme(t *testing.T) {
 	for _, ut := range []heapUnderTest{minHeapUT(), maxHeapUT()} {
 		t.Run(ut.name, func(t *testing.T) {
 			h := ut.new()
-			model := []float32{}
+			model := []float64{}
 
-			push := func(d float32) {
+			push := func(d float64) {
 				heap.Push(h, candidate{dist: d})
 				model = append(model, d)
 			}
@@ -194,7 +194,7 @@ func TestHeap_PreservesCandidatePayload(t *testing.T) {
 }
 
 // removeFirst returns s with the first occurrence of v removed (reference-model bookkeeping).
-func removeFirst(s []float32, v float32) []float32 {
+func removeFirst(s []float64, v float64) []float64 {
 	for i, x := range s {
 		if x == v {
 			return append(s[:i:i], s[i+1:]...)
@@ -204,8 +204,8 @@ func removeFirst(s []float32, v float32) []float32 {
 }
 
 // ascendingSorted returns a new ascending-sorted copy of in, used as the reference ordering.
-func ascendingSorted(in []float32) []float32 {
-	out := append([]float32(nil), in...)
+func ascendingSorted(in []float64) []float64 {
+	out := append([]float64(nil), in...)
 	for i := 1; i < len(out); i++ {
 		for j := i; j > 0 && out[j] < out[j-1]; j-- {
 			out[j], out[j-1] = out[j-1], out[j]

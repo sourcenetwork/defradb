@@ -37,8 +37,6 @@ func TestVectorIndex_CreateWithOversizedM_IsRejected(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Uniqueness has no meaning for a vector index. The index API can request it (the SDL directive
-// cannot), so it must be rejected rather than silently dropped.
 func TestVectorIndex_CreateAsUnique_IsRejected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -58,7 +56,35 @@ func TestVectorIndex_CreateAsUnique_IsRejected(t *testing.T) {
 					Dimensions: 3,
 					HNSW:       &client.HNSWParams{},
 				},
-				ExpectedError: "vector index cannot be unique",
+				ExpectedError: "only an ordered index can be unique",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestVectorIndex_CreateWithDirection_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!]
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields: []client.IndexedFieldDescription{
+					{Name: "vector", Descending: true},
+				},
+				Vector: &client.VectorIndexDescription{
+					Algorithm:  client.VectorAlgorithmHNSW,
+					Metric:     client.DistanceMetricCosine,
+					Dimensions: 3,
+					HNSW:       &client.HNSWParams{},
+				},
+				ExpectedError: "vector index cannot have a direction",
 			},
 		},
 	}

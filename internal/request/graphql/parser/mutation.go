@@ -136,6 +136,20 @@ func parseTruncateMutationArgs(mut *request.ObjectMutation, args map[string]any)
 				return ErrInvalidFilterConditions
 			}
 			mut.Filter = immutable.Some(request.Filter{Conditions: v})
+
+		case request.DocIDArgName:
+			if value == nil {
+				return ErrTruncateDocIDNull
+			}
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, v := range v {
+				docIDs[i] = v.(string)
+			}
+			mut.DocIDs = immutable.Some(docIDs)
 		}
 	}
 	return nil

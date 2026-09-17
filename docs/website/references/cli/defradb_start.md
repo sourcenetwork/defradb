@@ -19,7 +19,7 @@ defradb start [flags]
       --development                       Enables a set of features that make development easier but should not be enabled in production:
                                            - allows purging of all persisted data
                                            - generates temporary node identity if one doesn't exist in the keyring
-      --document-acp-type string          Specify the document acp engine to use (supported: local (default), source-hub) (default "local")
+      --document-acp-type string          Document Access Control (DAC) backend to use: local (default) or remote (default "local")
   -h, --help                              help for start
   -i, --identity string                   Hex formatted private key used to authenticate with ACP
       --keyring-backend string            Keyring backend to use. Options are file or system (default "file")
@@ -32,16 +32,16 @@ defradb start [flags]
       --no-searchable-encryption          Skip generating a searchable encryption key. Searchable encryption will be disabled.
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
-      --node-acp-enable                   Enable the node access control system.
+      --node-acp-enable                   Enable the Local Node Access Control (NAC) system.
       --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls
       --pubkeypath string                 Path to the public key for tls
       --pubsub                            Enable the pubsub system (default true)
       --relay                             Enable the p2p relay
+      --remote-dac-address string         Vera address authorized to make Remote DAC transactions on behalf of the actor
       --replicator-retry-intervals ints   Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. Example: 10,20,40,80,160,320 (default [30,60,120,240,480,960,1920])
       --secret-file string                Path to the file containing secrets (default ".env")
-      --source-hub-address string         The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --store string                      Specify the datastore to use (supported: badger, memory) (default "badger")
       --url string                        URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
       --valuelogfilesize int              Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize (default 1073741824)

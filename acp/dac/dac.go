@@ -46,7 +46,7 @@ type DocumentACP interface {
 	// by assuming YAML format if JSON validation fails. Upon success a policyID is returned,
 	// otherwise returns error.
 	//
-	// A policy can not be added without a creator identity (sourcehub address).
+	// A policy cannot be added without a creator identity (a Vera address for Remote DAC).
 	AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error)
 
 	// ValidateResourceInterface performs resource interface validation of the linked/matching

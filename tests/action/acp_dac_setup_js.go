@@ -16,7 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// cfg is unused: the js build has no SourceHub container to gate on.
-func setupSourceHub(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
+// cfg is unused: the js build has no Vera container to gate on.
+func setupRemoteDAC(s *state.State, cfg NodeSetupConfig) (*options.NodeDocumentACPOptions, error) {
 	return s.DocumentACPOptions, nil
 }

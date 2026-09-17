@@ -16,7 +16,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
@@ -30,7 +29,7 @@ import (
 // ver is unused: external (cross-version) nodes are not supported under js.
 func SetupNode(
 	s *state.State,
-	identity immutable.Option[acpIdentity.Identity],
+	identity immutable.Option[state.Identity],
 	cfg NodeSetupConfig,
 	opts *options.NodeOptionsBuilder,
 	ver string,
@@ -54,14 +53,14 @@ func SetupNode(
 	case state.LocalDocumentACPType:
 		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
-	case state.SourceHubDocumentACPType:
+	case state.RemoteDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			var err error
-			s.DocumentACPOptions, err = setupSourceHub(s, cfg)
+			s.DocumentACPOptions, err = setupRemoteDAC(s, cfg)
 			require.NoError(s.T, err)
 		}
 		opts.DocumentACP().
-			SetType(options.NodeSourceHubDocumentACPType).
+			SetType(options.NodeRemoteDocumentACPType).
 			SetAll(*s.DocumentACPOptions)
 
 	default:
@@ -72,7 +71,7 @@ func SetupNode(
 	if err != nil {
 		return nil, err
 	}
-	ctx := iIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, resolveIdentity(s, identity))
 	err = nodeObj.Start(ctx)
 	if err != nil {
 		return nil, err

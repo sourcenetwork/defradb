@@ -86,6 +86,87 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithSimilarityInFragmentAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					books: [Book]
+				}
+				type Book {
+					name: String
+					tags: [String!]
+					author: User
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						books {
+							...similarity
+						}
+					}
+				}
+				fragment similarity on Book {
+					SIMILARITY(tags: {vector: [1.1, 1.2, 0.9]})
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: tags, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityInInlineFragmentAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					pets: [String!]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						... on User {
+							SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
+						}
+					}
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityInMutationAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					pets: [String!]
+				}`,
+			},
+			&action.Request{
+				Request: `mutation {
+					add_User(input: {name: "John"}) {
+						SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
+					}
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -101,8 +182,7 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 						SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
 					}
 				}`,
-				// Not found on SIMILARITY because it's not a supported type.
-				ExpectedError: "Unknown argument \"pets\" on field \"SIMILARITY\" of type \"User\".",
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
 			},
 		},
 	}
@@ -511,6 +591,29 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 				Results: map[string]any{
 					"User": []map[string]any{},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityAndNoArguments_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Int!]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						SIMILARITY
+					}
+				}`,
+				ExpectedError: "similarity requires a target field argument",
 			},
 		},
 	}

@@ -21,21 +21,21 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-func newSourceHubDocumentACP(
+func newRemoteDocumentACP(
 	ctx context.Context,
 	opts *options.NodeDocumentACPOptions,
 ) (immutable.Option[dac.DocumentACP], error) {
 	if !opts.Signer.HasValue() {
-		return dac.NoDocumentACP, ErrSignerMissingForSourceHubACP
+		return dac.NoDocumentACP, ErrSignerMissingForRemoteDAC
 	}
-	acpSourceHub, err := dac.NewSourceHubACP(
-		opts.SourceHubChainID,
-		opts.SourceHubGRPCAddress,
-		opts.SourceHubCometRPCAddress,
+	remoteDAC, err := dac.NewRemoteDocumentACP(
+		opts.RemoteDACLogID,
+		opts.RemoteDACGRPCAddress,
+		opts.RemoteDACCometRPCAddress,
 		opts.Signer.Value(),
 	)
 	if err != nil {
 		return dac.NoDocumentACP, err
 	}
-	return immutable.Some(acpSourceHub), nil
+	return immutable.Some(remoteDAC), nil
 }

@@ -27,18 +27,31 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 var _ client.TxnStore = (*Wrapper)(nil)
 var _ client.P2P = (*Wrapper)(nil)
+
+// keyringSecret unlocks the node's keyring. The keyring only exists for the
+// lifetime of the node's temporary rootdir, so the value is not a secret.
+const keyringSecret = "test"
+
+// nodeIdentityKeyName is the keyring entry the node reads its identity from.
+// It has to match the name the node looks up, which is not exported.
+const nodeIdentityKeyName = "node-identity-key"
 
 // maxTxnRetries is returned by MaxTxnRetries. There is no in-process node to
 // ask, so this mirrors the default used by db.DB when nothing is configured.
@@ -78,7 +91,21 @@ type Wrapper struct {
 // A temporary rootdir and a free API port are chosen internally. The P2P
 // listener uses port 0 so the node picks a free port at bind time; read its
 // real address back with PeerInfo. Use Host for the API URL.
-func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
+//
+// nodeIdentity is the private key the node runs as. Without it the node
+// generates its own, which the test has no way to name, so anything addressing
+// the node by identity cannot reach it.
+//
+// rootDir restarts a node in the directory it was using. Pass an empty string
+// for a new node, which gets a fresh temporary one.
+func NewWrapper(
+	ctx context.Context,
+	t testing.TB,
+	binaryPath string,
+	nodeIdentity immutable.Option[crypto.PrivateKey],
+	rootDir string,
+	extraFlags []string,
+) (*Wrapper, error) {
 	// The API port is chosen before start, so another process can grab it in the
 	// gap before the child binds. Retry a few times on a start/health failure.
 	var lastErr error
@@ -91,7 +118,7 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 			}
 			return nil, err
 		}
-		w, err := startWrapper(ctx, t, binaryPath)
+		w, err := startWrapper(ctx, t, binaryPath, nodeIdentity, rootDir, extraFlags)
 		if err == nil {
 			return w, nil
 		}
@@ -101,36 +128,62 @@ func NewWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper,
 }
 
 // startWrapper makes one attempt to start and reach a node.
-func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrapper, error) {
+func startWrapper(
+	ctx context.Context,
+	t testing.TB,
+	binaryPath string,
+	nodeIdentity immutable.Option[crypto.PrivateKey],
+	rootDir string,
+	extraFlags []string,
+) (*Wrapper, error) {
 	apiPort, err := freePort()
 	if err != nil {
 		return nil, errors.Wrap("failed to find free api port", err)
 	}
-	rootDir, err := os.MkdirTemp("", "defradb-external-*")
-	if err != nil {
-		return nil, errors.Wrap("failed to create rootdir", err)
+	// An empty rootdir means a new node. A restart passes the one it was using,
+	// which holds data the test still reads, so only a directory made here is
+	// removed.
+	if rootDir == "" {
+		rootDir, err = os.MkdirTemp("", "defradb-external-*")
+		if err != nil {
+			return nil, errors.Wrap("failed to create rootdir", err)
+		}
+		// Close leaves the directory for a restart to start in again, so it is
+		// only safe to remove once the test that made it is over.
+		t.Cleanup(func() { removeAll(rootDir) })
 	}
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
 
-	cmd := exec.CommandContext(ctx, binaryPath, "start",
+	// The node reads its identity from the keyring, and generates one when the
+	// entry is missing. Seeding it is what lets the test address this node.
+	if nodeIdentity.HasValue() {
+		if err := seedNodeIdentity(rootDir, nodeIdentity.Value()); err != nil {
+			return nil, err
+		}
+	}
+
+	// The address and rootdir are chosen here because the wrapper needs to know
+	// them. Everything else about the node comes from the caller, so it can
+	// match the configuration a native node would be given.
+	args := []string{"start",
 		"--url", apiURL,
-		"--p2paddr", "/ip4/127.0.0.1/tcp/0",
-		"--store", "badger",
 		"--development",
-		"--no-keyring",
 		"--rootdir", rootDir,
-	)
+	}
+	args = append(args, extraFlags...)
+
+	cmd := exec.CommandContext(ctx, binaryPath, args...)
+	// The keyring prompts for its secret on a terminal when this is unset.
+	cmd.Env = append(os.Environ(), "DEFRA_KEYRING_SECRET="+keyringSecret)
 
 	stderr := newRingBuffer(64 * 1024)
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to get stdout pipe", err)
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to get stderr pipe", err)
 	}
 	var logWG sync.WaitGroup
@@ -139,7 +192,6 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrappe
 
 	if err := cmd.Start(); err != nil {
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to start process", err)
 	}
 
@@ -147,14 +199,12 @@ func startWrapper(ctx context.Context, t testing.TB, binaryPath string) (*Wrappe
 	if err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to create http client", err)
 	}
 
 	if err := waitForHealth(ctx, httpClient, healthCheckTimeout); err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap(
 			"external node did not become healthy in time",
 			err,
@@ -246,10 +296,33 @@ func killAndWait(cmd *exec.Cmd) {
 	_ = cmd.Wait()
 }
 
+// seedNodeIdentity writes the given key to the node's keyring, so the node
+// starts as that identity instead of generating one.
+//
+// The node stores the key type alongside the key and reads the type back, so
+// the prefix is part of the format rather than decoration.
+func seedNodeIdentity(rootDir string, key crypto.PrivateKey) error {
+	kr, err := keyring.OpenFileKeyring(filepath.Join(rootDir, "keys"), []byte(keyringSecret))
+	if err != nil {
+		return errors.Wrap("failed to open keyring", err)
+	}
+	value := append([]byte(string(key.Type())+":"), key.Raw()...)
+	if err := kr.Set(nodeIdentityKeyName, value); err != nil {
+		return errors.Wrap("failed to seed node identity", err)
+	}
+	return nil
+}
+
 // removeAll removes dir, swallowing errors since this is only used on
 // already-failing setup paths.
 func removeAll(dir string) {
 	_ = os.RemoveAll(dir)
+}
+
+// RootDir returns the directory holding the node's store and keyring. Pass it
+// back on a restart to keep both.
+func (w *Wrapper) RootDir() string {
+	return w.rootDir
 }
 
 // Host returns the base URL the wrapper's HTTP client is talking to.
@@ -270,7 +343,8 @@ func (w *Wrapper) Close() {
 	// goroutines may still be draining them; wait before returning to avoid
 	// a t.Log call racing past the end of the test.
 	w.logWG.Wait()
-	_ = os.RemoveAll(w.rootDir)
+	// The rootdir is left in place, since a restart starts a new process in it.
+	// It sits under the OS temporary directory either way.
 	w.bus.Close()
 }
 

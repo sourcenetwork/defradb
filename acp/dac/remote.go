@@ -8,8 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-// SourceHub ACP implementation for non-JS environments.
-// JS environments are handled by source_hub_js.go
+// Remote DAC implementation for non-JS environments.
+// JS environments are handled by remote_js.go.
 //
 //go:build !js
 
@@ -25,79 +25,83 @@ import (
 	acpErrors "github.com/sourcenetwork/acp_core/pkg/errors"
 	coreTypes "github.com/sourcenetwork/acp_core/pkg/types"
 	"github.com/sourcenetwork/immutable"
-	sourcehub "github.com/sourcenetwork/sourcehub/sdk"
-	sourcehubTypes "github.com/sourcenetwork/sourcehub/x/acp/types"
+	vera "github.com/sourcenetwork/vera/sdk"
+	veraTypes "github.com/sourcenetwork/vera/x/acp/types"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-func NewSourceHubACP(
-	chainID string,
+// NewRemoteDocumentACP returns a Vera-backed Remote DAC instance.
+func NewRemoteDocumentACP(
+	logID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	signer sourcehub.TxSigner,
+	signer vera.TxSigner,
 ) (DocumentACP, error) {
-	acpSourceHub, err := NewACPSourceHub(chainID, grpcAddress, cometRPCAddress, signer)
+	remoteDAC, err := NewRemoteDocumentACPClient(logID, grpcAddress, cometRPCAddress, signer)
 	if err != nil {
 		return nil, err
 	}
 
 	return &bridgeDocumentACP{
-		clientACP: acpSourceHub,
+		clientACP:       remoteDAC,
+		documentACPType: acpTypes.RemoteDocumentACP,
 	}, nil
 }
 
-type SourceHubDocumentACP struct {
-	client    *sourcehub.Client
-	txBuilder *sourcehub.TxBuilder
-	signer    sourcehub.TxSigner
+// RemoteDocumentACP is the Vera-backed client used by Remote DAC.
+type RemoteDocumentACP struct {
+	client    *vera.Client
+	txBuilder *vera.TxBuilder
+	signer    vera.TxSigner
 }
 
-func NewACPSourceHub(
-	chainID string,
+// NewRemoteDocumentACPClient returns a Vera-backed Remote DAC client.
+func NewRemoteDocumentACPClient(
+	logID string,
 	grpcAddress string,
 	cometRPCAddress string,
-	signer sourcehub.TxSigner,
-) (*SourceHubDocumentACP, error) {
-	client, err := sourcehub.NewClient(
-		sourcehub.WithGRPCAddr(grpcAddress),
-		sourcehub.WithCometRPCAddr(cometRPCAddress),
+	signer vera.TxSigner,
+) (*RemoteDocumentACP, error) {
+	client, err := vera.NewClient(
+		vera.WithGRPCAddr(grpcAddress),
+		vera.WithCometRPCAddr(cometRPCAddress),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	txBuilder, err := sourcehub.NewTxBuilder(
-		sourcehub.WithSDKClient(client),
-		sourcehub.WithChainID(chainID),
-		sourcehub.WithGasLimit(400000),
+	txBuilder, err := vera.NewTxBuilder(
+		vera.WithSDKClient(client),
+		vera.WithChainID(logID),
+		vera.WithGasLimit(400000),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SourceHubDocumentACP{
+	return &RemoteDocumentACP{
 		client:    client,
 		txBuilder: &txBuilder,
 		signer:    signer,
 	}, nil
 }
 
-func (a *SourceHubDocumentACP) Start(ctx context.Context) error {
+func (a *RemoteDocumentACP) Start(ctx context.Context) error {
 	return nil
 }
 
-func (a *SourceHubDocumentACP) AddPolicy(
+func (a *RemoteDocumentACP) AddPolicy(
 	ctx context.Context,
 	creator identity.Identity,
 	policy string,
 	policyMarshalType acpTypes.PolicyMarshalType,
 	creationTime *protoTypes.Timestamp,
 ) (string, error) {
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 	policyMapper := msgSet.WithCreatePolicy(
-		sourcehubTypes.NewMsgCreatePolicy(
+		veraTypes.NewMsgCreatePolicy(
 			a.signer.GetAccAddress(),
 			policy,
 			coreTypes.PolicyMarshalingType(policyMarshalType),
@@ -129,17 +133,17 @@ func (a *SourceHubDocumentACP) AddPolicy(
 	return policyResponse.Record.Policy.Id, nil
 }
 
-func (a *SourceHubDocumentACP) Policy(
+func (a *RemoteDocumentACP) Policy(
 	ctx context.Context,
 	policyID string,
 ) (immutable.Option[acpTypes.Policy], error) {
 	response, err := a.client.ACPQueryClient().Policy(
 		ctx,
-		&sourcehubTypes.QueryPolicyRequest{Id: policyID},
+		&veraTypes.QueryPolicyRequest{Id: policyID},
 	)
 	if err != nil {
 		// todo: https://github.com/sourcenetwork/defradb/issues/2826
-		// Sourcehub errors do not currently work with errors.Is, errors.Is
+		// Vera errors do not currently work with errors.Is, so errors.Is
 		// should be used here instead of strings.Contains when that is fixed.
 		if strings.Contains(err.Error(), acpErrors.ErrorType_NOT_FOUND.Error()) {
 			return immutable.None[acpTypes.Policy](), nil
@@ -149,14 +153,14 @@ func (a *SourceHubDocumentACP) Policy(
 	}
 
 	return immutable.Some(
-		fromSourceHubPolicy(response.Record.Policy),
+		fromRemoteDACPolicy(response.Record.Policy),
 	), nil
 }
 
-func fromSourceHubPolicy(pol *coreTypes.Policy) acpTypes.Policy {
+func fromRemoteDACPolicy(pol *coreTypes.Policy) acpTypes.Policy {
 	resources := make(map[string]*acpTypes.Resource)
 	for _, coreResource := range pol.Resources {
-		resource := fromSourceHubResource(coreResource)
+		resource := fromRemoteDACResource(coreResource)
 		resources[resource.Name] = resource
 	}
 
@@ -166,10 +170,10 @@ func fromSourceHubPolicy(pol *coreTypes.Policy) acpTypes.Policy {
 	}
 }
 
-func fromSourceHubResource(policy *coreTypes.Resource) *acpTypes.Resource {
+func fromRemoteDACResource(policy *coreTypes.Resource) *acpTypes.Resource {
 	perms := make(map[string]*acpTypes.Permission)
 	for _, corePermission := range policy.Permissions {
-		perm := fromSourceHubPermission(corePermission)
+		perm := fromRemoteDACPermission(corePermission)
 		perms[perm.Name] = perm
 	}
 
@@ -179,14 +183,14 @@ func fromSourceHubResource(policy *coreTypes.Resource) *acpTypes.Resource {
 	}
 }
 
-func fromSourceHubPermission(perm *coreTypes.Permission) *acpTypes.Permission {
+func fromRemoteDACPermission(perm *coreTypes.Permission) *acpTypes.Permission {
 	return &acpTypes.Permission{
 		Name:       perm.Name,
 		Expression: perm.Expression,
 	}
 }
 
-func (a *SourceHubDocumentACP) RegisterObject(
+func (a *RemoteDocumentACP) RegisterObject(
 	ctx context.Context,
 	ident identity.Identity,
 	policyID string,
@@ -194,7 +198,7 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	objectID string,
 	creationTime *protoTypes.Timestamp,
 ) error {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	// Check if the identity is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := ident.(identity.TokenIdentity)
@@ -202,12 +206,12 @@ func (a *SourceHubDocumentACP) RegisterObject(
 		return identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	msgSet := vera.MsgSet{}
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
+		Cmd:         veraTypes.NewRegisterObjectCmd(coreTypes.NewObject(resourceName, objectID)),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -231,17 +235,17 @@ func (a *SourceHubDocumentACP) RegisterObject(
 	return err
 }
 
-func (a *SourceHubDocumentACP) ObjectOwner(
+func (a *RemoteDocumentACP) ObjectOwner(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
 	objectID string,
 ) (immutable.Option[string], error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	resp, err := a.client.ACPQueryClient().ObjectOwner(
 		ctx,
-		&sourcehubTypes.QueryObjectOwnerRequest{
+		&veraTypes.QueryObjectOwnerRequest{
 			PolicyId: policyID,
 			Object:   coreTypes.NewObject(resourceName, objectID),
 		},
@@ -257,7 +261,7 @@ func (a *SourceHubDocumentACP) ObjectOwner(
 	return immutable.Some(resp.Record.Metadata.OwnerDid), nil
 }
 
-func (a *SourceHubDocumentACP) VerifyAccessRequest(
+func (a *RemoteDocumentACP) VerifyAccessRequest(
 	ctx context.Context,
 	permission acpTypes.ResourceInterfacePermission,
 	actorID string,
@@ -265,11 +269,11 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	resourceName string,
 	objectID string,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	checkDocResponse, err := a.client.ACPQueryClient().VerifyAccessRequest(
 		ctx,
-		&sourcehubTypes.QueryVerifyAccessRequestRequest{
+		&veraTypes.QueryVerifyAccessRequestRequest{
 			PolicyId: policyID,
 			AccessRequest: &coreTypes.AccessRequest{
 				Operations: []*coreTypes.Operation{
@@ -291,15 +295,15 @@ func (a *SourceHubDocumentACP) VerifyAccessRequest(
 	return checkDocResponse.Valid, nil
 }
 
-func (a *SourceHubDocumentACP) Close() error {
+func (a *RemoteDocumentACP) Close() error {
 	return nil
 }
 
-func (a *SourceHubDocumentACP) ResetState(_ context.Context) error {
-	return fmt.Errorf("sourcehub acp ResetState() unimplemented")
+func (a *RemoteDocumentACP) ResetState(_ context.Context) error {
+	return fmt.Errorf("remote DAC ResetState() is not implemented")
 }
 
-func (a *SourceHubDocumentACP) AddActorRelationship(
+func (a *RemoteDocumentACP) AddActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -309,7 +313,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
@@ -317,7 +321,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
 	if targetActor == "*" {
@@ -335,11 +339,11 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 		)
 	}
 
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewSetRelationshipCmd(newActorRelationship),
+		Cmd:         veraTypes.NewSetRelationshipCmd(newActorRelationship),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {
@@ -366,7 +370,7 @@ func (a *SourceHubDocumentACP) AddActorRelationship(
 	return cmdResult.GetResult().GetSetRelationshipResult().GetRecordExisted(), nil
 }
 
-func (a *SourceHubDocumentACP) DeleteActorRelationship(
+func (a *RemoteDocumentACP) DeleteActorRelationship(
 	ctx context.Context,
 	policyID string,
 	resourceName string,
@@ -376,7 +380,7 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 	targetActor string,
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
-	objectID = sourceHubObjectID(objectID)
+	objectID = remoteDACObjectID(objectID)
 
 	// Check if the requester is a TokenIdentity (has BearerToken)
 	tokenIdentity, ok := requester.(identity.TokenIdentity)
@@ -384,7 +388,7 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := sourcehub.MsgSet{}
+	msgSet := vera.MsgSet{}
 
 	var newActorRelationship *coreTypes.Relationship
 	if targetActor == "*" {
@@ -402,11 +406,11 @@ func (a *SourceHubDocumentACP) DeleteActorRelationship(
 		)
 	}
 
-	cmdMapper := msgSet.WithBearerPolicyCmd(&sourcehubTypes.MsgBearerPolicyCmd{
+	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
 		BearerToken: tokenIdentity.BearerToken(),
 		PolicyId:    policyID,
-		Cmd:         sourcehubTypes.NewDeleteRelationshipCmd(newActorRelationship),
+		Cmd:         veraTypes.NewDeleteRelationshipCmd(newActorRelationship),
 	})
 	tx, err := a.txBuilder.Build(ctx, a.signer, &msgSet)
 	if err != nil {

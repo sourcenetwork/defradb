@@ -192,6 +192,7 @@ func TestNewIndex_IfValidInput_NewIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	//nolint:staticcheck // asserts the deprecated field is still carried through
 	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
@@ -483,7 +484,6 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 		Name:   desc.Name,
 		ID:     1,
 		Fields: desc.Fields,
-		Unique: desc.Unique,
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
@@ -498,7 +498,6 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 		Name:   desc.Name,
 		ID:     1,
 		Fields: desc.Fields,
-		Unique: desc.Unique,
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))

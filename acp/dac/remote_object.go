@@ -12,8 +12,8 @@ package dac
 
 import "github.com/sourcenetwork/defradb/client"
 
-// SourceHub stores DocID objects by their UUID payload, not the DefraDB versioned string.
-func sourceHubObjectID(objectID string) string {
+// Vera stores DocID objects by their UUID payload, not the DefraDB versioned string.
+func remoteDACObjectID(objectID string) string {
 	docID, err := client.NewDocIDFromString(objectID)
 	if err != nil {
 		return objectID

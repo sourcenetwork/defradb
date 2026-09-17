@@ -21,12 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestACP_P2PAddPrivateDocumentsOnDifferentNodes_SourceHubACP(t *testing.T) {
+func TestACP_P2PAddPrivateDocumentsOnDifferentNodes_RemoteDAC(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 
@@ -115,11 +115,11 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_P2PAddPrivateDocumentAndSyncAfterAddingRelationship_SourceHubACP(t *testing.T) {
+func TestACP_P2PAddPrivateDocumentAndSyncAfterAddingRelationship_RemoteDAC(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{

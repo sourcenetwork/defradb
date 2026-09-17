@@ -81,6 +81,49 @@ func (a *assertStack) String() string {
 	return b.String()
 }
 
+// assertWarnings asserts the warnings in the `extensions` field of a response.
+//
+// Expecting none is the default, so a test that never mentions warnings still fails if the code
+// starts emitting one. Only the code and the details given are compared: message wording is free
+// to change, and a test can pin just the details it cares about.
+func assertWarnings(
+	t testing.TB,
+	clientType state.ClientType,
+	actual *client.GQLExtensions,
+	expected []client.GQLWarning,
+) {
+	var warnings []client.GQLWarning
+	if actual != nil {
+		warnings = actual.Warnings
+	}
+
+	if len(expected) == 0 {
+		require.Empty(t, warnings, "expected no warnings")
+		return
+	}
+
+	require.Len(t, warnings, len(expected), "unexpected number of warnings: %v", warnings)
+	for i, exp := range expected {
+		got := warnings[i]
+		require.Equal(t, exp.Code, got.Code, "unexpected warning code")
+		require.NotEmpty(t, got.Message, "warning %s has no message", got.Code)
+		// Details are part of the API, so an unexpected one is a change a test should catch.
+		require.Len(t, got.Detail, len(exp.Detail), "unexpected details on warning %s: %v", got.Code, got.Detail)
+		for key, expValue := range exp.Detail {
+			actualValue, ok := got.Detail[key]
+			require.True(t, ok, "warning %s has no detail %q", got.Code, key)
+			// isResultsEqual, not require.Equal: the serializing clients decode numbers as
+			// json.Number, so a number detail would not match its Go value.
+			require.True(
+				t,
+				isResultsEqual(clientType, expValue, actualValue),
+				"unexpected detail %q on warning %s: expected %v, got %v",
+				key, got.Code, expValue, actualValue,
+			)
+		}
+	}
+}
+
 // assertRequestResults asserts the results of a GQL request.
 func assertRequestResults(
 	s *state.State,
@@ -90,12 +133,15 @@ func assertRequestResults(
 	asserter ResultAsserter,
 	nodeID int,
 	ordered bool,
+	expectedWarnings []client.GQLWarning,
 ) bool {
 	s.CurrentAssertingNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if assertErrors(s.T, result.Errors, expectedError) || s.IsBench {
 		return true
 	}
+
+	assertWarnings(s.T, s.ClientType, result.Extensions, expectedWarnings)
 
 	if expectedResults == nil && result.Data == nil {
 		return false
@@ -156,7 +202,7 @@ func assertRequestResults(
 		default:
 			assertResultsEqual(
 				s.T,
-				s.ClientType,
+				clientTypeForNode(s, nodeID),
 				expect,
 				actual,
 				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
@@ -273,14 +319,14 @@ func assertRequestResultDoc(
 			if ordered {
 				assertResultsEqual(
 					s.T,
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedDocID,
 					actualValue,
 					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			} else {
 				ok := isResultsEqual(
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedDocID,
 					actualValue,
 				)
@@ -323,14 +369,14 @@ func assertRequestResultDoc(
 			if ordered {
 				assertResultsEqual(
 					s.T,
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedValue,
 					actualValue,
 					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
 				)
 			} else {
 				ok := isResultsEqual(
-					s.ClientType,
+					clientTypeForNode(s, nodeID),
 					expectedValue,
 					actualValue,
 				)
