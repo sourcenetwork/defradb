@@ -23,6 +23,14 @@ func RandomNetworkingConfig() *NewNode {
 	}
 }
 
+// NoNetworkingConfig returns a node configured with P2P disabled entirely (the node's
+// internal db.p2p stays nil).
+func NoNetworkingConfig() *NewNode {
+	return &NewNode{
+		DisableP2P: true,
+	}
+}
+
 func WithPrivateKey(_ *options.NodeP2POptions, _ []byte) {
 	// JS builds don't support P2P
 }

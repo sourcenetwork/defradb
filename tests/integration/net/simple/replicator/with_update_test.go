@@ -132,8 +132,8 @@ func TestP2POneToOneReplicatorUpdatesDocAddedBeforeReplicatorConfigWithNodesInve
 
 func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// Restarting a node re-creates the external node as a new process on a new
-		// port, and its auth token is still bound to the old address.
+		// A restarted external node is a new process with a new temporary directory,
+		// so it cannot reopen the store it wrote before the restart.
 		// https://github.com/sourcenetwork/defradb/issues/5170
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
@@ -220,8 +220,8 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 
 func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAfterAdd_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// Restarting a node re-creates the external node as a new process on a new
-		// port, and its auth token is still bound to the old address.
+		// A restarted external node is a new process with a new temporary directory,
+		// so it cannot reopen the store it wrote before the restart.
 		// https://github.com/sourcenetwork/defradb/issues/5170
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,

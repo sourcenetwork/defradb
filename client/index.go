@@ -93,7 +93,7 @@ const (
 	// graph quality (recall) at the cost of build time.
 	DefaultHNSWEfConstruction uint32 = 128
 	// DefaultHNSWEfSearch is the default query-time exploration factor. Higher values improve recall
-	// at the cost of query latency; it may be overridden per query.
+	// at the cost of query latency. It is set per index and cannot be changed per query.
 	DefaultHNSWEfSearch uint32 = 64
 
 	// Upper bounds, checked at index creation. Build cost grows with these, and any client can set
@@ -272,8 +272,16 @@ type NewIndexRequest struct {
 	Name string
 	// Fields contains the fields that are being indexed.
 	Fields []IndexedFieldDescription
+
 	// Unique indicates whether the index is unique.
+	//
+	// Deprecated: use [Ordered] instead. This field will be removed in Defra v2.0.0. Setting both is
+	// an error unless they agree.
 	Unique bool
+
+	// Ordered holds config specific to ordered indexes. Non-nil iff this is an ordered index request.
+	Ordered *OrderedIndexDescription
+
 	// Vector holds config specific to vector (ANN) indexes. Non-nil iff this is a vector index request.
 	Vector *VectorIndexDescription
 }

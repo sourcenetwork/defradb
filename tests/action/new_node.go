@@ -16,7 +16,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -45,7 +46,11 @@ type NewNode struct {
 	// that published release binary instead of natively in-process.
 	Version string
 	// Network returns the node's P2P options. Nil means default networking.
+	// Ignored if DisableP2P is true.
 	Network ConfigureNode
+	// DisableP2P, when true, starts the node with P2P disabled entirely (the node's
+	// internal db.p2p stays nil), instead of the default networking Network configures.
+	DisableP2P bool
 
 	// SetupConfig carries the test-level settings node setup needs. The harness
 	// sets it before execution.
@@ -103,9 +108,10 @@ func (a *NewNode) Execute() {
 			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
 			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		opts.P2P().SetAll(p2pOpts)
+		opts.SetDisableP2P(a.DisableP2P)
 	}
 
-	node, err := SetupNode(s, acpIdentity.None, a.SetupConfig, opts, a.Version)
+	node, err := SetupNode(s, immutable.None[state.Identity](), a.SetupConfig, opts, a.Version)
 	require.NoError(s.T, err)
 	if node == nil {
 		// SetupNode already skipped the test (no release asset for this platform).
@@ -113,6 +119,7 @@ func (a *NewNode) Execute() {
 	}
 
 	node.P2POpts = p2pOpts
+	node.DisableP2P = a.DisableP2P
 	node.Version = a.Version
 	s.Nodes = append(s.Nodes, node)
 }

@@ -930,6 +930,10 @@ func findIndexWithFirstField(
 ) (isUnique bool, found bool) {
 	for _, index := range newIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			if index.Ordered != nil {
+				return index.Ordered.Unique, true
+			}
+			//nolint:staticcheck // the deprecated field is still supported until v2.0.0
 			return index.Unique, true
 		}
 	}

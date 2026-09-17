@@ -18,8 +18,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/integration/version"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -44,7 +48,7 @@ func TestExternalWrapper(t *testing.T) {
 		t.Skip("no v1.0.0 asset for this platform")
 	}
 
-	w, err := NewWrapper(ctx, t, path, nil)
+	w, err := NewWrapper(ctx, t, path, immutable.None[crypto.PrivateKey](), nil)
 	require.NoError(t, err)
 	defer w.Close()
 
@@ -74,4 +78,32 @@ func TestExternalWrapper(t *testing.T) {
 	eventState, err := state.NewEventState(bus)
 	require.NoError(t, err)
 	require.NotNil(t, eventState)
+}
+
+// TestExternalWrapper_SeededNodeIdentity asserts the node runs as the identity
+// it was given. Without it the node generates its own, which no test can name,
+// and every request addressing the node by identity is refused.
+func TestExternalWrapper_SeededNodeIdentity(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
+	defer cancel()
+
+	path, skip, err := version.BinaryPath(ctx, "v1.0.0")
+	require.NoError(t, err)
+	if skip {
+		t.Skip("no v1.0.0 asset for this platform")
+	}
+
+	key, err := crypto.GenerateKey(crypto.KeyTypeSecp256k1)
+	require.NoError(t, err)
+	want, err := acpIdentity.FromPrivateKey(key)
+	require.NoError(t, err)
+
+	w, err := NewWrapper(ctx, t, path, immutable.Some(key), nil)
+	require.NoError(t, err)
+	defer w.Close()
+
+	got, err := w.GetNodeIdentity(ctx)
+	require.NoError(t, err)
+	require.True(t, got.HasValue(), "node reported no identity")
+	require.Equal(t, want.DID(), got.Value().DID)
 }
