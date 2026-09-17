@@ -183,6 +183,11 @@ type DB interface {
 type P2P struct {
 	identityProtocol   *protocol.IdentityProtocol
 	replicatorProtocol protocol.CommChannel[protocol.PushLogRequest, protocol.PushLogReply]
+	// carProtocol carries CAR requests for heads an update announced without one.
+	carProtocol protocol.CommChannel[protocol.CARRequest, protocol.CARReply]
+	// carCache keeps the CARs this node recently served, so a head many peers ask for is
+	// built once.
+	carCache *carCache
 
 	ctx                  context.Context
 	db                   DB
@@ -267,9 +272,28 @@ type P2P struct {
 	// CAR generation counters. A failed generation is not a lost document: the block is sent
 	// either way, so the receiver walks the DAG instead. statCARMissing counts links the build
 	// could not follow in a CAR it returned.
-	statCARBuilt           atomic.Int64
-	statCARFailed          atomic.Int64
-	statCARMissing         atomic.Int64
+	statCARBuilt   atomic.Int64
+	statCARFailed  atomic.Int64
+	statCARMissing atomic.Int64
+	// The pull side of the CAR exchange: heads whose CAR a peer served, and heads no peer
+	// served, which fall back to walking the DAG. carFetchOutcome breaks each attempt down by
+	// the peer asked and what came back, and carServeOutcome names what the serving side did
+	// with each head it was asked for.
+	statCARFetched     atomic.Int64
+	statCARFetchMissed atomic.Int64
+	carFetchOutcome    failureReasons
+	carServeOutcome    failureReasons
+	// carFetchFailureReason logs the first of each distinct CAR request failure, with the peer
+	// and the underlying error, which the outcome counters alone do not carry.
+	carFetchFailureReason failureReasons
+	// carSlots bounds the CAR requests in flight to each peer, so this node queues rather than
+	// having the peer's resource manager reset the streams it opened.
+	carSlots carRequestSlots
+	// carBackoff passes over peers whose CAR request recently failed.
+	carBackoff carPeerBackoffs
+	// statCARCacheHits counts CARs served without a build of their own, from the cache or
+	// from another request's build of the same head.
+	statCARCacheHits       atomic.Int64
 	carFailureReason       failureReasons
 	carImportFailureReason failureReasons
 
@@ -340,6 +364,7 @@ func New(
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
 		msgQueueMaxBytes:     queueByteBudget(),
+		carCache:             newCARCache(carCacheMaxBytes),
 	}
 	p.initReasonCounters()
 
@@ -356,6 +381,7 @@ func New(
 	go p.reportStats()
 
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
+	p.carProtocol = protocol.NewCommChannel(host, "car", &carCommProcessor{p2p: &p})
 	p.batcher = newPubsubBatcher(host.ID(), func(topic string, data []byte) error {
 		return host.PublishToTopicAsync(ctx, topic, data)
 	})
@@ -840,6 +866,9 @@ func (p *P2P) report() {
 		corelog.Int64("carBuilt", p.statCARBuilt.Swap(0)),
 		corelog.Int64("carFailed", p.statCARFailed.Swap(0)),
 		corelog.Int64("carMissingLinks", p.statCARMissing.Swap(0)),
+		corelog.Int64("carFetched", p.statCARFetched.Swap(0)),
+		corelog.Int64("carFetchMissed", p.statCARFetchMissed.Swap(0)),
+		corelog.Int64("carCacheHits", p.statCARCacheHits.Swap(0)),
 		corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
 	)
 	// A drop at the door is data this node will not hold. The stats line above is at
@@ -855,6 +884,8 @@ func (p *P2P) report() {
 	reportFailureReasons("document drops", p.docDropReason.drain())
 	reportFailureReasons("document skips", p.docSkipReason.drain())
 	reportFailureReasons("CAR import failures", p.carImportFailureReason.drain())
+	reportFailureReasons("CAR fetch outcomes", p.carFetchOutcome.drain())
+	reportFailureReasons("CAR serve outcomes", p.carServeOutcome.drain())
 }
 
 // reportFailureReasons logs one line naming every reason that occurred in the interval,
@@ -1055,10 +1086,17 @@ func (p *P2P) processPushlogRequest(
 			return nil
 		}
 
-		// All pre-storage checks passed — now write blocks to the blockstore.
-		if len(req.CAR) > 0 {
+		// All pre-storage checks passed, so this node needs the head: only now is its CAR
+		// asked for. A peer that predates the exchange still sends it inline.
+		carData := req.CAR
+		if len(carData) == 0 {
+			carData = p.fetchCARs(ctx, req.Creator, req.SenderID, []cid.Cid{headCID})[0]
+		}
+
+		// Now write blocks to the blockstore.
+		if len(carData) > 0 {
 			// CAR contains the full block DAG — import it directly, no round-trip sync needed.
-			if _, err = p.importCAR(ctx, req.CAR); err != nil {
+			if _, err = p.importCAR(ctx, carData); err != nil {
 				p.dropDoc(dropImportCAR)
 				return err
 			}
@@ -1134,6 +1172,20 @@ func (p *P2P) processBatchedDocuments(
 		dropped++
 	}
 
+	// Documents that pass their checks are held back until all have been checked, so the CARs
+	// they need can be fetched together. fetchAt maps each fetched head back into needed.
+	type neededDoc struct {
+		doc   protocol.DocumentInfo
+		head  cid.Cid
+		block *coreblock.Block
+		car   []byte
+	}
+	var (
+		needed     []neededDoc
+		fetchHeads []cid.Cid
+		fetchAt    []int
+	)
+
 	for _, doc := range req.Documents {
 		headCID, err := cid.Cast(doc.CID)
 		if err != nil {
@@ -1198,15 +1250,29 @@ func (p *P2P) processBatchedDocuments(
 			continue
 		}
 
-		if len(doc.CAR) > 0 {
-			if _, err = p.importCAR(ctx, doc.CAR); err != nil {
-				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", doc.DocID))
+		needed = append(needed, neededDoc{doc: doc, head: headCID, block: block, car: doc.CAR})
+		if len(doc.CAR) == 0 {
+			fetchHeads = append(fetchHeads, headCID)
+			fetchAt = append(fetchAt, len(needed)-1)
+		}
+	}
+
+	// Every document still here has passed its checks, so this node needs it. The CARs a peer
+	// predating the exchange did not send inline are asked for in one round trip.
+	for i, data := range p.fetchCARs(ctx, req.Creator, req.SenderID, fetchHeads) {
+		needed[fetchAt[i]].car = data
+	}
+
+	for _, n := range needed {
+		if len(n.car) > 0 {
+			if _, err := p.importCAR(ctx, n.car); err != nil {
+				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", n.doc.DocID))
 				drop(dropImportCAR)
 				continue
 			}
 		} else {
-			if err = p.syncDAG(ctx, block); err != nil {
-				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", doc.DocID))
+			if err := p.syncDAG(ctx, n.block); err != nil {
+				log.ErrorE("Batch: syncDAG failed", err, slog.String("DocID", n.doc.DocID))
 				drop(dropSyncDAG)
 				continue
 			}
@@ -1214,13 +1280,13 @@ func (p *P2P) processBatchedDocuments(
 
 		results = append(results, batchedDoc{
 			merge: event.Merge{
-				DocID:        doc.DocID,
+				DocID:        n.doc.DocID,
 				ByPeer:       req.SenderID,
 				FromPeer:     req.Creator,
-				Cid:          headCID,
+				Cid:          n.head,
 				CollectionID: req.CollectionID,
 			},
-			block: doc.Block, // empty when CAR was used; relay falls back to DAG sync
+			block: n.doc.Block, // empty when CAR was used; relay falls back to DAG sync
 		})
 	}
 
@@ -1232,25 +1298,14 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 
 	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry && !evt.IsRelay {
-		// Pre-generate a CAR so receivers import the full DAG without a BitSwap round-trip.
-		var carData []byte
-		if block, err := coreblock.GetFromBytes(evt.Block); err == nil {
-			ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
-			if data, err := p.generateCAR(ctx, block); err == nil {
-				carData = data
-			} else {
-				log.ErrorE("Failed to generate CAR for pubsub, receivers will fall back to DAG sync", err)
-			}
-			cancel()
-		}
-
+		// The update is announced without its CAR. Most subscribers already hold the head, and
+		// one that does not asks this node for the CAR over the car protocol.
 		req := &protocol.PushLogRequest{
 			DocID:        evt.DocID,
 			CID:          evt.Cid.Bytes(),
 			CollectionID: evt.CollectionID,
 			Creator:      p.host.ID(),
 			Block:        evt.Block,
-			CAR:          carData,
 		}
 
 		b, err := cbor.Marshal(req)
@@ -1258,7 +1313,7 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			return err
 		}
 
-		if evt.DocID != "" && !evt.IsRelay {
+		if evt.DocID != "" {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
 				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 			}
@@ -1280,7 +1335,6 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			DocID: evt.DocID,
 			CID:   evt.Cid.Bytes(),
 			Block: evt.Block,
-			CAR:   carData,
 		})
 		p.topicPeerMu.RLock()
 		noPeers := p.topicPeerCounts[evt.CollectionID] == 0
