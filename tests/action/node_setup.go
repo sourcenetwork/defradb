@@ -299,7 +299,14 @@ func setupExternalNode(
 		nodeKey = immutable.Some(nodeIdent.PrivateKey())
 	}
 
-	w, err := external.NewWrapper(s.Ctx, s.T, path, nodeKey, flags)
+	// The store and peer key live in the node's directory. Without it a restarted
+	// node has no data and a new peer id, so its peers cannot reach it again.
+	rootDir := ""
+	if s.CurrentSetupNodeID < len(s.Nodes) && s.Nodes[s.CurrentSetupNodeID] != nil {
+		rootDir = s.Nodes[s.CurrentSetupNodeID].DbPath
+	}
+
+	w, err := external.NewWrapper(s.Ctx, s.T, path, nodeKey, rootDir, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -316,8 +323,8 @@ func setupExternalNode(
 	}
 
 	// An external node has no in-process DB, so it discovers its addresses over
-	// the HTTP client.
-	return newNodeState(s, w, w, "", true, nacIdentity)
+	// the HTTP client. Its rootdir is kept so a restart can start in it again.
+	return newNodeState(s, w, w, w.RootDir(), true, nacIdentity)
 }
 
 // identityWithPrivateKey returns the identity as a [acpIdentity.FullIdentity],
@@ -376,7 +383,20 @@ func externalNodeFlags(
 	// Listen on the same interface a native node would. The addresses a node
 	// reports are asserted by some tests, so a node listening on loopback while
 	// its peers listen on the LAN address reports something different from them.
-	flags = append(flags, "--p2paddr", "/ip4/"+getIPString()+"/tcp/0")
+	// A node waits before retrying a peer it could not reach. The external node
+	// runs in its own process, so it never gets the short wait the others are
+	// given, and its own default of 30s is longer than the test waits.
+	flags = append(flags, "--replicator-retry-intervals", "1")
+
+	// A restarted node has to keep its old address, because its peers keep
+	// dialling that one. A new node takes any free port.
+	p2pAddrs := []string{"/ip4/" + getIPString() + "/tcp/0"}
+	if s.CurrentSetupNodeID < len(s.Nodes) && s.Nodes[s.CurrentSetupNodeID] != nil {
+		if cached := s.Nodes[s.CurrentSetupNodeID].CachedAddresses; len(cached) > 0 {
+			p2pAddrs = cached
+		}
+	}
+	flags = append(flags, "--p2paddr", strings.Join(p2pAddrs, ","))
 
 	// The store flag takes badger or memory, so the in-memory badger the tests
 	// usually run is not offered. Badger on disk is what the node starts with.
