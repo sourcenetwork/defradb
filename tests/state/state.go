@@ -332,6 +332,16 @@ type State struct {
 	// the need arises.
 	CollectionVersions []string
 
+	// The identity each collection was created with, by collection ID.
+	//
+	// A node in another process emits no events the test can read, so the head of
+	// a document it wrote has to be queried over its API instead. A branchable
+	// collection gates its commits on an object owned by whoever created it, so
+	// that query has to be made as them.
+	//
+	// Stored as a reference because the identity it resolves to differs per node.
+	CollectionOwners map[string]immutable.Option[Identity]
+
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
@@ -447,6 +457,7 @@ func NewState(
 		Nodes:                           []*NodeState{},
 		CollectionNames:                 collectionNames,
 		CollectionIndexesByCollectionID: map[string]int{},
+		CollectionOwners:                map[string]immutable.Option[Identity]{},
 		DocIDs:                          [][]client.DocID{},
 		PolicyIDs:                       [][]string{},
 		IsBench:                         false,

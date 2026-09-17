@@ -24,8 +24,8 @@ import (
 
 func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 	test := testUtils.TestCase{
-		// An external node is started as a new process with a new identity, so it
-		// cannot reopen the store it wrote before the restart.
+		// A restarted external node is a new process with a new temporary directory,
+		// so it cannot reopen the store it wrote before the restart.
 		// https://github.com/sourcenetwork/defradb/issues/5170
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
