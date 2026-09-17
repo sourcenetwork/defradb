@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -96,13 +95,6 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 	ownerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The peer is deliberately refused some of these blocks, so a head that is
-		// never coming is still waited for.
-		// https://github.com/sourcenetwork/defradb/issues/5193
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
@@ -197,13 +189,6 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 	afterCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The peer is deliberately refused some of these blocks, so a head that is
-		// never coming is still waited for.
-		// https://github.com/sourcenetwork/defradb/issues/5193
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
