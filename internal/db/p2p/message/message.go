@@ -91,6 +91,13 @@ type proto interface {
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
+	// Inbound handlers never use the stream after this call. libp2p releases
+	// the stream's resource-manager reservation only on a local close, so an
+	// unclosed stream holds a per-(protocol, peer) inbound slot until the
+	// connection drops; the peer's replies are refused once the slots are gone.
+	if closer, ok := stream.(io.Closer); ok {
+		defer closer.Close()
+	}
 	// Cap the read at maxMessageSize. We read one byte past the cap so we
 	// can distinguish a message that exactly fits from one that overflows:
 	// if the body is longer than maxMessageSize we reject it with
@@ -166,13 +173,12 @@ func Send[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
 	select {
 	case respMessage := <-responseChan:
-		if m.GetErrMessage() != "" {
+		if respMessage.GetErrMessage() != "" {
 			return resp, errors.New(respMessage.GetErrMessage())
 		}
 		switch typedResp := respMessage.(type) {
@@ -183,7 +189,6 @@ func Send[ResponseType Message](
 		}
 	case <-ctx.Done():
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, ErrResponseTimeout
 	}
 }
@@ -212,7 +217,6 @@ func SendAsync[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
@@ -230,7 +234,6 @@ func SendAsync[ResponseType Message](
 		case <-ctx.Done():
 			close(funcResponseChan)
 			proto.DeleteResponseChan(m.GetMessageID())
-			close(responseChan)
 		}
 	}()
 
