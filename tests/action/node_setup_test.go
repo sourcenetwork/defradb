@@ -49,8 +49,8 @@ var setupFields = map[string]setupFieldHandling{
 	"BadgerEncryption": fieldFlagged,
 	"NodeACP":          fieldFlagged,
 
-	// The external node keeps its store under the rootdir the wrapper owns, so it
-	// cannot reopen one the harness chose.
+	// The external node keeps its store under its own rootdir, which has a
+	// different layout from the path this setting names.
 	"DatabaseDir": fieldDropped,
 	// Both are only read when a lens is configured, which no cross-version test
 	// does yet.

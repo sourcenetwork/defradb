@@ -142,18 +142,15 @@ func startWrapper(
 	}
 	// An empty rootdir means a new node. A restart passes the one it was using,
 	// which holds data the test still reads, so only a directory made here is
-	// deleted on failure.
-	ownsRootDir := rootDir == ""
-	if ownsRootDir {
+	// removed.
+	if rootDir == "" {
 		rootDir, err = os.MkdirTemp("", "defradb-external-*")
 		if err != nil {
 			return nil, errors.Wrap("failed to create rootdir", err)
 		}
-	}
-	cleanup := func() {
-		if ownsRootDir {
-			removeAll(rootDir)
-		}
+		// Close leaves the directory for a restart to start in again, so it is
+		// only safe to remove once the test that made it is over.
+		t.Cleanup(func() { removeAll(rootDir) })
 	}
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
@@ -162,7 +159,6 @@ func startWrapper(
 	// entry is missing. Seeding it is what lets the test address this node.
 	if nodeIdentity.HasValue() {
 		if err := seedNodeIdentity(rootDir, nodeIdentity.Value()); err != nil {
-			cleanup()
 			return nil, err
 		}
 	}
@@ -184,12 +180,10 @@ func startWrapper(
 	stderr := newRingBuffer(64 * 1024)
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		cleanup()
 		return nil, errors.Wrap("failed to get stdout pipe", err)
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		cleanup()
 		return nil, errors.Wrap("failed to get stderr pipe", err)
 	}
 	var logWG sync.WaitGroup
@@ -198,7 +192,6 @@ func startWrapper(
 
 	if err := cmd.Start(); err != nil {
 		logWG.Wait()
-		cleanup()
 		return nil, errors.Wrap("failed to start process", err)
 	}
 
@@ -206,14 +199,12 @@ func startWrapper(
 	if err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		cleanup()
 		return nil, errors.Wrap("failed to create http client", err)
 	}
 
 	if err := waitForHealth(ctx, httpClient, healthCheckTimeout); err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		cleanup()
 		return nil, errors.Wrap(
 			"external node did not become healthy in time",
 			err,

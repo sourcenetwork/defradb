@@ -383,15 +383,20 @@ func externalNodeFlags(
 	// Listen on the same interface a native node would. The addresses a node
 	// reports are asserted by some tests, so a node listening on loopback while
 	// its peers listen on the LAN address reports something different from them.
+	// A node waits before retrying a peer it could not reach. The external node
+	// runs in its own process, so it never gets the short wait the others are
+	// given, and its own default of 30s is longer than the test waits.
+	flags = append(flags, "--replicator-retry-intervals", "1")
+
 	// A restarted node has to keep its old address, because its peers keep
 	// dialling that one. A new node takes any free port.
-	p2pAddr := "/ip4/" + getIPString() + "/tcp/0"
+	p2pAddrs := []string{"/ip4/" + getIPString() + "/tcp/0"}
 	if s.CurrentSetupNodeID < len(s.Nodes) && s.Nodes[s.CurrentSetupNodeID] != nil {
 		if cached := s.Nodes[s.CurrentSetupNodeID].CachedAddresses; len(cached) > 0 {
-			p2pAddr = cached[0]
+			p2pAddrs = cached
 		}
 	}
-	flags = append(flags, "--p2paddr", p2pAddr)
+	flags = append(flags, "--p2paddr", strings.Join(p2pAddrs, ","))
 
 	// The store flag takes badger or memory, so the in-memory badger the tests
 	// usually run is not offered. Badger on disk is what the node starts with.
