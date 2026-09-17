@@ -153,7 +153,7 @@ func MarkDocsExpectedOnTargets(
 		// The source node wrote this document, so it must be able to report the
 		// commit. Skipping would record nothing to wait for, letting the
 		// assertions that follow pass against data that never arrived.
-		head, ok := latestCompositeCID(s, sourceNodeID, docID, ident)
+		head, ok := latestCompositeCID(s, sourceNodeID, collectionIndex, docID, ident)
 		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
 
 		// Build the event, since the real one cannot be read.
@@ -212,10 +212,36 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 // A merge event reports the composite commit, so this is the same CID the native
 // path takes from that event.
 //
-// ident is the identity the document was written with. A document protected by
-// document ACP is invisible to an unidentified reader, so without it the query
-// returns nothing and the head cannot be found.
+// This only runs for a node in another process. An in-process node reports its
+// head through an event, which no identity is needed to read.
+//
+// ident is the identity the document was written with. Under document ACP a
+// reader that cannot see the commits gets nothing back, so this falls back to
+// the identity that created the collection.
 func latestCompositeCID(
+	s *state.State,
+	nodeID int,
+	collectionIndex int,
+	docID string,
+	ident immutable.Option[state.Identity],
+) (cid.Cid, bool) {
+	head, ok := compositeCIDAs(s, nodeID, docID, ident)
+	if ok {
+		return head, true
+	}
+
+	// The write had no identity, or one that cannot read what it wrote. A
+	// branchable collection gates its commits on an object owned by whoever
+	// created the collection, so ask again as them.
+	owner, hasOwner := s.CollectionOwners[collectionIDForIndex(s, nodeID, collectionIndex)]
+	if !hasOwner {
+		return cid.Cid{}, false
+	}
+	return compositeCIDAs(s, nodeID, docID, owner)
+}
+
+// compositeCIDAs runs the head query as the given identity.
+func compositeCIDAs(
 	s *state.State,
 	nodeID int,
 	docID string,

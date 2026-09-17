@@ -972,9 +972,28 @@ type Mutation {
         """
         filter: UserFilterArg
     ): [User]
-    "Remove all or matching documents from this node. Returns true when complete."
+    """
+    
+    Remove all or matching documents from this node. Returns true when complete.
+
+    """
     truncate_User(
-        "Filter documents to truncate"
+        """
+        
+        An optional set of docID values that will limit the truncate to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be removed. If an empty set is provided, no
+         documents will be removed.
+
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this truncate that will limit the truncate to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be removed.
+
+        """
         filter: UserFilterArg
     ): Boolean!
     """
@@ -2342,7 +2361,13 @@ type User {
         """
         points: ScalarAggregateNumericBlock
     ): Float
-    "Returns the cosine similarity between the specified field and the provided vector."
+    """
+    
+    Returns how similar the given vector is to the specified field's value. The metric is
+     whichever one the field's vector index was created with, defaulting to cosine similarity
+     when the field has no vector index. Higher values are more similar for every metric.
+
+    """
     SIMILARITY: Float
     """
     

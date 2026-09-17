@@ -24,12 +24,13 @@ import (
 )
 
 const (
-	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
-	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
-	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
-	levelEnvName            = "DEFRA_LEVEL"
-	inMemoryEnvName         = "DEFRA_IN_MEMORY"
-	lensTypeEnvName         = "DEFRA_LENS_TYPE"
+	memoryBadgerEnvName      = "DEFRA_BADGER_MEMORY"
+	fileBadgerEnvName        = "DEFRA_BADGER_FILE"
+	badgerEncryptionEnvName  = "DEFRA_BADGER_ENCRYPTION"
+	levelEnvName             = "DEFRA_LEVEL"
+	inMemoryEnvName          = "DEFRA_IN_MEMORY"
+	lensTypeEnvName          = "DEFRA_LENS_TYPE"
+	crossVersionExactEnvName = "DEFRA_CROSS_VERSION_EXACT"
 
 	// Instantiating lenses is expensive, and our tests do not benefit from a large
 	// number of them, so we explicitly set it to a low value.
@@ -58,6 +59,12 @@ var (
 
 	// badgerEncryption reports whether the badger store is encrypted.
 	badgerEncryption bool
+
+	// crossVersionExact makes a version-targeting multiplier run only the release
+	// it targets, skipping tests that need a newer one rather than moving them to
+	// it. Runs covering several releases set this so a test is not run twice, once
+	// by the release it needs and again by an older one promoting it.
+	crossVersionExact bool
 )
 
 func init() {
@@ -69,6 +76,7 @@ func init() {
 	levelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
 	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
 	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
+	crossVersionExact, _ = strconv.ParseBool(os.Getenv(crossVersionExactEnvName))
 
 	if changeDetector.Enabled {
 		// Change detector only uses badger file db type.

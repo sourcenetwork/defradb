@@ -903,7 +903,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SimilarityFieldName,
-		Description: "Returns the cosine similarity between the specified field and the provided vector.",
+		Description: schemaTypes.SimilarityFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
@@ -920,7 +920,7 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 			Fields: gql.InputObjectConfigFieldMap{
 				schemaTypes.SimilarityArgVector: &gql.InputObjectFieldConfig{
 					Type:        gql.NewNonNull(gql.NewList(listType.OfType)),
-					Description: "A vector of the same type as the field to compute the cosine similarity with.",
+					Description: schemaTypes.SimilarityArgDescription,
 				},
 			},
 		})
@@ -928,7 +928,12 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 		if err != nil {
 			return gql.Field{}, err
 		}
-		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
+		// The field's own description is whatever the user wrote in their schema, usually nothing,
+		// which is why clients showed this argument undocumented.
+		field.Args[objectField.Name] = schemaTypes.NewArgConfig(
+			inputObject,
+			fmt.Sprintf("Compares the given vector against the %s field.", objectField.Name),
+		)
 	}
 
 	return field, nil
@@ -1238,10 +1243,11 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	truncate := &gql.Field{
 		Name:        "truncate_" + obj.Name(),
-		Description: "Remove all or matching documents from this node. Returns true when complete.",
+		Description: truncateDocumentsDescription,
 		Type:        gql.NewNonNull(gql.Boolean),
 		Args: gql.FieldConfigArgument{
-			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), truncateIDsArgDescription),
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, truncateFilterArgDescription),
 		},
 	}
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
