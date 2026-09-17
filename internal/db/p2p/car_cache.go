@@ -14,7 +14,13 @@ import (
 	"container/list"
 	"context"
 	"sync"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
+
+// errCARBuildDidNotReturn is what requests waiting on a build receive when the build panicked or
+// its goroutine exited, so they see a failure rather than an empty CAR reported as success.
+var errCARBuildDidNotReturn = errors.New("building the CAR did not return")
 
 // carCacheMaxBytes bounds the CAR bytes the serving side keeps. Peers ask for a head within
 // moments of its announcement, so the cache only has to outlast one burst of requests.
@@ -94,8 +100,14 @@ func (c *carCache) getOrBuild(
 	c.building[key] = b
 	c.mu.Unlock()
 
-	// Deferred so a build that panics still releases the requests waiting on it.
+	// Deferred so a build that panics still releases the requests waiting on it. The panic itself
+	// carries on up this goroutine; the waiters get errCARBuildDidNotReturn in its place, since
+	// otherwise they would read the zero data and error and report an empty CAR as served.
+	returned := false
 	defer func() {
+		if !returned {
+			b.data, b.err = nil, errCARBuildDidNotReturn
+		}
 		c.mu.Lock()
 		delete(c.building, key)
 		if b.err == nil && len(b.data) > 0 {
@@ -105,6 +117,7 @@ func (c *carCache) getOrBuild(
 		close(b.done)
 	}()
 	b.data, b.err = build()
+	returned = true
 	return b.data, false, b.err
 }
 

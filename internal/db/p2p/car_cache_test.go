@@ -72,6 +72,48 @@ func TestCARCache_ConcurrentRequestSharesTheBuild(t *testing.T) {
 	require.Equal(t, []byte("car"), <-result)
 }
 
+// A build that panics hands the requests waiting on it an error rather than an empty CAR they
+// would report as served, lets the panic carry on in the goroutine that built, and caches nothing,
+// so the next request builds afresh.
+func TestCARCache_BuildThatPanicsFailsItsWaiters(t *testing.T) {
+	c := newCARCache(1 << 10)
+	started := make(chan struct{})
+	release := make(chan struct{})
+	recovered := make(chan any, 1)
+
+	go func() {
+		defer func() { recovered <- recover() }()
+		_, _, _ = c.getOrBuild(context.Background(), "a", func() ([]byte, error) {
+			close(started)
+			<-release
+			panic("build failed")
+		})
+	}()
+	<-started
+
+	// Waiters return exactly this build's data and error once done is closed.
+	c.mu.Lock()
+	b := c.building["a"]
+	c.mu.Unlock()
+	require.NotNil(t, b)
+
+	close(release)
+	<-b.done
+
+	require.Equal(t, "build failed", <-recovered)
+	require.Nil(t, b.data)
+	require.ErrorIs(t, b.err, errCARBuildDidNotReturn)
+	require.Empty(t, c.entries)
+	require.Empty(t, c.building)
+
+	calls := 0
+	data, shared, err := c.getOrBuild(context.Background(), "a", countingBuild([]byte("car"), nil, &calls))
+	require.NoError(t, err)
+	require.False(t, shared)
+	require.Equal(t, []byte("car"), data)
+	require.Equal(t, 1, calls)
+}
+
 // A waiter whose context ends stops waiting without disturbing the build it was waiting on.
 func TestCARCache_WaiterGivesUpOnItsContext(t *testing.T) {
 	c := newCARCache(1 << 10)
