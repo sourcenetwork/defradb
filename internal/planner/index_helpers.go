@@ -37,12 +37,30 @@ func queryableIndexes(col client.Collection) []client.IndexDescription {
 	return col.Version().Indexes
 }
 
+// firstIndexedField returns the name of the index's first field, or "" if it has none.
+//
+// A descriptor read from the store always carries its kind config, but one built in memory by a
+// caller that predates the kind carrying fields does not, so fall back to the deprecated field.
+func firstIndexedField(idx client.IndexDescription) string {
+	if idx.KindDescription != nil {
+		if names := idx.KindDescription.FieldNames(); len(names) > 0 {
+			return names[0]
+		}
+	}
+	//nolint:staticcheck // the fallback this helper exists to hide
+	if len(idx.Fields) > 0 {
+		//nolint:staticcheck // the fallback this helper exists to hide
+		return idx.Fields[0].Name
+	}
+	return ""
+}
+
 // queryableIndexesOnField mirrors CollectionVersion.GetIndexesOnField over queryableIndexes:
 // it returns only ready indexes whose first field matches fieldName.
 func queryableIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
 	var result []client.IndexDescription
 	for _, idx := range queryableIndexes(col) {
-		if len(idx.Fields) > 0 && idx.Fields[0].Name == fieldName {
+		if firstIndexedField(idx) == fieldName {
 			result = append(result, idx)
 		}
 	}

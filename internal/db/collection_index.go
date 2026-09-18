@@ -307,12 +307,12 @@ func (c *collection) collectIndexedFields(
 	seen := make(map[string]bool)
 	fields := make([]client.CollectionFieldDescription, 0, len(indexes))
 	for _, index := range indexes {
-		for _, field := range index.Description().Fields {
-			if seen[field.Name] {
+		for _, name := range indexFieldNames(index.Description()) {
+			if seen[name] {
 				continue
 			}
-			seen[field.Name] = true
-			colField, ok := c.Version().GetFieldByName(field.Name)
+			seen[name] = true
+			colField, ok := c.Version().GetFieldByName(name)
 			if ok {
 				fields = append(fields, colField)
 			}
@@ -493,6 +493,56 @@ func (c *collection) NewIndex(
 	return indexDesc, nil
 }
 
+// indexFieldNames returns the names of the index's fields.
+//
+// A descriptor read from the store always carries its kind config, but one built in memory by a
+// caller that predates the kind carrying fields does not, so fall back to the deprecated field.
+func indexFieldNames(desc client.IndexDescription) []string {
+	if desc.KindDescription != nil {
+		if names := desc.KindDescription.FieldNames(); len(names) > 0 {
+			return names
+		}
+	}
+	//nolint:staticcheck // the fallback this helper exists to hide
+	names := make([]string, len(desc.Fields))
+	//nolint:staticcheck // the fallback this helper exists to hide
+	for i, field := range desc.Fields {
+		names[i] = field.Name
+	}
+	return names
+}
+
+// indexFields returns the index's fields with their directions. Only an ordered index has them, so a
+// vector index's entries come back ascending. Prefer indexFieldNames where only names are used.
+func indexFields(desc client.IndexDescription) []client.IndexedFieldDescription {
+	if ordered, ok := desc.KindDescription.(*client.OrderedIndexDescription); ok && len(ordered.Fields) > 0 {
+		return ordered.Fields
+	}
+	names := indexFieldNames(desc)
+	fields := make([]client.IndexedFieldDescription, len(names))
+	for i, name := range names {
+		fields[i] = client.IndexedFieldDescription{Name: name}
+	}
+	return fields
+}
+
+// requestFields returns the requested fields, preferring the kind config over the deprecated
+// top-level one. Validation has already rejected the two disagreeing.
+func requestFields(desc client.NewIndexRequest) []client.IndexedFieldDescription {
+	if desc.Ordered != nil && len(desc.Ordered.Fields) > 0 {
+		return desc.Ordered.Fields
+	}
+	if desc.Vector != nil && len(desc.Vector.Fields) > 0 {
+		fields := make([]client.IndexedFieldDescription, len(desc.Vector.Fields))
+		for i, name := range desc.Vector.Fields {
+			fields[i] = client.IndexedFieldDescription{Name: name}
+		}
+		return fields
+	}
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	return desc.Fields
+}
+
 func processNewIndexRequest(
 	ctx context.Context,
 	def client.CollectionVersion,
@@ -503,7 +553,11 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	err = checkExistingFieldsAndAdjustRelFieldNames(def, desc.Fields)
+	// Resolved once so the checks below share one slice: the name check rewrites relation names in
+	// place, and this is what gets stored.
+	fields := requestFields(desc)
+
+	err = checkExistingFieldsAndAdjustRelFieldNames(def, fields)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -515,7 +569,7 @@ func processNewIndexRequest(
 		}
 	}
 
-	indexName, err := generateIndexNameIfNeeded(def, desc)
+	indexName, err := generateIndexNameIfNeeded(def, desc, fields)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -543,16 +597,24 @@ func processNewIndexRequest(
 		unique = desc.Ordered.Unique
 	}
 	kind := client.IndexKindOrdered
-	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{Unique: unique}
+	var kindDescription client.IndexKindDescription = &client.OrderedIndexDescription{
+		Unique: unique,
+		Fields: fields,
+	}
 	if desc.Vector != nil {
 		kind = client.IndexKindVector
-		kindDescription = desc.Vector
+		vector := *desc.Vector
+		vector.Fields = make([]string, len(fields))
+		for i, field := range fields {
+			vector.Fields[i] = field.Name
+		}
+		kindDescription = &vector
 	}
 
 	res := client.IndexDescription{
 		Name:            indexName,
 		ID:              uint32(indexID),
-		Fields:          desc.Fields,
+		Fields:          fields,
 		Kind:            kind,
 		KindDescription: kindDescription,
 		// Mirror the ordered kind's uniqueness into the compat field. A vector index is never unique.
@@ -572,14 +634,17 @@ func processNewIndexRequest(
 func validateVectorIndexDescription(def client.CollectionVersion, desc client.NewIndexRequest) error {
 	// The rest of the vector index code only ever reads the first field, and nothing reads direction,
 	// so both would be stored and ignored. Reject them rather than half-honour the request.
-	if len(desc.Fields) != 1 {
-		return NewErrVectorIndexRequiresSingleField(len(desc.Fields))
+	fields := requestFields(desc)
+	if len(fields) != 1 {
+		return NewErrVectorIndexRequiresSingleField(len(fields))
 	}
-	if desc.Fields[0].Descending {
-		return NewErrVectorIndexCannotBeDescending(desc.Fields[0].Name)
+	// Vector.Fields cannot carry a direction, but the deprecated spelling can, and a request may set
+	// both. Check the resolved fields so neither route slips past.
+	if fields[0].Descending {
+		return NewErrVectorIndexCannotBeDescending(fields[0].Name)
 	}
 
-	fieldName := desc.Fields[0].Name
+	fieldName := fields[0].Name
 	field, _ := def.GetFieldByName(fieldName)
 
 	if !client.IsVectorEmbeddingCompatible(field.Kind) {
@@ -637,7 +702,7 @@ func validateNoConflictingVectorIndexMetric(
 ) error {
 	for _, index := range def.Indexes {
 		vector, ok := index.GetVector()
-		if !ok || index.Fields[0].Name != fieldName {
+		if !ok || index.GetFields()[0].Name != fieldName {
 			continue
 		}
 		if vector.Metric != metric {
@@ -937,8 +1002,8 @@ func (c *collection) indexExistingDocs(
 	ctx context.Context,
 	index client.CollectionIndex,
 ) error {
-	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().Fields))
-	for _, field := range index.Description().Fields {
+	fields := make([]client.CollectionFieldDescription, 0, len(index.Description().GetFields()))
+	for _, field := range index.Description().GetFields() {
 		colField, ok := c.Version().GetFieldByName(field.Name)
 		if ok {
 			fields = append(fields, colField)
@@ -1311,13 +1376,14 @@ func validateEncryptedIndexesOnCollection(definition client.CollectionVersion) e
 func generateIndexNameIfNeeded(
 	colVersion client.CollectionVersion,
 	newReq client.NewIndexRequest,
+	fields []client.IndexedFieldDescription,
 ) (string, error) {
 	indexName := newReq.Name
 	if indexName == "" {
 		nameIncrement := 1
 		for {
 			var err error
-			indexName, err = generateIndexName(colVersion.Name, newReq.Fields, nameIncrement)
+			indexName, err = generateIndexName(colVersion.Name, fields, nameIncrement)
 			if err != nil {
 				return "", err
 			}
@@ -1351,11 +1417,12 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 	if desc.Name != "" && !schema.IsValidIndexName(desc.Name) {
 		return schema.NewErrIndexWithInvalidName(desc.Name)
 	}
-	if len(desc.Fields) == 0 {
+	fields := requestFields(desc)
+	if len(fields) == 0 {
 		return ErrIndexMissingFields
 	}
-	for i := range desc.Fields {
-		if desc.Fields[i].Name == "" {
+	for i := range fields {
+		if fields[i].Name == "" {
 			return ErrIndexFieldMissingName
 		}
 	}
@@ -1371,7 +1438,38 @@ func validateIndexDescription(desc client.NewIndexRequest) error {
 	}
 	//nolint:staticcheck // these checks exist to police the deprecated field
 	if desc.Unique && desc.Vector != nil {
-		return NewErrNonOrderedIndexCannotBeUnique(desc.Fields[0].Name, "vector")
+		return NewErrNonOrderedIndexCannotBeUnique(fields[0].Name, "vector")
+	}
+	if err := validateRequestFieldsAgree(desc); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateRequestFieldsAgree rejects a request whose kind config and deprecated Fields name
+// different things. Preferring one silently would index a field the caller did not ask for.
+func validateRequestFieldsAgree(desc client.NewIndexRequest) error {
+	//nolint:staticcheck // this check exists to police the deprecated field
+	deprecated := desc.Fields
+	if len(deprecated) == 0 {
+		return nil
+	}
+
+	var current []client.IndexedFieldDescription
+	switch {
+	case desc.Ordered != nil && len(desc.Ordered.Fields) > 0:
+		current = desc.Ordered.Fields
+	case desc.Vector != nil && len(desc.Vector.Fields) > 0:
+		current = make([]client.IndexedFieldDescription, len(desc.Vector.Fields))
+		for i, name := range desc.Vector.Fields {
+			current[i] = client.IndexedFieldDescription{Name: name}
+		}
+	default:
+		return nil
+	}
+
+	if !slices.Equal(deprecated, current) {
+		return ErrIndexFieldsConflict
 	}
 	return nil
 }
