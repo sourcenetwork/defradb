@@ -70,8 +70,9 @@ func newDocumentFetcher(
 	}
 
 	iterOptions := datastore.IterOptions{
-		Start: prefix,
-		End:   prefix.PrefixEnd(),
+		Prefix: prefix,
+		Start:  prefix,
+		End:    prefix.PrefixEnd(),
 	}
 
 	keysOnly := len(fieldsByID) == 0
