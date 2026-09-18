@@ -23,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -190,31 +189,43 @@ func (c *Collection) SaveDocument(
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
 
-	if !doc.ID().IsValid() {
-		return c.AddDocument(ctx, doc, opts...)
-	}
-
 	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+	var methodURL *url.URL
+	var body string
+	if doc.ID().IsValid() {
+		methodURL = c.http.apiURL.JoinPath("collections", c.Version().Name, "document", doc.ID().String())
+		patch, err := doc.ToJSONPatch()
+		if err != nil {
+			return err
+		}
+		body = string(patch)
+	} else {
+		methodURL = c.http.apiURL.JoinPath("collections", c.Version().Name, "document")
+		var err error
+		body, err = doc.String()
+		if err != nil {
+			return err
+		}
+	}
 
-	getOpts := options.GetDocument()
-	if opt.GetIdentity().HasValue() {
-		getOpts.SetIdentity(opt.GetIdentity().Value())
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, methodURL.String(), strings.NewReader(body))
+	if err != nil {
+		return err
 	}
-	_, err := c.GetDocument(ctx, doc.ID(), getOpts.SetShowDeleted(true))
-	if err == nil {
-		updateOpts := options.UpdateDocument()
-		if opt.GetIdentity().HasValue() {
-			updateOpts.SetIdentity(opt.GetIdentity().Value())
-		}
-		if opt.EnableSigning.HasValue() {
-			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
-		}
-		return c.UpdateDocument(ctx, doc, updateOpts)
+
+	setDocEncryptionFlagIfNeeded(req, opt)
+	setDocSigningFlagIfNeeded(req, opt.EnableSigning)
+
+	var docIDs []string
+	if err := c.http.requestJson(req, &docIDs); err != nil {
+		return err
 	}
-	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.AddDocument(ctx, doc, opts...)
+	if err := setDocumentIDs([]*client.Document{doc}, docIDs); err != nil {
+		return err
 	}
-	return err
+	doc.Clean()
+	return nil
 }
 
 func (c *Collection) DeleteDocument(

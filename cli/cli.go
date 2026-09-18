@@ -160,6 +160,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 	document.AddCommand(
 		MakeDocumentAddCommand(ctx),
 		MakeDocumentGetCommand(ctx),
+		MakeDocumentSaveCommand(ctx),
 		MakeDocumentUpdateCommand(ctx),
 		MakeDocumentDeleteCommand(ctx),
 	)

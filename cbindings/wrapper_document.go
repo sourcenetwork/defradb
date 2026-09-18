@@ -20,6 +20,8 @@ extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted,
 CollectionOptions options, uintptr_t identityPtr);
+extern Result SaveDocument(uintptr_t nodePtr, char* docIDStr, char* json, int isEncrypted,
+char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
 extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
 extern void FreeIdentity(uintptr_t identityPtr);
@@ -261,30 +263,78 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	if !doc.ID().IsValid() {
-		return c.AddDocument(ctx, doc, opts...)
+	ctx = setCtxTxnFromCollection(ctx, c)
+
+	saveOpts := utils.NewOptions(opts...)
+	isEncrypted := 0
+	if saveOpts.EncryptDoc {
+		isEncrypted = 1
+	}
+	encryptedFieldsStr := ""
+	if len(saveOpts.EncryptedFields) > 0 {
+		encryptedFieldsStr = strings.Join(saveOpts.EncryptedFields, ",")
+	}
+	encryptedFields := C.CString(encryptedFieldsStr)
+
+	var docID *C.char
+	if doc.ID().IsValid() {
+		docID = C.CString(doc.ID().String())
+	} else {
+		docID = C.CString("")
+	}
+	defer C.free(unsafe.Pointer(docID))
+
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cName := C.CString(c.def.Name)
+	cIdentity := optionToUintptr(saveOpts.GetIdentity())
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(encryptedFields))
+	defer C.FreeIdentity(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
+	setCCollectionSigningOption(&copts, saveOpts.EnableSigning)
+
+	var docJSONbytes []byte
+	var err error
+	if doc.ID().IsValid() {
+		docJSONbytes, err = doc.ToJSONPatch()
+	} else {
+		docJSONbytes, err = doc.MarshalJSON()
+	}
+	if err != nil {
+		return err
+	}
+	cJSON := C.CString(string(docJSONbytes))
+	defer C.free(unsafe.Pointer(cJSON))
+
+	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
+	res := ConvertAndFreeCResult(C.SaveDocument(
+		callHandle,
+		docID,
+		cJSON,
+		C.int(isEncrypted),
+		encryptedFields,
+		copts,
+		cIdentity,
+	))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	if err := setDocumentIDsFromJSON([]*client.Document{doc}, []byte(res.Value)); err != nil {
+		return err
 	}
 
-	saveOpt := utils.NewOptions(opts...)
-	getOpts := options.GetDocument().SetShowDeleted(true)
-	if saveOpt.Identity.HasValue() {
-		getOpts.SetIdentity(saveOpt.Identity.Value())
-	}
-	_, err := c.GetDocument(ctx, doc.ID(), getOpts)
-	if err == nil {
-		updateOpts := options.UpdateDocument()
-		if saveOpt.Identity.HasValue() {
-			updateOpts.SetIdentity(saveOpt.Identity.Value())
-		}
-		if saveOpt.EnableSigning.HasValue() {
-			updateOpts.SetEnableSigning(saveOpt.EnableSigning.Value())
-		}
-		return c.UpdateDocument(ctx, doc, updateOpts)
-	}
-	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		return c.AddDocument(ctx, doc, opts...)
-	}
-	return err
+	doc.Clean()
+
+	return nil
 }
 
 func (c *Collection) DeleteDocument(
