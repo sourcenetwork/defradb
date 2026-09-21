@@ -22,23 +22,16 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges asserts that a pncounter
-// converges to the sum of every applied increment when both peers are updated repeatedly.
+// TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges asserts that a counter
+// updated on both peers at once reaches the sum of every increment.
 //
-// A pncounter is a state-based CRDT: each increment is a distinct delta block, and the merged
-// value must equal the sum of all deltas regardless of the order or interleaving in which the
-// blocks arrive at each node.
+// Two nodes apply 20 increments of +1 each, so both must end on 40.
 //
-// Here each of the two nodes applies 20 increments of +1 to a counter starting at 0, so both
-// nodes must converge on 40.
-//
-// Without the accompanying fix both nodes hold an identical set of delta blocks but materialise
-// different values, both greater than 40, because an increment is applied more than once during
-// merge. The wrong value is persisted, so it survives a node restart.
-//
-// This is not caused by dropped or undelivered blocks: it reproduces with an identical block set
-// on both nodes and no transport errors logged. Nor is it a regression - it reproduces
-// identically on 63fa24b85, the commit preceding "refactor: Detangle crdts" (#5163).
+// Without the fix each node reads a value above 40, and the two disagree, even though they hold
+// the same blocks. The wrong value is stored, so restarting a node does not clear it. Dropped
+// blocks are not the cause: the block sets match and no transport errors are logged. It is also
+// not a regression, reproducing the same way on 63fa24b85, before "refactor: Detangle crdts"
+// (#5163).
 func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing.T) {
 	const updatesPerNode = 20
 	const expectedPoints = int64(2 * updatesPerNode)
@@ -79,8 +72,7 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 		},
 	}
 
-	// Interleave the updates across both nodes so that each node is producing deltas whilst
-	// also merging the deltas produced by its peer.
+	// Interleave the updates so each node is producing increments while merging its peer's.
 	for range updatesPerNode {
 		actions = append(actions,
 			&action.UpdateDoc{
@@ -131,18 +123,14 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge asserts that every node in a
-// five node mesh ends up on the same counter value, and that the value is the sum of every
-// increment applied anywhere in the mesh.
+// TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge is the two node case widened to
+// a five node mesh, where each node merges the increments of the other four.
 //
-// Each of the five nodes applies its increments while merging those of the other four, which is
-// what causes an already-counted composite to be collected again during a merge.
+// The closing request carries no NodeID, so it runs against all five nodes. It fails if any node
+// disagrees with the others, and if they agree on the wrong total.
 //
-// The request at the end carries no NodeID, so it is asserted against all five nodes: it fails if
-// any node disagrees with the others, and it fails if they agree on the wrong total.
-//
-// See TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges for the two node case and
-// the background on why the counter is applied more than once.
+// See TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges for why the counter is
+// applied more than once.
 func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.T) {
 	const nodeCount = 5
 	const updatesPerNode = 10
@@ -172,8 +160,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 		},
 	)
 
-	// Connect every node to every other node, so an update made on any node can reach all of the
-	// others without having to be relayed.
+	// Connect every pair, so an update reaches all the other nodes without being relayed.
 	for source := range nodeCount {
 		for target := source + 1; target < nodeCount; target++ {
 			actions = append(actions, testUtils.ConnectPeers{
@@ -192,8 +179,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 		})
 	}
 
-	// Interleave the updates so that every node is producing increments whilst merging those of
-	// the other four.
+	// Interleave the updates so every node is producing increments while merging the other four.
 	for range updatesPerNode {
 		for nodeID := range nodeCount {
 			actions = append(actions, &action.UpdateDoc{
@@ -209,7 +195,6 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 	actions = append(actions,
 		testUtils.WaitForSync{},
 		&action.Request{
-			// No NodeID, so this is asserted against every node in the mesh.
 			Request: `query {
 				Users {
 					points

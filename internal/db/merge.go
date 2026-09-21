@@ -187,13 +187,12 @@ type mergeProcessor struct {
 	currentCompositeDocRef *resolvedDocRef
 	newDocCreateMode       bool
 
-	// Heads are only saved when the merge finishes, so within one merge they cannot tell us
-	// what has already been applied.  This covers that gap.
+	// Field blocks applied during this merge. Heads are written only when the merge finishes,
+	// so until then they cannot report what this merge has already applied.
 	appliedFieldBlocks map[string]struct{}
 
-	// Ancestors already walked back from each field's heads, keyed by document and field.  Every
-	// field block of the same field asks the same question, so the walk is done once and then
-	// extended only when a deeper block needs it.
+	// Ancestors walked back from each field's heads, keyed by document and field. Every field
+	// block of one field asks the same question, so the walk runs once per merge.
 	ancestorCache map[string]*ancestorSet
 }
 
@@ -284,9 +283,9 @@ type mergeTarget struct {
 
 // minHeight is the lowest height among the heads being compared against.
 //
-// Heads sit at different heights whenever the document has concurrent branches, so no single
-// height describes them all.  Taking the lowest keeps every branch in scope: a block at or above
-// it may still be new to one of the branches, and is collected rather than skipped.
+// Concurrent branches leave the heads at different heights, so no single height covers them all.
+// A block above the lowest may still be new to one branch, so the lowest is what keeps every
+// branch in scope.
 func (mt mergeTarget) minHeight() uint64 {
 	var min uint64
 	first := true
@@ -461,45 +460,40 @@ func (mp *mergeProcessor) processBlock(
 
 // ancestorSet holds the blocks reachable from one field's heads, down to floor.
 //
-// floor records how deep the walk went: a block at or below it may exist in the history without
-// having been visited, so a query about such a block needs the walk extending first.
+// The walk stops at floor, so blocks below it were never visited. A question about one of those
+// needs the walk redone deeper.
 type ancestorSet struct {
 	seen  map[cid.Cid]struct{}
 	floor uint64
 }
 
-// isAlreadyApplied reports whether this field block's value was already counted.
+// isAlreadyApplied reports whether this field block's value is already in the document.
 //
-// Such a block is reached because loadComposites can collect a composite it has already applied.
-// Where the incoming branch is older than the document's heads, it walks the merge target back
-// through their parents; that drops a head from the set it compares against and lowers the height
-// beneath it, so the head passes both of its checks again.  Walking down from the block then
-// reaches a field block applied by an earlier merge, or by the local write that created it.
+// loadComposites can collect a composite it has already applied: walking the merge target back
+// removes a head from the set it compares against and lowers the height, so that head passes
+// both checks a second time. Walking down from it reaches a field block that was already
+// applied. Doing so again is harmless for a last-write-wins field and adds the increment twice
+// for a counter.
 //
-// Applying twice is invisible for a last-write-wins field, and adds the increment twice for a
-// counter.
+// A head is written only after its block is applied, so anything reachable from a head is
+// already counted. That covers earlier merges. appliedFieldBlocks covers this merge, whose
+// heads are not written yet.
 //
-// A head is only saved after its block has been applied, so anything reachable by walking back
-// from a head is already counted.  That covers earlier merges; appliedFieldBlocks covers repeats
-// inside the current one, whose heads are not saved yet.
-//
-// The blockstore's IsMerged flag looks like it would work here but does not: UpdateHeads clears
-// that flag for a block's links before this recursion applies them, so a block appears merged on
-// its first, correct application.  It is also keyed by block alone, while application is per
-// document.
+// The blockstore's IsMerged flag cannot answer this. UpdateHeads clears it for a block's links
+// before they are applied, and it is keyed by block while application is per document.
 func (mp *mergeProcessor) isAlreadyApplied(
 	ctx context.Context,
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) (bool, error) {
-	// Composites hold no value to double-count, and walking them is what tells the field blocks
+	// Composites carry no value to double-count, and walking them is what tells the field blocks
 	// below which document they belong to.
 	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		return false, nil
 	}
 
-	// Without knowing the document we cannot look up its heads, so let mergeBlock decide - it
-	// rejects this case with a proper error.
+	// Without the document we cannot look up its heads. mergeBlock rejects this case with a
+	// proper error, so leave it to do that.
 	if mp.currentCompositeDocRef == nil {
 		return false, nil
 	}
@@ -512,7 +506,7 @@ func (mp *mergeProcessor) isAlreadyApplied(
 	fieldName := block.Delta.GetFieldName()
 	fd, ok := mp.col.Version().GetFieldByName(fieldName)
 	if !ok {
-		// mergeBlock already handles fields this node does not know about.
+		// An unknown field cannot have been applied, and mergeBlock reports it properly.
 		return false, nil
 	}
 
@@ -526,14 +520,14 @@ func (mp *mergeProcessor) isAlreadyApplied(
 		DocShortID:        mp.currentCompositeDocRef.docShortID,
 	}.WithFieldID(fmt.Sprint(fieldShortID)).ToHeadStoreKey()
 
-	// Catches repeats within this merge, before any head has been saved.
+	// This merge's own applies, which the heads do not know about yet.
 	appliedKey := mp.currentCompositeDocRef.docID + "/" + blockLink.Cid.String()
 	if _, ok := mp.appliedFieldBlocks[appliedKey]; ok {
 		return true, nil
 	}
 
-	// Comparing against the heads themselves is not enough: once later updates arrive, an
-	// already-applied block sits behind the head rather than being one.
+	// Checking whether the block is a head is not enough. Once later updates arrive, an applied
+	// block sits behind the head instead of being one.
 	ancestors, err := mp.fieldAncestors(ctx, prefix, block.Delta.GetPriority())
 	if err != nil {
 		return false, err
@@ -578,8 +572,8 @@ func (mp *mergeProcessor) fieldAncestors(
 
 // walkAncestors collects every block reachable back from the given heads, stopping at floor.
 //
-// Links only ever point backwards, so a block below floor cannot lead to one at floor or above.
-// Not descending past it is what keeps the walk off the whole history.
+// Links point backwards only, so a block below floor cannot lead to one above it. Stopping there
+// keeps the walk off the whole history.
 func (mp *mergeProcessor) walkAncestors(
 	ctx context.Context,
 	heads []cid.Cid,
@@ -604,8 +598,8 @@ func (mp *mergeProcessor) walkAncestors(
 			coreblock.BlockSchemaPrototype,
 		)
 		if err != nil {
-			// Missing locally, so it cannot show that anything below it was applied.  Leaving it
-			// out risks a repeat, not a lost update.
+			// Not held locally, so it cannot show that anything below it was applied. Skipping it
+			// risks applying a block twice, never dropping one.
 			continue
 		}
 		currentBlock, err := coreblock.GetFromNode(nd)
