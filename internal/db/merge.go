@@ -373,9 +373,6 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		// Concurrent updates on different nodes produce different composites that link back to
-		// the same field block, so this recursion reaches that block once per composite.
-		// Applying it again would add a counter's increment a second time.
 		alreadyApplied, err := mp.isAlreadyApplied(ctx, block, blockLink)
 		if err != nil {
 			return err
@@ -458,13 +455,23 @@ type ancestorSet struct {
 
 // isAlreadyApplied reports whether this field block's value was already counted.
 //
+// Such a block is reached because loadComposites can collect a composite it has already applied.
+// Where the incoming branch is older than the document's heads, it walks the merge target back
+// through their parents; that drops a head from the set it compares against and lowers the height
+// beneath it, so the head passes both of its checks again.  Walking down from the block then
+// reaches a field block applied by an earlier merge, or by the local write that created it.
+//
+// Applying twice is invisible for a last-write-wins field, and adds the increment twice for a
+// counter.
+//
 // A head is only saved after its block has been applied, so anything reachable by walking back
 // from a head is already counted.  That covers earlier merges; appliedFieldBlocks covers repeats
 // inside the current one, whose heads are not saved yet.
 //
 // The blockstore's IsMerged flag looks like it would work here but does not: UpdateHeads clears
 // that flag for a block's links before this recursion applies them, so a block appears merged on
-// its first, correct application.
+// its first, correct application.  It is also keyed by block alone, while application is per
+// document.
 func (mp *mergeProcessor) isAlreadyApplied(
 	ctx context.Context,
 	block *coreblock.Block,

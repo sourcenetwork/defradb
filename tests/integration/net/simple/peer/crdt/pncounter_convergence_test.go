@@ -32,15 +32,13 @@ import (
 // Here each of the two nodes applies 20 increments of +1 to a counter starting at 0, so both
 // nodes must converge on 40.
 //
-// This test currently FAILS. Both nodes end up holding an identical set of delta blocks, but
-// materialise different values, and both are typically greater than 40 - increments are counted
-// more than once during merge. The divergent value is persisted, so it survives a node restart.
+// Without the accompanying fix both nodes hold an identical set of delta blocks but materialise
+// different values, both greater than 40, because an increment is applied more than once during
+// merge. The wrong value is persisted, so it survives a node restart.
 //
-// This is not caused by dropped or undelivered blocks: the failure reproduces with an identical
-// block set on both nodes and no transport errors logged.
-//
-// The behaviour is not a regression from a recent change - it reproduces identically on
-// 63fa24b85 (the commit preceding "refactor: Detangle crdts" #5163).
+// This is not caused by dropped or undelivered blocks: it reproduces with an identical block set
+// on both nodes and no transport errors logged. Nor is it a regression - it reproduces
+// identically on 63fa24b85, the commit preceding "refactor: Detangle crdts" (#5163).
 func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing.T) {
 	const updatesPerNode = 20
 	const expectedPoints = int64(2 * updatesPerNode)
@@ -137,8 +135,8 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 // five node mesh ends up on the same counter value, and that the value is the sum of every
 // increment applied anywhere in the mesh.
 //
-// Each of the five nodes applies its increments while merging the increments of the other four,
-// so the same field block is reached from several different composites on every node.
+// Each of the five nodes applies its increments while merging those of the other four, which is
+// what causes an already-counted composite to be collected again during a merge.
 //
 // The request at the end carries no NodeID, so it is asserted against all five nodes: it fails if
 // any node disagrees with the others, and it fails if they agree on the wrong total.
