@@ -131,3 +131,33 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 
 	assert.Len(t, collections, 0)
 }
+
+// TestStartFailureReleasesStore ensures a Start that fails after the store has been opened does not
+// orphan it, which would otherwise keep the store's directory lock held.
+func TestStartFailureReleasesStore(t *testing.T) {
+	ctx := context.Background()
+	path := t.TempDir()
+
+	failing, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			Store().SetPath(path).
+			Node().
+			P2P().SetListenAddresses("not-a-multiaddr").
+			Node(),
+	)
+	require.NoError(t, err)
+	require.Error(t, failing.Start(ctx))
+	require.Nil(t, failing.DB)
+
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(path).
+			Node(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, n.Start(ctx))
+	defer n.Close(ctx)
+}
