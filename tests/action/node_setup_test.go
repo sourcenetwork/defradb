@@ -49,8 +49,8 @@ var setupFields = map[string]setupFieldHandling{
 	"BadgerEncryption": fieldFlagged,
 	"NodeACP":          fieldFlagged,
 
-	// The external node keeps its store under the rootdir the wrapper owns, so it
-	// cannot reopen one the harness chose.
+	// The external node keeps its store under its own rootdir, which has a
+	// different layout from the path this setting names.
 	"DatabaseDir": fieldDropped,
 	// Both are only read when a lens is configured, which no cross-version test
 	// does yet.
@@ -174,4 +174,29 @@ func TestExternalNodeFlags_NAC(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestExternalNodeFlags_BadgerEncryption asserts the node is told not to encrypt
+// at rest. It encrypts by default once it has a keyring, which the in-process
+// node it is compared against does not do.
+func TestExternalNodeFlags_BadgerEncryption(t *testing.T) {
+	t.Run("off asks the node not to encrypt", func(t *testing.T) {
+		s := newFlagsTestState(t, crypto.KeyTypeSecp256k1)
+
+		flags, unsupported := externalNodeFlags(s, testOwner,
+			NodeSetupConfig{BadgerEncryption: false})
+
+		assert.Contains(t, strings.Join(flags, " "), "--no-encryption")
+		assert.NotContains(t, strings.Join(unsupported, " "), "badger encryption")
+	})
+
+	t.Run("on is not supported", func(t *testing.T) {
+		s := newFlagsTestState(t, crypto.KeyTypeSecp256k1)
+
+		flags, unsupported := externalNodeFlags(s, testOwner,
+			NodeSetupConfig{BadgerEncryption: true})
+
+		assert.NotContains(t, strings.Join(flags, " "), "--no-encryption")
+		assert.Contains(t, strings.Join(unsupported, " "), "badger encryption")
+	})
 }

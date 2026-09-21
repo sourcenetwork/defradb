@@ -247,8 +247,8 @@ type NodeState struct {
 	// released version driven black-box), rather than natively in-process.
 	// Its event bus lives in that other process and cannot be observed here,
 	// so event-based waits must skip it. The replicator/merge/update/SE waits
-	// already do; WaitForPeersEvents, Wait{Action} and node restart do not yet
-	// handle external nodes, so avoid them with an external node for now.
+	// already do; WaitForPeersEvents and Wait{Action} do not yet handle external
+	// nodes, so avoid them with an external node for now.
 	IsExternal bool
 	// Version is the released version this node runs, e.g. "v1.0.0", cached
 	// for restarts. Empty for native in-process nodes.
@@ -331,6 +331,16 @@ type State struct {
 	// WARNING: This does not actually include patch versions yet.  Please add that when
 	// the need arises.
 	CollectionVersions []string
+
+	// The identity each collection was created with, by collection ID.
+	//
+	// A node in another process emits no events the test can read, so the head of
+	// a document it wrote has to be queried over its API instead. A branchable
+	// collection gates its commits on an object owned by whoever created it, so
+	// that query has to be made as them.
+	//
+	// Stored as a reference because the identity it resolves to differs per node.
+	CollectionOwners map[string]immutable.Option[Identity]
 
 	// Document IDs by index, by collection index.
 	//
@@ -447,6 +457,7 @@ func NewState(
 		Nodes:                           []*NodeState{},
 		CollectionNames:                 collectionNames,
 		CollectionIndexesByCollectionID: map[string]int{},
+		CollectionOwners:                map[string]immutable.Option[Identity]{},
 		DocIDs:                          [][]client.DocID{},
 		PolicyIDs:                       [][]string{},
 		IsBench:                         false,
