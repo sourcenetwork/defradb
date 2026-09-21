@@ -150,6 +150,8 @@ func TestStartFailureReleasesStore(t *testing.T) {
 	require.Error(t, failing.Start(ctx))
 	require.Nil(t, failing.DB)
 
+	// This should fail iff a directory lock cannot be acquired. Therefore, it implicitly
+	// tests that the store's directory lock was released before.
 	n, err := New(ctx,
 		options.Node().
 			SetDisableAPI(true).
