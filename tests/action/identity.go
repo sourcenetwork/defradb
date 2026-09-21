@@ -85,3 +85,15 @@ func getIdentityForRequestSpecificToNode(
 	}
 	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
 }
+
+// resolveIdentity turns an identity reference into the identity itself.
+func resolveIdentity(
+	s *state.State,
+	identity immutable.Option[state.Identity],
+) immutable.Option[acpIdentity.Identity] {
+	ident := state.GetIdentity(s, identity)
+	if ident == nil {
+		return acpIdentity.None
+	}
+	return immutable.Some(ident)
+}
