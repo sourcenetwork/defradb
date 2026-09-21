@@ -84,11 +84,15 @@ func (c *Collection) NewIndex(
 		vectorJSON = string(vectorJSONBytes)
 	}
 
+	// Preserve the deprecated top-level Unique as well as Ordered.Unique, matching the C bridge.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	unique := indexDesc.Unique || (indexDesc.Ordered != nil && indexDesc.Ordered.Unique)
+
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
 	res, err := callStore(c.w, ctx, "NewIndexNative",
-		newArgs().argStr(indexDesc.Name).argStr(strings.Join(orderedFields, ",")).argBool(indexDesc.Unique).
+		newArgs().argStr(indexDesc.Name).argStr(strings.Join(orderedFields, ",")).argBool(unique).
 			argStr(vectorJSON).collOpts(c.def.Name, "", "", false, immutable.None[bool]()).argLong(idH))
 	if err != nil {
 		return client.IndexDescription{}, err

@@ -102,6 +102,8 @@ func (txn *Txn) Discard() {
 	txn.finalizeMu.Lock()
 	defer txn.finalizeMu.Unlock()
 	if txn.finalized {
+		// A previous finalize may have failed to release txnObj (see releaseTxnObj); retry it here.
+		txn.releaseTxnObj()
 		return
 	}
 	if discardTransaction(txn.txnObj, txn.handle) {
@@ -110,16 +112,29 @@ func (txn *Txn) Discard() {
 }
 
 // finalize marks the transaction finalized, releases txnObj's JNI global reference, and zeroes
-// handle/txnObj so that any use that manages to slip past the finalized guard fails on a
-// zero/invalid handle rather than silently reusing now-invalid native resources.
+// handle so that any use that manages to slip past the finalized guard fails on a zero/invalid
+// handle rather than silently reusing now-invalid native resources.
 // Callers must hold the finalizeMu lock.
 func (txn *Txn) finalize() {
 	txn.finalized = true
-	if env, detach, err := attach(); err == nil {
-		C.defra_delete_global_ref(env, txn.txnObj)
-		detach()
-	}
 	txn.handle = 0
+	txn.releaseTxnObj()
+}
+
+// releaseTxnObj deletes txnObj's JNI global reference and zeroes it. If attach fails, txnObj is
+// left set so a later call (Discard on an already-finalized Txn) can retry instead of leaking the
+// reference; it is never used for a native call meanwhile, since liveHandle rejects finalized
+// transactions. Callers must hold the finalizeMu lock.
+func (txn *Txn) releaseTxnObj() {
+	if txn.txnObj == 0 {
+		return
+	}
+	env, detach, err := attach()
+	if err != nil {
+		return
+	}
+	C.defra_delete_global_ref(env, txn.txnObj)
+	detach()
 	txn.txnObj = 0
 }
 

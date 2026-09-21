@@ -102,19 +102,6 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// getNodeOrTxnHandle mirrors cbindings' helper of the same name: if a *Txn is attached to ctx, its handle is
-// used instead of the node's.
-func getNodeOrTxnHandle(nodeHandle uintptr, ctx context.Context) uintptr {
-	txn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	if !hadTxn {
-		return nodeHandle
-	}
-	if t, ok := txn.(*Txn); ok {
-		return t.handle
-	}
-	return nodeHandle
-}
-
 func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
@@ -566,8 +553,7 @@ func (w *Wrapper) DeleteCollection(
 		activeOnly = 1
 	}
 
-	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := w.callGuarded("DeleteCollectionNative", handle,
+	res, err := callStore(w, ctx, "DeleteCollectionNative",
 		newArgs().argStr(strings.Join(names, ",")).argInt(activeOnly).argLong(idH))
 	if err != nil {
 		return err
@@ -628,8 +614,7 @@ func (w *Wrapper) ListActions(
 	idH := identityHandle(utils.NewOptions(opts...).GetIdentity())
 	defer freeIdentityHandle(idH)
 
-	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := w.callGuarded("ListActionsNative", handle, newArgs().argLong(idH))
+	res, err := callStore(w, ctx, "ListActionsNative", newArgs().argLong(idH))
 	if err != nil {
 		return nil, err
 	}
@@ -1002,6 +987,8 @@ func (w *Wrapper) Close() {
 	w.nodeMu.Lock()
 	defer w.nodeMu.Unlock()
 	if w.closed {
+		// A previous Close may have failed to release nodeObj (see releaseNodeObj); retry it here.
+		w.releaseNodeObj()
 		return
 	}
 	res, err := callNode(w.nodeObj, "NodeCloseNative", w.handle, newArgs())
@@ -1022,10 +1009,24 @@ func (w *Wrapper) Close() {
 		}
 	}
 
-	if env, detach, aerr := attach(); aerr == nil {
-		C.defra_delete_global_ref(env, w.nodeObj)
-		detach()
+	w.releaseNodeObj()
+}
+
+// releaseNodeObj deletes nodeObj's JNI global reference and zeroes it. If attach fails, nodeObj is
+// left set so a later Close can retry instead of leaking the reference; it is never used for a
+// native call meanwhile, since every caller checks w.closed first. Callers must hold nodeMu for
+// write.
+func (w *Wrapper) releaseNodeObj() {
+	if w.nodeObj == 0 {
+		return
 	}
+	env, detach, err := attach()
+	if err != nil {
+		return
+	}
+	C.defra_delete_global_ref(env, w.nodeObj)
+	detach()
+	w.nodeObj = 0
 }
 
 func (w *Wrapper) Events() event.Bus {
@@ -1069,8 +1070,7 @@ func (w *Wrapper) Disconnect(
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	handle := getNodeOrTxnHandle(w.handle, ctx)
-	res, err := w.callGuarded("GetNodeIdentityNative", handle, newArgs())
+	res, err := callStore(w, ctx, "GetNodeIdentityNative", newArgs())
 	if err != nil {
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
