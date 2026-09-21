@@ -116,8 +116,18 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 		//
 		// Signing makes each node's genesis block (and thus DocID) signer-specific, so creating the
 		// doc on every node yields distinct docs that never converge.
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
-		Actions:            actions,
+		//
+		// The older release still counts a merged increment more than once, which is the bug
+		// fixed here, so a node running it reads a value above the sum and the assertion on
+		// every node fails. Measured at 68 against an expected 40, while the current build on
+		// the other node of the same run read 40.
+		MultiplierExcludes: []string{
+			multiplier.SecondaryIndex,
+			multiplier.SignedDocs,
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
+		Actions: actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
@@ -216,8 +226,17 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 		//
 		// Signing makes each node's genesis block (and thus DocID) signer-specific, so creating the
 		// doc on every node yields distinct docs that never converge.
-		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
-		Actions:            actions,
+		//
+		// The older release still counts a merged increment more than once, which is the bug
+		// fixed here, so a node running it reads a value above the sum and the assertion on
+		// every node fails. See the two node test above for a measured example.
+		MultiplierExcludes: []string{
+			multiplier.SecondaryIndex,
+			multiplier.SignedDocs,
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
+		Actions: actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
