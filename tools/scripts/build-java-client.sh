@@ -2,7 +2,9 @@
 set -euo pipefail
 
 # Builds defradb.jar for the tests/clients/java client: clones (or updates)
-# defradb-java-sdk into a local, gitignored checkout, then runs its own
+# defradb-java-sdk into a local, gitignored checkout, pins it to the reviewed
+# commit below (so identical DefraDB commits always build against the same SDK
+# / ABI code), then runs its own
 # build.sh, which in turn:
 #   1. runs `make build-c-shared-linux` in this repo to build libdefradb.so
 #   2. copies that .so + headers into the checkout
@@ -19,13 +21,30 @@ DEFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WRAPPER_DIR="${DEFRA_JAVA_WRAPPER_DIR:-$DEFRA_DIR/.javaclient/defradb-java-sdk}"
 WRAPPER_REPO="${DEFRA_JAVA_WRAPPER_REPO:-https://github.com/sourcenetwork/defradb-java-sdk.git}"
 
+# The commit of the Java SDK to pin to
+WRAPPER_COMMIT="${DEFRA_JAVA_WRAPPER_COMMIT:-92c52ca7b8571feea0c0b7373c0441cbbd24b749}"
+
 if [ ! -d "$WRAPPER_DIR/.git" ]; then
   echo "Cloning defradb-java-sdk repo into $WRAPPER_DIR..."
   git clone "$WRAPPER_REPO" "$WRAPPER_DIR"
 else
   echo "Updating existing defradb-java-sdk checkout at $WRAPPER_DIR..."
-  git -C "$WRAPPER_DIR" pull --ff-only
+  git -C "$WRAPPER_DIR" fetch --quiet origin
 fi
+
+# Fetch the pinned commit explicitly in case it is not reachable from a branch head, then check it
+# out detached rather than following any moving branch.
+if ! git -C "$WRAPPER_DIR" cat-file -e "$WRAPPER_COMMIT^{commit}" 2>/dev/null; then
+  git -C "$WRAPPER_DIR" fetch --quiet origin "$WRAPPER_COMMIT"
+fi
+git -C "$WRAPPER_DIR" checkout --quiet --detach "$WRAPPER_COMMIT"
+
+ACTUAL_COMMIT="$(git -C "$WRAPPER_DIR" rev-parse HEAD)"
+if [ "$ACTUAL_COMMIT" != "$WRAPPER_COMMIT" ]; then
+  echo "defradb-java-sdk is at $ACTUAL_COMMIT, expected pinned commit $WRAPPER_COMMIT" >&2
+  exit 1
+fi
+echo "Using defradb-java-sdk commit $ACTUAL_COMMIT"
 
 chmod +x "$WRAPPER_DIR/build.sh" "$WRAPPER_DIR/gradlew" "$WRAPPER_DIR/src/main/c/build.sh"
 
