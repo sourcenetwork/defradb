@@ -111,6 +111,8 @@ func (a *NewNode) Execute() {
 		opts.SetDisableP2P(a.DisableP2P)
 	}
 
+	a.SetupConfig.DisableP2P = a.DisableP2P
+
 	node, err := SetupNode(s, immutable.None[state.Identity](), a.SetupConfig, opts, a.Version)
 	require.NoError(s.T, err)
 	if node == nil {

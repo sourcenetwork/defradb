@@ -388,6 +388,11 @@ func externalNodeFlags(
 	// given, and its own default of 30s is longer than the test waits.
 	flags = append(flags, "--replicator-retry-intervals", "1")
 
+	if cfg.DisableP2P {
+		flags = append(flags, "--no-p2p")
+		return flags, unsupported
+	}
+
 	// A restarted node has to keep its old address, because its peers keep
 	// dialling that one. A new node takes any free port.
 	p2pAddrs := []string{"/ip4/" + getIPString() + "/tcp/0"}
