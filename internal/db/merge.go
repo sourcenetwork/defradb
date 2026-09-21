@@ -279,8 +279,24 @@ func (db *DB) newMergeProcessor(
 }
 
 type mergeTarget struct {
-	heads      map[cid.Cid]*coreblock.Block
-	headHeight uint64
+	heads map[cid.Cid]*coreblock.Block
+}
+
+// minHeight is the lowest height among the heads being compared against.
+//
+// Heads sit at different heights whenever the document has concurrent branches, so no single
+// height describes them all.  Taking the lowest keeps every branch in scope: a block at or above
+// it may still be new to one of the branches, and is collected rather than skipped.
+func (mt mergeTarget) minHeight() uint64 {
+	var min uint64
+	first := true
+	for _, b := range mt.heads {
+		h := b.Delta.GetPriority()
+		if first || h < min {
+			min, first = h, false
+		}
+	}
+	return min
 }
 
 func newMergeTarget() mergeTarget {
@@ -314,7 +330,7 @@ func (mp *mergeProcessor) loadComposites(
 	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
 	// of the composite DAG. However, the new block and its children might have branched off from an older block.
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
-	if block.Delta.GetPriority() >= mt.headHeight {
+	if block.Delta.GetPriority() >= mt.minHeight() {
 		mp.composites.PushFront(block)
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
@@ -337,7 +353,6 @@ func (mp *mergeProcessor) loadComposites(
 				}
 
 				newMT.heads[link.Cid] = childBlock
-				newMT.headHeight = childBlock.Delta.GetPriority()
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
@@ -938,8 +953,6 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 		}
 
 		mt.heads[cid] = block
-		// All heads have the same height so overwriting is ok.
-		mt.headHeight = block.Delta.GetPriority()
 	}
 	return mt, nil
 }
