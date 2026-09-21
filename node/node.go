@@ -157,7 +157,7 @@ func (n *Node) Start(ctx context.Context) (err error) {
 
 	// On failure, release everything Start created so nothing is orphaned (e.g. the store's
 	// directory lock). Once db.NewDB has succeeded n.DB owns rootstore and both ACPs, so Close
-	// covers them; before that they are still ours to close.
+	// covers them, but before that they are still our responsibility.
 	defer func() {
 		if err == nil {
 			return
