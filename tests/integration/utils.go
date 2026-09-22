@@ -28,6 +28,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/mod/semver"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -78,7 +79,7 @@ var (
 	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
 	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
 	// suitable for browser environments).
-	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType}
+	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType, state.JavaClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -172,6 +173,9 @@ func ExecuteTestCase(
 	}
 	if cClient {
 		clients = append(clients, state.CClientType)
+	}
+	if javaClient {
+		clients = append(clients, state.JavaClientType)
 	}
 
 	var databases []state.DatabaseType
@@ -806,6 +810,9 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			testCase.SupportedClientTypes.Value(), name)
 	}
 
+	restoreVersions := applyTestCaseVersion(t, testCase.SupportedFromVersion, activeMultipliers, crossVersionExact)
+	defer restoreVersions()
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -873,8 +880,56 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
+// applyTestCaseVersion points each active multiplier that targets a release at
+// the one this test should run against, and returns a function restoring the
+// previous values.
+//
+// A test declaring [TestCase.SupportedFromVersion] cannot run against anything
+// older, so it runs against the oldest release it does support rather than being
+// skipped, which would leave it checking nothing. exact skips it instead, for
+// runs covering several releases, where the release it needs has its own run.
+//
+// It lives here because a multiplier only sees the action set, not the version
+// the test declared.
+func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string, exact bool) func() {
+	if supportedFrom != "" {
+		// A malformed value compares as older than every release, so the test
+		// would quietly run against one that cannot support it.
+		require.True(t, semver.IsValid(supportedFrom),
+			"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
+	}
+
+	var restores []func()
+	restoreAll := func() {
+		for _, restore := range restores {
+			restore()
+		}
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		version, resolution := defraMultiplier.ResolveTargetVersion(name, supportedFrom, exact)
+
+		switch resolution {
+		case defraMultiplier.VersionNotTargeted:
+			continue
+
+		case defraMultiplier.VersionSkip:
+			// Skipf ends the test, so anything already set has to be put back first.
+			restoreAll()
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
+				name, defraMultiplier.DefaultTargetVersion(name), supportedFrom)
+
+		case defraMultiplier.VersionRun:
+			restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
+		}
+	}
+
+	return restoreAll
+}
+
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
-	for _, name := range strings.Split(activeNames, ",") {
+	for name := range strings.SplitSeq(activeNames, ",") {
 		switch strings.TrimSpace(name) {
 		case defraMultiplier.SignedDocs:
 			testCase.EnableSigning = true
@@ -1041,7 +1096,7 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
@@ -1074,11 +1129,14 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 			opts.P2P().SetAll(p2pOpts)
 			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
-			opts.NodeACP().SetEnabled(start.EnableNAC)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				start.Identity,
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)
