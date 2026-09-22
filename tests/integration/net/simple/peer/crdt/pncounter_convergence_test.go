@@ -22,16 +22,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges asserts that a counter
-// updated on both peers at once reaches the sum of every increment.
-//
-// Two nodes apply 20 increments of +1 each, so both must end on 40.
-//
-// Without the fix each node reads a value above 40, and the two disagree, even though they hold
-// the same blocks. The wrong value is stored, so restarting a node does not clear it. Dropped
-// blocks are not the cause: the block sets match and no transport errors are logged. It is also
-// not a regression, reproducing the same way on 63fa24b85, before "refactor: Detangle crdts"
-// (#5163).
+// The request carries no NodeID so it runs against both nodes, which matters because the
+// failure this covers had them disagreeing, not just reading the wrong total.
 func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing.T) {
 	const updatesPerNode = 20
 	const expectedPoints = int64(2 * updatesPerNode)
@@ -72,7 +64,8 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 		},
 	}
 
-	// Interleave the updates so each node is producing increments while merging its peer's.
+	// Interleaved so each node is producing increments while merging its peer's. Sequential
+	// updates never fork the chain and the bug does not appear.
 	for range updatesPerNode {
 		actions = append(actions,
 			&action.UpdateDoc{
@@ -111,16 +104,10 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 	)
 
 	test := testUtils.TestCase{
-		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// Counter fields cannot be indexed:
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		//
-		// Signing makes each node's genesis block (and thus DocID) signer-specific, so creating the
-		// doc on every node yields distinct docs that never converge.
-		//
-		// The older release still counts a merged increment more than once, which is the bug
-		// fixed here, so a node running it reads a value above the sum and the assertion on
-		// every node fails. Measured at 68 against an expected 40, while the current build on
-		// the other node of the same run read 40.
+		// Signing gives each node its own genesis block, so the DocIDs never match.
+		// v1.0.0 still has this bug, so that node reports an inflated total.
 		MultiplierExcludes: []string{
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
@@ -133,14 +120,7 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge is the two node case widened to
-// a five node mesh, where each node merges the increments of the other four.
-//
-// The closing request carries no NodeID, so it runs against all five nodes. It fails if any node
-// disagrees with the others, and if they agree on the wrong total.
-//
-// See TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges for why the counter is
-// applied more than once.
+// Every node merges the increments of the other four, which the two node case cannot cover.
 func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.T) {
 	const nodeCount = 5
 	const updatesPerNode = 10
@@ -170,7 +150,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 		},
 	)
 
-	// Connect every pair, so an update reaches all the other nodes without being relayed.
+	// Every pair, so an update reaches the others directly rather than being relayed.
 	for source := range nodeCount {
 		for target := source + 1; target < nodeCount; target++ {
 			actions = append(actions, testUtils.ConnectPeers{
@@ -189,7 +169,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 		})
 	}
 
-	// Interleave the updates so every node is producing increments while merging the other four.
+	// Interleaved, as above.
 	for range updatesPerNode {
 		for nodeID := range nodeCount {
 			actions = append(actions, &action.UpdateDoc{
@@ -221,15 +201,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 	)
 
 	test := testUtils.TestCase{
-		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
-		// https://github.com/sourcenetwork/defradb/issues/4439
-		//
-		// Signing makes each node's genesis block (and thus DocID) signer-specific, so creating the
-		// doc on every node yields distinct docs that never converge.
-		//
-		// The older release still counts a merged increment more than once, which is the bug
-		// fixed here, so a node running it reads a value above the sum and the assertion on
-		// every node fails. See the two node test above for a measured example.
+		// As above.
 		MultiplierExcludes: []string{
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
