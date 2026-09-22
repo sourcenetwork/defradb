@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the Vera network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -39,6 +39,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
+   * [Embedded DefraDB](#embedded-defradb)
+   * [Versioning](#versioning)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -71,7 +73,7 @@ Building DefraDB from source requires significant system resources. If you encou
 
 ### Prerequisites
 
-- [Go](https://golang.org/) 1.24 or later
+- [Go](https://golang.org/) 1.26 or later
 - [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
 - Git
 
@@ -531,6 +533,27 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 [Trace exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
 
+## Embedded DefraDB
+
+Besides running as a standalone node, DefraDB can be embedded into an application through its C bindings, built from the [`cbindings`](./cbindings) package. The shared library exposes the operations implemented there, so an embedding application works against a local database in process.
+
+Build the library with one of the following targets:
+
+```shell
+make build-c-shared-linux      # build/libdefradb.so plus the C headers
+make build-c-shared-linux:deb  # the same, packaged as a .deb
+make build-c-static-windows
+make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=21
+```
+
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
+
+For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
+
+## Versioning
+
+Please refer to our [versioning policy](./VERSIONING.md).
+
 ## Community
 
 Discuss on [Discord](https://source.network/discord) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [X](https://x.com/edgeofsource).
@@ -541,7 +564,7 @@ Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 
-DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
+DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make production and non-production use of it provided such use is not in connection with the operation or provision of a Managed Service. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete [license](licenses/BSL.txt) before usage.
 
 ## Contributors
 

@@ -20,6 +20,7 @@ type FieldValue struct {
 	isDirty bool
 }
 
+// Deprecated: The first (CType) param  will be removed in Defra v2.0.0
 func NewFieldValue(t CType, val NormalValue) *FieldValue {
 	return &FieldValue{
 		t:       t,
@@ -36,6 +37,7 @@ func (val FieldValue) NormalValue() NormalValue {
 	return val.value
 }
 
+// Deprecated: This function will be removed in Defra v2.0.0
 func (val FieldValue) Type() CType {
 	return val.t
 }
@@ -54,6 +56,7 @@ func (val *FieldValue) Clean() {
 	val.isDirty = false
 }
 
+// Deprecated: This function will be removed in Defra v2.0.0
 func (val *FieldValue) SetType(t CType) {
 	val.t = t
 }

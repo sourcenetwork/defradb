@@ -193,7 +193,7 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 }
 
 func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
-	filter, err := stringArg(args, 0, "filter")
+	filter, err := filterArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -214,7 +214,7 @@ func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Va
 }
 
 func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
-	filter, err := stringArg(args, 0, "filter")
+	filter, err := filterArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
 	}

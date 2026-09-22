@@ -12,23 +12,13 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern void FreeIdentity(uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"unsafe"
@@ -100,9 +90,22 @@ func (c *Collection) NewIndex(
 	defer C.free(unsafe.Pointer(fields))
 
 	var cUnique C.int = 0
-	if indexDesc.Unique {
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	if indexDesc.Unique || (indexDesc.Ordered != nil && indexDesc.Ordered.Unique) {
 		cUnique = 1
 	}
+
+	// An empty string means no vector index; a non-empty one is the VectorIndexDescription as JSON.
+	vectorJSON := ""
+	if indexDesc.Vector != nil {
+		b, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return client.IndexDescription{}, err
+		}
+		vectorJSON = string(b)
+	}
+	cVectorJSON := C.CString(vectorJSON)
+	defer C.free(unsafe.Pointer(cVectorJSON))
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
 	res := ConvertAndFreeCResult(C.NewIndex(
@@ -110,6 +113,7 @@ func (c *Collection) NewIndex(
 		cIndexDescName,
 		fields,
 		cUnique,
+		cVectorJSON,
 		copts,
 		cIdentity,
 	))
@@ -212,8 +216,10 @@ func (c *Collection) NewEncryptedIndex(
 
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
+	indexType := C.CString(string(req.Type))
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(fieldName))
+	defer C.free(unsafe.Pointer(indexType))
 
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.FreeIdentity(cIdentity)
@@ -223,6 +229,7 @@ func (c *Collection) NewEncryptedIndex(
 		callHandle,
 		name,
 		fieldName,
+		indexType,
 		cIdentity,
 	))
 
@@ -297,11 +304,12 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
 	ctx = setCtxTxnFromCollection(ctx, c)
+	opt := utils.NewOptions(opts...)
 
 	cName := C.CString(c.def.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(opt.GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -315,13 +323,19 @@ func (c *Collection) Truncate(
 	copts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(c.w.handle, ctx)
-	res := ConvertAndFreeCResult(
-		C.TruncateCollection(
-			callHandle,
-			copts,
-			cIdentity,
-		),
-	)
+	var result C.Result
+	if opt.Filter == nil {
+		result = C.TruncateCollection(callHandle, copts, cIdentity)
+	} else {
+		filterJSON, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		cFilter := C.CString(string(filterJSON))
+		defer C.free(unsafe.Pointer(cFilter))
+		result = C.TruncateCollectionWithFilter(callHandle, copts, cIdentity, cFilter)
+	}
+	res := ConvertAndFreeCResult(result)
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}

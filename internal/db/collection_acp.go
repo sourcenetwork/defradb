@@ -55,7 +55,7 @@ func (c *collection) registerDoc(
 // collection has a policy, and the request carries an identity (see [acpDB.RegisterObject]).
 //
 // Unlike a document (created on a single node), the same collection is added on every node, so on a
-// shared acp instance (e.g. SourceHub) a second node re-registers the same collection object. The
+// shared ACP instance (e.g. Remote DAC) a second node re-registers the same collection object. The
 // underlying registration is idempotent for a same-owner re-register (and still errors on a
 // different owner), so no special handling is needed here (see [dac.bridgeDocumentACP.RegisterDocObject]).
 func (c *collection) registerCollection(

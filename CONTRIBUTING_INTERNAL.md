@@ -28,7 +28,7 @@
   - [🔧 Quick Fix Checklist](#-quick-fix-checklist)
 - [🧪 Testing - Advanced](#-testing--advanced)
   - [🏃 Test Configuration Variables](#-test-configuration-variables)
-  - [🌐 SourceHub ACP Tests](#-sourcehub-acp-tests)
+  - [🌐 Remote Document ACP Tests](#-remote-document-acp-tests)
   - [📈 Benchmarks](#-benchmarks)
   - [🔍 Change Detector](#-change-detector)
 - [📦 Dependency Management](#-dependency-management)
@@ -188,18 +188,18 @@ The test suite uses environment variables to control which configurations are te
 | `DEFRA_BADGER_FILE` | `true`/`false` | Use file-based Badger store |
 | `DEFRA_BADGER_ENCRYPTION` | `true`/`false` | Enable Badger encryption |
 | `DEFRA_MUTATION_TYPE` | `gql` / `collection-named` / `collection-save` | Mutation type |
-| `DEFRA_DOCUMENT_ACP_TYPE` | `local` / `source-hub` | ACP type |
+| `DEFRA_DOCUMENT_ACP_TYPE` | `local` / `remote` | ACP type |
 | `DEFRA_LENS_TYPE` | `wasm-time` / `wasm-er` | Lens WASM runtime |
 | `DEFRA_VIEW_TYPE` | `cacheless` / `materialized` | View type |
 | `DEFRA_VECTOR_EMBEDDING` | `true`/`false` | Enable vector embedding tests |
 
-### 🌐 SourceHub ACP Tests
+### 🌐 Remote Document ACP Tests
 
 > [!WARNING]
-> SourceHub ACP tests require **Docker** and are resource-heavy.
+> Remote Document ACP tests use a Vera container, require **Docker**, and are resource-heavy.
 
 ```shell
-DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_GO=false DEFRA_DOCUMENT_ACP_TYPE=source-hub \
+DEFRA_CLIENT_HTTP=true DEFRA_CLIENT_GO=false DEFRA_DOCUMENT_ACP_TYPE=remote \
   DEFRA_BADGER_MEMORY=true go test ./tests/integration/acp/... -count=1 -timeout 20m
 ```
 
@@ -279,7 +279,8 @@ For significant architectural changes or major new features, write a **[Source I
 >
 > 1. Include the `BREAKING CHANGE` keyword in the **commit message body** (not the title)
 > 2. Follow it with a description of what changed and why
-> 3. Document the changes in [`docs/data_format_changes/`](./docs/data_format_changes/) for the change detector to pass
+> 3. For an intentional one-off breaking change outside a major release, add the affected interfaces and migration guidance to [`BREAKLOG.md`](./BREAKLOG.md)
+> 4. If the stored data format changes, document it in [`docs/data_format_changes/`](./docs/data_format_changes/) for the change detector to pass
 
 ---
 

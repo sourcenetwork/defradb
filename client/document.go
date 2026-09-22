@@ -96,8 +96,6 @@ type Document struct {
 	values map[Field]*FieldValue
 	head   cid.Cid
 	mu     sync.RWMutex
-	// marks if document has unsaved changes
-	isDirty bool
 
 	collection CollectionVersion
 }
@@ -924,27 +922,19 @@ func (doc *Document) Set(ctx context.Context, field string, value any) error {
 	if err != nil {
 		return err
 	}
-	return doc.setCBOR(fd.Typ, field, val)
-}
 
-func (doc *Document) set(t CType, field string, value *FieldValue) error {
 	doc.mu.Lock()
 	defer doc.mu.Unlock()
 	var f Field
 	if v, exists := doc.fields[field]; exists {
 		f = v
 	} else {
-		f = doc.newField(t, field)
+		f = doc.newField(fd.Typ, field)
 		doc.fields[field] = f
 	}
-	doc.values[f] = value
-	doc.isDirty = true
-	return nil
-}
+	doc.values[f] = NewFieldValue(fd.Typ, val)
 
-func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
-	value := NewFieldValue(t, val)
-	return doc.set(t, field, value)
+	return nil
 }
 
 func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string]any) error {

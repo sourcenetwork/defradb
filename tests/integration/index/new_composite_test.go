@@ -79,7 +79,7 @@ func TestCompositeIndexNew_UsingObjectDirective_SetsDefaultDirection(t *testing.
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
-					type User @index(direction: DESC, includes: [{field: "name"}, {field: "age"}]) {
+					type User @index(ordered: {direction: DESC, includes: [{field: "name"}, {field: "age"}]}) {
 						name: String
 						age: Int 
 					}

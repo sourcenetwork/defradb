@@ -149,6 +149,9 @@ func (p *Planner) newObjectMutationPlan(stmt *mapper.Mutation) (planNode, error)
 	case mapper.UpsertObjects:
 		return p.UpsertDocs(stmt)
 
+	case mapper.TruncateObjects:
+		return p.Truncate(stmt)
+
 	default:
 		return nil, client.NewErrUnhandledType("mutation", stmt.Type)
 	}

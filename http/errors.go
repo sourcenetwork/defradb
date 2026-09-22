@@ -51,6 +51,7 @@ var (
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
 	ErrInvalidTTL                   = errors.New("invalid ttl value")
+	ErrCollectionSchemaNotGenerated = errors.New("collection schema was not generated")
 )
 
 type errorResponse struct {
@@ -176,6 +177,7 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrMaterializedViewAndACPNotSupported) ||
 		errors.Is(err, db.ErrColNotMaterialized) ||
 		errors.Is(err, db.ErrColMutatingIsBranchable) ||
+		errors.Is(err, db.ErrFilteredTruncateBranchableCollection) ||
 		errors.Is(err, db.ErrP2PColHasPolicy) ||
 		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
 		errors.Is(err, db.ErrCollectionNameMutated) ||

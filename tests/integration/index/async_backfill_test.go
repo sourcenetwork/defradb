@@ -30,7 +30,8 @@ import (
 //
 // inProcessDBType pins to a single backend: the gated behaviour is storage-agnostic, so running it
 // across backends only adds cost, and leveldb must be avoided since a build parked at the gate would
-// hold no txn but its concurrent-transaction limit makes the held-build scenarios fragile (#4959).
+// hold no txn but its concurrent-transaction limit makes the held-build scenarios fragile
+// (https://github.com/sourcenetwork/defradb/issues/4959).
 var (
 	goClientTypes   = immutable.Some([]state.ClientType{state.GoClientType})
 	inProcessDBType = immutable.Some([]state.DatabaseType{testUtils.BadgerIMType})

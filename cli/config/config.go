@@ -82,7 +82,7 @@ var ConfigFlags = map[string]string{
 	"keyring-path":               "keyring.path",
 	"no-keyring":                 "keyring.disabled",
 	"document-acp-type":          "acp.document.type",
-	"source-hub-address":         "acp.document.sourceHub.address",
+	"remote-dac-address":         "acp.document.remote.address",
 	"development":                "development",
 	"secret-file":                "secretfile",
 	"no-telemetry":               "telemetry.disabled",

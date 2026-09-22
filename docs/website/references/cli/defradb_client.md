@@ -13,7 +13,7 @@ Execute queries, add collections, obtain node info, etc.
       --audience string             Audience to set on minted auth tokens. Defaults to the host of --url
   -h, --help                        help for client
   -i, --identity string             Hex formatted private key used to authenticate with ACP
-      --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
+      --remote-dac-address string   Vera address authorized to make Remote DAC transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```
