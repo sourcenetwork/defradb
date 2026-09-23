@@ -169,6 +169,80 @@ func TestSignature_WithPerOpSigningDisabled_ShouldNotSignAnyCommit(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSignature_WithPerOpSigningOverrideOnUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+		}),
+		MultiplierExcludes: []string{multiplier.EncryptedDocs},
+		EnableSigning:      true,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.UpdateDoc{
+				Doc: `{
+					"name": "John Doe"
+				}`,
+				EnableSigning: immutable.Some(false),
+			},
+			&action.Request{
+				Request: `
+					query {
+						_commits(order: {height: DESC}, filter: {fieldName: {_eq: "_C"}}) {
+							height
+							signature {
+								type
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{"height": 2, "signature": nil},
+						{"height": 1, "signature": map[string]any{"type": coreblock.SignatureTypeECDSA256K}},
+					},
+				},
+			},
+			&action.UpdateDoc{
+				Doc: `{
+					"name": "John Doe Junior"
+				}`,
+				EnableSigning: immutable.Some(true),
+			},
+			&action.Request{
+				Request: `
+					query {
+						_commits(order: {height: DESC}, filter: {fieldName: {_eq: "_C"}}) {
+							height
+							signature {
+								type
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{"height": 3, "signature": map[string]any{"type": coreblock.SignatureTypeECDSA256K}},
+						{"height": 2, "signature": nil},
+						{"height": 1, "signature": map[string]any{"type": coreblock.SignatureTypeECDSA256K}},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(t *testing.T) {
 	uniqueSignature := testUtils.NewUniqueValue()
 	sameIdentity := testUtils.NewSameValue()
