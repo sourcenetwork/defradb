@@ -929,8 +929,7 @@ func findIndexWithFirstField(
 	fieldName string,
 ) (isUnique bool, found bool) {
 	for _, index := range newIndexes {
-		//nolint:staticcheck // a request has no accessor; the deprecated field is the only source
-		if fields := index.Fields; len(fields) > 0 && fields[0].Name == fieldName {
+		if fields := index.GetFields(); len(fields) > 0 && fields[0].Name == fieldName {
 			if index.Ordered != nil {
 				return index.Ordered.Unique, true
 			}

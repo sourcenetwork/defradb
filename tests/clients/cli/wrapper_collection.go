@@ -96,8 +96,13 @@ func (c *Collection) NewIndex(
 		args = append(args, "--vector", string(vectorJSON))
 	}
 
-	//nolint:staticcheck // a request has no accessor; the deprecated field is the only source
+	// The deprecated Fields wins when set, so the server still sees it disagreeing with the kind
+	// config and rejects it.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
 	requested := indexDesc.Fields
+	if len(requested) == 0 {
+		requested = indexDesc.GetFields()
+	}
 	fields := make([]string, len(requested))
 	orders := make([]bool, len(requested))
 

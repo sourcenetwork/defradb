@@ -117,7 +117,7 @@ func buildIndexBase(
 	desc client.IndexDescription,
 	building bool,
 ) (collectionBaseIndex, error) {
-	fields := indexFields(desc)
+	fields := desc.GetFields()
 	if len(fields) == 0 {
 		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}

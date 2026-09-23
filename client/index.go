@@ -212,51 +212,47 @@ func (d IndexDescription) GetUnique() bool {
 	return d.Unique
 }
 
-// GetFields returns the index's fields with their directions, reading the kind's own config and
-// falling back to the deprecated [IndexDescription.Fields]. Only an ordered index has directions, so
-// a vector index's entries come back ascending.
+// GetFields returns the index's fields. Only ordered indexes have a direction, so a vector index's
+// fields come back ascending.
 func (d IndexDescription) GetFields() []IndexedFieldDescription {
-	if ordered, ok := d.KindDescription.(*OrderedIndexDescription); ok && len(ordered.Fields) > 0 {
-		return ordered.Fields
-	}
-	// The deprecated field is the only one carrying directions for a descriptor built in memory, so
-	// it is returned whole rather than reduced to names.
-	if len(d.Fields) > 0 {
-		return d.Fields
-	}
-	names := d.fieldNames()
-	fields := make([]IndexedFieldDescription, len(names))
-	for i, name := range names {
-		fields[i] = IndexedFieldDescription{Name: name}
-	}
-	return fields
-}
-
-// fieldNames returns the names of the index's fields, falling back to the deprecated top-level ones
-// for a descriptor built in memory before the kind carried them.
-func (d IndexDescription) fieldNames() []string {
-	if d.KindDescription != nil {
-		if names := d.KindDescription.FieldNames(); len(names) > 0 {
-			return names
+	switch config := d.KindDescription.(type) {
+	case *OrderedIndexDescription:
+		if config != nil && len(config.Fields) > 0 {
+			return config.Fields
+		}
+	case *VectorIndexDescription:
+		if config != nil && len(config.Fields) > 0 {
+			fields := make([]IndexedFieldDescription, len(config.Fields))
+			for i, name := range config.Fields {
+				fields[i] = IndexedFieldDescription{Name: name}
+			}
+			return fields
 		}
 	}
-	names := make([]string, len(d.Fields))
-	for i, field := range d.Fields {
+	return d.Fields
+}
+
+// fieldNames returns the names of the index's fields, dropping any direction.
+func (d IndexDescription) fieldNames() []string {
+	fields := d.GetFields()
+	names := make([]string, len(fields))
+	for i, field := range fields {
 		names[i] = field.Name
 	}
 	return names
 }
 
-// normalize returns a copy with KindDescription and the compat fields consistent: a nil ordered
-// KindDescription is filled from the deprecated fields, and those are set back from the resolved
-// config. Both (un)marshalling paths run it, so a stored descriptor is always consistent.
-func (d IndexDescription) normalize() IndexDescription {
+// Normalize returns a copy with the kind config and the deprecated fields consistent, so a
+// descriptor is the same whichever one was set. Both (un)marshalling paths run it.
+//
+// Deprecated: this only reconciles the deprecated Fields and Unique, so it will be removed along
+// with them in Defra v2.0.0.
+func (d IndexDescription) Normalize() IndexDescription {
 	if d.Kind == IndexKindOrdered && d.KindDescription == nil {
 		d.KindDescription = &OrderedIndexDescription{Unique: d.Unique, Fields: d.Fields}
 	}
-	// A caller that set only the old spelling still gets a complete config. The config is replaced
-	// rather than written through: the pointer may be shared, and marshalling must not mutate its
-	// caller's descriptor.
+	// Replace the config rather than write through it: the pointer may be shared, and marshalling
+	// must not modify the caller's descriptor.
 	switch config := d.KindDescription.(type) {
 	case *OrderedIndexDescription:
 		if len(config.Fields) == 0 {
@@ -265,10 +261,13 @@ func (d IndexDescription) normalize() IndexDescription {
 			d.KindDescription = &upgraded
 		}
 	case *VectorIndexDescription:
-		if len(config.Fields) == 0 {
+		if len(config.Fields) == 0 && len(d.Fields) > 0 {
 			upgraded := *config
-			for _, field := range d.Fields {
-				upgraded.Fields = append(upgraded.Fields, field.Name)
+			// Allocate instead of appending: appending to an empty slice that has spare capacity
+			// would write into the caller's array.
+			upgraded.Fields = make([]string, len(d.Fields))
+			for i, field := range d.Fields {
+				upgraded.Fields[i] = field.Name
 			}
 			d.KindDescription = &upgraded
 		}
@@ -328,14 +327,14 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 		return NewErrUnknownIndexKind(uint8(mirror.Kind))
 	}
 	// Upgrades a descriptor stored before the kind carried its own fields.
-	*d = d.normalize()
+	*d = d.Normalize()
 	return nil
 }
 
 // MarshalJSON writes the Kind, its config, and the compat top-level Unique (so a reader that
 // predates [Kind] still gets the uniqueness). They are always emitted consistently.
 func (d IndexDescription) MarshalJSON() ([]byte, error) {
-	d = d.normalize()
+	d = d.Normalize()
 	// The concrete configs are plain structs; their Marshal cannot fail.
 	kindDescription, _ := json.Marshal(d.KindDescription)
 	return json.Marshal(indexDescription{
@@ -371,6 +370,22 @@ type NewIndexRequest struct {
 
 	// Vector holds config specific to vector (ANN) indexes. Non-nil iff this is a vector index request.
 	Vector *VectorIndexDescription
+}
+
+// GetFields returns the fields the request names. Only ordered indexes have a direction, so a vector
+// request's fields come back ascending.
+func (r NewIndexRequest) GetFields() []IndexedFieldDescription {
+	if r.Ordered != nil && len(r.Ordered.Fields) > 0 {
+		return r.Ordered.Fields
+	}
+	if r.Vector != nil && len(r.Vector.Fields) > 0 {
+		fields := make([]IndexedFieldDescription, len(r.Vector.Fields))
+		for i, name := range r.Vector.Fields {
+			fields[i] = IndexedFieldDescription{Name: name}
+		}
+		return fields
+	}
+	return r.Fields
 }
 
 // CollectionIndex is an interface for indexing documents in a collection.
