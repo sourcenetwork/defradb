@@ -52,6 +52,14 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 								Name: "name",
 							},
 						},
+						Kind: client.IndexKindOrdered,
+						KindDescription: &client.OrderedIndexDescription{
+							Fields: []client.IndexedFieldDescription{
+								{
+									Name: "name",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -72,6 +80,14 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedAfterP
 								Fields: []client.IndexedFieldDescription{
 									{
 										Name: "name",
+									},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Fields: []client.IndexedFieldDescription{
+										{
+											Name: "name",
+										},
 									},
 								},
 							},
@@ -153,6 +169,14 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 								Name: "name",
 							},
 						},
+						Kind: client.IndexKindOrdered,
+						KindDescription: &client.OrderedIndexDescription{
+							Fields: []client.IndexedFieldDescription{
+								{
+									Name: "name",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -173,6 +197,14 @@ func TestCollectionVersionUpdatesAddFieldSimple_WithExistingIndexDocsAddedBefore
 								Fields: []client.IndexedFieldDescription{
 									{
 										Name: "name",
+									},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Fields: []client.IndexedFieldDescription{
+										{
+											Name: "name",
+										},
 									},
 								},
 							},
