@@ -44,9 +44,6 @@ const (
 type IndexKindDescription interface {
 	// isIndexKindDescription is unexported so only types in this package can implement this interface.
 	isIndexKindDescription()
-
-	// FieldNames returns the names of the indexed fields, in the order the kind stores them.
-	FieldNames() []string
 }
 
 // VectorAlgorithm identifies the algorithm used to build/search a vector index. It is a string so it
@@ -120,15 +117,6 @@ type OrderedIndexDescription struct {
 
 func (*OrderedIndexDescription) isIndexKindDescription() {}
 
-// FieldNames returns the indexed field names, dropping each field's direction.
-func (d *OrderedIndexDescription) FieldNames() []string {
-	names := make([]string, len(d.Fields))
-	for i, field := range d.Fields {
-		names[i] = field.Name
-	}
-	return names
-}
-
 var _ IndexKindDescription = (*OrderedIndexDescription)(nil)
 
 // VectorIndexDescription is the config for a vector (ANN) index.
@@ -148,11 +136,6 @@ type VectorIndexDescription struct {
 }
 
 func (*VectorIndexDescription) isIndexKindDescription() {}
-
-// FieldNames returns the indexed field names, which is all a vector index stores.
-func (d *VectorIndexDescription) FieldNames() []string {
-	return d.Fields
-}
 
 var _ IndexKindDescription = (*VectorIndexDescription)(nil)
 
