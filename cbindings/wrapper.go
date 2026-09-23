@@ -851,13 +851,15 @@ func (w *CWrapper) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
+	opt := utils.NewOptions(opts...)
+	colsOpt := options.WithIdentity(options.GetCollections(), opt.GetIdentity())
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name), colsOpt)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(cols) == 0 {
-		return nil, fmt.Errorf("collection with name %q not found", name)
+		return nil, client.NewErrCollectionNotFoundForName(name)
 	}
 
 	// cols will always have length == 1 here
