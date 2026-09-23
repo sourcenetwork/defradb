@@ -31,17 +31,6 @@ import (
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
-// normalizeIndexes round-trips each index through JSON, which is what makes the deprecated and
-// current spellings consistent. A test expectation written in either style then compares equal to
-// the actual.
-func normalizeIndexes(t testing.TB, indexes []client.IndexDescription) []client.IndexDescription {
-	data, err := json.Marshal(indexes)
-	require.NoError(t, err)
-	var out []client.IndexDescription
-	require.NoError(t, json.Unmarshal(data, &out))
-	return out
-}
-
 func assertError(t testing.TB, err error, expectedError string) bool {
 	if err == nil {
 		return false
@@ -101,9 +90,7 @@ func assertCollectionVersions(
 		if expected.Indexes != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			// Normalize both sides so an expectation written in the old style (Unique only, no Kind)
-			// compares equal to the resolved actual (Kind populated).
-			require.Equal(s.T, normalizeIndexes(s.T, expected.Indexes), normalizeIndexes(s.T, actual.Indexes))
+			require.Equal(s.T, expected.Indexes, actual.Indexes)
 		}
 
 		require.Equal(s.T, expected.PreviousVersion.HasValue(), actual.PreviousVersion.HasValue())
