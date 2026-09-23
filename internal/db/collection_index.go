@@ -513,9 +513,9 @@ func processNewIndexRequest(
 		return client.IndexDescription{}, err
 	}
 
-	// Resolved once so the checks below share one slice: the name check rewrites relation names in
-	// place, and this is what gets stored.
-	fields := desc.GetFields()
+	// Cloned because the relation-name check below rewrites entries in place, and GetFields may
+	// return the request's own slice.
+	fields := slices.Clone(desc.GetFields())
 
 	err = checkExistingFieldsAndAdjustRelFieldNames(def, fields)
 	if err != nil {
