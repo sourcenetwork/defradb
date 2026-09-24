@@ -84,6 +84,7 @@ func TestNetInfoDisconnectEmptyList(t *testing.T) {
 			testUtils.DisconnectPeers{
 				SourceNodeID:  0,
 				TargetNodeIDs: []int{},
+				ExpectedError: "addresses cannot be empty",
 			},
 		},
 	}

@@ -43,6 +43,11 @@ type ListIndexes struct {
 	// The expected indexes to be returned.
 	ExpectedIndexes []client.IndexDescription
 
+	// ExpectedCollectionName is the collection name expected on every returned result.
+	//
+	// Only asserted when set.
+	ExpectedCollectionName string
+
 	// ExpectedStatuses maps index name to the expected execution for that index.
 	// When set for a name, asserts Status, Action and Reason (partial match) instead of the
 	// default ready assertion.
@@ -67,11 +72,9 @@ func (a *ListIndexes) Execute() {
 		return
 	}
 
-	var expectedErrorRaised bool
-
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, nodeID := range nodeIDs {
-		node := a.s.Nodes[index]
+	for _, nodeID := range nodeIDs {
+		node := a.s.Nodes[nodeID]
 
 		// Check if a transaction is attached to this action. If so, we will be using it.
 		var txn client.Txn
@@ -84,7 +87,12 @@ func (a *ListIndexes) Execute() {
 			txnOption = immutable.Some(txn)
 		}
 
-		collections := MustGetCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
+		if err != nil {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
+		}
 		collection := collections[a.CollectionID]
 
 		opts := options.ListCollectionIndexes()
@@ -95,16 +103,16 @@ func (a *ListIndexes) Execute() {
 
 		actualStatuses, err := collection.ListIndexes(a.s.Ctx, opts)
 
-		if assertError(a.s.T, err, a.ExpectedError) {
-			expectedErrorRaised = true
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+		if err != nil {
 			continue
 		}
 
 		assertIndexesListsEqual(a.ExpectedIndexes, actualStatuses, a.s.T)
 		assertIndexStatuses(a.ExpectedStatuses, actualStatuses, a.s.T)
+		assertIndexCollectionNames(a.ExpectedCollectionName, actualStatuses, a.s.T)
 	}
-
-	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 }
 
 func assertIndexesListsEqual(
@@ -181,10 +189,31 @@ func assertIndexStatuses(
 	}
 }
 
+// assertIndexCollectionNames checks that every returned result names its owning collection.
+//
+// When expectedName is empty, no assertions are made.
+func assertIndexCollectionNames(
+	expectedName string,
+	actualResults []client.ListIndexesResult,
+	t require.TestingT,
+) {
+	if expectedName == "" {
+		return
+	}
+	for _, actual := range actualResults {
+		assert.Equal(t, expectedName, actual.CollectionName,
+			"index %s collection name mismatch", actual.Description.Name)
+	}
+}
+
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t require.TestingT) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
 	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
-	assert.Equal(t, expectedIndex.Unique, actualIndex.Unique, "index unique mismatch")
+	assert.Equal(t, expectedIndex.Kind, actualIndex.Kind, "index kind mismatch")
+	assert.Equal(t, expectedIndex.GetUnique(), actualIndex.GetUnique(), "index unique mismatch")
+	expectedVec, _ := expectedIndex.GetVector()
+	actualVec, _ := actualIndex.GetVector()
+	assert.Equal(t, expectedVec, actualVec, "index vector description mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))

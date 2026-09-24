@@ -76,6 +76,9 @@ type UpdateDoc struct {
 
 	// If the given error is received, ignore the error and pretend the action succeeded.
 	IgnoreError string
+
+	// EnableSigning overrides node-level signing for this update.
+	EnableSigning immutable.Option[bool]
 }
 
 var _ Action = (*UpdateDoc)(nil)
@@ -117,7 +120,7 @@ func (a *UpdateDoc) Execute() {
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
 		}
 
-		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
@@ -187,6 +190,9 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
+	if action.EnableSigning.HasValue() {
+		saveOpts.SetEnableSigning(action.EnableSigning.Value())
+	}
 	return collection.SaveDocument(ctx, doc, saveOpts)
 }
 
@@ -224,6 +230,9 @@ func updateDocViaColUpdate(
 	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		updateOpts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return collection.UpdateDocument(ctx, doc, updateOpts)
 }

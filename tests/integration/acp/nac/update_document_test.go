@@ -14,6 +14,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -34,7 +35,7 @@ func TestNAC_GatesUpdateDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -68,8 +69,6 @@ func TestNAC_GatesUpdateDocument_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesUpdateDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -84,7 +83,7 @@ func TestNAC_GatesUpdateDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -98,15 +97,11 @@ func TestNAC_GatesUpdateDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 			// We haven't authorized non-identities. So, this should error.
 			&action.UpdateDoc{
-				Identity:     testUtils.NoIdentity(),
-				CollectionID: 0,
-				DocID:        0,
-				Doc:          `{ "name": "Lone" }`,
-				// todo: After implementing granular NAC permissions, this should be changed to a
-				// specific permission error. Currently, the permission error is different across
-				// different client types and environments.
-				// See: https://github.com/sourcenetwork/defradb/issues/4446
-				ExpectedError: "not authorized to perform operation",
+				Identity:      testUtils.NoIdentity(),
+				CollectionID:  0,
+				DocID:         0,
+				Doc:           `{ "name": "Lone" }`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
@@ -123,8 +118,6 @@ func TestNAC_GatesUpdateDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesUpdateDocument_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -139,7 +132,7 @@ func TestNAC_GatesUpdateDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -153,15 +146,11 @@ func TestNAC_GatesUpdateDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 
 			// Wrong user/identity will also not be authorized.
 			&action.UpdateDoc{
-				Identity:     testUtils.ClientIdentity(2),
-				CollectionID: 0,
-				DocID:        0,
-				Doc:          `{ "name": "Lone" }`,
-				// todo: After implementing granular NAC permissions, this should be changed to a
-				// specific permission error. Currently, the permission error is different across
-				// different client types and environments.
-				// See: https://github.com/sourcenetwork/defradb/issues/4446
-				ExpectedError: "not authorized to perform operation",
+				Identity:      testUtils.ClientIdentity(2),
+				CollectionID:  0,
+				DocID:         0,
+				Doc:           `{ "name": "Lone" }`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeGetCollectionPerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),

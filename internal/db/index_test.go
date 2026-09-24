@@ -91,6 +91,9 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	// Close awaits the background index worker, so it cannot outlive the test and race a later
+	// test that mutates the package-level build tunables (indexBackfillBatchSize, etc.).
+	t.Cleanup(func() { db.Close() })
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
@@ -189,6 +192,7 @@ func TestNewIndex_IfValidInput_NewIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
 	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	//nolint:staticcheck // asserts the deprecated field is still carried through
 	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
@@ -480,7 +484,6 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 		Name:   desc.Name,
 		ID:     1,
 		Fields: desc.Fields,
-		Unique: desc.Unique,
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
@@ -495,7 +498,6 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 		Name:   desc.Name,
 		ID:     1,
 		Fields: desc.Fields,
-		Unique: desc.Unique,
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))

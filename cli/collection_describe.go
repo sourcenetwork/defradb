@@ -12,9 +12,10 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
@@ -33,12 +34,13 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			display := make([]json.RawMessage, len(cols))
+			versions := make([]client.CollectionVersion, len(cols))
 			for i, col := range cols {
-				display[i], err = col.Version().Display()
-				if err != nil {
-					return err
-				}
+				versions[i] = col.Version()
+			}
+			display, err := client.DisplayCollectionVersions(versions)
+			if err != nil {
+				return err
 			}
 			return writeJSON(cmd, display)
 		},

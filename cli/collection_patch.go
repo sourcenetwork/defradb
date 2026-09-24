@@ -75,6 +75,7 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 
 			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 			decoder.DisallowUnknownFields()
+			decoder.UseNumber()
 
 			var migration immutable.Option[model.Lens]
 			if lensCfgJson != "" {

@@ -12,14 +12,50 @@ package db
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	blocks "github.com/ipfs/go-block-format"
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/client"
+	datastoreMocks "github.com/sourcenetwork/defradb/internal/datastore/mocks"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
+
+func TestDeleteBlockIfPresent(t *testing.T) {
+	ctx := context.Background()
+	blockID := blocks.NewBlock([]byte("missing block")).Cid()
+	deleteErr := errors.New("delete failed")
+
+	tests := []struct {
+		name    string
+		err     error
+		wantErr error
+	}{
+		{name: "corekv not found", err: corekv.ErrNotFound},
+		{name: "ipld not found", err: ipld.ErrNotFound{Cid: blockID}},
+		{name: "delete failure", err: deleteErr, wantErr: deleteErr},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			blockstore := datastoreMocks.NewBlockstore(t)
+			blockstore.EXPECT().DeleteBlock(ctx, blockID).Return(test.err).Once()
+
+			err := deleteBlockIfPresent(ctx, blockstore, blockID)
+			if test.wantErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, test.wantErr)
+			}
+		})
+	}
+}
 
 func TestCollectionTruncateRemovesDocIDMappings(t *testing.T) {
 	ctx := context.Background()

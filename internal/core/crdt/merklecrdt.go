@@ -21,36 +21,49 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-type FieldLevelCRDT interface {
-	ReplicatedData
-	Delta(ctx context.Context, data *DocField) (Delta, error)
+var FieldCRDTs = []FieldValueCRDT{
+	NewLWW(),
+	NewCounter(true),
+	NewCounter(false),
 }
 
-func FieldLevelCRDTWithStore(
-	store datastore.Keyedstore,
-	collectionVersionID string,
-	cType client.CType,
-	kind client.FieldKind,
-	key keys.DataStoreKey,
-	fieldName string,
-) (FieldLevelCRDT, error) {
-	switch cType {
-	case client.LWW_REGISTER:
-		return NewLWW(
-			store,
-			collectionVersionID,
-			key,
-			fieldName,
-		), nil
-	case client.PN_COUNTER, client.P_COUNTER:
-		return NewCounter(
-			store,
-			collectionVersionID,
-			key,
-			fieldName,
-			cType == client.PN_COUNTER,
-			kind.(client.ScalarKind), //nolint:forcetypeassert
-		), nil
+// TryGetFieldCRDT returns the cached instance of the given crdt.
+//
+// A `NONE_CRDT` will return `nil`.  If nothing is found, `false` will
+// be returned, else `true`.
+func TryGetFieldCRDT(ct client.CType) (FieldValueCRDT, bool) {
+	if ct == client.NONE_CRDT {
+		return nil, true
 	}
-	return nil, client.NewErrUnknownCRDT(cType)
+
+	for _, crdt := range FieldCRDTs {
+		if crdt.CType() == ct {
+			return crdt, true
+		}
+	}
+	return nil, false
+}
+
+type KindLimitedCRDT interface {
+	SupportedKinds() []client.FieldKind
+}
+
+type FieldValueCRDT interface {
+	CType() client.CType
+
+	String() string
+
+	Description() string
+
+	Merge(
+		ctx context.Context,
+		store datastore.Keyedstore,
+		key keys.DataStoreKey,
+		kind client.FieldKind,
+		other Delta,
+	) error
+}
+
+type DocumentValueCRDT interface {
+	Merge(ctx context.Context, store datastore.Keyedstore, key keys.PrimaryDataStoreKey, other Delta) error
 }

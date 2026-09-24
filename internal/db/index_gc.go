@@ -43,6 +43,13 @@ func (db *DB) gcIndex(
 	}
 
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
+		// Also clear any backfill record. deleteIndex clears it up front, but a build still in flight
+		// at that point can re-create one (an advanced watermark, or a failed status) after the clear
+		// and before its guard releases the drop. Sweeping it here keeps a deleted index from leaving
+		// an orphaned building or failed record behind.
+		if err := db.clearIndexBuildRecord(c, collectionID, indexID); err != nil {
+			return err
+		}
 		return db.completeIndexDrop(c, collectionID, indexID)
 	}); err != nil {
 		return NewErrIndexGCFailed(err, indexName)

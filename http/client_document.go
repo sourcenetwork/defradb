@@ -275,7 +275,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := UpdateCollectionRequest{
-		Filter:  filter,
+		Filter:  utils.NormalizeFilterForJSON(filter),
 		Updater: updater,
 	}
 
@@ -310,7 +310,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := DeleteCollectionRequest{
-		Filter: filter,
+		Filter: utils.NormalizeFilterForJSON(filter),
 	}
 
 	body, err := json.Marshal(request)

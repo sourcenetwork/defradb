@@ -72,8 +72,8 @@ Add from stdin:
       --log-source                  Include source location in logs
       --log-stacktrace              Include stacktrace in error and fatal logs
       --no-log-color                Disable colored log output
+      --remote-dac-address string   Vera address authorized to make Remote DAC transactions on behalf of the actor
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```

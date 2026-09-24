@@ -140,7 +140,7 @@ func (a *AddDoc) Execute() {
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		collections, err := getCanonicallyOrderedCollectionsWithIdentity(a.s, node, txnOption, a.Identity)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
@@ -152,7 +152,7 @@ func (a *AddDoc) Execute() {
 			require.NoError(a.s.T, err)
 		}
 
-		// getCanonicallyOrderedCollections returns a nil slot for any collection
+		// GetCollectionsCanonically returns a nil slot for any collection
 		// name that is no longer present in the database (documented on
 		// RefreshCollections). A concurrent PatchCollection removal therefore
 		// leaves the target slot nil, which is the expected "collection absent"

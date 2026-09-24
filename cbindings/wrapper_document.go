@@ -12,17 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result AddDocument(uintptr_t nodePtr, char* json, int isEncrypted,
-char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
-extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern void FreeIdentity(uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 
@@ -136,7 +126,7 @@ func (c *Collection) AddManyDocuments(
 	copts.getInactive = 0
 	setCCollectionSigningOption(&copts, addOpts.EnableSigning)
 
-	var jsonDocs []json.RawMessage
+	jsonDocs := make([]json.RawMessage, 0, len(docs))
 	for _, doc := range docs {
 		b, err := doc.MarshalJSON()
 		if err != nil {
@@ -342,8 +332,8 @@ func (c *Collection) ExistsDocument(
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
 
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
+	cVersion := C.CString(c.def.VersionID)
+	cCollectionID := C.CString(c.def.CollectionID)
 	cName := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
@@ -383,7 +373,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	docID := C.CString("")
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +429,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	ctx = setCtxTxnFromCollection(ctx, c)
 
 	docID := C.CString("")
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}

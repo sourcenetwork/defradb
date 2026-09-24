@@ -180,6 +180,22 @@ func CompleteTxn(
 	action client.Action,
 	subject string,
 ) error {
+	if err := ClearTxn(ctx, collectionID, action, subject); err != nil {
+		return err
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	txn.OnSuccess(func() {
+		publish(events, collectionID, action, subject, client.CompletedActionStatus)
+	})
+	return nil
+}
+
+// ClearTxn deletes a per-subject action's status, reason and payload records on the transaction
+// bound to ctx, without publishing an event. Use it when the record should vanish rather than
+// report completion, e.g. clearing a failed build's record when its index is dropped, where a
+// Completed event would wrongly signal success. Deleting a missing record is a no-op.
+func ClearTxn(ctx context.Context, collectionID string, action client.Action, subject string) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	for _, key := range [][]byte{
@@ -191,10 +207,6 @@ func CompleteTxn(
 			return err
 		}
 	}
-
-	txn.OnSuccess(func() {
-		publish(events, collectionID, action, subject, client.CompletedActionStatus)
-	})
 	return nil
 }
 

@@ -33,6 +33,7 @@ type DatastoreSE struct {
 }
 
 var _ Key = (*DatastoreSE)(nil)
+var _ Walkable = (*DatastoreSE)(nil)
 var _ CollectionedKey = DatastoreSE{}
 
 func (k DatastoreSE) Bytes() []byte {
@@ -70,6 +71,10 @@ func (k DatastoreSE) ToString() string {
 
 func (k DatastoreSE) ToDS() ds.Key {
 	return ds.NewKey(k.ToString())
+}
+
+func (k DatastoreSE) PrefixEnd() Walkable {
+	return rawKey(bytesPrefixEnd(k.Bytes()))
 }
 
 // NewDatastoreSEFromString creates a DatastoreSE from a key string
