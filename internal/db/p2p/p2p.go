@@ -734,14 +734,21 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			return err
 		}
 
+		var docTopicErr error
 		if evt.DocID != "" {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
-				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+				// A failure on the document topic must not stop the collection
+				// topic publish: subscribers of a branchable collection learn
+				// about this block only through the collection topic.
+				docTopicErr = NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 			}
 		}
 
 		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
 			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
+		}
+		if docTopicErr != nil {
+			return docTopicErr
 		}
 	}
 

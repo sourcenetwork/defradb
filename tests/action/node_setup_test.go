@@ -48,6 +48,7 @@ var setupFields = map[string]setupFieldHandling{
 	"HTTP":             fieldFlagged,
 	"BadgerEncryption": fieldFlagged,
 	"NodeACP":          fieldFlagged,
+	"DisableP2P":       fieldFlagged,
 
 	// The external node keeps its store under its own rootdir, which has a
 	// different layout from the path this setting names.
@@ -199,4 +200,16 @@ func TestExternalNodeFlags_BadgerEncryption(t *testing.T) {
 		assert.NotContains(t, strings.Join(flags, " "), "--no-encryption")
 		assert.Contains(t, strings.Join(unsupported, " "), "badger encryption")
 	})
+}
+
+func TestExternalNodeFlags_DisableP2P(t *testing.T) {
+	s := newFlagsTestState(t, crypto.KeyTypeSecp256k1)
+
+	flags, unsupported := externalNodeFlags(s, testOwner, NodeSetupConfig{DisableP2P: true})
+
+	joined := strings.Join(flags, " ")
+	assert.Contains(t, joined, "--no-p2p")
+	// A node with no p2p system has nowhere to listen.
+	assert.NotContains(t, joined, "--p2paddr")
+	assert.Empty(t, unsupported)
 }

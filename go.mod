@@ -49,7 +49,7 @@ require (
 	github.com/sourcenetwork/corekv/memory v0.3.1
 	github.com/sourcenetwork/corekv/namespace v0.3.1
 	github.com/sourcenetwork/corelog v0.0.9
-	github.com/sourcenetwork/go-p2p v0.1.11
+	github.com/sourcenetwork/go-p2p v0.1.12
 	github.com/sourcenetwork/goji v0.0.10
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b
 	github.com/sourcenetwork/immutable v0.3.0
