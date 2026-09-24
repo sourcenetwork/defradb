@@ -505,6 +505,10 @@ fix:
 	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
 
+.PHONY: build-c-shared-macos
+build-c-shared-macos:
+	@BUILD_TAGS="$(BUILD_TAGS)" tools/scripts/build-c-shared-macos.sh $(BUILD_FLAGS)
+
 .PHONY: build-c-static-windows
 build-c-static-windows:
 	@tools/scripts/build-c-static-windows.sh $(BUILD_FLAGS)
