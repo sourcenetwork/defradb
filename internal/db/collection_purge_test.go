@@ -279,3 +279,39 @@ func TestPurgeByDocIDsRemovesPrimaryKey(t *testing.T) {
 	require.Equal(t, 0, countPrimaryKeys(t, ctx, db, shortID),
 		"purge must delete the document's primary key")
 }
+
+func TestPurgeByDocIDsCountsOnlyDocumentsThatExisted(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	alice := addUserDoc(t, ctx, col, "alice")
+	bob := addUserDoc(t, ctx, col, "bob")
+
+	// The second alice finds nothing left to delete.
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{alice.ID(), bob.ID(), alice.ID()}, false))
+
+	require.Equal(t, int64(2), db.stats.deleted.Load())
+}
+
+func TestPurgeByDocIDsCountsOnlyCommittedDeletions(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	doc := addUserDoc(t, ctx, col, "alice")
+
+	discarded, err := db.NewTxn(false)
+	require.NoError(t, err)
+	discardedTxn, ok := discarded.(*Txn)
+	require.True(t, ok)
+	require.NoError(t, col.PurgeByDocIDs(InitContext(ctx, discardedTxn), []client.DocID{doc.ID()}, false))
+	discarded.Discard()
+	require.Equal(t, int64(0), db.stats.deleted.Load())
+
+	committed, err := db.NewTxn(false)
+	require.NoError(t, err)
+	committedTxn, ok := committed.(*Txn)
+	require.True(t, ok)
+	require.NoError(t, col.PurgeByDocIDs(InitContext(ctx, committedTxn), []client.DocID{doc.ID()}, false))
+	require.Equal(t, int64(0), db.stats.deleted.Load())
+	require.NoError(t, committed.Commit())
+	require.Equal(t, int64(1), db.stats.deleted.Load())
+}
