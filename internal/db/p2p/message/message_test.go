@@ -13,8 +13,13 @@ package message
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"testing"
+	"time"
 
+	"github.com/fxamacker/cbor/v2"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -43,29 +48,63 @@ func TestReceive_ClosesStream(t *testing.T) {
 	require.True(t, stream.closed)
 }
 
-type testHost struct{ client.Host }
-
-func (testHost) ID() string                                         { return "sender" }
-func (testHost) Pubkey() ([]byte, error)                            { return []byte{1}, nil }
-func (testHost) Sign([]byte) ([]byte, error)                        { return []byte{2}, nil }
-func (testHost) Send(context.Context, []byte, string, string) error { return nil }
-
-// testProto keeps the response channel Send registers, as Receive holds it once it has taken it
-// from the proto.
-type testProto struct {
-	ch chan Message
+// testHost signs with a real key, so messages it signs pass Receive's verification.
+type testHost struct {
+	client.Host
+	key crypto.PrivKey
+	id  string
 }
 
-func (p *testProto) Host() client.Host { return testHost{} }
+func newTestHost(t *testing.T) testHost {
+	key, _, err := crypto.GenerateEd25519Key(rand.Reader)
+	require.NoError(t, err)
+	id, err := peer.IDFromPrivateKey(key)
+	require.NoError(t, err)
+	return testHost{key: key, id: id.String()}
+}
+
+func (h testHost) ID() string                                       { return h.id }
+func (h testHost) Pubkey() ([]byte, error)                          { return crypto.MarshalPublicKey(h.key.GetPublic()) }
+func (h testHost) Sign(data []byte) ([]byte, error)                 { return h.key.Sign(data) }
+func (testHost) Send(context.Context, []byte, string, string) error { return nil }
+
+// testProto holds a single response channel: the one Send registers, or one a test sets.
+type testProto struct {
+	host testHost
+	ch   chan Message
+}
+
+func (p *testProto) Host() client.Host { return p.host }
 
 func (p *testProto) SetResponseChan(_ string, ch chan Message) { p.ch = ch }
 
 func (p *testProto) DeleteResponseChan(string) {}
 
-func (p *testProto) GetResponseChan(string) (chan Message, bool) { return nil, false }
+func (p *testProto) GetResponseChan(string) (chan Message, bool) { return p.ch, p.ch != nil }
+
+func TestReceive_FullResponseChan_DoesNotBlock(t *testing.T) {
+	host := newTestHost(t)
+	reply := &MetaData{}
+	require.NoError(t, signAndSetMetaData(host, reply))
+	data, err := cbor.Marshal(reply)
+	require.NoError(t, err)
+
+	proto := &testProto{host: host, ch: make(chan Message, 1)}
+	proto.ch <- &MetaData{}
+
+	done := make(chan error, 1)
+	go func() { done <- Receive(bytes.NewReader(data), host.ID(), proto, &MetaData{}) }()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("Receive blocked on a full response channel")
+	}
+}
 
 func TestSend_ReplyAfterTimeout_DoesNotPanic(t *testing.T) {
-	proto := &testProto{}
+	proto := &testProto{host: newTestHost(t)}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
