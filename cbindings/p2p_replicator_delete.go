@@ -37,8 +37,6 @@ func DeleteP2PReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	delRepOpt := options.WithIdentity(
 		options.DeleteReplicator().SetCollectionNames(colArgs),
 		acpIdentity.FromContext(ctx),

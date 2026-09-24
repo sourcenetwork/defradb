@@ -35,8 +35,6 @@ func ListP2PCollections(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	listP2PColOpt := options.WithIdentity(options.ListP2PCollections(), acpIdentity.FromContext(ctx))
 	cols, err := node.DB.ListP2PCollections(ctx, listP2PColOpt)
 
