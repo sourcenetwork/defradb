@@ -12,9 +12,12 @@ package message
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client"
 )
 
 func TestReceive_StreamLargerThanMax_ReturnsErrMessageTooLarge(t *testing.T) {
@@ -38,4 +41,35 @@ func TestReceive_ClosesStream(t *testing.T) {
 	err := Receive(stream, "some peer ID", nil, &MetaData{})
 	require.Error(t, err)
 	require.True(t, stream.closed)
+}
+
+type testHost struct{ client.Host }
+
+func (testHost) ID() string                                         { return "sender" }
+func (testHost) Pubkey() ([]byte, error)                            { return []byte{1}, nil }
+func (testHost) Sign([]byte) ([]byte, error)                        { return []byte{2}, nil }
+func (testHost) Send(context.Context, []byte, string, string) error { return nil }
+
+// testProto keeps the response channel Send registers, as Receive holds it once it has taken it
+// from the proto.
+type testProto struct {
+	ch chan Message
+}
+
+func (p *testProto) Host() client.Host { return testHost{} }
+
+func (p *testProto) SetResponseChan(_ string, ch chan Message) { p.ch = ch }
+
+func (p *testProto) DeleteResponseChan(string) {}
+
+func (p *testProto) GetResponseChan(string) (chan Message, bool) { return nil, false }
+
+func TestSend_ReplyAfterTimeout_DoesNotPanic(t *testing.T) {
+	proto := &testProto{}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := Send[*MetaData](ctx, proto, &MetaData{}, "some peer ID", "/test/0.0.1")
+	require.ErrorIs(t, err, ErrResponseTimeout)
+	require.NotPanics(t, func() { proto.ch <- &MetaData{} })
 }
