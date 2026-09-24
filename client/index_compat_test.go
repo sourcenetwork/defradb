@@ -11,6 +11,7 @@
 package client
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,4 +38,25 @@ func TestIndexDescription_CompatFieldsOnly_KeepsDirection(t *testing.T) {
 		Fields: []IndexedFieldDescription{{Name: "age", Descending: true}},
 	}
 	require.Equal(t, d.Fields, d.GetFields())
+}
+
+// The kind config wins when the two disagree, and a round trip writes it back to the deprecated
+// field so a stored descriptor never carries two different answers.
+func TestIndexDescription_ConflictingVectorFields_ConfigWins(t *testing.T) {
+	d := IndexDescription{
+		Name: "x", ID: 1, Kind: IndexKindVector,
+		Fields:          []IndexedFieldDescription{{Name: "stale"}},
+		KindDescription: &VectorIndexDescription{Fields: []string{"embedding"}, Dimensions: 3},
+	}
+	require.Equal(t, []IndexedFieldDescription{{Name: "embedding"}}, d.GetFields())
+
+	data, err := json.Marshal(d)
+	require.NoError(t, err)
+	var actual IndexDescription
+	require.NoError(t, json.Unmarshal(data, &actual))
+
+	config, ok := actual.KindDescription.(*VectorIndexDescription)
+	require.True(t, ok)
+	require.Equal(t, []string{"embedding"}, config.Fields)
+	require.Equal(t, []IndexedFieldDescription{{Name: "embedding"}}, actual.Fields)
 }
