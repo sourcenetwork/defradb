@@ -146,6 +146,14 @@ func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
 	assert.Equal(t, &OrderedIndexDescription{Unique: true}, actual.KindDescription)
 }
 
+func TestIndexDescription_LegacyNumericKind(t *testing.T) {
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(`{"Name":"x","ID":1,"Fields":[{"Name":"embedding"}],"Kind":1,"KindDescription":{"Dimensions":128}}`), &actual)
+	require.NoError(t, err)
+	assert.Equal(t, IndexKindVector, actual.Kind)
+	assert.Equal(t, &VectorIndexDescription{Dimensions: 128}, actual.KindDescription)
+}
+
 // An embedded caller that predates Kind builds the struct with only the top-level Unique. It must
 // behave correctly (GetUnique) and marshal a top-level Unique so an old reader still sees it.
 func TestIndexDescription_CompatUniqueOnly_Works(t *testing.T) {

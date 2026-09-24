@@ -72,6 +72,22 @@ func (k *IndexKind) UnmarshalText(text []byte) error {
 	}
 }
 
+func (k *IndexKind) UnmarshalJSON(data []byte) error {
+	if len(data) > 0 && data[0] == '"' {
+		var text string
+		if err := json.Unmarshal(data, &text); err != nil {
+			return err
+		}
+		return k.UnmarshalText([]byte(text))
+	}
+
+	var numeric uint8
+	if err := json.Unmarshal(data, &numeric); err != nil {
+		return err
+	}
+	return k.UnmarshalText([]byte(strconv.Itoa(int(numeric))))
+}
+
 // IndexKindDescription is the kind-specific config of an index: an [*OrderedIndexDescription] or a
 // [*VectorIndexDescription]. Which one an index must hold is decided by [IndexDescription.Kind],
 // never by the concrete type itself.
