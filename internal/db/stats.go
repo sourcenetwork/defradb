@@ -51,6 +51,10 @@ type mergeStats struct {
 	txnConflicts   atomic.Int64
 	chunkExhausted atomic.Int64
 
+	// deleted counts documents purged in committed transactions. A docID with no document is not
+	// counted.
+	deleted atomic.Int64
+
 	// dropReasons counts dropped events by cause. A dropped event is a document this node
 	// did not store, and the causes need different responses, so the total on its own does
 	// not say what to do.
@@ -173,5 +177,9 @@ func (s *mergeStats) report() {
 	// causes that occurred.
 	if drops := s.drainDropReasons(); len(drops) > 0 {
 		log.Error("merge drops", drops...)
+	}
+
+	if deleted := s.deleted.Swap(0); deleted != 0 {
+		log.Info("purge stats", corelog.Int64("deleted", deleted))
 	}
 }
