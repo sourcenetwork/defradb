@@ -152,6 +152,7 @@ func (txn *Txn) liveHandle(fn func(obj C.jobject, handle uintptr) (defraResult, 
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.PrintDump(ctx)
 }
 
