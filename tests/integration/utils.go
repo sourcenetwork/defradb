@@ -77,9 +77,9 @@ var (
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
-	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
-	// suitable for browser environments).
-	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType, state.JavaClientType}
+	// implemented: the JS client (the Backup API is not suitable for browser environments) and the
+	// Java client (see: https://github.com/sourcenetwork/defradb/issues/5282).
+	backupUnsupportedClientTypes = []state.ClientType{state.JSClientType, state.JavaClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )

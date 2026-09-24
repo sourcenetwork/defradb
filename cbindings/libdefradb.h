@@ -37,6 +37,8 @@ extern Result ACPAddNACActorRelationship(uintptr_t nodePtr, uintptr_t identityPt
 extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identityPtr, char* relation, char* actor);
 extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identityPtr);
 extern Result ListActions(uintptr_t nodePtr, uintptr_t identityPtr);
+extern Result BasicExport(uintptr_t nodePtr, char* filepath, char* collections, char* format, int pretty);
+extern Result BasicImport(uintptr_t nodePtr, char* filepath);
 extern Result VerifyBlockSignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid, uintptr_t identityPtr);
 extern Result AddCollection(uintptr_t nodePtr, char* sdl, uintptr_t identityPtr);
 extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions opts, uintptr_t identityPtr);
@@ -49,6 +51,7 @@ extern Result AddDocument(uintptr_t nodePtr, char* jsonData, int isEncrypted, ch
 extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions opts, uintptr_t identityPtr);
 extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions opts, uintptr_t identityPtr);
 extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, char* updaterStr, CollectionOptions opts, uintptr_t identityPtr);
+extern Result PrintDump(uintptr_t nodePtr);
 extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identityPtr);
 extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, char* indexType, uintptr_t identityPtr);
