@@ -173,7 +173,6 @@ func Send[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
@@ -190,58 +189,8 @@ func Send[ResponseType Message](
 		}
 	case <-ctx.Done():
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, ErrResponseTimeout
 	}
-}
-
-// SendAsync creates a new network stream with the provided peer, signs and set the appropriate meta data
-// on the message and writes it to the stream.
-//
-// It doesn't block for the response but instead provided a response channel for the
-// to handle however they prefer. It is the responsibility of the caller to set a reasonable
-// timeout otherwise this call will leak go routines and channels
-func SendAsync[ResponseType Message](
-	ctx context.Context,
-	proto proto,
-	m Message,
-	peerID string,
-	protoID string,
-) (resp <-chan ResponseType, err error) {
-	err = signAndSetMetaData(proto.Host(), m)
-	if err != nil {
-		return resp, err
-	}
-
-	responseChan := make(chan Message, 1)
-	proto.SetResponseChan(m.GetMessageID(), responseChan)
-
-	err = send(ctx, proto, m, peerID, protoID)
-	if err != nil {
-		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
-		return resp, err
-	}
-
-	funcResponseChan := make(chan ResponseType, 1)
-	go func() {
-		select {
-		case respMessage := <-responseChan:
-			switch typedResp := respMessage.(type) {
-			case ResponseType:
-				funcResponseChan <- typedResp
-				close(funcResponseChan)
-			default:
-				close(funcResponseChan)
-			}
-		case <-ctx.Done():
-			close(funcResponseChan)
-			proto.DeleteResponseChan(m.GetMessageID())
-			close(responseChan)
-		}
-	}()
-
-	return funcResponseChan, nil
 }
 
 func send(
