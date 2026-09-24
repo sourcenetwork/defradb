@@ -90,7 +90,14 @@ type proto interface {
 }
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
+//
+// Receive closes the stream if it implements [io.Closer]: handlers reply on a new stream, and an
+// inbound stream left open counts against the peer's stream limit until the connection closes.
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
+	if closer, ok := stream.(io.Closer); ok {
+		defer func() { _ = closer.Close() }()
+	}
+
 	// Cap the read at maxMessageSize. We read one byte past the cap so we
 	// can distinguish a message that exactly fits from one that overflows:
 	// if the body is longer than maxMessageSize we reject it with
