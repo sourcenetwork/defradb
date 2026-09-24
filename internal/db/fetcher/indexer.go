@@ -127,8 +127,8 @@ func newIndexFetcher(
 		epoch:             epoch,
 	}
 
-	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
-	for _, field := range indexDesc.Fields {
+	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.GetFields()))
+	for _, field := range indexDesc.GetFields() {
 		typeIndex := docMapper.FirstIndexOfName(field.Name)
 		indexField := mapper.Field{Index: typeIndex, Name: field.Name}
 		fieldsToCopy = append(fieldsToCopy, indexField)
@@ -137,7 +137,7 @@ func newIndexFetcher(
 		f.indexFilter = filter.Merge(f.indexFilter, filter.CopyField(docFilter, fieldsToCopy[i]))
 	}
 
-	for _, indexedField := range f.indexDesc.Fields {
+	for _, indexedField := range f.indexDesc.GetFields() {
 		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
@@ -246,14 +246,14 @@ func CanBeOrderedByIndex(
 ) (bool, bool) {
 	// if there is no ordering in the query or the query requests ordering on more fields, then index
 	// contains, we can't use index
-	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
+	if len(ordering) == 0 || len(ordering) > len(index.GetFields()) {
 		return false, false
 	}
 
 	orderMismatchCount := 0
 
 	for i := range len(ordering) {
-		fieldIndexes := mapping.IndexesByName[index.Fields[i].Name]
+		fieldIndexes := mapping.IndexesByName[index.GetFields()[i].Name]
 
 		// if indexed field doesn't match the ordering field, we can't use index
 		if len(fieldIndexes) == 0 || fieldIndexes[0] != ordering[i].FieldIndexes[0] {
@@ -261,7 +261,7 @@ func CanBeOrderedByIndex(
 		}
 
 		isDescending := ordering[i].Direction == mapper.DESC
-		if index.Fields[i].Descending != isDescending {
+		if index.GetFields()[i].Descending != isDescending {
 			orderMismatchCount++
 		}
 	}
@@ -289,7 +289,7 @@ func hasOrWithMultipleFields(
 	for _, branch := range branches {
 		hasNonIndexedField := false
 		filter.TraverseProperties(branch, func(prop *mapper.PropertyIndex, _ map[connor.FilterKey]any) bool {
-			for _, field := range indexDesc.Fields {
+			for _, field := range indexDesc.GetFields() {
 				if docMapper.FirstIndexOfName(field.Name) == prop.Index {
 					return true
 				}

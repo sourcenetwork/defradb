@@ -183,3 +183,46 @@ func TestVectorIndex_CreateWithDefaultParams_Works(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// The deprecated Fields and Ordered.Fields naming different fields: rejected.
+//
+// Gated to the struct clients: the CLI and C clients flatten the request into a single --fields
+// flag, so they cannot send two disagreeing ordered lists for the server to reject.
+func TestIndexNew_OrderedFieldsDisagreeWithDeprecated_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
+		Actions: []any{
+			&action.AddCollection{SDL: `type User { name: String
+				age: Int }`},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields:       []client.IndexedFieldDescription{{Name: "age"}},
+				Ordered: &client.OrderedIndexDescription{
+					Fields: []client.IndexedFieldDescription{{Name: "name"}},
+				},
+				ExpectedError: "naming different fields",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Both spellings set, naming different fields: rejected.
+func TestIndexNew_FieldsDisagreeBetweenSpellings_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{SDL: `type User { name: String
+				vector: [Float32!] }`},
+			&action.NewIndex{
+				CollectionID: 0,
+				Fields:       []client.IndexedFieldDescription{{Name: "name"}},
+				Vector: &client.VectorIndexDescription{
+					Fields: []string{"vector"}, Metric: client.DistanceMetricCosine,
+					Dimensions: 3, HNSW: &client.HNSWParams{},
+				},
+				ExpectedError: "naming different fields",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

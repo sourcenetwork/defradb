@@ -37,12 +37,20 @@ func queryableIndexes(col client.Collection) []client.IndexDescription {
 	return col.Version().Indexes
 }
 
+// firstIndexedField returns the name of the index's first field, or "" if it has none.
+func firstIndexedField(idx client.IndexDescription) string {
+	if fields := idx.GetFields(); len(fields) > 0 {
+		return fields[0].Name
+	}
+	return ""
+}
+
 // queryableIndexesOnField mirrors CollectionVersion.GetIndexesOnField over queryableIndexes:
 // it returns only ready indexes whose first field matches fieldName.
 func queryableIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
 	var result []client.IndexDescription
 	for _, idx := range queryableIndexes(col) {
-		if len(idx.Fields) > 0 && idx.Fields[0].Name == fieldName {
+		if firstIndexedField(idx) == fieldName {
 			result = append(result, idx)
 		}
 	}
