@@ -45,12 +45,10 @@ type NewNode struct {
 	// Version, when set (e.g. "v1.0.0"), runs the node as an external process from
 	// that published release binary instead of natively in-process.
 	Version string
-	// Network returns the node's P2P options. Nil means default networking.
-	// Ignored if DisableP2P is true.
-	Network ConfigureNode
-	// DisableP2P, when true, starts the node with P2P disabled entirely (the node's
-	// internal db.p2p stays nil), instead of the default networking Network configures.
-	DisableP2P bool
+	// Network returns the node's P2P options. None means the defaults, and a
+	// nil value inside it starts the node with no p2p system at all, leaving
+	// the node's internal db.p2p nil.
+	Network immutable.Option[ConfigureNode]
 
 	// SetupConfig carries the test-level settings node setup needs. The harness
 	// sets it before execution.
@@ -63,10 +61,15 @@ var _ Stateful = (*NewNode)(nil)
 // P2POptions returns the configured P2P options, or the defaults if no networking
 // config was supplied.
 func (a *NewNode) P2POptions() options.NodeP2POptions {
-	if a.Network == nil {
+	if !a.Network.HasValue() || a.Network.Value() == nil {
 		return options.NodeP2POptions{}
 	}
-	return a.Network()
+	return a.Network.Value()()
+}
+
+// P2PDisabled reports whether the node should run with no p2p system at all.
+func (a *NewNode) P2PDisabled() bool {
+	return a.Network.HasValue() && a.Network.Value() == nil
 }
 
 // WithVersion returns a copy of the action that runs the node as an external
@@ -108,10 +111,10 @@ func (a *NewNode) Execute() {
 			SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
 			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		opts.P2P().SetAll(p2pOpts)
-		opts.SetDisableP2P(a.DisableP2P)
+		opts.SetDisableP2P(a.P2PDisabled())
 	}
 
-	a.SetupConfig.DisableP2P = a.DisableP2P
+	a.SetupConfig.DisableP2P = a.P2PDisabled()
 
 	node, err := SetupNode(s, immutable.None[state.Identity](), a.SetupConfig, opts, a.Version)
 	require.NoError(s.T, err)
@@ -121,7 +124,7 @@ func (a *NewNode) Execute() {
 	}
 
 	node.P2POpts = p2pOpts
-	node.DisableP2P = a.DisableP2P
+	node.DisableP2P = a.P2PDisabled()
 	node.Version = a.Version
 	s.Nodes = append(s.Nodes, node)
 }
