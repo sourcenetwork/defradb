@@ -227,6 +227,7 @@ func TestIndexDescription_UnknownKind_Errors(t *testing.T) {
 	var actual IndexDescription
 	err := json.Unmarshal([]byte(json1), &actual)
 	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "unknown")
 }
 
 func TestIndexKind_TextRoundTrip(t *testing.T) {
@@ -246,4 +247,10 @@ func TestIndexKind_TextRoundTrip(t *testing.T) {
 
 	_, err = IndexKind(42).MarshalText()
 	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "42")
+
+	var invalid IndexKind
+	err = invalid.UnmarshalText([]byte("invalid-kind"))
+	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "invalid-kind")
 }

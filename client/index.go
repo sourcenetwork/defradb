@@ -13,6 +13,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 )
 
 // IndexFieldDescription describes how a field is being indexed.
@@ -54,7 +55,7 @@ func (k IndexKind) MarshalText() ([]byte, error) {
 	case IndexKindOrdered, IndexKindVector:
 		return []byte(k.String()), nil
 	default:
-		return nil, NewErrUnknownIndexKind(uint8(k))
+		return nil, NewErrUnknownIndexKind(strconv.Itoa(int(k)))
 	}
 }
 
@@ -67,7 +68,7 @@ func (k *IndexKind) UnmarshalText(text []byte) error {
 		*k = IndexKindVector
 		return nil
 	default:
-		return NewErrUnknownIndexKind(0)
+		return NewErrUnknownIndexKind(string(text))
 	}
 }
 
@@ -274,7 +275,7 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 		}
 		d.KindDescription = vector
 	default:
-		return NewErrUnknownIndexKind(uint8(mirror.Kind))
+		return NewErrUnknownIndexKind(strconv.Itoa(int(mirror.Kind)))
 	}
 	// Keep the compat Unique field in sync with the resolved config so old readers see it.
 	d.Unique = d.GetUnique()
