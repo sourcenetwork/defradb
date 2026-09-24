@@ -31,7 +31,7 @@ import (
 // up in the log.
 const mergeStatsInterval = 30 * time.Second
 
-// mergeStats are the merge-path counters reported once per interval and reset on report,
+// mergeStats are the merge and purge counters reported once per interval and reset on report,
 // so each line carries the rate for that interval rather than a running total.
 //
 // Counting is an atomic add on paths that already do storage work, so it is not a cost worth
@@ -50,6 +50,10 @@ type mergeStats struct {
 	// dropRetryExhausted, as is a chunk of one that exhausts.
 	txnConflicts   atomic.Int64
 	chunkExhausted atomic.Int64
+
+	// deleted counts documents purged in committed transactions. A docID with no document is not
+	// counted.
+	deleted atomic.Int64
 
 	// dropReasons counts dropped events by cause. A dropped event is a document this node
 	// did not store, and the causes need different responses, so the total on its own does
@@ -137,7 +141,7 @@ func (s *mergeStats) markCreateOrUpdate(created bool) {
 	s.updates.Add(1)
 }
 
-// reportMergeStats logs the merge counters once per interval until the database context is
+// reportMergeStats logs the merge and purge counters once per interval until the database context is
 // cancelled. Rates are reported per interval rather than per event, which keeps the merge
 // path quiet under load where per-event logging would dominate the output.
 func (db *DB) reportMergeStats(ctx context.Context) {
@@ -173,5 +177,9 @@ func (s *mergeStats) report() {
 	// causes that occurred.
 	if drops := s.drainDropReasons(); len(drops) > 0 {
 		log.Error("merge drops", drops...)
+	}
+
+	if deleted := s.deleted.Swap(0); deleted != 0 {
+		log.Info("purge stats", corelog.Int64("deleted", deleted))
 	}
 }
