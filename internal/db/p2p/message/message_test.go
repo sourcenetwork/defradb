@@ -22,3 +22,20 @@ func TestReceive_StreamLargerThanMax_ReturnsErrMessageTooLarge(t *testing.T) {
 	err := Receive(stream, "some peer ID", nil, &MetaData{})
 	require.ErrorIs(t, err, ErrMessageTooLarge)
 }
+
+type closeRecordingStream struct {
+	*bytes.Reader
+	closed bool
+}
+
+func (s *closeRecordingStream) Close() error {
+	s.closed = true
+	return nil
+}
+
+func TestReceive_ClosesStream(t *testing.T) {
+	stream := &closeRecordingStream{Reader: bytes.NewReader([]byte("not cbor"))}
+	err := Receive(stream, "some peer ID", nil, &MetaData{})
+	require.Error(t, err)
+	require.True(t, stream.closed)
+}

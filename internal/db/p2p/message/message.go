@@ -90,7 +90,15 @@ type proto interface {
 }
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
+//
+// Receive closes the stream if it implements [io.Closer]. Handlers read one message from an inbound
+// stream and reply on a new one, and libp2p frees an inbound stream's resources only when this side
+// closes or resets it.
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
+	if closer, ok := stream.(io.Closer); ok {
+		defer func() { _ = closer.Close() }()
+	}
+
 	// Cap the read at maxMessageSize. We read one byte past the cap so we
 	// can distinguish a message that exactly fits from one that overflows:
 	// if the body is longer than maxMessageSize we reject it with
