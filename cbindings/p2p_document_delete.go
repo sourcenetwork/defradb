@@ -37,8 +37,6 @@ func DeleteP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.u
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	deleteP2PDocOpt := options.WithIdentity(options.DeleteP2PDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.DeleteP2PDocuments(ctx, colArgs, deleteP2PDocOpt)
 	if err != nil {
