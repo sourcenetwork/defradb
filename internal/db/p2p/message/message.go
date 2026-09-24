@@ -127,7 +127,12 @@ func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
 
 	messageChan, ok := proto.GetResponseChan(m.GetMessageID())
 	if ok {
-		messageChan <- m
+		// The channel holds one reply. A reply that finds it already full is dropped instead of
+		// blocking this handler.
+		select {
+		case messageChan <- m:
+		default:
+		}
 		proto.DeleteResponseChan(m.GetMessageID())
 	}
 
