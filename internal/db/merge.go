@@ -186,6 +186,13 @@ type mergeProcessor struct {
 	blockDocRefs           map[string]resolvedDocRef
 	currentCompositeDocRef *resolvedDocRef
 	newDocCreateMode       bool
+
+	// The heads are only written once the merge finishes, so during it they cannot say what
+	// this merge has already applied. These can.
+	appliedFieldBlocks map[string]struct{}
+
+	// Every field block of a field asks the same question, so the walk runs once per merge.
+	ancestorCache map[string]*ancestorSet
 }
 
 type resolvedDocRef struct {
@@ -256,20 +263,38 @@ func (db *DB) newMergeProcessor(
 	encBlockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Encstore()))
 
 	return &mergeProcessor{
-		blockLS:          blockLS,
-		encBlockLS:       encBlockLS,
-		col:              col,
-		db:               db,
-		docIDs:           make(map[client.DocID]*client.Document),
-		composites:       list.New(),
-		blockDocRefs:     make(map[string]resolvedDocRef),
-		newDocCreateMode: newDocCreateMode,
+		blockLS:            blockLS,
+		encBlockLS:         encBlockLS,
+		col:                col,
+		db:                 db,
+		docIDs:             make(map[client.DocID]*client.Document),
+		composites:         list.New(),
+		blockDocRefs:       make(map[string]resolvedDocRef),
+		newDocCreateMode:   newDocCreateMode,
+		appliedFieldBlocks: make(map[string]struct{}),
+		ancestorCache:      make(map[string]*ancestorSet),
 	}, nil
 }
 
 type mergeTarget struct {
-	heads      map[cid.Cid]*coreblock.Block
-	headHeight uint64
+	heads map[cid.Cid]*coreblock.Block
+}
+
+// minHeight is the lowest height among the heads.
+//
+// Concurrent branches leave the heads at different heights, so there is no one height to use.
+// Taking the lowest keeps every branch in scope, since a block above it may still be new to one
+// of them.
+func (mt mergeTarget) minHeight() uint64 {
+	var min uint64
+	first := true
+	for _, b := range mt.heads {
+		h := b.Delta.GetPriority()
+		if first || h < min {
+			min, first = h, false
+		}
+	}
+	return min
 }
 
 func newMergeTarget() mergeTarget {
@@ -303,7 +328,7 @@ func (mp *mergeProcessor) loadComposites(
 	// In the simplest case, the new block or its children will link to the current head/heads (merge target)
 	// of the composite DAG. However, the new block and its children might have branched off from an older block.
 	// In this case, we also need to walk back the merge target's DAG until we reach a common block.
-	if block.Delta.GetPriority() >= mt.headHeight {
+	if block.Delta.GetPriority() >= mt.minHeight() {
 		mp.composites.PushFront(block)
 		for _, head := range block.Heads {
 			err := mp.loadComposites(ctx, head.Cid, mt)
@@ -326,7 +351,6 @@ func (mp *mergeProcessor) loadComposites(
 				}
 
 				newMT.heads[link.Cid] = childBlock
-				newMT.headHeight = childBlock.Delta.GetPriority()
 			}
 		}
 		return mp.loadComposites(ctx, blockCid, newMT)
@@ -362,6 +386,14 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
+		alreadyApplied, err := mp.isAlreadyApplied(ctx, block, blockLink)
+		if err != nil {
+			return err
+		}
+		if alreadyApplied {
+			return nil
+		}
+
 		shouldProcess, headstorePrefix, docRef, err := mp.mergeBlock(ctx, block, blockLink)
 		if err != nil {
 			return NewErrInitCRDTForMerge(err, blockLink.String())
@@ -423,6 +455,157 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	return nil
+}
+
+// ancestorSet is only valid down to floor, because the walk stopped there. Asking it about a
+// block below that needs the walk redone deeper.
+type ancestorSet struct {
+	seen  map[cid.Cid]struct{}
+	floor uint64
+}
+
+// isAlreadyApplied reports whether this field block's value is already in the document.
+//
+// loadComposites can hand us a composite it has already applied, because walking the merge
+// target back lowers the bar it compares against and lets that composite through a second time.
+// Re-applying is harmless for a last-write-wins field but adds the increment twice for a counter.
+//
+// A head is only written once its block is applied, so anything reachable from a head is already
+// counted. The blockstore's IsMerged flag cannot stand in for this: it is keyed by block while
+// applying is per document, and UpdateHeads clears it for a block's links before they are
+// applied.
+func (mp *mergeProcessor) isAlreadyApplied(
+	ctx context.Context,
+	block *coreblock.Block,
+	blockLink cidlink.Link,
+) (bool, error) {
+	// No value to double-count, and walking them is what tells the field blocks below which
+	// document they belong to.
+	if block.Delta.IsComposite() || block.Delta.IsCollection() {
+		return false, nil
+	}
+
+	// Without the document there are no heads to check. mergeBlock reports this properly.
+	if mp.currentCompositeDocRef == nil {
+		return false, nil
+	}
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, mp.col.Version().CollectionID)
+	if err != nil {
+		return false, NewErrGetCollectionShortIDForMerge(err, mp.col.Version().CollectionID)
+	}
+
+	fieldName := block.Delta.GetFieldName()
+	fd, ok := mp.col.Version().GetFieldByName(fieldName)
+	if !ok {
+		// Cannot have been applied, and mergeBlock reports it properly.
+		return false, nil
+	}
+
+	fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fd.FieldID)
+	if err != nil {
+		return false, NewErrGetShortFieldIDMerge(err, fd.FieldID, fieldName)
+	}
+
+	prefix := keys.DataStoreKey{
+		CollectionShortID: collectionShortID,
+		DocShortID:        mp.currentCompositeDocRef.docShortID,
+	}.WithFieldID(fmt.Sprint(fieldShortID)).ToHeadStoreKey()
+
+	// This merge's own applies, which the heads do not know about yet.
+	appliedKey := mp.currentCompositeDocRef.docID + "/" + blockLink.Cid.String()
+	if _, ok := mp.appliedFieldBlocks[appliedKey]; ok {
+		return true, nil
+	}
+
+	// Testing against the heads alone is not enough: once later updates arrive, an applied block
+	// sits behind a head rather than being one.
+	ancestors, err := mp.fieldAncestors(ctx, prefix, block.Delta.GetPriority())
+	if err != nil {
+		return false, err
+	}
+	if _, ok := ancestors.seen[blockLink.Cid]; ok {
+		return true, nil
+	}
+
+	mp.appliedFieldBlocks[appliedKey] = struct{}{}
+	return false, nil
+}
+
+func (mp *mergeProcessor) fieldAncestors(
+	ctx context.Context,
+	prefix keys.HeadstoreKey,
+	floor uint64,
+) (*ancestorSet, error) {
+	cacheKey := string(prefix.Bytes())
+	cached, ok := mp.ancestorCache[cacheKey]
+	if ok && cached.floor <= floor {
+		return cached, nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	headset := coreblock.NewHeadSet(txn.Headstore(), prefix)
+
+	heads, _, err := headset.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	seen, err := mp.walkAncestors(ctx, heads, floor)
+	if err != nil {
+		return nil, err
+	}
+
+	set := &ancestorSet{seen: seen, floor: floor}
+	mp.ancestorCache[cacheKey] = set
+	return set, nil
+}
+
+// walkAncestors walks back from the given heads, stopping at floor.
+//
+// Links only point backwards, so a block below floor cannot lead back to one above it. Stopping
+// there keeps the walk off the whole history.
+func (mp *mergeProcessor) walkAncestors(
+	ctx context.Context,
+	heads []cid.Cid,
+	floor uint64,
+) (map[cid.Cid]struct{}, error) {
+	seen := make(map[cid.Cid]struct{}, len(heads))
+	stack := make([]cid.Cid, 0, len(heads))
+	stack = append(stack, heads...)
+
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if _, ok := seen[current]; ok {
+			continue
+		}
+		seen[current] = struct{}{}
+
+		nd, err := mp.blockLS.Load(
+			linking.LinkContext{Ctx: ctx},
+			cidlink.Link{Cid: current},
+			coreblock.BlockSchemaPrototype,
+		)
+		if err != nil {
+			// Not held locally, so it proves nothing about what is below it. Skipping risks
+			// applying a block twice, never dropping one.
+			continue
+		}
+		currentBlock, err := coreblock.GetFromNode(nd)
+		if err != nil {
+			return nil, err
+		}
+		if currentBlock.Delta.GetPriority() <= floor {
+			continue
+		}
+		for _, l := range currentBlock.AllLinks() {
+			stack = append(stack, l.Cid)
+		}
+	}
+
+	return seen, nil
 }
 
 func (mp *mergeProcessor) setBlockDocIDMapping(
@@ -755,8 +938,6 @@ func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTar
 		}
 
 		mt.heads[cid] = block
-		// All heads have the same height so overwriting is ok.
-		mt.headHeight = block.Delta.GetPriority()
 	}
 	return mt, nil
 }
