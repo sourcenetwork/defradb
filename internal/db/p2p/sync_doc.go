@@ -21,6 +21,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -109,9 +111,15 @@ func (p *P2P) syncDocuments(
 		return nil, ErrTimeoutDocSync
 	}
 
+	// A peer answers with its id, while ActivePeers reports full addresses, so
+	// key on the id or a response never clears the peer that sent it.
 	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
+	for _, addr := range activePeers {
+		id, err := peerIDFromAddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		pendingPeers[id] = struct{}{}
 	}
 
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
@@ -355,4 +363,17 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	return result, nil
+}
+
+// peerIDFromAddr returns the peer id carried by a multiaddr.
+func peerIDFromAddr(addr string) (string, error) {
+	maddr, err := multiaddr.NewMultiaddr(addr)
+	if err != nil {
+		return "", err
+	}
+	id, err := peer.IDFromP2PAddr(maddr)
+	if err != nil {
+		return "", err
+	}
+	return id.String(), nil
 }

@@ -357,7 +357,16 @@ func (w *CWrapper) SyncBranchableCollection(
 }
 
 func (w *CWrapper) BasicImport(ctx context.Context, filepath string) error {
-	panic("not implemented")
+	cFilepath := C.CString(filepath)
+	defer C.free(unsafe.Pointer(cFilepath))
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.BasicImport(callHandle, cFilepath))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
 }
 
 func (w *CWrapper) BasicExport(
@@ -365,7 +374,26 @@ func (w *CWrapper) BasicExport(
 	filepath string,
 	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
-	panic("not implemented")
+	opt := utils.NewOptions(opts...)
+	cFilepath := C.CString(filepath)
+	cCollections := C.CString(strings.Join(opt.Collections, ","))
+	cFormat := C.CString(opt.Format)
+	defer C.free(unsafe.Pointer(cFilepath))
+	defer C.free(unsafe.Pointer(cCollections))
+	defer C.free(unsafe.Pointer(cFormat))
+
+	cPretty := C.int(0)
+	if opt.Pretty {
+		cPretty = 1
+	}
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.BasicExport(callHandle, cFilepath, cCollections, cFormat, cPretty))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
 }
 
 func (w *CWrapper) AddCollection(
@@ -1065,7 +1093,13 @@ func (w *CWrapper) MaxTxnRetries() int {
 }
 
 func (w *CWrapper) PrintDump(ctx context.Context) error {
-	panic("not implemented")
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.PrintDump(callHandle))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
 }
 
 func (w *CWrapper) Connect(

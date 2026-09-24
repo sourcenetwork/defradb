@@ -62,6 +62,7 @@ func (txn *Transaction) Discard() {
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PrintDump(ctx)
 }
 
