@@ -59,6 +59,14 @@ func (k IndexKind) MarshalText() ([]byte, error) {
 	}
 }
 
+// MarshalJSON returns the numeric representation of IndexKind as uint8.
+//
+// Stored collection descriptors and wire payloads must keep emitting the compact numeric form
+// to avoid unnecessarily increasing storage space. Only human-readable display paths emit the string form.
+func (k IndexKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uint8(k))
+}
+
 func (k *IndexKind) UnmarshalText(text []byte) error {
 	switch string(text) {
 	case "ordered", "b-tree", "0":
@@ -73,6 +81,9 @@ func (k *IndexKind) UnmarshalText(text []byte) error {
 }
 
 func (k *IndexKind) UnmarshalJSON(data []byte) error {
+	if string(data) == jsonNullLiteral {
+		return NewErrUnknownIndexKind(jsonNullLiteral)
+	}
 	if len(data) > 0 && data[0] == '"' {
 		var text string
 		if err := json.Unmarshal(data, &text); err != nil {

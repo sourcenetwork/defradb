@@ -262,3 +262,34 @@ func TestIndexKind_TextRoundTrip(t *testing.T) {
 	require.ErrorContains(t, err, "unknown index kind")
 	require.ErrorContains(t, err, "invalid-kind")
 }
+
+func TestIndexKind_MarshalJSON_EmitsNumeric(t *testing.T) {
+	orderedBytes, err := json.Marshal(IndexKindOrdered)
+	require.NoError(t, err)
+	assert.Equal(t, "0", string(orderedBytes))
+
+	vectorBytes, err := json.Marshal(IndexKindVector)
+	require.NoError(t, err)
+	assert.Equal(t, "1", string(vectorBytes))
+}
+
+func TestIndexKind_UnmarshalJSON_RejectsNull(t *testing.T) {
+	var k IndexKind
+	err := json.Unmarshal([]byte("null"), &k)
+	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "null")
+}
+
+func TestIndexDescription_StorageJSON_EmitsNumeric(t *testing.T) {
+	desc := IndexDescription{
+		Name:            "idx",
+		ID:              1,
+		Fields:          []IndexedFieldDescription{{Name: "age"}},
+		Kind:            IndexKindOrdered,
+		KindDescription: &OrderedIndexDescription{Unique: true},
+	}
+	bytes, err := json.Marshal(desc)
+	require.NoError(t, err)
+	assert.Contains(t, string(bytes), `"Kind":0`)
+	assert.NotContains(t, string(bytes), `"Kind":"ordered"`)
+}
