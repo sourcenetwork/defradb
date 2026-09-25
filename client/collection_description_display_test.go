@@ -47,6 +47,22 @@ func sampleDisplayCollectionVersion() CollectionVersion {
 				Typ:  NONE_CRDT,
 			},
 		},
+		Indexes: []IndexDescription{
+			{
+				Name:            "Book_title_ASC",
+				ID:              1,
+				Fields:          []IndexedFieldDescription{{Name: "title", Descending: false}},
+				Kind:            IndexKindOrdered,
+				KindDescription: &OrderedIndexDescription{Unique: false},
+			},
+			{
+				Name:            "Book_pages_ASC",
+				ID:              2,
+				Fields:          []IndexedFieldDescription{{Name: "pages", Descending: false}},
+				Kind:            IndexKindVector,
+				KindDescription: &VectorIndexDescription{Dimensions: 128},
+			},
+		},
 	}
 }
 
@@ -60,6 +76,10 @@ func TestCollectionVersionDisplay_RendersStrings(t *testing.T) {
 	assert.Contains(t, out, `"Kind":"[Int!]"`)
 	assert.Contains(t, out, `"Typ":"lww"`)
 	assert.Contains(t, out, `"Typ":"none"`)
+
+	// Index kinds render as their string form in display output.
+	assert.Contains(t, out, `"Kind":"ordered"`)
+	assert.Contains(t, out, `"Kind":"vector"`)
 
 	// Relation kinds keep their object shape so they round-trip (not a bare string).
 	assert.Contains(t, out, `"CollectionID":"authorid"`)
@@ -81,4 +101,32 @@ func TestCollectionVersionDisplay_RoundTrips(t *testing.T) {
 	var got CollectionVersion
 	require.NoError(t, json.Unmarshal(raw, &got))
 	assert.True(t, original.Equal(got), "Display() output must round-trip back into the original CollectionVersion")
+}
+
+func TestCollectionVersion_StorageSerialization_EmitsNumeric(t *testing.T) {
+	col := sampleDisplayCollectionVersion()
+
+	// Persistence to storage uses json.Marshal directly. It must emit numeric Kind values
+	// so storage footprint is not increased.
+	rawStorage, err := json.Marshal(col)
+	require.NoError(t, err)
+	storageStr := string(rawStorage)
+
+	assert.Contains(t, storageStr, `"Kind":0`)
+	assert.Contains(t, storageStr, `"Kind":1`)
+	assert.NotContains(t, storageStr, `"Kind":"ordered"`)
+	assert.NotContains(t, storageStr, `"Kind":"vector"`)
+}
+
+func TestIndexDescription_Display(t *testing.T) {
+	desc := IndexDescription{
+		Name:            "Book_title_ASC",
+		ID:              1,
+		Fields:          []IndexedFieldDescription{{Name: "title"}},
+		Kind:            IndexKindOrdered,
+		KindDescription: &OrderedIndexDescription{Unique: false},
+	}
+	raw, err := desc.Display()
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), `"Kind":"ordered"`)
 }

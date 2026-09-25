@@ -13,6 +13,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 )
 
 // IndexFieldDescription describes how a field is being indexed.
@@ -37,6 +38,66 @@ const (
 	// IndexKindVector identifies a vector (ANN) index.
 	IndexKindVector
 )
+
+func (k IndexKind) String() string {
+	switch k {
+	case IndexKindOrdered:
+		return "ordered"
+	case IndexKindVector:
+		return "vector"
+	default:
+		return "unknown"
+	}
+}
+
+func (k IndexKind) MarshalText() ([]byte, error) {
+	switch k {
+	case IndexKindOrdered, IndexKindVector:
+		return []byte(k.String()), nil
+	default:
+		return nil, NewErrUnknownIndexKind(strconv.Itoa(int(k)))
+	}
+}
+
+// MarshalJSON returns the numeric representation of IndexKind as uint8.
+//
+// Stored collection descriptors and wire payloads must keep emitting the compact numeric form
+// to avoid unnecessarily increasing storage space. Only human-readable display paths emit the string form.
+func (k IndexKind) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uint8(k))
+}
+
+func (k *IndexKind) UnmarshalText(text []byte) error {
+	switch string(text) {
+	case "ordered", "b-tree", "0":
+		*k = IndexKindOrdered
+		return nil
+	case "vector", "1":
+		*k = IndexKindVector
+		return nil
+	default:
+		return NewErrUnknownIndexKind(string(text))
+	}
+}
+
+func (k *IndexKind) UnmarshalJSON(data []byte) error {
+	if string(data) == jsonNullLiteral {
+		return NewErrUnknownIndexKind(jsonNullLiteral)
+	}
+	if len(data) > 0 && data[0] == '"' {
+		var text string
+		if err := json.Unmarshal(data, &text); err != nil {
+			return err
+		}
+		return k.UnmarshalText([]byte(text))
+	}
+
+	var numeric uint8
+	if err := json.Unmarshal(data, &numeric); err != nil {
+		return err
+	}
+	return k.UnmarshalText([]byte(strconv.Itoa(int(numeric))))
+}
 
 // IndexKindDescription is the kind-specific config of an index: an [*OrderedIndexDescription] or a
 // [*VectorIndexDescription]. Which one an index must hold is decided by [IndexDescription.Kind],
@@ -241,7 +302,7 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 		}
 		d.KindDescription = vector
 	default:
-		return NewErrUnknownIndexKind(uint8(mirror.Kind))
+		return NewErrUnknownIndexKind(strconv.Itoa(int(mirror.Kind)))
 	}
 	// Keep the compat Unique field in sync with the resolved config so old readers see it.
 	d.Unique = d.GetUnique()

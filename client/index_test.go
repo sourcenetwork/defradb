@@ -146,6 +146,14 @@ func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
 	assert.Equal(t, &OrderedIndexDescription{Unique: true}, actual.KindDescription)
 }
 
+func TestIndexDescription_LegacyNumericKind(t *testing.T) {
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(`{"Name":"x","ID":1,"Fields":[{"Name":"embedding"}],"Kind":1,"KindDescription":{"Dimensions":128}}`), &actual)
+	require.NoError(t, err)
+	assert.Equal(t, IndexKindVector, actual.Kind)
+	assert.Equal(t, &VectorIndexDescription{Dimensions: 128}, actual.KindDescription)
+}
+
 // An embedded caller that predates Kind builds the struct with only the top-level Unique. It must
 // behave correctly (GetUnique) and marshal a top-level Unique so an old reader still sees it.
 func TestIndexDescription_CompatUniqueOnly_Works(t *testing.T) {
@@ -222,9 +230,66 @@ func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
 // Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not
 // know cannot be loaded: silently defaulting it would misread the index.
 func TestIndexDescription_UnknownKind_Errors(t *testing.T) {
-	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":42}`
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":"unknown"}`
 
 	var actual IndexDescription
 	err := json.Unmarshal([]byte(json1), &actual)
 	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "unknown")
+}
+
+func TestIndexKind_TextRoundTrip(t *testing.T) {
+	orderedBytes, err := IndexKindOrdered.MarshalText()
+	require.NoError(t, err)
+
+	var ordered IndexKind
+	require.NoError(t, ordered.UnmarshalText(orderedBytes))
+	assert.Equal(t, IndexKindOrdered, ordered)
+
+	vectorBytes, err := IndexKindVector.MarshalText()
+	require.NoError(t, err)
+
+	var vector IndexKind
+	require.NoError(t, vector.UnmarshalText(vectorBytes))
+	assert.Equal(t, IndexKindVector, vector)
+
+	_, err = IndexKind(42).MarshalText()
+	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "42")
+
+	var invalid IndexKind
+	err = invalid.UnmarshalText([]byte("invalid-kind"))
+	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "invalid-kind")
+}
+
+func TestIndexKind_MarshalJSON_EmitsNumeric(t *testing.T) {
+	orderedBytes, err := json.Marshal(IndexKindOrdered)
+	require.NoError(t, err)
+	assert.Equal(t, "0", string(orderedBytes))
+
+	vectorBytes, err := json.Marshal(IndexKindVector)
+	require.NoError(t, err)
+	assert.Equal(t, "1", string(vectorBytes))
+}
+
+func TestIndexKind_UnmarshalJSON_RejectsNull(t *testing.T) {
+	var k IndexKind
+	err := json.Unmarshal([]byte("null"), &k)
+	require.ErrorContains(t, err, "unknown index kind")
+	require.ErrorContains(t, err, "null")
+}
+
+func TestIndexDescription_StorageJSON_EmitsNumeric(t *testing.T) {
+	desc := IndexDescription{
+		Name:            "idx",
+		ID:              1,
+		Fields:          []IndexedFieldDescription{{Name: "age"}},
+		Kind:            IndexKindOrdered,
+		KindDescription: &OrderedIndexDescription{Unique: true},
+	}
+	bytes, err := json.Marshal(desc)
+	require.NoError(t, err)
+	assert.Contains(t, string(bytes), `"Kind":0`)
+	assert.NotContains(t, string(bytes), `"Kind":"ordered"`)
 }
