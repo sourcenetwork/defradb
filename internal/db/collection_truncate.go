@@ -338,6 +338,9 @@ func (c *collection) hardDeleteDocumentBlocks(
 		return err
 	}
 
+	// Shared by the document's head-key walks, which reach overlapping blocks.
+	visited := make(map[cid.Cid]struct{})
+
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
@@ -381,7 +384,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners, visited)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -457,7 +460,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			// the document blocks and their owner edges are deleted earlier in truncate (see the
 			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
 			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil)
+			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil, make(map[cid.Cid]struct{}))
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -483,13 +486,20 @@ func (c *collection) hardDeleteCollectionBlocks(
 // a block with this cid is found.
 //
 // If the block is not found, it will not error.
+//
+// Links to blocks already in visited are not followed. visited may span one document's walks but
+// not several documents, because each document's walk must reach a shared block to remove its own
+// owner edge.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
 	docID string,
 	currentCid cid.Cid,
 	prunedOwners map[string]struct{},
+	visited map[cid.Cid]struct{},
 ) error {
+	visited[currentCid] = struct{}{}
+
 	blockstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Blockstore()
 
 	// Block content is immutable and content-addressed; the walk only reads it to find child
@@ -571,8 +581,9 @@ func (c *collection) deleteBlocks(
 		}
 
 		if !isReversed && i == len(toDelete) {
-			// if we have reached the end of the set, reverse direction - the children are now
-			// gaurenteed to be deleted before their parents.
+			// if we have reached the end of the set, reverse direction - each block is deleted
+			// before the block it was first reached through, so if the walk stops early the
+			// blocks not yet deleted are still reachable from currentCid.
 			isReversed = true
 			i--
 			return true
@@ -589,6 +600,18 @@ func (c *collection) deleteBlocks(
 
 	for increment() {
 		currentBlock := toDelete[i]
+
+		if isReversed {
+			// Missing blocks, field blocks, and encryption and signature links were handled on
+			// the forward pass.
+			if currentBlock.block != nil && !currentBlock.block.Delta.IsField() {
+				err := deleteBlock(currentBlock.id)
+				if err != nil {
+					return err
+				}
+			}
+			continue
+		}
 
 		if currentBlock.block == nil {
 			coreBlock, isFound, err := getBlock(readCtx, blockstore, currentBlock.id)
@@ -619,16 +642,6 @@ func (c *collection) deleteBlocks(
 			}
 		}
 
-		if isReversed {
-			// If we are now iterating in reverse order, all the children of this block should
-			// have been deleted, and we are now free to delete this block.
-			err := deleteBlock(currentBlock.id)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
 		switch {
 		case currentBlock.block.Delta.IsField():
 			// If this block is a field block, we can delete it immediately after blocks such
@@ -643,6 +656,10 @@ func (c *collection) deleteBlocks(
 
 		default:
 			for _, link := range currentBlock.block.AllLinks() {
+				if _, ok := visited[link.Cid]; ok {
+					continue
+				}
+				visited[link.Cid] = struct{}{}
 				toDelete = append(toDelete, &block{
 					id: link.Cid,
 				})
@@ -656,12 +673,7 @@ func (c *collection) deleteBlocks(
 func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {
 	rawBlock, err := blockstore.Get(ctx, id)
 	if errors.Is(err, ipld.ErrNotFound{}) {
-		// We are looping through the links in a simple way that may result in us
-		// attempting to delete blocks we have already deleted, this can include
-		// blocks deleted by walking the dag pointed-to from another headstore key
-		// (another call to `deleteBlocks`).
-		//
-		// If we encounter such a block, we can skip over the error and continue.
+		// Another walk may already have deleted the block, so a missing block is skipped.
 		return nil, false, nil
 	}
 	if err != nil {
