@@ -15,10 +15,13 @@ import "context"
 // ReplicationFilter allows consumers to filter incoming P2P documents before
 // they are stored locally.
 type ReplicationFilter interface {
-	// AllowReplication is called once per incoming document.
-	//   collectionID — the collection the document belongs to.
-	//   docID        — the document identifier.
-	//   fields       — field name → decoded value, extracted from CRDT deltas.
+	// AllowReplication is called for each incoming document before any of its blocks are
+	// stored. A document received without its CAR is checked again once the CAR is fetched. If
+	// no peer serves the CAR, only the first check runs.
+	//   collectionID: Collection.CollectionID() of the document's collection.
+	//   docID:        the document identifier.
+	//   fields:       field name to value for the fields written in the document's head commit.
+	//                 A value that has not arrived, is encrypted, or does not decode is absent.
 	// Return false to discard the document (all its blocks are dropped silently).
 	AllowReplication(
 		ctx context.Context,

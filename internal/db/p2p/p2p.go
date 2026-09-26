@@ -1081,16 +1081,21 @@ func (p *P2P) processPushlogRequest(
 		}
 
 		// Run the replication filter before writing any blocks to storage.
-		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block) {
+		if !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block, req.CAR) {
 			p.skipDoc(skipFiltered)
 			return nil
 		}
 
-		// All pre-storage checks passed, so this node needs the head: only now is its CAR
-		// asked for. A peer that predates the exchange still sends it inline.
+		// The pre-fetch checks passed, so only now is the head's CAR asked for. A peer that
+		// predates the exchange still sends it inline.
 		carData := req.CAR
 		if len(carData) == 0 {
 			carData = p.fetchCARs(ctx, req.Creator, req.SenderID, []cid.Cid{headCID})[0]
+			// Filter again on the field values the fetched CAR carries.
+			if len(carData) > 0 && !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block, carData) {
+				p.skipDoc(skipFilteredAfterFetch)
+				return nil
+			}
 		}
 
 		// Now write blocks to the blockstore.
@@ -1245,7 +1250,7 @@ func (p *P2P) processBatchedDocuments(
 			}
 		}
 
-		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block) {
+		if !p.filterAllowsReplication(ctx, req.CollectionID, doc.DocID, block, doc.CAR) {
 			p.skipDoc(skipFiltered)
 			continue
 		}
@@ -1257,13 +1262,20 @@ func (p *P2P) processBatchedDocuments(
 		}
 	}
 
-	// Every document still here has passed its checks, so this node needs it. The CARs a peer
-	// predating the exchange did not send inline are asked for in one round trip.
+	// Every document still here has passed the pre-fetch checks. The CARs a peer predating the
+	// exchange did not send inline are asked for in one round trip.
 	for i, data := range p.fetchCARs(ctx, req.Creator, req.SenderID, fetchHeads) {
 		needed[fetchAt[i]].car = data
 	}
 
 	for _, n := range needed {
+		// Filter again on the field values the fetched CAR carries.
+		if len(n.doc.CAR) == 0 && len(n.car) > 0 &&
+			!p.filterAllowsReplication(ctx, req.CollectionID, n.doc.DocID, n.block, n.car) {
+			p.skipDoc(skipFilteredAfterFetch)
+			continue
+		}
+
 		if len(n.car) > 0 {
 			if _, err := p.importCAR(ctx, n.car); err != nil {
 				log.ErrorE("Batch: importCAR failed", err, slog.String("DocID", n.doc.DocID))
