@@ -11,7 +11,12 @@
 package p2p
 
 import (
+	"bytes"
 	"context"
+
+	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
+	car "github.com/ipld/go-car/v2"
 
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 )
@@ -23,34 +28,80 @@ func (p *P2P) filterAllowsReplication(
 	collectionID string,
 	docID string,
 	block *coreblock.Block,
+	carData []byte,
 ) bool {
 	if p.replicationFilter == nil {
 		return true
 	}
-	fields := extractFieldsFromBlock(block)
+	fields := extractFieldsFromBlock(block, carData)
 	return p.replicationFilter.AllowReplication(ctx, collectionID, docID, fields)
 }
 
-// extractFieldsFromBlock extracts field name → decoded value from a block's CRDT delta.
-func extractFieldsFromBlock(block *coreblock.Block) map[string]any {
+// extractFieldsFromBlock returns the values of the fields written in block's commit, keyed by
+// field name. A composite block only links to the field blocks holding the values, so they are
+// read from carData. A field whose value was not decoded is left out, so a nil value means null.
+func extractFieldsFromBlock(block *coreblock.Block, carData []byte) map[string]any {
 	if block == nil {
 		return nil
 	}
 
 	fields := make(map[string]any)
+	addFieldValue(fields, block)
 
-	name := block.Delta.GetFieldName()
-	if name != "" {
-		fields[name] = block.Delta.GetData()
+	if len(block.Links) == 0 || len(carData) == 0 {
+		return fields
 	}
-
-	// Also extract from linked field blocks.
-	for _, link := range block.Links {
-		if link.Name != "" {
-			// Use the link name as a best-effort field name indicator.
-			fields[link.Name] = nil
-		}
-	}
+	addLinkedFieldValues(fields, block.Links, carData)
 
 	return fields
+}
+
+// addFieldValue adds the value a field block holds under its field name. A block that names no
+// field, such as a composite, adds nothing.
+func addFieldValue(fields map[string]any, block *coreblock.Block) {
+	name := block.Delta.GetFieldName()
+	if name == "" {
+		return
+	}
+	// An encrypted delta holds ciphertext, which does not decode to the field's value.
+	if block.Encryption != nil {
+		return
+	}
+	var value any
+	if err := cbor.Unmarshal(block.Delta.GetData(), &value); err != nil {
+		return
+	}
+	fields[name] = value
+}
+
+// addLinkedFieldValues adds the values of the linked field blocks found in carData. A CAR that
+// cannot be read is left for the import to report.
+func addLinkedFieldValues(fields map[string]any, links []coreblock.DAGLink, carData []byte) {
+	wanted := make(map[cid.Cid]struct{}, len(links))
+	for _, link := range links {
+		wanted[link.Cid] = struct{}{}
+	}
+
+	reader, err := car.NewBlockReader(bytes.NewReader(carData))
+	if err != nil {
+		return
+	}
+
+	for len(wanted) > 0 {
+		carBlock, err := reader.Next()
+		if err != nil {
+			return
+		}
+		blockCID := carBlock.Cid()
+		if _, ok := wanted[blockCID]; !ok {
+			continue
+		}
+		delete(wanted, blockCID)
+
+		decoded, err := coreblock.GetFromBytes(carBlock.RawData())
+		if err != nil {
+			continue
+		}
+		addFieldValue(fields, decoded)
+	}
 }
