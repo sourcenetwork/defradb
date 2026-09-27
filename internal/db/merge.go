@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -479,8 +480,8 @@ func (mp *mergeProcessor) isAlreadyApplied(
 	block *coreblock.Block,
 	blockLink cidlink.Link,
 ) (bool, error) {
-	// No value to double-count, and walking them is what tells the field blocks below which
-	// document they belong to.
+	// Composite blocks are not CRDTs, and collection blocks are not merged at the moment, so
+	// neither can be double-counted. Revisit if collection blocks ever start accumulating.
 	if block.Delta.IsComposite() || block.Delta.IsCollection() {
 		return false, nil
 	}
@@ -564,7 +565,7 @@ func (mp *mergeProcessor) fieldAncestors(
 // walkAncestors walks back from the given heads, stopping at floor.
 //
 // Links only point backwards, so a block below floor cannot lead back to one above it. Stopping
-// there keeps the walk off the whole history.
+// there keeps the walk off of the whole history.
 func (mp *mergeProcessor) walkAncestors(
 	ctx context.Context,
 	heads []cid.Cid,
@@ -588,10 +589,13 @@ func (mp *mergeProcessor) walkAncestors(
 			cidlink.Link{Cid: current},
 			coreblock.BlockSchemaPrototype,
 		)
-		if err != nil {
+		if errors.Is(err, ipld.ErrNotFound{}) {
 			// Not held locally, so it proves nothing about what is below it. Skipping risks
 			// applying a block twice, never dropping one.
 			continue
+		}
+		if err != nil {
+			return nil, err
 		}
 		currentBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
