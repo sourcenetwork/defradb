@@ -99,9 +99,15 @@ func (p *P2P) syncBranchableCollection(
 		return ErrTimeoutCollectionSync
 	}
 
+	// A peer answers with its id, while ActivePeers reports full addresses, so
+	// key on the id or a response never clears the peer that sent it.
 	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
+	for _, addr := range activePeers {
+		id, err := peerIDFromAddr(addr)
+		if err != nil {
+			return err
+		}
+		pendingPeers[id] = struct{}{}
 	}
 
 	pubsubReq := &syncBranchableCollectionRequest{CollectionID: collectionID}
