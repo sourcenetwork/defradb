@@ -105,9 +105,10 @@ type mergeEntry struct {
 // locks are acquired upfront and held for the lifetime of the call, so callers must
 // ensure the merges are independent (different docIDs and collectionIDs).
 //
-// A chunk that fails is re-run one event at a time. A deterministic failure then drops
-// only the event that caused it, and a chunk that exhausted its retry budget is retried
-// over a smaller write set.
+// A chunk that fails, including one that holds a document the retention rule refuses, is
+// re-run one event at a time. A deterministic failure then drops only the event that caused
+// it, a refused event is reported as rejected, and a chunk that exhausted its retry budget is
+// retried over a smaller write set.
 //
 // The returned slice is parallel to merges and reports each event's outcome. An event that
 // did not commit is not stored, so callers must not relay it onward as merged. The error
@@ -957,8 +958,8 @@ func (mp *mergeProcessor) resolveAndCacheBlockDocRef(
 	return resolved, nil
 }
 
-// trackMergedDocument tracks the current version of the document so we
-// can correctly sync indexes after a merge.
+// trackMergedDocument records a document the merge touches, for the retention check and index sync
+// that follow, and keeps its version from before the merge when its indexes need syncing.
 func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
 	if len(mp.col.indexes) == 0 {
 		mp.docIDs[docID] = nil

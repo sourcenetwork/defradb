@@ -304,8 +304,8 @@ type P2P struct {
 	// when an arrival carries no CAR, and by document and branchable-collection sync.
 	statSyncDAGCalls     atomic.Int64
 	syncDAGFailureReason failureReasons
-	// statHeightFetches counts height blocks the retention gate fetched, and statHeightFetchMissed
-	// those no peer served.
+	// statHeightFetches counts height blocks the retention gate asked the network for, and
+	// statHeightFetchMissed those no peer served.
 	statHeightFetches     atomic.Int64
 	statHeightFetchMissed atomic.Int64
 
@@ -1199,7 +1199,7 @@ type batchedDoc struct {
 }
 
 // processBatchedDocuments runs the per-document pre-storage checks (CID verification,
-// access control, replication filter) and block sync for every document in a batched
+// access control, replication filter, retention gate) and block sync for every document in a batched
 // PushLogRequest.  It returns the subset that passed all checks and are ready to be
 // committed via MergeBatchWithTxn, paired with their raw block bytes for relay.
 func (p *P2P) processBatchedDocuments(

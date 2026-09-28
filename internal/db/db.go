@@ -129,6 +129,7 @@ type DB struct {
 	// stats are the merge and purge counters reported on an interval by reportMergeStats.
 	stats *mergeStats
 
+	// retentionRule, when set, refuses replicated documents by block height.
 	retentionRule client.RetentionRule
 }
 

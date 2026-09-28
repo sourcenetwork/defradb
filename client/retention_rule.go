@@ -12,11 +12,11 @@ package client
 
 // RetentionRule refuses replicated documents by block height. A document in a covered collection is
 // refused when its height is at or below the floor, or when it has no valid height. Branchable
-// collections are not judged.
+// collections and deleted documents are not judged.
 type RetentionRule interface {
 	// RetentionFloor returns the height field and floor for the collection with this CollectionID,
-	// or false if it is not covered. A floor of zero or less refuses no height. It is called for
-	// every replicated document and must not block.
+	// or false if it is not covered. A floor of zero or less refuses nothing by height. It is called
+	// concurrently for every replicated document and must not block.
 	RetentionFloor(collectionID string) (field string, floor int64, ok bool)
 }
 
