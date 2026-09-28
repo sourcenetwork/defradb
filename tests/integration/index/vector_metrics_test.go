@@ -245,6 +245,7 @@ func TestVectorIndex_DropThenRecreateWithDifferentMetric_IsAllowed(t *testing.T)
 						Fields: []client.IndexedFieldDescription{{Name: "vector"}},
 						Kind:   client.IndexKindVector,
 						KindDescription: &client.VectorIndexDescription{
+							Fields:     []string{"vector"},
 							Algorithm:  client.VectorAlgorithmHNSW,
 							Metric:     client.DistanceMetricEuclidean,
 							Dimensions: 3,
