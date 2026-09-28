@@ -1243,10 +1243,11 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 
 	truncate := &gql.Field{
 		Name:        "truncate_" + obj.Name(),
-		Description: "Remove all or matching documents from this node. Returns true when complete.",
+		Description: truncateDocumentsDescription,
 		Type:        gql.NewNonNull(gql.Boolean),
 		Args: gql.FieldConfigArgument{
-			request.FilterClause: schemaTypes.NewArgConfig(filterInput, "Filter documents to truncate"),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), truncateIDsArgDescription),
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, truncateFilterArgDescription),
 		},
 	}
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]

@@ -35,8 +35,6 @@ func ConnectP2PPeers(nodePtr C.uintptr_t, peerAddresses *C.char, identityPtr C.u
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	addresses := splitCommaSeparatedString(C.GoString(peerAddresses))
 	connectOpt := options.WithIdentity(options.Connect(), acpIdentity.FromContext(ctx))
 	err = node.DB.Connect(ctx, addresses, connectOpt)

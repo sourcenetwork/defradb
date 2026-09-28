@@ -67,7 +67,7 @@ func TestNewWrapper_CtxCancelled_ReturnsPromptly(t *testing.T) {
 	t.Setenv("STUB_MODE", "unhealthy")
 
 	start := time.Now()
-	w, err := NewWrapper(ctx, t, binaryPath, immutable.None[crypto.PrivateKey](), nil)
+	w, err := NewWrapper(ctx, t, binaryPath, immutable.None[crypto.PrivateKey](), "", nil)
 	elapsed := time.Since(start)
 
 	require.Error(t, err)
@@ -84,7 +84,7 @@ func TestNewWrapper_StartFailure_ReturnsError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	w, err := NewWrapper(ctx, t, missingPath, immutable.None[crypto.PrivateKey](), nil)
+	w, err := NewWrapper(ctx, t, missingPath, immutable.None[crypto.PrivateKey](), "", nil)
 
 	require.Error(t, err)
 	assert.Nil(t, w)
@@ -98,7 +98,7 @@ func TestWrapper_Close_Idempotent(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	w, err := NewWrapper(ctx, t, binaryPath, immutable.None[crypto.PrivateKey](), nil)
+	w, err := NewWrapper(ctx, t, binaryPath, immutable.None[crypto.PrivateKey](), "", nil)
 	require.NoError(t, err)
 	require.NotNil(t, w)
 

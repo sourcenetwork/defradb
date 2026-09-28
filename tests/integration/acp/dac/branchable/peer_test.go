@@ -36,14 +36,6 @@ const commitsQuery = `
 // at the sync layer and never reach node 1 - the owner sees nothing on the peer.
 func TestACP_P2PBranchableCollectionNotSyncedWithoutNodeCollectionAccess_LocalACP(t *testing.T) {
 	test := testUtils.TestCase{
-		// The document is written without an identity into an ACP gated collection, so
-		// the head read-back that works out what the peer should receive is
-		// unauthenticated and finds nothing.
-		// https://github.com/sourcenetwork/defradb/issues/5196
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,
@@ -104,10 +96,9 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 	ownerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The document is written without an identity into an ACP gated collection, so
-		// the head read-back that works out what the peer should receive is
-		// unauthenticated and finds nothing.
-		// https://github.com/sourcenetwork/defradb/issues/5196
+		// The peer is deliberately refused some of these blocks, so a head that is
+		// never coming is still waited for.
+		// https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
 			multiplier.CrossVersionNewSource,
@@ -206,10 +197,9 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 	afterCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The document is written without an identity into an ACP gated collection, so
-		// the head read-back that works out what the peer should receive is
-		// unauthenticated and finds nothing.
-		// https://github.com/sourcenetwork/defradb/issues/5196
+		// The peer is deliberately refused some of these blocks, so a head that is
+		// never coming is still waited for.
+		// https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldSource,
 			multiplier.CrossVersionNewSource,

@@ -42,6 +42,9 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	case state.CClientType:
 		return cbindings.NewCWrapper(nodeObj)
 
+	case state.JavaClientType:
+		return setupJavaClient(nodeObj)
+
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
 	}

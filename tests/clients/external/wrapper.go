@@ -95,11 +95,15 @@ type Wrapper struct {
 // nodeIdentity is the private key the node runs as. Without it the node
 // generates its own, which the test has no way to name, so anything addressing
 // the node by identity cannot reach it.
+//
+// rootDir restarts a node in the directory it was using. Pass an empty string
+// for a new node, which gets a fresh temporary one.
 func NewWrapper(
 	ctx context.Context,
 	t testing.TB,
 	binaryPath string,
 	nodeIdentity immutable.Option[crypto.PrivateKey],
+	rootDir string,
 	extraFlags []string,
 ) (*Wrapper, error) {
 	// The API port is chosen before start, so another process can grab it in the
@@ -114,7 +118,7 @@ func NewWrapper(
 			}
 			return nil, err
 		}
-		w, err := startWrapper(ctx, t, binaryPath, nodeIdentity, extraFlags)
+		w, err := startWrapper(ctx, t, binaryPath, nodeIdentity, rootDir, extraFlags)
 		if err == nil {
 			return w, nil
 		}
@@ -129,15 +133,24 @@ func startWrapper(
 	t testing.TB,
 	binaryPath string,
 	nodeIdentity immutable.Option[crypto.PrivateKey],
+	rootDir string,
 	extraFlags []string,
 ) (*Wrapper, error) {
 	apiPort, err := freePort()
 	if err != nil {
 		return nil, errors.Wrap("failed to find free api port", err)
 	}
-	rootDir, err := os.MkdirTemp("", "defradb-external-*")
-	if err != nil {
-		return nil, errors.Wrap("failed to create rootdir", err)
+	// An empty rootdir means a new node. A restart passes the one it was using,
+	// which holds data the test still reads, so only a directory made here is
+	// removed.
+	if rootDir == "" {
+		rootDir, err = os.MkdirTemp("", "defradb-external-*")
+		if err != nil {
+			return nil, errors.Wrap("failed to create rootdir", err)
+		}
+		// Close leaves the directory for a restart to start in again, so it is
+		// only safe to remove once the test that made it is over.
+		t.Cleanup(func() { removeAll(rootDir) })
 	}
 
 	apiURL := fmt.Sprintf("127.0.0.1:%d", apiPort)
@@ -146,7 +159,6 @@ func startWrapper(
 	// entry is missing. Seeding it is what lets the test address this node.
 	if nodeIdentity.HasValue() {
 		if err := seedNodeIdentity(rootDir, nodeIdentity.Value()); err != nil {
-			removeAll(rootDir)
 			return nil, err
 		}
 	}
@@ -168,12 +180,10 @@ func startWrapper(
 	stderr := newRingBuffer(64 * 1024)
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to get stdout pipe", err)
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to get stderr pipe", err)
 	}
 	var logWG sync.WaitGroup
@@ -182,7 +192,6 @@ func startWrapper(
 
 	if err := cmd.Start(); err != nil {
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to start process", err)
 	}
 
@@ -190,14 +199,12 @@ func startWrapper(
 	if err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap("failed to create http client", err)
 	}
 
 	if err := waitForHealth(ctx, httpClient, healthCheckTimeout); err != nil {
 		killAndWait(cmd)
 		logWG.Wait()
-		removeAll(rootDir)
 		return nil, errors.Wrap(
 			"external node did not become healthy in time",
 			err,
@@ -312,6 +319,12 @@ func removeAll(dir string) {
 	_ = os.RemoveAll(dir)
 }
 
+// RootDir returns the directory holding the node's store and keyring. Pass it
+// back on a restart to keep both.
+func (w *Wrapper) RootDir() string {
+	return w.rootDir
+}
+
 // Host returns the base URL the wrapper's HTTP client is talking to.
 func (w *Wrapper) Host() string {
 	return w.apiURL
@@ -330,7 +343,8 @@ func (w *Wrapper) Close() {
 	// goroutines may still be draining them; wait before returning to avoid
 	// a t.Log call racing past the end of the test.
 	w.logWG.Wait()
-	_ = os.RemoveAll(w.rootDir)
+	// The rootdir is left in place, since a restart starts a new process in it.
+	// It sits under the OS temporary directory either way.
 	w.bus.Close()
 }
 

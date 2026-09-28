@@ -972,9 +972,28 @@ type Mutation {
         """
         filter: UserFilterArg
     ): [User]
-    "Remove all or matching documents from this node. Returns true when complete."
+    """
+    
+    Remove all or matching documents from this node. Returns true when complete.
+
+    """
     truncate_User(
-        "Filter documents to truncate"
+        """
+        
+        An optional set of docID values that will limit the truncate to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be removed. If an empty set is provided, no
+         documents will be removed.
+
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this truncate that will limit the truncate to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be removed.
+
+        """
         filter: UserFilterArg
     ): Boolean!
     """

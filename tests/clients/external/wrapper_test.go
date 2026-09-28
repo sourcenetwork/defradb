@@ -48,7 +48,7 @@ func TestExternalWrapper(t *testing.T) {
 		t.Skip("no v1.0.0 asset for this platform")
 	}
 
-	w, err := NewWrapper(ctx, t, path, immutable.None[crypto.PrivateKey](), nil)
+	w, err := NewWrapper(ctx, t, path, immutable.None[crypto.PrivateKey](), "", nil)
 	require.NoError(t, err)
 	defer w.Close()
 
@@ -98,7 +98,7 @@ func TestExternalWrapper_SeededNodeIdentity(t *testing.T) {
 	want, err := acpIdentity.FromPrivateKey(key)
 	require.NoError(t, err)
 
-	w, err := NewWrapper(ctx, t, path, immutable.Some(key), nil)
+	w, err := NewWrapper(ctx, t, path, immutable.Some(key), "", nil)
 	require.NoError(t, err)
 	defer w.Close()
 

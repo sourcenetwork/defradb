@@ -154,15 +154,6 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 
 func TestUpdateWithMapFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -207,6 +198,7 @@ func TestUpdateWithMapFilter_LargeIntegerStraddling2To53_UpdatesOnlyExactMatch(t
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.CClientType,
+				state.JavaClientType,
 			},
 		),
 		// The gql mutation type embeds the doc as a literal in a GraphQL mutation, and
@@ -260,15 +252,6 @@ func TestUpdateWithMapFilter_LargeIntegerStraddling2To53_UpdatesOnlyExactMatch(t
 
 func TestUpdateWithSomeOptionFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,
@@ -306,15 +289,6 @@ func TestUpdateWithSomeOptionFilter_Succeeds(t *testing.T) {
 
 func TestUpdateWithNoneOptionFilter_UpdatesAllDocuments(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.CClientType,
-				state.JSClientType,
-			},
-		),
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 0,

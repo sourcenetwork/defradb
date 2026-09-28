@@ -12,14 +12,16 @@
 package action
 
 import (
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func RandomNetworkingConfig() *NewNode {
 	return &NewNode{
-		Network: func() options.NodeP2POptions {
+		Network: immutable.Some[ConfigureNode](func() options.NodeP2POptions {
 			return options.NodeP2POptions{}
-		},
+		}),
 	}
 }
 
@@ -27,7 +29,8 @@ func RandomNetworkingConfig() *NewNode {
 // internal db.p2p stays nil).
 func NoNetworkingConfig() *NewNode {
 	return &NewNode{
-		DisableP2P: true,
+		// A present but nil config is what tells node setup to leave p2p out.
+		Network: immutable.Some[ConfigureNode](nil),
 	}
 }
 

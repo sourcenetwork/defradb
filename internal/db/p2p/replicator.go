@@ -260,8 +260,7 @@ func (p *P2P) pushHeadsForDoc(
 			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
+		reqCtx, reqCancel := context.WithTimeout(ctx, networkRequestTimeout)
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
@@ -270,10 +269,12 @@ func (p *P2P) pushHeadsForDoc(
 			Block:        rawblock,
 		}
 
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+		_, sendErr := p.replicatorProtocol.SendRequest(reqCtx, pushLogReq, peerID)
+		reqCancel()
+		if sendErr != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
-				err,
+				sendErr,
 				corelog.Any("DocID", docID),
 			)
 			err := p.handleReplicatorFailure(ctx, peerID, docID)
@@ -384,6 +385,13 @@ func (p *P2P) ListReplicators(ctx context.Context) ([]client.Replicator, error) 
 func (p *P2P) pushLogToReplicators(lg event.Update) {
 	p.repMu.Lock()
 	reps, exists := p.replicators[lg.CollectionID]
+	var peerIDs []string
+	if exists {
+		peerIDs = make([]string, 0, len(reps))
+		for peerID := range reps {
+			peerIDs = append(peerIDs, peerID)
+		}
+	}
 	p.repMu.Unlock()
 
 	for _, handler := range p.pushHandlers {
@@ -394,34 +402,32 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 		}
 	}
 
-	if exists {
-		for peerID := range reps {
-			go func() {
-				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
-				defer cancel()
-				pushLogReq := protocol.PushLogRequest{
-					DocID:        lg.DocID,
-					CID:          lg.Cid.Bytes(),
-					CollectionID: lg.CollectionID,
-					Creator:      p.host.ID(),
-					Block:        lg.Block,
-				}
-				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
-					log.ErrorE(
-						"Failed pushing log",
-						err,
-						corelog.String("DocID", lg.DocID),
-						corelog.Any("CID", lg.Cid),
-						corelog.Any("PeerID", peerID))
-					if !lg.IsRetry {
-						err = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
-						if err != nil {
-							log.ErrorE("Failed to handle replicator failure.", err)
-						}
+	for _, peerID := range peerIDs {
+		go func() {
+			ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
+			defer cancel()
+			pushLogReq := protocol.PushLogRequest{
+				DocID:        lg.DocID,
+				CID:          lg.Cid.Bytes(),
+				CollectionID: lg.CollectionID,
+				Creator:      p.host.ID(),
+				Block:        lg.Block,
+			}
+			if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+				log.ErrorE(
+					"Failed pushing log",
+					err,
+					corelog.String("DocID", lg.DocID),
+					corelog.Any("CID", lg.Cid),
+					corelog.Any("PeerID", peerID))
+				if !lg.IsRetry {
+					err = p.handleReplicatorFailure(p.ctx, peerID, lg.DocID)
+					if err != nil {
+						log.ErrorE("Failed to handle replicator failure.", err)
 					}
 				}
-			}()
-		}
+			}
+		}()
 	}
 }
 
@@ -483,6 +489,9 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
+	p.handleRetryMutex.Lock()
+	defer p.handleRetryMutex.Unlock()
+
 	// Check if context is cancelled before attempting database operations.
 	// This prevents attempts to write to a closed database during shutdown.
 	if ctx.Err() != nil {
@@ -607,6 +616,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 			return
 		}
 		log.ErrorContextE(ctx, "Failed iterate replicator retry ID keys", err)
+		return
 	}
 	defer closeQueryResults(iter)
 	now := time.Now()
@@ -878,8 +888,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
+		reqCtx, reqCancel := context.WithTimeout(ctx, networkRequestTimeout)
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
@@ -887,7 +896,9 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+		_, err = p.replicatorProtocol.SendRequest(reqCtx, pushLogReq, peerID)
+		reqCancel()
+		if err != nil {
 			return NewErrSendReplicatorRequest(err, peerID, docID)
 		}
 	}

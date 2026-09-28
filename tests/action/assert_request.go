@@ -413,7 +413,7 @@ func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
 // The comparison is relaxed when using client types other than goClientType.
 func isResultsEqual(client state.ClientType, expected any, actual any) bool {
 	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType, state.JavaClientType:
 		if !areResultsEqual(expected, actual) {
 			return assert.ObjectsAreEqualValues(expected, actual)
 		}

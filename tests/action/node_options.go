@@ -60,6 +60,8 @@ type NodeSetupConfig struct {
 	// NodeACP overrides the node's access control settings when set. While it is on
 	// the node lets through no one but the identity it was started with.
 	NodeACP immutable.Option[options.NodeACPOptions]
+	// DisableP2P starts the node with no p2p system at all.
+	DisableP2P bool
 }
 
 // nacEnabled reports whether the test asked for node access control.
