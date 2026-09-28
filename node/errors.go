@@ -22,10 +22,10 @@ const (
 )
 
 var (
-	ErrSignerMissingForSourceHubACP = errors.New("a txn signer must be provided for SourceHub ACP")
-	ErrStoreTypeNotSupported        = errors.New(errStoreTypeNotSupported)
-	ErrP2PNotSupported              = errors.New("p2p networking is not supported by this build")
-	ErrNodeACPTypeNotSupported      = errors.New(errNodeACPTypeNotSupported)
+	ErrSignerMissingForRemoteDAC = errors.New("a transaction signer must be provided for Remote DAC")
+	ErrStoreTypeNotSupported     = errors.New(errStoreTypeNotSupported)
+	ErrP2PNotSupported           = errors.New("p2p networking is not supported by this build")
+	ErrNodeACPTypeNotSupported   = errors.New(errNodeACPTypeNotSupported)
 )
 
 func NewErrStoreTypeNotSupported(store options.NodeStoreType) error {

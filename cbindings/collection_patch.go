@@ -46,14 +46,12 @@ func PatchCollection(nodePtr C.uintptr_t,
 		var lensCfg model.Lens
 		decoder := json.NewDecoder(strings.NewReader(lensString))
 		decoder.DisallowUnknownFields()
+		decoder.UseNumber()
 		if err := decoder.Decode(&lensCfg); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 
-		// Length being greater than 0 also means it is not nil, so no need to check
-		if len(lensCfg.Lenses) > 0 {
-			migration = immutable.Some(lensCfg)
-		}
+		migration = immutable.Some(lensCfg)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

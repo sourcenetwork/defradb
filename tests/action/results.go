@@ -15,6 +15,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +31,16 @@ import (
 
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
+// normalizeIndexes returns a copy of the slice with each index's Kind/Unique made consistent, so a
+// test expectation written in either style (only Unique, or only Kind) compares against the actual.
+func normalizeIndexes(indexes []client.IndexDescription) []client.IndexDescription {
+	out := make([]client.IndexDescription, len(indexes))
+	for i, idx := range indexes {
+		out[i] = idx.Normalize()
+	}
+	return out
+}
+
 func assertError(t testing.TB, err error, expectedError string) bool {
 	if err == nil {
 		return false
@@ -89,7 +100,9 @@ func assertCollectionVersions(
 		if expected.Indexes != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(s.T, expected.Indexes, actual.Indexes)
+			// Normalize both sides so an expectation written in the old style (Unique only, no Kind)
+			// compares equal to the resolved actual (Kind populated).
+			require.Equal(s.T, normalizeIndexes(expected.Indexes), normalizeIndexes(actual.Indexes))
 		}
 
 		require.Equal(s.T, expected.PreviousVersion.HasValue(), actual.PreviousVersion.HasValue())
@@ -145,12 +158,23 @@ func assertCollectionVersions(
 	}
 }
 
+// clientTypeForNode returns the client type used to talk to the given node.
+//
+// An external node runs in another process and is always reached over HTTP, so
+// its results need the relaxed comparison whatever client the run selected.
+func clientTypeForNode(s *state.State, nodeID int) state.ClientType {
+	if nodeID >= 0 && nodeID < len(s.Nodes) && s.Nodes[nodeID].IsExternal {
+		return state.HTTPClientType
+	}
+	return s.ClientType
+}
+
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.
 func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
 	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType, state.JavaClientType:
 		if !areResultsEqual(expected, actual) {
 			assert.EqualValues(t, expected, actual, msgAndArgs...)
 		}
@@ -176,12 +200,30 @@ func areResultsEqual(expected any, actual any) bool {
 			return false
 		}
 		for k, v := range expectedVal {
-			if !areResultsEqual(v, actualVal[k]) {
+			actualForKey, ok := actualVal[k]
+			if !ok {
+				return false
+			}
+			if !areResultsEqual(v, actualForKey) {
 				return false
 			}
 		}
 		return true
-	case uint64, uint32, uint16, uint8, uint, int64, int32, int16, int8, int:
+	case uint64, uint32, uint16, uint8, uint:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		// Parse as an unsigned integer rather than using json.Number.Int64().
+		// Int64() would reject valid uint64 values above math.MaxInt64, and
+		// could also turn -1 into math.MaxUint64 if the result were later
+		// converted to uint64, hiding a signed-vs-unsigned comparison bug.
+		actualVal, err := strconv.ParseUint(string(jsonNum), 10, 64)
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, actualVal)
+	case int64, int32, int16, int8, int:
 		jsonNum, ok := actual.(json.Number)
 		if !ok {
 			return assert.ObjectsAreEqualValues(expected, actual)

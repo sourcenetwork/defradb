@@ -35,8 +35,6 @@ func DisconnectP2PPeers(nodePtr C.uintptr_t, peerAddresses *C.char, identityPtr 
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	addresses := splitCommaSeparatedString(C.GoString(peerAddresses))
 	disconnectOpt := options.WithIdentity(options.Disconnect(), acpIdentity.FromContext(ctx))
 	err = node.DB.Disconnect(ctx, addresses, disconnectOpt)

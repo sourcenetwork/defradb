@@ -86,6 +86,87 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQuerySimple_WithSimilarityInFragmentAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					books: [Book]
+				}
+				type Book {
+					name: String
+					tags: [String!]
+					author: User
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						books {
+							...similarity
+						}
+					}
+				}
+				fragment similarity on Book {
+					SIMILARITY(tags: {vector: [1.1, 1.2, 0.9]})
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: tags, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityInInlineFragmentAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					pets: [String!]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						... on User {
+							SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
+						}
+					}
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityInMutationAndWrongFieldType_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					pets: [String!]
+				}`,
+			},
+			&action.Request{
+				Request: `mutation {
+					add_User(input: {name: "John"}) {
+						SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
+					}
+				}`,
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -101,8 +182,7 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 						SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
 					}
 				}`,
-				// Not found on SIMILARITY because it's not a supported type.
-				ExpectedError: "Unknown argument \"pets\" on field \"SIMILARITY\" of type \"User\".",
+				ExpectedError: "similarity can only target a numeric array field. Field: pets, Type: [String!]",
 			},
 		},
 	}
@@ -161,7 +241,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(10),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -228,7 +308,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(10),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -265,7 +345,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(10),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -302,7 +382,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 					"User": []map[string]any{
 						{
 							"name":       "John",
-							"SIMILARITY": float64(10),
+							"SIMILARITY": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -342,7 +422,7 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 			},
 			&action.Request{
 				Request: `query {
-					User(filter: {_alias: {sim: {_lt: 11}}}){
+					User(filter: {_alias: {sim: {_lt: 0.9}}}){
 						name
 						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
@@ -350,12 +430,12 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "John",
-							"sim":  float64(10),
+							"name": "Bob",
+							"sim":  testUtils.CosineSimilarity([]float64{1, 1, 1}, []float64{1, 2, 0}),
 						},
 						{
-							"name": "Bob",
-							"sim":  float64(3),
+							"name": "Alice",
+							"sim":  testUtils.CosineSimilarity([]float64{4, 5, 3}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -403,12 +483,12 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "Alice",
-							"sim":  float64(14),
+							"name": "John",
+							"sim":  testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
 						},
 						{
-							"name": "John",
-							"sim":  float64(10),
+							"name": "Alice",
+							"sim":  testUtils.CosineSimilarity([]float64{4, 5, 3}, []float64{1, 2, 0}),
 						},
 					},
 				},
@@ -448,7 +528,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 			},
 			&action.Request{
 				Request: `query {
-					User(filter: {_alias: {sim2: {_gt: 20}}}){
+					User(filter: {_alias: {sim2: {_gt: 0.95}}}){
 						name
 						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
 						sim2: SIMILARITY(pointsList: {vector: [2, 3, 0]})
@@ -457,9 +537,9 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name": "Alice",
-							"sim":  float64(14),
-							"sim2": float64(23),
+							"name": "John",
+							"sim":  testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{1, 2, 0}),
+							"sim2": testUtils.CosineSimilarity([]float64{2, 4, 1}, []float64{2, 3, 0}),
 						},
 					},
 				},
@@ -511,6 +591,29 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 				Results: map[string]any{
 					"User": []map[string]any{},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQuerySimple_WithSimilarityAndNoArguments_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Int!]
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User {
+						SIMILARITY
+					}
+				}`,
+				ExpectedError: "similarity requires a target field argument",
 			},
 		},
 	}

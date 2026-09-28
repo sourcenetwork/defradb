@@ -30,11 +30,11 @@ import (
 //
 // The test asserts the user-visible outcome the race breaks: once the grants land, the
 // non-creator can read the fully-synced document on the receiving node.
-func TestACP_P2PSubscribe_MultiBlockDoc_NonCreatorReadsAfterGrantsLand_SourceHubACP(t *testing.T) {
+func TestACP_P2PSubscribe_MultiBlockDoc_NonCreatorReadsAfterGrantsLand_RemoteDAC(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 

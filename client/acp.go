@@ -10,14 +10,12 @@
 
 package client
 
-// PolicyDescription describes a policy using it's ID and it's resource name, where:
-// 1) the ID is the policyID of the registered policy on the document acp system and
-// 2) the resource name is of a valid resource that adheres to the corresponding
+// PolicyDescription describes a policy by its ID and resource name, where:
+// 1) the ID identifies the policy registered with the ACP system and
+// 2) the resource name identifies a valid resource that adheres to the corresponding
 // resource interface (RI) rules.
 type PolicyDescription struct {
-	// ID is the local policyID when using local acp, and global policyID when
-	// using remote acp with sourcehub. This identifier is externally managed
-	// by the acp system.
+	// ID is the policy identifier managed by the configured ACP system.
 	ID string
 
 	// ResourceName is the name of the corresponding resource within the policy.
@@ -45,19 +43,19 @@ type DeleteActorRelationshipResult struct {
 	RecordFound bool
 }
 
-// NACStatus represents the current state/status of the Node ACP system.
+// NACStatus represents the current state of the Local NAC system.
 type NACStatus int
 
 const (
-	// NACNotConfigured indicates that NAC system is in a clean state, meaning it has not been started/configured yet.
+	// NACNotConfigured indicates that Local NAC has not been configured yet.
 	//
 	// Note: Upon purge or reset, NAC will be set back to this state as well.
 	NACNotConfigured NACStatus = iota
 
-	// NACEnabled indicates that NAC system was started and is currently enabled.
+	// NACEnabled indicates that Local NAC was started and is currently enabled.
 	NACEnabled
 
-	// NACDisabledTemporarily indicates that NAC system was started but is temporarily disabled.
+	// NACDisabledTemporarily indicates that Local NAC was started but is temporarily disabled.
 	NACDisabledTemporarily
 )
 
@@ -74,7 +72,7 @@ func (status NACStatus) String() string {
 	}
 }
 
-// NACStatusResult wraps the result of current node acp status.
+// NACStatusResult wraps the current Local NAC status.
 type NACStatusResult struct {
 	Status string
 }

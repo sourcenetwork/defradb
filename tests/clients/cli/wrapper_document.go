@@ -232,7 +232,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	args = append(args, "--collection-name", c.Version().Name)
 	args = append(args, "--updater", updater)
 
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	args := []string{"client", "document", "delete"}
 	args = append(args, "--collection-name", c.Version().Name)
 
-	filterJSON, err := json.Marshal(filter)
+	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
 	}

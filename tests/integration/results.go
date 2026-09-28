@@ -15,7 +15,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -73,7 +75,7 @@ var _ TestStateMatcher = (*anyOf)(nil)
 
 func (matcher *anyOf) Match(actual any) (bool, error) {
 	switch matcher.s.GetClientType() {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType, state.JavaClientType:
 		if !areResultsAnyOf(matcher.Values, actual) {
 			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
@@ -238,6 +240,92 @@ func (matcher *docIDAt) String() string {
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
+// similarityScoreTolerance absorbs the gap between the exact float64 score and the value the engine
+// gets from float32-stored vectors, whose components are not all exactly representable in float32.
+const similarityScoreTolerance = 1e-6
+
+// CosineSimilarity matches a _similarity result against the cosine of the two given vectors. Prefer
+// it over a hard-coded float: it names the vectors under comparison and cannot go stale.
+func CosineSimilarity(source, vector []float64) *similarityScore {
+	return &similarityScore{source: source, vector: vector}
+}
+
+// SimilarityScore matches a _similarity result under the given metric. Use it when the field being
+// queried has a non-cosine vector index, since the score follows the index's metric.
+func SimilarityScore(metric client.DistanceMetric, source, vector []float64) *similarityScore {
+	return &similarityScore{source: source, vector: vector, metric: metric}
+}
+
+type similarityScore struct {
+	source []float64
+	vector []float64
+	// The zero value is cosine, so CosineSimilarity keeps working unchanged.
+	metric client.DistanceMetric
+}
+
+var _ gomega.OmegaMatcher = (*similarityScore)(nil)
+
+// expected computes the score the two vectors should produce under the metric.
+//
+// It is written out here rather than calling the production scoring function, so that the assertion
+// is an independent check on the value and not just on the ordering. Sharing the implementation would
+// let a wrong but order-preserving formula (say a square root left in) satisfy every assertion.
+func (m *similarityScore) expected() float64 {
+	var dot, sumSq, sourceNorm, vectorNorm float64
+	for i := range m.source {
+		s, v := m.source[i], m.vector[i]
+		dot += s * v
+		d := s - v
+		sumSq += d * d
+		sourceNorm += s * s
+		vectorNorm += v * v
+	}
+
+	switch m.metric {
+	case client.DistanceMetricEuclidean:
+		return -sumSq
+	case client.DistanceMetricDotProduct:
+		return dot
+	default:
+		if sourceNorm == 0 || vectorNorm == 0 {
+			return 0
+		}
+		return dot / (math.Sqrt(sourceNorm) * math.Sqrt(vectorNorm))
+	}
+}
+
+func (m *similarityScore) Match(actual any) (bool, error) {
+	// The HTTP, CLI and C clients decode the result through JSON, so the similarity value arrives as a
+	// json.Number rather than a float64. gomega.BeNumerically only accepts native numeric types, so
+	// unwrap it first, the same way the rest of the result-matching does.
+	if jsonNum, ok := actual.(json.Number); ok {
+		f, err := jsonNum.Float64()
+		if err != nil {
+			return false, err
+		}
+		actual = f
+	}
+	return gomega.BeNumerically("~", m.expected(), similarityScoreTolerance).Match(actual)
+}
+
+func (m *similarityScore) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be the %s similarity score\n\t%v (within %v)",
+		actual, m.metricName(), m.expected(), similarityScoreTolerance)
+}
+
+func (m *similarityScore) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be the %s similarity score\n\t%v (within %v)",
+		actual, m.metricName(), m.expected(), similarityScoreTolerance)
+}
+
+// metricName names the metric in failure messages, so a mismatch says which one was expected.
+func (m *similarityScore) metricName() string {
+	if m.metric == "" {
+		return string(client.DistanceMetricCosine)
+	}
+	return string(m.metric)
+}
+
 func ValidDocID() *validDocID {
 	return &validDocID{}
 }
@@ -325,12 +413,30 @@ func areResultsEqual(expected any, actual any) bool {
 			return false
 		}
 		for k, v := range expectedVal {
-			if !areResultsEqual(v, actualVal[k]) {
+			actualForKey, ok := actualVal[k]
+			if !ok {
+				return false
+			}
+			if !areResultsEqual(v, actualForKey) {
 				return false
 			}
 		}
 		return true
-	case uint64, uint32, uint16, uint8, uint, int64, int32, int16, int8, int:
+	case uint64, uint32, uint16, uint8, uint:
+		jsonNum, ok := actual.(json.Number)
+		if !ok {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		// Parse as an unsigned integer rather than using json.Number.Int64().
+		// Int64() would reject valid uint64 values above math.MaxInt64, and
+		// could also turn -1 into math.MaxUint64 if the result were later
+		// converted to uint64, hiding a signed-vs-unsigned comparison bug.
+		actualVal, err := strconv.ParseUint(string(jsonNum), 10, 64)
+		if err != nil {
+			return false
+		}
+		return assert.ObjectsAreEqualValues(expected, actualVal)
+	case int64, int32, int16, int8, int:
 		jsonNum, ok := actual.(json.Number)
 		if !ok {
 			return assert.ObjectsAreEqualValues(expected, actual)

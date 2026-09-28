@@ -930,12 +930,17 @@ func findIndexWithFirstField(
 ) (isUnique bool, found bool) {
 	for _, index := range newIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			if index.Ordered != nil {
+				return index.Ordered.Unique, true
+			}
+			//nolint:staticcheck // the deprecated field is still supported until v2.0.0
 			return index.Unique, true
 		}
 	}
 	for _, index := range existingIndexes {
-		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
-			return index.Unique, true
+		// Only non-vector indexes carry uniqueness, so skip a vector index here.
+		if !index.IsVector() && len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index.GetUnique(), true
 		}
 	}
 	return false, false

@@ -35,18 +35,19 @@ const (
 	operationNodeProp    = "operationNode"
 	filterMatchesProp    = "filterMatches"
 
-	selectTopNodeProp = "selectTopNode"
-	selectNodeProp    = "selectNode"
-	scanNodeProp      = "scanNode"
-	limitNodeProp     = "limitNode"
-	orderNodeProp     = "orderNode"
-	typeIndexJoinProp = "typeIndexJoin"
-	typeJoinManyProp  = "typeJoinMany"
-	typeJoinOneProp   = "typeJoinOne"
-	orphanNodeProp    = "orphanNode"
-	sequenceNodeProp  = "sequenceNode"
-	rootProp          = "root"
-	subTypeProp       = "subType"
+	selectTopNodeProp  = "selectTopNode"
+	selectNodeProp     = "selectNode"
+	scanNodeProp       = "scanNode"
+	limitNodeProp      = "limitNode"
+	orderNodeProp      = "orderNode"
+	similarityNodeProp = "similarityNode"
+	typeIndexJoinProp  = "typeIndexJoin"
+	typeJoinManyProp   = "typeJoinMany"
+	typeJoinOneProp    = "typeJoinOne"
+	orphanNodeProp     = "orphanNode"
+	sequenceNodeProp   = "sequenceNode"
+	rootProp           = "root"
+	subTypeProp        = "subType"
 )
 
 type dataMap = map[string]any
@@ -280,7 +281,7 @@ func formatPath(path []string) string {
 
 // navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
 func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
-	node = unwrapNode(node, limitNodeProp, orderNodeProp)
+	node = unwrapNode(node, limitNodeProp, orderNodeProp, similarityNodeProp)
 	selectNode, ok := node[selectNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 	return selectNode
@@ -320,7 +321,7 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 
 // navigateThroughSelectTop handles the selectTopNode -> selectNode -> typeIndexJoin chain.
 func navigateThroughSelectTop(node dataMap) dataMap {
-	node = unwrapNode(node, selectTopNodeProp, limitNodeProp, orderNodeProp, selectNodeProp)
+	node = unwrapNode(node, selectTopNodeProp, limitNodeProp, orderNodeProp, similarityNodeProp, selectNodeProp)
 	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
 		return indexJoin
 	}

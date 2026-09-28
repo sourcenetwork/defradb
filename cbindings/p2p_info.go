@@ -36,8 +36,6 @@ func GetP2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	opts := options.WithIdentity(options.PeerInfo(), acpIdentity.FromContext(ctx))
 	addresses, err := node.DB.PeerInfo(ctx, opts)
 	if err != nil {

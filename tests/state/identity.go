@@ -14,6 +14,7 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/json"
 	"math/rand"
 	"strings"
 
@@ -104,10 +105,13 @@ func GetIdentityHolder(s *State, identity Identity) *IdentityHolder {
 	return s.Identities[identity]
 }
 
-// TokenHasAudience returns true if the given JWT token string contains an audience claim.
-// This is used to detect tokens that were generated before the node's HTTP host was available,
-// and need to be regenerated with the correct audience.
-func TokenHasAudience(token string) bool {
+// TokenHasAudience returns true if the given JWT token carries the given audience.
+//
+// It detects both a token generated before the node's HTTP host was available and
+// one generated for a different host. An external node binds a new port every start,
+// so a token minted for an earlier address is rejected by that node and has to be
+// regenerated.
+func TokenHasAudience(token string, audience string) bool {
 	if token == "" {
 		return false
 	}
@@ -119,7 +123,26 @@ func TokenHasAudience(token string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(payload), `"aud"`)
+
+	var claims struct {
+		Audience any `json:"aud"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return false
+	}
+
+	// The audience claim is either a single string or a list of them.
+	switch aud := claims.Audience.(type) {
+	case string:
+		return aud == audience
+	case []any:
+		for _, a := range aud {
+			if s, ok := a.(string); ok && s == audience {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Generate the keys using predefined seed so that multiple runs yield the same private key.

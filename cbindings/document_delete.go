@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 //export DeleteDocument
@@ -76,9 +77,12 @@ func DeleteDocument(nodePtr C.uintptr_t,
 
 	// If docID is not provided, next try to delete by filter
 	case filter != "":
-		var filterValue any
-		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+		filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		if filterValue == nil {
+			filterValue = map[string]any{}
 		}
 		deleteOpt := options.WithIdentity(options.DeleteDocumentsWithFilter(), ident)
 		if opts.enableSigning != 0 {

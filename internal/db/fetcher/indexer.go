@@ -170,7 +170,7 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		hasNilField = hasNilField || res.key.Fields[i].Value.IsNil()
 	}
 
-	if f.indexDesc.Unique && !hasNilField {
+	if f.indexDesc.GetUnique() && !hasNilField {
 		docShortID, err := keys.DecodeDocShortID(res.value)
 		if err != nil {
 			return immutable.None[string](), err

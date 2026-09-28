@@ -59,6 +59,29 @@ func TestNetInfoPeers(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestNetInfoConnectPeers_SourceP2PDisabled tests that a node started with P2P disabled
+// will return an error instead of panicking when the Connect function gets called.
+func TestNetInfoConnectPeers_SourceP2PDisabled(t *testing.T) {
+	test := testUtils.TestCase{
+		// v1.0.0 calls straight into the p2p system without checking it exists, so
+		// it panics rather than reporting the error this asserts.
+		SupportedFromVersion: "v1.1.0",
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.NoNetworkingConfig(),
+			testUtils.ConnectPeers{
+				// Node 1 has P2P disabled, so it is the source of the connect attempt -
+				// this exercises the "p2p == nil" guard that Connect previously lacked.
+				SourceNodeID:  1,
+				TargetNodeID:  0,
+				ExpectedError: "no p2p system configured",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestNetInfoConnectPeers(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

@@ -12,6 +12,7 @@ package p2p
 
 import (
 	"context"
+	crand "crypto/rand"
 	"fmt"
 	"slices"
 	"time"
@@ -20,6 +21,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corelog"
 
@@ -40,6 +43,11 @@ const docSyncTopic = "doc-sync"
 // docSyncRequest represents a request to synchronize specific documents.
 type docSyncRequest struct {
 	DocIDs []string `json:"docIDs"`
+	// RequestID is a random nonce that makes each request's marshalled bytes unique. The
+	// pubsub-rpc layer keys its response channel by a hash of the request bytes, so without this
+	// two concurrent syncs for the same docIDs would collide on that key and one would time out
+	// while the other succeeds. Mirrors the KMS pubsub fix (fetchEncryptionKeyRequest).
+	RequestID []byte `json:"requestID"`
 }
 
 // docSyncReply represents the response to a document sync request.
@@ -103,12 +111,25 @@ func (p *P2P) syncDocuments(
 		return nil, ErrTimeoutDocSync
 	}
 
+	// A peer answers with its id, while ActivePeers reports full addresses, so
+	// key on the id or a response never clears the peer that sent it.
 	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
+	for _, addr := range activePeers {
+		id, err := peerIDFromAddr(addr)
+		if err != nil {
+			return nil, err
+		}
+		pendingPeers[id] = struct{}{}
 	}
 
 	pubsubReq := &docSyncRequest{DocIDs: docIDs}
+
+	// Attach a random nonce so concurrent syncs for the same docIDs marshal to distinct bytes and
+	// therefore get distinct pubsub-rpc response-channel keys.
+	pubsubReq.RequestID = make([]byte, 16)
+	if _, err := crand.Read(pubsubReq.RequestID); err != nil {
+		return nil, err
+	}
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
@@ -342,4 +363,17 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	return result, nil
+}
+
+// peerIDFromAddr returns the peer id carried by a multiaddr.
+func peerIDFromAddr(addr string) (string, error) {
+	maddr, err := multiaddr.NewMultiaddr(addr)
+	if err != nil {
+		return "", err
+	}
+	id, err := peer.IDFromP2PAddr(maddr)
+	if err != nil {
+		return "", err
+	}
+	return id.String(), nil
 }

@@ -21,7 +21,7 @@ import (
 )
 
 // Eventhough empty resources make no sense from a DefraDB (DRI) perspective,
-// it is still a valid sourcehub policy for now.
+// it is still a valid Remote DAC policy for now.
 func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -42,7 +42,7 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 }
 
 // Eventhough empty resources make no sense from a DefraDB (DRI) perspective,
-// it is still a valid sourcehub policy for now.
+// it is still a valid Remote DAC policy for now.
 func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -65,8 +65,8 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some([]state.DocumentACPType{
-			// This is currently a local-acp only limitation, this test-restriction
-			// can be lifted if/when SourceHub introduces the same limitation.
+			// This is currently a Local DAC-only limitation; this test restriction
+			// can be lifted if/when Vera introduces the same limitation.
 			state.LocalDocumentACPType,
 		}),
 		Actions: []any{

@@ -382,6 +382,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 			if len(prefixes) == 0 {
 				origScan.noResults = true
 			}
+		} else {
+			// No CID or explicit docID constraint, so this scan is otherwise a full scan. If it is a
+			// nearest-neighbour query with a ready vector index, narrow it to the k nearest documents.
+			if err := n.tryRouteSimilarityToVectorIndex(origScan); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
@@ -479,7 +485,8 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 		case *mapper.Similarity:
 			var simFilter *mapper.Filter
 			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
-			similarity = append(similarity, n.planner.Similarity(f, simFilter))
+			metric := vectorIndexMetricOnField(n.collection, f.SimilarityTarget.Field.Name)
+			similarity = append(similarity, n.planner.Similarity(f, simFilter, metric))
 		}
 	}
 

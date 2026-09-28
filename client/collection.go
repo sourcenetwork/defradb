@@ -59,12 +59,10 @@ type Collection interface {
 	// will be created.
 	SaveDocument(ctx context.Context, doc *Document, opts ...options.Enumerable[options.SaveDocumentOptions]) error
 
-	// DeleteDocument will attempt to delete a document by DocID.
+	// DeleteDocument soft-deletes a document by DocID and publishes the deletion for replication.
 	//
-	// Will return true if a deletion is successful, and return false along with an error
-	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
-	// This operation will hard-delete all state relating to the given DocID.
-	// This includes data, block, and head storage.
+	// The document data and commit history remain available locally. If the document does not exist,
+	// this returns false and an ErrDocumentNotFound error.
 	DeleteDocument(
 		ctx context.Context,
 		docID DocID,
@@ -167,7 +165,9 @@ type Collection interface {
 		opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 	) ([]EncryptedIndexDescription, error)
 
-	// Truncate this collection, permanently deleting all document state on this node.
+	// Truncate permanently deletes document state from this collection on this node.
+	// Set a filter in the options to target matching documents; without one, all document state is deleted.
+	// Filtered truncation can also remove unshared document history.
 	//
 	// Changes made by this call will not impact other nodes, and cannot be synced to them over the P2P
 	// system.

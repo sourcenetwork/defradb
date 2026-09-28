@@ -4,8 +4,9 @@ Truncate the given collection
 
 ### Synopsis
 
-Truncate the given collection, removing all document data within it from the local node.
- Does not propagate the deletion to other Defra nodes in the peer network.
+Truncate the given collection, removing document data from the local node.
+Without a filter all documents are removed. With a filter only matching documents and their
+unshared history are removed. Changes do not propagate to other nodes.
 
 ```
 defradb client collection truncate [flags]
@@ -16,6 +17,7 @@ defradb client collection truncate [flags]
 ```
       --collection-id string     Collection ID
       --collection-name string   Collection name
+      --filter string            Document filter
       --get-inactive             Get inactive collections as well as active
   -h, --help                     help for truncate
       --version-id string        Collection version ID
@@ -33,8 +35,8 @@ defradb client collection truncate [flags]
       --log-source                  Include source location in logs
       --log-stacktrace              Include stacktrace in error and fatal logs
       --no-log-color                Disable colored log output
+      --remote-dac-address string   Vera address authorized to make Remote DAC transactions on behalf of the actor
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
 ```

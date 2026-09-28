@@ -14,10 +14,21 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// structRequestClientTypes restricts a test to the clients that send the index request as a struct.
+// The CLI and C clients translate it into flags, collapsing Ordered and the deprecated Unique into a
+// single --unique, so they cannot tell the two spellings apart.
+var structRequestClientTypes = immutable.Some([]state.ClientType{
+	state.GoClientType,
+	state.HTTPClientType,
+})
 
 func TestAddUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
@@ -345,6 +356,108 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexNew_SetThroughOrderedConfig_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				FieldName:    "name",
+				Ordered:      &client.OrderedIndexDescription{Unique: true},
+			},
+			&action.ListIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name:            "User_name_ASC",
+						ID:              1,
+						Fields:          []client.IndexedFieldDescription{{Name: "name"}},
+						Unique:          true,
+						Kind:            client.IndexKindOrdered,
+						KindDescription: &client.OrderedIndexDescription{Unique: true},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexNew_BothSpellingsAgree_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				FieldName:    "name",
+				Unique:       true,
+				Ordered:      &client.OrderedIndexDescription{Unique: true},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestUniqueIndexNew_SpellingsDisagree_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID:  0,
+				FieldName:     "name",
+				Unique:        true,
+				Ordered:       &client.OrderedIndexDescription{Unique: false},
+				ExpectedError: "index request sets both the deprecated unique field",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexNew_BothOrderedAndVectorConfig_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedClientTypes: structRequestClientTypes,
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					vector: [Float32!]
+				}`,
+			},
+			&action.NewIndex{
+				CollectionID: 0,
+				FieldName:    "vector",
+				Ordered:      &client.OrderedIndexDescription{},
+				Vector: &client.VectorIndexDescription{
+					Metric:     client.DistanceMetricCosine,
+					Dimensions: 3,
+					HNSW:       &client.HNSWParams{},
+				},
+				ExpectedError: "index request has more than one kind config",
 			},
 		},
 	}

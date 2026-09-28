@@ -23,13 +23,13 @@ import (
 
 type cliWrapper struct {
 	address          string
-	sourceHubAddress string
+	remoteDACAddress string
 }
 
-func newCliWrapper(address string, sourceHubAddress string) *cliWrapper {
+func newCliWrapper(address string, remoteDACAddress string) *cliWrapper {
 	return &cliWrapper{
 		address:          strings.TrimPrefix(address, "http://"),
-		sourceHubAddress: sourceHubAddress,
+		remoteDACAddress: remoteDACAddress,
 	}
 }
 
@@ -60,8 +60,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
-	if len(w.sourceHubAddress) > 0 {
-		args = append(args, "--source-hub-address", w.sourceHubAddress)
+	if len(w.remoteDACAddress) > 0 {
+		args = append(args, "--remote-dac-address", w.remoteDACAddress)
 	}
 	args = append(args, "--url", w.address)
 
