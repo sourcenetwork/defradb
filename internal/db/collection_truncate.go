@@ -488,7 +488,8 @@ func (c *collection) hardDeleteCollectionBlocks(
 // If the block is not found, it will not error.
 //
 // Links to blocks already in visited are not followed. visited may span one document's walks but
-// not several documents, as a block two documents own is deleted only after both owner edges are.
+// not several documents, because each document's walk must reach a shared block to remove its own
+// owner edge.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
@@ -672,12 +673,7 @@ func (c *collection) deleteBlocks(
 func getBlock(ctx context.Context, blockstore datastore.Blockstore, id cid.Cid) (*coreblock.Block, bool, error) {
 	rawBlock, err := blockstore.Get(ctx, id)
 	if errors.Is(err, ipld.ErrNotFound{}) {
-		// We are looping through the links in a simple way that may result in us
-		// attempting to delete blocks we have already deleted, this can include
-		// blocks deleted by walking the dag pointed-to from another headstore key
-		// (another call to `deleteBlocks`).
-		//
-		// If we encounter such a block, we can skip over the error and continue.
+		// Another walk may already have deleted the block, so a missing block is skipped.
 		return nil, false, nil
 	}
 	if err != nil {
