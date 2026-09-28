@@ -22,7 +22,7 @@ WRAPPER_DIR="${DEFRA_JAVA_WRAPPER_DIR:-$DEFRA_DIR/.javaclient/defradb-java-sdk}"
 WRAPPER_REPO="${DEFRA_JAVA_WRAPPER_REPO:-https://github.com/sourcenetwork/defradb-java-sdk.git}"
 
 # The commit of the Java SDK to pin to
-WRAPPER_COMMIT="${DEFRA_JAVA_WRAPPER_COMMIT:-92c52ca7b8571feea0c0b7373c0441cbbd24b749}"
+WRAPPER_COMMIT="${DEFRA_JAVA_WRAPPER_COMMIT:-46fd85987d62da946db67a8b953930cd3bd90a5f}"
 
 if [ ! -d "$WRAPPER_DIR/.git" ]; then
   echo "Cloning defradb-java-sdk repo into $WRAPPER_DIR..."
