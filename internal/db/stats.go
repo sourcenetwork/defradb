@@ -31,7 +31,7 @@ import (
 // up in the log.
 const mergeStatsInterval = 30 * time.Second
 
-// mergeStats are the merge-path counters reported once per interval and reset on report,
+// mergeStats are the merge and purge counters reported once per interval and reset on report,
 // so each line carries the rate for that interval rather than a running total.
 //
 // Counting is an atomic add on paths that already do storage work, so it is not a cost worth
@@ -155,7 +155,7 @@ func (s *mergeStats) markCreateOrUpdate(created bool) {
 	s.updates.Add(1)
 }
 
-// reportMergeStats logs the merge counters once per interval until the database context is
+// reportMergeStats logs the merge and purge counters once per interval until the database context is
 // cancelled. Rates are reported per interval rather than per event, which keeps the merge
 // path quiet under load where per-event logging would dominate the output.
 func (db *DB) reportMergeStats(ctx context.Context) {

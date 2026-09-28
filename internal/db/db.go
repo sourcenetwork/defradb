@@ -126,7 +126,7 @@ type DB struct {
 
 	collectionRepository *description.CollectionRepository
 
-	// stats are the merge-path counters reported on an interval by reportMergeStats.
+	// stats are the merge and purge counters reported on an interval by reportMergeStats.
 	stats *mergeStats
 
 	retentionRule client.RetentionRule
