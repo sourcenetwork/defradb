@@ -82,6 +82,21 @@ func TestExtractFieldsFromBlock_SkipsAnEncryptedFieldBlock(t *testing.T) {
 	require.Equal(t, map[string]any{"address": "0xabc"}, fields)
 }
 
+// A field block whose value does not decode is left out.
+func TestExtractFieldsFromBlock_SkipsAValueThatDoesNotDecode(t *testing.T) {
+	_, plain := fieldBlock(t, "address", client.NewNormalString("0xabc"))
+	// 0xff on its own is a CBOR break code with nothing to close, so it does not decode.
+	broken := encodeBlock(t, &coreblock.Block{
+		Delta: crdt.CRDT{LWWDelta: &crdt.LWWDelta{FieldName: "blockNumber", Priority: 1, Data: []byte{0xff}}},
+	})
+
+	composite, root := compositeLinking(t, broken.Cid(), plain.Cid())
+
+	fields := extractFieldsFromBlock(composite, carWith(t, root.Cid(), broken, plain))
+
+	require.Equal(t, map[string]any{"address": "0xabc"}, fields)
+}
+
 // heightFilter rejects a document whose blockNumber is at or below cutoff, and records the
 // fields of every call.
 type heightFilter struct {
