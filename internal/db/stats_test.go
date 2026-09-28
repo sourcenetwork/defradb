@@ -180,12 +180,12 @@ func TestMergeStatsCountsCommittedMergeOnce(t *testing.T) {
 
 	// The mergeable event is listed first so it lands in the chunk attempt that then fails,
 	// and again when the chunk is re-run one event at a time.
-	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{
+	outcomes, err := db.MergeBatchWithTxn(ctx, []event.Merge{
 		{DocID: goodDocID.String(), Cid: good.link.Cid, CollectionID: col.CollectionID()},
 		{DocID: badDocID.String(), Cid: bad.link.Cid, CollectionID: col.CollectionID()},
 	})
 	require.Error(t, err)
-	require.Equal(t, []bool{true, false}, merged)
+	require.Equal(t, []event.MergeOutcome{event.MergeCommitted, event.MergeDropped}, outcomes)
 
 	require.Equal(t, int64(1), db.stats.creates.Load(), "the committed merge is counted once")
 	require.Equal(t, int64(0), db.stats.updates.Load())
@@ -316,15 +316,15 @@ func TestMergeStatsChunkExhaustion(t *testing.T) {
 			updates := existingDocUpdates(ctx, t, db, col, tc.documents)
 
 			store.failCommits.Store(tc.failCommits)
-			merged, err := db.MergeBatchWithTxn(ctx, updates)
+			outcomes, err := db.MergeBatchWithTxn(ctx, updates)
 			if tc.wantMerged {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
 			}
-			require.Len(t, merged, tc.documents)
-			for i, ok := range merged {
-				require.Equal(t, tc.wantMerged, ok, "event %d", i)
+			require.Len(t, outcomes, tc.documents)
+			for i, outcome := range outcomes {
+				require.Equal(t, tc.wantMerged, outcome == event.MergeCommitted, "event %d", i)
 			}
 
 			require.Equal(t, tc.failCommits, db.stats.txnConflicts.Load(),
@@ -402,9 +402,9 @@ func TestMergeStatsCollectionLookupCauses(t *testing.T) {
 	t.Run("a lookup that fails for any other reason, in a batch", func(t *testing.T) {
 		db, evt := closedDB(t)
 
-		merged, err := db.MergeBatchWithTxn(context.Background(), []event.Merge{evt})
+		outcomes, err := db.MergeBatchWithTxn(context.Background(), []event.Merge{evt})
 		require.ErrorIs(t, err, context.Canceled)
-		require.Equal(t, []bool{false}, merged)
+		require.Equal(t, []event.MergeOutcome{event.MergeDropped}, outcomes)
 		require.Equal(t, map[string]int64{dropContext: 1}, drainedDrops(db.stats))
 	})
 }

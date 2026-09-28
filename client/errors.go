@@ -108,6 +108,10 @@ var (
 	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
 	ErrTransactionNotFound                   = errors.New(errTransactionNotFound)
 	ErrMaxTxnRetries                         = errors.New(errMaxTxnRetries)
+	// ErrRetentionRejected is the parent of every retention refusal.
+	ErrRetentionRejected   = errors.New("refused by the retention rule")
+	ErrBelowRetentionFloor = errors.Wrap("replicated document is at or below the retention floor", ErrRetentionRejected)
+	ErrNoRetentionHeight   = errors.Wrap("replicated document has no valid retention height", ErrRetentionRejected)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

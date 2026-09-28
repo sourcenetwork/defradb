@@ -84,6 +84,9 @@ type Node struct {
 	// ReplicationFilter is an optional filter that rejects incoming P2P documents
 	// before they are stored locally. Set this between New() and Start().
 	ReplicationFilter client.ReplicationFilter
+	// RetentionRule is an optional rule that refuses replicated documents by block height. Set
+	// this between New() and Start().
+	RetentionRule client.RetentionRule
 }
 
 // APIError returns a buffered, never-closed channel that receives at most one
@@ -194,6 +197,9 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 	if n.ReplicationFilter != nil {
 		dbBuilder.SetReplicationFilter(n.ReplicationFilter)
+	}
+	if n.RetentionRule != nil {
+		dbBuilder.SetRetentionRule(n.RetentionRule)
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
