@@ -87,11 +87,12 @@ const (
 
 // Reasons a document was skipped.
 const (
-	skipAlreadyMerged = "alreadyMerged"
-	skipDuplicateHead = "duplicateHead"
-	skipFiltered      = "filtered"
-	skipInFlight      = "inFlight"
-	skipNoAccess      = "noAccess"
+	skipAlreadyMerged      = "alreadyMerged"
+	skipDuplicateHead      = "duplicateHead"
+	skipFiltered           = "filtered"
+	skipFilteredAfterFetch = "filteredAfterFetch"
+	skipInFlight           = "inFlight"
+	skipNoAccess           = "noAccess"
 )
 
 // failureReasons counts occurrences by reason, drained once per report interval. Callers
