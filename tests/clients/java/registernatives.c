@@ -58,6 +58,10 @@ extern jobject JNICALL Java_source_defra_DefraNode_ListIndexesNative(JNIEnv*, jo
 extern jobject JNICALL Java_source_defra_DefraNode_DeleteIndexNative(JNIEnv*, jobject, jlong, jstring, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_GetNodeIdentityNative(JNIEnv*, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_ListActionsNative(JNIEnv*, jobject, jlong, jlong);
+extern jobject JNICALL Java_source_defra_DefraNode_BasicImportNative(JNIEnv*, jobject, jlong, jstring);
+extern jobject JNICALL Java_source_defra_DefraNode_BasicExportNative(
+    JNIEnv*, jobject, jlong, jstring, jstring, jstring, jboolean);
+extern jobject JNICALL Java_source_defra_DefraNode_PrintDumpNative(JNIEnv*, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_DeleteCollectionNative(
     JNIEnv*, jobject, jlong, jstring, jint, jlong);
 extern jobject JNICALL Java_source_defra_DefraNode_SetLensNative(
@@ -142,6 +146,10 @@ extern jobject JNICALL Java_source_defra_DefraTransaction_SetLensNative(
     JNIEnv*, jobject, jlong, jlong, jstring, jstring, jstring);
 extern jobject JNICALL Java_source_defra_DefraTransaction_AddLensNative(JNIEnv*, jobject, jlong, jlong, jstring);
 extern jobject JNICALL Java_source_defra_DefraTransaction_ListLensesNative(JNIEnv*, jobject, jlong, jlong);
+extern jobject JNICALL Java_source_defra_DefraTransaction_BasicImportNative(JNIEnv*, jobject, jlong, jstring);
+extern jobject JNICALL Java_source_defra_DefraTransaction_BasicExportNative(
+    JNIEnv*, jobject, jlong, jstring, jstring, jstring, jboolean);
+extern jobject JNICALL Java_source_defra_DefraTransaction_PrintDumpNative(JNIEnv*, jobject, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_GetP2PInfoNative(JNIEnv*, jobject, jlong, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_ListP2PReplicatorsNative(JNIEnv*, jobject, jlong, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_AddP2PReplicatorNative(
@@ -221,6 +229,11 @@ static JNINativeMethod nodeNativeMethods[] = {
         {"GetNodeIdentityNative", "(J)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_GetNodeIdentityNative},
         {"ListActionsNative", "(JJ)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraNode_ListActionsNative},
+        {"BasicImportNative", "(JLjava/lang/String;)Lsource/defra/DefraResult;",
+            (void*)Java_source_defra_DefraNode_BasicImportNative},
+        {"BasicExportNative", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lsource/defra/DefraResult;",
+            (void*)Java_source_defra_DefraNode_BasicExportNative},
+        {"PrintDumpNative", "(J)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraNode_PrintDumpNative},
         {"DeleteCollectionNative", "(JLjava/lang/String;IJ)Lsource/defra/DefraResult;",
             (void*)Java_source_defra_DefraNode_DeleteCollectionNative},
         {"SetLensNative", "(JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lsource/defra/DefraResult;",
@@ -368,6 +381,11 @@ static JNINativeMethod transactionNativeMethods[] = {
     {"AddLensNative", "(JJLjava/lang/String;)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_AddLensNative},
     {"ListLensesNative", "(JJ)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraTransaction_ListLensesNative},
+    {"BasicImportNative", "(JLjava/lang/String;)Lsource/defra/DefraResult;",
+        (void*)Java_source_defra_DefraTransaction_BasicImportNative},
+    {"BasicExportNative", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lsource/defra/DefraResult;",
+        (void*)Java_source_defra_DefraTransaction_BasicExportNative},
+    {"PrintDumpNative", "(J)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraTransaction_PrintDumpNative},
     {"GetP2PInfoNative", "(JJ)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraTransaction_GetP2PInfoNative},
     {"ListP2PReplicatorsNative", "(JJ)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_ListP2PReplicatorsNative},
