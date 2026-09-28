@@ -128,6 +128,9 @@ type DB struct {
 
 	// stats are the merge-path counters reported on an interval by reportMergeStats.
 	stats *mergeStats
+
+	// retentionRule, when set, refuses replicated documents by block height.
+	retentionRule client.RetentionRule
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -180,6 +183,7 @@ func newDB(
 		lockSet:                 lockSet,
 		collectionRepository:    description.NewColCache(lockSet, datastore.NewUnsafeDatastore(rootstore)),
 		stats:                   newMergeStats(),
+		retentionRule:           cfg.RetentionRule,
 	}
 
 	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
@@ -219,6 +223,7 @@ func newDB(
 			NewCollectionRetriever(db),
 			db.collectionRepository,
 			cfg.ReplicationFilter,
+			db.retentionFloorOf,
 		)
 		if err != nil {
 			return nil, err

@@ -128,6 +128,19 @@ type MergeComplete struct {
 	Merge Merge
 }
 
+// MergeOutcome is the result of one event in a merge batch.
+type MergeOutcome int
+
+const (
+	// MergeDropped means the event failed to merge. It is the zero value, so an event given no
+	// outcome reads as dropped.
+	MergeDropped MergeOutcome = iota
+	// MergeCommitted means the document was stored.
+	MergeCommitted
+	// MergeRejected means the retention rule refused the document.
+	MergeRejected
+)
+
 // SEArtifactReceived is a notification that SE artifacts have been successfully received.
 type SEArtifactReceived struct {
 	// DocID is the document ID for which SE artifacts were received.

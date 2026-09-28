@@ -51,6 +51,11 @@ type mergeStats struct {
 	txnConflicts   atomic.Int64
 	chunkExhausted atomic.Int64
 
+	// rejectedBelowFloor and rejectedNoHeight count retention refusals by reason. A refusal is not
+	// a drop.
+	rejectedBelowFloor atomic.Int64
+	rejectedNoHeight   atomic.Int64
+
 	// dropReasons counts dropped events by cause. A dropped event is a document this node
 	// did not store, and the causes need different responses, so the total on its own does
 	// not say what to do.
@@ -127,6 +132,15 @@ func (s *mergeStats) drainDropReasons() []slog.Attr {
 	return attrs
 }
 
+// markRejected counts a retention refusal under its reason.
+func (s *mergeStats) markRejected(err error) {
+	if errors.Is(err, client.ErrNoRetentionHeight) {
+		s.rejectedNoHeight.Add(1)
+		return
+	}
+	s.rejectedBelowFloor.Add(1)
+}
+
 // markCreateOrUpdate records whether a merge is creating the document or updating one that
 // already exists locally.
 func (s *mergeStats) markCreateOrUpdate(created bool) {
@@ -158,14 +172,18 @@ func (s *mergeStats) report() {
 	updates := s.updates.Swap(0)
 	conflicts := s.txnConflicts.Swap(0)
 	exhausted := s.chunkExhausted.Swap(0)
+	belowFloor := s.rejectedBelowFloor.Swap(0)
+	noHeight := s.rejectedNoHeight.Swap(0)
 
 	// Nothing to report on an idle database, or one doing only local writes.
-	if creates != 0 || updates != 0 || conflicts != 0 || exhausted != 0 {
+	if creates != 0 || updates != 0 || conflicts != 0 || exhausted != 0 || belowFloor != 0 || noHeight != 0 {
 		log.Info("merge stats",
 			corelog.Int64("creates", creates),
 			corelog.Int64("updates", updates),
 			corelog.Int64("txnConflicts", conflicts),
 			corelog.Int64("chunkExhausted", exhausted),
+			corelog.Int64("rejectedBelowFloor", belowFloor),
+			corelog.Int64("rejectedNoHeight", noHeight),
 		)
 	}
 
