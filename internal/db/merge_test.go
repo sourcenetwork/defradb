@@ -203,13 +203,13 @@ func TestMergeBatch_ZeroMaxRetriesStillAttempts(t *testing.T) {
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{{
+	outcomes, err := db.MergeBatchWithTxn(ctx, []event.Merge{{
 		DocID:        "missing",
 		Cid:          blocks.NewBlock(nil).Cid(),
 		CollectionID: col.CollectionID(),
 	}})
 	require.ErrorContains(t, err, "failed to load block for merge")
-	require.Equal(t, []bool{false}, merged)
+	require.Equal(t, []event.MergeOutcome{event.MergeDropped}, outcomes)
 }
 
 func TestMerge_GenesisWithEmptyDocID_ResolvesDocIDAndFieldMappings(t *testing.T) {
@@ -396,9 +396,9 @@ func TestMergeBatch_ExhaustedRetries_ReportsNothingMerged(t *testing.T) {
 	docID, mergeEvent := stageUnmergedDoc(t, ctx, db, col)
 
 	conflict.failCommits.Store(math.MaxInt64)
-	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{mergeEvent})
+	outcomes, err := db.MergeBatchWithTxn(ctx, []event.Merge{mergeEvent})
 	require.Error(t, err)
-	require.Equal(t, []bool{false}, merged, "an event that committed nothing must not be reported as merged")
+	require.Equal(t, []event.MergeOutcome{event.MergeDropped}, outcomes, "an event that committed nothing must not be reported as merged")
 
 	_, err = col.GetDocument(ctx, docID)
 	require.Error(t, err, "the report must be truthful: nothing was stored")
@@ -721,13 +721,13 @@ func TestMergeBatch_OneEventCannotMerge_OthersStillLand(t *testing.T) {
 
 	// The unmergeable event is listed first so that an all-or-nothing batch would
 	// abort before ever reaching the one that can merge.
-	merged, err := db.MergeBatchWithTxn(ctx, []event.Merge{
+	outcomes, err := db.MergeBatchWithTxn(ctx, []event.Merge{
 		{DocID: badDocID.String(), Cid: badInfo.link.Cid, CollectionID: col.CollectionID()},
 		{DocID: goodDocID.String(), Cid: goodInfo.link.Cid, CollectionID: col.CollectionID()},
 	})
 	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
 	require.ErrorContains(t, err, badDocID.String())
-	require.Equal(t, []bool{false, true}, merged)
+	require.Equal(t, []event.MergeOutcome{event.MergeDropped, event.MergeCommitted}, outcomes)
 
 	doc, err := col.GetDocument(ctx, goodDocID)
 	require.NoError(t, err)
@@ -795,14 +795,16 @@ func TestMergeBatch_FailureInLaterChunk_ReportsFailureAgainstTheRightEvent(t *te
 		}
 	}
 
-	merged, err := db.MergeBatchWithTxn(ctx, events)
+	outcomes, err := db.MergeBatchWithTxn(ctx, events)
 	require.ErrorContains(t, err, "could not find "+missingLink.Cid.String())
 
-	expected := make([]bool, count)
+	expected := make([]event.MergeOutcome, count)
 	for i := range expected {
-		expected[i] = i != badIndex
+		if i != badIndex {
+			expected[i] = event.MergeCommitted
+		}
 	}
-	require.Equal(t, expected, merged)
+	require.Equal(t, expected, outcomes)
 
 	// The result slice has to agree with what is actually readable from the store.
 	for i, docID := range docIDs {

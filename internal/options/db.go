@@ -30,6 +30,8 @@ type DBOptions struct {
 	// When non-nil, it is called for each replicated document before it is persisted.
 	// Returning false from the filter drops the document silently.
 	ReplicationFilter client.ReplicationFilter
+	// RetentionRule, when set, refuses replicated documents by block height.
+	RetentionRule client.RetentionRule
 }
 
 // DBOptionsBuilder is a builder for DBOptions.
@@ -63,6 +65,12 @@ func (b *DBOptionsBuilder) SetNodeDBOptions(cfg publicOpts.NodeDBOptions) *DBOpt
 // SetReplicationFilter sets the pre-storage replication filter.
 func (b *DBOptionsBuilder) SetReplicationFilter(f client.ReplicationFilter) *DBOptionsBuilder {
 	b.Append(func(o *DBOptions) { o.ReplicationFilter = f })
+	return b
+}
+
+// SetRetentionRule sets the retention rule.
+func (b *DBOptionsBuilder) SetRetentionRule(r client.RetentionRule) *DBOptionsBuilder {
+	b.Append(func(o *DBOptions) { o.RetentionRule = r })
 	return b
 }
 
