@@ -401,6 +401,15 @@ func (p *P2P) waitForTopicPeers(ctx context.Context, topic string, peers map[str
 		select {
 		case <-ticker.C:
 		case <-waitCtx.Done():
+			var notReady []string
+			for id := range peers {
+				if _, ok := ready[id]; !ok {
+					notReady = append(notReady, id)
+				}
+			}
+			log.InfoContext(ctx, "Sending sync request before every peer can receive it",
+				corelog.String("Topic", topic),
+				corelog.Any("NotReadyPeers", notReady))
 			return
 		}
 	}
