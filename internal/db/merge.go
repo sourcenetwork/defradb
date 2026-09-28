@@ -67,6 +67,10 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 			db.stats.txnConflicts.Add(1)
 			continue
 		}
+		if errors.Is(err, client.ErrRetentionRejected) {
+			db.stats.markRejected(err)
+			return err
+		}
 		if err != nil {
 			db.stats.markDropped(mergeDropReason(err))
 			return err
@@ -105,13 +109,13 @@ type mergeEntry struct {
 // only the event that caused it, and a chunk that exhausted its retry budget is retried
 // over a smaller write set.
 //
-// The returned slice is parallel to merges and reports which events committed. An event
-// that did not commit is not stored, so callers must not relay it onward as merged. The
-// error names every dropped event and is nil when all of them committed.
-func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bool, error) {
-	merged := make([]bool, len(merges))
+// The returned slice is parallel to merges and reports each event's outcome. An event that
+// did not commit is not stored, so callers must not relay it onward as merged. The error
+// names every dropped event and is nil when none was dropped.
+func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]event.MergeOutcome, error) {
+	outcomes := make([]event.MergeOutcome, len(merges))
 	if len(merges) == 0 {
-		return merged, nil
+		return outcomes, nil
 	}
 
 	var errs []error
@@ -184,24 +188,30 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bo
 		if err := db.mergeChunk(ctx, chunk); err == nil {
 			db.publishMergeComplete(chunk)
 			for _, e := range chunk {
-				merged[e.index] = true
+				outcomes[e.index] = event.MergeCommitted
 			}
 			continue
 		}
 
 		// Isolate the failure so the events that can merge still land.
 		for i := range chunk {
-			if err := db.mergeChunk(ctx, chunk[i:i+1]); err != nil {
+			err := db.mergeChunk(ctx, chunk[i:i+1])
+			if errors.Is(err, client.ErrRetentionRejected) {
+				db.stats.markRejected(err)
+				outcomes[chunk[i].index] = event.MergeRejected
+				continue
+			}
+			if err != nil {
 				errs = append(errs, NewErrMergeEventDropped(err, chunk[i].evt.DocID, chunk[i].evt.Cid.String()))
 				db.stats.markDropped(mergeDropReason(err))
 				continue
 			}
 			db.publishMergeComplete(chunk[i : i+1])
-			merged[chunk[i].index] = true
+			outcomes[chunk[i].index] = event.MergeCommitted
 		}
 	}
 
-	return merged, errors.Join(errs...)
+	return outcomes, errors.Join(errs...)
 }
 
 // txnAttempts is how many times to try a transaction before giving up, never fewer than
@@ -358,7 +368,14 @@ func (db *DB) mergeInTxn(ctx context.Context, col *collection, dagMerge event.Me
 	}
 
 	for docID, oldDoc := range mp.docIDs {
-		if err = syncIndexedDoc(ctx, docID, mp.col, oldDoc); err != nil {
+		newDoc, err := getDocForMerge(ctx, mp.col, docID)
+		if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+			return false, NewErrSyncIndexedDoc(err, docID.String())
+		}
+		if err := db.checkRetention(mp.col, newDoc); err != nil {
+			return false, err
+		}
+		if err := syncIndexedDoc(ctx, docID, mp.col, oldDoc, newDoc); err != nil {
 			return false, NewErrSyncIndexedDoc(err, docID.String())
 		}
 	}
@@ -1059,11 +1076,8 @@ func syncIndexedDoc(
 	docID client.DocID,
 	col *collection,
 	oldDoc *client.Document,
+	newDoc *client.Document,
 ) error {
-	newDoc, err := getDocForMerge(ctx, col, docID)
-	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return err
-	}
 	// Both can be nil during concurrent P2P operations (e.g. delete + update)
 	// where the document was already deleted and no prior indexed state exists.
 	if oldDoc == nil && newDoc == nil {

@@ -152,19 +152,20 @@ func TestSingleDocumentOutcomesAreCounted(t *testing.T) {
 	})
 }
 
-// emptyIPLDHost satisfies Host for the doc-sync path, backed by a store holding no blocks
-// so a DAG walk fails to load its root.
-type emptyIPLDHost struct {
+// ipldHost satisfies Host for the doc-sync path and DAG walks, serving the blocks in store.
+type ipldHost struct {
 	client.Host
 	store blockstore.IPLDStore
 }
 
-func (h emptyIPLDHost) ID() string                      { return "peerID" }
-func (h emptyIPLDHost) IPLDStore() blockstore.IPLDStore { return h.store }
+func (h ipldHost) ID() string                                           { return "peerID" }
+func (h ipldHost) IPLDStore() blockstore.IPLDStore                      { return h.store }
+func (ipldHost) ContextWithSession(ctx context.Context) context.Context { return ctx }
 
-func newEmptyIPLDHost(ctx context.Context) emptyIPLDHost {
+// newEmptyIPLDHost returns a host whose store holds no blocks, so a DAG walk fails to load its root.
+func newEmptyIPLDHost(ctx context.Context) ipldHost {
 	bs := datastore.BlockstoreFrom(memory.NewDatastore(ctx), immutable.None[int]())
-	return emptyIPLDHost{store: blockstore.NewIPLDStore(bs)}
+	return ipldHost{store: blockstore.NewIPLDStore(bs)}
 }
 
 // Documents pulled from a peer reach the store by a different route than a pushed batch,
@@ -203,6 +204,23 @@ func TestDocSyncOutcomesAreCounted(t *testing.T) {
 
 		require.Equal(t, int64(1), p.statDroppedDocs.Load(), "a document that could not be fetched is a loss")
 		require.Equal(t, int64(0), p.statMergedDocs.Load())
+	})
+
+	t.Run("a document the retention rule refuses is a skip", func(t *testing.T) {
+		_, root := compositeLinking(t)
+		bs := datastore.BlockstoreFrom(memory.NewDatastore(ctx), immutable.None[int]())
+		require.NoError(t, bs.Put(ctx, root))
+		p := withReasonMaps(&P2P{
+			host: ipldHost{store: blockstore.NewIPLDStore(bs)},
+			db:   &ingestDB{store: memory.NewDatastore(ctx), mergeErr: client.ErrBelowRetentionFloor},
+		})
+		item := docSyncItem{DocID: "d", Heads: [][]byte{root.Cid().Bytes()}}
+
+		p.handleDocSyncItem(ctx, item, "sender", "col", map[string][]cid.Cid{})
+
+		require.Equal(t, map[string]int64{"retentionAtMerge": 1}, reasonMap(p.docSkipReason.drain()))
+		require.Zero(t, p.statDroppedDocs.Load(), "a refusal is not a loss")
+		require.Zero(t, p.statMergedDocs.Load())
 	})
 }
 

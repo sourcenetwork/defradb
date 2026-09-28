@@ -157,9 +157,9 @@ type DB interface {
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
 	// MergeBatchWithTxn merges events in bounded chunks. The returned slice is parallel
-	// to merges and reports which events committed; the rest are not stored and must not
-	// be relayed onward as merged. The error names every dropped event.
-	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]bool, error)
+	// to merges and reports each event's outcome; an event that did not commit is not
+	// stored and must not be relayed onward as merged. The error names every dropped event.
+	MergeBatchWithTxn(ctx context.Context, merges []event.Merge) ([]event.MergeOutcome, error)
 	// Events returns the event bus for the database.
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
@@ -226,6 +226,9 @@ type P2P struct {
 	// replicationFilter, when non-nil, is called for each incoming replicated document.
 	// Returning false from the filter drops the document silently.
 	replicationFilter client.ReplicationFilter
+
+	// retentionFloor returns the retention rule's height field and floor for a collection.
+	retentionFloor func(ctx context.Context, collectionID string) (field string, floor int64, ok bool)
 
 	// topicPeerCounts tracks the number of known peers per pubsub topic.
 	// Updated by peerEventHandler; consulted by SendUpdate to emit P2PNoPeers events.
@@ -301,6 +304,10 @@ type P2P struct {
 	// when an arrival carries no CAR, and by document and branchable-collection sync.
 	statSyncDAGCalls     atomic.Int64
 	syncDAGFailureReason failureReasons
+	// statHeightFetches counts height blocks the retention gate fetched, and statHeightFetchMissed
+	// those no peer served.
+	statHeightFetches     atomic.Int64
+	statHeightFetchMissed atomic.Int64
 
 	// docDropReason names why an inbound document never reached the merge, and docSkipReason
 	// why one was deliberately not merged. Both sets are fixed: a reason taken from an error
@@ -347,6 +354,7 @@ func New(
 	collectionRetriever kms.CollectionRetriever,
 	collectionRepository *description.CollectionRepository,
 	replicationFilter client.ReplicationFilter,
+	retentionFloor func(ctx context.Context, collectionID string) (field string, floor int64, ok bool),
 ) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
@@ -360,6 +368,7 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(),
 		replicationFilter:    replicationFilter,
+		retentionFloor:       retentionFloor,
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 		topicPeerCounts:      make(map[string]int),
 		msgQueue:             make(chan queuedMessage, msgQueueSize),
@@ -870,6 +879,8 @@ func (p *P2P) report() {
 		corelog.Int64("carFetchMissed", p.statCARFetchMissed.Swap(0)),
 		corelog.Int64("carCacheHits", p.statCARCacheHits.Swap(0)),
 		corelog.Int64("syncDAGCalls", p.statSyncDAGCalls.Swap(0)),
+		corelog.Int64("heightFetches", p.statHeightFetches.Swap(0)),
+		corelog.Int64("heightFetchMissed", p.statHeightFetchMissed.Swap(0)),
 	)
 	// A drop at the door is data this node will not hold. The stats line above is at
 	// info, so a node running at error level sees only this.
@@ -968,11 +979,14 @@ func (p *P2P) processPushlogRequest(
 			for i, r := range results {
 				merges[i] = r.merge
 			}
-			merged, err := p.db.MergeBatchWithTxn(ctx, merges)
-			for _, ok := range merged {
-				if ok {
+			outcomes, err := p.db.MergeBatchWithTxn(ctx, merges)
+			for _, outcome := range outcomes {
+				switch outcome {
+				case event.MergeCommitted:
 					p.statMergedDocs.Add(1)
-				} else {
+				case event.MergeRejected:
+					p.skipDoc(skipRetentionAtMerge)
+				default:
 					p.dropDoc(dropMergeFailed)
 					dropped++
 				}
@@ -983,7 +997,7 @@ func (p *P2P) processPushlogRequest(
 					corelog.Int("Documents", len(merges)))
 			}
 			for i, r := range results {
-				if !merged[i] {
+				if outcomes[i] != event.MergeCommitted {
 					// Not stored here, so relaying it would advertise a document this node
 					// cannot serve.
 					continue
@@ -1086,6 +1100,14 @@ func (p *P2P) processPushlogRequest(
 			return nil
 		}
 
+		gate := p.retentionGate(ctx, req.CollectionID)
+		heightLink := gate.heightLink(block)
+		gate.readCARs([][]byte{req.CAR}, []cid.Cid{heightLink})
+		if err := gate.refusal(ctx, heightLink, false); err != nil {
+			p.skipDoc(retentionSkip(err, skipRetentionBeforeFetch))
+			return nil
+		}
+
 		// The pre-fetch checks passed, so only now is the head's CAR asked for. A peer that
 		// predates the exchange still sends it inline.
 		carData := req.CAR
@@ -1095,6 +1117,18 @@ func (p *P2P) processPushlogRequest(
 			if len(carData) > 0 && !p.filterAllowsReplication(ctx, req.CollectionID, req.DocID, block, carData) {
 				p.skipDoc(skipFilteredAfterFetch)
 				return nil
+			}
+			gate.readCARs([][]byte{carData}, []cid.Cid{heightLink})
+			if err := gate.refusal(ctx, heightLink, false); err != nil {
+				p.skipDoc(retentionSkip(err, skipRetentionAfterCARFetch))
+				return nil
+			}
+			// Fetch only the height block before walking the rest.
+			if len(carData) == 0 {
+				if err := gate.refusal(ctx, heightLink, true); err != nil {
+					p.skipDoc(retentionSkip(err, skipRetentionAfterHeightFetch))
+					return nil
+				}
 			}
 		}
 
@@ -1119,7 +1153,12 @@ func (p *P2P) processPushlogRequest(
 			Cid:          headCID,
 			CollectionID: req.CollectionID,
 		}
-		if err = p.db.Merge(ctx, mergeEvt); err != nil {
+		err = p.db.Merge(ctx, mergeEvt)
+		if errors.Is(err, client.ErrRetentionRejected) {
+			p.skipDoc(skipRetentionAtMerge)
+			return nil
+		}
+		if err != nil {
 			p.dropDoc(dropMergeFailed)
 			return err
 		}
@@ -1184,12 +1223,16 @@ func (p *P2P) processBatchedDocuments(
 		head  cid.Cid
 		block *coreblock.Block
 		car   []byte
+		// heightLink is undefined when the retention gate does not judge the document.
+		heightLink cid.Cid
 	}
 	var (
 		needed     []neededDoc
 		fetchHeads []cid.Cid
+		fetchLinks []cid.Cid
 		fetchAt    []int
 	)
+	gate := p.retentionGate(ctx, req.CollectionID)
 
 	for _, doc := range req.Documents {
 		headCID, err := cid.Cast(doc.CID)
@@ -1255,18 +1298,43 @@ func (p *P2P) processBatchedDocuments(
 			continue
 		}
 
-		needed = append(needed, neededDoc{doc: doc, head: headCID, block: block, car: doc.CAR})
-		if len(doc.CAR) == 0 {
-			fetchHeads = append(fetchHeads, headCID)
-			fetchAt = append(fetchAt, len(needed)-1)
+		heightLink := gate.heightLink(block)
+		needed = append(needed, neededDoc{doc: doc, head: headCID, block: block, car: doc.CAR, heightLink: heightLink})
+	}
+
+	// Refuse what the sent CARs or the local store can already judge, before fetching anything.
+	sent := make([][]byte, 0, len(req.Documents))
+	for _, doc := range req.Documents {
+		sent = append(sent, doc.CAR)
+	}
+	links := make([]cid.Cid, 0, len(needed))
+	for _, n := range needed {
+		links = append(links, n.heightLink)
+	}
+	gate.readCARs(sent, links)
+	kept := needed[:0]
+	for _, n := range needed {
+		if err := gate.refusal(ctx, n.heightLink, false); err != nil {
+			p.skipDoc(retentionSkip(err, skipRetentionBeforeFetch))
+			continue
+		}
+		kept = append(kept, n)
+		if len(n.car) == 0 {
+			fetchHeads = append(fetchHeads, n.head)
+			fetchLinks = append(fetchLinks, n.heightLink)
+			fetchAt = append(fetchAt, len(kept)-1)
 		}
 	}
+	needed = kept
 
 	// Every document still here has passed the pre-fetch checks. The CARs a peer predating the
 	// exchange did not send inline are asked for in one round trip.
-	for i, data := range p.fetchCARs(ctx, req.Creator, req.SenderID, fetchHeads) {
+	fetched := p.fetchCARs(ctx, req.Creator, req.SenderID, fetchHeads)
+	for i, data := range fetched {
 		needed[fetchAt[i]].car = data
 	}
+	// Documents at one height share a height block, so a sibling's CAR may carry it.
+	gate.readCARs(fetched, fetchLinks)
 
 	for _, n := range needed {
 		// Filter again on the field values the fetched CAR carries.
@@ -1274,6 +1342,19 @@ func (p *P2P) processBatchedDocuments(
 			!p.filterAllowsReplication(ctx, req.CollectionID, n.doc.DocID, n.block, n.car) {
 			p.skipDoc(skipFilteredAfterFetch)
 			continue
+		}
+		if len(n.doc.CAR) == 0 {
+			if err := gate.refusal(ctx, n.heightLink, false); err != nil {
+				p.skipDoc(retentionSkip(err, skipRetentionAfterCARFetch))
+				continue
+			}
+			// Fetch only the height block before walking the rest.
+			if len(n.car) == 0 {
+				if err := gate.refusal(ctx, n.heightLink, true); err != nil {
+					p.skipDoc(retentionSkip(err, skipRetentionAfterHeightFetch))
+					continue
+				}
+			}
 		}
 
 		if len(n.car) > 0 {

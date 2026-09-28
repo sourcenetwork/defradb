@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -94,18 +95,38 @@ func (f *heightFilter) AllowReplication(_ context.Context, _, _ string, fields m
 	return !ok || height > f.cutoff
 }
 
-// ingestDB provides the stores, merge and event bus the pushlog path uses.
+// ingestDB provides the stores, merge and event bus the pushlog path uses. Every merge is recorded
+// and returns mergeErr.
 type ingestDB struct {
 	multistoreDB
-	store corekv.TxnStore
-	bus   event.Bus
+	store    corekv.TxnStore
+	bus      event.Bus
+	mergeErr error
+	merged   []event.Merge
 }
 
-func (d ingestDB) Rootstore() corekv.TxnStore { return d.store }
+func (d *ingestDB) Rootstore() corekv.TxnStore { return d.store }
 
-func (d ingestDB) Merge(context.Context, event.Merge) error { return nil }
+func (d *ingestDB) Merge(_ context.Context, evt event.Merge) error {
+	d.merged = append(d.merged, evt)
+	return d.mergeErr
+}
 
-func (d ingestDB) Events() event.Bus { return d.bus }
+func (d *ingestDB) MergeBatchWithTxn(_ context.Context, merges []event.Merge) ([]event.MergeOutcome, error) {
+	outcomes := make([]event.MergeOutcome, len(merges))
+	for i, evt := range merges {
+		d.merged = append(d.merged, evt)
+		switch {
+		case d.mergeErr == nil:
+			outcomes[i] = event.MergeCommitted
+		case errors.Is(d.mergeErr, client.ErrRetentionRejected):
+			outcomes[i] = event.MergeRejected
+		}
+	}
+	return outcomes, nil
+}
+
+func (d *ingestDB) Events() event.Bus { return d.bus }
 
 // A document received without its CAR is filtered again on the values in the fetched CAR, and one
 // received with its CAR is filtered once. A rejected document writes nothing.
@@ -166,7 +187,7 @@ func TestArrivalIsFilteredOnTheFieldValuesInItsCAR(t *testing.T) {
 				stores := datastore.NewMultistore(store, lock.NewLockSet(), immutable.None[int]())
 				bus := event.NewChannelBus(0, 0)
 				t.Cleanup(bus.Close)
-				p.db = ingestDB{multistoreDB: multistoreDB{stores: stores}, store: store, bus: bus}
+				p.db = &ingestDB{multistoreDB: multistoreDB{stores: stores}, store: store, bus: bus}
 				filter := &heightFilter{cutoff: tc.cutoff}
 				p.replicationFilter = filter
 
