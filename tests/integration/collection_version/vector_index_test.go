@@ -84,7 +84,26 @@ func TestCollectionVersion_VectorIndexOnStringField_ShouldError(t *testing.T) {
 						embedding: String @index(vector: {dimensions: 3})
 					}
 				`,
-				ExpectedError: "unsupported field type for vector index",
+				ExpectedError: "vector index requires a [Float32!] field",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Int arrays are rejected even though the distance maths would work on them, because float32 holds
+// integers exactly only up to ~16.7 million, so larger values would silently collide and rank wrong.
+func TestCollectionVersion_VectorIndexOnIntArrayField_ShouldError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						embedding: [Int!] @index(vector: {dimensions: 3})
+					}
+				`,
+				ExpectedError: "vector index requires a [Float32!] field",
 			},
 		},
 	}
@@ -101,7 +120,7 @@ func TestCollectionVersion_VectorIndexOnFloat64ArrayField_ShouldError(t *testing
 						embedding: [Float64!] @index(vector: {dimensions: 3})
 					}
 				`,
-				ExpectedError: "unsupported field type for vector index",
+				ExpectedError: "vector index requires a [Float32!] field",
 			},
 		},
 	}

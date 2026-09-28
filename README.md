@@ -541,12 +541,13 @@ Build the library with one of the following targets:
 
 ```shell
 make build-c-shared-linux      # build/libdefradb.so plus the C headers
+make build-c-shared-macos      # build/libdefradb.dylib plus the C headers (macOS host)
 make build-c-shared-linux:deb  # the same, packaged as a .deb
 make build-c-static-windows
 make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=21
 ```
 
-The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The macOS target requires Xcode Command Line Tools and writes `libdefradb.dylib` and the same headers, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a macOS architecture, and `BUILD_TAGS=silent` to disable logging. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
 
 For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
 

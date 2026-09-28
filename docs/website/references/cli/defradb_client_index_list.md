@@ -1,10 +1,10 @@
 ## defradb client index list
 
-Shows the list indexes in the database or for a specific collection
+Show the list of indexes in the database or for a specific collection
 
 ### Synopsis
 
-Shows the list indexes in the database or for a specific collection.
+Show the list of indexes in the database or for a specific collection.
 
 If the --collection flag is provided, only the indexes for that collection will be shown.
 Otherwise, all indexes in the database will be shown.
@@ -19,7 +19,7 @@ defradb client index list [flags]
 ### Examples
 
 ```
-show all index for 'Users' collection:  
+show all indexes for 'Users' collection:  
   defradb client index list --collection Users
 ```
 

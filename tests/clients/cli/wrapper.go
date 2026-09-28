@@ -314,6 +314,9 @@ func (w *Wrapper) SyncDocuments(
 	if hasDeadline {
 		args = append(args, "--timeout", time.Until(deadline).String())
 	}
+	if blockSyncTimeout := opt.GetBlockSyncTimeout(); blockSyncTimeout.HasValue() {
+		args = append(args, "--block-sync-timeout", blockSyncTimeout.Value().String())
+	}
 
 	args = append(args, collectionName)
 	args = append(args, docIDs...)

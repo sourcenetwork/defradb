@@ -37,8 +37,6 @@ func AddP2PDocument(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	addP2PDocOpt := options.WithIdentity(options.AddP2PDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.AddP2PDocuments(ctx, colArgs, addP2PDocOpt)
 	if err != nil {

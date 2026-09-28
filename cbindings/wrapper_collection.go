@@ -12,21 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result DescribeCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewIndex(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
-char* vectorJSON, CollectionOptions options, uintptr_t identityPtr);
-extern Result ListIndexes(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result DeleteIndex(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result NewEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, char* indexType,
-uintptr_t identity);
-extern Result ListEncryptedIndexes(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result DeleteEncryptedIndex(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr,
-char* filterJSON);
-extern void FreeIdentity(uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 

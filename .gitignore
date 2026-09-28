@@ -1,5 +1,8 @@
 # Ignore defradb specific files.
 build/*
+
+# Local DefraJavaWrapper checkout + built jar, see tools/scripts/build-java-client.sh.
+.javaclient/
 cmd/defradb/defradb
 cmd/genclidocs/genclidocs
 cmd/genmanpages/genmanpages
