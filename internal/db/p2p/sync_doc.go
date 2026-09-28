@@ -259,7 +259,12 @@ func (p *P2P) syncDocumentAndMerge(
 		CollectionID: collectionID,
 	}
 
-	if err := p.db.Merge(ctx, evt); err != nil {
+	err = p.db.Merge(ctx, evt)
+	if errors.Is(err, client.ErrRetentionRejected) {
+		p.skipDoc(skipRetentionAtMerge)
+		return nil
+	}
+	if err != nil {
 		p.dropDoc(dropMergeFailed)
 		return err
 	}

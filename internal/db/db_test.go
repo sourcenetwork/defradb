@@ -19,10 +19,12 @@ import (
 
 	"github.com/sourcenetwork/corekv/badger"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
 )
 
-func newBadgerDB(ctx context.Context) (*DB, error) {
+func newBadgerDB(ctx context.Context, opts ...options.Enumerable[intOpts.DBOptions]) (*DB, error) {
 	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	if err != nil {
 		return nil, err
@@ -32,7 +34,7 @@ func newBadgerDB(ctx context.Context) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore, adminInfo)
+	return newDB(ctx, rootstore, adminInfo, opts...)
 }
 
 func TestNewDB(t *testing.T) {
