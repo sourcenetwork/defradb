@@ -100,35 +100,43 @@ func (c *collection) purgeChunk(
 		prunedOwners = make(map[string]struct{})
 	}
 
+	var deleted int64
+	txn.OnSuccess(func() { c.db.stats.deleted.Add(deleted) })
+
 	for _, docID := range docIDs {
-		if err := c.purgeOneDoc(ctx, shortID, docID, pruneHistory, prunedOwners); err != nil {
+		found, err := c.purgeOneDoc(ctx, shortID, docID, pruneHistory, prunedOwners)
+		if err != nil {
 			return err
+		}
+		if found {
+			deleted++
 		}
 	}
 
 	return txn.Commit()
 }
 
+// purgeOneDoc reports whether the document existed.
 func (c *collection) purgeOneDoc(
 	ctx context.Context,
 	shortID uint32,
 	docID client.DocID,
 	pruneHistory bool,
 	prunedOwners map[string]struct{},
-) error {
+) (bool, error) {
 	docShortID, found, err := id.GetDocShortID(ctx, shortID, docID.String())
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !found {
-		return nil
+		return false, nil
 	}
 
 	// Index entries are keyed by the document's field values, so they must be deleted before
 	// the datastore prefixes holding those values are removed.
 	if len(c.indexes) > 0 {
 		if err := c.deleteIndexedDocWithID(ctx, docID); err != nil {
-			return err
+			return false, err
 		}
 	}
 
@@ -141,7 +149,7 @@ func (c *collection) purgeOneDoc(
 			DocShortID:        docShortID,
 		}
 		if err := c.hardDeleteDatastorePrefix(ctx, prefix); err != nil {
-			return err
+			return false, err
 		}
 	}
 
@@ -152,21 +160,24 @@ func (c *collection) purgeOneDoc(
 	// prefix then cannot resolve.
 	primaryKey := keys.PrimaryDataStoreKey{CollectionShortID: shortID, DocShortID: docShortID}
 	if err := stores.Datastore().Delete(ctx, primaryKey); err != nil {
-		return err
+		return false, err
 	}
 
 	systemstore := stores.Systemstore()
 	if pruneHistory {
 		if err := c.hardDeleteDocumentBlocks(ctx, systemstore, docShortID, prunedOwners); err != nil {
-			return err
+			return false, err
 		}
 	} else {
 		if err := c.hardDeleteHeadstoreForDoc(ctx, docShortID); err != nil {
-			return err
+			return false, err
 		}
 	}
 
-	return id.DeleteDocIDMappings(ctx, systemstore, docShortID)
+	if err := id.DeleteDocIDMappings(ctx, systemstore, docShortID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // hardDeleteHeadstoreForDoc deletes all headstore entries for the given document
