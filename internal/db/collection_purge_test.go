@@ -11,14 +11,17 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -214,8 +217,110 @@ func TestPurgeByDocIDsPruneHistoryKeepsBlockOwnedByAnotherDoc(t *testing.T) {
 // still uncommitted when the second is checked, so the per-chunk owner tracking is what lets the
 // shared block be recognised as unowned rather than leaked.
 func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		supersede bool
+	}{
+		{name: "shared block is a head"},
+		{name: "shared block is reached through a link", supersede: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			db, err := newBadgerDB(ctx)
+			require.NoError(t, err)
+			defer db.Close()
+
+			_, err = db.AddCollection(ctx, userDocIDTestSchema)
+			require.NoError(t, err)
+			col, err := db.GetCollectionByName(ctx, "User")
+			require.NoError(t, err)
+
+			docA, docB := addSharedFieldDocs(t, ctx, col)
+			shared := sharedFieldBlock(t, ctx, db, docA.Head(), docB.Head())
+
+			if tc.supersede {
+				for _, doc := range []*client.Document{docA, docB} {
+					require.NoError(t, doc.Set(ctx, "name", doc.ID().String()))
+					require.NoError(t, col.UpdateDocument(ctx, doc))
+				}
+			}
+
+			bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
+			requireBlockPresent(t, ctx, bs, shared, true)
+
+			require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), docB.ID()}, true))
+			requireBlockPresent(t, ctx, bs, shared, false)
+		})
+	}
+}
+
+// rootstoreRecorder records the keys read with Get and the prefixes iterated, including those
+// read through a transaction on the context.
+type rootstoreRecorder struct {
+	corekv.TxnStore
+
+	mu       sync.Mutex
+	reads    [][]byte
+	prefixes [][]byte
+}
+
+func (s *rootstoreRecorder) Get(ctx context.Context, key []byte) ([]byte, error) {
+	s.mu.Lock()
+	s.reads = append(s.reads, bytes.Clone(key))
+	s.mu.Unlock()
+	return s.TxnStore.Get(ctx, key)
+}
+
+func (s *rootstoreRecorder) Iterator(ctx context.Context, opts corekv.IterOptions) (corekv.Iterator, error) {
+	s.mu.Lock()
+	s.prefixes = append(s.prefixes, bytes.Clone(opts.Prefix))
+	s.mu.Unlock()
+	return s.TxnStore.Iterator(ctx, opts)
+}
+
+func (s *rootstoreRecorder) reset() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.reads = nil
+	s.prefixes = nil
+}
+
+// blockReads counts Gets of blockCID's content.
+func (s *rootstoreRecorder) blockReads(blockCID cid.Cid) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var n int
+	for _, key := range s.reads {
+		if bytes.HasSuffix(key, blockCID.Bytes()) {
+			n++
+		}
+	}
+	return n
+}
+
+// ownerScans counts iterators opened over blockCID's owner edges.
+func (s *rootstoreRecorder) ownerScans(blockCID cid.Cid) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var n int
+	for _, prefix := range s.prefixes {
+		if bytes.Contains(prefix, []byte(blockCID.String())) {
+			n++
+		}
+	}
+	return n
+}
+
+// TestPurgeByDocIDsPruneHistoryVisitsEachBlockOnce checks that purging a two-version document
+// reads and owner-checks each of its blocks once and deletes them all.
+func TestPurgeByDocIDsPruneHistoryVisitsEachBlockOnce(t *testing.T) {
 	ctx := context.Background()
-	db, err := newBadgerDB(ctx)
+	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
+	recorder := &rootstoreRecorder{TxnStore: rootstore}
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+	db, err := newDB(ctx, recorder, adminInfo)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -224,14 +329,36 @@ func TestPurgeByDocIDsPruneHistoryRemovesBlockWhenAllOwnersPurgedTogether(t *tes
 	col, err := db.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	docA, docB := addSharedFieldDocs(t, ctx, col)
-	shared := sharedFieldBlock(t, ctx, db, docA.Head(), docB.Head())
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name":"Alice","age":40}`), col.Version())
+	require.NoError(t, err)
+	require.NoError(t, col.AddDocument(ctx, doc))
+	require.NoError(t, doc.Set(ctx, "age", int64(41)))
+	require.NoError(t, col.UpdateDocument(ctx, doc))
+
+	second := loadTestBlock(t, ctx, db, doc.Head())
+	require.Len(t, second.Heads, 1)
+	first := loadTestBlock(t, ctx, db, second.Heads[0].Cid)
+	blockCIDs := []cid.Cid{doc.Head(), second.Heads[0].Cid}
+	for _, link := range second.Links {
+		blockCIDs = append(blockCIDs, link.Cid)
+	}
+	for _, link := range first.Links {
+		blockCIDs = append(blockCIDs, link.Cid)
+	}
+	require.Len(t, blockCIDs, 5, "two composites, two first-version fields, one updated field")
+
+	recorder.reset()
+	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{doc.ID()}, true))
+
+	for _, blockCID := range blockCIDs {
+		require.Equal(t, 1, recorder.blockReads(blockCID), "reads of %s", blockCID)
+		require.Equal(t, 1, recorder.ownerScans(blockCID), "owner scans of %s", blockCID)
+	}
 
 	bs := datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)
-	requireBlockPresent(t, ctx, bs, shared, true)
-
-	require.NoError(t, col.PurgeByDocIDs(ctx, []client.DocID{docA.ID(), docB.ID()}, true))
-	requireBlockPresent(t, ctx, bs, shared, false)
+	for _, blockCID := range blockCIDs {
+		requireBlockPresent(t, ctx, bs, blockCID, false)
+	}
 }
 
 // countPrimaryKeys returns how many primary keys the collection holds. A primary key marks
