@@ -48,6 +48,7 @@ extern Result TruncateCollection(uintptr_t nodePtr, CollectionOptions opts, uint
 extern Result TruncateCollectionWithFilter(uintptr_t nodePtr, CollectionOptions opts, uintptr_t identityPtr, char* filterJSON);
 extern Result DeleteCollection(uintptr_t nodePtr, char* names, int activeOnly, uintptr_t identityPtr);
 extern Result AddDocument(uintptr_t nodePtr, char* jsonData, int isEncrypted, char* encryptedFields, CollectionOptions opts, uintptr_t identityPtr);
+extern Result SaveDocument(uintptr_t nodePtr, char* docIDStr, char* json, int isEncrypted, char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
 extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions opts, uintptr_t identityPtr);
 extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions opts, uintptr_t identityPtr);
 extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr, char* updaterStr, CollectionOptions opts, uintptr_t identityPtr);
