@@ -91,9 +91,8 @@ type proto interface {
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
 //
-// Receive closes the stream if it implements [io.Closer]. Handlers read one message from an inbound
-// stream and reply on a new one, and libp2p frees an inbound stream's resources only when this side
-// closes or resets it.
+// Receive closes the stream if it implements [io.Closer]: handlers reply on a new stream, and an
+// inbound stream left open counts against the peer's stream limit until the connection closes.
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
 	if closer, ok := stream.(io.Closer); ok {
 		defer func() { _ = closer.Close() }()
@@ -197,55 +196,6 @@ func Send[ResponseType Message](
 		proto.DeleteResponseChan(m.GetMessageID())
 		return resp, ErrResponseTimeout
 	}
-}
-
-// SendAsync creates a new network stream with the provided peer, signs and set the appropriate meta data
-// on the message and writes it to the stream.
-//
-// It doesn't block for the response but instead provided a response channel for the
-// to handle however they prefer. It is the responsibility of the caller to set a reasonable
-// timeout otherwise this call will leak go routines and channels
-func SendAsync[ResponseType Message](
-	ctx context.Context,
-	proto proto,
-	m Message,
-	peerID string,
-	protoID string,
-) (resp <-chan ResponseType, err error) {
-	err = signAndSetMetaData(proto.Host(), m)
-	if err != nil {
-		return resp, err
-	}
-
-	responseChan := make(chan Message, 1)
-	proto.SetResponseChan(m.GetMessageID(), responseChan)
-
-	err = send(ctx, proto, m, peerID, protoID)
-	if err != nil {
-		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
-		return resp, err
-	}
-
-	funcResponseChan := make(chan ResponseType, 1)
-	go func() {
-		select {
-		case respMessage := <-responseChan:
-			switch typedResp := respMessage.(type) {
-			case ResponseType:
-				funcResponseChan <- typedResp
-				close(funcResponseChan)
-			default:
-				close(funcResponseChan)
-			}
-		case <-ctx.Done():
-			close(funcResponseChan)
-			proto.DeleteResponseChan(m.GetMessageID())
-			close(responseChan)
-		}
-	}()
-
-	return funcResponseChan, nil
 }
 
 func send(
