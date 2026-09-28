@@ -136,16 +136,18 @@ func (p *P2P) syncDocuments(
 		return nil, err
 	}
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, docSyncTopic, data, true)
-	if err != nil {
-		return nil, err
-	}
-
 	waitCtx := ctx
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
 		var cancel context.CancelFunc
 		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
+	}
+
+	p.waitForTopicPeers(waitCtx, docSyncTopic, pendingPeers)
+
+	pubSubRespChan, err := p.host.PublishToTopic(ctx, docSyncTopic, data, true)
+	if err != nil {
+		return nil, err
 	}
 
 	return p.waitAndHandleDocSyncResponses(waitCtx, collectionID, docIDs, pubSubRespChan, pendingPeers)
@@ -363,6 +365,45 @@ func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
 	}
 
 	return result, nil
+}
+
+// waitForTopicPeers waits until every given peer can receive on the topic.
+// Without it, a request sent right after connecting can be lost, and the sync
+// times out. It gives up after half the remaining time, so a peer that never
+// joins the topic still leaves time for the others to reply.
+func (p *P2P) waitForTopicPeers(ctx context.Context, topic string, peers map[string]struct{}) {
+	waitCtx := ctx
+	if deadline, ok := ctx.Deadline(); ok {
+		var cancel context.CancelFunc
+		waitCtx, cancel = context.WithTimeout(ctx, time.Until(deadline)/2)
+		defer cancel()
+	}
+
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	ready := make(map[string]struct{}, len(peers))
+	for {
+		clear(ready)
+		for _, id := range p.host.TopicPeers(topic) {
+			ready[id] = struct{}{}
+		}
+		allReady := true
+		for id := range peers {
+			if _, ok := ready[id]; !ok {
+				allReady = false
+				break
+			}
+		}
+		if allReady {
+			return
+		}
+
+		select {
+		case <-ticker.C:
+		case <-waitCtx.Done():
+			return
+		}
+	}
 }
 
 // peerIDFromAddr returns the peer id carried by a multiaddr.

@@ -117,16 +117,18 @@ func (p *P2P) syncBranchableCollection(
 		return err
 	}
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
-	if err != nil {
-		return err
-	}
-
 	waitCtx := ctx
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
 		var cancel context.CancelFunc
 		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
+	}
+
+	p.waitForTopicPeers(waitCtx, syncBranchableCollectionTopic, pendingPeers)
+
+	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
+	if err != nil {
+		return err
 	}
 
 	return p.waitAndHandleSyncBranchableCollectionResponse(waitCtx, collectionID, pubSubRespChan, pendingPeers)
