@@ -126,7 +126,12 @@ func (p *P2P) syncBranchableCollection(
 
 	p.waitForTopicPeers(waitCtx, syncBranchableCollectionTopic, pendingPeers)
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
+	// The request is kept, and resent to peers that join, until this is
+	// cancelled, so end it as soon as the replies stop being read.
+	pubCtx, cancelPub := context.WithCancel(waitCtx)
+	defer cancelPub()
+
+	pubSubRespChan, err := p.host.PublishToTopic(pubCtx, syncBranchableCollectionTopic, data, true)
 	if err != nil {
 		return err
 	}
