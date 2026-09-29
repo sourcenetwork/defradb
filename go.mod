@@ -49,7 +49,7 @@ require (
 	github.com/sourcenetwork/corekv/memory v0.3.1
 	github.com/sourcenetwork/corekv/namespace v0.3.1
 	github.com/sourcenetwork/corelog v0.0.9
-	github.com/sourcenetwork/go-p2p v0.1.13
+	github.com/sourcenetwork/go-p2p v0.1.14
 	github.com/sourcenetwork/goji v0.0.10
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b
 	github.com/sourcenetwork/immutable v0.3.0
@@ -407,7 +407,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/skip-mev/block-sdk/v2 v2.1.5 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
-	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 // indirect
+	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.15 // indirect
 	github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20260514175348-017fdf639300 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
