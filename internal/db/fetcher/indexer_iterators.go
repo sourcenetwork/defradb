@@ -515,7 +515,7 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 			}
 			indexKey.Fields = []keys.IndexedField{{
 				Value:      inValues[idx],
-				Descending: f.indexDesc.Fields[0].Descending,
+				Descending: f.indexDesc.GetFields()[0].Descending,
 			}}
 			return f.newPrefixBaseMatchIterator(indexKey, matchers, f.execInfo), nil
 		},
@@ -535,7 +535,7 @@ func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValu
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
-		fields[i].Descending = f.indexDesc.Fields[i].Descending
+		fields[i].Descending = f.indexDesc.GetFields()[i].Descending
 	}
 
 	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
@@ -551,7 +551,7 @@ func (f *indexFetcher) createKeyWithValue(key keys.IndexDataStoreKey, val client
 	key.Fields = []keys.IndexedField{
 		{
 			Value:      val,
-			Descending: f.indexDesc.Fields[0].Descending,
+			Descending: f.indexDesc.GetFields()[0].Descending,
 		},
 	}
 	return key
@@ -648,7 +648,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	cond fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexMatchIterator, error) {
-	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.Fields[0].Descending)
+	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.GetFields()[0].Descending)
 	if err != nil {
 		return nil, err
 	}
@@ -793,7 +793,7 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
 	// we process first the conditions that match composite index fields starting from the first one
-	for i := range f.indexDesc.Fields {
+	for i := range f.indexDesc.GetFields() {
 		indexedField := f.indexedFields[i]
 		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
 		var err error
@@ -1122,7 +1122,7 @@ func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath clien
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
 	// we need to check length of conditions because full key fetch is only possible
 	// if all fields of the index are specified in the filter
-	res := indexDesc.GetUnique() && len(conditions) == len(indexDesc.Fields)
+	res := indexDesc.GetUnique() && len(conditions) == len(indexDesc.GetFields())
 
 	// first condition is not required to be _eq, but if is, val must be not nil
 	res = res && (conditions[0].op != opEq || !conditions[0].val.IsNil())
