@@ -323,13 +323,24 @@ func (w *Wrapper) SyncBranchableCollection(
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
-	panic("not implemented")
+	res, err := callStore(w, ctx, "BasicImportNative", newArgs().argStr(filepath))
+	if err != nil {
+		return err
+	}
+	return res.asError()
 }
 
 func (w *Wrapper) BasicExport(
 	ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
-	panic("not implemented")
+	opt := utils.NewOptions(opts...)
+
+	res, err := callStore(w, ctx, "BasicExportNative",
+		newArgs().argStr(filepath).argStr(strings.Join(opt.Collections, ",")).argStr(opt.Format).argBool(opt.Pretty))
+	if err != nil {
+		return err
+	}
+	return res.asError()
 }
 
 func (w *Wrapper) AddCollection(
@@ -1038,7 +1049,11 @@ func (w *Wrapper) MaxTxnRetries() int {
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	panic("not implemented")
+	res, err := callStore(w, ctx, "PrintDumpNative", newArgs())
+	if err != nil {
+		return err
+	}
+	return res.asError()
 }
 
 func (w *Wrapper) Connect(
