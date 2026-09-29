@@ -109,6 +109,10 @@ const (
 type OrderedIndexDescription struct {
 	// Unique indicates whether the index enforces uniqueness.
 	Unique bool
+
+	// Fields are the indexed fields, in key order. Each carries a direction, since an ordered index
+	// is read in key order.
+	Fields []IndexedFieldDescription
 }
 
 func (*OrderedIndexDescription) isIndexKindDescription() {}
@@ -117,6 +121,10 @@ var _ IndexKindDescription = (*OrderedIndexDescription)(nil)
 
 // VectorIndexDescription is the config for a vector (ANN) index.
 type VectorIndexDescription struct {
+	// Fields are the names of the indexed fields. Names only: a graph is searched by nearness, so
+	// there is no direction to carry.
+	Fields []string
+
 	// Algorithm is the algorithm used to build/search the index.
 	Algorithm VectorAlgorithm
 	// Metric is the distance metric used to compare vectors.
@@ -138,6 +146,9 @@ type IndexDescription struct {
 	// ID is the local identifier of this index.
 	ID uint32
 	// Fields contains the fields that are being indexed.
+	//
+	// Deprecated: use the kind config's Fields. This field will be removed in Defra v2.0.0 and is
+	// kept in sync until then.
 	Fields []IndexedFieldDescription
 
 	// Unique indicates whether the index enforces uniqueness. It only applies to ordered indexes.
@@ -184,15 +195,70 @@ func (d IndexDescription) GetUnique() bool {
 	return d.Unique
 }
 
-// Normalize returns a copy with KindDescription and the compat Unique field consistent: a nil
-// ordered KindDescription is filled from Unique, and Unique is set from the resolved config. Use it
-// to compare two descriptors that may have been built in different styles (only Unique, or only
-// Kind/KindDescription).
+// GetFields returns the index's fields. Only ordered indexes have a direction, so a vector index's
+// fields come back ascending.
+func (d IndexDescription) GetFields() []IndexedFieldDescription {
+	switch config := d.KindDescription.(type) {
+	case *OrderedIndexDescription:
+		if config != nil && len(config.Fields) > 0 {
+			return config.Fields
+		}
+	case *VectorIndexDescription:
+		if config != nil && len(config.Fields) > 0 {
+			fields := make([]IndexedFieldDescription, len(config.Fields))
+			for i, name := range config.Fields {
+				fields[i] = IndexedFieldDescription{Name: name}
+			}
+			return fields
+		}
+	}
+	return d.Fields
+}
+
+// fieldNames returns the names of the index's fields, dropping any direction.
+func (d IndexDescription) fieldNames() []string {
+	fields := d.GetFields()
+	names := make([]string, len(fields))
+	for i, field := range fields {
+		names[i] = field.Name
+	}
+	return names
+}
+
+// Normalize returns a copy with the kind config and the deprecated fields consistent, so a
+// descriptor is the same whichever one was set. Both (un)marshalling paths run it.
+//
+// Deprecated: this only reconciles the deprecated Fields and Unique, so it will be removed along
+// with them in Defra v2.0.0.
 func (d IndexDescription) Normalize() IndexDescription {
 	if d.Kind == IndexKindOrdered && d.KindDescription == nil {
-		d.KindDescription = &OrderedIndexDescription{Unique: d.Unique}
+		d.KindDescription = &OrderedIndexDescription{Unique: d.Unique, Fields: d.Fields}
+	}
+	// Replace the config rather than write through it: the pointer may be shared, and marshalling
+	// must not modify the caller's descriptor.
+	switch config := d.KindDescription.(type) {
+	case *OrderedIndexDescription:
+		if len(config.Fields) == 0 {
+			upgraded := *config
+			upgraded.Fields = d.Fields
+			d.KindDescription = &upgraded
+		}
+	case *VectorIndexDescription:
+		if len(config.Fields) == 0 && len(d.Fields) > 0 {
+			upgraded := *config
+			// Allocate instead of appending: appending to an empty slice that has spare capacity
+			// would write into the caller's array.
+			upgraded.Fields = make([]string, len(d.Fields))
+			for i, field := range d.Fields {
+				upgraded.Fields[i] = field.Name
+			}
+			d.KindDescription = &upgraded
+		}
 	}
 	d.Unique = d.GetUnique()
+	if fields := d.GetFields(); len(fields) > 0 {
+		d.Fields = fields
+	}
 	return d
 }
 
@@ -243,8 +309,8 @@ func (d *IndexDescription) UnmarshalJSON(bytes []byte) error {
 	default:
 		return NewErrUnknownIndexKind(uint8(mirror.Kind))
 	}
-	// Keep the compat Unique field in sync with the resolved config so old readers see it.
-	d.Unique = d.GetUnique()
+	// Upgrades a descriptor stored before the kind carried its own fields.
+	*d = d.Normalize()
 	return nil
 }
 
@@ -271,6 +337,9 @@ type NewIndexRequest struct {
 	// Name contains the name of the index.
 	Name string
 	// Fields contains the fields that are being indexed.
+	//
+	// Deprecated: set them on [NewIndexRequest.Ordered] or [NewIndexRequest.Vector]. This field will
+	// be removed in Defra v2.0.0. Setting both is an error unless they agree.
 	Fields []IndexedFieldDescription
 
 	// Unique indicates whether the index is unique.
@@ -284,6 +353,22 @@ type NewIndexRequest struct {
 
 	// Vector holds config specific to vector (ANN) indexes. Non-nil iff this is a vector index request.
 	Vector *VectorIndexDescription
+}
+
+// GetFields returns the fields the request names. Only ordered indexes have a direction, so a vector
+// request's fields come back ascending.
+func (r NewIndexRequest) GetFields() []IndexedFieldDescription {
+	if r.Ordered != nil && len(r.Ordered.Fields) > 0 {
+		return r.Ordered.Fields
+	}
+	if r.Vector != nil && len(r.Vector.Fields) > 0 {
+		fields := make([]IndexedFieldDescription, len(r.Vector.Fields))
+		for i, name := range r.Vector.Fields {
+			fields[i] = IndexedFieldDescription{Name: name}
+		}
+		return fields
+	}
+	return r.Fields
 }
 
 // CollectionIndex is an interface for indexing documents in a collection.
@@ -327,13 +412,13 @@ func (col CollectionVersion) CollectIndexedFields() []CollectionFieldDescription
 	fieldsMap := make(map[string]bool)
 	fields := make([]CollectionFieldDescription, 0, len(col.Indexes))
 	for _, index := range col.Indexes {
-		for _, field := range index.Fields {
-			if fieldsMap[field.Name] {
+		for _, name := range index.fieldNames() {
+			if fieldsMap[name] {
 				// If the FieldDescription has already been added to the result do not add it a second time
 				// this can happen if a field is referenced by multiple indexes
 				continue
 			}
-			colField, ok := col.GetFieldByName(field.Name)
+			colField, ok := col.GetFieldByName(name)
 			if ok {
 				fields = append(fields, colField)
 			}
@@ -347,7 +432,8 @@ func (col CollectionVersion) CollectIndexedFields() []CollectionFieldDescription
 func (col CollectionVersion) GetIndexesOnField(fieldName string) []IndexDescription {
 	result := []IndexDescription{}
 	for _, index := range col.Indexes {
-		if index.Fields[0].Name == fieldName {
+		names := index.fieldNames()
+		if len(names) > 0 && names[0] == fieldName {
 			result = append(result, index)
 		}
 	}
