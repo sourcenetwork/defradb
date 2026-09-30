@@ -94,7 +94,7 @@ func TestIndexWorker_DrainBuildingRecord_Completes(t *testing.T) {
 // first build mid-way so a second drain runs against the still-present record.
 func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 
 	var starts atomic.Int32
 	release := make(chan struct{})
