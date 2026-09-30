@@ -99,9 +99,6 @@ func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 	var starts atomic.Int32
 	release := make(chan struct{})
 	var releaseOnce sync.Once
-	// Always release, so a failing assertion before the explicit release does not strand the build
-	// goroutine blocked in the gate.
-	t.Cleanup(func() { releaseOnce.Do(func() { close(release) }) })
 	entered := make(chan struct{}, 1)
 	IndexBuildGate = func(_ context.Context, _ string, _ uint32) {
 		starts.Add(1)
@@ -114,6 +111,13 @@ func TestIndexWorker_InFlightGuard_PreventsDoubleBuild(t *testing.T) {
 
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
+	// Always release and wait for the build, so a failing assertion before the explicit release does
+	// not strand the build goroutine blocked in the gate. This is registered after the DB so it runs
+	// before db.Close, which doesn't wait for builds started directly by the test.
+	t.Cleanup(func() {
+		releaseOnce.Do(func() { close(release) })
+		db.indexBuildWorker.builds.Wait()
+	})
 	addUserDoc(t, ctx, col, "Alice")
 
 	desc, err := col.NewIndex(ctx, client.NewIndexRequest{
