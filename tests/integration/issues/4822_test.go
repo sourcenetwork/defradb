@@ -14,6 +14,7 @@ package issues
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -30,10 +31,8 @@ import (
 // the backfill path in `internal/db/p2p/replicator.go::pushHeadsForAllDocs`
 // drops documents partway through under load.
 //
-// Likely culprit: `pushHeadsForDoc` opens a fresh libp2p
-// request stream per doc with a 10s `networkRequestTimeout`. Under
-// back-to-back load some streams fail (or hang past 10s), and the
-// failure mode also wedges subsequent collections in the iteration.
+// Each request and response uses a new stream. Without closing the receiving
+// side, backfill exhausts libp2p's stream resources and retries fail too.
 func TestP2POneToOneReplicator_BackfillDropsExistingDocsUnderLoad(t *testing.T) {
 	actions := []any{
 		testUtils.RandomNetworkingConfig(),
@@ -65,6 +64,7 @@ func TestP2POneToOneReplicator_BackfillDropsExistingDocsUnderLoad(t *testing.T) 
 		testUtils.AddReplicator{
 			SourceNodeID: 0,
 			TargetNodeID: 1,
+			Timeout:      30 * time.Second,
 		},
 		testUtils.WaitForSync{},
 		&action.Request{
