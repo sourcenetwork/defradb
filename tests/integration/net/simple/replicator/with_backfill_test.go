@@ -9,7 +9,7 @@
 //
 // See tests/LICENSE for details.
 
-package issues
+package replicator
 
 import (
 	"fmt"
@@ -22,18 +22,9 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Reproduces a P2P replicator backfill drop under load.
-//
-// Setup: source node has many pre-existing documents in a single
-// collection. A replicator from source -> target is then configured. The
-// expectation (and the comment in `TestP2POneToOneReplicatorDoesNotSyncExisting`)
-// is that `AddReplicator` backfills every existing document. In practice
-// the backfill path in `internal/db/p2p/replicator.go::pushHeadsForAllDocs`
-// drops documents partway through under load.
-//
-// Each request and response uses a new stream. Without closing the receiving
-// side, backfill exhausts libp2p's stream resources and retries fail too.
-func TestP2POneToOneReplicator_BackfillDropsExistingDocsUnderLoad(t *testing.T) {
+// Backfilling more documents than the event buffer can hold must complete without
+// blocking event delivery or exhausting libp2p stream resources.
+func TestP2POneToOneReplicator_BackfillSyncsAllExistingDocs(t *testing.T) {
 	actions := []any{
 		testUtils.RandomNetworkingConfig(),
 		testUtils.RandomNetworkingConfig(),

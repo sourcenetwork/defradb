@@ -90,12 +90,14 @@ type proto interface {
 }
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
-func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
+func Receive(stream io.Reader, peerID string, proto proto, m Message) (err error) {
 	// Messages use a separate stream for each request and response. Release the
 	// receiving side too: reading EOF alone does not release libp2p's stream
 	// resources, and leaving them open eventually prevents further requests.
 	if closer, ok := stream.(io.Closer); ok {
-		defer closer.Close()
+		defer func() {
+			err = errors.Join(err, closer.Close())
+		}()
 	}
 
 	// Cap the read at maxMessageSize. We read one byte past the cap so we

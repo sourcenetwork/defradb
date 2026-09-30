@@ -22,12 +22,24 @@ import (
 
 type trackedStream struct {
 	io.Reader
-	closed bool
+	closed   bool
+	closeErr error
 }
 
 func (s *trackedStream) Close() error {
 	s.closed = true
-	return nil
+	return s.closeErr
+}
+
+func TestReceive_ReadAndCloseErrors_ReturnsBoth(t *testing.T) {
+	readErr := errors.New("read failed")
+	closeErr := errors.New("close failed")
+	stream := &trackedStream{Reader: iotest.ErrReader(readErr), closeErr: closeErr}
+
+	err := Receive(stream, "some peer ID", nil, &MetaData{})
+	require.ErrorIs(t, err, readErr)
+	require.ErrorIs(t, err, closeErr)
+	require.True(t, stream.closed)
 }
 
 func TestReceive_InvalidStreamReleasesResources(t *testing.T) {
