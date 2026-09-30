@@ -31,7 +31,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -40,6 +39,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -59,6 +59,11 @@ type (
 )
 
 const networkRequestTimeout = 10 * time.Second
+
+// accessCacheTTL is how long a positive read-access decision for a (peer, document) pair is
+// reused before being re-checked. It is short so that a revoked grant becomes effective quickly,
+// while still collapsing the per-block access checks of a single DAG sync into one round-trip.
+const accessCacheTTL = 3 * time.Second
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
 // Implementations can perform additional actions like generating SE artifacts.
@@ -122,6 +127,10 @@ type P2P struct {
 
 	peerIdentities map[peerID]identity.Identity
 	piMu           sync.RWMutex
+
+	// accessCache memoizes positive read-access decisions per (peer, document) so that serving
+	// an entire document DAG to a peer does not incur one access-control round-trip per block.
+	accessCache *accessCache
 
 	// The intervals at which to retry replicator failures.
 	// For example, this can define an exponential backoff strategy.
@@ -191,6 +200,7 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
+		accessCache:          newAccessCache(accessCacheTTL),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
@@ -442,21 +452,47 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-		ctx,
-		identFunc,
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
-	)
+	// A block may be owned by several documents (shared field blocks); read access to any one is
+	// enough. docIDsForBlockCID returns a single empty docID for collection-level blocks, which
+	// CheckDocReadAccessWithIdentityFunc gates on the collection object for a branchable collection.
+	docIDs, err := p.docIDsForBlockCID(ctx, c, block)
 	if err != nil {
-		log.ErrorE("Failed to check access", err)
+		log.ErrorE("Failed to resolve block doc ID", err)
 		return false
 	}
 
-	return peerHasAccess
+	// The block is servable if the peer can read any one of its owning documents, so a cached
+	// grant for any of them is enough. Caching collapses a document's many per-block checks into
+	// one round-trip; only grants are cached, so a denied peer is re-checked and picks up a fresh
+	// grant without delay. The collection id is keyed because a collection-level block has an empty
+	// docID whose access is decided per collection. See accessCache.
+	collectionID := cols[0].CollectionID()
+	for _, docID := range docIDs {
+		if p.accessCache.allowed(pid, collectionID, docID) {
+			return true
+		}
+	}
+
+	for _, docID := range docIDs {
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
+			ctx,
+			identFunc,
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			docID,
+		)
+		if err != nil {
+			log.ErrorE("Failed to check access", err)
+			return false
+		}
+		if peerHasAccess {
+			p.accessCache.storeAllowed(pid, collectionID, docID)
+			return true
+		}
+	}
+
+	return false
 }
 
 // trySelfHasAccess checks if the local node has access to the given block.
@@ -464,7 +500,18 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 // This is a best-effort check and returns true unless we explicitly find that the local node
 // doesn't have access or if we get an error. The node sending is ultimately responsible for
 // ensuring that the recipient has access.
-func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, collectionID string) (bool, error) {
+//
+// The collection is resolved from collectionID (the stable root collection id) rather than the
+// block's collection version id, because the local node may legitimately hold a different version
+// of the collection than the one the block was authored against (e.g. replication to an older
+// collection version).
+func (p *P2P) trySelfHasAccess(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+	collectionID string,
+	docID string,
+) (bool, error) {
 	if !p.db.DocumentACP().HasValue() {
 		return true, nil
 	}
@@ -491,22 +538,60 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
-		ctx,
-		func() immutable.Option[identity.Identity] {
-			return immutable.Some(identity.FromDID(ident.Value().DID))
-		},
-		p.db.NodeACP(),
-		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
-		acpTypes.DocumentReadPerm,
-		string(block.Delta.GetDocID()),
-	)
-	if err != nil {
-		return false, err
+	docIDs := []string{docID}
+	if docID == "" {
+		docIDs, err = p.docIDsForBlockCID(ctx, blockCID, block)
+		if err != nil {
+			return false, err
+		}
 	}
 
-	return peerHasAccess, nil
+	for _, docID := range docIDs {
+		peerHasAccess, err := acpDB.CheckDocReadAccessWithIdentityFunc(
+			ctx,
+			func() immutable.Option[identity.Identity] {
+				return immutable.Some(identity.FromDID(ident.Value().DID))
+			},
+			p.db.NodeACP(),
+			p.db.DocumentACP().Value(),
+			cols[0], // For now we assume there is only one collection.
+			docID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if peerHasAccess {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (p *P2P) docIDsForBlockCID(
+	ctx context.Context,
+	blockCID cid.Cid,
+	block *coreblock.Block,
+) ([]string, error) {
+	if block.Delta.IsCollection() {
+		return []string{""}, nil
+	}
+
+	docIDs, err := id.GetDocIDsForBlockFromStore(
+		ctx,
+		p.db.Multistore().Systemstore(),
+		blockCID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(docIDs) > 0 {
+		return docIDs, nil
+	}
+	if block.Delta.IsComposite() && len(block.Heads) == 0 {
+		return []string{client.NewDocIDV0(blockCID).String()}, nil
+	}
+	return nil, nil
 }
 
 // pubSubMessageHandler handles incoming PushLog messages from the pubsub network.
@@ -555,6 +640,16 @@ func (p *P2P) processPushlogRequest(
 		return err
 	}
 
+	// Verify the advertised CID actually matches the block contents, so a peer cannot push
+	// arbitrary content under a CID of its choosing.
+	blockLink, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+	if blockLink.Cid != headCID {
+		return ErrBlockCIDMismatch
+	}
+
 	// Calls to syncDAG should not overlap for a given CID. If they do, they will use the same
 	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
 	// if this initial sync call had a negative response for a given link, the subsequent calls will
@@ -575,7 +670,7 @@ func (p *P2P) processPushlogRequest(
 	// No need to check access if the message is for replication as the node sending
 	// will have done so deliberately.
 	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+		mightHaveAccess, err := p.trySelfHasAccess(ctx, headCID, block, req.CollectionID, req.DocID)
 		if err != nil {
 			return err
 		}
@@ -639,14 +734,21 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			return err
 		}
 
+		var docTopicErr error
 		if evt.DocID != "" {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
-				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+				// A failure on the document topic must not stop the collection
+				// topic publish: subscribers of a branchable collection learn
+				// about this block only through the collection topic.
+				docTopicErr = NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
 			}
 		}
 
 		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
 			return NewErrPublishingToCollectionTopic(err, evt.Cid.String(), evt.CollectionID)
+		}
+		if docTopicErr != nil {
+			return docTopicErr
 		}
 	}
 

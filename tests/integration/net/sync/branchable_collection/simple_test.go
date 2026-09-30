@@ -58,7 +58,8 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
-				NodeID: immutable.Some(1),
+				NodeID:            immutable.Some(1),
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name
@@ -132,6 +133,7 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 			},
 			testUtils.WaitForSync{},
 			&action.Request{
+				NonOrderedResults: true,
 				Request: `query {
 					User {
 						name

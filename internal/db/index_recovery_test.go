@@ -14,11 +14,14 @@ import (
 	"context"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 // TestRecoverIndexStates_BuildingResumesAndCompletes checks recovery rebuilds an interrupted
@@ -32,7 +35,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -48,7 +51,7 @@ func TestRecoverIndexStates_BuildingResumesAndCompletes(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	assert.Equal(t, len(names), countIndexEntries(t, ctx, db, shortID, desc.ID))
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
@@ -67,7 +70,7 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 		addUserDoc(t, ctx, col, name)
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -82,7 +85,7 @@ func TestRecoverIndexStates_DroppingResumesGC(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
 	assert.Equal(t, 0, after, "expected 0 index entries after recovery")
@@ -101,21 +104,32 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 		docs[i] = addUserDoc(t, ctx, col, "name"+string(rune('0'+i)))
 	}
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
 	shortID := getCollectionShortID(t, ctx, db, collectionID)
 
-	// docIDs sort lexicographically, matching storage order.
-	docIDs := make([]string, len(docs))
-	for i, d := range docs {
-		docIDs[i] = d.ID().String()
-	}
-	sort.Strings(docIDs)
+	// Doc short IDs sort in storage order.
+	docShortIDs := make([]uint64, len(docs))
+	func() {
+		rawTxn, err := db.NewTxn(true)
+		require.NoError(t, err)
+		defer rawTxn.Discard()
+		txnCtx := InitContext(ctx, rawTxn)
+		for i, d := range docs {
+			docShortID, found, err := id.GetDocShortID(txnCtx, shortID, d.ID().String())
+			require.NoError(t, err)
+			require.True(t, found)
+			docShortIDs[i] = docShortID
+		}
+	}()
+	sort.Slice(docShortIDs, func(i, j int) bool {
+		return docShortIDs[i] < docShortIDs[j]
+	})
 
 	// Watermark at the midpoint: docs 0-2 count as done, 3-5 must be re-indexed.
-	watermark := docIDs[2]
+	watermark := docShortIDs[2]
 	docsAfterWatermark := 3
 
 	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
@@ -127,11 +141,96 @@ func TestRecoverIndexStates_BuildingResumesFromWatermark(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, countIndexEntries(t, ctx, db, shortID, desc.ID))
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	assert.Equal(t, docsAfterWatermark, countIndexEntries(t, ctx, db, shortID, desc.ID),
 		"only docs after the watermark should be re-indexed")
 	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+}
+
+// TestRecoverBuilding_WatermarkAtDeletedDoc_ResumesCleanly checks that a build resuming from a
+// watermark that points at a since-deleted document does not panic or error: the deleted doc is
+// simply gone, and every remaining doc whose short ID sorts after the watermark is indexed. This
+// guards the resume path against a watermark referencing a doc the collection no longer holds.
+func TestRecoverBuilding_WatermarkAtDeletedDoc_ResumesCleanly(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+
+	docs := make([]*client.Document, 6)
+	for i := range 6 {
+		docs[i] = addUserDoc(t, ctx, col, "name"+string(rune('0'+i)))
+	}
+
+	desc, err := newNameIndex(t, ctx, db, col)
+	require.NoError(t, err)
+
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	// Map each doc's short ID (storage order) so the deleted doc can be placed at the midpoint.
+	type docRef struct {
+		doc     *client.Document
+		shortID uint64
+	}
+	refs := make([]docRef, len(docs))
+	func() {
+		rawTxn, err := db.NewTxn(true)
+		require.NoError(t, err)
+		defer rawTxn.Discard()
+		txnCtx := InitContext(ctx, rawTxn)
+		for i, d := range docs {
+			sid, found, err := id.GetDocShortID(txnCtx, shortID, d.ID().String())
+			require.NoError(t, err)
+			require.True(t, found)
+			refs[i] = docRef{doc: d, shortID: sid}
+		}
+	}()
+	sort.Slice(refs, func(i, j int) bool { return refs[i].shortID < refs[j].shortID })
+
+	// Delete the midpoint doc and use its short ID as the watermark. Docs before it count as done;
+	// docs after it must be re-indexed; the deleted doc itself is gone.
+	deleted := refs[2]
+	ok, err := col.DeleteDocument(ctx, deleted.doc.ID())
+	require.NoError(t, err)
+	require.True(t, ok)
+	watermark := deleted.shortID
+
+	// Wipe entries and stage a building record resuming from the deleted doc's short ID.
+	err = db.withTxnRetries(ctx, func(txnCtx context.Context) error {
+		if err := clearIndexEntries(t, txnCtx, shortID, desc.ID); err != nil {
+			return err
+		}
+		return db.advanceIndexWatermark(txnCtx, collectionID, desc.ID, watermark)
+	})
+	require.NoError(t, err)
+
+	// The build must resume without panicking on the missing doc.
+	db.indexBuildWorker.drainSync(context.Background())
+
+	requireNoIndexState(t, ctx, db, collectionID, desc.ID)
+
+	// Only docs after the watermark are re-indexed (refs[3..5]); the deleted doc is absent.
+	assert.Equal(t, 3, countIndexEntries(t, ctx, db, shortID, desc.ID),
+		"docs after the watermark must be indexed, the deleted doc must not reappear")
+	for i := 3; i < len(refs); i++ {
+		name := "name" + string(rune('0'+indexOfDoc(docs, refs[i].doc)))
+		require.Len(t, queryUserByName(t, db, ctx, name), 1, "doc %q must be queryable", name)
+	}
+
+	// The deleted doc must not be queryable under its old name.
+	deletedName := "name" + string(rune('0'+indexOfDoc(docs, deleted.doc)))
+	assert.Empty(t, queryUserByName(t, db, ctx, deletedName),
+		"the deleted doc must be absent from query results")
+}
+
+// indexOfDoc returns the position of doc in docs, for recovering the name assigned at insert.
+func indexOfDoc(docs []*client.Document, doc *client.Document) int {
+	for i, d := range docs {
+		if d.ID().String() == doc.ID().String() {
+			return i
+		}
+	}
+	return -1
 }
 
 // TestRecoverIndexStates_OrphanedBuildingRecord_Skipped checks that a building record with no
@@ -149,9 +248,9 @@ func TestRecoverIndexStates_OrphanedBuildingRecord_Skipped(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
-	_, err = newNameIndex(t, ctx, col)
+	_, err = newNameIndex(t, ctx, db, col)
 	require.NoError(t, err, "system must remain usable after skipping orphan record")
 }
 
@@ -165,7 +264,7 @@ func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T)
 	addUserDoc(t, ctx, col, "Alice")
 	addUserDoc(t, ctx, col, "Bob")
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -184,7 +283,7 @@ func TestRecoverIndexStates_MixedRecords_OrphanSkippedValidHandled(t *testing.T)
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	// The dropping record was still processed despite the orphan erroring.
 	after := countIndexEntries(t, ctx, db, shortID, desc.ID)
@@ -198,7 +297,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	ctx := context.Background()
 	db, col := setupUserCollection(t, ctx)
 
-	desc, err := newNameIndex(t, ctx, col)
+	desc, err := newNameIndex(t, ctx, db, col)
 	require.NoError(t, err)
 
 	collectionID := col.Version().CollectionID
@@ -208,7 +307,7 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, db.recoverIndexStates(context.Background()))
+	db.indexBuildWorker.drainSync(context.Background())
 
 	state := readIndexState(t, ctx, db, collectionID, desc.ID)
 	assert.True(t, state.isFailed())
@@ -216,5 +315,101 @@ func TestRecoverIndexStates_FailedAndNoRecords_NoOp(t *testing.T) {
 
 	// A db with no records: recovery is a no-op.
 	db2, _ := setupUserCollection(t, ctx)
-	require.NoError(t, db2.recoverIndexStates(context.Background()))
+	db2.indexBuildWorker.drainSync(context.Background())
+}
+
+// TestRecoverStaleEpochs_SweepsBelowBuildingEpoch checks the stale-epoch sweep collects a
+// superseded epoch even while a rebuild is in flight, without touching the epoch being built. A
+// migration invalidates the old epoch's values and a building index is excluded from query planning
+// (queries full-scan), so the old epoch is neither valid nor read and is safe to collect early. The
+// delete range is bounded strictly below the live epoch, so the in-progress build's epoch is left
+// intact. recoverStaleEpochs is called directly here (not via the worker drain, which would also
+// resume the build) to isolate the sweep.
+func TestRecoverStaleEpochs_SweepsBelowBuildingEpoch(t *testing.T) {
+	ctx := context.Background()
+	db, col := setupUserCollection(t, ctx)
+	collectionID := col.Version().CollectionID
+	shortID := getCollectionShortID(t, ctx, db, collectionID)
+
+	for _, name := range []string{"a", "b", "c"} {
+		addUserDoc(t, ctx, col, name)
+	}
+
+	desc, err := newNameIndex(t, ctx, db, col)
+	require.NoError(t, err)
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1))
+
+	// Advance to epoch 2 with a building record in place and a partial build in the new epoch. Epoch
+	// 1 is the stale, pre-migration epoch; epoch 2 is the one being built.
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		newEpoch, err := allocateIndexEpoch(c, collectionID, desc.ID)
+		if err != nil {
+			return err
+		}
+		require.Equal(t, uint32(2), newEpoch)
+		// A real rebuild marks the index as having stale epochs when it advances the sequence; the
+		// sweep only touches marked indexes.
+		if err := db.markStaleEpochs(c, shortID, desc.ID); err != nil {
+			return err
+		}
+		if err := db.startIndexBuild(c, collectionID, desc.ID); err != nil {
+			return err
+		}
+		coll, err := db.newCollection(c, col.Version(), datastore.CtxTryGetTxnOption(c))
+		if err != nil {
+			return err
+		}
+		colIndex, err := NewCollectionIndex(c, coll, desc, true)
+		if err != nil {
+			return err
+		}
+		return coll.indexExistingDocs(c, colIndex)
+	}))
+	require.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2))
+
+	_, err = db.recoverStaleEpochs(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 1),
+		"stale epoch below the building epoch must be collected")
+	assert.Equal(t, 3, countIndexEpochEntries(t, ctx, db, shortID, desc.ID, 2),
+		"the epoch being built must be left intact")
+}
+
+// TestRecoverBuilding_OrphanRecordNoDefinition_Resolves is the regression for the spin-loop bug: a
+// building record whose index definition is gone (a crash can commit the record but leave the
+// definition unwritten, or a rebuild can orphan it) made the running worker re-dispatch forever.
+// findIndexDefinition returned "does not exist", which dispatch logged without recording a terminal
+// state, and the post-build notify re-drained the still-building record into the same failure. The
+// worker must instead resolve the orphan (clear its record) so the drain converges.
+func TestRecoverBuilding_OrphanRecordNoDefinition_Resolves(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+
+	_, err = db.AddCollection(ctx, `type User { name: String }`)
+	require.NoError(t, err)
+	col, err := db.GetCollectionByName(ctx, "User")
+	require.NoError(t, err)
+	collectionID := col.Version().CollectionID
+
+	// Stage a building record for an index ID that has no definition, then commit so the running
+	// worker is woken by the published event.
+	const orphanIndexID = uint32(997)
+	require.NoError(t, db.withTxnRetries(ctx, func(c context.Context) error {
+		return db.startIndexBuild(c, collectionID, orphanIndexID)
+	}))
+
+	// The worker must clear the orphan record rather than spin on it. With the bug this never
+	// happens and the record stays InProgress, re-dispatched on a hot loop.
+	require.Eventually(t, func() bool {
+		rawTxn, err := db.NewTxn(true)
+		if err != nil {
+			return false
+		}
+		defer rawTxn.Discard()
+		_, err = getIndexState(InitContext(ctx, rawTxn), collectionID, orphanIndexID)
+		return err != nil // a missing record means the orphan was resolved
+	}, 10*time.Second, 10*time.Millisecond, "orphan building record was never resolved")
 }

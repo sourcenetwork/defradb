@@ -172,6 +172,22 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "collection short ID encoding contains slash",
+			input: DatastoreSE{
+				CollectionShortID: slashEncodedShortID,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
+			}.ToString(),
+			expected: DatastoreSE{
+				CollectionShortID: slashEncodedShortID,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
+			},
+			expectError: false,
+		},
+		{
 			name:        "invalid prefix",
 			input:       "/notse/\x89",
 			expected:    DatastoreSE{},

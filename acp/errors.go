@@ -18,21 +18,21 @@ const (
 	errInvalidACPSystem                          = "invalid acp system"
 	errInitializationOfACPFailed                 = "initialization of acp failed"
 	errStartingACPInEmptyPath                    = "starting acp in an empty path"
-	errFailedToAddPolicyWithACP                  = "failed to add policy with acp"
-	errFailedToRegisterDocWithACP                = "failed to register document with acp"
-	errFailedToCheckIfDocIsRegisteredWithACP     = "failed to check if doc is registered with acp"
-	errFailedToVerifyDocAccessWithACP            = "failed to verify doc access with acp"
-	errFailedToVerifyAdminAccessWithACP          = "failed to verify admin access with acp"
-	errFailedToAddDocActorRelationshipWithACP    = "failed to add document actor relationship with acp"
-	errFailedToDeleteDocActorRelationshipWithACP = "failed to delete document actor relationship with acp"
+	errFailedToAddPolicy                         = "failed to add policy with acp"
+	errFailedToRegisterDoc                       = "failed to register document with acp"
+	errFailedToCheckIfDocIsRegistered            = "failed to check if doc is registered with acp"
+	errFailedToVerifyDocAccess                   = "failed to verify doc access with acp"
+	errFailedToVerifyAdminAccess                 = "failed to verify admin access with acp"
+	errFailedToAddDocActorRelationship           = "failed to add document actor relationship with acp"
+	errFailedToDeleteDocActorRelationship        = "failed to delete document actor relationship with acp"
 	errMissingReqArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
 	errMissingReqArgToDeleteDocActorRelationship = "missing a required argument needed to delete doc actor relationship"
 
 	errNoPolicyArgs = "missing policy arguments, must have both id and resource"
 
-	errPolicyIDMustNotBeEmpty        = "policyID must not be empty"
-	errPolicyDoesNotExistWithACP     = "policyID specified does not exist with acp"
-	errPolicyValidationFailedWithACP = "policyID validation through acp failed"
+	errPolicyIDMustNotBeEmpty = "policyID must not be empty"
+	errPolicyDoesNotExist     = "policyID specified does not exist with acp"
+	errPolicyValidationFailed = "policyID validation through acp failed"
 
 	errResourceNameMustNotBeEmpty          = "resource name must not be empty"
 	errResourceDoesNotExistOnTargetPolicy  = "resource does not exist on the specified policy"
@@ -45,15 +45,15 @@ const (
 )
 
 var (
-	ErrInvalidACPSystem                          = errors.New(errInvalidACPSystem)
-	ErrInitializationOfACPFailed                 = errors.New(errInitializationOfACPFailed)
-	ErrFailedToAddPolicyWithACP                  = errors.New(errFailedToAddPolicyWithACP)
-	ErrFailedToRegisterDocWithACP                = errors.New(errFailedToRegisterDocWithACP)
-	ErrFailedToCheckIfDocIsRegisteredWithACP     = errors.New(errFailedToCheckIfDocIsRegisteredWithACP)
-	ErrFailedToVerifyDocAccessWithACP            = errors.New(errFailedToVerifyDocAccessWithACP)
-	ErrFailedToAddDocActorRelationshipWithACP    = errors.New(errFailedToAddDocActorRelationshipWithACP)
-	ErrFailedToDeleteDocActorRelationshipWithACP = errors.New(errFailedToDeleteDocActorRelationshipWithACP)
-	ErrPolicyDoesNotExistWithACP                 = errors.New(errPolicyDoesNotExistWithACP)
+	ErrInvalidACPSystem                   = errors.New(errInvalidACPSystem)
+	ErrInitializationOfACPFailed          = errors.New(errInitializationOfACPFailed)
+	ErrFailedToAddPolicy                  = errors.New(errFailedToAddPolicy)
+	ErrFailedToRegisterDoc                = errors.New(errFailedToRegisterDoc)
+	ErrFailedToCheckIfDocIsRegistered     = errors.New(errFailedToCheckIfDocIsRegistered)
+	ErrFailedToVerifyDocAccess            = errors.New(errFailedToVerifyDocAccess)
+	ErrFailedToAddDocActorRelationship    = errors.New(errFailedToAddDocActorRelationship)
+	ErrFailedToDeleteDocActorRelationship = errors.New(errFailedToDeleteDocActorRelationship)
+	ErrPolicyDoesNotExist                 = errors.New(errPolicyDoesNotExist)
 
 	ErrResourceDoesNotExistOnTargetPolicy = errors.New(errResourceDoesNotExistOnTargetPolicy)
 
@@ -82,31 +82,31 @@ func NewErrInitializationOfACPFailed(
 	)
 }
 
-func NewErrFailedToAddPolicyWithACP(
+func NewErrFailedToAddPolicy(
 	inner error,
-	Type string,
+	acpType string,
 	creatorID string,
 ) error {
 	return errors.Wrap(
-		errFailedToAddPolicyWithACP,
+		errFailedToAddPolicy,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("CreatorID", creatorID),
 	)
 }
 
-func NewErrFailedToRegisterDocWithACP(
+func NewErrFailedToRegisterDoc(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	creatorID string,
 	resourceName string,
 	docID string,
 ) error {
 	return errors.Wrap(
-		errFailedToRegisterDocWithACP,
+		errFailedToRegisterDoc,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("CreatorID", creatorID),
 		errors.NewKV("ResourceName", resourceName),
@@ -114,24 +114,24 @@ func NewErrFailedToRegisterDocWithACP(
 	)
 }
 
-func NewErrFailedToCheckIfDocIsRegisteredWithACP(
+func NewErrFailedToCheckIfDocIsRegistered(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
 ) error {
 	return errors.Wrap(
-		errFailedToCheckIfDocIsRegisteredWithACP,
+		errFailedToCheckIfDocIsRegistered,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
 	)
 }
 
-func NewErrFailedToVerifyNodeAccessWithACP(
+func NewErrFailedToVerifyNodeAccess(
 	inner error,
 	permission string,
 	policyID string,
@@ -140,7 +140,7 @@ func NewErrFailedToVerifyNodeAccessWithACP(
 	operation string,
 ) error {
 	return errors.Wrap(
-		errFailedToVerifyAdminAccessWithACP,
+		errFailedToVerifyAdminAccess,
 		inner,
 		errors.NewKV("Permission", permission),
 		errors.NewKV("PolicyID", policyID),
@@ -150,9 +150,9 @@ func NewErrFailedToVerifyNodeAccessWithACP(
 	)
 }
 
-func NewErrFailedToVerifyDocAccessWithACP(
+func NewErrFailedToVerifyDocAccess(
 	inner error,
-	Type string,
+	acpType string,
 	permission string,
 	policyID string,
 	actorID string,
@@ -160,9 +160,9 @@ func NewErrFailedToVerifyDocAccessWithACP(
 	docID string,
 ) error {
 	return errors.Wrap(
-		errFailedToVerifyDocAccessWithACP,
+		errFailedToVerifyDocAccess,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("Permission", permission),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ActorID", actorID),
@@ -171,9 +171,9 @@ func NewErrFailedToVerifyDocAccessWithACP(
 	)
 }
 
-func NewErrFailedToAddDocActorRelationshipWithACP(
+func NewErrFailedToAddDocActorRelationship(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -182,9 +182,9 @@ func NewErrFailedToAddDocActorRelationshipWithACP(
 	targetActor string,
 ) error {
 	return errors.Wrap(
-		errFailedToAddDocActorRelationshipWithACP,
+		errFailedToAddDocActorRelationship,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -194,9 +194,9 @@ func NewErrFailedToAddDocActorRelationshipWithACP(
 	)
 }
 
-func NewErrFailedToDeleteDocActorRelationshipWithACP(
+func NewErrFailedToDeleteDocActorRelationship(
 	inner error,
-	Type string,
+	acpType string,
 	policyID string,
 	resourceName string,
 	docID string,
@@ -205,9 +205,9 @@ func NewErrFailedToDeleteDocActorRelationshipWithACP(
 	targetActor string,
 ) error {
 	return errors.Wrap(
-		errFailedToDeleteDocActorRelationshipWithACP,
+		errFailedToDeleteDocActorRelationship,
 		inner,
-		errors.NewKV("Type", Type),
+		errors.NewKV("Type", acpType),
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
@@ -217,23 +217,23 @@ func NewErrFailedToDeleteDocActorRelationshipWithACP(
 	)
 }
 
-func NewErrPolicyDoesNotExistWithACP(
+func NewErrPolicyDoesNotExist(
 	inner error,
 	policyID string,
 ) error {
 	return errors.Wrap(
-		errPolicyDoesNotExistWithACP,
+		errPolicyDoesNotExist,
 		inner,
 		errors.NewKV("PolicyID", policyID),
 	)
 }
 
-func NewErrPolicyValidationFailedWithACP(
+func NewErrPolicyValidationFailed(
 	inner error,
 	policyID string,
 ) error {
 	return errors.Wrap(
-		errPolicyValidationFailedWithACP,
+		errPolicyValidationFailed,
 		inner,
 		errors.NewKV("PolicyID", policyID),
 	)

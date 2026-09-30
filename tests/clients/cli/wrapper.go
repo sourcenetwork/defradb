@@ -49,11 +49,11 @@ type Wrapper struct {
 	serverCancel context.CancelFunc
 }
 
-// NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
+// NewWrapper takes a Node and a Remote DAC address used to pay for Vera transactions.
 //
-// sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
-func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, nil)
+// remoteDACAddress can be empty when testing configurations other than Remote DAC.
+func NewWrapper(node *node.Node, remoteDACAddress string) (*Wrapper, error) {
+	handler, err := http.NewHandler(node.DB, node.Options())
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	handlerWithCtx := http.InjectServerContext(ctx)(handler)
 	httpServer := httptest.NewServer(handlerWithCtx)
-	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
+	cmd := newCliWrapper(httpServer.URL, remoteDACAddress)
 
 	return &Wrapper{
 		node:         node,
@@ -314,6 +314,9 @@ func (w *Wrapper) SyncDocuments(
 	if hasDeadline {
 		args = append(args, "--timeout", time.Until(deadline).String())
 	}
+	if blockSyncTimeout := opt.GetBlockSyncTimeout(); blockSyncTimeout.HasValue() {
+		args = append(args, "--block-sync-timeout", blockSyncTimeout.Value().String())
+	}
 
 	args = append(args, collectionName)
 	args = append(args, docIDs...)
@@ -471,7 +474,7 @@ func (w *Wrapper) DeleteCollection(
 	if opt.ActiveOnly {
 		args = append(args, "--active-only")
 	}
-	args = append(args, strings.Join(names, ","))
+	args = append(args, "--collection-name", strings.Join(names, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -816,6 +819,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()
+	w.handler.Close()
 	_ = w.node.Close(context.Background())
 }
 

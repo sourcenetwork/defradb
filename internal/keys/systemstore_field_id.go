@@ -55,7 +55,7 @@ func NewFieldIDFromBytes(key []byte) (FieldID, error) {
 	}
 	key = key[1:]
 
-	key, colID, err := encoding.DecodeUvarintAscending(key)
+	key, collectionShortID, err := encoding.DecodeUvarintAscending(key)
 	if err != nil {
 		return FieldID{}, err
 	}
@@ -69,7 +69,7 @@ func NewFieldIDFromBytes(key []byte) (FieldID, error) {
 	}
 
 	return FieldID{
-		CollectionShortID: uint32(colID),
+		CollectionShortID: uint32(collectionShortID),
 		FieldID:           fieldID,
 	}, nil
 }

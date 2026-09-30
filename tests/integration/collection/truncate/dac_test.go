@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 const policy = `
@@ -49,6 +50,10 @@ resources:
 
 func TestTruncateCollectionDAC_RemovedPrivateDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
+		// This test relies on re-adding the same document content yielding the same DocID, so the
+		// pre-truncate ACP registration still applies. That does not hold under signing: the two
+		// adds are signed differently and so get different DocIDs.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),

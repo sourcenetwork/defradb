@@ -14,6 +14,7 @@ package state
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/json"
 	"math/rand"
 	"strings"
 
@@ -75,6 +76,18 @@ func GetIdentity(s *State, identity immutable.Option[Identity]) acpIdentity.Iden
 	return GetIdentityHolder(s, identity.Value()).Identity
 }
 
+// GetIdentityDID returns the DID of the given identity, the "*" selector as-is, or the empty string
+// if no identity is set.
+func GetIdentityDID(s *State, identity immutable.Option[Identity]) string {
+	if identity.HasValue() {
+		if identity.Value().Selector == "*" {
+			return identity.Value().Selector
+		}
+		return GetIdentity(s, identity).DID()
+	}
+	return ""
+}
+
 // GetIdentityHolder returns the identity holder for the given reference.
 // If the identity does not exist, it will be generated.
 func GetIdentityHolder(s *State, identity Identity) *IdentityHolder {
@@ -92,10 +105,13 @@ func GetIdentityHolder(s *State, identity Identity) *IdentityHolder {
 	return s.Identities[identity]
 }
 
-// TokenHasAudience returns true if the given JWT token string contains an audience claim.
-// This is used to detect tokens that were generated before the node's HTTP host was available,
-// and need to be regenerated with the correct audience.
-func TokenHasAudience(token string) bool {
+// TokenHasAudience returns true if the given JWT token carries the given audience.
+//
+// It detects both a token generated before the node's HTTP host was available and
+// one generated for a different host. An external node binds a new port every start,
+// so a token minted for an earlier address is rejected by that node and has to be
+// regenerated.
+func TokenHasAudience(token string, audience string) bool {
 	if token == "" {
 		return false
 	}
@@ -107,7 +123,26 @@ func TokenHasAudience(token string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(string(payload), `"aud"`)
+
+	var claims struct {
+		Audience any `json:"aud"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return false
+	}
+
+	// The audience claim is either a single string or a list of them.
+	switch aud := claims.Audience.(type) {
+	case string:
+		return aud == audience
+	case []any:
+		for _, a := range aud {
+			if s, ok := a.(string); ok && s == audience {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Generate the keys using predefined seed so that multiple runs yield the same private key.

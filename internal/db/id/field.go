@@ -152,7 +152,7 @@ func DeleteShortFieldID(
 
 // SetShortFieldID sets and stores the short field ids, if they do not already exist.
 func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) error {
-	collectionShortID, err := GetShortCollectionID(ctx, collection.CollectionID)
+	collectionShortID, err := GetCollectionShortID(ctx, collection.CollectionID)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func DeleteShortFieldIDs(
 	collection client.CollectionVersion,
 	allVersions []client.CollectionVersion,
 ) error {
-	collectionShortID, err := GetShortCollectionID(ctx, collection.CollectionID)
+	collectionShortID, err := GetCollectionShortID(ctx, collection.CollectionID)
 	if err != nil {
 		return err
 	}

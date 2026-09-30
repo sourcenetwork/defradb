@@ -56,7 +56,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageW
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"AVG":  float64(30),
+							"AVG":  float64(33),
 						},
 						{
 							"Name": "Alice",

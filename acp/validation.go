@@ -38,10 +38,10 @@ func ValidateResourceInterface(
 	maybePolicy, err := acpClient.Policy(ctx, policyID)
 
 	if err != nil {
-		return NewErrPolicyValidationFailedWithACP(err, policyID)
+		return NewErrPolicyValidationFailed(err, policyID)
 	}
 	if !maybePolicy.HasValue() {
-		return NewErrPolicyDoesNotExistWithACP(err, policyID)
+		return NewErrPolicyDoesNotExist(err, policyID)
 	}
 
 	policy := maybePolicy.Value()
@@ -54,7 +54,7 @@ func ValidateResourceInterface(
 
 	var requiredResourcePermissions []string
 	switch acpType {
-	case acpTypes.LocalDocumentACP, acpTypes.SourceHubDocumentACP:
+	case acpTypes.LocalDocumentACP, acpTypes.RemoteDocumentACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForDocument
 	case acpTypes.NodeACP:
 		requiredResourcePermissions = acpTypes.RequiredResourcePermissionsForNode

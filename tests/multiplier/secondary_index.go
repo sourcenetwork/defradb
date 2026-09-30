@@ -45,7 +45,7 @@ func (m *secondaryIndex) Name() Name {
 // ShouldSkip implements [multiplier.ActionAwareSkipper].
 //
 // Returns true if the action set contains index-related actions, explain queries,
-// or SDL with existing @index directives. Index tests should not be modified,
+// or SDL with existing index directives. Index tests should not be modified,
 // and explain tests verifying query produce different results with indexes.
 func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	if hasIndexActions(actions) {
@@ -122,9 +122,9 @@ func hasExplainActions(actions action.Actions) bool {
 	return false
 }
 
-// hasIndexDirective returns true if the SDL contains @index directive.
+// hasIndexDirective returns true if the SDL contains an index directive.
 func hasIndexDirective(sdl string) bool {
-	return strings.Contains(sdl, "@index")
+	return strings.Contains(sdl, "@index") || strings.Contains(sdl, "@vectorIndex")
 }
 
 // scalarTypes are the built-in types that can be indexed.

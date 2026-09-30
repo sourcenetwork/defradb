@@ -38,13 +38,13 @@ func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 					},
 				},

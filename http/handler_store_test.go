@@ -96,6 +96,62 @@ func TestHandler_GetCollection_RendersStringKindAndTyp(t *testing.T) {
 	assert.NotContains(t, out, `"Typ":1`)
 }
 
+// POST /collections must render Kind and Typ as strings, as GET does.
+// https://github.com/sourcenetwork/defradb/issues/4816
+func TestHandler_AddCollection_WithScalarFields_RendersStringKindAndTyp(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb, nil)
+	require.NoError(t, err)
+
+	sdl := `type Book { title: String }`
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/collections",
+		bytes.NewBufferString(sdl))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(body))
+
+	out := string(body)
+	// The `title` field is a nillable String with an LWW CRDT.
+	assert.Contains(t, out, `"Kind":"String"`)
+	assert.Contains(t, out, `"Typ":"lww"`)
+	assert.NotContains(t, out, `"Kind":11`)
+	assert.NotContains(t, out, `"Typ":1`)
+}
+
+// POST /view returns collection versions too, so it renders Kind and Typ as strings.
+// https://github.com/sourcenetwork/defradb/issues/4816
+func TestHandler_AddView_WithScalarFields_RendersStringKindAndTyp(t *testing.T) {
+	cdb := setupDatabase(t)
+
+	handler, err := NewHandler(cdb, nil)
+	require.NoError(t, err)
+
+	body, err := json.Marshal(addViewRequest{
+		Query: `User { name }`,
+		SDL:   `type UserView { name: String }`,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v1/view",
+		bytes.NewBuffer(body))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	res := rec.Result()
+	resBody, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	require.Equalf(t, http.StatusOK, res.StatusCode, "expected 200, got %d: %s", res.StatusCode, string(resBody))
+
+	out := string(resBody)
+	assert.Contains(t, out, `"Kind":"String"`)
+	assert.NotContains(t, out, `"Kind":11`)
+}
+
 func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	cdb := setupDatabase(t)
 

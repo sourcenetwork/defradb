@@ -72,9 +72,13 @@ func TestIndexCreate_WithExplicitTxn_BackfillRunsOnCommit(t *testing.T) {
 			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			// Commit the transaction — backfill runs synchronously inside Commit.
+			// Commit publishes the build event; the worker backfills the index.
 			&action.CommitTransaction{
 				TransactionID: 0,
+			},
+			// Wait for the backfill so the query below uses a built index.
+			&action.WaitForIndexReady{
+				CollectionID: 0,
 			},
 			// After commit: index must appear.
 			&action.ListIndexes{

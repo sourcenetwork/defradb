@@ -39,10 +39,12 @@ else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
 VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
+ifeq ($(VERSION_GITRELEASE),)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
 VERSION_GITRELEASE=$(shell git describe --tags)
+endif
 endif
 
 $(info ----------------------------------------);
@@ -67,7 +69,7 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
-JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/... 
+JS_TEST_DIRS=./event/... ./node/... ./js/... ./tests/integration/...
 JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
 
 COVERAGE_DIRECTORY=$(PWD)/coverage
@@ -206,6 +208,12 @@ mocks:
 	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
+# Regenerates the committed SDL test fixtures from the current generator output.
+# This is a standalone step and does not require node/npx.
+.PHONY: sdl-fixtures
+sdl-fixtures:
+	go run ./internal/request/graphql/schema/testfixtures/gen
+
 .PHONY: ollama
 ollama:
 # run ollama in the background
@@ -293,9 +301,9 @@ test\:gql-mutations:
 test\:col-named-mutations:
 	DEFRA_MUTATION_TYPE=collection-named DEFRA_BADGER_MEMORY=true gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
-.PHONY: test\:source-hub
-test\:source-hub:
-	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+.PHONY: test\:remote-dac
+test\:remote-dac:
+	DEFRA_DOCUMENT_ACP_TYPE=remote gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
@@ -312,6 +320,30 @@ test\:cli:
 .PHONY: test\:c
 test\:c:
 	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+
+# Builds defradb.jar (via build-java-client) and runs both the integration tests against the Java
+# client and the wrapper's own lifecycle/JNI tests under tests/clients/java/tests, the latter
+# covering nodeObj ref lifetime, concurrent Close, and subscription teardown (see
+# wrapper_close_test.go/wrapper_tx_test.go) that the integration suite doesn't exercise directly.
+# TEST_FLAGS already carries -race; DEFRA_JAVA_JVM_OPTS=-Xcheck:jni is added too, since that's the
+# JNI-usage check those lifecycle tests are written to be run under, and it's a no-op for any test
+# that never boots the JVM. CGO_CFLAGS is derived from JAVA_HOME here (rather than left to the
+# caller) since cgo can't expand it itself inside a #cgo directive - see tests/clients/java/doc.go.
+# DEFRA_JAVA_JAR is likewise derived from DEFRA_JAVA_WRAPPER_DIR so an overridden checkout location
+# is still found (tests/clients/java/jvm.go's own default lookup only knows the standard
+# .javaclient/ location). Linux/WSL only - see tools/scripts/build-java-client.sh.
+.PHONY: test\:java
+test\:java:
+ifeq ($(JAVA_HOME),)
+	$(error JAVA_HOME must be set to a JDK installation)
+endif
+	@$(MAKE) build-java-client
+	CGO_ENABLED=1 \
+	CGO_CFLAGS="-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux" \
+	DEFRA_CLIENT_JAVA=true \
+	DEFRA_JAVA_JAR="$(or $(DEFRA_JAVA_WRAPPER_DIR),$(CURDIR)/.javaclient/defradb-java-sdk)/build/libs/defradb.jar" \
+	DEFRA_JAVA_JVM_OPTS=-Xcheck:jni \
+	go test -tags javaclient ./tests/integration/... ./tests/clients/java/tests/... $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -373,6 +405,16 @@ test\:coverage-js:
 .PHONY: test\:changes
 test\:changes:
 	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
+
+# Fails if a node-to-node wire type changed shape without the golden being updated.
+.PHONY: test\:wire-snapshot
+test\:wire-snapshot:
+	go test ./internal/wire/snapshottest/...
+
+# Regenerate the wire snapshot golden after an intentional wire-format change.
+.PHONY: test\:wire-snapshot-update
+test\:wire-snapshot-update:
+	WIRE_SNAPSHOT_UPDATE=1 go test ./internal/wire/snapshottest/...
 
 .PHONY: test\:js
 test\:js:
@@ -460,7 +502,12 @@ fix:
 	@$(MAKE) lint\:fix
 	@$(MAKE) tidy
 	@$(MAKE) mocks
+	@$(MAKE) sdl-fixtures
 	@$(MAKE) docs
+
+.PHONY: build-c-shared-macos
+build-c-shared-macos:
+	@BUILD_TAGS="$(BUILD_TAGS)" tools/scripts/build-c-shared-macos.sh $(BUILD_FLAGS)
 
 .PHONY: build-c-static-windows
 build-c-static-windows:
@@ -483,3 +530,10 @@ API_LEVEL ?= 21
 .PHONY: build-c-shared-android
 build-c-shared-android:
 	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
+
+# Clones (or updates) defradb-java-sdk into .javaclient/ and builds
+# defradb.jar from it, for use by tests/clients/java (-tags javaclient).
+# Linux/WSL only - see tools/scripts/build-java-client.sh.
+.PHONY: build-java-client
+build-java-client:
+	@tools/scripts/build-java-client.sh

@@ -57,7 +57,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxWith
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"MAX":  int64(32),
+							"MAX":  int64(38),
 						},
 						{
 							"Name": "Alice",

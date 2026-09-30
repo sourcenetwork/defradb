@@ -76,7 +76,9 @@ type indexMatchIterator struct {
 	// Index metadata
 	indexDesc     client.IndexDescription
 	indexedFields []client.CollectionFieldDescription
-	execInfo      *ExecInfo
+	// epoch is the namespace this iterator scans, used to decode its keys back into their epoch.
+	epoch    uint32
+	execInfo *ExecInfo
 
 	// Iterator state
 	resultIter corekv.Iterator
@@ -157,6 +159,7 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 		iter.resultIter.Key(),
 		&iter.indexDesc,
 		iter.indexedFields,
+		iter.epoch,
 	)
 	if err != nil {
 		return indexIterResult{}, NewErrDecodeIndexKey(err, iter.indexDesc.Name)
@@ -186,6 +189,7 @@ func (f *indexFetcher) newPrefixBaseMatchIterator(
 	return &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      execInfo,
 		prefixKey:     &indexKey,
 		matchers:      matchers,
@@ -389,7 +393,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 type memorizingIndexIterator struct {
 	inner indexIterator
 
-	fetchedDocs map[string]struct{}
+	fetchedDocs map[uint64]struct{}
 
 	ctx   context.Context
 	store datastore.Keyedstore
@@ -400,7 +404,7 @@ var _ indexIterator = (*memorizingIndexIterator)(nil)
 func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
-	iter.fetchedDocs = make(map[string]struct{})
+	iter.fetchedDocs = make(map[uint64]struct{})
 	return iter.inner.Init(ctx, store)
 }
 
@@ -413,21 +417,22 @@ func (iter *memorizingIndexIterator) Next() (indexIterResult, error) {
 		if !res.foundKey {
 			return res, nil
 		}
-		var docID string
+		var docShortID uint64
 		if len(res.value) > 0 {
-			docID = string(res.value)
-		} else {
-			lastField := &res.key.Fields[len(res.key.Fields)-1]
-			var ok bool
-			docID, ok = lastField.Value.String()
-			if !ok {
-				return indexIterResult{}, NewErrUnexpectedTypeValue[string](lastField.Value)
+			docShortID, err = keys.DecodeDocShortID(res.value)
+			if err != nil {
+				return indexIterResult{}, err
 			}
+		} else {
+			docShortID = res.key.DocShortID
 		}
-		if _, ok := iter.fetchedDocs[docID]; ok {
+		if docShortID == 0 {
+			return indexIterResult{}, NewErrUnexpectedTypeValue[uint64](docShortID)
+		}
+		if _, ok := iter.fetchedDocs[docShortID]; ok {
 			continue
 		}
-		iter.fetchedDocs[docID] = struct{}{}
+		iter.fetchedDocs[docShortID] = struct{}{}
 		return res, nil
 	}
 }
@@ -510,7 +515,7 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 			}
 			indexKey.Fields = []keys.IndexedField{{
 				Value:      inValues[idx],
-				Descending: f.indexDesc.Fields[0].Descending,
+				Descending: f.indexDesc.GetFields()[0].Descending,
 			}}
 			return f.newPrefixBaseMatchIterator(indexKey, matchers, f.execInfo), nil
 		},
@@ -518,27 +523,27 @@ func (f *indexFetcher) newMultiIndexIteratorForInOp(
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: f.indexDesc.ID}, nil
+	return keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: f.indexDesc.ID, Epoch: f.epoch}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKeyWithValues(values []client.NormalValue) (keys.IndexDataStoreKey, error) {
 	fields := make([]keys.IndexedField, len(values))
 	for i := range values {
 		fields[i].Value = values[i]
-		fields[i].Descending = f.indexDesc.Fields[i].Descending
+		fields[i].Descending = f.indexDesc.GetFields()[i].Descending
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(f.ctx, f.col.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
 
-	return keys.NewIndexDataStoreKey(shortID, f.indexDesc.ID, fields), nil
+	return keys.NewIndexDataStoreKey(collectionShortID, f.indexDesc.ID, f.epoch, fields), nil
 }
 
 // createKeyWithValue creates an index key with the given value encoded.
@@ -546,7 +551,7 @@ func (f *indexFetcher) createKeyWithValue(key keys.IndexDataStoreKey, val client
 	key.Fields = []keys.IndexedField{
 		{
 			Value:      val,
-			Descending: f.indexDesc.Fields[0].Descending,
+			Descending: f.indexDesc.GetFields()[0].Descending,
 		},
 	}
 	return key
@@ -643,7 +648,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	cond fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexMatchIterator, error) {
-	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.Fields[0].Descending)
+	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.GetFields()[0].Descending)
 	if err != nil {
 		return nil, err
 	}
@@ -657,6 +662,7 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	iter := &indexMatchIterator{
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
+		epoch:         f.epoch,
 		execInfo:      f.execInfo,
 		reverse:       false,
 		startKey:      startKey,
@@ -787,7 +793,7 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 
 	result := make([]fieldFilterCond, 0, len(f.indexedFields))
 	// we process first the conditions that match composite index fields starting from the first one
-	for i := range f.indexDesc.Fields {
+	for i := range f.indexDesc.GetFields() {
 		indexedField := f.indexedFields[i]
 		fieldInd := f.mapping.FirstIndexOfName(indexedField.Name)
 		var err error
@@ -1116,7 +1122,7 @@ func setJSONFilterCondition(cond *fieldFilterCond, filterVal any, jsonPath clien
 func isUniqueFetchByFullKey(indexDesc *client.IndexDescription, conditions []fieldFilterCond) bool {
 	// we need to check length of conditions because full key fetch is only possible
 	// if all fields of the index are specified in the filter
-	res := indexDesc.Unique && len(conditions) == len(indexDesc.Fields)
+	res := indexDesc.GetUnique() && len(conditions) == len(indexDesc.GetFields())
 
 	// first condition is not required to be _eq, but if is, val must be not nil
 	res = res && (conditions[0].op != opEq || !conditions[0].val.IsNil())

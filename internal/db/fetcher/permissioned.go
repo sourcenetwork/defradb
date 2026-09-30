@@ -64,7 +64,7 @@ func (f *permissionedFetcher) NextDoc() (immutable.Option[string], error) {
 		return immutable.None[string](), nil
 	}
 
-	hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
+	hasPermission, err := acpDB.CheckAccessOfDocOnCollection(
 		f.ctx,
 		f.identity,
 		f.nodeACP,

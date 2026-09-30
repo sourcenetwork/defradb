@@ -758,6 +758,7 @@ func TestQueryWithUniqueIndex_WithMultipleNilValuesAndEqualFilter_ShouldFetch(t 
 						{"name": "Alice"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

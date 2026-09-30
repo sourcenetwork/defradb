@@ -58,50 +58,6 @@ func TestNAC_GatesNewEncryptedIndex_AuthorizedIdentity_AllowAccess(t *testing.T)
 
 func TestNAC_GatesNewEncryptedIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.JSClientType,
-			},
-		),
-		Actions: []any{
-			testUtils.Close{},
-			testUtils.Start{
-				Identity:  testUtils.ClientIdentity(1),
-				EnableNAC: true,
-			},
-			&action.AddCollection{
-				Identity: testUtils.ClientIdentity(1),
-				SDL: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.NewEncryptedIndex{
-				Identity:      testUtils.NoIdentity(),
-				CollectionID:  0,
-				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
-	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.CClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-			},
-		),
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{
@@ -129,50 +85,6 @@ func TestNAC_GatesNewEncryptedIndex_NoIdentity_CLIandCandHTTPClient_NotAuthorize
 
 func TestNAC_GatesNewEncryptedIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.GoClientType,
-				state.JSClientType,
-			},
-		),
-		Actions: []any{
-			testUtils.Close{},
-			testUtils.Start{
-				Identity:  testUtils.ClientIdentity(1),
-				EnableNAC: true,
-			},
-			&action.AddCollection{
-				Identity: testUtils.ClientIdentity(1),
-				SDL: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.NewEncryptedIndex{
-				Identity:      testUtils.ClientIdentity(2),
-				CollectionID:  0,
-				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNewEncryptedIndexPerm),
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestNAC_GatesNewEncryptedIndex_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
-	test := testUtils.TestCase{
-		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-		// See: https://github.com/sourcenetwork/defradb/issues/4383
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.CClientType,
-				state.HTTPClientType,
-				state.CLIClientType,
-			},
-		),
 		Actions: []any{
 			testUtils.Close{},
 			testUtils.Start{

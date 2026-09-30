@@ -113,5 +113,11 @@ func (a *PatchCollection) Execute() {
 				}
 			}
 		}
+
+		// A patch that creates a new version reindexes in the background; wait so a following query
+		// sees a built index.
+		for _, node := range a.s.Nodes {
+			WaitForNodeIndexesBuilt(a.s, node)
+		}
 	}
 }

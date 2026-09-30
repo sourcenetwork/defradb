@@ -19,8 +19,6 @@ import (
 )
 
 func TestQueryCommitsWithDepth1(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -40,13 +38,14 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -59,8 +58,6 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -89,16 +86,18 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							// "Age" field head
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 						{
 							// "Name" field head (unchanged from create)
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(1),
 						},
 						{
-							"cid":    uniqueCid,
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 					},
@@ -112,8 +111,6 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -149,27 +146,32 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							// Composite head
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(3),
 						},
 						{
 							// Composite head -1
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 						{
 							// "Name" field head (unchanged from create)
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(1),
 						},
 						{
 							// "Age" field head
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(3),
 						},
 						{
 							// "Age" field head -1
-							"cid":    uniqueCid,
+
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 					},
@@ -183,8 +185,6 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 }
 
 func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -211,22 +211,23 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},

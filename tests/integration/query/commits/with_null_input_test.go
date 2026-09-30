@@ -19,8 +19,6 @@ import (
 )
 
 func TestQueryCommitsWithNullDepth(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -40,13 +38,14 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -59,8 +58,6 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullCID(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -80,13 +77,14 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -126,8 +124,6 @@ func TestQueryCommitsWithNullField(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOrder(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -147,13 +143,14 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -166,8 +163,6 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOrderField(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -187,13 +182,14 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -206,8 +202,6 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullLimit(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -227,13 +221,14 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -246,8 +241,6 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullOffset(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -267,13 +260,14 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -286,8 +280,6 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 }
 
 func TestQueryCommitsWithNullGroupBy(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -307,13 +299,14 @@ func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 						{
-							"cid": uniqueCid,
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},

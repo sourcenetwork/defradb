@@ -78,16 +78,16 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[option
 		return ErrNACIsNotConfigured
 	}
 
-	if db.nodeACP.NodeACPDesc.Status == client.NACEnabled {
-		return ErrNACIsAlreadyEnabled
-	}
-
 	opt := utils.NewOptions(opts...)
 
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeReEnableNACPerm); err != nil {
 		return err
+	}
+
+	if db.nodeACP.NodeACPDesc.Status == client.NACEnabled {
+		return ErrNACIsAlreadyEnabled
 	}
 
 	db.nodeACP.NodeACPDesc.Status = client.NACEnabled

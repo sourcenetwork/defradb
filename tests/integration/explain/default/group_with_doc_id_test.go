@@ -59,9 +59,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
-							"prefixes": []string{
-								"/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-							},
+							"prefixes":       []string{},
 						},
 					},
 				},
@@ -120,10 +118,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 									"_eq": int32(20),
 								},
 							},
-							"prefixes": []string{
-								"/3/bae-6a4c5bc5-b044-5a03-a868-8260af6f2254",
-								"/3/bae-4ea9d148-13f3-5a48-a0ef-9ffd344caeed",
-							},
+							"prefixes": []string{},
 						},
 					},
 				},

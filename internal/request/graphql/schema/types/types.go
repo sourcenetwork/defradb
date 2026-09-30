@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 )
 
 const (
@@ -49,23 +50,36 @@ const (
 	IndexDirectivePropUnique    = "unique"
 	IndexDirectivePropDirection = "direction"
 	IndexDirectivePropIncludes  = "includes"
+	IndexDirectivePropKind      = "kind"
+
+	OrderedIndexKind = "ordered"
 
 	EncryptedIndexDirectiveLabel    = "encryptedIndex"
 	EncryptedIndexDirectivePropType = "type"
 
+	VectorIndexKind             = "vector"
+	VectorIndexPropDimensions   = "dimensions"
+	VectorIndexPropAlgorithm    = "alg"
+	VectorIndexPropHNSW         = "hnsw"
+	VectorIndexAlgorithmHNSW    = "hnsw"
+	VectorIndexConfigPropMetric = "metric"
+
+	VectorIndexHNSWConfigPropM              = "M"
+	VectorIndexHNSWConfigPropEfConstruction = "efConstruction"
+	VectorIndexHNSWConfigPropEfSearch       = "efSearch"
+
+	// Values of the VectorDistanceMetric enum. They are the string form of the matching
+	// [client.DistanceMetric], so the two cannot drift apart and the directive parser maps one to the
+	// other without a translation table.
+	VectorDistanceMetricCosine    = string(client.DistanceMetricCosine)
+	VectorDistanceMetricEuclidean = string(client.DistanceMetricEuclidean)
+	VectorDistanceMetricDot       = string(client.DistanceMetricDotProduct)
+
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
-	DefaultDirectiveLabel        = "default"
-	DefaultDirectivePropString   = "string"
-	DefaultDirectivePropBool     = "bool"
-	DefaultDirectivePropInt      = "int"
-	DefaultDirectivePropFloat    = "float"
-	DefaultDirectivePropFloat32  = "float32"
-	DefaultDirectivePropFloat64  = "float64"
-	DefaultDirectivePropDateTime = "dateTime"
-	DefaultDirectivePropJSON     = "json"
-	DefaultDirectivePropBlob     = "blob"
+	DefaultDirectiveLabel     = "default"
+	DefaultDirectivePropValue = "value"
 
 	MaterializedDirectiveLabel  = "materialized"
 	MaterializedDirectivePropIf = "if"
@@ -91,6 +105,83 @@ func OrderingEnum() *gql.Enum {
 			"DESC": &gql.EnumValueConfig{
 				Description: descOrderDescription,
 				Value:       1,
+			},
+		},
+	})
+}
+
+func IndexKindEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "IndexKind",
+		Values: gql.EnumValueConfigMap{
+			OrderedIndexKind: &gql.EnumValueConfig{
+				Description: "ordered scalar index",
+				Value:       OrderedIndexKind,
+			},
+		},
+	})
+}
+
+// VectorIndexAlgorithmEnum identifies the configured vector index algorithm.
+func VectorIndexAlgorithmEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "VectorIndexAlgorithm",
+		Values: gql.EnumValueConfigMap{
+			VectorIndexAlgorithmHNSW: &gql.EnumValueConfig{
+				Description: "HNSW (Hierarchical Navigable Small World)",
+				Value:       VectorIndexAlgorithmHNSW,
+			},
+		},
+	})
+}
+
+// VectorDistanceMetricEnum is an enum for a vector index algorithm's metric field.
+func VectorDistanceMetricEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "VectorDistanceMetric",
+		Values: gql.EnumValueConfigMap{
+			VectorDistanceMetricCosine: &gql.EnumValueConfig{
+				Description: "Cosine distance on normalised vectors. Compares direction only.",
+				Value:       VectorDistanceMetricCosine,
+			},
+			VectorDistanceMetricEuclidean: &gql.EnumValueConfig{
+				Description: "Straight-line (L2) distance. Compares direction and magnitude.",
+				Value:       VectorDistanceMetricEuclidean,
+			},
+			VectorDistanceMetricDot: &gql.EnumValueConfig{
+				Description: "Dot product. Grows with magnitude, so a longer vector pointing the " +
+					"same way is nearer.",
+				Value: VectorDistanceMetricDot,
+			},
+		},
+	})
+}
+
+// HNSWIndexConfigInputObject is the typed config for a vector index's HNSW argument.
+func HNSWIndexConfigInputObject(metricEnum *gql.Enum) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "HNSWIndexConfig",
+		Description: "HNSW (Hierarchical Navigable Small World) vector index parameters.",
+		Fields: gql.InputObjectConfigFieldMap{
+			VectorIndexConfigPropMetric: &gql.InputObjectFieldConfig{
+				Description:  "Distance metric used to compare vectors.",
+				Type:         metricEnum,
+				DefaultValue: VectorDistanceMetricCosine,
+			},
+			VectorIndexHNSWConfigPropM: &gql.InputObjectFieldConfig{
+				Description:  "Max connections per node. Higher improves recall at the cost of memory and build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWM),
+			},
+			VectorIndexHNSWConfigPropEfConstruction: &gql.InputObjectFieldConfig{
+				Description:  "Build-time exploration factor. Higher improves graph quality (recall) at the cost of build time.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfConstruction),
+			},
+			VectorIndexHNSWConfigPropEfSearch: &gql.InputObjectFieldConfig{
+				Description:  "Default query-time exploration factor. Higher improves recall at the cost of query latency.",
+				Type:         gql.Int,
+				DefaultValue: int(client.DefaultHNSWEfSearch),
 			},
 		},
 	})
@@ -123,35 +214,11 @@ func DefaultDirective() *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name: DefaultDirectiveLabel,
 		Description: `@default is a directive that can be used to set a default field value.
-		
+
 		Setting a default value on a field within a view has no effect.`,
 		Args: gql.FieldConfigArgument{
-			DefaultDirectivePropString: &gql.ArgumentConfig{
-				Type: gql.String,
-			},
-			DefaultDirectivePropBool: &gql.ArgumentConfig{
-				Type: gql.Boolean,
-			},
-			DefaultDirectivePropInt: &gql.ArgumentConfig{
-				Type: gql.Int,
-			},
-			DefaultDirectivePropFloat: &gql.ArgumentConfig{
-				Type: gql.Float,
-			},
-			DefaultDirectivePropFloat32: &gql.ArgumentConfig{
-				Type: Float32,
-			},
-			DefaultDirectivePropFloat64: &gql.ArgumentConfig{
-				Type: Float64,
-			},
-			DefaultDirectivePropDateTime: &gql.ArgumentConfig{
-				Type: gql.DateTime,
-			},
-			DefaultDirectivePropJSON: &gql.ArgumentConfig{
-				Type: JSON,
-			},
-			DefaultDirectivePropBlob: &gql.ArgumentConfig{
-				Type: Blob,
+			DefaultDirectivePropValue: &gql.ArgumentConfig{
+				Type: Any,
 			},
 		},
 		Locations: []string{
@@ -226,7 +293,13 @@ func IndexFieldInputObject(orderingEnum *gql.Enum) *gql.InputObject {
 	})
 }
 
-func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.Directive {
+func IndexDirective(
+	orderingEnum *gql.Enum,
+	indexFieldInputObject *gql.InputObject,
+	indexKindEnum *gql.Enum,
+	orderedIndexInputObject *gql.InputObject,
+	vectorIndexInputObject *gql.InputObject,
+) *gql.Directive {
 	return gql.NewDirective(gql.DirectiveConfig{
 		Name:        IndexDirectiveLabel,
 		Description: "@index is a directive that can be used to add an index on a type or a field.",
@@ -235,13 +308,31 @@ func IndexDirective(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObje
 				Description: "Sets the index name.",
 				Type:        gql.String,
 			},
+
+			IndexDirectivePropKind: &gql.ArgumentConfig{
+				Description: "Selects an index kind using its default configuration.",
+				Type:        indexKindEnum,
+			},
+
+			VectorIndexKind: &gql.ArgumentConfig{
+				Description: "Configures a vector index.",
+				Type:        vectorIndexInputObject,
+			},
+
+			OrderedIndexKind: &gql.ArgumentConfig{
+				Description: "Configures an ordered index.",
+				Type:        orderedIndexInputObject,
+			},
+
+			// unique, direction, and includes are kept here at the top level for backwards compat.
+			// They are replicated in the `OrderedIndexInputObject`
 			IndexDirectivePropUnique: &gql.ArgumentConfig{
 				Description: "Makes the index unique.",
 				Type:        gql.Boolean,
 			},
 			IndexDirectivePropDirection: &gql.ArgumentConfig{
 				Description: `Sets the default index ordering for all fields.
-				
+
 	If a field in the includes list does not specify a direction
 	the default ordering from this value will be used instead.`,
 				Type: orderingEnum,
@@ -306,31 +397,18 @@ func BranchableDirective() *gql.Directive {
 }
 
 func CRDTEnum() *gql.Enum {
+	valueMap := gql.EnumValueConfigMap{}
+	for _, fieldCrdt := range crdt.FieldCRDTs {
+		valueMap[fieldCrdt.String()] = &gql.EnumValueConfig{
+			Value:       fieldCrdt.CType(),
+			Description: fieldCrdt.Description(),
+		}
+	}
+
 	return gql.NewEnum(gql.EnumConfig{
 		Name:        "CRDTType",
 		Description: "One of the possible CRDT Types.",
-		Values: gql.EnumValueConfigMap{
-			client.LWW_REGISTER.String(): &gql.EnumValueConfig{
-				Value:       client.LWW_REGISTER,
-				Description: "Last Write Wins register",
-			},
-			client.PN_COUNTER.String(): &gql.EnumValueConfig{
-				Value: client.PN_COUNTER,
-				Description: `Positive-Negative Counter.
-	
-	WARNING: Incrementing an integer and causing it to overflow the int64 max value
-	will cause the value to roll over to the int64 min value. Incremeting a float and
-	causing it to overflow the float64 max value will act like a no-op.`,
-			},
-			client.P_COUNTER.String(): &gql.EnumValueConfig{
-				Value: client.P_COUNTER,
-				Description: `Positive Counter.
-	
-	WARNING: Incrementing an integer and causing it to overflow the int64 max value
-	will cause the value to roll over to the int64 min value. Incremeting a float and
-	causing it to overflow the float64 max value will act like a no-op.`,
-			},
-		},
+		Values:      valueMap,
 	})
 }
 
@@ -414,6 +492,59 @@ func EncryptedIndexDirective() *gql.Directive {
 		},
 		Locations: []string{
 			gql.DirectiveLocationFieldDefinition,
+		},
+	})
+}
+
+// VectorIndexInputObject configures an approximate-nearest-neighbour index over a vector field.
+func VectorIndexInputObject(
+	hnswConfig *gql.InputObject,
+	algorithmEnum *gql.Enum,
+) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "VectorIndexConfig",
+		Description: "Configures an approximate-nearest-neighbour index over a vector field.",
+		Fields: gql.InputObjectConfigFieldMap{
+			VectorIndexPropDimensions: &gql.InputObjectFieldConfig{
+				Description: "Vector dimensions; must be greater than zero.",
+				Type:        gql.Int,
+			},
+			VectorIndexPropAlgorithm: &gql.InputObjectFieldConfig{
+				Description: "Selects the vector index algorithm using its default configuration.",
+				Type:        algorithmEnum,
+			},
+			VectorIndexPropHNSW: &gql.InputObjectFieldConfig{
+				Description: "Configures the HNSW algorithm.",
+				Type:        hnswConfig,
+			},
+		},
+	})
+}
+
+// OrderedIndexInputObject configures an ordered index over one or more scalar fields.
+func OrderedIndexInputObject(orderingEnum *gql.Enum, indexFieldInputObject *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "OrderedIndexConfig",
+		Description: "Configures an ordered index over one or more scalar fields.",
+		Fields: gql.InputObjectConfigFieldMap{
+			IndexDirectivePropUnique: &gql.InputObjectFieldConfig{
+				Description: "Makes the index unique.",
+				Type:        gql.Boolean,
+			},
+			IndexDirectivePropDirection: &gql.InputObjectFieldConfig{
+				Description: `Sets the default index ordering for all fields.
+
+	If a field in the includes list does not specify a direction
+	the default ordering from this value will be used instead.`,
+				Type: orderingEnum,
+			},
+			IndexDirectivePropIncludes: &gql.InputObjectFieldConfig{
+				Description: `Sets the fields the index is added on.
+
+	When used on a field definition and the field is not in the includes list
+	it will be implicitly added as the first entry.`,
+				Type: gql.NewList(indexFieldInputObject),
+			},
 		},
 	})
 }

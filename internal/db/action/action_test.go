@@ -66,8 +66,26 @@ func TestStatus_RoundTrips(t *testing.T) {
 		client.ErroredActionStatus,
 		client.CompletedActionStatus,
 	} {
-		assert.Equal(t, status, DecodeStatus(encodeStatus(status)))
+		got, err := DecodeStatus(encodeStatus(status))
+		require.NoError(t, err)
+		assert.Equal(t, status, got)
 	}
+}
+
+// TestDecodeStatus_EmptyInput checks that an empty byte slice is rejected
+// instead of silently returning NoneActionStatus (the fix for issue #4965).
+func TestDecodeStatus_EmptyInput(t *testing.T) {
+	_, err := DecodeStatus([]byte{})
+	require.ErrorIs(t, err, ErrInvalidActionStatusEncoding)
+}
+
+// TestDecodeStatus_TruncatedInput checks that a truncated uvarint
+// (all continuation bits set, no terminator) is rejected.
+func TestDecodeStatus_TruncatedInput(t *testing.T) {
+	// 0x80 has the continuation bit set but no following byte, so
+	// binary.Uvarint returns n == 0 (buffer too small).
+	_, err := DecodeStatus([]byte{0x80})
+	require.ErrorIs(t, err, ErrInvalidActionStatusEncoding)
 }
 
 // TestSetTxn_StoresStatusReasonAndPayloadSeparately checks status, reason and payload live
@@ -84,7 +102,9 @@ func TestSetTxn_StoresStatusReasonAndPayloadSeparately(t *testing.T) {
 
 	statusVal, err := txn.Systemstore().Get(ctx, keys.NewActionStatusSubjectKey("col1", client.BackfillIndexAction, "1").Bytes())
 	require.NoError(t, err)
-	assert.Equal(t, client.ErroredActionStatus, DecodeStatus(statusVal))
+	decodedStatus, err := DecodeStatus(statusVal)
+	require.NoError(t, err)
+	assert.Equal(t, client.ErroredActionStatus, decodedStatus)
 
 	reason, err := GetReason(ctx, "col1", client.BackfillIndexAction, "1")
 	require.NoError(t, err)

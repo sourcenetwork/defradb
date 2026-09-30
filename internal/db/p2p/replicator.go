@@ -13,7 +13,6 @@ package p2p
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -128,8 +127,8 @@ func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionN
 			if err != nil {
 				return NewErrUnmarshalReplicator(err, id)
 			}
-			for _, colID := range storedRep.CollectionIDs {
-				storedRepCollectionIDs[id][colID] = struct{}{}
+			for _, collectionID := range storedRep.CollectionIDs {
+				storedRepCollectionIDs[id][collectionID] = struct{}{}
 			}
 		} else {
 			storedRep.ID = id
@@ -191,11 +190,15 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	type unsafeDatastore interface {
 		Unsafe() corekv.ReaderWriter
 	}
-	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
+	collectionShortID, err := id.GetUncachedCollectionShortID(
+		ctx,
+		col.Version().CollectionID,
+		p.db.Multistore().Systemstore(),
+	)
 	if err != nil {
 		return err
 	}
-	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: collectionShortID}
 	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
@@ -215,9 +218,23 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		if !hasNext {
 			return nil
 		}
-		splitString := strings.Split(string(iter.Key()), "/")
-		docID := splitString[len(splitString)-1]
-		err = p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
+		primaryKey, err := keys.NewPrimaryDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return err
+		}
+		docID, found, err := id.GetDocIDFromStore(
+			ctx,
+			p.db.Multistore().Systemstore(),
+			primaryKey.DocShortID,
+		)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return client.ErrDocumentNotFoundOrNotAuthorized
+		}
+
+		err = p.pushHeadsForDoc(ctx, primaryKey.DocShortID, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return NewErrPushDocHeads(err, docID)
 		}
@@ -226,8 +243,14 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 
 // pushHeadsForDoc gets the all the head blocks for a given docID and pushes them
 // to the given peer.
-func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, peerID string) error {
-	heads, err := p.getHeads(ctx, docID)
+func (p *P2P) pushHeadsForDoc(
+	ctx context.Context,
+	docShortID uint64,
+	docID string,
+	collectionID string,
+	peerID string,
+) error {
+	heads, err := p.getHeadsForDocShortID(ctx, docShortID, docID)
 	if err != nil {
 		return err
 	}
@@ -237,8 +260,7 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
+		reqCtx, reqCancel := context.WithTimeout(ctx, networkRequestTimeout)
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
@@ -247,10 +269,12 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 			Block:        rawblock,
 		}
 
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+		_, sendErr := p.replicatorProtocol.SendRequest(reqCtx, pushLogReq, peerID)
+		reqCancel()
+		if sendErr != nil {
 			log.ErrorE(
 				"Failed to push doc heads. Handling replicator failure",
-				err,
+				sendErr,
 				corelog.Any("DocID", docID),
 			)
 			err := p.handleReplicatorFailure(ctx, peerID, docID)
@@ -361,6 +385,13 @@ func (p *P2P) ListReplicators(ctx context.Context) ([]client.Replicator, error) 
 func (p *P2P) pushLogToReplicators(lg event.Update) {
 	p.repMu.Lock()
 	reps, exists := p.replicators[lg.CollectionID]
+	var peerIDs []string
+	if exists {
+		peerIDs = make([]string, 0, len(reps))
+		for peerID := range reps {
+			peerIDs = append(peerIDs, peerID)
+		}
+	}
 	p.repMu.Unlock()
 
 	for _, handler := range p.pushHandlers {
@@ -371,34 +402,32 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 		}
 	}
 
-	if exists {
-		for peerID := range reps {
-			go func() {
-				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
-				defer cancel()
-				pushLogReq := protocol.PushLogRequest{
-					DocID:        lg.DocID,
-					CID:          lg.Cid.Bytes(),
-					CollectionID: lg.CollectionID,
-					Creator:      p.host.ID(),
-					Block:        lg.Block,
-				}
-				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
-					log.ErrorE(
-						"Failed pushing log",
-						err,
-						corelog.String("DocID", lg.DocID),
-						corelog.Any("CID", lg.Cid),
-						corelog.Any("PeerID", peerID))
-					if !lg.IsRetry {
-						err = p.handleReplicatorFailure(ctx, peerID, lg.DocID)
-						if err != nil {
-							log.ErrorE("Failed to handle replicator failure.", err)
-						}
+	for _, peerID := range peerIDs {
+		go func() {
+			ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
+			defer cancel()
+			pushLogReq := protocol.PushLogRequest{
+				DocID:        lg.DocID,
+				CID:          lg.Cid.Bytes(),
+				CollectionID: lg.CollectionID,
+				Creator:      p.host.ID(),
+				Block:        lg.Block,
+			}
+			if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+				log.ErrorE(
+					"Failed pushing log",
+					err,
+					corelog.String("DocID", lg.DocID),
+					corelog.Any("CID", lg.Cid),
+					corelog.Any("PeerID", peerID))
+				if !lg.IsRetry {
+					err = p.handleReplicatorFailure(p.ctx, peerID, lg.DocID)
+					if err != nil {
+						log.ErrorE("Failed to handle replicator failure.", err)
 					}
 				}
-			}()
-		}
+			}
+		}()
 	}
 }
 
@@ -460,6 +489,9 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
+	p.handleRetryMutex.Lock()
+	defer p.handleRetryMutex.Unlock()
+
 	// Check if context is cancelled before attempting database operations.
 	// This prevents attempts to write to a closed database during shutdown.
 	if ctx.Err() != nil {
@@ -584,6 +616,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 			return
 		}
 		log.ErrorContextE(ctx, "Failed iterate replicator retry ID keys", err)
+		return
 	}
 	defer closeQueryResults(iter)
 	now := time.Now()
@@ -768,12 +801,28 @@ type head struct {
 }
 
 func (p *P2P) getHeads(ctx context.Context, docID string) ([]head, error) {
+	docRef, found, err := id.GetDocRefFromStore(ctx, p.db.Multistore().Systemstore(), docID)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, NewErrGetDocHeads(client.ErrDocumentNotFoundOrNotAuthorized, docID)
+	}
+
+	return p.getHeadsForDocShortID(ctx, docRef.DocShortID, docID)
+}
+
+func (p *P2P) getHeadsForDocShortID(
+	ctx context.Context,
+	docShortID uint64,
+	docID string,
+) ([]head, error) {
 	headstore := p.db.Multistore().Headstore()
 	blockstore := blockstore.NewIPLDStore(p.db.Multistore().Blockstore())
 
 	prefix := keys.HeadstoreDocKey{
-		DocID:   docID,
-		FieldID: core.COMPOSITE_NAMESPACE,
+		DocShortID: docShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
 	}
 
 	iter, err := headstore.Iterator(ctx, corekv.IterOptions{
@@ -839,8 +888,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			return NewErrMarshalBlock(err, docID, head.cid.String())
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
-		defer cancel()
+		reqCtx, reqCancel := context.WithTimeout(ctx, networkRequestTimeout)
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
@@ -848,7 +896,9 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
-		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
+		_, err = p.replicatorProtocol.SendRequest(reqCtx, pushLogReq, peerID)
+		reqCancel()
+		if err != nil {
 			return NewErrSendReplicatorRequest(err, peerID, docID)
 		}
 	}

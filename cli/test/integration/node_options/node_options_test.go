@@ -30,6 +30,8 @@ const testIdentityKeyHex = "e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8a
 // TestGetNodeOptions_SetA starts a node with set A values and verifies that all
 // configurable options are reflected in `client node-options`.
 func TestGetNodeOptions_SetA(t *testing.T) {
+	t.Setenv("DEFRA_ACP_DOCUMENT_REMOTE_LOGID", "log-a")
+
 	test := &integration.Test{
 		Actions: []action.Action{
 			action.StartWithArgs([]string{
@@ -78,6 +80,7 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 					// Document ACP
 					{Path: []string{"DocumentACP", "DocumentACPType"}, Value: "local"},
 					{Path: []string{"DocumentACP", "Path"}, Value: ""},
+					{Path: []string{"DocumentACP", "RemoteDACLogID"}, Value: "log-a"},
 					// Node ACP
 					{Path: []string{"NodeACP", "IsEnabled"}, Value: false},
 					{Path: []string{"NodeACP", "Path"}, Value: ""},
@@ -94,6 +97,7 @@ func TestGetNodeOptions_SetA(t *testing.T) {
 func TestGetNodeOptions_SetB(t *testing.T) {
 	// The file keyring backend requires a secret
 	t.Setenv("DEFRA_KEYRING_SECRET", "test-secret-for-node-options-setb")
+	t.Setenv("DEFRA_ACP_DOCUMENT_REMOTE_LOGID", "log-b")
 
 	test := &integration.Test{
 		// Disk-mode + P2P startup is slower than in-memory; allow more time.
@@ -143,6 +147,7 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 					// Document ACP
 					{Path: []string{"DocumentACP", "DocumentACPType"}, Value: "local"},
 					{Path: []string{"DocumentACP", "Path"}, UseRootDir: true},
+					{Path: []string{"DocumentACP", "RemoteDACLogID"}, Value: "log-b"},
 					// Node ACP
 					{Path: []string{"NodeACP", "IsEnabled"}, Value: true},
 					{Path: []string{"NodeACP", "Path"}, UseRootDir: true},

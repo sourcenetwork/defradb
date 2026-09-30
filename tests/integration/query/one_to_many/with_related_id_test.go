@@ -26,7 +26,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -34,7 +34,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -42,7 +42,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -50,7 +50,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -58,7 +58,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -66,7 +66,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "{{.DocID1_2}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -104,27 +104,27 @@ func TestQueryOneToManyWithRelatedTypeIDFromManySide(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Candide",
-							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
+							"_authorID": "{{.DocID1_1}}",
 						},
 						{
 							"name":      "Painted House",
-							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_authorID": "{{.DocID1_0}}",
 						},
 						{
 							"name":      "Zadig",
-							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
+							"_authorID": "{{.DocID1_1}}",
 						},
 						{
 							"name":      "A Time for Mercy",
-							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_authorID": "{{.DocID1_0}}",
 						},
 						{
 							"name":      "The Client",
-							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_authorID": "{{.DocID1_0}}",
 						},
 						{
 							"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
+							"_authorID": "{{.DocID1_2}}",
 						},
 					},
 				},
@@ -144,7 +144,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -152,7 +152,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -160,7 +160,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -168,7 +168,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -176,7 +176,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -184,7 +184,7 @@ func TestQueryOneToManyWithRelatedTypeIDFromSingleSide(t *testing.T) {
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "{{.DocID1_2}}"
 				}`,
 			},
 			&action.AddDoc{

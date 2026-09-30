@@ -2,7 +2,7 @@
 #
 # Bump the release tag in the URL below to change versions.
 
-$url = "https://github.com/sourcenetwork/defradb-explorer/releases/download/v1.0.0-beta.1/dist.tar.gz"
+$url = "https://github.com/sourcenetwork/defradb-explorer/releases/download/v1.0.0/dist.tar.gz"
 $tarFile = "dist.tar.gz"
 
 try {

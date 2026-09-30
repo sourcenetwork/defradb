@@ -26,7 +26,7 @@ func TestQueryOneToManyWithTypeName(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{

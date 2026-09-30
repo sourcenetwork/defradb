@@ -32,17 +32,13 @@ var userCollection = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			Actions: append(
-				[]any{
-					&action.AddCollection{
-						SDL: userCollection,
-					},
-				},
-				test.Actions...,
-			),
+	test.Actions = append(
+		[]any{
+			&action.AddCollection{
+				SDL: userCollection,
+			},
 		},
+		test.Actions...,
 	)
+	testUtils.ExecuteTestCase(t, test)
 }

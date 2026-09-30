@@ -35,6 +35,7 @@ const (
 
 var (
 	FilterEqOp = &Operator{Operation: connor.EqualOp}
+	FilterInOp = &Operator{Operation: connor.InOp}
 )
 
 // SelectionType is the type of selection.
@@ -388,7 +389,13 @@ func resolveGroupByDependencies(
 		return fields, nil
 	}
 
-	groupByFields := selectRequest.GroupBy.Value().Fields
+	// Copy the groupBy fields before remapping rather than rewriting them in
+	// place. The original slice is shared with the caller's request select (and
+	// any copy taken of it, e.g. for duplicate detection in getRequestables), so
+	// mutating it here would retroactively change those values.
+	originalFields := selectRequest.GroupBy.Value().Fields
+	groupByFields := make([]string, len(originalFields))
+	copy(groupByFields, originalFields)
 	// Remap all object (relation) field names to use their internal foreign-key field
 	// id, as that is the scalar value actually stored on - and fetched from - the document.
 	for index, groupByField := range groupByFields {
@@ -465,7 +472,7 @@ func resolveAggregates(
 	var collectionShortID uint32
 	if def.CollectionID != "" {
 		var err error
-		collectionShortID, err = id.GetShortCollectionID(ctx, def.CollectionID)
+		collectionShortID, err = id.GetCollectionShortID(ctx, def.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -564,7 +571,7 @@ func resolveAggregates(
 				}
 				mapAggregateNestedTargets(target, hostSelectRequest)
 
-				childMapping, _, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
+				childMapping, childDef, err := getTopLevelInfo(ctx, store, rootSelectType, hostSelectRequest, childCollectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -615,6 +622,54 @@ func resolveAggregates(
 					return nil, err
 				}
 
+				// convertedGroupBy holds the planner-internal form of the aggregate's groupBy
+				// argument, with field names translated to the numeric indices the planner uses
+				// internally. It is nil when no groupBy was requested.
+				var convertedGroupBy *GroupBy
+				if target.groupBy.HasValue() {
+					// Work on a copy so we don't mutate the original request.
+					groupByFields := make([]string, len(target.groupBy.Value().Fields))
+					copy(groupByFields, target.groupBy.Value().Fields)
+
+					for i, groupByField := range groupByFields {
+						fieldDesc, ok := childDef.GetFieldByName(groupByField)
+						if ok && fieldDesc.Kind.IsObject() {
+							// Grouping by a multi-valued (array) relation is not meaningful.
+							if fieldDesc.Kind.IsArray() {
+								return nil, NewErrInvalidFieldToGroupBy(groupByField)
+							}
+							// The planner stores relation fields under their ID form (e.g. "author_id"
+							// rather than "author"), so rewrite the name to match.
+							groupByFields[i] = request.ToFieldID(groupByField)
+						}
+					}
+
+					remappedGroupBy := immutable.Some(request.GroupBy{Fields: groupByFields})
+
+					// The groupNode requires a slot in the mapping for the special GROUP field so
+					// it has a valid data-source index to read from. If one doees not exist, it will be added.
+					if _, isGroupFieldMapped := childMapping.IndexesByName[request.GroupFieldName]; !isGroupFieldMapped {
+						groupIndex := childMapping.GetNextIndex()
+						childMapping.Add(groupIndex, request.GroupFieldName)
+					}
+
+					// Translate the (now-remapped) field names into their numeric mapping indices.
+					convertedGroupBy = toGroupBy(remappedGroupBy, childMapping)
+
+					// The group-by fields must be explicitly added to the child select so the
+					// fetcher knows to retrieve them. Unlike a top-level aggregate (whose scan
+					// has no explicit fields and so fetches everything by default), a relation
+					// host is fetched via a type-join whose child scan only retrieves the fields
+					// it is told about. Without this the group-by value is never fetched and all
+					// documents collapse into a single group.
+					for _, groupByField := range convertedGroupBy.Fields {
+						childFields = append(childFields, &Field{
+							Index: groupByField.Index,
+							Name:  groupByField.Name,
+						})
+					}
+				}
+
 				var dummyJoin Requestable
 				dummyJoinSelect := &Select{
 					Targetable: Targetable{
@@ -625,6 +680,7 @@ func resolveAggregates(
 						Filter:  convertedFilter,
 						Limit:   target.limit,
 						OrderBy: orderBy,
+						GroupBy: convertedGroupBy,
 					},
 					CollectionName:  childCollectionName,
 					DocumentMapping: childMapping,
@@ -892,6 +948,11 @@ func getRequestables(
 	collectionName string,
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	// Tracks relation selects already mapped in this selection set so that an
+	// identical relation field is collapsed onto the first occurrence, mirroring
+	// how duplicate scalar fields collapse onto their first index. Without this a
+	// duplicate relation manufactures a redundant join over the same root scan.
+	seenSelects := []request.Select{}
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
 		case *request.Field:
@@ -910,6 +971,19 @@ func getRequestables(
 				Key:   getRenderKey(f),
 			})
 		case *request.Select:
+			// Collapse identical duplicate relation selects onto the first one.
+			isDuplicate := false
+			for _, seen := range seenSelects {
+				if reflect.DeepEqual(seen, *f) {
+					isDuplicate = true
+					break
+				}
+			}
+			if isDuplicate {
+				continue
+			}
+			seenSelects = append(seenSelects, *f)
+
 			index := mapping.GetNextIndex()
 
 			innerSelect, err := toSelect(ctx, store, collectionRepository, rootSelectType, index, f, collectionName)
@@ -1497,6 +1571,42 @@ func toMutation(
 	mutationRequest *request.ObjectMutation,
 	thisIndex int,
 ) (*Mutation, error) {
+	if mutationRequest.Type == request.TruncateObjects {
+		mapping := core.NewDocumentMapping()
+		mapping.Add(0, "result")
+
+		var conditions map[string]any
+		if mutationRequest.Filter.HasValue() {
+			conditions = mutationRequest.Filter.Value().Conditions
+		}
+		if mutationRequest.DocIDs.HasValue() {
+			docIDs := mutationRequest.DocIDs.Value()
+			ids := make([]any, len(docIDs))
+			for i, docID := range docIDs {
+				ids[i] = docID
+			}
+			docIDCondition := map[string]any{request.DocIDFieldName: map[string]any{"_in": ids}}
+			if conditions != nil {
+				conditions = map[string]any{"_and": []any{docIDCondition, conditions}}
+			} else {
+				conditions = docIDCondition
+			}
+		}
+		filter := immutable.None[map[string]any]()
+		if conditions != nil {
+			filter = immutable.Some(conditions)
+		}
+		return &Mutation{
+			Select: Select{
+				Targetable:      Targetable{Field: Field{Index: thisIndex, Name: mutationRequest.Collection}},
+				DocumentMapping: mapping,
+				CollectionName:  mutationRequest.Collection,
+			},
+			Type:           TruncateObjects,
+			TruncateFilter: filter,
+		}, nil
+	}
+
 	underlyingSelect, err := toSelect(
 		ctx,
 		store,
@@ -1933,6 +2043,9 @@ type aggregateRequestTarget struct {
 	// The order in which items should be aggregated. Affects results when used with
 	// limit. Optional.
 	order immutable.Option[request.OrderBy]
+
+	// The groupBy specified by the consumer for this target. Optional.
+	groupBy immutable.Option[request.GroupBy]
 }
 
 // Returns the source of the aggregate as requested by the consumer
@@ -1946,6 +2059,7 @@ func getAggregateSources(field *request.Aggregate) ([]*aggregateRequestTarget, e
 			filter:            target.Filter,
 			limit:             toLimit(target.Limit, target.Offset),
 			order:             target.OrderBy,
+			groupBy:           target.GroupBy,
 		}
 	}
 

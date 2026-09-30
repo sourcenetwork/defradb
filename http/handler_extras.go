@@ -24,7 +24,7 @@ type extrasHandler struct{}
 
 func (h *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
 	// Send either 200 or 403 response based on whether the server is in dev mode
-	if IsDevMode {
+	if isDevMode(req) {
 		rw.WriteHeader(http.StatusOK)
 
 		db := mustGetContextClientDB(req)

@@ -28,10 +28,30 @@ type Walkable interface {
 	PrefixEnd() Walkable
 }
 
+type rawKey []byte
+
+func (k rawKey) ToString() string {
+	return string(k)
+}
+
+func (k rawKey) Bytes() []byte {
+	return k
+}
+
+func (k rawKey) ToDS() ds.Key {
+	return ds.RawKey(string(k))
+}
+
+func (k rawKey) PrefixEnd() Walkable {
+	return rawKey(bytesPrefixEnd(k))
+}
+
 // PrettyPrint returns the human readable version of the given key.
 func PrettyPrint(k Key) string {
 	switch typed := k.(type) {
 	case DataStoreKey:
+		return typed.PrettyPrint()
+	case PrimaryDataStoreKey:
 		return typed.PrettyPrint()
 	default:
 		return typed.ToString()

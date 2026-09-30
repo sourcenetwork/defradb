@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"sort"
 
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
@@ -50,29 +51,15 @@ func (s *SchemaManager) Schema() *gql.Schema {
 	return &s.schema
 }
 
-// ResolveTypes ensures all necessary types are defined, and
-// resolves any remaining thunks/closures defined on object fields.
+// ResolveTypes resolves object fields needed by the current generation phase.
 // It should be called *after* all dependent types have been added.
 func (s *SchemaManager) ResolveTypes() error {
-	// basically, this function just refreshes the
-	// schema.TypeMap, and runs the internal
-	// typeMapReducer (https://github.com/sourcenetwork/graphql-go/blob/v0.7.9/schema.go#L275)
-	// which ensures all the necessary types are defined in the
-	// typeMap, and if there are any outstanding Thunks/closures
-	// resolve them.
-
-	// ATM, there is no function to easily call the internal
-	// typeMapReducer function, so as a hack, we are just
-	// going to re-add the Query type.
-
 	for _, gqlType := range s.schema.TypeMap() {
-		object, isObject := gqlType.(*gql.Object)
-		if !isObject {
+		object, ok := gqlType.(*gql.Object)
+		if !ok {
 			continue
 		}
-		// We need to make sure the object's fields are resolved
 		object.Fields()
-
 		if object.Error() != nil {
 			return object.Error()
 		}
@@ -80,6 +67,30 @@ func (s *SchemaManager) ResolveTypes() error {
 
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
+}
+
+// FinalizeTypes resolves every schema thunk before the schema is shared.
+func (s *SchemaManager) FinalizeTypes() error {
+	if err := s.ResolveTypes(); err != nil {
+		return err
+	}
+	for _, gqlType := range s.schema.TypeMap() {
+		switch gqlType := gqlType.(type) {
+		case *gql.Object:
+			gqlType.Fields()
+			gqlType.Interfaces()
+		case *gql.Interface:
+			gqlType.Fields()
+		case *gql.InputObject:
+			gqlType.Fields()
+		case *gql.Union:
+			gqlType.Types()
+		}
+		if gqlType.Error() != nil {
+			return gqlType.Error()
+		}
+	}
+	return nil
 }
 
 func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
@@ -114,6 +125,11 @@ func (s *SchemaManager) WriteSDL(writer io.Writer) error {
 		return errors.Join(ErrGeneratingSDL, r.Errors[0])
 	}
 
+	// The introspection result orders types and fields by Go map iteration,
+	// which is non-deterministic. Sort everything by name so the emitted SDL is
+	// stable across runs (keeps the generated golden fixtures diff-friendly).
+	sortIntrospectionByName(r.Data)
+
 	respJson, err := json.Marshal(r.Data)
 	if err != nil {
 		return err
@@ -131,6 +147,34 @@ func (s *SchemaManager) WriteSDL(writer io.Writer) error {
 		return errors.Join(ErrWritingSDL, err)
 	}
 	return nil
+}
+
+// sortIntrospectionByName recursively sorts any slice of name-bearing objects in
+// an introspection result alphabetically by name, making the serialized output
+// deterministic. Slices whose elements have no "name" are left in place.
+func sortIntrospectionByName(v any) {
+	switch val := v.(type) {
+	case map[string]any:
+		for _, child := range val {
+			sortIntrospectionByName(child)
+		}
+	case []any:
+		for _, child := range val {
+			sortIntrospectionByName(child)
+		}
+		sort.SliceStable(val, func(i, j int) bool {
+			return introspectionName(val[i]) < introspectionName(val[j])
+		})
+	}
+}
+
+func introspectionName(v any) string {
+	if m, ok := v.(map[string]any); ok {
+		if name, ok := m["name"].(string); ok {
+			return name
+		}
+	}
+	return ""
 }
 
 const introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}" //nolint:lll

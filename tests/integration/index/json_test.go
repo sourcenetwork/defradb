@@ -563,6 +563,7 @@ func TestJSONIndex_WithEqFilterOnStringField_ShouldUseIndex(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -951,6 +952,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -1142,6 +1144,7 @@ func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -1316,6 +1319,7 @@ func TestJSONIndex_WithNotAndInFilter_ShouldNotUseIndex(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			// we don't assert index usage here because the query is not using the index
 		},

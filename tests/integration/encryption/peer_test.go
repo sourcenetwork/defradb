@@ -68,16 +68,16 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							"cid":       gomega.And(ageCid, uniqueCid),
-							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
-							"docID":     john21DocID,
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue(21), docRefKey(1, 1), ""),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
 						},
 						{
 							"cid":       gomega.And(nameCid, uniqueCid),
-							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
-							"docID":     john21DocID,
+							"delta":     encryptedCBORValueWithKey(testUtils.CBORValue("John"), docRefKey(1, 1), ""),
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
@@ -85,7 +85,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 						{
 							"cid":       uniqueCid,
 							"delta":     nil,
-							"docID":     john21DocID,
+							"docID":     testUtils.NewDocIndex(0, 0),
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{

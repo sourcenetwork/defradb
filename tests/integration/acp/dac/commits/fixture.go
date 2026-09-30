@@ -40,11 +40,10 @@ const userDoc = `
 `
 
 // userDocID is the docID for the userDoc.
-const userDocID = "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f"
+const userDocID = "{{.DocID0_0}}"
 
-// userDocCompositeCid is the deterministic composite-block cid for the userDoc.
-// It is only valid when the SignedDocs multiplier is excluded.
-const userDocCompositeCid = "bafyreifiehbtwpqssac2tk33na4agof7a23ymr5vd5xx6zty3zclftdogu"
+// userDocCompositeCid is the composite-block cid for the userDoc.
+const userDocCompositeCid = "{{.CID0_0_0}}"
 
 const usersAndPostsPolicy = `
 description: a test policy with two resources

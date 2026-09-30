@@ -37,6 +37,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	intOpts "github.com/sourcenetwork/defradb/internal/options"
@@ -66,10 +67,13 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
-	// recoveryWG tracks the background index-state recovery goroutine started by newDB.
-	// Close waits on this before tearing down storage so the goroutine does not outlive
-	// the rootstore.
+	// recoveryWG tracks the background index build worker. Close waits on it before tearing down
+	// storage so the worker does not outlive the rootstore.
 	recoveryWG sync.WaitGroup
+
+	// indexBuildWorker drains pending index build/drop records in the background, on startup and on
+	// demand after NewIndex/DeleteIndex. See index_worker.go.
+	indexBuildWorker *indexBuildWorker
 
 	rootstore corekv.TxnStore
 
@@ -112,6 +116,7 @@ type DB struct {
 
 	docMergeQueue *mergeQueue
 	colMergeQueue *mergeQueue
+	docShortIDMu  sync.Mutex
 
 	p2p *p2p.P2P
 	// Retry intervals when a replicator failure occurs.
@@ -224,14 +229,29 @@ func newDB(
 		return nil, err
 	}
 
-	db.recoveryWG.Go(func() {
-		if err := db.recoverIndexStates(db.ctx); err != nil {
-			log.ErrorE("index state recovery failed", err)
-		}
-	})
+	// Subscribe before the first drain so an event published meanwhile is buffered, not lost.
+	worker, err := db.newIndexBuildWorker()
+	if err != nil {
+		return nil, err
+	}
+	db.indexBuildWorker = worker
+	if suppressIndexWorkerRun {
+		// The run loop drains the subscription. With it suppressed, unsubscribe so the buffer
+		// cannot fill and block publishers; the test drives drainSync, which needs no event.
+		db.events.Unsubscribe(worker.sub)
+	} else {
+		db.recoveryWG.Go(func() {
+			worker.run(db.ctx)
+		})
+	}
 
 	return db, nil
 }
+
+// suppressIndexWorkerRun makes newDB construct the worker but not start its run loop, so a test can
+// drive draining via drainSync without the background loop racing its hand-seeded records. Test-only;
+// the db package runs its tests serially, so toggling it around one newDB call is safe.
+var suppressIndexWorkerRun bool
 
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
@@ -243,15 +263,58 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	return wrapDatastoreTxn(txn, db), nil
 }
 
+// reserveDocShortID commits the node-wide sequence separately from document writes so concurrent
+// document transactions do not contend on the sequence key. Failed document transactions may leave
+// gaps; short IDs only need to be unique. The lock spans transaction creation through commit so each
+// transaction sees the last committed reservation.
+func (db *DB) reserveDocShortID(ctx context.Context) (uint64, error) {
+	db.docShortIDMu.Lock()
+	defer db.docShortIDMu.Unlock()
+
+	txn, err := db.NewTxn(false)
+	if err != nil {
+		return 0, err
+	}
+	defer txn.Discard()
+
+	docShortID, err := id.NextDocShortID(InitContext(ctx, txn))
+	if err != nil {
+		return 0, err
+	}
+	if err := txn.Commit(); err != nil {
+		return 0, err
+	}
+	return docShortID, nil
+}
+
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
+	systemstore := datastore.SystemstoreFrom(db.rootstore)
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortIDFromStore(ctx, systemstore, collectionShortID, docID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+
 	headsIterator, err := NewHeadBlocksIterator(
 		ctx,
 		datastore.HeadstoreFrom(db.rootstore),
 		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
-		docID,
+		docShortID,
 	)
 	if err != nil {
 		return err

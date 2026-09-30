@@ -17,15 +17,17 @@ import (
 )
 
 func TestBaseCRDTvalueKey(t *testing.T) {
-	vk := keys.DataStoreKey{}.WithDocID("mykey").WithValueFlag()
-	if vk.ToString() != "/v/mykey" {
-		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), "/v/mykey")
+	vk := keys.DataStoreKey{}.WithDocShortID(1).WithValueFlag()
+	want := "/v/" + string(keys.EncodeDocShortID(1))
+	if vk.ToString() != want {
+		t.Errorf("Incorrect valueKey. Have %v, want %v", vk.ToString(), want)
 	}
 }
 
 func TestBaseCRDTprioryKey(t *testing.T) {
-	pk := keys.DataStoreKey{}.WithDocID("mykey").WithPriorityFlag()
-	if pk.ToString() != "/p/mykey" {
-		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), "/p/mykey")
+	pk := keys.DataStoreKey{}.WithDocShortID(1).WithPriorityFlag()
+	want := "/p/" + string(keys.EncodeDocShortID(1))
+	if pk.ToString() != want {
+		t.Errorf("Incorrect priorityKey. Have %v, want %v", pk.ToString(), want)
 	}
 }

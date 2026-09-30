@@ -21,7 +21,7 @@ import (
 
 // Hardcoded collection-level commit CIDs; no template placeholder yet.
 // See https://github.com/sourcenetwork/defradb/issues/4744.
-var branchableCollectionCidExcludes = []string{multiplier.EncryptedDocs}
+var branchableCollectionCidExcludes = []string{multiplier.EncryptedDocs, multiplier.SignedDocs}
 
 func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{
@@ -52,7 +52,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4"
+							cid: "{{.CollectionCID0_0}}"
 						) {
 						name
 					}
@@ -100,7 +100,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreibc2flc7hsmj3qfw77niwtbdh54thycppxizgvqdwn2l3zpcymbpq"
+							cid: "{{.CollectionCID0_1}}"
 						) {
 						name
 					}
@@ -148,7 +148,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreibyobeiqifhovshswbvezcuug6l76bz7ejm5zec47pzsmmmldz5we"
+							cid: "{{.CollectionCID0}}"
 						) {
 						name
 					}

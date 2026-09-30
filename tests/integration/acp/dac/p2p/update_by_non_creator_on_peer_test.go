@@ -68,7 +68,7 @@ func TestACP_P2P_NonCreatorUpdatesIndexedFieldOnPeerNode_Succeeds(t *testing.T) 
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{
@@ -176,7 +176,7 @@ func TestACP_P2P_NonCreatorUpdatesNonIndexedFieldOnPeerNode_Succeeds(t *testing.
 	test := testUtils.TestCase{
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 		Actions: []any{

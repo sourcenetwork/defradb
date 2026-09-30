@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// CheckAccessOfDocOnCollectionWithACP handles the check, which tells us if access to the target
+// CheckAccessOfDocOnCollection handles the check, which tells us if access to the target
 // document is valid, with respect to the permission type, and the specified collection.
 //
 // This function should only be called if acp is available. As we have unrestricted
@@ -37,7 +37,7 @@ import (
 // - (2) is false.
 // - Document is public (unregistered), whether signatured request or not doesn't matter.
 // - (3) is true.
-func CheckAccessOfDocOnCollectionWithACP(
+func CheckAccessOfDocOnCollection(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	nodeACP NACInfo,
@@ -86,6 +86,37 @@ func CheckDocAccessWithIdentityFunc(
 	permission acpTypes.ResourceInterfacePermission,
 	docID string,
 ) (bool, error) {
+	access, err := checkDocAccess(ctx, identityFunc, nodeACP, documentACP, collection, permission, docID)
+	return access.hasAccess, err
+}
+
+// docAccess is the outcome of a single object (document or collection) access check. It
+// distinguishes access that was explicitly granted via an acp registration from unrestricted
+// ("public") access.
+type docAccess struct {
+	// hasAccess is the final verdict: whether the actor may access the object.
+	hasAccess bool
+
+	// explicit is true when the verdict was decided by something specific to this actor: an explicit
+	// acp registration of the object (it is registered, so the actor was or was not granted a
+	// relationship on it), or a DAC-bypass privilege granted to the actor via node acp. It is false
+	// for access that is unrestricted for everyone: an unpermissioned collection or a public
+	// (unregistered) object.
+	explicit bool
+}
+
+// checkDocAccess performs the access check for a single object (docID) and reports both the verdict
+// and whether it was decided by an explicit acp registration (as opposed to unrestricted/public
+// access). See [CheckDocAccessWithIdentityFunc] for the access rules.
+func checkDocAccess(
+	ctx context.Context,
+	identityFunc func() immutable.Option[acpIdentity.Identity],
+	nodeACP NACInfo,
+	documentACP dac.DocumentACP,
+	collection client.Collection,
+	permission acpTypes.ResourceInterfacePermission,
+	docID string,
+) (docAccess, error) {
 	identity := identityFunc()
 	var identityValue string
 	// Note: The following must be done to handle the "*" edge case before:
@@ -102,16 +133,18 @@ func CheckDocAccessWithIdentityFunc(
 		identityValue = identity.Value().DID()
 	}
 
-	// Check if can bypass DAC, if not then continue DAC.
+	// Check if can bypass DAC, if not then continue DAC. A DAC-bypass privilege (granted to this
+	// actor via node acp) is specific to the actor, not access that is unrestricted for everyone, so
+	// it counts as explicit access.
 	if canDACBypass(ctx, nodeACP, identityValue) {
-		return true, nil
+		return docAccess{hasAccess: true, explicit: true}, nil
 	}
 
 	// Even if document acp exists, but there is no policy on the collection (unpermissioned collection)
 	// then we still have unrestricted access.
 	policyID, resourceName, hasPolicy := IsPermissioned(collection)
 	if !hasPolicy {
-		return true, nil
+		return docAccess{hasAccess: true, explicit: false}, nil
 	}
 
 	// Now that we know acp is available and the collection is permissioned, before checking access with
@@ -125,17 +158,17 @@ func CheckDocAccessWithIdentityFunc(
 		docID,
 	)
 	if err != nil {
-		return false, err
+		return docAccess{}, err
 	}
 
 	if !isRegistered {
-		// Unrestricted access as it is a public document.
-		return true, nil
+		// Unrestricted access as it is a public object.
+		return docAccess{hasAccess: true, explicit: false}, nil
 	}
 
 	documentResourcePerm, ok := permission.(acpTypes.DocumentResourcePermission)
 	if !ok {
-		return false, client.ErrInvalidResourcePermissionType
+		return docAccess{}, client.ErrInvalidResourcePermissionType
 	}
 
 	// Now actually check using the signature if this identity has access or not.
@@ -149,10 +182,90 @@ func CheckDocAccessWithIdentityFunc(
 	)
 
 	if err != nil {
-		return false, err
+		return docAccess{}, err
 	}
 
-	return hasAccess, nil
+	return docAccess{hasAccess: hasAccess, explicit: true}, nil
+}
+
+// CheckDocReadAccessWithIdentityFunc reports whether the actor (resolved by identityFunc) may read
+// the document identified by docID on the given collection. This gates the document's entire commit
+// DAG / history (every block of it), not just its current field values. docID is empty for a
+// collection-level object, which only branchable collections have.
+//
+// Access is granted if EITHER:
+//   - the actor was explicitly granted read access to the document — an actor with whom a specific
+//     document was shared may read that document even without access to the rest of a branchable
+//     collection; OR
+//   - the actor can read every object the document relates to: the document itself (when present)
+//     and, for a branchable collection, the collection object (gated using the collection id).
+//     Requiring collection access in the non-explicit case keeps a private branchable collection
+//     gating its public (unregistered) documents too.
+//
+// For a non-branchable collection this reduces to the document's own read access. An explicit denial
+// on the document always denies, regardless of collection access (the document's own acp wins).
+func CheckDocReadAccessWithIdentityFunc(
+	ctx context.Context,
+	identityFunc func() immutable.Option[acpIdentity.Identity],
+	nodeACP NACInfo,
+	documentACP dac.DocumentACP,
+	collection client.Collection,
+	docID string,
+) (bool, error) {
+	docAccessible := true
+	if docID != "" {
+		access, err := checkDocAccess(
+			ctx, identityFunc, nodeACP, documentACP, collection, acpTypes.DocumentReadPerm, docID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if access.explicit && access.hasAccess {
+			// Explicitly shared this specific document: sufficient on its own.
+			return true, nil
+		}
+		docAccessible = access.hasAccess
+	}
+	if !docAccessible {
+		return false, nil
+	}
+
+	// The document is public (or this is a collection-level commit). For a branchable collection the
+	// commit is part of the collection-level DAG, so it additionally requires collection access.
+	if collection.Version().IsBranchable {
+		access, err := checkDocAccess(
+			ctx,
+			identityFunc,
+			nodeACP,
+			documentACP,
+			collection,
+			acpTypes.DocumentReadPerm,
+			collection.Version().CollectionID,
+		)
+		if err != nil {
+			return false, err
+		}
+		if !access.hasAccess {
+			return false, nil
+		}
+	}
+
+	return true, nil
+}
+
+// CheckDocReadAccess is [CheckDocReadAccessWithIdentityFunc] for a known identity.
+func CheckDocReadAccess(
+	ctx context.Context,
+	identity immutable.Option[acpIdentity.Identity],
+	nodeACP NACInfo,
+	documentACP dac.DocumentACP,
+	collection client.Collection,
+	docID string,
+) (bool, error) {
+	identityFunc := func() immutable.Option[acpIdentity.Identity] {
+		return identity
+	}
+	return CheckDocReadAccessWithIdentityFunc(ctx, identityFunc, nodeACP, documentACP, collection, docID)
 }
 
 // CheckNodeOperationAccess returns an [client.ErrNotAuthorizedToPerformOperation]
@@ -222,7 +335,7 @@ func CheckNodeOperationAccess(
 	)
 
 	if err != nil {
-		return acp.NewErrFailedToVerifyNodeAccessWithACP(
+		return acp.NewErrFailedToVerifyNodeAccess(
 			err,
 			permission.String(),
 			policyID,

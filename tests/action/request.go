@@ -82,6 +82,12 @@ type Request struct {
 	// Asserter is an optional custom result asserter.
 	Asserter ResultAsserter
 
+	// The warnings expected in the `extensions` field of the response. Optional.
+	//
+	// Leaving it empty asserts the response carries none. Only the Code and any Detail entries
+	// given are compared.
+	ExpectedWarnings []client.GQLWarning
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -145,6 +151,7 @@ nodeLoop:
 			a.Asserter,
 			nodeID,
 			!a.NonOrderedResults,
+			a.ExpectedWarnings,
 		)
 	}
 

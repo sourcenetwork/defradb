@@ -59,16 +59,23 @@ func (n *addNode) Kind() string { return "addNode" }
 func (n *addNode) Init() error { return nil }
 
 func (n *addNode) docIDsToPrefixes(ids []string, desc client.CollectionVersion) ([]keys.Walkable, error) {
-	shortID, err := id.GetShortCollectionID(n.p.ctx, desc.CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(n.p.ctx, desc.CollectionID)
 	if err != nil {
 		return nil, err
 	}
 
 	prefixes := make([]keys.Walkable, len(ids))
-	for i, id := range ids {
+	for i, docID := range ids {
+		docShortID, found, err := id.GetDocShortID(n.p.ctx, collectionShortID, docID)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			return nil, client.ErrDocumentNotFoundOrNotAuthorized
+		}
 		prefixes[i] = keys.DataStoreKey{
-			CollectionShortID: shortID,
-			DocID:             id,
+			CollectionShortID: collectionShortID,
+			DocShortID:        docShortID,
 		}
 	}
 	return prefixes, nil

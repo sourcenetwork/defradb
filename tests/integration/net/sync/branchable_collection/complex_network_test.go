@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 const syncBranchableTopic = "sync-branchable"
@@ -376,7 +377,8 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 	sameCid5 := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
-		FlakeRetries: 5,
+		MultiplierExcludes: []string{multiplier.SignedDocs},
+		FlakeRetries:       5,
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

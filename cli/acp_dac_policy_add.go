@@ -35,7 +35,9 @@ Notes:
   - A non-DRI policy will be accepted (will be registered with acp system).
   - But only a valid DRI policyID & resource can be specified on a collection.
   - DRI validation happens when attempting to add a collection with '@policy'.
-  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+  - Learn more about the
+  [Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+  system.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// TODO-ACP: Ensure here (before going through acp system) if the required identity argument

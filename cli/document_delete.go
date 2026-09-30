@@ -18,15 +18,21 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
-		Long:  `Delete documents by docID or filter and lists the number of documents deleted.`,
+		Long: `Delete documents by docID or filter and list the number of documents deleted.
+
+This is a soft delete. The document's data and commit history remain available locally
+and can be accessed using the --show-deleted flag on the 'document get' command
+or the showDeleted parameter on GraphQL queries.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
@@ -43,14 +49,30 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteOpt.SetEnableSigning(enableSigning)
+				}
 
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
+				filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+				if err != nil {
+					return NewErrParsingArgument("filter", err)
+				}
+				if filterValue == nil {
+					filterValue = map[string]any{}
+				}
+
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteWithFilterOpt.SetEnableSigning(enableSigning)
+				}
 
-				res, err := col.DeleteDocumentsWithFilter(ctx, filter, deleteWithFilterOpt)
+				res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteWithFilterOpt)
 				if err != nil {
 					return err
 				}
@@ -73,6 +95,7 @@ func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

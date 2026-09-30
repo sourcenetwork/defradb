@@ -19,8 +19,6 @@ import (
 )
 
 func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -33,16 +31,26 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							cid
 							COUNT(field: links)
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid, "COUNT": 0},
-						{"cid": uniqueCid, "COUNT": 0},
-						{"cid": uniqueCid, "COUNT": 2},
+
+						{
+							"cid":   testUtils.ValidCID(),
+							"COUNT": 0,
+						},
+						{
+							"cid":   testUtils.ValidCID(),
+							"COUNT": 0,
+						},
+						{
+							"cid":   testUtils.ValidCID(),
+							"COUNT": 2,
+						},
 					},
 				},
 			},
@@ -70,7 +78,7 @@ func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+						_commits(docID: "{{.DocID0_0}}") {
 							fieldName
 							linkCount: COUNT(field: links)
 							headCount: COUNT(field: heads)

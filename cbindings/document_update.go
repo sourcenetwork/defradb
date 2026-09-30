@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 //export UpdateDocument
@@ -75,7 +76,11 @@ func UpdateDocument(
 		if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.UpdateDocument(ctx, doc, options.WithIdentity(options.UpdateDocument(), ident))
+		updateOpt := options.WithIdentity(options.UpdateDocument(), ident)
+		if opts.enableSigning != 0 {
+			updateOpt.SetEnableSigning(opts.enableSigning > 0)
+		}
+		err = col.UpdateDocument(ctx, doc, updateOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -83,12 +88,18 @@ func UpdateDocument(
 
 	// If docID is not provided, next try to update the documents by filter
 	case filter != "":
-		var filterValue any
-		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+		filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater,
-			options.WithIdentity(options.UpdateDocumentsWithFilter(), ident))
+		if filterValue == nil {
+			filterValue = map[string]any{}
+		}
+		updateOpt := options.WithIdentity(options.UpdateDocumentsWithFilter(), ident)
+		if opts.enableSigning != 0 {
+			updateOpt.SetEnableSigning(opts.enableSigning > 0)
+		}
+		res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

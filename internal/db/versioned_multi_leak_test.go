@@ -136,7 +136,6 @@ func authorBlockWithUnknownField(
 	fieldBlock := coreblock.Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               docID,
 				FieldName:           unknownField,
 				Priority:            1,
 				CollectionVersionID: collectionVersionID,
@@ -155,7 +154,6 @@ func authorBlockWithUnknownField(
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:               docID,
 			Priority:            1,
 			CollectionVersionID: collectionVersionID,
 			Status:              1,

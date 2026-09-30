@@ -35,8 +35,6 @@ func ListP2PDocuments(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	listP2PDocOpt := options.WithIdentity(options.ListP2PDocuments(), acpIdentity.FromContext(ctx))
 	cols, err := node.DB.ListP2PDocuments(ctx, listP2PDocOpt)
 	if err != nil {

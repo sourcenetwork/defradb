@@ -1,8 +1,8 @@
 ![Test Coverage Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-coverage.yml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
 [![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
-[![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.gg/w7jYQVJ)
-[![Twitter Follow](https://img.shields.io/twitter/follow/sourcenetwrk.svg?label=&style=social)](https://twitter.com/sourcenetwrk)
+[![Discord](https://img.shields.io/discord/1374835078781468722.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://source.network/discord)
+[![X URL](https://img.shields.io/twitter/follow/edgeofsource.svg?label=&style=social)](https://x.com/edgeofsource)
 
 <p align="center">
   <picture>
@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the Vera network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -39,6 +39,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
+   * [Embedded DefraDB](#embedded-defradb)
+   * [Versioning](#versioning)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -71,7 +73,7 @@ Building DefraDB from source requires significant system resources. If you encou
 
 ### Prerequisites
 
-- [Go](https://golang.org/) 1.24 or later
+- [Go](https://golang.org/) 1.26 or later
 - [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
 - Git
 
@@ -465,28 +467,30 @@ As we add or update documents in the Article collection on *nodeA*, they will be
 
 ## Securing the HTTP API with TLS
 
-By default, DefraDB will expose its HTTP API at `http://localhost:9181/api`. It's also possible to configure the API to use TLS with self-signed certificates or Let's Encrypt.
+By default, DefraDB exposes its HTTP API over plain HTTP at `http://localhost:9181/api`. It can instead serve the API over HTTPS using a TLS certificate.
 
-To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
-being the public key and `server.crt` being the private key, just do:
+DefraDB enables TLS automatically when both the certificate (`server.crt`) and the private key (`server.key`) are present in the `certs` directory inside the data and configuration directory (by default `~/.defradb/certs/`). With both files in place, just start the node:
 ```shell
-defradb start --tls
+defradb start
+```
+and the HTTP API is served over `https://localhost:9181` instead.
+
+Enabling TLS requires both files: if only one of `server.crt` and `server.key` is present (or only one of the paths below is set), `defradb start` fails with an error rather than silently starting without TLS. With neither present, DefraDB simply starts over plain HTTP.
+
+The certificate and key can be generated with your generator of choice, or with `make tls-certs`. Since they should live inside the DefraDB data and configuration directory, the recommended command is:
+```shell
+make tls-certs path="~/.defradb/certs"
 ```
 
-The keys can be generated with your generator of choice or with `make tls-certs`.
-
-Since the keys should be stored within the DefraDB data and configuration directory, the recommended key generation command is `make tls-certs path="~/.defradb/certs"`.
-
-If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be explicitly defined in addition to the `--tls` flag or `tls` set to `true` in the config.
-
-Then to start the server with TLS, using your generated keys in custom path:
+To use a certificate and key stored elsewhere, set both paths explicitly (both are required). The certificate path is `pubkeypath` and the private key path is `privkeypath`; they can be passed as flags or set in the config file:
 ```shell
-defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
-
+defradb start --pubkeypath ~/path-to/server.crt --privkeypath ~/path-to/server.key
 ```
+
+Because the certificates are self-signed, HTTPS clients must be configured to trust them (for example, `curl -k`). Note that the bundled `defradb` CLI does not yet connect to a TLS-enabled node.
 
 ## Access Control System
-Read more about the DefraDB ACP System [here](/acp/README.md)
+Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 ## Supporting CORS
 
@@ -529,9 +533,31 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 [Trace exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
 
+## Embedded DefraDB
+
+Besides running as a standalone node, DefraDB can be embedded into an application through its C bindings, built from the [`cbindings`](./cbindings) package. The shared library exposes the operations implemented there, so an embedding application works against a local database in process.
+
+Build the library with one of the following targets:
+
+```shell
+make build-c-shared-linux      # build/libdefradb.so plus the C headers
+make build-c-shared-macos      # build/libdefradb.dylib plus the C headers (macOS host)
+make build-c-shared-linux:deb  # the same, packaged as a .deb
+make build-c-static-windows
+make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=21
+```
+
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The macOS target requires Xcode Command Line Tools and writes `libdefradb.dylib` and the same headers, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a macOS architecture, and `BUILD_TAGS=silent` to disable logging. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 21, which is the minimum supported.
+
+For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
+
+## Versioning
+
+Please refer to our [versioning policy](./VERSIONING.md).
+
 ## Community
 
-Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
+Discuss on [Discord](https://source.network/discord) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [X](https://x.com/edgeofsource).
 
 ## Explorer
 
@@ -539,7 +565,7 @@ Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 
-DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
+DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make production and non-production use of it provided such use is not in connection with the operation or provision of a Managed Service. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete [license](licenses/BSL.txt) before usage.
 
 ## Contributors
 

@@ -17,20 +17,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
-
-// CollectionIndex is an interface for collection indexes
-// It abstracts away common index functionality to be implemented
-// by different index types: non-unique, unique, and composite
-type CollectionIndex interface {
-	client.CollectionIndex
-	// RemoveAll removes all documents from the index
-	RemoveAll(context.Context) error
-}
 
 func isSupportedKind(kind client.FieldKind) bool {
 	if kind.IsObject() && !kind.IsArray() {
@@ -80,35 +73,87 @@ func isSupportedKind(kind client.FieldKind) bool {
 // already written by a concurrent live write of the same document, and Delete tolerates a
 // missing entry for a document the backfill has not yet reached.
 func NewCollectionIndex(
+	ctx context.Context,
 	collection client.Collection,
 	desc client.IndexDescription,
 	building bool,
-) (CollectionIndex, error) {
-	if len(desc.Fields) == 0 {
-		return nil, NewErrIndexDescHasNoFields(desc)
+) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	// Read the epoch after validation so an invalid description fails the same way whether or not a
+	// transaction is on the context.
+	base.epoch, err = getIndexEpoch(ctx, collection.Version().CollectionID, desc.ID)
+	if err != nil {
+		return nil, err
+	}
+	return wrapCollectionIndex(base)
+}
+
+// newCollectionIndexWithEpoch builds an index instance pinned to a caller-resolved epoch, rather
+// than re-reading the sequence. A backfill uses it so every batch writes the same epoch even if a
+// concurrent version switch advances the sequence mid-build; splitting one build across two epochs
+// would leave the live epoch missing the documents indexed before the advance. Live writes use
+// NewCollectionIndex, which always targets the current epoch.
+func newCollectionIndexWithEpoch(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+	epoch uint32,
+) (client.CollectionIndex, error) {
+	base, err := buildIndexBase(collection, desc, building)
+	if err != nil {
+		return nil, err
+	}
+	base.epoch = epoch
+	return wrapCollectionIndex(base)
+}
+
+// buildIndexBase validates the description against the collection and assembles the shared index
+// base, leaving the epoch unset for the caller to resolve.
+func buildIndexBase(
+	collection client.Collection,
+	desc client.IndexDescription,
+	building bool,
+) (collectionBaseIndex, error) {
+	fields := desc.GetFields()
+	if len(fields) == 0 {
+		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
 		building:        building,
-		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
-		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(fields)),
+		descending:      make([]bool, len(fields)),
+		fieldGenerators: make([]FieldIndexGenerator, len(fields)),
 	}
-	for i := range desc.Fields {
-		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
+	for i := range fields {
+		field, foundField := collection.Version().GetFieldByName(fields[i].Name)
 		if !foundField {
-			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
+		base.descending[i] = fields[i].Descending
 		if !isSupportedKind(field.Kind) {
-			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
+			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
-			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
+			ct, _ := crdt.TryGetFieldCRDT(field.Typ)
+			return collectionBaseIndex{}, NewErrCannotIndexAccumulatedCRDTField(field.Name, ct.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
-	if desc.Unique {
+	return base, nil
+}
+
+// wrapCollectionIndex returns the concrete index implementation for the base, dispatched by kind.
+func wrapCollectionIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
+	if base.desc.IsVector() {
+		return newCollectionVectorIndex(base)
+	}
+	if base.desc.GetUnique() {
 		return &collectionUniqueIndex{collectionBaseIndex: base}, nil
 	}
 	return &collectionSimpleIndex{collectionBaseIndex: base}, nil
@@ -190,11 +235,18 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.CollectionFieldDescription
+	fieldsDescs []client.CollectionFieldDescription
+	// descending is each field's direction, positionally aligned with fieldsDescs. Resolved once at
+	// construction so the write path never reads the deprecated top-level fields.
+	descending      []bool
 	fieldGenerators []FieldIndexGenerator
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
 	building bool
+	// epoch is the namespace this instance reads and writes, resolved from the index's epoch
+	// sequence at construction. During a rebuild the sequence names the epoch being built, so
+	// live writes maintain it.
+	epoch uint32
 }
 
 // getDocFieldValues retrieves the values of the indexed fields from the given document.
@@ -221,7 +273,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 func (index *collectionBaseIndex) getDocumentsIndexKey(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 ) (keys.IndexDataStoreKey, error) {
 	fieldValues, err := index.getDocFieldValues(doc)
 	if err != nil {
@@ -231,19 +283,28 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	fields := make([]keys.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
 		fields[i].Value = fieldValues[i]
-		fields[i].Descending = index.desc.Fields[i].Descending
+		fields[i].Descending = index.descending[i]
 	}
 
-	if appendDocID {
-		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
-	}
-
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return keys.IndexDataStoreKey{}, err
 	}
+	var docShortID uint64
+	if appendDocShortID {
+		var found bool
+		docShortID, found, err = id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+		if err != nil {
+			return keys.IndexDataStoreKey{}, err
+		}
+		if !found {
+			return keys.IndexDataStoreKey{}, client.ErrDocumentNotFoundOrNotAuthorized
+		}
+	}
 
-	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
+	key := keys.NewIndexDataStoreKey(collectionShortID, index.desc.ID, index.epoch, fields)
+	key.DocShortID = docShortID
+	return key, nil
 }
 
 // deleteIndexKey removes a single index entry. While the index is building, a missing
@@ -272,59 +333,6 @@ func (index *collectionBaseIndex) deleteIndexKey(
 	return nil
 }
 
-// RemoveAll remove all artifacts of the index from the storage, i.e. all index
-// field values for all documents.
-func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
-	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
-	if err != nil {
-		return err
-	}
-
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionShortID = shortID
-	prefixKey.IndexID = index.desc.ID
-
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
-		Prefix:   &prefixKey,
-		KeysOnly: true,
-	})
-	if err != nil {
-		return NewErrCreateDeleteIndexIterator(err)
-	}
-
-	keysToDelete := make([]keys.IndexDataStoreKey, 0)
-	for {
-		hasNext, err := iter.Next()
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-		if !hasNext {
-			break
-		}
-
-		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs)
-		if err != nil {
-			return errors.Join(err, iter.Close())
-		}
-
-		keysToDelete = append(keysToDelete, key)
-	}
-	if err := iter.Close(); err != nil {
-		return err
-	}
-
-	for _, key := range keysToDelete {
-		err := txn.Datastore().Delete(ctx, &key)
-		if err != nil {
-			return NewCanNotDeleteIndexedField(err)
-		}
-	}
-
-	return nil
-}
-
 // Name returns the name of the index
 func (index *collectionBaseIndex) Name() string {
 	return index.desc.Name
@@ -340,11 +348,11 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 func (index *collectionBaseIndex) generateKeysAndProcess(
 	ctx context.Context,
 	doc *client.Document,
-	appendDocID bool,
+	appendDocShortID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocShortID)
 	if err != nil {
 		return err
 	}
@@ -385,7 +393,7 @@ type collectionSimpleIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionSimpleIndex)(nil)
+var _ client.CollectionIndex = (*collectionSimpleIndex)(nil)
 
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
@@ -427,6 +435,170 @@ func (index *collectionSimpleIndex) Delete(
 	})
 }
 
+// collectionVectorIndex is a vector index. Save/Update/Delete maintain it in the same transaction as
+// the document write, through the algorithm-agnostic vectorindex package.
+//
+// The collection short id needs a store read, so it is read on first use and kept. The index handle
+// is opened fresh on each call because it holds the request's transaction.
+type collectionVectorIndex struct {
+	collectionBaseIndex
+
+	// vectorDesc is the index's vector config, resolved once at construction (this type is only built
+	// for a vector-kind index).
+	vectorDesc *client.VectorIndexDescription
+
+	collectionShortID uint32
+	shortIDResolved   bool
+}
+
+var _ client.CollectionIndex = (*collectionVectorIndex)(nil)
+
+func newCollectionVectorIndex(base collectionBaseIndex) (client.CollectionIndex, error) {
+	vectorDesc, ok := base.desc.GetVector()
+	if !ok {
+		return nil, NewErrCorruptedVectorIndex(base.desc.Name, "")
+	}
+	return &collectionVectorIndex{collectionBaseIndex: base, vectorDesc: vectorDesc}, nil
+}
+
+// resolveCollectionShortID returns the collection short id, reading it from the store on the first
+// call and reusing it after. The id never changes, so this saves a store read on every write.
+func (index *collectionVectorIndex) resolveCollectionShortID(ctx context.Context) (uint32, error) {
+	if index.shortIDResolved {
+		return index.collectionShortID, nil
+	}
+	shortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return 0, err
+	}
+	index.collectionShortID = shortID
+	index.shortIDResolved = true
+	return shortID, nil
+}
+
+// openIndex opens the vector index for this description, reading and writing through the transaction
+// on ctx. The vectorindex package selects the algorithm, so the planner opens the same index when
+// searching. An unsupported algorithm or metric fails here, on first use.
+func (index *collectionVectorIndex) openIndex(ctx context.Context) (vectorindex.Index, uint32, error) {
+	collectionShortID, err := index.resolveCollectionShortID(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	idx, err := vectorindex.Open(ctx, collectionShortID, index.desc.ID, index.epoch, *index.vectorDesc)
+	if err != nil {
+		return nil, 0, err
+	}
+	return idx, collectionShortID, nil
+}
+
+// nodeAndVector returns the node id (the document's short id) and the vector to index for doc.
+// found is false when the document has no short id, which the callers decide how to treat. vec is
+// nil when the document has no value for the field, meaning there is nothing to index.
+func (index *collectionVectorIndex) nodeAndVector(
+	ctx context.Context,
+	collectionShortID uint32,
+	doc *client.Document,
+) (uint64, []float32, bool, error) {
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil || !found {
+		return 0, nil, found, err
+	}
+
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return 0, nil, false, err
+	}
+	if fieldVal == nil || fieldVal.Value() == nil {
+		// No vector on this doc, so nothing to index.
+		return docShortID, nil, true, nil
+	}
+
+	vec, ok := fieldVal.NormalValue().Float32Array()
+	if !ok {
+		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
+	}
+
+	return docShortID, vec, true, nil
+}
+
+// Save indexes doc by inserting its vector. If the document has no value for the indexed field,
+// there is nothing to index and Save does nothing.
+func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Document) error {
+	idx, collectionShortID, err := index.openIndex(ctx)
+	if err != nil {
+		return err
+	}
+
+	nodeID, vec, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
+	if err != nil {
+		return err
+	}
+	if !found {
+		// A document being written always has a short id by this point. Not finding one means the
+		// document is missing or the caller cannot access it, which is an error, not a doc to skip.
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	if vec == nil {
+		return nil
+	}
+
+	// Vectors of different lengths in one graph make distances meaningless. Dimensions is set for a
+	// directly-written field, so check against it. It is 0 only for an @embedding field, where the
+	// model fixes the length, so the only guard left is against an empty vector.
+	if index.vectorDesc.Dimensions > 0 && len(vec) != int(index.vectorDesc.Dimensions) {
+		return NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
+	}
+	if len(vec) == 0 {
+		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
+	}
+
+	return idx.Insert(nodeID, vec)
+}
+
+// Update re-indexes a document whose vector changed. A document keeps the same id across an update,
+// so the old and new vectors map to the same node; delete-then-save re-inserts it. (The binding
+// handles the in-place replacement; see the vectorindex package.)
+func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	if err := index.Delete(ctx, oldDoc); err != nil {
+		return err
+	}
+	return index.Save(ctx, newDoc)
+}
+
+// Delete removes doc from the search results. It is a soft delete: the node is marked deleted but
+// kept in the graph, so other nodes still reach their neighbours through it. Search never returns a
+// deleted node, so from a query's point of view the document is gone right away, in this same
+// transaction. This is on purpose: removing a node outright means fixing up every neighbour's links
+// in the write path, which is the most error-prone part of a vector delete. The leftover links only
+// lower recall over time, not correctness; a background pass to clean up tombstones is planned.
+//
+// While the index is still building, the backfill may not have reached this document yet, so a
+// missing short id is expected and Delete does nothing. Once built, a missing short id means the
+// index is out of step with the data.
+func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Document) error {
+	idx, collectionShortID, err := index.openIndex(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Delete needs only the node id, not the vector, so resolve the short id directly. Going through
+	// nodeAndVector would also re-decode the field value and fail if it cannot, blocking the delete of
+	// a document whose vector became undecodable.
+	nodeID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		if index.building {
+			return nil
+		}
+		return NewErrCorruptedVectorIndex(index.desc.Name, doc.ID().String())
+	}
+
+	return idx.Delete(nodeID)
+}
+
 // hasIndexKeyNilField returns true if the index key has a field with nil value
 func hasIndexKeyNilField(key *keys.IndexDataStoreKey) bool {
 	for i := range key.Fields {
@@ -441,7 +613,7 @@ type collectionUniqueIndex struct {
 	collectionBaseIndex
 }
 
-var _ CollectionIndex = (*collectionUniqueIndex)(nil)
+var _ client.CollectionIndex = (*collectionUniqueIndex)(nil)
 
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
@@ -456,7 +628,7 @@ func (index *collectionUniqueIndex) Save(
 //
 // Keys whose value is empty embed the docID in the key itself, so they are already
 // doc-specific and are written unconditionally. For value-bearing keys, an entry that
-// already exists is a uniqueness violation — except while the index is building, where
+// already exists is a uniqueness violation, except while the index is building, where
 // an entry for the same doc means a concurrent live write got there first and is skipped.
 func saveUniqueKey(
 	ctx context.Context,
@@ -467,7 +639,14 @@ func saveUniqueKey(
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	key, val, err := makeUniqueKeyValueRecord(key, doc)
+	docShortID, found, err := id.GetDocShortID(ctx, key.CollectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
+	key, val, err := makeUniqueKeyValueRecord(key, docShortID)
 	if err != nil {
 		return err
 	}
@@ -478,7 +657,7 @@ func saveUniqueKey(
 			return NewErrCheckUniqueIndexConstraint(err)
 		}
 		if existing != nil {
-			if tolerateSameDoc && string(existing) == doc.ID().String() {
+			if tolerateSameDoc && string(existing) == string(val) {
 				return nil
 			}
 			return newUniqueIndexError(doc, fieldsDescs)
@@ -511,13 +690,14 @@ func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFi
 
 func makeUniqueKeyValueRecord(
 	key keys.IndexDataStoreKey,
-	doc *client.Document,
+	docShortID uint64,
 ) (keys.IndexDataStoreKey, []byte, error) {
+	encodedDocShortID := keys.EncodeDocShortID(docShortID)
 	if hasIndexKeyNilField(&key) {
-		key.Fields = append(key.Fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
+		key.DocShortID = docShortID
 		return key, []byte{}, nil
 	} else {
-		return key, []byte(doc.ID().String()), nil
+		return key, encodedDocShortID, nil
 	}
 }
 
@@ -526,8 +706,19 @@ func (index *collectionUniqueIndex) Delete(
 	doc *client.Document,
 ) error {
 	txn := datastore.CtxMustGetTxn(ctx)
+	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return client.ErrDocumentNotFoundOrNotAuthorized
+	}
 	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
-		key, _, err := makeUniqueKeyValueRecord(key, doc)
+		key, _, err := makeUniqueKeyValueRecord(key, docShortID)
 		if err != nil {
 			return err
 		}
@@ -561,10 +752,10 @@ func (index *collectionUniqueIndex) Update(
 	return nil
 }
 
-func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {
-	for _, indexedFields := range index.Description().Fields {
-		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
-		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
+	for _, name := range indexFieldNames(index.Description()) {
+		oldVal, getOldValErr := oldDoc.GetValue(name)
+		newVal, getNewValErr := newDoc.GetValue(name)
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set

@@ -66,6 +66,9 @@ type TestCase struct {
 	// differences between database types, or we need to temporarily document a bug.
 	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
+	// HTTP configures the test node HTTP API behavior.
+	HTTP immutable.Option[options.NodeHTTPOptions]
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
@@ -88,6 +91,22 @@ type TestCase struct {
 	// The test will be skipped if the current active set of multipliers
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
+
+	// SupportedFromVersion is the earliest release supporting the behaviour under
+	// test, as a semver tag such as "v1.1.0".
+	//
+	// It is only consulted by multipliers that target a specific release. Such a
+	// multiplier runs the test against this release instead of its default target
+	// when the default is older. Empty (the default) runs against the default
+	// target.
+	//
+	// This is for tests that assert behaviour an older release lacks. Use
+	// [TestCase.MultiplierExcludes] for opting out of a multiplier for any other
+	// reason, including gaps in what the harness can do.
+	//
+	// A malformed value fails the test rather than silently running against a
+	// release that cannot support it.
+	SupportedFromVersion string
 
 	// FlakeRetries specifies the number of times a flaky test should be retried
 	// if it fails. If a test succeeds on any attempt, it is considered passed.
@@ -118,15 +137,43 @@ type KMS struct {
 // the first item that is neither an AddCollection, AddDoc or UpdateDoc action.
 type SetupComplete struct{}
 
-// ConfigureNode allows the explicit configuration of new Defra nodes.
+// RandomNetworkingConfig returns a node configured with random networking.
+var RandomNetworkingConfig = action.RandomNetworkingConfig
+
+// NoNetworkingConfig returns a node configured with P2P disabled entirely.
+var NoNetworkingConfig = action.NoNetworkingConfig
+
+// nodeSetupConfig returns the node setup settings for this test case.
+func (tc TestCase) nodeSetupConfig() action.NodeSetupConfig {
+	return action.NodeSetupConfig{
+		EnableSigning:     tc.EnableSigning,
+		HTTP:              tc.HTTP,
+		IsDocumentACPTest: hasDocumentACPActions(tc.Actions),
+		VeraImage:         veraImage,
+		DatabaseDir:       databaseDir,
+		BadgerEncryption:  badgerEncryption,
+		LensRuntime:       lensType,
+		LensPoolSize:      lensPoolSize,
+	}
+}
+
+// hasDocumentACPActions reports whether the action set uses document ACP.
 //
-// If no nodes are explicitly configured, a default one will be setup.  There is no
-// upper limit to the number that can be configured.
-//
-// Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
-// If the action has a `NodeID` property and it is not specified, the action will be
-// effected on all nodes.
-type ConfigureNode func() options.NodeP2POptions
+// Spinning up a Vera instance is slow, so tests that do not need one are
+// skipped when Remote DAC is selected.
+func hasDocumentACPActions(actions []any) bool {
+	for _, a := range actions {
+		switch a.(type) {
+		case
+			AddDACPolicy,
+			AddDACActorRelationship,
+			*action.AddDACCollectionActorRelationship,
+			DeleteDACActorRelationship:
+			return true
+		}
+	}
+	return false
+}
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -254,6 +301,48 @@ type DeleteDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// TransactionID to use for the action. Optional.
+	TransactionID immutable.Option[int]
+}
+
+// DeleteWithFilter will delete the set of documents that match the given filter.
+type DeleteWithFilter struct {
+	// NodeID may hold the ID (index) of a node to apply this delete to.
+	//
+	// If a value is not provided the delete will be applied to all nodes.
+	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only delete public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then
+	// can also delete private document(s) that are owned by this Identity.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// The collection in which the documents should be deleted.
+	CollectionID int
+
+	// The filter to match documents against.
+	Filter any
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+
+	// Skip waiting for an update event on the local event bus.
+	//
+	// This should only be used for tests that do not correctly
+	// publish an update event to the local event bus.
+	SkipLocalUpdateEvent bool
 
 	// TransactionID to use for the action. Optional.
 	TransactionID immutable.Option[int]
@@ -634,7 +723,14 @@ type SyncDocs struct {
 	// This is used by testing framework to determine from which nodes the expected doc heads can
 	// be looked up for WaitForSync action.
 	// There must an item for each document in DocIDs.
+	//
+	// Not required when Concurrency > 1 (concurrent syncs skip head tracking).
 	SourceNodes []int
+
+	// Concurrency, when greater than 1, fires that many SyncDocuments calls in parallel for the
+	// same DocIDs instead of a single sequential call. ExpectedError is asserted against every
+	// call, and SourceNodes head tracking is skipped. Zero or 1 means a single sequential sync.
+	Concurrency int
 
 	// Any error expected from the action.
 	ExpectedError string

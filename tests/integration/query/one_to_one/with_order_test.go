@@ -41,7 +41,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "{{.DocID0_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -50,7 +50,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "{{.DocID0_1}}"
 				}`,
 			},
 			&action.Request{
@@ -114,7 +114,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "{{.DocID0_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -123,7 +123,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "{{.DocID0_1}}"
 				}`,
 			},
 			&action.Request{
@@ -187,7 +187,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "{{.DocID0_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -196,7 +196,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "{{.DocID0_1}}"
 				}`,
 			},
 			&action.Request{
@@ -248,7 +248,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "{{.DocID0_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -257,7 +257,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "{{.DocID0_1}}"
 				}`,
 			},
 			&action.Request{

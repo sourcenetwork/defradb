@@ -64,19 +64,19 @@ func getBooleanField(t *testing.T, doc *client.Document, fieldName string) bool 
 	return val
 }
 
-func getDocIDsFromDocs(docs []*client.Document) []string {
+func getDocIDsFromDocs(docs []GeneratedDoc) []string {
 	result := make([]string, 0, len(docs))
 	for _, doc := range docs {
-		result = append(result, doc.ID().String())
+		result = append(result, doc.GeneratedID)
 	}
 	return result
 }
 
-func filterByCollection(docs []GeneratedDoc, name string) []*client.Document {
-	var result []*client.Document
+func filterByCollection(docs []GeneratedDoc, name string) []GeneratedDoc {
+	var result []GeneratedDoc
 	for _, doc := range docs {
 		if doc.Col.Name == name {
-			result = append(result, doc.Doc)
+			result = append(result, doc)
 		}
 	}
 	return result
@@ -107,7 +107,7 @@ func assertDocIDsMatch(
 	docIDs := getDocIDsFromDocs(primaryDocs)
 	foreignValues := make([]string, 0, len(secondaryDocs))
 	for _, secDoc := range secondaryDocs {
-		foreignValues = append(foreignValues, getStringField(t, secDoc, foreignField))
+		foreignValues = append(foreignValues, getStringField(t, secDoc.Doc, foreignField))
 	}
 
 	if allowDuplicates {
@@ -215,7 +215,7 @@ func assertUniformRelationDistribution(
 
 	secondaryPerPrimary := make(map[string]int)
 	for _, d := range secondaryCol {
-		docID := getStringField(t, d, foreignField)
+		docID := getStringField(t, d.Doc, foreignField)
 		secondaryPerPrimary[docID]++
 	}
 	minDocsPerPrimary := math.MaxInt
@@ -1131,15 +1131,15 @@ func TestAutoGenerateFromSchema_IfOptionOverlapsSchemaConfig_ItShouldOverwrite(t
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
 	for _, userDoc := range userDocs {
-		actualAgeVal := getIntField(t, userDoc, "age")
+		actualAgeVal := getIntField(t, userDoc.Doc, "age")
 		assert.GreaterOrEqual(t, actualAgeVal, 30)
 		assert.LessOrEqual(t, actualAgeVal, 40)
 
-		actualRatingVal := getFloatField(t, userDoc, "rating")
+		actualRatingVal := getFloatField(t, userDoc.Doc, "rating")
 		assert.GreaterOrEqual(t, actualRatingVal, 1.0)
 		assert.LessOrEqual(t, actualRatingVal, 2.0)
 
-		actualNameVal := getStringField(t, userDoc, "name")
+		actualNameVal := getStringField(t, userDoc.Doc, "name")
 		assert.Len(t, actualNameVal, 6)
 	}
 }
@@ -1369,15 +1369,15 @@ func TestAutoGenerate_IfColDefinitionsAreValid_ShouldGenerate(t *testing.T) {
 	assert.Len(t, filterByCollection(docs, "Device"), numUsers*3)
 
 	for _, userDoc := range userDocs {
-		actualAgeVal := getIntField(t, userDoc, "age")
+		actualAgeVal := getIntField(t, userDoc.Doc, "age")
 		assert.GreaterOrEqual(t, actualAgeVal, 30)
 		assert.LessOrEqual(t, actualAgeVal, 40)
 
-		actualRatingVal := getFloatField(t, userDoc, "rating")
+		actualRatingVal := getFloatField(t, userDoc.Doc, "rating")
 		assert.GreaterOrEqual(t, actualRatingVal, 1.0)
 		assert.LessOrEqual(t, actualRatingVal, 2.0)
 
-		actualNameVal := getStringField(t, userDoc, "name")
+		actualNameVal := getStringField(t, userDoc.Doc, "name")
 		assert.Len(t, actualNameVal, 6)
 	}
 }

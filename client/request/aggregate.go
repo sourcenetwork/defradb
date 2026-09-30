@@ -34,6 +34,7 @@ type AggregateTarget struct {
 	Offsetable
 	Orderable
 	Filterable
+	Groupable
 
 	// HostName is the name of the immediate field on the object hosting the aggregate.
 	//

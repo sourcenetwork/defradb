@@ -474,6 +474,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockPropNotSet(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

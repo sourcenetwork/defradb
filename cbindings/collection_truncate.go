@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/options"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 //export TruncateCollection
@@ -28,6 +29,41 @@ func TruncateCollection(
 	nodePtr C.uintptr_t,
 	opts C.CollectionOptions,
 	identityPtr C.uintptr_t,
+) C.Result {
+	return truncateCollection(nodePtr, opts, identityPtr, nil)
+}
+
+// TruncateCollectionWithFilter preserves TruncateCollection's v1 C ABI.
+//
+// Deprecated: This compatibility function will be removed in v2, when TruncateCollection
+// accepts filtered-truncate options.
+//
+//export TruncateCollectionWithFilter
+func TruncateCollectionWithFilter(
+	nodePtr C.uintptr_t,
+	opts C.CollectionOptions,
+	identityPtr C.uintptr_t,
+	filterJSON *C.char,
+) C.Result {
+	if filterJSON == nil {
+		return returnC(returnGoC(1, "filter is required", ""))
+	}
+	filter, err := utils.DecodeJSONFilter([]byte(C.GoString(filterJSON)))
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	// JSON null must not fall through to an unfiltered collection truncate.
+	if filter == nil {
+		return returnC(returnGoC(1, "filter cannot be null", ""))
+	}
+	return truncateCollection(nodePtr, opts, identityPtr, filter)
+}
+
+func truncateCollection(
+	nodePtr C.uintptr_t,
+	opts C.CollectionOptions,
+	identityPtr C.uintptr_t,
+	filter any,
 ) C.Result {
 	ctx := context.Background()
 
@@ -54,7 +90,11 @@ func TruncateCollection(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = col.Truncate(ctx, options.WithIdentity(options.TruncateCollection(), ident))
+	truncateOpts := options.WithIdentity(options.TruncateCollection(), ident)
+	if filter != nil {
+		truncateOpts.SetFilter(filter)
+	}
+	err = col.Truncate(ctx, truncateOpts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

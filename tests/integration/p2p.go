@@ -13,6 +13,7 @@ package tests
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -245,6 +246,11 @@ func connectWithRetry(
 }
 
 // syncDocs requests document sync from peers.
+//
+// When action.Concurrency > 1 it fires that many SyncDocuments calls in parallel for the same
+// docIDs and asserts every call's error (used to exercise the concurrent-same-doc sync race);
+// otherwise it does a single sequential sync (with retry) and records the expected DAG heads for a
+// subsequent WaitForSync.
 func syncDocs(s *state.State, action SyncDocs) {
 	node := s.Nodes[action.NodeID]
 
@@ -255,29 +261,46 @@ func syncDocs(s *state.State, action SyncDocs) {
 		s.DocIDsLock.RUnlock()
 	}
 
-	collections := node.Collections
-	collectionName := collections[action.CollectionID].Name()
+	collectionName := node.Collections[action.CollectionID].Name()
 
-	syncOpts := options.SyncDocuments()
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID)
-	if identOption.HasValue() {
-		syncOpts.SetIdentity(identOption.Value())
+
+	// The options builder is a stateful, single-use enumerable, so a fresh one is built per call
+	// rather than shared. Sharing it across the concurrent goroutines below would race on (and
+	// exhaust) its internal cursor.
+	syncOnce := func() error {
+		syncOpts := options.SyncDocuments()
+		if identOption.HasValue() {
+			syncOpts.SetIdentity(identOption.Value())
+		}
+		return node.SyncDocuments(s.Ctx, collectionName, docIDStrings, syncOpts)
 	}
 
-	err := withRetryOnNode(
-		node,
-		func() error {
-			return node.SyncDocuments(
-				s.Ctx,
-				collectionName,
-				docIDStrings,
-				syncOpts,
-			)
-		},
-	)
+	if action.Concurrency > 1 {
+		errs := make([]error, action.Concurrency)
+		var wg sync.WaitGroup
+		wg.Add(action.Concurrency)
+		for i := range action.Concurrency {
+			go func(idx int) {
+				defer wg.Done()
+				errs[idx] = syncOnce()
+			}(i)
+		}
+		wg.Wait()
+
+		for i, err := range errs {
+			expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+			if action.ExpectedError == "" {
+				require.NoError(s.T, err, "concurrent SyncDocuments call %d/%d failed", i+1, action.Concurrency)
+			}
+		}
+		return
+	}
+
+	err := withRetryOnNode(node, syncOnce)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if !expectedErrorRaised {

@@ -1,14 +1,15 @@
-# The below sdl contains an example `Users` object with an example source hub policy id and resource name.
+# The SDL below contains an example `Users` object with a Remote DAC policy ID and resource name.
 # 
-# The policy id must exist in sourcehub (for remote acp) or local acp first, and the resource name
-# must exist on the corresponding policy to the policy id.
+# The policy ID must first exist in Remote DAC or Local DAC, and the resource name must exist on
+# the corresponding policy.
 #
 # The resource name does not need to be similar to the collection name.
 #
 # The linked policy id and resource correspond to an uploaded policy, some policy examples can be
 # found under: `examples/policy/`
 # 
-# Learn more about the DefraDB [ACP System](/acp/README.md)
+# Learn more about the
+# [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",

@@ -30,7 +30,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -38,7 +38,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -46,12 +46,12 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -60,7 +60,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -101,6 +101,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -116,7 +117,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -124,7 +125,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -132,12 +133,12 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -146,7 +147,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -170,6 +171,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -185,7 +187,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -193,7 +195,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -201,12 +203,12 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -215,7 +217,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -251,6 +253,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -266,7 +269,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -274,7 +277,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -282,12 +285,12 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -296,7 +299,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -354,6 +357,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -368,7 +372,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -376,7 +380,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -384,7 +388,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -392,12 +396,12 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "The Lord of the Rings",
 					"rating": 5.0,
-					"_authorID": "bae-3027a2d8-0820-5db3-a25f-20239a3571c8"
+					"_authorID": "{{.DocID1_2}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -406,7 +410,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -415,7 +419,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3027a2d8-0820-5db3-a25f-20239a3571c8
+				// {{.DocID1_2}}
 				Doc: `{
 					"name": "John Tolkien",
 					"age": 70,
@@ -466,6 +470,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			},
 		},
 	}
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -560,6 +565,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 			},
 		},
 	}
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -575,7 +581,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -583,7 +589,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -591,12 +597,12 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "{{.DocID1_1}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -605,7 +611,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-3d5a3204-4e55-5236-992a-ce27da27902b
+				// {{.DocID1_1}}
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
@@ -646,5 +652,6 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }

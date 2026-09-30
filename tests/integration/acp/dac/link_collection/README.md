@@ -4,4 +4,4 @@
 - Rejected tests are with invalid DRIs (hence collection is rejected).
 - There are also some Partially-DRI tests that are both accepted and rejected depending on the resource.
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.

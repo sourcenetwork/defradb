@@ -309,8 +309,8 @@ func TestQuerySimpleWithOffset2(t *testing.T) {
 							"Age":  int64(19),
 						},
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
+							"Name": "Melynda",
+							"Age":  int64(30),
 						},
 					},
 				},

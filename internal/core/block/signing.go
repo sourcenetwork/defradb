@@ -24,17 +24,31 @@ type enabledSigningContextKey struct{}
 
 // ContextWithEnabledSigning returns a context with block signing enabled.
 func ContextWithEnabledSigning(ctx context.Context) context.Context {
-	return context.WithValue(ctx, enabledSigningContextKey{}, true)
+	return ContextWithSigning(ctx, true)
+}
+
+// ContextWithSigning returns a context with block signing explicitly configured.
+func ContextWithSigning(ctx context.Context, enabled bool) context.Context {
+	return context.WithValue(ctx, enabledSigningContextKey{}, enabled)
+}
+
+// SigningConfigFromContext returns the explicit block signing config from the context.
+func SigningConfigFromContext(ctx context.Context) (bool, bool) {
+	val := ctx.Value(enabledSigningContextKey{})
+	if val == nil {
+		return false, false
+	}
+	return val.(bool), true //nolint:forcetypeassert
 }
 
 // EnabledSigningFromContext returns true if block signing is enabled in the context.
 func EnabledSigningFromContext(ctx context.Context) (bool, immutable.Option[identity.FullIdentity]) {
-	val := ctx.Value(enabledSigningContextKey{})
-	if val == nil {
+	enabled, ok := SigningConfigFromContext(ctx)
+	if !ok {
 		return false, immutable.None[identity.FullIdentity]()
 	}
 
-	return val.(bool), extractFullIdentity(ctx) //nolint:forcetypeassert
+	return enabled, extractFullIdentity(ctx)
 }
 
 func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIdentity] {

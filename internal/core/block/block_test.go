@@ -29,7 +29,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -43,7 +42,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	compositeBlock := Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
-				DocID:               []byte("docID"),
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
 				Status:              1,
@@ -62,7 +60,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	fieldUpdateBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            2,
 				CollectionVersionID: "collectionVersionID",
@@ -79,7 +76,6 @@ func makeCompositeBlock(t *testing.T, lsys *linking.LinkSystem) Block {
 	return Block{
 		Delta: crdt.CRDT{
 			DocCompositeDelta: &crdt.DocCompositeDelta{
-				DocID:               []byte("docID"),
 				Priority:            2,
 				CollectionVersionID: "collectionVersionID",
 				Status:              1,
@@ -162,6 +158,51 @@ func TestBlockDeltaPriority(t *testing.T) {
 	require.Equal(t, uint64(2), block.Delta.GetPriority())
 }
 
+func TestBlockMarshal_DeltasDoNotEncodeDocID(t *testing.T) {
+	// The marshaled block bytes are dagcbor, so a "docID" map key would appear verbatim if any
+	// delta still encoded one. This guards against a DocID field being reintroduced to a delta,
+	// which would break cross-node genesis-CID determinism.
+	blocks := map[string]Block{
+		"composite": {
+			Delta: crdt.CRDT{
+				DocCompositeDelta: &crdt.DocCompositeDelta{
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Status:              1,
+				},
+			},
+		},
+		"lww": {
+			Delta: crdt.CRDT{
+				LWWDelta: &crdt.LWWDelta{
+					FieldName:           "name",
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Data:                []byte("John"),
+				},
+			},
+		},
+		"counter": {
+			Delta: crdt.CRDT{
+				CounterDelta: &crdt.CounterDelta{
+					FieldName:           "points",
+					Priority:            1,
+					CollectionVersionID: "collectionVersionID",
+					Data:                []byte{1},
+				},
+			},
+		},
+	}
+
+	for name, block := range blocks {
+		t.Run(name, func(t *testing.T) {
+			encoded, err := block.Marshal()
+			require.NoError(t, err)
+			require.NotContains(t, string(encoded), "docID")
+		})
+	}
+}
+
 func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	store := memstore.Store{}
@@ -169,8 +210,7 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	lsys.SetWriteStorage(&store)
 
 	encBlock := Encryption{
-		DocID: []byte("docID"),
-		Key:   []byte("keyID"),
+		Key: []byte("keyID"),
 	}
 
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
@@ -181,7 +221,6 @@ func TestBlockMarshal_IfEncryptedNotSet_ShouldNotContainIsEncryptedField(t *test
 	block := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -220,7 +259,6 @@ func TestBlockMarshal_IsEncryptedNotSetWithLinkSystem_ShouldLoadWithNoError(t *t
 	fieldBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -241,7 +279,6 @@ func TestBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
 	validBlock := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",
@@ -275,11 +312,8 @@ func TestEncryptionBlockUnmarshal_InvalidCBOR_Error(t *testing.T) {
 }
 
 func TestEncryptionBlockUnmarshal_ValidInput_Succeed(t *testing.T) {
-	fieldName := "fieldName"
 	encBlock := Encryption{
-		DocID:     []byte("docID"),
-		Key:       []byte("keyID"),
-		FieldName: &fieldName,
+		Key: []byte("keyID"),
 	}
 
 	marshaledData, err := encBlock.Marshal()
@@ -353,8 +387,7 @@ func TestBlock_Clone(t *testing.T) {
 
 	// Create encryption block and link
 	encBlock := Encryption{
-		DocID: []byte("docID"),
-		Key:   []byte("keyID"),
+		Key: []byte("keyID"),
 	}
 	encBlockLink, err := lsys.Store(ipld.LinkContext{}, GetLinkPrototype(), encBlock.GenerateNode())
 	require.NoError(t, err, "Failed to store encryption block")
@@ -387,7 +420,6 @@ func TestBlock_Clone(t *testing.T) {
 	original := Block{
 		Delta: crdt.CRDT{
 			LWWDelta: &crdt.LWWDelta{
-				DocID:               []byte("docID"),
 				FieldName:           "name",
 				Priority:            1,
 				CollectionVersionID: "collectionVersionID",

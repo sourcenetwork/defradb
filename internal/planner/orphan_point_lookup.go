@@ -19,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -51,10 +51,10 @@ type orphanPointLookupNode struct {
 	parentClone     *scanNode
 	pointLookupDone bool
 
-	// Initialized once in initPointLookupState, reused for every parent doc.
-	childFKIndex client.IndexDescription
-	childShortID uint32
-	planner      *Planner
+	// childLookup probes the child's unique FK index for a parent's docID. Initialized once in
+	// initPointLookupState and reused for every parent doc.
+	childLookup *fetcher.IndexLookup
+	planner     *Planner
 
 	execInfo orphanExecInfo
 }
@@ -189,7 +189,7 @@ func (e *sourceEnumerable) Reset() {}
 // for streaming orphan detection via point lookups.
 //
 // For each parent doc, we need to check if a child with FK = parentDocID exists.
-// We find the child's unique FK index once here and then do a direct datastore.Has()
+// We build an index lookup over the child's unique FK index once here and then probe it
 // per doc in nextOrphanByPointLookup.
 func (n *orphanPointLookupNode) initPointLookupState() error {
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
@@ -201,13 +201,17 @@ func (n *orphanPointLookupNode) initPointLookupState() error {
 		n.pointLookupDone = true
 		return nil
 	}
-	n.childFKIndex = childIdx.Value()
 
-	shortID, err := id.GetShortCollectionID(n.planner.ctx, n.join.childSide.col.Version().CollectionID)
+	lookup, err := fetcher.NewIndexLookup(
+		n.planner.ctx,
+		datastore.CtxMustGetTxn(n.planner.ctx),
+		n.join.childSide.col,
+		childIdx.Value(),
+	)
 	if err != nil {
 		return err
 	}
-	n.childShortID = shortID
+	n.childLookup = lookup
 
 	// Use subQueryFilter when set (nested join scoped to one target doc),
 	// otherwise use the top-level subFilter.
@@ -239,9 +243,6 @@ func (n *orphanPointLookupNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, e
 		return core.Doc{}, false, nil
 	}
 
-	txn := datastore.CtxMustGetTxn(n.planner.ctx)
-	ds := txn.Datastore()
-
 	for {
 		hasNext, err := n.parentClone.Next()
 		if err != nil {
@@ -257,11 +258,7 @@ func (n *orphanPointLookupNode) nextOrphanByPointLookup() (_ core.Doc, _ bool, e
 
 		doc := n.parentClone.Value()
 
-		indexKey := keys.NewIndexDataStoreKey(n.childShortID, n.childFKIndex.ID, []keys.IndexedField{
-			{Value: client.NewNormalString(doc.GetID()), Descending: n.childFKIndex.Fields[0].Descending},
-		})
-
-		hasChild, err := ds.Has(n.planner.ctx, &indexKey)
+		hasChild, err := n.childLookup.Has(n.planner.ctx, client.NewNormalString(doc.GetID()))
 		if err != nil {
 			return core.Doc{}, false, NewErrCheckOrphanPointLookup(err)
 		}

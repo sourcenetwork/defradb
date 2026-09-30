@@ -13,11 +13,16 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
+	"github.com/sourcenetwork/immutable"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
@@ -32,14 +37,26 @@ func NewCollectionRetriever(db *DB) collectionRetriever {
 	}
 }
 
+// ResolveBlockDocIDs returns every DocID that owns the given block CID. A block can be
+// co-owned by several documents (identical genesis field deltas produce one shared CID), so
+// callers must handle more than one owner.
+func (r collectionRetriever) ResolveBlockDocIDs(ctx context.Context, blockCID cid.Cid) ([]string, error) {
+	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	return id.GetDocIDsForBlockFromStore(ctx, txn.Systemstore(), blockCID)
+}
+
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
-// The supplied identity is forwarded to the underlying collection lookup, so
-// NAC sees the caller's identity rather than the node's. Pass `immutable.None`
-// for anonymous lookups; NAC will gate the call accordingly.
+// The identity argument is kept for the KMS interface, but collection metadata
+// resolution is internal and must not require the requester to have get-collection access.
 func (r collectionRetriever) RetrieveCollectionFromDocID(
 	ctx context.Context,
 	docID string,
-	ident immutable.Option[identity.Identity],
+	_ immutable.Option[identity.Identity],
 ) (client.Collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, r.db, false)
 	if err != nil {
@@ -48,35 +65,63 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 
 	defer txn.Discard()
 
-	headIterator, err := NewHeadBlocksIteratorFromTxn(ctx, docID)
+	docID, err = resolveDocIDFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
 
-	hasValue, err := headIterator.Next()
+	docRef, found, err := id.GetDocRefFromStore(ctx, txn.Systemstore(), docID)
 	if err != nil {
 		return nil, err
 	}
-
-	if !hasValue {
+	if !found {
 		return nil, NewErrDocIDNotFound(docID)
 	}
 
-	opt := options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())
-	if ident.HasValue() {
-		opt = opt.SetIdentity(ident.Value())
-	}
-
-	cols, err := txn.GetCollections(ctx, opt)
+	cols, err := r.db.getCollections(
+		ctx,
+		utils.NewOptions(options.GetCollections().SetGetInactive(true)),
+		true,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForCollectionVersion(
-			headIterator.CurrentBlock().Delta.GetCollectionVersionID(),
-		)
+	for _, col := range cols {
+		collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
+		if err != nil {
+			return nil, err
+		}
+		if collectionShortID == docRef.CollectionShortID {
+			return col, nil
+		}
 	}
 
-	return cols[0], nil
+	return nil, client.ErrCollectionNotFound
+}
+
+func resolveDocIDFromStore(ctx context.Context, store corekv.Reader, docKey string) (string, error) {
+	// Old encryption blocks may carry an encoded DocRef.
+	docRef, err := keys.DecodeDocRef([]byte(docKey))
+	if err == nil {
+		docID, found, err := id.GetDocIDFromStore(
+			ctx,
+			store,
+			docRef.DocShortID,
+		)
+		if err != nil || found {
+			return docID, err
+		}
+	}
+
+	docRef, found, err := id.GetDocRefFromStore(ctx, store, docKey)
+	if err != nil || !found {
+		return docKey, err
+	}
+	docID, found, err := id.GetDocIDFromStore(ctx, store, docRef.DocShortID)
+	if err != nil || !found {
+		return docKey, err
+	}
+
+	return docID, nil
 }

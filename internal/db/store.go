@@ -41,22 +41,37 @@ func (db *DB) ExecRequest(
 		ctx = identity.WithContext(ctx, opt.Identity)
 	}
 
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		res := &client.RequestResult{}
-		res.GQL.Errors = append(res.GQL.Errors, err)
-		return res
-	}
-
-	defer txn.Discard()
-
 	gqlOpts := &client.GQLOptions{}
 	if opt.OperationName.HasValue() {
 		gqlOpts.OperationName = opt.OperationName.Value()
 	}
 	gqlOpts.Variables = opt.Variables
 
-	res := db.execRequest(ctx, request, gqlOpts)
+	parsedRequest, res := db.parseRequest(ctx, request, gqlOpts)
+	if res != nil {
+		return res
+	}
+
+	hasTruncate, isStandalone := truncateMutationState(parsedRequest)
+	if hasTruncate {
+		if !isStandalone {
+			return requestError(ErrTruncateMutationMustBeStandalone)
+		}
+		if _, hasTxn := datastore.CtxTryGetTxn(ctx); hasTxn {
+			return requestError(ErrTruncateMutationInTransaction)
+		}
+
+		// Truncate owns its collection lock and applies changes outside a datastore transaction.
+		return db.executeRequest(ctx, parsedRequest)
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return requestError(err)
+	}
+	defer txn.Discard()
+
+	res = db.executeRequest(ctx, parsedRequest)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -66,6 +81,12 @@ func (db *DB) ExecRequest(
 		return res
 	}
 
+	return res
+}
+
+func requestError(err error) *client.RequestResult {
+	res := &client.RequestResult{}
+	res.GQL.Errors = append(res.GQL.Errors, err)
 	return res
 }
 
@@ -188,6 +209,10 @@ func (db *DB) AddCollection(
 		return nil, err
 	}
 
+	// Propagate the identity so that collection-level acp registration (for branchable
+	// permissioned collections) can record the creating identity as the object owner.
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
@@ -239,40 +264,21 @@ func (db *DB) PatchCollection(
 
 	defer txn.Discard()
 
-	backfills, err := db.patchCollection(ctx, patchString, migration)
-	if err != nil {
+	if err := db.patchCollection(ctx, patchString, migration); err != nil {
 		return err
 	}
 
-	return commitAndRunDeferred(ctx, txn, backfills)
+	return commitImplicit(txn)
 }
 
-// commitAndRunDeferred commits the transaction and then runs each deferred function
-// sequentially. If the transaction is explicit (caller-provided), the functions are
-// instead registered as OnSuccess callbacks so they run when the caller commits.
-func commitAndRunDeferred(ctx context.Context, txn *Txn, deferred []func(context.Context) error) error {
+// commitImplicit commits an implicit transaction. An explicit (caller-provided) one is left for the
+// caller to commit. A collection patch or version switch that reindexes stages the builds on this
+// transaction; the background worker runs them once it commits, so nothing needs to run here.
+func commitImplicit(txn *Txn) error {
 	if txn.explicit {
-		for _, fn := range deferred {
-			fn := fn
-			txn.OnSuccess(func() {
-				if err := fn(ctx); err != nil {
-					log.ErrorE("deferred operation after commit failed", err)
-				}
-			})
-		}
 		return nil
 	}
-
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-
-	for _, fn := range deferred {
-		if err := fn(ctx); err != nil {
-			return err
-		}
-	}
-	return nil
+	return txn.Commit()
 }
 
 func (db *DB) DeleteCollection(
@@ -296,21 +302,20 @@ func (db *DB) DeleteCollection(
 
 	defer txn.Discard()
 
-	backfills, err := db.deleteCollection(ctx, names, opt.ActiveOnly)
-	if err != nil {
+	if err := db.deleteCollection(ctx, names, opt.ActiveOnly); err != nil {
 		return err
 	}
 
-	return commitAndRunDeferred(ctx, txn, backfills)
+	return commitImplicit(txn)
 }
 
 func (db *DB) deleteCollection(
 	ctx context.Context,
 	names []string,
 	activeOnly bool,
-) ([]func(context.Context) error, error) {
+) error {
 	if len(names) == 0 {
-		return nil, client.ErrCollectionNameRequired
+		return client.ErrCollectionNameRequired
 	}
 
 	seen := make(map[string]struct{}, len(names))
@@ -323,7 +328,7 @@ func (db *DB) deleteCollection(
 
 		col, err := db.getCollectionByName(ctx, name)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if activeOnly {
@@ -335,7 +340,7 @@ func (db *DB) deleteCollection(
 			ctx, db.collectionRepository, col.Version().CollectionID,
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		for _, v := range allVersions {
 			ops = append(ops, fmt.Sprintf(`{"op": "remove", "path": "/%s"}`, v.VersionID))
@@ -367,12 +372,11 @@ func (db *DB) SetActiveCollectionVersion(
 
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
-	if err != nil {
+	if err := db.setActiveCollectionVersion(ctx, collectionVersionID); err != nil {
 		return err
 	}
 
-	return txn.Commit()
+	return commitImplicit(txn)
 }
 
 func (db *DB) SetMigration(
@@ -401,8 +405,7 @@ func (db *DB) SetMigration(
 		return "", err
 	}
 
-	err = txn.Commit()
-	if err != nil {
+	if err := commitImplicit(txn); err != nil {
 		return "", err
 	}
 

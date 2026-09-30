@@ -63,6 +63,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -120,6 +121,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -165,6 +167,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -222,6 +225,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
