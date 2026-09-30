@@ -1616,6 +1616,54 @@
                 ]
             }
         },
+        "/collections/{name}/document": {
+            "put": {
+                "description": "Save (upsert) a document atomically. If a document with the given ID exists it will be updated, otherwise a new document will be created.",
+                "operationId": "save_document",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/document"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "The IDs of the saved documents"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "document"
+                ]
+            }
+        },
         "/collections/{name}/document/{docID}": {
             "delete": {
                 "description": "Delete a document by docID",
@@ -1728,6 +1776,59 @@
                         "$ref": "#/components/responses/error"
                     },
                     "404": {
+                        "$ref": "#/components/responses/error"
+                    }
+                },
+                "tags": [
+                    "document"
+                ]
+            },
+            "put": {
+                "description": "Save (upsert) a document by docID atomically. If a document with the given ID exists it will be updated, otherwise a new document will be created.",
+                "operationId": "save_document_with_id",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "docID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/document"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "The IDs of the saved documents"
+                    },
+                    "400": {
                         "$ref": "#/components/responses/error"
                     }
                 },
