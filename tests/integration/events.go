@@ -313,6 +313,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue
 		}
 
+		// The timeout restarts on progress, so a slow but moving sync is not cut off.
 		timeout := time.After(30 * eventTimeout)
 		for totalPending > 0 {
 			var evt event.MergeComplete
@@ -322,9 +323,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 					require.Fail(s.T, "subscription closed waiting for merge complete event")
 				}
 				evt = msg.Data.(event.MergeComplete)
+				timeout = time.After(30 * eventTimeout)
 
 			case <-time.After(eventTimeout):
-				totalPending -= dropMergedHeads(s, node, pending)
+				if dropped := dropMergedHeads(s, node, pending); dropped > 0 {
+					totalPending -= dropped
+					timeout = time.After(30 * eventTimeout)
+				}
 				continue
 
 			case <-timeout:
