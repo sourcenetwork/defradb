@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 // Backfilling more documents than the event buffer can hold must complete without
@@ -69,5 +70,12 @@ func TestP2POneToOneReplicator_BackfillSyncsAllExistingDocs(t *testing.T) {
 		},
 	)
 
-	testUtils.ExecuteTestCase(t, testUtils.TestCase{Actions: actions})
+	testUtils.ExecuteTestCase(t, testUtils.TestCase{
+		Actions: actions,
+		// Older releases lack the stream cleanup required on both peers during backfill.
+		MultiplierExcludes: []string{
+			multiplier.CrossVersionOldSource,
+			multiplier.CrossVersionNewSource,
+		},
+	})
 }
