@@ -735,9 +735,11 @@ func addReplicatorNextRetry(
 // 1. Query the retry docs for the replicator.
 // 2. For each doc, retry the doc.
 // 3. If the doc is successfully retried, delete the retry doc.
-// 4. If the doc fails to retry, stop retrying the rest of the docs and wait for the next retry.
+// 4. If the doc fails to retry, keep its retry doc and carry on with the rest of the docs, so that
+// a doc that can never be delivered does not block the others.
 // 5. If all docs are successfully retried, delete the replicator retry.
-// 6. If there are more docs to retry, set the next retry time to be immediate.
+// 6. If any doc failed, the next retry follows the normal retry intervals. Otherwise, if there are
+// more docs to retry, set the next retry time to be immediate.
 //
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
@@ -755,6 +757,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 	}
 	defer closeQueryResults(iter)
 
+	anyFailed := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -765,6 +768,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		hasNext, err := iter.Next()
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to get next replicator retry docID key", err)
+			anyFailed = true
 			break
 		}
 		if !hasNext {
@@ -779,18 +783,18 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		err = p.retryDoc(ctx, peerID, key.DocID)
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to retry doc", err, corelog.String("DocID", key.DocID))
-			if err = p.handleCompletedReplicatorRetry(ctx, peerID, false); err != nil {
-				log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
-			}
-			// if one doc fails, stop retrying the rest and just wait for the next retry
-			return
+			// Keep the retry doc and carry on, a doc that keeps failing must not block the others.
+			anyFailed = true
+			continue
 		}
 		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
 	}
 
-	if err = p.handleCompletedReplicatorRetry(ctx, peerID, true); err != nil {
+	// Reporting success while retry docs remain schedules an immediate retry, so a doc that keeps
+	// failing would cause a busy loop. Use the normal retry intervals instead if any doc failed.
+	if err = p.handleCompletedReplicatorRetry(ctx, peerID, !anyFailed); err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 	}
 }
