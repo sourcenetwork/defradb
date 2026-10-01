@@ -313,6 +313,8 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue
 		}
 
+		// The timeout restarts on progress, so a slow but moving sync is not cut off.
+		timeout := time.After(30 * eventTimeout)
 		for totalPending > 0 {
 			var evt event.MergeComplete
 			select {
@@ -321,8 +323,16 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 					require.Fail(s.T, "subscription closed waiting for merge complete event")
 				}
 				evt = msg.Data.(event.MergeComplete)
+				timeout = time.After(30 * eventTimeout)
 
-			case <-time.After(30 * eventTimeout):
+			case <-time.After(eventTimeout):
+				if dropped := dropMergedHeads(s, node, pending); dropped > 0 {
+					totalPending -= dropped
+					timeout = time.After(30 * eventTimeout)
+				}
+				continue
+
+			case <-timeout:
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
@@ -352,6 +362,82 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 	}
 }
 
+// dropMergedHeads removes the pending heads that are already a current head of
+// their document on the node, and returns how many it removed.
+//
+// A merge that finishes while a node is starting, before its events can be
+// read, is never reported. Without this, waiting for it times out even though
+// the data arrived.
+func dropMergedHeads(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) int {
+	dropped := 0
+	for key, cidSet := range pending {
+		if !isDocID(key) {
+			continue
+		}
+		for _, head := range docHeads(s, node, key) {
+			if _, ok := cidSet[head]; !ok {
+				continue
+			}
+			delete(cidSet, head)
+			dropped++
+			node.P2P.ActualDAGHeads[key] = state.DocHeadState{CID: head}
+		}
+		if len(cidSet) == 0 {
+			delete(pending, key)
+		}
+	}
+	return dropped
+}
+
+// docHeads returns the current heads of a document on the node, or nothing if
+// the node cannot read it.
+func docHeads(s *state.State, node *state.NodeState, docID string) []cid.Cid {
+	for _, col := range node.Collections {
+		result := node.ExecRequest(
+			s.Ctx,
+			fmt.Sprintf(`query { %s(docID: %q) { _version { cid } } }`, col.Name(), docID),
+		)
+		if len(result.GQL.Errors) > 0 {
+			continue
+		}
+		data, ok := result.GQL.Data.(map[string]any)
+		if !ok {
+			continue
+		}
+		docs := asMaps(data[col.Name()])
+		if len(docs) == 0 {
+			continue
+		}
+		var heads []cid.Cid
+		for _, version := range asMaps(docs[0]["_version"]) {
+			cidStr, _ := version["cid"].(string)
+			if head, err := cid.Decode(cidStr); err == nil {
+				heads = append(heads, head)
+			}
+		}
+		return heads
+	}
+	return nil
+}
+
+// asMaps returns a query result list as maps, whichever form the client gave it in.
+func asMaps(v any) []map[string]any {
+	switch list := v.(type) {
+	case []map[string]any:
+		return list
+	case []any:
+		out := make([]map[string]any, 0, len(list))
+		for _, item := range list {
+			if m, ok := item.(map[string]any); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
 // waitForHeadsOnNode waits until every expected head has arrived on the node.
 //
 // It asks the node for its commits instead of reading its event bus, so it works
@@ -365,11 +451,6 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 	}
 	var heads []wanted
 	for key, cidSet := range pending {
-		// A collection level key has no document to ask about, and only a
-		// document ID parses as one.
-		if _, err := client.NewDocIDFromString(key); err != nil {
-			continue
-		}
 		for c := range cidSet {
 			heads = append(heads, wanted{key: key, cid: c})
 		}
@@ -388,7 +469,7 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 		if _, seen := wantDoc[head.key]; seen {
 			continue
 		}
-		wantDoc[head.key] = anyNodeHasDocExcept(s, node, head.key)
+		wantDoc[head.key] = isDocID(head.key) && anyNodeHasDocExcept(s, node, head.key)
 	}
 
 	deadline := time.Now().Add(30 * eventTimeout)
@@ -471,12 +552,21 @@ func hasDoc(s *state.State, node *state.NodeState, docID string) bool {
 	return false
 }
 
-// hasCommit reports whether the node holds the given commit of a document.
-func hasCommit(s *state.State, node *state.NodeState, docID string, target cid.Cid) bool {
-	result := node.ExecRequest(
-		s.Ctx,
-		fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, docID, target.String()),
-	)
+// isDocID reports whether the key names a document rather than a collection.
+func isDocID(key string) bool {
+	_, err := client.NewDocIDFromString(key)
+	return err == nil
+}
+
+// hasCommit reports whether the node holds the given commit of a document or,
+// for a branchable collection, of the collection.
+func hasCommit(s *state.State, node *state.NodeState, key string, target cid.Cid) bool {
+	// A collection commit belongs to no document, so ask for it by CID alone.
+	request := fmt.Sprintf(`query { _commits(cid: %q) { cid } }`, target.String())
+	if isDocID(key) {
+		request = fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, key, target.String())
+	}
+	result := node.ExecRequest(s.Ctx, request)
 	for _, err := range result.GQL.Errors {
 		// The node holds the block but cannot describe it, so there is nothing
 		// left to ask. Treat it as arrived, since waiting longer never resolves.
