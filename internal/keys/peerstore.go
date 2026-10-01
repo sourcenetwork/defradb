@@ -14,4 +14,5 @@ const (
 	REPLICATOR           = "/rep/id"
 	REPLICATOR_RETRY_ID  = "/rep/retry/id"
 	REPLICATOR_RETRY_DOC = "/rep/retry/doc"
+	REPLICATOR_RETRY_COL = "/rep/retry/col"
 )
