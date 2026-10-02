@@ -345,12 +345,12 @@ func (p *P2P) updateReplicators(ctx context.Context, id string, addresses []stri
 	p.repMu.Unlock()
 }
 
-// getCollectionsByVersionID returns the collection version with the given version id, active or not,
-// as seen by the local node.
+// getCollectionByVersionID returns the collection version with the given version id, active or not,
+// as seen by the local node. It returns client.ErrCollectionNotFound if the version is not known.
 //
 // A block records the collection version it was authored against, which is only equal to the
 // collection's root id for the first version, so it must not be passed to SetCollectionID.
-func (p *P2P) getCollectionsByVersionID(ctx context.Context, versionID string) ([]client.Collection, error) {
+func (p *P2P) getCollectionByVersionID(ctx context.Context, versionID string) (client.Collection, error) {
 	ident, err := p.db.GetNodeIdentity(ctx)
 	if err != nil {
 		return nil, err
@@ -359,7 +359,14 @@ func (p *P2P) getCollectionsByVersionID(ctx context.Context, versionID string) (
 	if ident.HasValue() {
 		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
 	}
-	return p.db.GetCollections(ctx, getColOpts)
+	cols, err := p.db.GetCollections(ctx, getColOpts)
+	if err != nil {
+		return nil, err
+	}
+	if len(cols) == 0 {
+		return nil, client.ErrCollectionNotFound
+	}
+	return cols[0], nil
 }
 
 // hasAccess checks if the requesting peer has access to the given cid.
@@ -403,20 +410,20 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return true
 	}
 
-	cols, err := p.getCollectionsByVersionID(ctx, block.Delta.GetCollectionVersionID())
-	if err != nil {
-		log.ErrorE("Failed to get collections", err)
-		return false
-	}
-	if len(cols) == 0 {
+	col, err := p.getCollectionByVersionID(ctx, block.Delta.GetCollectionVersionID())
+	if errors.Is(err, client.ErrCollectionNotFound) {
 		log.Info("No collections found",
 			corelog.Any("Collection Version ID", block.Delta.GetCollectionVersionID()))
+		return false
+	}
+	if err != nil {
+		log.ErrorE("Failed to get collections", err)
 		return false
 	}
 
 	// If the requesting peer is in the replicators list for that collection, then they have accesp.
 	p.repMu.Lock()
-	if peerList, ok := p.replicators[cols[0].CollectionID()]; ok {
+	if peerList, ok := p.replicators[col.CollectionID()]; ok {
 		_, exists := peerList[pid]
 		if exists {
 			p.repMu.Unlock()
@@ -473,7 +480,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	// one round-trip; only grants are cached, so a denied peer is re-checked and picks up a fresh
 	// grant without delay. The collection id is keyed because a collection-level block has an empty
 	// docID whose access is decided per collection. See accessCache.
-	collectionID := cols[0].CollectionID()
+	collectionID := col.CollectionID()
 	for _, docID := range docIDs {
 		if p.accessCache.allowed(pid, collectionID, docID) {
 			return true
@@ -486,7 +493,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 			identFunc,
 			p.db.NodeACP(),
 			p.db.DocumentACP().Value(),
-			cols[0], // For now we assume there is only one collection.
+			col,
 			docID,
 		)
 		if err != nil {
