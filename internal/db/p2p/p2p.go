@@ -345,6 +345,23 @@ func (p *P2P) updateReplicators(ctx context.Context, id string, addresses []stri
 	p.repMu.Unlock()
 }
 
+// getCollectionsByVersionID returns the collection version with the given version id, active or not,
+// as seen by the local node.
+//
+// A block records the collection version it was authored against, which is only equal to the
+// collection's root id for the first version, so it must not be passed to SetCollectionID.
+func (p *P2P) getCollectionsByVersionID(ctx context.Context, versionID string) ([]client.Collection, error) {
+	ident, err := p.db.GetNodeIdentity(ctx)
+	if err != nil {
+		return nil, err
+	}
+	getColOpts := options.GetCollections().SetVersionID(versionID)
+	if ident.HasValue() {
+		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
+	}
+	return p.db.GetCollections(ctx, getColOpts)
+}
+
 // hasAccess checks if the requesting peer has access to the given cid.
 //
 // This is used as a filter in bitswap to determine if we should send the block to the requesting peer.
@@ -386,17 +403,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return true
 	}
 
-	ident, err := p.db.GetNodeIdentity(p.ctx)
-	if err != nil {
-		log.ErrorE("Failed to get node identity", err)
-		return false
-	}
-	getColOpts := options.GetCollections().SetCollectionID(block.Delta.GetCollectionVersionID())
-	if ident.HasValue() {
-		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
-	}
-
-	cols, err := p.db.GetCollections(ctx, getColOpts)
+	cols, err := p.getCollectionsByVersionID(ctx, block.Delta.GetCollectionVersionID())
 	if err != nil {
 		log.ErrorE("Failed to get collections", err)
 		return false
