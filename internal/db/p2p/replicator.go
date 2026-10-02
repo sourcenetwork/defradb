@@ -884,6 +884,17 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 	if err != nil {
 		return err
 	}
+	if len(heads) == 0 {
+		return nil
+	}
+
+	// The receiver resolves the collection by its root id, not the version the head was authored against.
+	// All heads of a document share the same collection root, whichever version authored them.
+	col, err := p.getCollectionByVersionID(ctx, heads[0].block.Delta.GetCollectionVersionID())
+	if err != nil {
+		return err
+	}
+	collectionID := col.CollectionID()
 
 	for _, head := range heads {
 		select {
@@ -901,7 +912,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
-			CollectionID: head.block.Delta.GetCollectionVersionID(),
+			CollectionID: collectionID,
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
