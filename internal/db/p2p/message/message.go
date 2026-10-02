@@ -182,7 +182,7 @@ func Send[ResponseType Message](
 	select {
 	case respMessage := <-responseChan:
 		if respMessage.GetErrMessage() != "" {
-			return resp, errors.New(respMessage.GetErrMessage())
+			return resp, NewErrPeerRejected(respMessage.GetErrMessage())
 		}
 		switch typedResp := respMessage.(type) {
 		case ResponseType:

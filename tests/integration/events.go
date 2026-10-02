@@ -270,6 +270,13 @@ func recordUpdateEvent(s *state.State, node *state.NodeState, evt event.Update) 
 // During pending set construction, for each (key, source) pair we keep only the latest CID
 // (last appended), since earlier CIDs from the same source are ancestors subsumed by the latest.
 func waitForMergeEvents(s *state.State, action WaitForSync) {
+	excluded := make(map[string]struct{}, len(action.ExcludedDocs))
+	s.DocIDsLock.RLock()
+	for _, doc := range action.ExcludedDocs {
+		excluded[s.DocIDs[doc.Col][doc.Doc].String()] = struct{}{}
+	}
+	s.DocIDsLock.RUnlock()
+
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
 		if node.Closed {
@@ -283,6 +290,9 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		// key → sourceNodeID → latest CID
 		latestPerSource := make(map[string]map[int]cid.Cid)
 		for key, heads := range node.P2P.ExpectedDAGHeads {
+			if _, ok := excluded[key]; ok {
+				continue
+			}
 			for _, head := range heads {
 				if latestPerSource[key] == nil {
 					latestPerSource[key] = make(map[int]cid.Cid)
