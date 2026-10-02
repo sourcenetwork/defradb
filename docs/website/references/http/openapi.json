@@ -600,6 +600,20 @@
                     "Ordered": {
                         "nullable": true,
                         "properties": {
+                            "Fields": {
+                                "items": {
+                                    "properties": {
+                                        "Descending": {
+                                            "type": "boolean"
+                                        },
+                                        "Name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
                             "Unique": {
                                 "type": "boolean"
                             }
@@ -619,6 +633,12 @@
                                 "maximum": 4294967295,
                                 "minimum": 0,
                                 "type": "integer"
+                            },
+                            "Fields": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
                             },
                             "HNSW": {
                                 "nullable": true,
@@ -706,6 +726,26 @@
             "set_migration": {
                 "properties": {
                     "lensId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "sync_documents_params": {
+                "properties": {
+                    "blockSyncTimeout": {
+                        "type": "string"
+                    },
+                    "collectionName": {
+                        "type": "string"
+                    },
+                    "docIDs": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "timeout": {
                         "type": "string"
                     }
                 },
@@ -2730,21 +2770,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "collectionName": {
-                                        "type": "string"
-                                    },
-                                    "docIDs": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    },
-                                    "timeout": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/sync_documents_params"
                             }
                         }
                     },

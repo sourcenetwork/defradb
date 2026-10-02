@@ -154,7 +154,8 @@ func TestCrossVersionApply_PreservesNetworkingConfig(t *testing.T) {
 	result := oldSource().Apply(source)
 
 	versioned := nodeAt(t, result, 0)
-	assert.NotNil(t, versioned.Network, "networking config must survive the rewrite")
+	assert.True(t, versioned.Network.HasValue(), "networking config must survive the rewrite")
+	assert.True(t, versioned.P2POptions().EnablePubSub, "and must still yield the same options")
 }
 
 func TestCrossVersionApply_WithSingleNode_ReturnsSourceUnchanged(t *testing.T) {

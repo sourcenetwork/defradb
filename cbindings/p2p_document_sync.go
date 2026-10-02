@@ -58,8 +58,6 @@ func SyncP2PDocuments(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	syncOpts := options.WithIdentity(options.SyncDocuments(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs, syncOpts)
 	if err != nil {

@@ -50,7 +50,9 @@ const (
 	errNonZeroIndexIDProvided               string = "non-zero index ID provided"
 	errIndexFieldMissingName                string = "index field missing name"
 	errIndexKindConflict                    string = "index request has more than one kind config"
-	errIndexUniqueConflict                  string = "index request sets both the deprecated " +
+	errIndexFieldsConflict                  string = "index request sets both the deprecated " +
+		"fields and a kind config naming different fields"
+	errIndexUniqueConflict string = "index request sets both the deprecated " +
 		"unique field and an ordered config that disagrees with it"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
@@ -64,7 +66,7 @@ const (
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
-	errUnsupportedVectorIndexFieldType           string = "unsupported field type for vector index"
+	errUnsupportedVectorIndexFieldType           string = "vector index requires a [Float32!] field"
 	errVectorIndexMissingDimensions              string = "vector index dimensions must be greater than zero"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
@@ -232,6 +234,7 @@ var (
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
 	ErrIndexKindConflict                         = errors.New(errIndexKindConflict)
+	ErrIndexFieldsConflict                       = errors.New(errIndexFieldsConflict)
 	ErrIndexUniqueConflict                       = errors.New(errIndexUniqueConflict)
 	ErrCorruptedIndex                            = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject                        = errors.New(errExpectedJSONObject)
@@ -614,6 +617,10 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 
 // NewErrUnsupportedVectorIndexFieldType returns a new error indicating that the given field kind is
 // not supported for a vector (ANN) index.
+//
+// Wider numeric arrays are rejected rather than narrowed, because the index stores float32 and
+// narrowing would lose precision the field had. Opting into that is
+// https://github.com/sourcenetwork/defradb/issues/5252
 func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
 	return errors.New(
 		errUnsupportedVectorIndexFieldType,

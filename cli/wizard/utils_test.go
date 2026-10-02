@@ -37,6 +37,9 @@ func unsetEnvForTest(t *testing.T, key string) {
 // setConfigValueForTest is a helper that unsets a value from the wizard's config.yaml file,
 // but which will restore the original value after the test.
 func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value any) {
+	if ctx.RootDir == "" {
+		ctx.RootDir = t.TempDir()
+	}
 	originalValue, ok := getConfigValue(ctx, key).(string)
 	if !ok {
 		t.Fatal("failed to get original value")

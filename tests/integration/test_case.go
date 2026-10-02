@@ -92,6 +92,22 @@ type TestCase struct {
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
 
+	// SupportedFromVersion is the earliest release supporting the behaviour under
+	// test, as a semver tag such as "v1.1.0".
+	//
+	// It is only consulted by multipliers that target a specific release. Such a
+	// multiplier runs the test against this release instead of its default target
+	// when the default is older. Empty (the default) runs against the default
+	// target.
+	//
+	// This is for tests that assert behaviour an older release lacks. Use
+	// [TestCase.MultiplierExcludes] for opting out of a multiplier for any other
+	// reason, including gaps in what the harness can do.
+	//
+	// A malformed value fails the test rather than silently running against a
+	// release that cannot support it.
+	SupportedFromVersion string
+
 	// FlakeRetries specifies the number of times a flaky test should be retried
 	// if it fails. If a test succeeds on any attempt, it is considered passed.
 	// A value of 0 (default) means no retries - the test runs once as normal.
@@ -707,7 +723,14 @@ type SyncDocs struct {
 	// This is used by testing framework to determine from which nodes the expected doc heads can
 	// be looked up for WaitForSync action.
 	// There must an item for each document in DocIDs.
+	//
+	// Not required when Concurrency > 1 (concurrent syncs skip head tracking).
 	SourceNodes []int
+
+	// Concurrency, when greater than 1, fires that many SyncDocuments calls in parallel for the
+	// same DocIDs instead of a single sequential call. ExpectedError is asserted against every
+	// call, and SourceNodes head tracking is skipped. Zero or 1 means a single sequential sync.
+	Concurrency int
 
 	// Any error expected from the action.
 	ExpectedError string

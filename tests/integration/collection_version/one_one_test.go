@@ -121,6 +121,13 @@ func TestCollectionVersionOneOne_SelfUsingActualName(t *testing.T) {
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_bossID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_bossID"},
+									},
+								},
 							},
 						},
 					},

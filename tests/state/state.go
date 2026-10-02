@@ -247,8 +247,8 @@ type NodeState struct {
 	// released version driven black-box), rather than natively in-process.
 	// Its event bus lives in that other process and cannot be observed here,
 	// so event-based waits must skip it. The replicator/merge/update/SE waits
-	// already do; WaitForPeersEvents, Wait{Action} and node restart do not yet
-	// handle external nodes, so avoid them with an external node for now.
+	// already do; WaitForPeersEvents and Wait{Action} do not yet handle external
+	// nodes, so avoid them with an external node for now.
 	IsExternal bool
 	// Version is the released version this node runs, e.g. "v1.0.0", cached
 	// for restarts. Empty for native in-process nodes.
@@ -332,6 +332,16 @@ type State struct {
 	// the need arises.
 	CollectionVersions []string
 
+	// The identity each collection was created with, by collection ID.
+	//
+	// A node in another process emits no events the test can read, so the head of
+	// a document it wrote has to be queried over its API instead. A branchable
+	// collection gates its commits on an object owned by whoever created it, so
+	// that query has to be made as them.
+	//
+	// Stored as a reference because the identity it resolves to differs per node.
+	CollectionOwners map[string]immutable.Option[Identity]
+
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
@@ -355,6 +365,14 @@ type State struct {
 	// CurrentSetupNodeID is used during setup stage to find specific attributes that are unique to a
 	// node, for example finding a specific node's NodeIdentity inorder to bypass NAC.
 	CurrentSetupNodeID int
+
+	// CurrentSetupHost is the address to mint auth tokens from while a node is being
+	// set up.
+	//
+	// A restarting node gets a new port, and the node rejects tokens minted for the
+	// port it had before. Its entry on Nodes cannot be replaced any earlier, since
+	// setting the node up reads the old entry to build the new one.
+	CurrentSetupHost string
 
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
@@ -439,6 +457,7 @@ func NewState(
 		Nodes:                           []*NodeState{},
 		CollectionNames:                 collectionNames,
 		CollectionIndexesByCollectionID: map[string]int{},
+		CollectionOwners:                map[string]immutable.Option[Identity]{},
 		DocIDs:                          [][]client.DocID{},
 		PolicyIDs:                       [][]string{},
 		IsBench:                         false,
