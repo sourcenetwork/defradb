@@ -533,6 +533,44 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteDocument.Responses.Set("400", errorResponse)
 	deleteDocument.Responses.Set("404", errorResponse)
 
+	saveDocumentRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(documentSchema))
+
+	saveDocumentResponse := openapi3.NewResponse().
+		WithDescription("The IDs of the saved documents").
+		WithJSONSchemaRef(openapi3.NewSchemaRef("", docIDArraySchema))
+
+	saveDocument := openapi3.NewOperation()
+	saveDocument.OperationID = "save_document"
+	saveDocument.Description = "Save (upsert) a document atomically. " +
+		"If a document with the given ID exists it will be updated, otherwise a new document will be created."
+	saveDocument.Tags = []string{"document"}
+	saveDocument.AddParameter(collectionNamePathParam)
+	saveDocument.RequestBody = &openapi3.RequestBodyRef{
+		Value: saveDocumentRequest,
+	}
+	saveDocument.Responses = openapi3.NewResponses()
+	saveDocument.Responses.Set("200", &openapi3.ResponseRef{Value: saveDocumentResponse})
+	saveDocument.Responses.Set("400", errorResponse)
+
+	saveDocumentWithIDRequest := openapi3.NewRequestBody().
+		WithContent(openapi3.NewContentWithJSONSchemaRef(documentSchema))
+
+	saveDocumentWithID := openapi3.NewOperation()
+	saveDocumentWithID.OperationID = "save_document_with_id"
+	saveDocumentWithID.Description = "Save (upsert) a document by docID atomically. " +
+		"If a document with the given ID exists it will be updated, otherwise a new document will be created."
+	saveDocumentWithID.Tags = []string{"document"}
+	saveDocumentWithID.AddParameter(collectionNamePathParam)
+	saveDocumentWithID.AddParameter(documentIDPathParam)
+	saveDocumentWithID.RequestBody = &openapi3.RequestBodyRef{
+		Value: saveDocumentWithIDRequest,
+	}
+	saveDocumentWithID.Responses = openapi3.NewResponses()
+	saveDocumentWithID.Responses.Set("200", &openapi3.ResponseRef{Value: saveDocumentResponse})
+	saveDocumentWithID.Responses.Set("400", errorResponse)
+
 	newEncryptedIndexRequest := openapi3.NewRequestBody().
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchemaRef(newEncryptedIndexRequestSchema))
@@ -614,7 +652,10 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		h.DeleteEncryptedIndex)
 	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
 
+	router.AddRoute("/collections/{name}/document", http.MethodPut, saveDocument, h.SaveDocument)
+	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPut, saveDocumentWithID, h.SaveDocument)
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodGet, getDocument, h.GetDocument)
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, updateDocument, h.UpdateDocument)
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodDelete, deleteDocument, h.DeleteDocument)
 }
+

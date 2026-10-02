@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -154,31 +153,49 @@ func (c *Collection) SaveDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.SaveDocumentOptions],
 ) error {
-	if !doc.ID().IsValid() {
-		return c.AddDocument(ctx, doc, opts...)
-	}
+	// SaveDocumentOptions is an alias for AddDocumentOptions, so we can build
+	// the args the same way but use the 'save' subcommand instead of 'add'.
+	args := []string{"client", "document", "save"}
+	args = append(args, "--collection-name", c.Version().Name)
 
-	getOpts := options.GetDocument()
 	opt := utils.NewOptions(opts...)
-	if opt.Identity.HasValue() {
-		getOpts.SetIdentity(opt.GetIdentity().Value())
+	args = appendIdentityArg(args, opt.GetIdentity())
+	if opt.EncryptDoc {
+		args = append(args, "--encrypt")
 	}
-	_, err := c.GetDocument(ctx, doc.ID(), getOpts.SetShowDeleted(true))
-	if err == nil {
-		updateOpts := options.UpdateDocument()
-		opt := utils.NewOptions(opts...)
-		if opt.GetIdentity().HasValue() {
-			updateOpts.SetIdentity(opt.GetIdentity().Value())
+	if len(opt.EncryptedFields) > 0 {
+		args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
+	}
+	if opt.EnableSigning.HasValue() {
+		args = append(args, "--enable-signing="+strconv.FormatBool(opt.EnableSigning.Value()))
+	}
+	var document string
+	if doc.ID().IsValid() {
+		args = append(args, "--docID", doc.ID().String())
+		patch, err := doc.ToJSONPatch()
+		if err != nil {
+			return err
 		}
-		if opt.EnableSigning.HasValue() {
-			updateOpts.SetEnableSigning(opt.EnableSigning.Value())
+		document = string(patch)
+	} else {
+		var err error
+		document, err = doc.String()
+		if err != nil {
+			return err
 		}
-		return c.UpdateDocument(ctx, doc, updateOpts)
 	}
-	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.AddDocument(ctx, doc, opts...)
+	args = append(args, document)
+	args = appendTxnArg(args, c.txn)
+
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return err
 	}
-	return err
+	if err := setDocumentIDsFromJSON([]*client.Document{doc}, data); err != nil {
+		return err
+	}
+	doc.Clean()
+	return nil
 }
 
 func (c *Collection) DeleteDocument(
