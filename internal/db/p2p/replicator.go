@@ -33,6 +33,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -735,8 +736,9 @@ func addReplicatorNextRetry(
 // 1. Query the retry docs for the replicator.
 // 2. For each doc, retry the doc.
 // 3. If the doc is successfully retried, delete the retry doc.
-// 4. If the doc fails to retry, keep its retry doc and carry on with the rest of the docs, so that
-// a doc that can never be delivered does not block the others.
+// 4. If the doc fails to retry, keep its retry doc. If the peer rejected it, carry on with the rest
+// of the docs, so that a doc that can never be delivered does not block the others. Otherwise, stop
+// retrying the rest of the docs and wait for the next retry.
 // 5. If all docs are successfully retried, delete the replicator retry.
 // 6. If any doc failed, the next retry follows the normal retry intervals. Otherwise, if there are
 // more docs to retry, set the next retry time to be immediate.
@@ -783,9 +785,13 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		err = p.retryDoc(ctx, peerID, key.DocID)
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to retry doc", err, corelog.String("DocID", key.DocID))
-			// Keep the retry doc and carry on, a doc that keeps failing must not block the others.
 			anyFailed = true
-			continue
+			// The peer rejected this doc, but may accept the others, so keep going. Any other
+			// error, like the peer being unreachable, would fail the others too.
+			if errors.Is(err, message.ErrPeerRejected) {
+				continue
+			}
+			break
 		}
 		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
