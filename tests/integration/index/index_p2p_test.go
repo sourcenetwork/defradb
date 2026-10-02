@@ -200,6 +200,10 @@ func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 
 // The first push of "Bob" is rejected, so it ends up in the retry queue together with "Alice",
 // which is always rejected. "Bob" can only arrive if "Alice" does not block the retry.
+//
+// The unique index is only used here to make the target reject a doc. If unique conflicts stop
+// being rejected on merge, this test must get its rejections some other way, or it no longer
+// tests that a rejected doc does not block the others.
 func TestIndexP2P_UniqueConflictOnReplicatorRetry_ShouldNotBlockOtherDocs(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

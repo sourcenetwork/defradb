@@ -798,8 +798,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		}
 	}
 
-	// Reporting success while retry docs remain schedules an immediate retry, so a doc that keeps
-	// failing would cause a busy loop. Use the normal retry intervals instead if any doc failed.
+	// If any doc failed, wait before retrying again instead of retrying right away.
 	if err = p.handleCompletedReplicatorRetry(ctx, peerID, !anyFailed); err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 	}
