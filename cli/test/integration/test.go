@@ -43,8 +43,10 @@ type Test struct {
 	Actions action.Actions
 
 	// Timeout overrides the default context deadline for the test. When zero,
-	// the default of 1 second is used. Increase this for tests that start a
-	// node in disk mode, which requires more time than the in-memory default.
+	// the default of 30 seconds is used.
+	//
+	// The deadline only bounds a test that hangs, so it is deliberately generous: under
+	// -race and coverage on a loaded CI runner, starting a node alone can take over a second.
 	Timeout time.Duration
 }
 
@@ -52,7 +54,7 @@ func (test *Test) Execute(t testing.TB) {
 	ctx := context.Background()
 	timeout := test.Timeout
 	if timeout == 0 {
-		timeout = time.Second
+		timeout = 30 * time.Second
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

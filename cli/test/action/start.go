@@ -11,8 +11,6 @@
 package action
 
 import (
-	"time"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/node"
@@ -91,8 +89,8 @@ func (a *StartCli) Execute() {
 	if a.expectedError != nil {
 		select {
 		case err := <-asyncExecute(a.s.Ctx, args):
-			require.Contains(a.s.T, err.Error(), a.expectedError.Error())
-		case <-time.After(1 * time.Second):
+			require.ErrorContains(a.s.T, err, a.expectedError.Error())
+		case <-a.s.Ctx.Done():
 			a.s.T.Error("expected error but got none")
 		}
 		return
