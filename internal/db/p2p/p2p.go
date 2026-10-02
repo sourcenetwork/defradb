@@ -355,6 +355,8 @@ func (p *P2P) getCollectionByVersionID(ctx context.Context, versionID string) (c
 	if err != nil {
 		return nil, err
 	}
+	// The collection lookup is a local operation on this node — authorise it
+	// as the node itself so NAC sees a known identity rather than "anonymous".
 	getColOpts := options.GetCollections().SetVersionID(versionID)
 	if ident.HasValue() {
 		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
@@ -362,9 +364,6 @@ func (p *P2P) getCollectionByVersionID(ctx context.Context, versionID string) (c
 	cols, err := p.db.GetCollections(ctx, getColOpts)
 	if err != nil {
 		return nil, err
-	}
-	if len(cols) == 0 {
-		return nil, client.ErrCollectionNotFound
 	}
 	return cols[0], nil
 }
