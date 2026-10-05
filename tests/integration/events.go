@@ -383,7 +383,18 @@ func dropMergedHeads(s *state.State, node *state.NodeState, pending map[string]m
 		if !isDocID(key) {
 			continue
 		}
-		for _, head := range docHeads(s, node, key) {
+		heads, versionUnknown := docHeads(s, node, key)
+		if versionUnknown {
+			// The head was merged from a collection version this node does not
+			// have yet, so it cannot be read. Without this, waiting for it times
+			// out even though it arrived.
+			for c := range cidSet {
+				if hasCommit(s, node, key, c) {
+					heads = append(heads, c)
+				}
+			}
+		}
+		for _, head := range heads {
 			if _, ok := cidSet[head]; !ok {
 				continue
 			}
@@ -399,14 +410,20 @@ func dropMergedHeads(s *state.State, node *state.NodeState, pending map[string]m
 }
 
 // docHeads returns the current heads of a document on the node, or nothing if
-// the node cannot read it.
-func docHeads(s *state.State, node *state.NodeState, docID string) []cid.Cid {
+// the node cannot read it. versionUnknown reports that the heads were made with
+// a collection version the node does not have.
+func docHeads(s *state.State, node *state.NodeState, docID string) (heads []cid.Cid, versionUnknown bool) {
 	for _, col := range node.Collections {
 		result := node.ExecRequest(
 			s.Ctx,
 			fmt.Sprintf(`query { %s(docID: %q) { _version { cid } } }`, col.Name(), docID),
 		)
 		if len(result.GQL.Errors) > 0 {
+			for _, err := range result.GQL.Errors {
+				if strings.Contains(err.Error(), errCollectionVersionNotFound) {
+					versionUnknown = true
+				}
+			}
 			continue
 		}
 		data, ok := result.GQL.Data.(map[string]any)
@@ -417,16 +434,15 @@ func docHeads(s *state.State, node *state.NodeState, docID string) []cid.Cid {
 		if len(docs) == 0 {
 			continue
 		}
-		var heads []cid.Cid
 		for _, version := range asMaps(docs[0]["_version"]) {
 			cidStr, _ := version["cid"].(string)
 			if head, err := cid.Decode(cidStr); err == nil {
 				heads = append(heads, head)
 			}
 		}
-		return heads
+		return heads, false
 	}
-	return nil
+	return nil, versionUnknown
 }
 
 // asMaps returns a query result list as maps, whichever form the client gave it in.
