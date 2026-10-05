@@ -124,8 +124,6 @@ func (p *P2P) syncBranchableCollection(
 		defer cancel()
 	}
 
-	p.waitForTopicPeers(waitCtx, syncBranchableCollectionTopic, pendingPeers)
-
 	// The request is kept, and resent to peers that join, until this is
 	// cancelled, so end it as soon as the replies stop being read.
 	pubCtx, cancelPub := context.WithCancel(waitCtx)

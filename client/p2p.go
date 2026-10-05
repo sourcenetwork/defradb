@@ -208,8 +208,6 @@ type Host interface {
 	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler, eventHandler PeerEventHandler) error
 	// RemovePubSubTopic removes the given topic from the host.
 	RemovePubSubTopic(topic string) error
-	// TopicPeers returns the peers subscribed to the topic that the host can send to right now.
-	TopicPeers(topic string) []string
 	// PublishToTopicAsync sends a new message on the given topic without waiting for a response.
 	PublishToTopicAsync(ctx context.Context, topic string, data []byte) error
 	// PublishToTopic sends a new message on the given topic, returning a response channel.
