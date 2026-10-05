@@ -33,6 +33,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -735,9 +736,12 @@ func addReplicatorNextRetry(
 // 1. Query the retry docs for the replicator.
 // 2. For each doc, retry the doc.
 // 3. If the doc is successfully retried, delete the retry doc.
-// 4. If the doc fails to retry, stop retrying the rest of the docs and wait for the next retry.
+// 4. If the doc fails to retry, keep its retry doc. If the peer rejected it, carry on with the rest
+// of the docs, so that a doc that can never be delivered does not block the others. Otherwise, stop
+// retrying the rest of the docs and wait for the next retry.
 // 5. If all docs are successfully retried, delete the replicator retry.
-// 6. If there are more docs to retry, set the next retry time to be immediate.
+// 6. If any doc failed, the next retry follows the normal retry intervals. Otherwise, if there are
+// more docs to retry, set the next retry time to be immediate.
 //
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
@@ -755,6 +759,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 	}
 	defer closeQueryResults(iter)
 
+	anyFailed := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -765,6 +770,7 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		hasNext, err := iter.Next()
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to get next replicator retry docID key", err)
+			anyFailed = true
 			break
 		}
 		if !hasNext {
@@ -779,18 +785,21 @@ func (p *P2P) retryReplicator(ctx context.Context, peerID string) {
 		err = p.retryDoc(ctx, peerID, key.DocID)
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to retry doc", err, corelog.String("DocID", key.DocID))
-			if err = p.handleCompletedReplicatorRetry(ctx, peerID, false); err != nil {
-				log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
+			anyFailed = true
+			// The peer rejected this doc, but may accept the others, so keep going. Any other
+			// error, like the peer being unreachable, would fail the others too.
+			if errors.Is(err, message.ErrPeerRejected) {
+				continue
 			}
-			// if one doc fails, stop retrying the rest and just wait for the next retry
-			return
+			break
 		}
 		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
 	}
 
-	if err = p.handleCompletedReplicatorRetry(ctx, peerID, true); err != nil {
+	// If any doc failed, wait before retrying again instead of retrying right away.
+	if err = p.handleCompletedReplicatorRetry(ctx, peerID, !anyFailed); err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
 	}
 }
@@ -875,6 +884,17 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 	if err != nil {
 		return err
 	}
+	if len(heads) == 0 {
+		return nil
+	}
+
+	// The receiver resolves the collection by its root id, not the version the head was authored against.
+	// All heads of a document share the same collection root, whichever version authored them.
+	col, err := p.getCollectionByVersionID(ctx, heads[0].block.Delta.GetCollectionVersionID())
+	if err != nil {
+		return err
+	}
+	collectionID := col.CollectionID()
 
 	for _, head := range heads {
 		select {
@@ -892,7 +912,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
-			CollectionID: head.block.Delta.GetCollectionVersionID(),
+			CollectionID: collectionID,
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
