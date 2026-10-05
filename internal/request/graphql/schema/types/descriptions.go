@@ -86,8 +86,8 @@ The ID of the collection version that this commit was committed against. This ID
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
-The name of the field that this commit was committed against. If this is a composite
- or a collection the value will be null.
+The name of the field that this commit was committed against. The value is "_C" for composite
+ blocks and null for collection blocks.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
