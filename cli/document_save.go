@@ -98,10 +98,7 @@ Options:
 				if err != nil {
 					return NewErrParsingArgument("docID", err)
 				}
-				doc, err = client.NewDocWithID(ctx, docID, col.Version())
-				if err != nil {
-					return err
-				}
+				doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
 				if len(docData) > 0 {
 					if err := doc.SetWithJSON(ctx, docData); err != nil {
 						return NewErrParsingArgument("document", err)
@@ -110,10 +107,15 @@ Options:
 			} else {
 				var rawMap map[string]any
 				if err := json.Unmarshal(docData, &rawMap); err == nil && rawMap != nil {
-					if _, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
-						doc, err = client.NewDocFromMap(ctx, rawMap, col.Version())
-						if err != nil {
-							return NewErrParsingArgument("document", err)
+					if docIDRaw, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
+						if docIDStr, ok := docIDRaw.(string); ok {
+							if docID, err := client.NewDocIDFromString(docIDStr); err == nil {
+								delete(rawMap, request.DocIDFieldName)
+								doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
+								if err := doc.SetWithJSON(ctx, docData); err != nil {
+									return NewErrParsingArgument("document", err)
+								}
+							}
 						}
 					}
 				}

@@ -761,6 +761,8 @@ func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *clien
 			continue
 		case getOldValErr != nil && getNewValErr == nil:
 			return true
+		case getOldValErr == nil && getNewValErr != nil:
+			return true
 		case !oldVal.NormalValue().Equal(newVal.NormalValue()):
 			return true
 		}

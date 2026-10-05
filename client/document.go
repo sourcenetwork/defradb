@@ -100,12 +100,44 @@ type Document struct {
 	collection CollectionVersion
 }
 
-func newEmptyDoc(ctx context.Context, collection CollectionVersion) (*Document, error) {
-	doc := &Document{
+func newEmptyDocWithoutDefaults(collection CollectionVersion) *Document {
+	return &Document{
 		fields:     make(map[string]Field),
 		values:     make(map[Field]*FieldValue),
 		collection: collection,
 	}
+}
+
+// NewDocWithoutDefaults creates a Document without applying default values.
+func NewDocWithoutDefaults(collection CollectionVersion) *Document {
+	return newEmptyDocWithoutDefaults(collection)
+}
+
+// NewDocWithoutDefaultsWithID creates a Document with the specified DocID without applying default values.
+func NewDocWithoutDefaultsWithID(docID DocID, collection CollectionVersion) *Document {
+	doc := newEmptyDocWithoutDefaults(collection)
+	doc.id = docID
+	return doc
+}
+
+// ApplyDefaultValues applies default values from the collection definition
+// for any fields that have not been set on the document.
+func (doc *Document) ApplyDefaultValues(ctx context.Context) error {
+	for _, field := range doc.collection.Fields {
+		if field.DefaultValue == nil {
+			continue
+		}
+		if _, exists := doc.fields[field.Name]; !exists {
+			if err := doc.Set(ctx, field.Name, field.DefaultValue); err != nil {
+				return NewErrSetDocFieldValue(err, field.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func newEmptyDoc(ctx context.Context, collection CollectionVersion) (*Document, error) {
+	doc := newEmptyDocWithoutDefaults(collection)
 	if err := doc.setDefaultValues(ctx); err != nil {
 		return nil, err
 	}
@@ -1059,6 +1091,59 @@ func (doc *Document) Clean() {
 			val.Clean()
 		}
 	}
+}
+
+// CloneWithUpdates creates a shallow copy of doc with the modified (dirty)
+// fields from updates overlaid on top. Fields present in updates that are marked
+// dirty will overwrite the corresponding fields from doc.
+func (doc *Document) CloneWithUpdates(updates *Document) *Document {
+	if doc == nil {
+		return updates
+	}
+	if updates == nil {
+		return doc
+	}
+
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
+
+	updates.mu.RLock()
+	defer updates.mu.RUnlock()
+
+	cloned := &Document{
+		id:         doc.id,
+		head:       doc.head,
+		collection: doc.collection,
+		fields:     make(map[string]Field, len(doc.fields)+len(updates.fields)),
+		values:     make(map[Field]*FieldValue, len(doc.values)+len(updates.values)),
+	}
+
+	for k, v := range doc.fields {
+		cloned.fields[k] = v
+	}
+	for k, v := range doc.values {
+		cloned.values[k] = &FieldValue{
+			t:       v.t,
+			value:   v.value,
+			isDirty: v.isDirty,
+		}
+	}
+
+	for fieldName, field := range updates.fields {
+		if val, exists := updates.values[field]; exists && val.isDirty {
+			if oldF, alreadyExists := cloned.fields[fieldName]; alreadyExists {
+				delete(cloned.values, oldF)
+			}
+			cloned.fields[fieldName] = field
+			cloned.values[field] = &FieldValue{
+				t:       val.t,
+				value:   val.value,
+				isDirty: true,
+			}
+		}
+	}
+
+	return cloned
 }
 
 // converts the document into a map[string]any including any sub documents.

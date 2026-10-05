@@ -404,6 +404,9 @@ func (c *collection) SaveDocument(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
+		if err := doc.ApplyDefaultValues(ctx); err != nil {
+			return err
+		}
 		err = c.add(ctx, doc, opt)
 	}
 	if err != nil {

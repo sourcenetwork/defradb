@@ -257,11 +257,7 @@ func (h *collectionHandler) SaveDocument(rw http.ResponseWriter, req *http.Reque
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		doc, err = client.NewDocWithID(ctx, docID, col.Version())
-		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
-		}
+		doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
 		if len(data) > 0 {
 			if err := doc.SetWithJSON(ctx, data); err != nil {
 				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -271,11 +267,16 @@ func (h *collectionHandler) SaveDocument(rw http.ResponseWriter, req *http.Reque
 	} else {
 		var rawMap map[string]any
 		if err := json.Unmarshal(data, &rawMap); err == nil && rawMap != nil {
-			if _, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
-				doc, err = client.NewDocFromMap(ctx, rawMap, col.Version())
-				if err != nil {
-					responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-					return
+			if docIDRaw, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
+				if docIDStr, ok := docIDRaw.(string); ok {
+					if docID, err := client.NewDocIDFromString(docIDStr); err == nil {
+						delete(rawMap, request.DocIDFieldName)
+						doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
+						if err := doc.SetWithJSON(ctx, data); err != nil {
+							responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+							return
+						}
+					}
 				}
 			}
 		}
