@@ -934,8 +934,8 @@ type Commit {
     docID: String
     """
     
-    The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
+    The name of the field that this commit was committed against. The value is "_C" for composite
+     blocks and null for collection blocks.
 
     """
     fieldName: String
@@ -3391,8 +3391,8 @@ enum commitFields {
     docID
     """
     
-    The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
+    The name of the field that this commit was committed against. The value is "_C" for composite
+     blocks and null for collection blocks.
 
     """
     fieldName
