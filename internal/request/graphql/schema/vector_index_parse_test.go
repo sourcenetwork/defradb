@@ -95,7 +95,7 @@ func TestParseVectorIndex_OnField_ProducesVectorKindIndex(t *testing.T) {
 	// Simulate turning the request into a descriptor, as processNewIndexRequest would: a request with
 	// a Vector becomes a vector-kind descriptor carrying the vector config.
 	desc := client.IndexDescription{
-		Fields:          newIndex.Fields,
+		Fields:          newIndex.Fields, //nolint:staticcheck // request has no accessor
 		Kind:            client.IndexKindVector,
 		KindDescription: newIndex.Vector,
 	}

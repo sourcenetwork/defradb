@@ -84,7 +84,11 @@ type DisconnectPeers struct {
 //
 // For example you will likely wish to `WaitForSync` after adding a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// ExcludedDocs are documents that are expected to never sync, for example because the
+	// receiving node rejects them. They are not waited for.
+	ExcludedDocs []state.ColDocIndex
+}
 
 // WaitForSESync waits for SE artifact synchronization to complete.
 type WaitForSESync struct {

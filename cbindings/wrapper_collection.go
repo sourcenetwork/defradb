@@ -78,8 +78,15 @@ func (c *Collection) NewIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
-	orderedFields := make([]string, len(indexDesc.Fields))
-	for i, f := range indexDesc.Fields {
+	// The deprecated Fields wins when set, so the server still sees it disagreeing with the kind
+	// config and rejects it.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	requested := indexDesc.Fields
+	if len(requested) == 0 {
+		requested = indexDesc.GetFields()
+	}
+	orderedFields := make([]string, len(requested))
+	for i, f := range requested {
 		order := "ASC"
 		if f.Descending {
 			order = "DESC"

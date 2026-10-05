@@ -39,6 +39,10 @@ const eventTimeout = 1 * time.Second
 //
 // Expected document heads will be updated for the targeted node.
 func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
+	timeout := cfg.Timeout
+	if timeout == 0 {
+		timeout = eventTimeout
+	}
 	// An external node runs in another process, so its completion event fires on a
 	// bus we cannot observe. Skip the wait. The event is published asynchronously
 	// after commit anyway, so skipping it means the follow-up head push may still be
@@ -51,7 +55,7 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 				require.Fail(s.T, "subscription closed waiting for replicator event")
 			}
 
-		case <-time.After(eventTimeout):
+		case <-time.After(timeout):
 			require.Fail(s.T, "timeout waiting for replicator event")
 		}
 	}
@@ -198,30 +202,7 @@ func waitForUpdateEvents(
 					}
 					evt = msg.Data.(event.Update)
 
-					node.CompositesLock.Lock()
-					// We keep track of the list of cids for all documents in the test
-					// in case we want to use them in subsequent test actions without having
-					// to know in advance what the CID will be.
-					if node.Composites == nil {
-						node.Composites = make(map[string][]cid.Cid)
-					}
-					updateKey := getUpdateEventKey(evt)
-					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
-					if node.FieldCIDs == nil {
-						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
-					}
-					if node.FieldCIDs[updateKey] == nil {
-						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
-					}
-					block, err := coreblock.GetFromBytes(evt.Block)
-					require.NoError(s.T, err)
-					for _, link := range block.Links {
-						node.FieldCIDs[updateKey][link.Name] = append(
-							node.FieldCIDs[updateKey][link.Name],
-							link.Link.Cid,
-						)
-					}
-					node.CompositesLock.Unlock()
+					recordUpdateEvent(s, node, evt)
 
 					if !evt.IsRelay {
 						break relayCheck
@@ -246,6 +227,34 @@ func waitForUpdateEvents(
 	}
 }
 
+// recordUpdateEvent records document and field CIDs for later test actions.
+func recordUpdateEvent(s *state.State, node *state.NodeState, evt event.Update) {
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+	// We keep track of the list of cids for all documents in the test
+	// in case we want to use them in subsequent test actions without having
+	// to know in advance what the CID will be.
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	updateKey := getUpdateEventKey(evt)
+	node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[updateKey] == nil {
+		node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+	}
+	block, err := coreblock.GetFromBytes(evt.Block)
+	require.NoError(s.T, err)
+	for _, link := range block.Links {
+		node.FieldCIDs[updateKey][link.Name] = append(
+			node.FieldCIDs[updateKey][link.Name],
+			link.Link.Cid,
+		)
+	}
+}
+
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 //
@@ -261,6 +270,13 @@ func waitForUpdateEvents(
 // During pending set construction, for each (key, source) pair we keep only the latest CID
 // (last appended), since earlier CIDs from the same source are ancestors subsumed by the latest.
 func waitForMergeEvents(s *state.State, action WaitForSync) {
+	excluded := make(map[string]struct{}, len(action.ExcludedDocs))
+	s.DocIDsLock.RLock()
+	for _, doc := range action.ExcludedDocs {
+		excluded[s.DocIDs[doc.Col][doc.Doc].String()] = struct{}{}
+	}
+	s.DocIDsLock.RUnlock()
+
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
 		if node.Closed {
@@ -274,6 +290,9 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		// key → sourceNodeID → latest CID
 		latestPerSource := make(map[string]map[int]cid.Cid)
 		for key, heads := range node.P2P.ExpectedDAGHeads {
+			if _, ok := excluded[key]; ok {
+				continue
+			}
 			for _, head := range heads {
 				if latestPerSource[key] == nil {
 					latestPerSource[key] = make(map[int]cid.Cid)
@@ -314,18 +333,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		}
 
 		for totalPending > 0 {
-			var evt event.MergeComplete
-			select {
-			case msg, ok := <-node.Event.Merge.Message():
-				if !ok {
-					require.Fail(s.T, "subscription closed waiting for merge complete event")
-				}
-				evt = msg.Data.(event.MergeComplete)
-
-			case <-time.After(30 * eventTimeout):
-				require.Fail(s.T, "timeout waiting for merge complete event")
-			}
-
+			evt := waitForMergeComplete(s, node)
 			key := getMergeEventKey(evt.Merge)
 			node.P2P.ActualDAGHeads[key] = state.DocHeadState{
 				CID: evt.Merge.Cid,
@@ -348,6 +356,30 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			if len(cidSet) == 0 {
 				delete(pending, key)
 			}
+		}
+	}
+}
+
+// waitForMergeComplete waits until a `event.MergeComplete` message is received.
+//
+// It skips locally generated `event.Update` messages so that the event buffer does
+// not fill and block future events.
+func waitForMergeComplete(s *state.State, node *state.NodeState) event.MergeComplete {
+	timeout := time.After(30 * eventTimeout)
+	for {
+		select {
+		case msg, ok := <-node.Event.Merge.Message():
+			require.True(s.T, ok, "subscription closed waiting for merge complete event")
+			return msg.Data.(event.MergeComplete)
+		case msg, ok := <-node.Event.Update.Message():
+			require.True(s.T, ok, "subscription closed waiting for update event")
+			update := msg.Data.(event.Update)
+			// Write actions consume their own updates. Drain replication
+			// updates here so their buffer cannot block merge notifications.
+			require.True(s.T, update.IsRelay, "unexpected local update while waiting for sync")
+			recordUpdateEvent(s, node, update)
+		case <-timeout:
+			require.FailNow(s.T, "timeout waiting for merge complete event")
 		}
 	}
 }

@@ -20,8 +20,6 @@ import (
 )
 
 func TestNAC_GatesAddCollection_AllowIfAuthorizedElseError(t *testing.T) {
-	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
-	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.

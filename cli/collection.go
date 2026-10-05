@@ -44,11 +44,10 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			// The 'add' subcommand creates new collections and doesn't need to resolve an
-			// existing collection from the context.
-			// If we don't do this, we will hit the NAC gate for collection-get permission
-			// when we do the [GetCollections()] call below.
-			if cmd.Name() == "add" {
+			// Only truncate operates on a collection object supplied through the command
+			// context. The other subcommands either resolve collections themselves (describe)
+			// or call a store-level operation directly (add, patch, delete, and set-active).
+			if cmd.Name() != "truncate" {
 				return nil
 			}
 
