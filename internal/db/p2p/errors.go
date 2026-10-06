@@ -36,13 +36,13 @@ const (
 	errDeleteReplicator        string = "failed to delete replicator"
 	errListReplicators         string = "failed to list replicators"
 	errCreateDocIterator       string = "failed to create document iterator for replicator"
-	errIterateReplicatorDocs   string = "failed to iterate replicator documents"
+	errIterateReplicatorItems  string = "failed to iterate replicator items"
 	errPushDocHeads            string = "failed to push document heads"
-	errGetDocHeads             string = "failed to get document heads for replication"
+	errGetItemHeads            string = "failed to get item heads for replication"
 	errMarshalBlock            string = "failed to marshal block for replication"
 	errUpdateReplicatorStatus  string = "failed to update replicator status"
 	errCreateReplicatorRetry   string = "failed to create replicator retry"
-	errStoreRetryDoc           string = "failed to store retry doc for replicator"
+	errStoreRetryItem          string = "failed to store retry item for replicator"
 	errHandleRetryCompletion   string = "failed to handle replicator retry completion"
 	errCheckRetryExists        string = "failed to check if replicator retry exists"
 	errMarshalRetryInfo        string = "failed to marshal replicator retry info"
@@ -53,7 +53,7 @@ const (
 	errSendReplicatorRequest   string = "failed to send replicator push request"
 	errFetchRetryDocs          string = "failed to fetch retry docs for replicator"
 	errDeleteRetryKey          string = "failed to delete replicator retry key"
-	errDeleteRetryDoc          string = "failed to delete replicator retry doc"
+	errDeleteRetryItem         string = "failed to delete replicator retry item"
 	errListP2PCollections      string = "failed to list P2P collections"
 	errGetAllP2PCollections    string = "failed to get all P2P collection IDs"
 	errListP2PDocuments        string = "failed to list P2P documents"
@@ -141,16 +141,16 @@ func NewErrCreateDocIterator(inner error) error {
 	return errors.Wrap(errCreateDocIterator, inner)
 }
 
-func NewErrIterateReplicatorDocs(inner error) error {
-	return errors.Wrap(errIterateReplicatorDocs, inner)
+func NewErrIterateReplicatorItems(inner error) error {
+	return errors.Wrap(errIterateReplicatorItems, inner)
 }
 
 func NewErrPushDocHeads(inner error, docID string) error {
 	return errors.Wrap(errPushDocHeads, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrGetDocHeads(inner error, docID string) error {
-	return errors.Wrap(errGetDocHeads, inner, errors.NewKV("DocID", docID))
+func NewErrGetItemHeads(inner error, itemID string) error {
+	return errors.Wrap(errGetItemHeads, inner, errors.NewKV("ItemID", itemID))
 }
 
 func NewErrMarshalBlock(inner error, docID string, cid string) error {
@@ -190,8 +190,8 @@ func NewErrCreateReplicatorRetry(inner error, peerID string) error {
 	return errors.Wrap(errCreateReplicatorRetry, inner, errors.NewKV("PeerID", peerID))
 }
 
-func NewErrStoreRetryDoc(inner error, peerID, docID string) error {
-	return errors.Wrap(errStoreRetryDoc, inner, errors.NewKV("PeerID", peerID), errors.NewKV("DocID", docID))
+func NewErrStoreRetryItem(inner error, peerID, itemID string) error {
+	return errors.Wrap(errStoreRetryItem, inner, errors.NewKV("PeerID", peerID), errors.NewKV("ItemID", itemID))
 }
 
 func NewErrHandleRetryCompletion(inner error, peerID string) error {
@@ -234,8 +234,8 @@ func NewErrDeleteRetryKey(inner error, peerID string) error {
 	return errors.Wrap(errDeleteRetryKey, inner, errors.NewKV("PeerID", peerID))
 }
 
-func NewErrDeleteRetryDoc(inner error, peerID string) error {
-	return errors.Wrap(errDeleteRetryDoc, inner, errors.NewKV("PeerID", peerID))
+func NewErrDeleteRetryItem(inner error, peerID string) error {
+	return errors.Wrap(errDeleteRetryItem, inner, errors.NewKV("PeerID", peerID))
 }
 
 func NewErrDeleteP2PCollection(inner error, collectionID string) error {
