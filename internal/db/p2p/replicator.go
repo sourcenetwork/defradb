@@ -491,7 +491,7 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, colID, docID 
 	}
 
 	if err := p.db.Multistore().Peerstore().Set(ctx, peerStoreKey.Bytes(), []byte{}); err != nil {
-		return NewErrStoreRetryItem(err, peerID, docID)
+		return NewErrStoreRetryItem(err, peerID, peerStoreKey.ToString())
 	}
 	return nil
 }
