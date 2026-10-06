@@ -1090,14 +1090,6 @@ func (p *P2P) retryCol(ctx context.Context, peerID string, colID string) error {
 		return nil
 	}
 
-	// The receiver resolves the collection by its root id, not the version the head was authored against.
-	// All heads of a document share the same collection root, whichever version authored them.
-	col, err := p.getCollectionByVersionID(ctx, heads[0].block.Delta.GetCollectionVersionID())
-	if err != nil {
-		return err
-	}
-	collectionID := col.CollectionID()
-
 	for _, head := range heads {
 		select {
 		case <-ctx.Done():
@@ -1113,7 +1105,7 @@ func (p *P2P) retryCol(ctx context.Context, peerID string, colID string) error {
 		reqCtx, reqCancel := context.WithTimeout(ctx, networkRequestTimeout)
 		pushLogReq := protocol.PushLogRequest{
 			CID:          head.cid.Bytes(),
-			CollectionID: collectionID,
+			CollectionID: colID,
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}
