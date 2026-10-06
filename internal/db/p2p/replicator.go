@@ -763,9 +763,6 @@ func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
 // 4. If the doc fails to retry, keep its retry doc. If the peer rejected it, carry on with the rest
 // of the docs, so that a doc that can never be delivered does not block the others. Otherwise, stop
 // retrying the rest of the docs and wait for the next retry.
-// 5. If all docs are successfully retried, delete the replicator retry.
-// 6. If any doc failed, the next retry follows the normal retry intervals. Otherwise, if there are
-// more docs to retry, set the next retry time to be immediate.
 //
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
@@ -833,9 +830,6 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 // 4. If the col fails to retry, keep its retry col. If the peer rejected it, carry on with the rest
 // of the cols, so that a col that can never be delivered does not block the others. Otherwise, stop
 // retrying the rest of the cols and wait for the next retry.
-// 5. If all cols are successfully retried, delete the replicator retry.
-// 6. If any col failed, the next retry follows the normal retry intervals. Otherwise, if there are
-// more cols to retry, set the next retry time to be immediate.
 //
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryCol step, there
