@@ -776,7 +776,8 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 	})
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to iterate replicator retry docID keys", err)
-		return true, false
+		// Return true, true so that we delay before retrying
+		return true, true
 	}
 	defer closeQueryResults(iter)
 
@@ -841,7 +842,8 @@ func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToComp
 	})
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to iterate replicator retry colID keys", err)
-		return true, false
+		// Return true, true so that we delay before retrying
+		return true, true
 	}
 	defer closeQueryResults(iter)
 
