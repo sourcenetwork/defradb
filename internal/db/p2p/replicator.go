@@ -738,6 +738,8 @@ func addReplicatorNextRetry(
 }
 
 func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
+	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
+
 	ranToCompletion, anyDocsFailed := p.retryReplicatorDocs(ctx, peerID)
 	if !ranToCompletion {
 		return
@@ -768,8 +770,6 @@ func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
 // would be a high chance of unnecessary transaction conflicts.
 func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToCompletion bool, anyFailed bool) {
-	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
-
 	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
@@ -835,8 +835,6 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 // and post updates as soon as possible. Because of the asyncronous nature of the retryCol step, there
 // would be a high chance of unnecessary transaction conflicts.
 func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToCompletion bool, anyFailed bool) {
-	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
-
 	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryCollectionIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
@@ -866,7 +864,7 @@ func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToComp
 
 		key, err := keys.NewReplicatorRetryCollectionIDKeyFromString(string(iter.Key()))
 		if err != nil {
-			log.ErrorContextE(ctx, "Failed to parse retry doc key", err)
+			log.ErrorContextE(ctx, "Failed to parse retry col key", err)
 			continue
 		}
 		err = p.retryCol(ctx, peerID, key.CollectionID)
