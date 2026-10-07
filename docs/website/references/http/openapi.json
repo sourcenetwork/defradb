@@ -350,9 +350,6 @@
                                 "Provider": {
                                     "type": "string"
                                 },
-                                "Template": {
-                                    "type": "string"
-                                },
                                 "URL": {
                                     "type": "string"
                                 }

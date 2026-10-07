@@ -911,8 +911,6 @@ func vectorEmbeddingFromAST(
 			embedding.Model = arg.Value.(*ast.StringValue).Value
 		case types.VectorEmbeddingDirectivePropProvider:
 			embedding.Provider = arg.Value.(*ast.StringValue).Value
-		case types.VectorEmbeddingDirectivePropTemplate:
-			embedding.Template = arg.Value.(*ast.StringValue).Value
 		case types.VectorEmbeddingDirectivePropURL:
 			embedding.URL = arg.Value.(*ast.StringValue).Value
 		}
