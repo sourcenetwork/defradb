@@ -658,4 +658,3 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodPatch, updateDocument, h.UpdateDocument)
 	router.AddRoute("/collections/{name}/document/{docID}", http.MethodDelete, deleteDocument, h.DeleteDocument)
 }
-

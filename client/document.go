@@ -1096,6 +1096,7 @@ func (doc *Document) Clean() {
 // CloneWithUpdates creates a shallow copy of doc with the modified (dirty)
 // fields from updates overlaid on top. Fields present in updates that are marked
 // dirty will overwrite the corresponding fields from doc.
+// If doc or updates is nil, the non-nil document (or nil if both are nil) is returned without copying.
 func (doc *Document) CloneWithUpdates(updates *Document) *Document {
 	if doc == nil {
 		return updates

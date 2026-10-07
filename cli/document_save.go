@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 
@@ -20,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
@@ -105,25 +103,9 @@ Options:
 					}
 				}
 			} else {
-				var rawMap map[string]any
-				if err := json.Unmarshal(docData, &rawMap); err == nil && rawMap != nil {
-					if docIDRaw, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
-						if docIDStr, ok := docIDRaw.(string); ok {
-							if docID, err := client.NewDocIDFromString(docIDStr); err == nil {
-								delete(rawMap, request.DocIDFieldName)
-								doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
-								if err := doc.SetWithJSON(ctx, docData); err != nil {
-									return NewErrParsingArgument("document", err)
-								}
-							}
-						}
-					}
-				}
-				if doc == nil {
-					doc, err = client.NewDocFromJSON(ctx, docData, col.Version())
-					if err != nil {
-						return NewErrParsingArgument("document", err)
-					}
+				doc, err = client.NewDocFromJSON(ctx, docData, col.Version())
+				if err != nil {
+					return NewErrParsingArgument("document", err)
 				}
 			}
 			if err := col.SaveDocument(ctx, doc, saveOpt); err != nil {

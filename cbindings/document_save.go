@@ -23,7 +23,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -91,25 +90,10 @@ func SaveDocument(
 			}
 		}
 	} else {
-		var rawMap map[string]any
-		if err := json.Unmarshal([]byte(jsonString), &rawMap); err == nil && rawMap != nil {
-			if docIDRaw, hasDocID := rawMap[request.DocIDFieldName]; hasDocID {
-				if docIDStr, ok := docIDRaw.(string); ok {
-					if newDocID, err := client.NewDocIDFromString(docIDStr); err == nil {
-						delete(rawMap, request.DocIDFieldName)
-						doc = client.NewDocWithoutDefaultsWithID(newDocID, col.Version())
-						if err := doc.SetWithJSON(ctx, []byte(jsonString)); err != nil {
-							return returnC(returnGoC(1, err.Error(), ""))
-						}
-					}
-				}
-			}
-		}
-		if doc == nil {
-			doc, err = client.NewDocFromJSON(ctx, []byte(jsonString), col.Version())
-			if err != nil {
-				return returnC(returnGoC(1, err.Error(), ""))
-			}
+		var err error
+		doc, err = client.NewDocFromJSON(ctx, []byte(jsonString), col.Version())
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
 		}
 	}
 
