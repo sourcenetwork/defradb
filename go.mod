@@ -52,7 +52,7 @@ require (
 	github.com/sourcenetwork/corelog v0.0.9
 	github.com/sourcenetwork/go-p2p v0.1.11
 	github.com/sourcenetwork/goji v0.0.10
-	github.com/sourcenetwork/graphql-go v0.7.10-0.20260603160416-fba12ae14d3b
+	github.com/sourcenetwork/graphql-go v0.7.10-0.20261007192339-02418a8a6594
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.11.0
 	github.com/sourcenetwork/sourcehub v0.4.1-0.20260128164915-1bce44032618
