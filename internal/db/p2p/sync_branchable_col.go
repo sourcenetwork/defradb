@@ -99,9 +99,15 @@ func (p *P2P) syncBranchableCollection(
 		return ErrTimeoutCollectionSync
 	}
 
+	// A peer answers with its id, while ActivePeers reports full addresses, so
+	// key on the id or a response never clears the peer that sent it.
 	pendingPeers := make(map[string]struct{}, len(activePeers))
-	for _, peer := range activePeers {
-		pendingPeers[peer] = struct{}{}
+	for _, addr := range activePeers {
+		id, err := peerIDFromAddr(addr)
+		if err != nil {
+			return err
+		}
+		pendingPeers[id] = struct{}{}
 	}
 
 	pubsubReq := &syncBranchableCollectionRequest{CollectionID: collectionID}
@@ -111,16 +117,21 @@ func (p *P2P) syncBranchableCollection(
 		return err
 	}
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
-	if err != nil {
-		return err
-	}
-
 	waitCtx := ctx
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
 		var cancel context.CancelFunc
 		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
+	}
+
+	// The request is kept, and resent to peers that join, until this is
+	// cancelled, so end it as soon as the replies stop being read.
+	pubCtx, cancelPub := context.WithCancel(waitCtx)
+	defer cancelPub()
+
+	pubSubRespChan, err := p.host.PublishToTopic(pubCtx, syncBranchableCollectionTopic, data, true)
+	if err != nil {
+		return err
 	}
 
 	return p.waitAndHandleSyncBranchableCollectionResponse(waitCtx, collectionID, pubSubRespChan, pendingPeers)
