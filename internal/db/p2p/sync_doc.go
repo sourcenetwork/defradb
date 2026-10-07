@@ -136,16 +136,21 @@ func (p *P2P) syncDocuments(
 		return nil, err
 	}
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, docSyncTopic, data, true)
-	if err != nil {
-		return nil, err
-	}
-
 	waitCtx := ctx
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
 		var cancel context.CancelFunc
 		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
+	}
+
+	// The request is kept, and resent to peers that join, until this is
+	// cancelled, so end it as soon as the replies stop being read.
+	pubCtx, cancelPub := context.WithCancel(waitCtx)
+	defer cancelPub()
+
+	pubSubRespChan, err := p.host.PublishToTopic(pubCtx, docSyncTopic, data, true)
+	if err != nil {
+		return nil, err
 	}
 
 	return p.waitAndHandleDocSyncResponses(waitCtx, collectionID, docIDs, pubSubRespChan, pendingPeers)

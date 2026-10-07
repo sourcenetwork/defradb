@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -64,13 +65,6 @@ func (a *WaitForPeersEvents) Execute() {
 
 	sourceNode := a.s.Nodes[a.NodeID]
 
-	// A node in another process emits its peer events on a bus we cannot read,
-	// so there is nothing to wait for. The connection itself is still made, and
-	// the actions that follow verify it by talking to the node.
-	if sourceNode.IsExternal {
-		return
-	}
-
 	expectedPeers := make(map[string]map[string]bool)
 
 	addExpectedPeers := func(topic string, peerNodeIDs []int) {
@@ -106,6 +100,15 @@ func (a *WaitForPeersEvents) Execute() {
 
 		topic := docID.String()
 		addExpectedPeers(topic, peerNodeIDs)
+	}
+
+	if sourceNode.IsExternal {
+		// Leaving a topic does not end the connection, so there is nothing
+		// outside the node that shows it happened.
+		if eventType == client.PeerEventTypeJoined {
+			a.waitOnExternalNode(sourceNode, expectedPeers, timeout)
+		}
+		return
 	}
 
 	totalExpected := 0
@@ -144,6 +147,58 @@ func (a *WaitForPeersEvents) Execute() {
 				a.NodeID, eventType, remaining)
 			return
 		}
+	}
+}
+
+// waitOnExternalNode waits until a node in another process is connected to
+// every expected peer, which it has to be before it can see them join a topic.
+// Its events cannot be read from here, so it is asked over its API instead.
+// Without this, the actions that follow run before the node has found its
+// peers, and a sync it starts misses the ones it has not found yet.
+func (a *WaitForPeersEvents) waitOnExternalNode(
+	node *state.NodeState,
+	expectedPeers map[string]map[string]bool,
+	timeout time.Duration,
+) {
+	want := make(map[string]struct{})
+	for _, peers := range expectedPeers {
+		for id := range peers {
+			want[id] = struct{}{}
+		}
+	}
+
+	opts := options.ActivePeers()
+	ident := getIdentityForRequestSpecificToNode(a.s, NodeIdentity(a.NodeID), a.NodeID)
+	if ident.HasValue() {
+		opts.SetIdentity(ident.Value())
+	}
+
+	deadline := time.Now().Add(timeout)
+	for {
+		addrs, err := node.ActivePeers(a.s.Ctx, opts)
+		require.NoError(a.s.T, err)
+		connected := make(map[string]struct{}, len(addrs))
+		for _, addr := range addrs {
+			if id, err := extractPeerID(addr); err == nil {
+				connected[id] = struct{}{}
+			}
+		}
+
+		var waitingOn []string
+		for id := range want {
+			if _, ok := connected[id]; !ok {
+				waitingOn = append(waitingOn, id)
+			}
+		}
+		if len(waitingOn) == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			require.Fail(a.s.T, "timeout waiting for external node peers",
+				"node %d did not connect to: %v", a.NodeID, waitingOn)
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
