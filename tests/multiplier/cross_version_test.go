@@ -89,7 +89,7 @@ func TestCrossVersionApply_OldSource_VersionsFirstNode(t *testing.T) {
 	result := oldSource().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 0).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 0).Version)
 	assert.Equal(t, "", nodeAt(t, result, 1).Version)
 }
 
@@ -102,7 +102,7 @@ func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
 
 	require.Len(t, result, 2)
 	assert.Equal(t, "", nodeAt(t, result, 0).Version)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 1).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 1).Version)
 }
 
 func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
@@ -117,7 +117,7 @@ func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
 	require.Len(t, result, 3)
 	assert.Equal(t, "", nodeAt(t, result, 0).Version)
 	assert.Equal(t, "", nodeAt(t, result, 1).Version)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 2).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 2).Version)
 }
 
 func TestCrossVersionApply_LeavesOtherActionsUntouched(t *testing.T) {

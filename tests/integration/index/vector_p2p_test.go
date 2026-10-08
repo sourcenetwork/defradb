@@ -26,7 +26,8 @@ import (
 func TestVectorIndexP2P_ReplicatedDoc_IsSearchableOnReplica(t *testing.T) {
 	test := testUtils.TestCase{
 		// Vector indexes first shipped in v1.1.0.
-		SupportedFromVersion: "v1.1.0",
+		OldSourceSupportedFromVersion: "v1.1.0",
+		NewSourceSupportedFromVersion: "v1.1.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
