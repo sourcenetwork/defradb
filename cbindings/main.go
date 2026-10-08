@@ -11,7 +11,7 @@
 //go:build cgo
 // +build cgo
 
-package cbindings
+package main
 
 // The following comment is to allow use of C structs in the Go code
 
