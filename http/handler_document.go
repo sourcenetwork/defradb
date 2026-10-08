@@ -216,3 +216,70 @@ func (h *collectionHandler) GetDocument(rw http.ResponseWriter, req *http.Reques
 	}
 	responseJSON(rw, http.StatusOK, docMap)
 }
+
+func (h *collectionHandler) SaveDocument(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	ctx := req.Context()
+	q := req.URL.Query()
+	encConf := encryption.DocEncConfig{}
+	encConf.IsDocEncrypted, _ = strconv.ParseBool(q.Get(docEncryptParam))
+	if q.Get(docEncryptFieldsParam) != "" {
+		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
+	}
+
+	saveOpt := options.WithIdentity(
+		options.SaveDocument().
+			SetEncryptDoc(encConf.IsDocEncrypted).
+			SetEncryptedFields(encConf.EncryptedFields),
+		identity.FromContext(ctx),
+	)
+	if err := setSaveSigningOption(req, saveOpt); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	var doc *client.Document
+	docIDParam := chi.URLParam(req, "docID")
+	if docIDParam != "" {
+		docID, err := client.NewDocIDFromString(docIDParam)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		doc = client.NewDocWithoutDefaultsWithID(docID, col.Version())
+		if len(data) > 0 {
+			if err := doc.SetWithJSON(ctx, data); err != nil {
+				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+				return
+			}
+		}
+	} else {
+		doc, err = client.NewDocFromJSON(ctx, data, col.Version())
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+	}
+
+	if err := col.SaveDocument(ctx, doc, saveOpt); err != nil {
+		responseJSON(rw, httpStatusFromError(err), errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, client.DocumentIDs([]*client.Document{doc}))
+}
+
+func setSaveSigningOption(req *http.Request, opt *options.SaveDocumentOptionsBuilder) error {
+	enableSigning, ok, err := enableSigningFromRequest(req)
+	if err != nil || !ok {
+		return err
+	}
+	opt.SetEnableSigning(enableSigning)
+	return nil
+}

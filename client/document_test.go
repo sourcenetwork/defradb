@@ -289,3 +289,141 @@ func TestNewDocFromJSON_OmittedNonNillableArrayField_NoError(t *testing.T) {
 	_, err := NewDocFromJSON(ctx, []byte(`{}`), nillableArrayDef)
 	require.NoError(t, err)
 }
+
+func TestNewDocWithoutDefaults(t *testing.T) {
+	col := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name:         "status",
+				Typ:          LWW_REGISTER,
+				Kind:         FieldKind_STRING,
+				DefaultValue: "active",
+			},
+		},
+	}
+	doc := NewDocWithoutDefaults(col)
+	require.NotNil(t, doc)
+	assert.Empty(t, doc.fields)
+	assert.Empty(t, doc.values)
+}
+
+func TestNewDocWithoutDefaultsWithID(t *testing.T) {
+	col := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name:         "status",
+				Typ:          LWW_REGISTER,
+				Kind:         FieldKind_STRING,
+				DefaultValue: "active",
+			},
+		},
+	}
+	docID, err := NewDocIDFromString("bae-c94acbfa-dd53-40d0-97f3-29ce16c333fc")
+	require.NoError(t, err)
+	doc := NewDocWithoutDefaultsWithID(docID, col)
+	require.NotNil(t, doc)
+	assert.Equal(t, docID, doc.ID())
+	assert.Empty(t, doc.fields)
+	assert.Empty(t, doc.values)
+}
+
+func TestApplyDefaultValues(t *testing.T) {
+	ctx := context.Background()
+	col := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name:         "status",
+				Typ:          LWW_REGISTER,
+				Kind:         FieldKind_STRING,
+				DefaultValue: "active",
+			},
+			{
+				Name:         "count",
+				Typ:          LWW_REGISTER,
+				Kind:         FieldKind_INT,
+				DefaultValue: int64(10),
+			},
+			{
+				Name: "name",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_STRING,
+			},
+		},
+	}
+	doc := NewDocWithoutDefaults(col)
+	err := doc.Set(ctx, "status", "inactive")
+	require.NoError(t, err)
+
+	err = doc.ApplyDefaultValues(ctx)
+	require.NoError(t, err)
+
+	statusVal, err := doc.GetValue("status")
+	require.NoError(t, err)
+	assert.Equal(t, "inactive", statusVal.Value())
+
+	countVal, err := doc.GetValue("count")
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), countVal.Value())
+	assert.True(t, countVal.IsDirty())
+
+	_, err = doc.GetValue("name")
+	require.ErrorIs(t, err, ErrFieldNotExist)
+}
+
+func TestCloneWithUpdates(t *testing.T) {
+	ctx := context.Background()
+	col := CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "name",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_STRING,
+			},
+			{
+				Name: "age",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_INT,
+			},
+		},
+	}
+	docID, err := NewDocIDFromString("bae-c94acbfa-dd53-40d0-97f3-29ce16c333fc")
+	require.NoError(t, err)
+
+	// 1. Nil receiver returns updates
+	dummyUpdates := NewDocWithoutDefaultsWithID(docID, col)
+	assert.Same(t, dummyUpdates, (*Document)(nil).CloneWithUpdates(dummyUpdates))
+
+	// 2. Nil updates returns doc
+	origDoc := NewDocWithoutDefaultsWithID(docID, col)
+	assert.Same(t, origDoc, origDoc.CloneWithUpdates(nil))
+
+	// 3. Both nil returns nil
+	assert.Nil(t, (*Document)(nil).CloneWithUpdates(nil))
+
+	// 4. Overlay dirty fields
+	oldDoc := NewDocWithoutDefaultsWithID(docID, col)
+	require.NoError(t, oldDoc.Set(ctx, "name", "Alice"))
+	require.NoError(t, oldDoc.Set(ctx, "age", int64(25)))
+	oldDoc.Clean()
+
+	updates := NewDocWithoutDefaultsWithID(docID, col)
+	require.NoError(t, updates.Set(ctx, "age", int64(30)))
+
+	cloned := oldDoc.CloneWithUpdates(updates)
+	require.NotNil(t, cloned)
+	assert.Equal(t, docID, cloned.ID())
+
+	nameVal, err := cloned.GetValue("name")
+	require.NoError(t, err)
+	assert.Equal(t, "Alice", nameVal.Value())
+	assert.False(t, nameVal.IsDirty())
+
+	ageVal, err := cloned.GetValue("age")
+	require.NoError(t, err)
+	assert.Equal(t, int64(30), ageVal.Value())
+	assert.True(t, ageVal.IsDirty())
+}

@@ -74,17 +74,15 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isA
 		// Get the new values of the fields used for embedding generation. We keep track
 		// of the fields that aren't defined to lookup their previous values later.
 		for _, embedField := range embedding.Fields {
-			if docField, ok := doc.Fields()[embedField]; ok {
-				if doc.Values()[docField].IsDirty() {
-					needsGeneration = true
-					fieldsVal[embedField] = doc.Values()[docField].NormalValue()
-				} else {
-					fieldDef, ok := c.def.GetFieldByName(embedField)
-					if !ok {
-						return NewErrEmbeddingFieldNotFound(embedField)
-					}
-					missingFieldsForGeneration = append(missingFieldsForGeneration, fieldDef)
+			if docField, ok := doc.Fields()[embedField]; ok && doc.Values()[docField].IsDirty() {
+				needsGeneration = true
+				fieldsVal[embedField] = doc.Values()[docField].NormalValue()
+			} else {
+				fieldDef, ok := c.def.GetFieldByName(embedField)
+				if !ok {
+					return NewErrEmbeddingFieldNotFound(embedField)
 				}
+				missingFieldsForGeneration = append(missingFieldsForGeneration, fieldDef)
 			}
 		}
 

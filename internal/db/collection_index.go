@@ -289,8 +289,9 @@ func (c *collection) updateIndexedDoc(
 	if err != nil {
 		return err
 	}
+	newDoc := oldDoc.CloneWithUpdates(doc)
 	for _, index := range indexes {
-		err = index.Update(ctx, oldDoc, doc)
+		err = index.Update(ctx, oldDoc, newDoc)
 		if err != nil {
 			return err
 		}
