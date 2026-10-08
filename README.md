@@ -547,7 +547,7 @@ make build-c-static-windows
 make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=24
 ```
 
-The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`. The macOS target requires Xcode Command Line Tools and writes `libdefradb.dylib` and the same headers, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a macOS architecture, and `BUILD_TAGS=silent` to disable logging. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 24, which is the minimum supported.
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a Linux architecture; a cross build uses `aarch64-linux-gnu-gcc` or `x86_64-linux-gnu-gcc` unless `CC` is set. The macOS target requires Xcode Command Line Tools and writes `libdefradb.dylib` and the same headers, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a macOS architecture, and `BUILD_TAGS=silent` to disable logging. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 24, which is the minimum supported.
 
 For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
 
