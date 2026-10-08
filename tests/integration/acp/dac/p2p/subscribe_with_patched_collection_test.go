@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -27,12 +26,10 @@ import (
 // still resolve the collection to authorize the blocks.
 func TestACP_P2PSubscribeUpdateAuthoredOnInactiveCollectionVersion_SyncsUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		// Released versions still resolve the collection by the block's version id.
+		// Releases before v1.2.0 resolve the collection by the block's version id.
 		// https://github.com/sourcenetwork/defradb/issues/5303
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
+		OldSourceSupportedFromVersion: "v1.2.0",
+		NewSourceSupportedFromVersion: "v1.2.0",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,

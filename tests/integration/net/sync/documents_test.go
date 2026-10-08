@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
@@ -400,10 +399,10 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 // succeeded while the others blocked until their deadline and returned "timeout while syncing doc".
 func TestDocSync_ConcurrentSameDocRequests_AllShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// The collision happens on the node sending the requests, and in this
-		// direction that is the older release, which predates the fix in
-		// https://github.com/sourcenetwork/defradb/issues/5020.
-		MultiplierExcludes: []string{multiplier.CrossVersionNewSource},
+		// The collision happens on the node sending the requests. Releases before
+		// the fix in https://github.com/sourcenetwork/defradb/issues/5020 still
+		// have it.
+		NewSourceSupportedFromVersion: "v1.2.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

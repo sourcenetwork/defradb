@@ -92,21 +92,20 @@ type TestCase struct {
 	// contains any of the given multiplier names.
 	MultiplierExcludes []multiplier.Name
 
-	// SupportedFromVersion is the earliest release supporting the behaviour under
-	// test, as a semver tag such as "v1.1.0".
-	//
-	// It is only consulted by multipliers that target a specific release. Such a
-	// multiplier runs the test against this release instead of its default target
-	// when the default is older. Empty (the default) runs against the default
-	// target.
+	// OldSourceSupportedFromVersion is the earliest release, as a semver tag such
+	// as "v1.1.0", that supports the behaviour under test when the older release
+	// is the source node, under the cross-version-old-source multiplier. The test
+	// is skipped when the targeted release is older.
 	//
 	// This is for tests that assert behaviour an older release lacks. Use
 	// [TestCase.MultiplierExcludes] for opting out of a multiplier for any other
 	// reason, including gaps in what the harness can do.
-	//
-	// A malformed value fails the test rather than silently running against a
-	// release that cannot support it.
-	SupportedFromVersion string
+	OldSourceSupportedFromVersion string
+
+	// NewSourceSupportedFromVersion is [TestCase.OldSourceSupportedFromVersion]
+	// for the cross-version-new-source multiplier, where the older release is the
+	// last node.
+	NewSourceSupportedFromVersion string
 
 	// FlakeRetries specifies the number of times a flaky test should be retried
 	// if it fails. If a test succeeds on any attempt, it is considered passed.

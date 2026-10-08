@@ -63,9 +63,11 @@ func TestNetInfoPeers(t *testing.T) {
 // will return an error instead of panicking when the Connect function gets called.
 func TestNetInfoConnectPeers_SourceP2PDisabled(t *testing.T) {
 	test := testUtils.TestCase{
-		// v1.0.0 calls straight into the p2p system without checking it exists, so
-		// it panics rather than reporting the error this asserts.
-		SupportedFromVersion: "v1.1.0",
+		// The connect call runs on the last node. In this direction that is the
+		// older release, and v1.0.0 calls straight into the p2p system without
+		// checking it exists, so it panics rather than reporting the error this
+		// asserts.
+		NewSourceSupportedFromVersion: "v1.1.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.NoNetworkingConfig(),
