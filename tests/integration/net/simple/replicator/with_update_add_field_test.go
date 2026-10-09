@@ -197,7 +197,7 @@ func TestP2PReplicatorUpdateWithNewFieldWithTargetNodeTemporarilyOffline_SyncsUp
 		// The update arrives only by retry, which runs on the node sending it.
 		// Releases before the fix in
 		// https://github.com/sourcenetwork/defradb/pull/5304 fail every retry.
-		OldSourceSupportedFromVersion: "v1.2.0",
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to

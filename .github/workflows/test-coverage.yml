@@ -388,14 +388,10 @@ jobs:
           coverage-artifact-name: "coverage_signed_docs"
           coverage-path: coverage.txt
 
-  # These jobs run the networked tests with one node on an older release, to catch
-  # changes that break compatibility with it. Both directions are run because they
-  # fail differently: old-source has the older node sending, new-source receiving.
-  #
-  # The release binary is a public download over HTTPS, so no token is needed.
   # These jobs run the P2P suite with one node on an older release, once per
-  # release and direction. A test needing a newer release is skipped and runs in
-  # that release's job. Add a release here once it is published.
+  # release and direction: old-first makes the first node old, old-last the last.
+  # A test needing a newer release is skipped and runs in that release's job.
+  # Add a release here once it is published; its binary is a public download.
   test-coverage-cross-version:
     name: Test coverage cross version job (${{ matrix.direction }}, ${{ matrix.target-version }})
 
@@ -403,7 +399,7 @@ jobs:
       fail-fast: false
       matrix:
         target-version: [v1.0.0, v1.1.0]
-        direction: [old-source, new-source]
+        direction: [old-first, old-last]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache

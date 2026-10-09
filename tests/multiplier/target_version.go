@@ -51,7 +51,7 @@ func parseCrossVersionTarget(value string) (string, error) {
 // empty string if it targets none.
 func TargetVersion(name Name) string {
 	switch name {
-	case CrossVersionOldSource, CrossVersionNewSource:
+	case CrossVersionOldFirst, CrossVersionOldLast:
 		return crossVersionTarget
 	default:
 		return ""

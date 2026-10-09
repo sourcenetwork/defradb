@@ -402,7 +402,7 @@ func TestDocSync_ConcurrentSameDocRequests_AllShouldSucceed(t *testing.T) {
 		// The collision happens on the node sending the requests. Releases before
 		// the fix in https://github.com/sourcenetwork/defradb/issues/5020 still
 		// have it.
-		NewSourceSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion: "v1.2.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),

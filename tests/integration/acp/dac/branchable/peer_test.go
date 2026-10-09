@@ -100,8 +100,8 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 		// never coming is still waited for.
 		// https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
+			multiplier.CrossVersionOldFirst,
+			multiplier.CrossVersionOldLast,
 		},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
@@ -201,8 +201,8 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 		// never coming is still waited for.
 		// https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
+			multiplier.CrossVersionOldFirst,
+			multiplier.CrossVersionOldLast,
 		},
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{

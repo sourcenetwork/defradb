@@ -20,7 +20,7 @@ import (
 )
 
 func TestTargetVersion_CrossVersionMultipliers(t *testing.T) {
-	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
+	for _, name := range []Name{CrossVersionOldFirst, CrossVersionOldLast} {
 		assert.Equal(t, crossVersionTarget, TargetVersion(name))
 	}
 }
@@ -61,7 +61,7 @@ func TestTargetVersion_UnknownName(t *testing.T) {
 func TestTargetVersion_ReturnsComparableSemver(t *testing.T) {
 	// The harness feeds this straight into semver.Compare, so a target that is not
 	// valid semver would compare as older than everything and skip every gated test.
-	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
+	for _, name := range []Name{CrossVersionOldFirst, CrossVersionOldLast} {
 		version := TargetVersion(name)
 		assert.True(t, semver.IsValid(version), "%s targets %q which is not valid semver", name, version)
 	}

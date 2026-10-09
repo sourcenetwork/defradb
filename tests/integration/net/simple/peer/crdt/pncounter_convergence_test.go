@@ -113,9 +113,9 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 		},
 		// Releases before v1.2.0 still have this bug, so that node reports an
 		// inflated total.
-		OldSourceSupportedFromVersion: "v1.2.0",
-		NewSourceSupportedFromVersion: "v1.2.0",
-		Actions:                       actions,
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
+		Actions:                          actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
@@ -207,9 +207,9 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
 		},
-		OldSourceSupportedFromVersion: "v1.2.0",
-		NewSourceSupportedFromVersion: "v1.2.0",
-		Actions:                       actions,
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
+		Actions:                          actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
