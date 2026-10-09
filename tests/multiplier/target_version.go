@@ -18,12 +18,11 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-// crossVersionTargetEnvName names the env var that picks the older release the
-// cross-version multipliers run against, so CI can run one job per release.
+// crossVersionTargetEnvName picks the old release to test against, so CI can
+// run one job per release.
 const crossVersionTargetEnvName = "DEFRA_CROSS_VERSION_TARGET"
 
-// crossVersionTarget is the older release the cross-version multipliers run
-// against.
+// crossVersionTarget is the old release to test against.
 var crossVersionTarget = mustParseCrossVersionTarget(os.Getenv(crossVersionTargetEnvName))
 
 // mustParseCrossVersionTarget returns the release named by value, or

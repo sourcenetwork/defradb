@@ -71,8 +71,8 @@ func TestP2POneToOneReplicator_BackfillSyncsAllExistingDocs(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, testUtils.TestCase{
 		Actions: actions,
-		// Releases before v1.2.0 lack the stream cleanup required on both peers
-		// during backfill.
+		// Releases before v1.2.0 don't clean up streams during backfill, which
+		// both peers need. Fixed in https://github.com/sourcenetwork/defradb/issues/4823
 		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		OldLastNodeSupportedFromVersion:  "v1.2.0",
 	})

@@ -194,9 +194,8 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 // they were authored against rather than the collection's root id.
 func TestP2PReplicatorUpdateWithNewFieldWithTargetNodeTemporarilyOffline_SyncsUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		// The update arrives only by retry, which runs on the node sending it.
-		// Releases before the fix in
-		// https://github.com/sourcenetwork/defradb/pull/5304 fail every retry.
+		// Releases before v1.2.0 fail every retry of this update, so an old sender
+		// never delivers it. Fixed in https://github.com/sourcenetwork/defradb/pull/5304
 		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
