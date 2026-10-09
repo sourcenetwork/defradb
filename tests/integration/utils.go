@@ -882,8 +882,8 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 // multiplier targets an older release than the test declares for its direction.
 func skipUnsupportedDirection(t testing.TB, testCase *TestCase, activeNames string) {
 	required := map[defraMultiplier.Name]string{
-		defraMultiplier.CrossVersionOldSource: testCase.OldSourceSupportedFromVersion,
-		defraMultiplier.CrossVersionNewSource: testCase.NewSourceSupportedFromVersion,
+		defraMultiplier.CrossVersionOldFirst: testCase.OldFirstNodeSupportedFromVersion,
+		defraMultiplier.CrossVersionOldLast:  testCase.OldLastNodeSupportedFromVersion,
 	}
 	for name, version := range required {
 		// A malformed value compares as older than every release, so the test

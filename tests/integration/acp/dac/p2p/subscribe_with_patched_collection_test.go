@@ -28,8 +28,8 @@ func TestACP_P2PSubscribeUpdateAuthoredOnInactiveCollectionVersion_SyncsUpdate(t
 	test := testUtils.TestCase{
 		// Releases before v1.2.0 resolve the collection by the block's version id.
 		// https://github.com/sourcenetwork/defradb/issues/5303
-		OldSourceSupportedFromVersion: "v1.2.0",
-		NewSourceSupportedFromVersion: "v1.2.0",
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
 				state.LocalDocumentACPType,

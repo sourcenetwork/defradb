@@ -67,7 +67,7 @@ func TestNetInfoConnectPeers_SourceP2PDisabled(t *testing.T) {
 		// older release, and v1.0.0 calls straight into the p2p system without
 		// checking it exists, so it panics rather than reporting the error this
 		// asserts.
-		NewSourceSupportedFromVersion: "v1.1.0",
+		OldLastNodeSupportedFromVersion: "v1.1.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.NoNetworkingConfig(),

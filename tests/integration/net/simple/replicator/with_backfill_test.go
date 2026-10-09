@@ -73,7 +73,7 @@ func TestP2POneToOneReplicator_BackfillSyncsAllExistingDocs(t *testing.T) {
 		Actions: actions,
 		// Releases before v1.2.0 lack the stream cleanup required on both peers
 		// during backfill.
-		OldSourceSupportedFromVersion: "v1.2.0",
-		NewSourceSupportedFromVersion: "v1.2.0",
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
 	})
 }

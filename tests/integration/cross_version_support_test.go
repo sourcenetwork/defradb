@@ -77,38 +77,38 @@ func runDirection(t *testing.T, testCase *TestCase, activeNames string) *version
 	return rec
 }
 
-func TestSkipUnsupportedDirection_OldSourceNeedsNewer_SkipsOldSource(t *testing.T) {
-	rec := runDirection(t, &TestCase{OldSourceSupportedFromVersion: "v99.0.0"},
-		defraMultiplier.CrossVersionOldSource)
+func TestSkipUnsupportedDirection_OldFirstNeedsNewer_SkipsOldFirst(t *testing.T) {
+	rec := runDirection(t, &TestCase{OldFirstNodeSupportedFromVersion: "v99.0.0"},
+		defraMultiplier.CrossVersionOldFirst)
 
 	assert.True(t, rec.skipped)
 	assert.False(t, rec.failed)
-	assert.Contains(t, rec.message, defraMultiplier.CrossVersionOldSource)
+	assert.Contains(t, rec.message, defraMultiplier.CrossVersionOldFirst)
 	assert.Contains(t, rec.message, "v99.0.0")
 }
 
-func TestSkipUnsupportedDirection_OldSourceNeedsNewer_RunsNewSource(t *testing.T) {
+func TestSkipUnsupportedDirection_OldFirstNeedsNewer_RunsOldLast(t *testing.T) {
 	// The other direction is unaffected, which is the point of declaring it per
 	// direction.
-	rec := runDirection(t, &TestCase{OldSourceSupportedFromVersion: "v99.0.0"},
-		defraMultiplier.CrossVersionNewSource)
+	rec := runDirection(t, &TestCase{OldFirstNodeSupportedFromVersion: "v99.0.0"},
+		defraMultiplier.CrossVersionOldLast)
 
 	assert.False(t, rec.skipped)
 	assert.False(t, rec.failed)
 }
 
-func TestSkipUnsupportedDirection_NewSourceNeedsNewer_SkipsNewSource(t *testing.T) {
-	rec := runDirection(t, &TestCase{NewSourceSupportedFromVersion: "v99.0.0"},
-		defraMultiplier.CrossVersionNewSource)
+func TestSkipUnsupportedDirection_OldLastNeedsNewer_SkipsOldLast(t *testing.T) {
+	rec := runDirection(t, &TestCase{OldLastNodeSupportedFromVersion: "v99.0.0"},
+		defraMultiplier.CrossVersionOldLast)
 
 	assert.True(t, rec.skipped)
-	assert.Contains(t, rec.message, defraMultiplier.CrossVersionNewSource)
+	assert.Contains(t, rec.message, defraMultiplier.CrossVersionOldLast)
 }
 
 func TestSkipUnsupportedDirection_TargetSupported_Runs(t *testing.T) {
-	target := defraMultiplier.TargetVersion(defraMultiplier.CrossVersionOldSource)
-	rec := runDirection(t, &TestCase{OldSourceSupportedFromVersion: target},
-		defraMultiplier.CrossVersionOldSource)
+	target := defraMultiplier.TargetVersion(defraMultiplier.CrossVersionOldFirst)
+	rec := runDirection(t, &TestCase{OldFirstNodeSupportedFromVersion: target},
+		defraMultiplier.CrossVersionOldFirst)
 
 	assert.False(t, rec.skipped)
 	assert.False(t, rec.failed)
@@ -117,7 +117,7 @@ func TestSkipUnsupportedDirection_TargetSupported_Runs(t *testing.T) {
 func TestSkipUnsupportedDirection_InvalidVersion_FailsEvenWhenInactive(t *testing.T) {
 	// A typo must not go unnoticed just because the run does not use that
 	// direction.
-	rec := runDirection(t, &TestCase{NewSourceSupportedFromVersion: "1.2.0"},
+	rec := runDirection(t, &TestCase{OldLastNodeSupportedFromVersion: "1.2.0"},
 		defraMultiplier.SignedDocs)
 
 	assert.True(t, rec.failed)

@@ -18,21 +18,21 @@ import (
 )
 
 func init() {
-	multiplier.Register(&crossVersion{name: CrossVersionOldSource, oldNodeFirst: true})
-	multiplier.Register(&crossVersion{name: CrossVersionNewSource, oldNodeFirst: false})
+	multiplier.Register(&crossVersion{name: CrossVersionOldFirst, oldNodeFirst: true})
+	multiplier.Register(&crossVersion{name: CrossVersionOldLast, oldNodeFirst: false})
 }
 
 // CrossVersionTargetVersion is the older release run against the current build,
 // unless crossVersionTargetEnvName names another.
 const CrossVersionTargetVersion = "v1.0.0"
 
-// CrossVersionOldSource runs the first node on the older release, so data starts
+// CrossVersionOldFirst runs the first node on the older release, so data starts
 // on the old node.
-const CrossVersionOldSource Name = "cross-version-old-source"
+const CrossVersionOldFirst Name = "cross-version-old-first"
 
-// CrossVersionNewSource runs the last node on the older release, so data starts
+// CrossVersionOldLast runs the last node on the older release, so data starts
 // on the current build.
-const CrossVersionNewSource Name = "cross-version-new-source"
+const CrossVersionOldLast Name = "cross-version-old-last"
 
 // crossVersion runs one node of a networked test on an older release, so the
 // existing P2P suite also checks compatibility with that release.
@@ -115,5 +115,5 @@ func nodeActions(actions action.Actions) []*action.NewNode {
 //
 // Such a node is reached over HTTP whatever the run-wide client type.
 func MakesNodeExternal(name Name) bool {
-	return name == CrossVersionOldSource || name == CrossVersionNewSource
+	return name == CrossVersionOldFirst || name == CrossVersionOldLast
 }
