@@ -472,7 +472,7 @@ func VectorEmbeddingDirective() *gql.Directive {
 			},
 			VectorEmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
 				Type:        gql.String,
-				Description: "The template to use with the fields to create the content to feed the model.",
+				Description: "Deprecated: this argument is ignored.",
 			},
 		},
 	})
