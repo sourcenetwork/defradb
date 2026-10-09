@@ -809,8 +809,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			testCase.SupportedClientTypes.Value(), name)
 	}
 
-	restoreVersions := applyTestCaseVersion(t, testCase.SupportedFromVersion, activeMultipliers, crossVersionExact)
-	defer restoreVersions()
+	skipUnsupportedDirection(t, testCase, activeMultipliers)
 
 	modified := multiplier.Apply(actions)
 
@@ -879,52 +878,32 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
-// applyTestCaseVersion points each active multiplier that targets a release at
-// the one this test should run against, and returns a function restoring the
-// previous values.
-//
-// A test declaring [TestCase.SupportedFromVersion] cannot run against anything
-// older, so it runs against the oldest release it does support rather than being
-// skipped, which would leave it checking nothing. exact skips it instead, for
-// runs covering several releases, where the release it needs has its own run.
-//
-// It lives here because a multiplier only sees the action set, not the version
-// the test declared.
-func applyTestCaseVersion(t testing.TB, supportedFrom string, activeNames string, exact bool) func() {
-	if supportedFrom != "" {
+// skipUnsupportedDirection skips the test when an active cross-version
+// multiplier targets an older release than the test declares for its direction.
+func skipUnsupportedDirection(t testing.TB, testCase *TestCase, activeNames string) {
+	required := map[defraMultiplier.Name]string{
+		defraMultiplier.CrossVersionOldFirst: testCase.OldFirstNodeSupportedFromVersion,
+		defraMultiplier.CrossVersionOldLast:  testCase.OldLastNodeSupportedFromVersion,
+	}
+	for name, version := range required {
 		// A malformed value compares as older than every release, so the test
 		// would quietly run against one that cannot support it.
-		require.True(t, semver.IsValid(supportedFrom),
-			"SupportedFromVersion must be a semver tag with a leading v, got %q", supportedFrom)
-	}
-
-	var restores []func()
-	restoreAll := func() {
-		for _, restore := range restores {
-			restore()
-		}
+		require.True(t, version == "" || semver.IsValid(version),
+			"supported version for %s must be a semver tag with a leading v, got %q", name, version)
 	}
 
 	for name := range strings.SplitSeq(activeNames, ",") {
 		name = strings.TrimSpace(name)
-		version, resolution := defraMultiplier.ResolveTargetVersion(name, supportedFrom, exact)
-
-		switch resolution {
-		case defraMultiplier.VersionNotTargeted:
+		version := required[name]
+		if version == "" {
 			continue
-
-		case defraMultiplier.VersionSkip:
-			// Skipf ends the test, so anything already set has to be put back first.
-			restoreAll()
-			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer",
-				name, defraMultiplier.DefaultTargetVersion(name), supportedFrom)
-
-		case defraMultiplier.VersionRun:
-			restores = append(restores, defraMultiplier.SetTargetVersion(name, version))
+		}
+		target := defraMultiplier.TargetVersion(name)
+		if semver.Compare(target, version) < 0 {
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer in this direction",
+				name, target, version)
 		}
 	}
-
-	return restoreAll
 }
 
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {

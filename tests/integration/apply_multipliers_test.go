@@ -101,20 +101,20 @@ func TestExternalNodeMultiplierUnsupported(t *testing.T) {
 	}{
 		{
 			name:        "no supported client types runs",
-			activeNames: defraMultiplier.CrossVersionOldSource,
+			activeNames: defraMultiplier.CrossVersionOldFirst,
 		},
 		{
 			name: "http client supported runs",
 			clientTypes: immutable.Some(
 				[]state.ClientType{state.GoClientType, state.HTTPClientType},
 			),
-			activeNames: defraMultiplier.CrossVersionOldSource,
+			activeNames: defraMultiplier.CrossVersionOldFirst,
 		},
 		{
 			name:        "go client only skips",
 			clientTypes: goOnly,
-			activeNames: defraMultiplier.CrossVersionNewSource,
-			wantName:    defraMultiplier.CrossVersionNewSource,
+			activeNames: defraMultiplier.CrossVersionOldLast,
+			wantName:    defraMultiplier.CrossVersionOldLast,
 			wantSkip:    true,
 		},
 		{
@@ -126,8 +126,8 @@ func TestExternalNodeMultiplierUnsupported(t *testing.T) {
 			// The name is reported so the skip message can say which multiplier it was.
 			name:        "cross version among others skips",
 			clientTypes: goOnly,
-			activeNames: defraMultiplier.SignedDocs + ", " + defraMultiplier.CrossVersionOldSource,
-			wantName:    defraMultiplier.CrossVersionOldSource,
+			activeNames: defraMultiplier.SignedDocs + ", " + defraMultiplier.CrossVersionOldFirst,
+			wantName:    defraMultiplier.CrossVersionOldFirst,
 			wantSkip:    true,
 		},
 		{
