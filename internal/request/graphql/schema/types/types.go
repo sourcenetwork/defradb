@@ -39,6 +39,7 @@ const (
 	VectorEmbeddingDirectivePropModel    = "model"
 	VectorEmbeddingDirectivePropURL      = "url"
 	VectorEmbeddingDirectivePropFields   = "fields"
+	VectorEmbeddingDirectivePropTemplate = "template"
 
 	PolicySchemaDirectiveLabel        = "policy"
 	PolicySchemaDirectivePropID       = "id"
@@ -468,6 +469,10 @@ func VectorEmbeddingDirective() *gql.Directive {
 			VectorEmbeddingDirectivePropFields: &gql.ArgumentConfig{
 				Type:        gql.NewList(gql.String),
 				Description: "The fields to pass to the model.",
+			},
+			VectorEmbeddingDirectivePropTemplate: &gql.ArgumentConfig{
+				Type:        gql.String,
+				Description: "Deprecated: this argument is ignored.",
 			},
 		},
 	})
