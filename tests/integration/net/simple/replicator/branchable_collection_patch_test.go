@@ -22,9 +22,8 @@ import (
 
 func TestP2POneToOneReplicator_BranchableCollection_WithPatch(t *testing.T) {
 	test := testUtils.TestCase{
-		// The collection block arrives only by retry, which runs on the node sending
-		// it. Releases before the fix in
-		// https://github.com/sourcenetwork/defradb/pull/5307 don't retry it.
+		// Releases before v1.2.0 don't retry collection blocks, so an old sender
+		// never delivers it. Fixed in https://github.com/sourcenetwork/defradb/pull/5307
 		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,

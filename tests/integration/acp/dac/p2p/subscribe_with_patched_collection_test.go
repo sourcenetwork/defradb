@@ -26,8 +26,8 @@ import (
 // still resolve the collection to authorize the blocks.
 func TestACP_P2PSubscribeUpdateAuthoredOnInactiveCollectionVersion_SyncsUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		// Releases before v1.2.0 resolve the collection by the block's version id.
-		// https://github.com/sourcenetwork/defradb/issues/5303
+		// Releases before v1.2.0 can't find the collection for these blocks.
+		// Fixed in https://github.com/sourcenetwork/defradb/issues/5303
 		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		OldLastNodeSupportedFromVersion:  "v1.2.0",
 		SupportedDocumentACPTypes: immutable.Some(

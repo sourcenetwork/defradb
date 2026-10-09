@@ -399,9 +399,8 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 // succeeded while the others blocked until their deadline and returned "timeout while syncing doc".
 func TestDocSync_ConcurrentSameDocRequests_AllShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// The collision happens on the node sending the requests. Releases before
-		// the fix in https://github.com/sourcenetwork/defradb/issues/5020 still
-		// have it.
+		// Releases before v1.2.0 have this bug on the requesting node, which is the
+		// last one. Fixed in https://github.com/sourcenetwork/defradb/issues/5020
 		OldLastNodeSupportedFromVersion: "v1.2.0",
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

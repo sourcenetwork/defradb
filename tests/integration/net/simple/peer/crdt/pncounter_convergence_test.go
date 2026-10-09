@@ -111,8 +111,8 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
 		},
-		// Releases before v1.2.0 still have this bug, so that node reports an
-		// inflated total.
+		// Releases before v1.2.0 have this bug, so an old node reports a wrong
+		// total. Fixed in https://github.com/sourcenetwork/defradb/issues/5274
 		OldFirstNodeSupportedFromVersion: "v1.2.0",
 		OldLastNodeSupportedFromVersion:  "v1.2.0",
 		Actions:                          actions,
@@ -202,7 +202,7 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 	)
 
 	test := testUtils.TestCase{
-		// As above.
+		// Same exclusions and release as the test above.
 		MultiplierExcludes: []string{
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,

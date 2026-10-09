@@ -96,9 +96,8 @@ func TestACP_P2PBranchableCollectionSyncedWithNodeCollectionAccess_LocalACP(t *t
 	ownerCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The peer is deliberately refused some of these blocks, so a head that is
-		// never coming is still waited for.
-		// https://github.com/sourcenetwork/defradb/issues/5193
+		// The test waits for blocks this peer is meant to be refused, so it never
+		// finishes cross-version. See https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldFirst,
 			multiplier.CrossVersionOldLast,
@@ -197,9 +196,8 @@ func TestACP_P2PBranchableCollectionSharedReaderCanReadOnPeer_LocalACP(t *testin
 	afterCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
-		// The peer is deliberately refused some of these blocks, so a head that is
-		// never coming is still waited for.
-		// https://github.com/sourcenetwork/defradb/issues/5193
+		// The test waits for blocks this peer is meant to be refused, so it never
+		// finishes cross-version. See https://github.com/sourcenetwork/defradb/issues/5193
 		MultiplierExcludes: []string{
 			multiplier.CrossVersionOldFirst,
 			multiplier.CrossVersionOldLast,

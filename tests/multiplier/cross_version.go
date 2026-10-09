@@ -22,8 +22,8 @@ func init() {
 	multiplier.Register(&crossVersion{name: CrossVersionOldLast, oldNodeFirst: false})
 }
 
-// CrossVersionTargetVersion is the older release run against the current build,
-// unless crossVersionTargetEnvName names another.
+// CrossVersionTargetVersion is the old release tested when
+// DEFRA_CROSS_VERSION_TARGET is not set.
 const CrossVersionTargetVersion = "v1.0.0"
 
 // CrossVersionOldFirst runs the first node on the older release, so data starts
