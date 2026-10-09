@@ -17,18 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"golang.org/x/mod/semver"
-
-	"github.com/sourcenetwork/defradb/tests/action"
 )
-
-// twoNodeActions returns the minimal action set the cross-version multiplier
-// acts on.
-func twoNodeActions() action.Actions {
-	return action.Actions{
-		action.RandomNetworkingConfig(),
-		action.RandomNetworkingConfig(),
-	}
-}
 
 func TestTargetVersion_CrossVersionMultipliers(t *testing.T) {
 	for _, name := range []Name{CrossVersionOldSource, CrossVersionNewSource} {
