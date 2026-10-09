@@ -912,6 +912,7 @@ func vectorEmbeddingFromAST(
 		case types.VectorEmbeddingDirectivePropProvider:
 			embedding.Provider = arg.Value.(*ast.StringValue).Value
 		case types.VectorEmbeddingDirectivePropTemplate:
+			//nolint:staticcheck // the deprecated field is still supported
 			embedding.Template = arg.Value.(*ast.StringValue).Value
 		case types.VectorEmbeddingDirectivePropURL:
 			embedding.URL = arg.Value.(*ast.StringValue).Value
