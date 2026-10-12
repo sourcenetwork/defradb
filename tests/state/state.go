@@ -247,8 +247,9 @@ type NodeState struct {
 	// released version driven black-box), rather than natively in-process.
 	// Its event bus lives in that other process and cannot be observed here,
 	// so event-based waits must skip it. The replicator/merge/update/SE waits
-	// already do; WaitForPeersEvents and Wait{Action} do not yet handle external
-	// nodes, so avoid them with an external node for now.
+	// already do, and WaitForPeersEvents waits for the connection instead of
+	// join events. Wait{Action} does not yet handle external nodes, so avoid it
+	// with an external node for now.
 	IsExternal bool
 	// Version is the released version this node runs, e.g. "v1.0.0", cached
 	// for restarts. Empty for native in-process nodes.

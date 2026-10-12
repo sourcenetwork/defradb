@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -194,6 +195,10 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 // they were authored against rather than the collection's root id.
 func TestP2PReplicatorUpdateWithNewFieldWithTargetNodeTemporarilyOffline_SyncsUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		// The update arrives only by retry, which runs on the node sending it. In
+		// this direction that is the older release, which predates the fix in
+		// https://github.com/sourcenetwork/defradb/pull/5304.
+		MultiplierExcludes: []string{multiplier.CrossVersionOldSource},
 		SupportedDatabaseTypes: immutable.Some(
 			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to

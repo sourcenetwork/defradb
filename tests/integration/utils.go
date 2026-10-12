@@ -1172,7 +1172,10 @@ func restartNodes(
 	}
 	closeNodes(s, Close{})
 	startNodes(s, testCase, Start{})
-	reconnectPeers(s)
+
+	reconnect := &action.ReconnectPeers{}
+	reconnect.SetState(s)
+	reconnect.Execute()
 }
 
 // refreshTokens refreshes all the existing tokens, preserving order.

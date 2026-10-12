@@ -1324,13 +1324,13 @@ func TestDeleteCollection_WithSecondaryIndex_RemovesIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// A view that depends on a collection does NOT block deletion of that source
-// collection. This is by design: views are derived data, not structural
-// references. They materialize on demand from their source query, so it is safe
-// to let them outlive the source. The view's query now resolves against a missing
-// collection and surfaces a "collection not found" error (view has gone stale).
+// A cacheless view does not block deletion of its source collection. Querying the
+// view after deletion resolves against the missing source and returns an error.
 func TestDeleteCollection_WithViewDepending_ViewBecomesStale(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.CachelessViewType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -1371,6 +1371,62 @@ func TestDeleteCollection_WithViewDepending_ViewBecomesStale(t *testing.T) {
 						name
 					}
 				}`,
+				ExpectedError: "collection not found",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDeleteCollection_WithMaterializedViewDepending_RefreshReturnsError(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.AddDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			&action.AddView{
+				Query: `Users { name }`,
+				SDL: `
+					type UsersByName {
+						name: String
+					}
+				`,
+			},
+			// Empty the source so it can be deleted, preserving the view's cache.
+			&action.Truncate{
+				CollectionIndex: 0,
+			},
+			&action.DeleteCollection{
+				Names: []string{"Users"},
+			},
+			&action.Request{
+				DoNotRefreshViews: true,
+				Request: `query {
+					UsersByName {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"UsersByName": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			&action.RefreshViews{
+				FilterOptions: options.RefreshViews().SetCollectionName("UsersByName"),
 				ExpectedError: "collection not found",
 			},
 		},

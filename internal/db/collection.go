@@ -226,8 +226,12 @@ func (db *DB) getCollections(
 			// GetActiveCollectionByCollectionID is quite a lot more efficient than GetCollectionsByCollectionID
 			// so we use it when we can.
 			col, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
-			if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
-				return nil, err
+			if err != nil {
+				if errors.Is(err, client.ErrCollectionNotFound) {
+					return []client.Collection{}, nil
+				} else {
+					return nil, err
+				}
 			}
 			cols = append(cols, col)
 		}

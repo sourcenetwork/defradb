@@ -183,48 +183,6 @@ func disconnectPeers(
 	}
 }
 
-// reconnectPeers makes sure that all peers are connected after a node restart action.
-func reconnectPeers(s *state.State) {
-	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
-	for sourceIndex, sourceNode := range nodes {
-		sourceNodeID := nodeIDs[sourceIndex]
-		// Inject every source node's identity into the context while refreshing so the [Connect] & [PeerInfo]
-		// call doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(sourceNodeID)
-		sourceOpts := options.PeerInfo()
-		sourceIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID)
-		if sourceIdent.HasValue() {
-			sourceOpts.SetIdentity(sourceIdent.Value())
-		}
-
-		for targetIndex := range sourceNode.P2P.Connections {
-			targetNode := nodes[targetIndex]
-			targetNodeID := nodeIDs[targetIndex]
-			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
-			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-			targetOpts := options.PeerInfo()
-			targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
-			if targetIdent.HasValue() {
-				targetOpts.SetIdentity(targetIdent.Value())
-			}
-			sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
-			require.NoError(s.T, err)
-			targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
-			require.NoError(s.T, err)
-
-			log.InfoContext(s.Ctx, "Connect peers",
-				corelog.Any("Source", sourceAddresses),
-				corelog.Any("Target", targetAddresses),
-			)
-
-			opt := options.WithIdentity(options.Connect(),
-				getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID))
-			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
-			require.NoError(s.T, err)
-		}
-	}
-}
-
 // connectWithRetry attempts to connect to target addresses with retry logic
 // to handle transient connection failures.
 func connectWithRetry(

@@ -146,5 +146,9 @@ func parseCommitSelect(
 		return nil, err
 	}
 
-	return commit, err
+	if errs := commit.ToSelect().Validate(); len(errs) > 0 {
+		return nil, errs[0]
+	}
+
+	return commit, nil
 }

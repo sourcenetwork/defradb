@@ -31,9 +31,8 @@ const CrossVersionTargetVersion = "v1.0.0"
 // CrossVersionOldSource runs the first node on the older release, so data starts
 // on the old node.
 //
-// Tests needing behaviour the older release lacks opt out with MultiplierExcludes.
-// A version-aware gate is tracked in
-// https://github.com/sourcenetwork/defradb/issues/5121
+// Tests needing behaviour the older release lacks declare SupportedFromVersion,
+// so they run against the first release that has it instead of being skipped.
 const CrossVersionOldSource Name = "cross-version-old-source"
 
 // CrossVersionNewSource runs the last node on the older release, so data starts

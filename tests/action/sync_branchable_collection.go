@@ -41,7 +41,7 @@ type SyncBranchableCollection struct {
 	CollectionID int
 
 	// NoDeadline, if true, calls the client with a context that has no deadline,
-	// instead of the default one-second timeout. Optional.
+	// instead of the default timeout. Optional.
 	//
 	// This exists to exercise the no-deadline path through clients (such as the C
 	// and Java clients) that must serialize the context's deadline across a
@@ -61,10 +61,12 @@ var _ Stateful = (*SyncBranchableCollection)(nil)
 func (a *SyncBranchableCollection) Execute() {
 	ctx := a.s.Ctx
 
-	// Attach the default timeout if the NoDeadline flag is unset
+	// Attach the default timeout if the NoDeadline flag is unset. The sync returns
+	// as soon as every peer answers, so this only caps a slow sync. Without enough
+	// room, a sync on a busy machine returns with only some peers' data.
 	if !a.NoDeadline {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Second)
+		ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 	}
 

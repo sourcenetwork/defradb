@@ -149,36 +149,77 @@ func MarkDocsExpectedOnTargets(
 	docIDs map[string]struct{},
 	ident immutable.Option[state.Identity],
 ) {
+	collectionID := collectionIDForIndex(s, sourceNodeID, collectionIndex)
+
 	for docID := range docIDs {
 		// The source node wrote this document, so it must be able to report the
 		// commit. Skipping would record nothing to wait for, letting the
 		// assertions that follow pass against data that never arrived.
-		head, ok := latestCompositeCID(s, sourceNodeID, collectionIndex, docID, ident)
+		head, ok := latestHeadCID(s, sourceNodeID, collectionIndex, ident,
+			func(ident immutable.Option[state.Identity]) (cid.Cid, bool) {
+				return compositeCIDAs(s, sourceNodeID, docID, ident)
+			},
+		)
 		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
 
-		// Build the event, since the real one cannot be read.
-		evt := event.Update{
+		markHeadExpectedOnTargets(s, sourceNodeID, collectionIndex, ident, event.Update{
 			DocID:        docID,
 			Cid:          head,
-			CollectionID: collectionIDForIndex(s, sourceNodeID, collectionIndex),
-		}
+			CollectionID: collectionID,
+		})
+	}
 
-		s.Nodes[sourceNodeID].P2P.ActualDAGHeads[docID] = state.DocHeadState{CID: head}
+	// A write to a branchable collection also adds a collection commit, which
+	// syncs separately. Without waiting for it too, the targets can be read
+	// before it arrives.
+	collections := s.Nodes[sourceNodeID].Collections
+	if len(docIDs) == 0 || collectionIndex < 0 || collectionIndex >= len(collections) ||
+		!collections[collectionIndex].Version().IsBranchable {
+		return
+	}
+	versionID := collections[collectionIndex].Version().VersionID
+	head, ok := latestHeadCID(s, sourceNodeID, collectionIndex, ident,
+		func(ident immutable.Option[state.Identity]) (cid.Cid, bool) {
+			return collectionCIDAs(s, sourceNodeID, versionID, ident)
+		},
+	)
+	require.True(s.T, ok, "node %d could not report the head of collection %s", sourceNodeID, collectionID)
 
-		for targetID := range s.Nodes[sourceNodeID].P2P.Replicators {
-			s.Nodes[targetID].P2P.ExpectedDAGHeads[docID] = append(
-				s.Nodes[targetID].P2P.ExpectedDAGHeads[docID],
-				state.ExpectedHead{CID: head, SourceNodeID: sourceNodeID},
-			)
-		}
+	markHeadExpectedOnTargets(s, sourceNodeID, collectionIndex, ident, event.Update{
+		Cid:          head,
+		CollectionID: collectionID,
+	})
+}
 
-		// Subscribers are reached over connections rather than replicators, so
-		// they need the same walk the native path does.
-		updateConnectedNodes(
-			s, sourceNodeID, sourceNodeID, map[int]struct{}{}, ident,
-			collectionIndex, docIndexForID(s, collectionIndex, docID), evt,
+// markHeadExpectedOnTargets records the head in the event as written on the
+// source node and expected on every node the source syncs to.
+func markHeadExpectedOnTargets(
+	s *state.State,
+	sourceNodeID int,
+	collectionIndex int,
+	ident immutable.Option[state.Identity],
+	evt event.Update,
+) {
+	key := getUpdateEventKey(evt)
+	s.Nodes[sourceNodeID].P2P.ActualDAGHeads[key] = state.DocHeadState{CID: evt.Cid}
+
+	for targetID := range s.Nodes[sourceNodeID].P2P.Replicators {
+		s.Nodes[targetID].P2P.ExpectedDAGHeads[key] = append(
+			s.Nodes[targetID].P2P.ExpectedDAGHeads[key],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: sourceNodeID},
 		)
 	}
+
+	// Subscribers are reached over connections rather than replicators, so
+	// they need the same walk the native path does.
+	docIndex := -1
+	if evt.DocID != "" {
+		docIndex = docIndexForID(s, collectionIndex, evt.DocID)
+	}
+	updateConnectedNodes(
+		s, sourceNodeID, sourceNodeID, map[int]struct{}{}, ident,
+		collectionIndex, docIndex, evt,
+	)
 }
 
 // collectionIDForIndex returns the collection ID for a collection index on a node.
@@ -206,11 +247,10 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 	return -1
 }
 
-// latestCompositeCID asks the node for the newest composite commit of a
-// document.
+// latestHeadCID asks the node for a head with the given lookup.
 //
-// A merge event reports the composite commit, so this is the same CID the native
-// path takes from that event.
+// A merge event reports the head, so this is the same CID the native path takes
+// from that event.
 //
 // This only runs for a node in another process. An in-process node reports its
 // head through an event, which no identity is needed to read.
@@ -218,14 +258,14 @@ func docIndexForID(s *state.State, collectionIndex int, docID string) int {
 // ident is the identity the document was written with. Under document ACP a
 // reader that cannot see the commits gets nothing back, so this falls back to
 // the identity that created the collection.
-func latestCompositeCID(
+func latestHeadCID(
 	s *state.State,
 	nodeID int,
 	collectionIndex int,
-	docID string,
 	ident immutable.Option[state.Identity],
+	lookup func(immutable.Option[state.Identity]) (cid.Cid, bool),
 ) (cid.Cid, bool) {
-	head, ok := compositeCIDAs(s, nodeID, docID, ident)
+	head, ok := lookup(ident)
 	if ok {
 		return head, true
 	}
@@ -237,59 +277,91 @@ func latestCompositeCID(
 	if !hasOwner {
 		return cid.Cid{}, false
 	}
-	return compositeCIDAs(s, nodeID, docID, owner)
+	return lookup(owner)
 }
 
-// compositeCIDAs runs the head query as the given identity.
+// compositeCIDAs asks, as the given identity, for the newest composite commit of
+// a document.
 func compositeCIDAs(
 	s *state.State,
 	nodeID int,
 	docID string,
 	ident immutable.Option[state.Identity],
 ) (cid.Cid, bool) {
+	commits := commitsAs(s, nodeID, ident, fmt.Sprintf(
+		`query { _commits(docID: %q, filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
+		docID,
+	))
+	if len(commits) == 0 {
+		return cid.Cid{}, false
+	}
+	return parseCommitCID(commits[0])
+}
+
+// collectionCIDAs asks, as the given identity, for the newest commit of a
+// branchable collection.
+func collectionCIDAs(
+	s *state.State,
+	nodeID int,
+	versionID string,
+	ident immutable.Option[state.Identity],
+) (cid.Cid, bool) {
+	// Collection commits have no field name. Other collections may have them
+	// too, so pick this one's by its version.
+	commits := commitsAs(s, nodeID, ident,
+		`query { _commits(filter: {fieldName: {_eq: null}}, order: {height: DESC}) { cid collectionVersionId } }`,
+	)
+	for _, commit := range commits {
+		if commit["collectionVersionId"] == versionID {
+			return parseCommitCID(commit)
+		}
+	}
+	return cid.Cid{}, false
+}
+
+// commitsAs runs a commits query as the given identity and returns the commits,
+// or nothing if the query fails.
+func commitsAs(
+	s *state.State,
+	nodeID int,
+	ident immutable.Option[state.Identity],
+	request string,
+) []map[string]any {
 	reqOption := options.ExecRequest()
 	identOption := getIdentityForRequestSpecificToNode(s, ident, nodeID)
 	if identOption.HasValue() {
 		reqOption.SetIdentity(identOption.Value())
 	}
 
-	result := s.Nodes[nodeID].ExecRequest(
-		s.Ctx,
-		fmt.Sprintf(
-			`query { _commits(docID: %q, filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
-			docID,
-		),
-		reqOption,
-	)
+	result := s.Nodes[nodeID].ExecRequest(s.Ctx, request, reqOption)
 	if len(result.GQL.Errors) > 0 {
-		return cid.Cid{}, false
+		return nil
 	}
 
 	data, ok := result.GQL.Data.(map[string]any)
 	if !ok {
-		return cid.Cid{}, false
+		return nil
 	}
 
-	var cidStr string
 	switch commits := data["_commits"].(type) {
-	case []any:
-		if len(commits) == 0 {
-			return cid.Cid{}, false
-		}
-		commit, ok := commits[0].(map[string]any)
-		if !ok {
-			return cid.Cid{}, false
-		}
-		cidStr, _ = commit["cid"].(string)
 	case []map[string]any:
-		if len(commits) == 0 {
-			return cid.Cid{}, false
+		return commits
+	case []any:
+		out := make([]map[string]any, 0, len(commits))
+		for _, c := range commits {
+			if commit, ok := c.(map[string]any); ok {
+				out = append(out, commit)
+			}
 		}
-		cidStr, _ = commits[0]["cid"].(string)
+		return out
 	default:
-		return cid.Cid{}, false
+		return nil
 	}
+}
 
+// parseCommitCID returns the CID of a commit from a query result.
+func parseCommitCID(commit map[string]any) (cid.Cid, bool) {
+	cidStr, _ := commit["cid"].(string)
 	parsed, err := cid.Decode(cidStr)
 	if err != nil {
 		return cid.Cid{}, false

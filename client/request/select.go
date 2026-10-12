@@ -104,6 +104,10 @@ func (s *Select) validateGroupBy() []error {
 			if !s.isSelectInGroupBy(typedChildSelection.Name) {
 				result = append(result, NewErrSelectOfNonGroupField(typedChildSelection.Name))
 			}
+		case *CommitSelect:
+			if !s.isSelectInGroupBy(typedChildSelection.Name) {
+				result = append(result, NewErrSelectOfNonGroupField(typedChildSelection.Name))
+			}
 		default:
 			// Do nothing
 		}
