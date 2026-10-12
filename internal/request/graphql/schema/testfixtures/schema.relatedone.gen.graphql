@@ -3210,6 +3210,15 @@ input VectorIndexConfig {
     dimensions: Int
     "Configures the HNSW algorithm."
     hnsw: HNSWIndexConfig
+    "Selects when index changes are applied to the graph. Defaults to SYNC."
+    maintenance: VectorIndexMaintenance
+}
+
+enum VectorIndexMaintenance {
+    "Record the change in a pending list and let a background writer update the graph later. Searches merge the pending list, so results match SYNC."
+    DEFERRED
+    "Update the graph in the writing transaction (default)."
+    SYNC
 }
 
 """

@@ -769,6 +769,7 @@ func vectorIndexFromAST(
 	}
 
 	var dimensions uint32
+	var maintenance client.VectorIndexMaintenance
 	algorithm := client.VectorAlgorithmHNSW
 	metric := client.DistanceMetricCosine
 	hnswParams := client.HNSWParams{
@@ -798,15 +799,30 @@ func vectorIndexFromAST(
 				return client.NewIndexRequest{}, err
 			}
 
+		case types.VectorIndexPropMaintenance:
+			maintenanceVal, ok := field.Value.(*ast.EnumValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			switch maintenanceVal.Value {
+			case string(client.VectorIndexMaintenanceSync):
+				maintenance = client.VectorIndexMaintenanceSync
+			case string(client.VectorIndexMaintenanceDeferred):
+				maintenance = client.VectorIndexMaintenanceDeferred
+			default:
+				return client.NewIndexRequest{}, NewErrVectorIndexUnknownMaintenance(maintenanceVal.Value)
+			}
+
 		default:
 			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
 		}
 	}
 
 	vectorDesc := client.VectorIndexDescription{
-		Algorithm:  algorithm,
-		Metric:     metric,
-		Dimensions: dimensions,
+		Algorithm:   algorithm,
+		Metric:      metric,
+		Dimensions:  dimensions,
+		Maintenance: maintenance,
 	}
 	if algorithm == client.VectorAlgorithmHNSW {
 		vectorDesc.HNSW = &hnswParams

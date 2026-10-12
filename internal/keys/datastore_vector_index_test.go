@@ -120,3 +120,37 @@ func TestVectorIndexKey_PrefixEnd_ExcludesExactPrefixMatch(t *testing.T) {
 	assert.True(t, bytes.Compare(prefix.Bytes(), node.Bytes()) < 0)
 	assert.True(t, bytes.Compare(node.Bytes(), end.Bytes()) < 0)
 }
+
+func TestVectorIndexKey_PendingKey_SharesPendingPrefixAndIsDisjointFromNodeAndMeta(t *testing.T) {
+	prefix := NewVectorPendingPrefix(1, 2, 3)
+	pending := NewVectorPendingKey(1, 2, 3, 7)
+	node := NewVectorNodeKey(1, 2, 3, 7)
+	meta := NewVectorMetaKey(1, 2, 3)
+	nodePrefix := NewVectorNodePrefix(1, 2, 3)
+
+	assert.True(t, bytes.HasPrefix(pending.Bytes(), prefix.Bytes()))
+	assert.NotEqual(t, pending.Bytes(), node.Bytes())
+	assert.False(t, bytes.HasPrefix(node.Bytes(), prefix.Bytes()))
+	assert.False(t, bytes.HasPrefix(meta.Bytes(), prefix.Bytes()))
+	assert.False(t, bytes.HasPrefix(pending.Bytes(), nodePrefix.Bytes()))
+	assert.True(t, strings.HasSuffix(prefix.ToString(), "p"))
+}
+
+func TestVectorIndexKey_DecodePendingNodeID_RoundTrips(t *testing.T) {
+	for _, id := range []uint64{1, 7, 255, 70000, 1 << 40} {
+		key := NewVectorPendingKey(5, 300, 9, id)
+		got, err := DecodeVectorPendingNodeID(key.Bytes())
+		require.NoError(t, err)
+		assert.Equal(t, id, got)
+	}
+}
+
+func TestVectorIndexKey_DecodePendingNodeID_RejectsNonPendingKeys(t *testing.T) {
+	node := NewVectorNodeKey(1, 2, 3, 7)
+	prefix := NewVectorPendingPrefix(1, 2, 3)
+	meta := NewVectorMetaKey(1, 2, 3)
+	for _, k := range []VectorIndexKey{node, prefix, meta} {
+		_, err := DecodeVectorPendingNodeID(k.Bytes())
+		require.Error(t, err)
+	}
+}

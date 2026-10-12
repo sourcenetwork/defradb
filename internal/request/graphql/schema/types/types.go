@@ -61,6 +61,7 @@ const (
 	VectorIndexPropDimensions   = "dimensions"
 	VectorIndexPropAlgorithm    = "alg"
 	VectorIndexPropHNSW         = "hnsw"
+	VectorIndexPropMaintenance  = "maintenance"
 	VectorIndexAlgorithmHNSW    = "hnsw"
 	VectorIndexConfigPropMetric = "metric"
 
@@ -130,6 +131,24 @@ func VectorIndexAlgorithmEnum() *gql.Enum {
 			VectorIndexAlgorithmHNSW: &gql.EnumValueConfig{
 				Description: "HNSW (Hierarchical Navigable Small World)",
 				Value:       VectorIndexAlgorithmHNSW,
+			},
+		},
+	})
+}
+
+// VectorIndexMaintenanceEnum selects when a vector index's graph is updated after a write.
+func VectorIndexMaintenanceEnum() *gql.Enum {
+	return gql.NewEnum(gql.EnumConfig{
+		Name: "VectorIndexMaintenance",
+		Values: gql.EnumValueConfigMap{
+			string(client.VectorIndexMaintenanceSync): &gql.EnumValueConfig{
+				Description: "Update the graph in the writing transaction (default).",
+				Value:       string(client.VectorIndexMaintenanceSync),
+			},
+			string(client.VectorIndexMaintenanceDeferred): &gql.EnumValueConfig{
+				Description: "Record the change in a pending list and let a background writer update " +
+					"the graph later. Searches merge the pending list, so results match SYNC.",
+				Value: string(client.VectorIndexMaintenanceDeferred),
 			},
 		},
 	})
@@ -500,6 +519,7 @@ func EncryptedIndexDirective() *gql.Directive {
 func VectorIndexInputObject(
 	hnswConfig *gql.InputObject,
 	algorithmEnum *gql.Enum,
+	maintenanceEnum *gql.Enum,
 ) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name:        "VectorIndexConfig",
@@ -516,6 +536,10 @@ func VectorIndexInputObject(
 			VectorIndexPropHNSW: &gql.InputObjectFieldConfig{
 				Description: "Configures the HNSW algorithm.",
 				Type:        hnswConfig,
+			},
+			VectorIndexPropMaintenance: &gql.InputObjectFieldConfig{
+				Description: "Selects when index changes are applied to the graph. Defaults to SYNC.",
+				Type:        maintenanceEnum,
 			},
 		},
 	})

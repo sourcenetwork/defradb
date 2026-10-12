@@ -26,6 +26,8 @@ var (
 	ErrInvalidKey              = errors.New("invalid key string")
 	ErrInvalidFieldIndex       = errors.New(errInvalidFieldIndex)
 	ErrInvalidFieldValue       = errors.New(errInvalidFieldValue)
+	// ErrInvalidVectorPendingKey is returned when bytes do not form a full vector pending key.
+	ErrInvalidVectorPendingKey = errors.New("invalid vector pending key")
 )
 
 // NewErrFailedToGetFieldIdOfKey returns the error indicating failure to get FieldID of Key.

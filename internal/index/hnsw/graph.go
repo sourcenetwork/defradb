@@ -153,6 +153,10 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		return err
 	}
 
+	// Only write meta when it changes. Every insert reads the meta singleton, so an unconditional
+	// write makes all concurrent inserts conflict under the datastore's optimistic transactions.
+	origMeta := meta
+
 	if topLevel > meta.TopLayer {
 		meta.EntryPoint = id
 		meta.TopLayer = topLevel
@@ -169,6 +173,9 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		}
 	}
 
+	if meta == origMeta {
+		return nil
+	}
 	return g.store.PutMeta(meta)
 }
 

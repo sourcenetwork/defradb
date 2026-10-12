@@ -176,3 +176,10 @@ func squaredEuclideanDistance(a, b []float32) float64 {
 func dotProductDistance(a, b []float32) float64 {
 	return -dot(a, b)
 }
+
+// Distance returns the distance between two raw vectors under metric, smaller being nearer. It
+// applies the same per-metric preparation (normalization for cosine) the graph applies, so a vector
+// scored outside the graph ranks consistently with the graph's own hits.
+func Distance(metric Metric, a, b []float32) float64 {
+	return distance(metric, vectorForMetric(metric, a), vectorForMetric(metric, b))
+}

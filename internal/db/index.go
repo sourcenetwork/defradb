@@ -553,7 +553,76 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
 	}
 
+	if index.deferNow() {
+		return index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingUpsert,
+			Vector: vec,
+		})
+	}
+	if index.isDeferred() {
+		// Applying inline because the pending list is full. The node may still have an older pending
+		// entry; remove it, or the background writer would later apply it over this newer vector (or
+		// resurrect a deleted node). Delete first, as the writer does, so the graph's vector is
+		// replaced.
+		if err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID); err != nil {
+			return err
+		}
+		if err := idx.Delete(nodeID); err != nil {
+			return err
+		}
+	}
 	return idx.Insert(nodeID, vec)
+}
+
+// isDeferred reports whether writes to this index go to the pending list instead of the graph. An
+// index that is still building stays inline: the backfill reads the documents, so it covers them.
+func (index *collectionVectorIndex) isDeferred() bool {
+	return index.vectorDesc.IsDeferred() && !index.building
+}
+
+// maintenanceWriter returns the background writer of the DB this index belongs to, or nil if the
+// collection is not backed by a DB.
+func (index *collectionVectorIndex) maintenanceWriter() *vectorMaintenanceWriter {
+	if c, ok := index.collection.(*collection); ok && c.db != nil {
+		return c.db.vectorMaintenance
+	}
+	return nil
+}
+
+func (index *collectionVectorIndex) maintenanceKey() vectorIndexRef {
+	return vectorIndexRef{index.collection.Version().CollectionID, index.desc.ID}
+}
+
+// deferNow reports whether a write should go to the pending list. An index whose pending list has
+// outgrown the background writer applies writes inline instead, which slows the writers down rather
+// than letting the list grow without bound.
+func (index *collectionVectorIndex) deferNow() bool {
+	if !index.isDeferred() {
+		return false
+	}
+	w := index.maintenanceWriter()
+	return w == nil || !w.overLimit(index.maintenanceKey(), index.vectorDesc)
+}
+
+// putPending records a pending write and arranges for the background writer to be woken once the
+// transaction commits.
+func (index *collectionVectorIndex) putPending(
+	ctx context.Context,
+	collectionShortID uint32,
+	entry vectorindex.PendingEntry,
+) error {
+	err := vectorindex.PutPending(ctx, collectionShortID, index.desc.ID, index.epoch, entry)
+	if err != nil {
+		return err
+	}
+	if w := index.maintenanceWriter(); w != nil {
+		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+			key := index.maintenanceKey()
+			txn.OnSuccess(func() { w.noteWrite(key) })
+		}
+	}
+	return nil
 }
 
 // Update re-indexes a document whose vector changed. A document keeps the same id across an update,
@@ -596,6 +665,19 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 		return NewErrCorruptedVectorIndex(index.desc.Name, doc.ID().String())
 	}
 
+	if index.deferNow() {
+		return index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingDelete,
+		})
+	}
+	if index.isDeferred() {
+		// Applying inline because the pending list is full. Remove an older pending upsert of this
+		// node, or the background writer would later re-insert the deleted document.
+		if err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID); err != nil {
+			return err
+		}
+	}
 	return idx.Delete(nodeID)
 }
 
