@@ -44,9 +44,13 @@ func pendingLimit(_ *client.VectorIndexDescription) int64 {
 	return max(1, vectorMaintenancePendingLimit)
 }
 
-// vectorMaintenanceRetryDelay is how long the writer waits before it retries a failed index.
+// vectorMaintenanceRetryDelay is how long the writer waits before it first retries a failed index.
 // Without it the writer would spin on an error. It is a var so tests can shorten it.
 var vectorMaintenanceRetryDelay = 200 * time.Millisecond
+
+// vectorMaintenanceMaxRetryDelay caps the retry delay. The delay doubles on every failed pass, so
+// an error that does not go away is retried (and logged) every half minute, not five times a second.
+var vectorMaintenanceMaxRetryDelay = 30 * time.Second
 
 // vectorMaintenanceGate is a test hook that runs before each drain batch. Tests use it to hold
 // the writer so they can look at the pending list. It is nil in production.
@@ -156,26 +160,42 @@ func (w *vectorMaintenanceWriter) takeDirty() []vectorIndexRef {
 // run drains the dirty indexes each time it wakes, until ctx is cancelled. It starts by marking
 // every deferred index dirty. Pending entries are stored on disk, so this picks up work left over
 // from before a crash or restart. If a drain fails, the index stays dirty and run tries again
-// after a short delay.
+// later, waiting twice as long after each failed pass.
 func (w *vectorMaintenanceWriter) run(ctx context.Context) {
-	if err := w.markAllDeferredDirty(ctx); err != nil && ctx.Err() == nil {
-		log.ErrorE("Failed to list deferred vector indexes", err)
-	}
-
+	// The timer starts stopped. Reset arms it when a retry is needed.
 	retry := time.NewTimer(time.Hour)
 	retry.Stop()
 	defer retry.Stop()
 
+	delay := vectorMaintenanceRetryDelay
+	scanned := false
 	for {
+		// Without the startup scan, work left from before a restart would wait for the next write
+		// to its index, so a failed scan is retried like a failed drain.
+		if !scanned {
+			err := w.markAllDeferredDirty(ctx)
+			if ctx.Err() != nil {
+				return
+			}
+			if err != nil {
+				log.ErrorE("Failed to list deferred vector indexes", err)
+			}
+			scanned = err == nil
+		}
+
+		failed := w.drainPass(ctx) || !scanned
+		if failed {
+			retry.Reset(delay)
+			delay = min(2*delay, vectorMaintenanceMaxRetryDelay)
+		} else {
+			delay = vectorMaintenanceRetryDelay
+		}
+
 		select {
 		case <-ctx.Done():
 			return
 		case <-w.wake:
 		case <-retry.C:
-		}
-
-		if failed := w.drainPass(ctx); failed {
-			retry.Reset(vectorMaintenanceRetryDelay)
 		}
 	}
 }

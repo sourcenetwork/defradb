@@ -53,10 +53,10 @@ type VectorIndexKey struct {
 	Epoch uint32
 	// Kind is which kind of entry this key addresses.
 	Kind VectorIndexKeyKind
-	// NodeID is the node this key addresses. Only meaningful for node and pending keys. Node ids come from
-	// a sequence that starts at 1, so a zero NodeID never addresses a node: it marks a node-prefix key
-	// (`.../n`, or `.../p` for pending) that scans every entry of that kind, as opposed to a full key (`.../n/<id>`). This
-	// matches how the other keys use a zero component as their prefix.
+	// NodeID is the node this key addresses. Only meaningful for node and pending keys. Node ids come
+	// from a sequence that starts at 1, so a zero NodeID never addresses a node: it marks a prefix key
+	// (`.../n`, or `.../p` for pending) that scans every entry of that kind, as opposed to a full key
+	// (`.../n/<id>`). This matches how the other keys use a zero component as their prefix.
 	NodeID uint64
 	// offset controls how many times bytesPrefixEnd is applied during encoding; see
 	// IndexDataStoreKey.Offset for the same mechanism.

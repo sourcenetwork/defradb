@@ -18,6 +18,7 @@ const (
 	errFailedToGetFieldIdOfKey string = "failed to get FieldID of Key"
 	errInvalidFieldIndex       string = "invalid field index"
 	errInvalidFieldValue       string = "invalid field value"
+	errInvalidVectorPendingKey string = "invalid vector pending key"
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 	ErrInvalidFieldIndex       = errors.New(errInvalidFieldIndex)
 	ErrInvalidFieldValue       = errors.New(errInvalidFieldValue)
 	// ErrInvalidVectorPendingKey is returned when bytes do not form a full vector pending key.
-	ErrInvalidVectorPendingKey = errors.New("invalid vector pending key")
+	ErrInvalidVectorPendingKey = errors.New(errInvalidVectorPendingKey)
 )
 
 // NewErrFailedToGetFieldIdOfKey returns the error indicating failure to get FieldID of Key.

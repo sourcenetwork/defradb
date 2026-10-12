@@ -560,11 +560,12 @@ func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Docume
 			Vector: vec,
 		})
 	}
-	if index.isDeferred() {
-		// Applying inline because the pending list is full. The node may still have an older pending
-		// entry; remove it, or the background writer would later apply it over this newer vector (or
-		// resurrect a deleted node). Delete first, as the writer does, so the graph's vector is
-		// replaced.
+	if index.vectorDesc.IsDeferred() {
+		// Applying inline, because the pending list is full or this handle still thinks the index
+		// is building (a handle never learns that a build finished). The node may still have an
+		// older pending entry; remove it, or the background writer would later apply it over this
+		// newer vector (or resurrect a deleted node). Delete first, as the writer does, so the
+		// graph's vector is replaced.
 		if err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID); err != nil {
 			return err
 		}
@@ -671,9 +672,10 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 			Op:     vectorindex.PendingDelete,
 		})
 	}
-	if index.isDeferred() {
-		// Applying inline because the pending list is full. Remove an older pending upsert of this
-		// node, or the background writer would later re-insert the deleted document.
+	if index.vectorDesc.IsDeferred() {
+		// Applying inline, because the pending list is full or this handle still thinks the index
+		// is building. Remove an older pending upsert of this node, or the background writer would
+		// later re-insert the deleted document.
 		if err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID); err != nil {
 			return err
 		}

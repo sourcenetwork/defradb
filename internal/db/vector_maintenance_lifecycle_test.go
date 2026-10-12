@@ -188,3 +188,34 @@ func TestVectorMaintenance_RebuildWithPending_StaleEpochNotApplied(t *testing.T)
 	assert.Empty(t, f.pendingAt(2))
 	assert.Equal(t, ids(docs["a"], g), f.search(query, 2))
 }
+
+// A handle resolved during a build keeps building=true for good, so it writes inline. Its inline
+// write must still remove the doc's older pending entry, or the writer would later apply that
+// entry over the newer vector.
+func TestVectorMaintenance_StaleBuildingHandle_InlineWriteRemovesPendingEntry(t *testing.T) {
+	f := newLifecycleFixture(t)
+	x := f.add("x", []float32{1, 0, 0})
+	// z sits between x's two later vectors, so the final search shows which one the graph kept.
+	f.add("z", []float32{0.5, 0.5, 0})
+	f.drain()
+
+	stageRebuild(t, f.ctx, f.db, f.fetch().Version())
+	// Resolved while the build is running, so this handle thinks the index is still building.
+	stale := f.fetch()
+	f.db.indexBuildWorker.drainSync(f.ctx)
+	f.drain()
+
+	// A fresh handle defers the write, leaving an older pending entry for x.
+	f.reload()
+	f.update(x, []float32{0, 0, 1})
+	require.Equal(t, 1, f.pending())
+
+	// The stale handle writes inline with a newer vector and must clear that entry.
+	require.NoError(t, x.Set(f.ctx, "embedding", []float32{1, 0, 0.01}))
+	require.NoError(t, stale.UpdateDocument(f.ctx, x))
+	assert.Equal(t, 0, f.pending(), "inline write must remove the older pending entry")
+
+	// Had the older pending vector (0,0,1) been applied, z would be nearest to (1,0,0).
+	f.drain()
+	assert.Equal(t, ids(x), f.search([]float32{1, 0, 0}, 1))
+}

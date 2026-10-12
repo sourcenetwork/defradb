@@ -126,8 +126,8 @@ const (
 	// VectorIndexMaintenanceSync maintains the graph in the writing transaction. It is the default.
 	VectorIndexMaintenanceSync VectorIndexMaintenance = "SYNC"
 	// VectorIndexMaintenanceDeferred records the change in a pending list in the writing transaction
-	// and a background writer applies it to the graph later. Searches merge the pending list, so
-	// results are the same as [VectorIndexMaintenanceSync].
+	// and a background writer applies it to the graph later. Searches merge the pending list, so a
+	// committed write is searchable right away, as with [VectorIndexMaintenanceSync].
 	VectorIndexMaintenanceDeferred VectorIndexMaintenance = "DEFERRED"
 )
 

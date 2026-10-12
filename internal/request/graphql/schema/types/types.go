@@ -147,7 +147,7 @@ func VectorIndexMaintenanceEnum() *gql.Enum {
 			},
 			string(client.VectorIndexMaintenanceDeferred): &gql.EnumValueConfig{
 				Description: "Record the change in a pending list and let a background writer update " +
-					"the graph later. Searches merge the pending list, so results match SYNC.",
+					"the graph later. Searches merge the pending list, so committed writes are searchable right away.",
 				Value: string(client.VectorIndexMaintenanceDeferred),
 			},
 		},
