@@ -3492,7 +3492,7 @@ directive @embedding(
     model: String
     "The provider to use for embedding. (ollama, openAI, etc.)"
     provider: String
-    "The template to use with the fields to create the content to feed the model."
+    "Deprecated: this argument is ignored."
     template: String
     "The URL of the provider API."
     url: String
