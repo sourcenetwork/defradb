@@ -55,7 +55,7 @@ func Search(
 		return nil, err
 	}
 
-	if desc.IsDeferred() {
+	if desc.Maintenance == client.VectorIndexMaintenanceDeferred {
 		hits, err = mergePending(ctx, collectionShortID, indexID, epoch, desc, index, query, k, hits)
 		if err != nil {
 			return nil, err

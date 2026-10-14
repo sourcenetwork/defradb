@@ -217,7 +217,7 @@ func (w *vectorMaintenanceWriter) markAllDeferredDirty(ctx context.Context) erro
 	for _, def := range versions {
 		for _, idx := range def.Indexes {
 			vd, ok := idx.GetVector()
-			if !ok || !vd.IsDeferred() {
+			if !ok || vd.Maintenance != client.VectorIndexMaintenanceDeferred {
 				continue
 			}
 			key := vectorIndexRef{def.CollectionID, idx.ID}
@@ -350,7 +350,7 @@ func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorInde
 	vd, ok := desc.GetVector()
 	// Can't happen today: only deferred vector indexes get marked dirty, indexes can't be altered,
 	// and index IDs are never reused. This guards against a future way to change the mode in place.
-	if !ok || !vd.IsDeferred() {
+	if !ok || vd.Maintenance != client.VectorIndexMaintenanceDeferred {
 		w.forget(key)
 		return nil
 	}

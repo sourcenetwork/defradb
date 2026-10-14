@@ -150,12 +150,6 @@ type VectorIndexDescription struct {
 	Maintenance VectorIndexMaintenance `json:",omitempty"`
 }
 
-// IsDeferred returns true if the index applies changes to the graph in the background rather than in
-// the writing transaction.
-func (d *VectorIndexDescription) IsDeferred() bool {
-	return d.Maintenance == VectorIndexMaintenanceDeferred
-}
-
 func (*VectorIndexDescription) isIndexKindDescription() {}
 
 var _ IndexKindDescription = (*VectorIndexDescription)(nil)

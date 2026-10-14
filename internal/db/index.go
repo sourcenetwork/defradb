@@ -566,7 +566,7 @@ func (index *collectionVectorIndex) save(ctx context.Context, doc *client.Docume
 			Vector: vec,
 		})
 	}
-	if index.vectorDesc.IsDeferred() {
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
 		// Applying inline: either the pending list is full, or this collection object was loaded
 		// while the index was building and has not noticed the build finished. Delete first, as the
 		// writer does, so the graph's vector is replaced.
@@ -601,7 +601,7 @@ func (index *collectionVectorIndex) applyInline(ctx context.Context, collectionS
 // isDeferred reports whether writes to this index go to the pending list instead of the graph. An
 // index that is still building stays inline: the backfill reads the documents, so it covers them.
 func (index *collectionVectorIndex) isDeferred() bool {
-	return index.vectorDesc.IsDeferred() && !index.building
+	return index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred && !index.building
 }
 
 // maintenanceWriter returns the background writer of the DB this index belongs to, or nil if the
@@ -708,7 +708,7 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 			Op:     vectorindex.PendingDelete,
 		})
 	}
-	if index.vectorDesc.IsDeferred() {
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
 		// Applying inline: either the pending list is full, or this collection object was loaded
 		// while the index was building and has not noticed the build finished.
 		if err := index.applyInline(ctx, collectionShortID, nodeID); err != nil {
