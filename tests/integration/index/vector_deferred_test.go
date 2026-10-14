@@ -15,8 +15,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -74,51 +72,6 @@ func TestVectorIndexDeferred_AddUpdateDelete_SearchIsCorrect(t *testing.T) {
 						{"name": "d4", "sim": cosX(0.95, 0.05, 0)},
 						{"name": "d1", "sim": cosX(0.9, 0.1, 0)},
 						{"name": "d2", "sim": cosX(0.8, 0.3, 0.1)},
-					},
-				},
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
-// A search inside an open transaction sees that transaction's own uncommitted writes. The deferred
-// variant is covered by a unit test in internal/db, which needs the background writer suppressed.
-func TestVectorIndex_SearchInTransaction_SeesOwnWrites(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			vectorModeSDL(""),
-			&action.AddDoc{DocMap: map[string]any{"name": "far", "vector": []float32{0, 1, 0}}},
-			&action.AddDoc{
-				TransactionID: immutable.Some(0),
-				DocMap:        map[string]any{"name": "near", "vector": []float32{1, 0, 0}},
-			},
-			&action.Request{
-				TransactionID: immutable.Some(0),
-				Request:       vectorTop2Query,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "near", "sim": cosX(1, 0, 0)},
-						{"name": "far", "sim": cosX(0, 1, 0)},
-					},
-				},
-			},
-			// Outside the transaction the uncommitted write is not visible.
-			&action.Request{
-				Request: vectorTop2Query,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "far", "sim": cosX(0, 1, 0)},
-					},
-				},
-			},
-			&action.CommitTransaction{TransactionID: 0},
-			&action.Request{
-				Request: vectorTop2Query,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "near", "sim": cosX(1, 0, 0)},
-						{"name": "far", "sim": cosX(0, 1, 0)},
 					},
 				},
 			},

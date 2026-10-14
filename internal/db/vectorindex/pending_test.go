@@ -19,7 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func TestPendingEntry_EncodeDecode_RoundTrips(t *testing.T) {
@@ -34,10 +36,33 @@ func TestPendingEntry_EncodeDecode_RoundTrips(t *testing.T) {
 }
 
 func TestDecodePendingEntry_Malformed_ReturnsError(t *testing.T) {
-	for _, b := range [][]byte{nil, {byte(PendingUpsert), 1, 2}, {9}} {
-		_, err := DecodePendingEntry(1, b)
-		require.Error(t, err)
+	for _, tc := range []struct {
+		name string
+		in   []byte
+		want string
+	}{
+		{"empty", nil, errMalformedPending},
+		{"partial float", []byte{byte(PendingUpsert), 1, 2}, errMalformedPending},
+		{"unknown op", []byte{9}, errUnknownPendingOp},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := DecodePendingEntry(1, tc.in)
+			require.ErrorContains(t, err, tc.want)
+		})
 	}
+}
+
+// One corrupt stored entry fails the whole listing, and so every search on the index. Storage
+// corruption is not tolerated on purpose.
+func TestListPending_CorruptStoredValue_ReturnsError(t *testing.T) {
+	ctx := newStoreTestCtx(t)
+	require.NoError(t, PutPending(ctx, 1, 1, 1, PendingEntry{NodeID: 1, Op: PendingDelete}))
+	key := keys.NewVectorPendingKey(1, 1, 1, 2)
+	require.NoError(t, datastore.CtxMustGetTxn(ctx).Datastore().Set(ctx, &key, []byte{9}))
+
+	_, err := ListPending(ctx, 1, 1, 1, 0)
+	require.ErrorContains(t, err, errVectorIndexStore)
+	require.ErrorContains(t, err, errUnknownPendingOp)
 }
 
 func TestPending_PutListDelete(t *testing.T) {

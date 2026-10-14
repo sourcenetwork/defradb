@@ -53,8 +53,9 @@ var vectorMaintenanceRetryDelay = 200 * time.Millisecond
 var vectorMaintenanceMaxRetryDelay = 30 * time.Second
 
 // vectorMaintenanceGate is a test hook that runs before each drain batch. Tests use it to hold
-// the writer so they can look at the pending list. It is nil in production.
-var vectorMaintenanceGate func(ctx context.Context, collectionID string, indexID uint32)
+// the writer, to change the index mid-drain, or to make a drain fail by returning an error. It is
+// nil in production.
+var vectorMaintenanceGate func(ctx context.Context, collectionID string, indexID uint32) error
 
 // afterPendingRead is a test hook that runs right after a drain batch reads its entries. A test
 // can use it to overwrite an entry before the batch commits. It is nil in production.
@@ -212,14 +213,60 @@ func (w *vectorMaintenanceWriter) markAllDeferredDirty(ctx context.Context) erro
 	if err != nil {
 		return err
 	}
+	txnCtx := InitContext(ctx, rawTxn)
 	for _, def := range versions {
 		for _, idx := range def.Indexes {
-			if vd, ok := idx.GetVector(); ok && vd.IsDeferred() {
-				w.markDirty(vectorIndexRef{def.CollectionID, idx.ID})
+			vd, ok := idx.GetVector()
+			if !ok || !vd.IsDeferred() {
+				continue
 			}
+			key := vectorIndexRef{def.CollectionID, idx.ID}
+			// The pending count lives in memory, so after a restart it starts from what is stored.
+			// Otherwise every restart would let another full limit of entries pile up.
+			_, entries, _, err := listPending(txnCtx, key, 0)
+			if err != nil {
+				return err
+			}
+			w.pendingCounter(key).Store(int64(len(entries)))
+			w.markDirty(key)
 		}
 	}
 	return nil
+}
+
+// pendingKeyspace is where an index's pending entries are stored.
+type pendingKeyspace struct {
+	shortID uint32
+	epoch   uint32
+}
+
+// listPending returns up to limit pending entries of an index (all of them when limit is 0), and
+// where they are stored. found is false when the collection or index has been removed, which
+// callers treat as nothing to do rather than an error.
+func listPending(
+	ctx context.Context,
+	key vectorIndexRef,
+	limit int,
+) (ks pendingKeyspace, entries []vectorindex.PendingEntry, found bool, err error) {
+	ks.shortID, err = id.GetCollectionShortID(ctx, key.collectionID)
+	if errors.Is(err, corekv.ErrNotFound) {
+		return ks, nil, false, nil
+	}
+	if err != nil {
+		return ks, nil, false, err
+	}
+	ks.epoch, err = getIndexEpoch(ctx, key.collectionID, key.indexID)
+	if errors.Is(err, fetcher.ErrIndexEpochNotFound) {
+		return ks, nil, false, nil
+	}
+	if err != nil {
+		return ks, nil, false, err
+	}
+	entries, err = vectorindex.ListPending(ctx, ks.shortID, key.indexID, ks.epoch, limit)
+	if err != nil {
+		return ks, nil, false, err
+	}
+	return ks, entries, true, nil
 }
 
 // drainPass drains each dirty index once. It returns true if any drain failed, and those indexes
@@ -312,7 +359,9 @@ func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorInde
 	counter := w.pendingCounter(key)
 	for {
 		if gate := vectorMaintenanceGate; gate != nil {
-			gate(ctx, key.collectionID, key.indexID)
+			if err := gate(ctx, key.collectionID, key.indexID); err != nil {
+				return err
+			}
 		}
 		if err := ctx.Err(); err != nil {
 			return err
@@ -328,6 +377,13 @@ func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorInde
 			if errors.Is(err, corekv.ErrTxnTooBig) && limit > 1 {
 				limit /= 2
 				w.setBatchLimit(key, limit)
+				continue
+			}
+			// Inline writes (used when the pending list is full) touch the same graph nodes as our
+			// batch. A smaller batch commits faster and touches fewer nodes, so it is less likely to
+			// clash again. Unlike the size limit this depends on load, so it is not remembered.
+			if errors.Is(err, corekv.ErrTxnConflict) && limit > 1 {
+				limit /= 2
 				continue
 			}
 			return err
@@ -395,26 +451,13 @@ func (w *vectorMaintenanceWriter) drainBatch(
 			return err
 		}
 
-		shortID, err := id.GetCollectionShortID(txnCtx, key.collectionID)
+		ks, entries, found, err := listPending(txnCtx, key, limit)
 		if err != nil {
-			if errors.Is(err, corekv.ErrNotFound) {
-				forget = true
-				return nil
-			}
 			return err
 		}
-		epoch, err := getIndexEpoch(txnCtx, key.collectionID, key.indexID)
-		if err != nil {
-			if errors.Is(err, fetcher.ErrIndexEpochNotFound) {
-				forget = true
-				return nil
-			}
-			return err
-		}
-
-		entries, err := vectorindex.ListPending(txnCtx, shortID, key.indexID, epoch, limit)
-		if err != nil {
-			return err
+		if !found {
+			forget = true
+			return nil
 		}
 		if hook := afterPendingRead; hook != nil {
 			hook()
@@ -423,7 +466,7 @@ func (w *vectorMaintenanceWriter) drainBatch(
 			return nil
 		}
 
-		idx, err := vectorindex.Open(txnCtx, shortID, key.indexID, epoch, *vd)
+		idx, err := vectorindex.Open(txnCtx, ks.shortID, key.indexID, ks.epoch, *vd)
 		if err != nil {
 			return err
 		}
@@ -438,7 +481,7 @@ func (w *vectorMaintenanceWriter) drainBatch(
 					return err
 				}
 			}
-			if err := vectorindex.DeletePending(txnCtx, shortID, key.indexID, epoch, e.NodeID); err != nil {
+			if err := vectorindex.DeletePending(txnCtx, ks.shortID, key.indexID, ks.epoch, e.NodeID); err != nil {
 				return err
 			}
 		}

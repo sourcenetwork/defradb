@@ -13,7 +13,7 @@ package hnsw
 import (
 	"container/heap"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 	"sync"
 )
@@ -28,8 +28,8 @@ type HNSWIndex struct {
 	params Params
 	metric Metric
 
-	rng *rand.Rand
-	mu  sync.Mutex // serializes Insert/Delete (single-writer)
+	seed int64
+	mu   sync.Mutex // serializes Insert/Delete (single-writer)
 }
 
 // New creates a new HNSWIndex backed by the given store, using the given
@@ -41,7 +41,7 @@ func New(store NodeStore, metric Metric, params Params, seed int64) *HNSWIndex {
 		store:  store,
 		params: params,
 		metric: metric,
-		rng:    rand.New(rand.NewSource(seed)),
+		seed:   seed,
 	}
 }
 
@@ -52,12 +52,15 @@ func New(store NodeStore, metric Metric, params Params, seed int64) *HNSWIndex {
 // each layer up holds exponentially fewer nodes. Search starts at the sparse top and drops down, so
 // it can cover a lot of ground in a few steps before doing the fine-grained search at the bottom.
 // ML controls how fast the layers thin out.
-func (g *HNSWIndex) randomLevel() int {
-	// rng.Float64 returns a value in [0, 1); guard against exactly 0 to
-	// avoid taking ln(0).
-	r := g.rng.Float64()
+//
+// The random number is seeded by the node id. A generator kept on the index would not work: the
+// index is reopened for almost every write, so it would restart and give every node the same level.
+func (g *HNSWIndex) randomLevel(id NodeID) int {
+	rng := rand.New(rand.NewPCG(uint64(g.seed), uint64(id)))
+	// Float64 can return 0, and ln(0) is infinite.
+	r := rng.Float64()
 	for r == 0 {
-		r = g.rng.Float64()
+		r = rng.Float64()
 	}
 	return int(math.Floor(-math.Log(r) * g.params.ML))
 }
@@ -69,7 +72,7 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 	defer g.mu.Unlock()
 
 	v := vectorForMetric(g.metric, vector)
-	topLevel := g.randomLevel()
+	topLevel := g.randomLevel(id)
 
 	meta, found, err := g.store.GetMeta()
 	if err != nil {
@@ -146,15 +149,21 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		// the next layer a wider starting frontier lets it find better neighbours (higher recall)
 		// instead of narrowing to a single point too early. They all exist on the next layer, since a
 		// node is present on every layer up to its height.
-		entryPoints = w
+		//
+		// w leaves out deleted nodes, so it is empty when only deleted ones were found. Keep the
+		// current entry points then. Otherwise the new node gets no links, becomes the entry point,
+		// and cuts off the rest of the graph.
+		if len(w) > 0 {
+			entryPoints = w
+		}
 	}
 
 	if err := g.store.PutNode(Node{ID: id, Vector: v, Neighbours: newLayers}); err != nil {
 		return err
 	}
 
-	// Only write meta when it changes. Every insert reads the meta singleton, so an unconditional
-	// write makes all concurrent inserts conflict under the datastore's optimistic transactions.
+	// Write meta only when it changed. Every insert reads it, so writing it every time would make
+	// concurrent inserts conflict with each other.
 	origMeta := meta
 
 	if topLevel > meta.TopLayer {

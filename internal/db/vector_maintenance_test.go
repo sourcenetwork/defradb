@@ -391,6 +391,14 @@ func TestVectorMaintenance_BackPressure_AppliesInlineWhenPendingIsFull(t *testin
 
 	f.drain()
 	assert.Equal(t, before, f.search([]float32{0, 0, 1}, 10))
+
+	// An inline write to a full index still wakes the writer, since the graph it touched may have
+	// been changed by a drain at the same time.
+	require.Equal(t, 0, f.dirty())
+	f.db.vectorMaintenance.pendingCounter(f.ref()).Store(2)
+	f.add("inline", []float32{0, 1, 0})
+	assert.Equal(t, 0, f.pending(), "the write should have gone to the graph")
+	assert.Equal(t, 1, f.dirty())
 }
 
 // Badger rejects a transaction that grows past a share of its memtable. With a small memtable and
@@ -487,4 +495,52 @@ func TestVectorMaintenance_Merge_WritesPendingEntriesInsteadOfGraphNodes(t *test
 	target.drain()
 	assert.Equal(t, 0, target.pending())
 	assert.Equal(t, 1, target.graphHits(query))
+}
+
+func TestVectorMaintenance_Startup_SeedsPendingCounterFromStoredEntries(t *testing.T) {
+	path := t.TempDir()
+	f := newDeferredFixture(t, path, true)
+	for i := range 3 {
+		f.add(fmt.Sprint("d", i), []float32{1, float32(i), 0})
+	}
+	f.db.Close()
+
+	f2 := newDeferredFixture(t, path, true)
+	w := f2.db.vectorMaintenance
+	require.Equal(t, int64(0), w.pendingCounter(f2.ref()).Load())
+
+	require.NoError(t, w.markAllDeferredDirty(f2.ctx))
+
+	assert.Equal(t, int64(3), w.pendingCounter(f2.ref()).Load())
+	assert.Equal(t, 1, f2.dirty())
+}
+
+func TestVectorMaintenance_Update_WritesOnePendingEntryPerUpdate(t *testing.T) {
+	f := newDeferredFixture(t, "", true)
+	counter := f.db.vectorMaintenance.pendingCounter(f.ref())
+	doc := f.add("a", []float32{1, 0, 0})
+	require.Equal(t, int64(1), counter.Load())
+
+	f.update(doc, []float32{0, 1, 0})
+
+	assert.Equal(t, int64(2), counter.Load())
+	entries := f.pendingAt(1)
+	require.Len(t, entries, 1)
+	assert.Equal(t, vectorindex.PendingUpsert, entries[0].Op)
+	assert.Equal(t, []float32{0, 1, 0}, entries[0].Vector)
+}
+
+func TestVectorMaintenance_Update_RemovingVectorWritesPendingDelete(t *testing.T) {
+	f := newDeferredFixture(t, "", true)
+	doc := f.add("a", []float32{1, 0, 0})
+	f.drain()
+	require.Equal(t, ids(doc), f.search([]float32{1, 0, 0}, 10))
+
+	require.NoError(t, doc.Set(f.ctx, "embedding", nil))
+	require.NoError(t, f.col.UpdateDocument(f.ctx, doc))
+
+	entries := f.pendingAt(1)
+	require.Len(t, entries, 1)
+	assert.Equal(t, vectorindex.PendingDelete, entries[0].Op)
+	assert.Empty(t, f.search([]float32{1, 0, 0}, 10))
 }

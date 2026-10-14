@@ -151,6 +151,6 @@ func TestVectorIndexKey_DecodePendingNodeID_RejectsNonPendingKeys(t *testing.T) 
 	meta := NewVectorMetaKey(1, 2, 3)
 	for _, k := range []VectorIndexKey{node, prefix, meta} {
 		_, err := DecodeVectorPendingNodeID(k.Bytes())
-		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidVectorPendingKey)
 	}
 }
