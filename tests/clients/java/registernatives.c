@@ -150,14 +150,6 @@ extern jobject JNICALL Java_source_defra_DefraTransaction_BasicImportNative(JNIE
 extern jobject JNICALL Java_source_defra_DefraTransaction_BasicExportNative(
     JNIEnv*, jobject, jlong, jstring, jstring, jstring, jboolean);
 extern jobject JNICALL Java_source_defra_DefraTransaction_PrintDumpNative(JNIEnv*, jobject, jlong);
-extern jobject JNICALL Java_source_defra_DefraTransaction_GetP2PInfoNative(JNIEnv*, jobject, jlong, jlong);
-extern jobject JNICALL Java_source_defra_DefraTransaction_ListP2PReplicatorsNative(JNIEnv*, jobject, jlong, jlong);
-extern jobject JNICALL Java_source_defra_DefraTransaction_AddP2PReplicatorNative(
-    JNIEnv*, jobject, jlong, jstring, jstring, jlong);
-extern jobject JNICALL Java_source_defra_DefraTransaction_ConnectP2PPeersNative(
-    JNIEnv*, jobject, jlong, jstring, jlong);
-extern jobject JNICALL Java_source_defra_DefraTransaction_DisconnectP2PPeersNative(
-    JNIEnv*, jobject, jlong, jstring, jlong);
 extern jobject JNICALL Java_source_defra_DefraTransaction_ExecuteQueryNative(
     JNIEnv*, jobject, jlong, jstring, jlong, jstring, jstring);
 extern jobject JNICALL Java_source_defra_DefraTransaction_AddViewNative(
@@ -386,15 +378,6 @@ static JNINativeMethod transactionNativeMethods[] = {
     {"BasicExportNative", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_BasicExportNative},
     {"PrintDumpNative", "(J)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraTransaction_PrintDumpNative},
-    {"GetP2PInfoNative", "(JJ)Lsource/defra/DefraResult;", (void*)Java_source_defra_DefraTransaction_GetP2PInfoNative},
-    {"ListP2PReplicatorsNative", "(JJ)Lsource/defra/DefraResult;",
-        (void*)Java_source_defra_DefraTransaction_ListP2PReplicatorsNative},
-    {"AddP2PReplicatorNative", "(JLjava/lang/String;Ljava/lang/String;J)Lsource/defra/DefraResult;",
-        (void*)Java_source_defra_DefraTransaction_AddP2PReplicatorNative},
-    {"ConnectP2PPeersNative", "(JLjava/lang/String;J)Lsource/defra/DefraResult;",
-        (void*)Java_source_defra_DefraTransaction_ConnectP2PPeersNative},
-    {"DisconnectP2PPeersNative", "(JLjava/lang/String;J)Lsource/defra/DefraResult;",
-        (void*)Java_source_defra_DefraTransaction_DisconnectP2PPeersNative},
     {"ExecuteQueryNative", "(JLjava/lang/String;JLjava/lang/String;Ljava/lang/String;)Lsource/defra/DefraResult;",
         (void*)Java_source_defra_DefraTransaction_ExecuteQueryNative},
     {"AddViewNative", "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;J)Lsource/defra/DefraResult;",
