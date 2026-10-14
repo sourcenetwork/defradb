@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -158,6 +160,44 @@ func (c *Collection) SaveDocument(
 		return c.AddDocument(ctx, doc, opts...)
 	}
 
+	if c.txn.HasValue() {
+		return c.saveDocument(ctx, doc, opts...)
+	}
+
+	// Without an explicit transaction, each of the commands run by saveDocument would open and
+	// commit its own, leaving a window in which another writer could add or delete the document
+	// between the existence check and the resulting add/update. Running them against a
+	// transaction-bound copy of the collection makes the save atomic, matching the Go client.
+	txn, err := c.w.NewTxn(false)
+	if err != nil {
+		return err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			txn.Discard()
+		}
+	}()
+
+	txnCol := &Collection{c.w, c.cmd, c.def, immutable.Some(txn)}
+	if err := txnCol.saveDocument(ctx, doc, opts...); err != nil {
+		return err
+	}
+	if err := txn.Commit(); err != nil {
+		return err
+	}
+	committed = true
+	return nil
+}
+
+// saveDocument adds or updates the document depending on whether it already exists.
+//
+// It is not atomic on its own; the caller must ensure c is bound to a transaction.
+func (c *Collection) saveDocument(
+	ctx context.Context,
+	doc *client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
 	getOpts := options.GetDocument()
 	opt := utils.NewOptions(opts...)
 	if opt.Identity.HasValue() {
@@ -166,7 +206,6 @@ func (c *Collection) SaveDocument(
 	_, err := c.GetDocument(ctx, doc.ID(), getOpts.SetShowDeleted(true))
 	if err == nil {
 		updateOpts := options.UpdateDocument()
-		opt := utils.NewOptions(opts...)
 		if opt.GetIdentity().HasValue() {
 			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
