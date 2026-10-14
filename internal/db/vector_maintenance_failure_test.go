@@ -266,9 +266,15 @@ func TestVectorMaintenance_PendingUpsert_IsFilteredByDocumentACP(t *testing.T) {
 			}
 		}`, opts)
 		require.Empty(t, res.GQL.Errors)
+		data, ok := res.GQL.Data.(map[string]any)
+		require.True(t, ok)
+		rows, ok := data["Users"].([]map[string]any)
+		require.True(t, ok)
 		var names []string
-		for _, row := range res.GQL.Data.(map[string]any)["Users"].([]map[string]any) {
-			names = append(names, row["name"].(string))
+		for _, row := range rows {
+			name, ok := row["name"].(string)
+			require.True(t, ok)
+			names = append(names, name)
 		}
 		return names
 	}

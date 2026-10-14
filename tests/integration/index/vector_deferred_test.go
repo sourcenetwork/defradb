@@ -28,13 +28,6 @@ func vectorModeSDL(maintenance string) *action.AddCollection {
 	}
 }
 
-const vectorTop2Query = `query {
-	User(order: {_alias: {sim: DESC}}, limit: 2){
-		name
-		sim: SIMILARITY(vector: {vector: [1, 0, 0]})
-	}
-}`
-
 func cosX(v ...float64) any {
 	return testUtils.CosineSimilarity(v, []float64{1, 0, 0})
 }

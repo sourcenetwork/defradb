@@ -480,7 +480,9 @@ func TestVectorMaintenance_Merge_WritesPendingEntriesInsteadOfGraphNodes(t *test
 	doc := source.add("merged", []float32{1, 0, 0})
 	copyDAGBlocks(t, target.ctx, source.db, target.db, doc.Head())
 
-	err := target.db.executeMerge(target.ctx, target.col.(*collection), event.Merge{
+	col, ok := target.col.(*collection)
+	require.True(t, ok)
+	err := target.db.executeMerge(target.ctx, col, event.Merge{
 		DocID:        doc.ID().String(),
 		Cid:          doc.Head(),
 		CollectionID: target.col.CollectionID(),

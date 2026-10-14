@@ -114,7 +114,9 @@ func (w *vectorMaintenanceWriter) pendingCounter(key vectorIndexRef) *atomic.Int
 	if !ok {
 		c, _ = w.pending.LoadOrStore(key, &atomic.Int64{})
 	}
-	return c.(*atomic.Int64)
+	// Only *atomic.Int64 values are ever stored.
+	counter, _ := c.(*atomic.Int64)
+	return counter
 }
 
 // overLimit reports whether the index has so many pending writes that new writes should update

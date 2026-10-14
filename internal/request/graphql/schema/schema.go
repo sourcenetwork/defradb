@@ -27,7 +27,11 @@ func defaultSchema() (gql.Schema, error) {
 	vectorIndexAlgorithmEnum := types.VectorIndexAlgorithmEnum()
 	vectorIndexMaintenanceEnum := types.VectorIndexMaintenanceEnum()
 	hnswIndexConfigInput := types.HNSWIndexConfigInputObject(vectorDistanceMetricEnum)
-	vectorIndexInput := types.VectorIndexInputObject(hnswIndexConfigInput, vectorIndexAlgorithmEnum, vectorIndexMaintenanceEnum)
+	vectorIndexInput := types.VectorIndexInputObject(
+		hnswIndexConfigInput,
+		vectorIndexAlgorithmEnum,
+		vectorIndexMaintenanceEnum,
+	)
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
