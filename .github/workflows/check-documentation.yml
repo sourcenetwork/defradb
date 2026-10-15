@@ -83,6 +83,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code into the directory
         uses: actions/checkout@v6
@@ -96,6 +99,9 @@ jobs:
 
       - name: Try generating readme toc
         run: make toc
+        env:
+          # Authenticate the GitHub markdown API calls to avoid the shared anonymous rate limit.
+          GH_TOC_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check no new changes exist
         uses: tj-actions/verify-changed-files@v20
