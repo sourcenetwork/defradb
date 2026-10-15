@@ -302,6 +302,15 @@ func executeTestCase(
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(s, Close{})
+	// Deferred after closeNodes so it runs first. A transaction left open blocks LevelDB, which only
+	// allows one at a time, so a background store task can hang node shutdown waiting on it.
+	defer func() {
+		for _, txn := range s.Txns {
+			if txn != nil {
+				txn.Discard()
+			}
+		}
+	}()
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
