@@ -284,6 +284,79 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithIndex_WithGreaterOrEqualAndLessOrEqualFilter_ShouldFetchOnlyTheRange(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_geq: 28, _leq: 33}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int @index
+					}`,
+			},
+			testUtils.AddPredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "John"},
+						{"name": "Islam"},
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithNonOverlappingGreaterAndLessThanFilter_ShouldFetchNothing(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_gt: 44, _lt: 30}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int @index
+					}`,
+			},
+			testUtils.AddPredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
 		User(filter: {name: {_neq: "Islam"}}) {
