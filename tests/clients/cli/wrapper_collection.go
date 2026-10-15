@@ -53,6 +53,7 @@ func appendTxnArg(args []string, txn immutable.Option[client.Txn]) []string {
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
+	w   *Wrapper
 	cmd *cliWrapper
 	def client.CollectionVersion
 	txn immutable.Option[client.Txn]
