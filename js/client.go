@@ -37,15 +37,22 @@ type Client struct {
 // Funcs created for transactions and collections are also only released when the client
 // closes, so a long-lived client still accumulates them until then.
 type funcs struct {
-	mu   sync.Mutex
-	list []js.Func
+	mu       sync.Mutex
+	list     []js.Func
+	released bool
 }
 
 func (f *funcs) async(fn func(this js.Value, args []js.Value) (js.Value, error)) js.Func {
 	jsFn := goji.Async(fn)
 	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.released {
+		// A call that was still running when the client closed must not
+		// register funcs that would never be released.
+		jsFn.Release()
+		return jsFn
+	}
 	f.list = append(f.list, jsFn)
-	f.mu.Unlock()
 	return jsFn
 }
 
@@ -56,6 +63,7 @@ func (f *funcs) release() {
 		fn.Release()
 	}
 	f.list = nil
+	f.released = true
 }
 
 // NewClient returns a new JS client.
