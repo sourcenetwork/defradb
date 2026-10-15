@@ -269,22 +269,13 @@ func (c *Collection) SaveDocument(
 	if err != nil {
 		return err
 	}
-	committed := false
-	defer func() {
-		if !committed {
-			txn.Discard()
-		}
-	}()
+	defer txn.Discard()
 
 	err = c.saveDocument(datastore.CtxSetFromClientTxn(ctx, txn), doc, opts...)
 	if err != nil {
 		return err
 	}
-	if err := txn.Commit(); err != nil {
-		return err
-	}
-	committed = true
-	return nil
+	return txn.Commit()
 }
 
 // saveDocument adds or updates the document depending on whether it already exists.
