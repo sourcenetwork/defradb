@@ -12,9 +12,7 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -23,15 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/corekv/badger"
-
-	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/crypto"
-	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
-	intOpts "github.com/sourcenetwork/defradb/internal/options"
 )
 
 var errInjectedDrain = errors.New("injected drain failure")
@@ -181,105 +171,3 @@ const mixedIndexesSDL = `
 		embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
 	}
 `
-
-const usersACPPolicy = `
-description: a test policy which marks a collection in a database as a resource
-name: test
-resources:
-- name: users
-  permissions:
-  - name: delete
-  - expr: reader
-    name: read
-  - name: update
-  relations:
-  - manages:
-    - reader
-    name: admin
-    types:
-    - actor
-  - name: reader
-    types:
-    - actor
-`
-
-// The integration ACP test cannot prove this for pending entries, because the background writer
-// drains them before the query runs. Here the writer is off, so the private document is still
-// pending when it is searched.
-func TestVectorMaintenance_PendingUpsert_IsFilteredByDocumentACP(t *testing.T) {
-	ctx := context.Background()
-	owner, err := identity.Generate(crypto.KeyTypeSecp256k1)
-	require.NoError(t, err)
-	other, err := identity.Generate(crypto.KeyTypeSecp256k1)
-	require.NoError(t, err)
-
-	rootstore, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
-	require.NoError(t, err)
-	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
-	require.NoError(t, err)
-	localACP, err := dac.NewLocalDocumentACP("")
-	require.NoError(t, err)
-
-	setForTest(t, &suppressVectorMaintenanceRun, true)
-	db, err := newDB(ctx, rootstore, adminInfo, intOpts.DB().SetDocumentACP(localACP))
-	require.NoError(t, err)
-	t.Cleanup(db.Close)
-
-	policy, err := db.AddDACPolicy(ctx, usersACPPolicy, options.AddDACPolicy().SetIdentity(owner))
-	require.NoError(t, err)
-	_, err = db.AddCollection(ctx, fmt.Sprintf(`
-		type Users @policy(id: %q, resource: "users") {
-			name: String
-			embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
-		}
-	`, policy.PolicyID))
-	require.NoError(t, err)
-	col, err := db.GetCollectionByName(ctx, "Users")
-	require.NoError(t, err)
-
-	add := func(name string, vec []float32, id identity.Identity) {
-		data, err := json.Marshal(map[string]any{"name": name, "embedding": vec})
-		require.NoError(t, err)
-		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
-		require.NoError(t, err)
-		opts := options.AddDocument()
-		if id != nil {
-			opts.SetIdentity(id)
-		}
-		require.NoError(t, col.AddDocument(ctx, doc, opts))
-	}
-	add("public", []float32{0, 1, 0}, nil)
-	add("private", []float32{1, 0, 0}, owner)
-
-	f := &deferredIndexFixture{t: t, ctx: ctx, db: db, col: col}
-	require.Equal(t, 2, f.pending(), "both entries must still be pending")
-
-	search := func(id identity.Identity) []string {
-		opts := options.ExecRequest()
-		if id != nil {
-			opts.SetIdentity(id)
-		}
-		res := db.ExecRequest(ctx, `query {
-			Users(order: {_alias: {sim: DESC}}, limit: 3){
-				name
-				sim: SIMILARITY(embedding: {vector: [1, 0, 0]})
-			}
-		}`, opts)
-		require.Empty(t, res.GQL.Errors)
-		data, ok := res.GQL.Data.(map[string]any)
-		require.True(t, ok)
-		rows, ok := data["Users"].([]map[string]any)
-		require.True(t, ok)
-		var names []string
-		for _, row := range rows {
-			name, ok := row["name"].(string)
-			require.True(t, ok)
-			names = append(names, name)
-		}
-		return names
-	}
-
-	assert.Equal(t, []string{"public"}, search(nil))
-	assert.Equal(t, []string{"public"}, search(other))
-	assert.Equal(t, []string{"private", "public"}, search(owner))
-}

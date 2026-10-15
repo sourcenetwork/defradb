@@ -14,6 +14,8 @@ package test_acp_dac_index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -30,7 +32,7 @@ func vectorACPSim(v ...float64) any {
 }
 
 // A document owned by one identity is not returned to another by a similarity query on a deferred
-// vector index, whether its entry is still pending or already applied by the background writer.
+// vector index, once the background writer has applied its entry to the graph.
 func TestACPWithVectorIndex_Deferred_PrivateDocsAreNotLeaked(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -95,6 +97,71 @@ func TestACPWithVectorIndex_Deferred_PrivateDocsAreNotLeaked(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// The same, while the entries are still pending. The background writer only applies committed
+// entries, so inside the open transaction the search must read them from the pending list.
+func TestACPWithVectorIndex_DeferredPending_PrivateDocsAreNotLeaked(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+				Policy:   userPolicy,
+			},
+			&action.AddCollection{
+				SDL: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						vector: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
+					}
+				`,
+			},
+			&action.AddDoc{
+				TransactionID: immutable.Some(0),
+				DocMap:        map[string]any{"name": "public", "vector": []float32{0, 1, 0}},
+			},
+			&action.AddDoc{
+				TransactionID: immutable.Some(0),
+				Identity:      testUtils.ClientIdentity(1),
+				DocMap:        map[string]any{"name": "private", "vector": []float32{1, 0, 0}},
+			},
+			&action.Request{
+				TransactionID: immutable.Some(0),
+				Request:       vectorACPQuery,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "public", "sim": vectorACPSim(0, 1, 0)},
+					},
+				},
+			},
+			&action.Request{
+				TransactionID: immutable.Some(0),
+				Identity:      testUtils.ClientIdentity(2),
+				Request:       vectorACPQuery,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "public", "sim": vectorACPSim(0, 1, 0)},
+					},
+				},
+			},
+			&action.Request{
+				TransactionID: immutable.Some(0),
+				Identity:      testUtils.ClientIdentity(1),
+				Request:       vectorACPQuery,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "private", "sim": vectorACPSim(1, 0, 0)},
+						{"name": "public", "sim": vectorACPSim(0, 1, 0)},
+					},
+				},
+			},
+			&action.CommitTransaction{TransactionID: 0},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
