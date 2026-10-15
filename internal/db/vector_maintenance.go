@@ -29,8 +29,8 @@ import (
 )
 
 // deferredBatchSize is how many pending entries one drain transaction applies at first. Benchmarks
-// showed no speed difference between 16 and 256. It is a var so tests can change it.
-var deferredBatchSize = 32
+// showed no speed difference between 16 and 256.
+const deferredBatchSize = 32
 
 // vectorMaintenancePendingLimit is how many pending entries an index can hold before writes stop
 // deferring and update the graph inline. This makes a fast writer slow down instead of letting
@@ -325,7 +325,7 @@ func (w *vectorMaintenanceWriter) batchLimit(key vectorIndexRef) int {
 	if n, ok := w.batchSizes[key]; ok {
 		return n
 	}
-	return max(1, deferredBatchSize)
+	return deferredBatchSize
 }
 
 // setBatchLimit remembers a smaller batch size for an index.

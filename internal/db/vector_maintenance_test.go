@@ -303,7 +303,7 @@ func ids(docs ...*client.Document) []string {
 
 func TestVectorMaintenance_Drain_AppliesUpsertsAndDeletesAndKeepsResults(t *testing.T) {
 	f := newDeferredFixture(t, "", true)
-	setForTest(t, &deferredBatchSize, 2) // several batches
+	f.db.vectorMaintenance.setBatchLimit(f.ref(), 2) // several batches
 
 	docs := make([]*client.Document, 6)
 	for i := range docs {
