@@ -66,6 +66,7 @@ var (
 	ErrPolicyIDMustNotBeEmpty                      = errors.New(errPolicyIDMustNotBeEmpty)
 	ErrResourceNameMustNotBeEmpty                  = errors.New(errResourceNameMustNotBeEmpty)
 	ErrInvalidActorID                              = errors.New(errInvalidActorID)
+	ErrRelationshipTargetActorEmpty                = errors.New("acp relationship target actor must not be empty")
 	ErrResourceIsMissingRequiredPermission         = errors.New(errResourceIsMissingRequiredPermission)
 )
 
