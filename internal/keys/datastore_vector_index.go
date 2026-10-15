@@ -33,11 +33,11 @@ type VectorIndexKeyKind uint8
 
 const (
 	// VectorIndexKeyNode addresses a graph node entry. It is the zero value.
-	VectorIndexKeyNode VectorIndexKeyKind = iota
+	VectorIndexKeyNode VectorIndexKeyKind = 0
 	// VectorIndexKeyMeta addresses the graph's meta singleton.
-	VectorIndexKeyMeta
+	VectorIndexKeyMeta VectorIndexKeyKind = 1
 	// VectorIndexKeyPending addresses a pending (not yet applied) write of one node.
-	VectorIndexKeyPending
+	VectorIndexKeyPending VectorIndexKeyKind = 2
 )
 
 // VectorIndexKey points to one entry in a vector index's graph: either the meta entry or a single

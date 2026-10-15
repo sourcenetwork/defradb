@@ -22,14 +22,15 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// PendingOp is the kind of change a pending entry records.
+// PendingOp is the kind of change a pending entry records. It is stored as the first byte of the
+// entry, so the values must never change.
 type PendingOp uint8
 
 const (
 	// PendingUpsert sets the node's vector, replacing any vector the graph holds for it.
-	PendingUpsert PendingOp = iota + 1
+	PendingUpsert PendingOp = 1
 	// PendingDelete removes the node from the results.
-	PendingDelete
+	PendingDelete PendingOp = 2
 )
 
 // PendingEntry is one write to a deferred index that has not been applied to the graph yet. There is
