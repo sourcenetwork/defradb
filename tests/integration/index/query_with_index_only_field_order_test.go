@@ -342,6 +342,45 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithIndex_IfIntFieldInDescOrderWithGtAndLt_ShouldFetchOnlyTheRange(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_gt: 28, _lt: 44}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type User {
+						name: String
+						age: Int @index(direction: DESC)
+					}`,
+			},
+			testUtils.AddPredefinedDocs{
+				Docs: getUserDocs(),
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Addo"},
+						{"name": "Andy"},
+						{"name": "Islam"},
+						{"name": "John"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t *testing.T) {
 	req := `
 		query {

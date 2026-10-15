@@ -747,9 +747,24 @@ func (f *indexFetcher) newRangeBasedMatchIterator(
 	cond fieldFilterCond,
 	matchers []valueMatcher,
 ) (*indexMatchIterator, error) {
-	startKey, endKey, err := f.createRangeBoundaries(cond, f.indexDesc.Fields[0].Descending)
+	descending := f.indexDesc.Fields[0].Descending
+	startKey, endKey, err := f.createRangeBoundaries(cond, descending)
 	if err != nil {
 		return nil, err
+	}
+	// Narrow the range to the intersection of every bound's range. Comparing key bytes also works
+	// for descending indexes, whose values are encoded in reverse order.
+	for _, bound := range cond.otherBounds {
+		boundStart, boundEnd, err := f.createRangeBoundaries(bound, descending)
+		if err != nil {
+			return nil, err
+		}
+		if bytes.Compare(boundStart.Bytes(), startKey.Bytes()) > 0 {
+			startKey = boundStart
+		}
+		if bytes.Compare(boundEnd.Bytes(), endKey.Bytes()) < 0 {
+			endKey = boundEnd
+		}
 	}
 
 	// Range iterator already handles the first field through the range boundaries,
@@ -880,6 +895,9 @@ type fieldFilterCond struct {
 	jsonPath client.JSONPath
 	val      client.NormalValue
 	kind     client.FieldKind
+	// otherBounds holds the field's other ordering conditions when op is an ordering condition on the
+	// index's first field, such as _leq in {_geq: 1, _leq: 9}. The range scan applies all of them.
+	otherBounds []fieldFilterCond
 }
 
 // determineFieldFilterConditions determines the conditions and their corresponding operation
@@ -931,6 +949,13 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 						return false
 					}
 
+					if i == 0 && isOrderingOp(op) {
+						cond.otherBounds, err = otherOrderingConditions(condMap, op, jsonPath, indexedField)
+						if err != nil {
+							return false
+						}
+					}
+
 					result = append(result, cond)
 					break
 				}
@@ -959,6 +984,30 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 		}
 	}
 	return result, nil
+}
+
+// otherOrderingConditions returns the ordering conditions in condMap, other than op, that the index
+// can use as range bounds.
+func otherOrderingConditions(
+	condMap map[connor.FilterKey]any,
+	op string,
+	jsonPath client.JSONPath,
+	indexedField client.CollectionFieldDescription,
+) ([]fieldFilterCond, error) {
+	var conds []fieldFilterCond
+	for key, filterVal := range condMap {
+		otherOp := key.(*mapper.Operator).Operation
+		if otherOp == op || !isOrderingOp(otherOp) ||
+			shouldFallbackToFullScan(otherOp, filterVal, jsonPath, indexedField.Kind) {
+			continue
+		}
+		cond, err := makeFieldFilterCondition(otherOp, jsonPath, indexedField, filterVal)
+		if err != nil {
+			return nil, err
+		}
+		conds = append(conds, cond)
+	}
+	return conds, nil
 }
 
 // makeFieldFilterCondition creates a fieldFilterCond based on the given operator and filter value on
