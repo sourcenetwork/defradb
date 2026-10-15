@@ -11,11 +11,9 @@
 package wizard
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/defradb/keyring"
 )
@@ -254,7 +252,7 @@ func Test_GenerateIndividualKeyrings_SystemKeyring(t *testing.T) {
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the actual functions, then the first check will be that it didn't error
@@ -307,7 +305,7 @@ func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
@@ -327,9 +325,6 @@ func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 			t.Fatalf("expected %s to not exist, but it does", keyname)
 		}
 	}
-
-	// Finally, cleanup the entry in the keyring we made for this test
-	_ = openKeyring.Delete("node-identity-key")
 }
 
 // This will test the callback_GenerateKeysInSystemKeyring function.
@@ -351,7 +346,7 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
@@ -368,12 +363,6 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	requireKeyInKeyring(t, openKeyring, "peer-key", "", 64, "")
 	requireKeyInKeyring(t, openKeyring, "encryption-key", "", 32, "")
 	requireKeyInKeyring(t, openKeyring, "searchable-encryption-key", "", 32, "")
-
-	// Finally, cleanup the entries in the keyring we made for this test
-	_ = openKeyring.Delete("node-identity-key")
-	_ = openKeyring.Delete("peer-key")
-	_ = openKeyring.Delete("encryption-key")
-	_ = openKeyring.Delete("searchable-encryption-key")
 }
 
 // This will test the callback_AddIdentityKey function using the file keyring, and a secp256r1 key.
@@ -430,7 +419,7 @@ func Test_AddIdentityKey_Secp256r1_SystemKeyring(t *testing.T) {
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
@@ -496,13 +485,13 @@ func Test_AddIdentityKey_Secp256k1_SystemKeyring(t *testing.T) {
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation":     {1},
-			"stepQueryAddingIdentityKeyType": {2},
+			"stepQueryAddingIdentityKeyType": {1},
 			"stepGettingIdentityKeyForAdd":   {dummyKey_secp256k1},
 		},
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
@@ -570,13 +559,13 @@ func Test_AddIdentityKey_Ed25519_SystemKeyring(t *testing.T) {
 	ctx := &WizardContext{
 		Results: map[string][]any{
 			"stepKeyringStorageLocation":     {1},
-			"stepQueryAddingIdentityKeyType": {2},
+			"stepQueryAddingIdentityKeyType": {0},
 			"stepGettingIdentityKeyForAdd":   {dummyKey_ed25519},
 		},
 	}
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callback, then the first check will be that it didn't error
@@ -668,7 +657,7 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 
 	ctx := &WizardContext{
 		Results: map[string][]any{
-			"stepKeyringStorageLocation":               {0},
+			"stepKeyringStorageLocation":               {1},
 			"stepGettingPeerKeyForAdd":                 {dummyKey_peer},
 			"stepGettingEncryptionKeyForAdd":           {dummyKey_encryption},
 			"stepGettingSearchableEncryptionKeyForAdd": {dummyKey_searchableEncryption},
@@ -678,7 +667,7 @@ func Test_AddMultipleKeys_SystemKeyring(t *testing.T) {
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Assign a unique namespace for the test keyring so we can remove it afterwards
-	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	keyringNamespace := systemKeyringNamespaceForTest(t)
 	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
 
 	// Execute the callbacks, then the first check will be that they didn't error
