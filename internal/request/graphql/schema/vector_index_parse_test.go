@@ -71,6 +71,54 @@ func TestParseVectorIndex_OnField_ParsesArgsAndDefaults(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "maintenance DEFERRED is carried onto the description",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED})
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "embedding"},
+					},
+					Vector: &client.VectorIndexDescription{
+						Algorithm:   client.VectorAlgorithmHNSW,
+						Metric:      client.DistanceMetricCosine,
+						Dimensions:  3,
+						Maintenance: client.VectorIndexMaintenanceDeferred,
+						HNSW: &client.HNSWParams{
+							M:              16,
+							EfConstruction: 128,
+							EfSearch:       64,
+						},
+					},
+				},
+			},
+		},
+		{
+			description: "maintenance SYNC is carried onto the description",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: SYNC})
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "embedding"},
+					},
+					Vector: &client.VectorIndexDescription{
+						Algorithm:   client.VectorAlgorithmHNSW,
+						Metric:      client.DistanceMetricCosine,
+						Dimensions:  3,
+						Maintenance: client.VectorIndexMaintenanceSync,
+						HNSW: &client.HNSWParams{
+							M:              16,
+							EfConstruction: 128,
+							EfSearch:       64,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {
@@ -139,6 +187,13 @@ func TestParseVectorIndex_InvalidArgs_ReturnsError(t *testing.T) {
 				embedding: [Float32!] @index(vector: {dimensions: 3, hnsw: {metric: MANHATTAN}})
 			}`,
 			expectedErr: `Expected type "VectorDistanceMetric", found MANHATTAN`,
+		},
+		{
+			description: "unknown maintenance value",
+			sdl: `type user {
+				embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: LAZY})
+			}`,
+			expectedErr: `Expected type "VectorIndexMaintenance", found LAZY`,
 		},
 		{
 			description: "unknown top-level argument",

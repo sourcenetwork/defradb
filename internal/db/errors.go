@@ -152,6 +152,7 @@ const (
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
 	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
+	errVectorIndexUnknownMaintenance       string = "vector index with unknown maintenance"
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errNonOrderedIndexCannotBeUnique       string = "only an ordered index can be unique"
@@ -1340,6 +1341,15 @@ func NewErrVectorIndexEmptyVector(fieldName, docID string) error {
 		errVectorIndexEmptyVector,
 		errors.NewKV("Field", fieldName),
 		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexUnknownMaintenance returns a new error indicating that a vector index was given an
+// unknown maintenance mode.
+func NewErrVectorIndexUnknownMaintenance(maintenance string) error {
+	return errors.New(
+		errVectorIndexUnknownMaintenance,
+		errors.NewKV("Maintenance", maintenance),
 	)
 }
 
