@@ -678,7 +678,7 @@ func (w *Wrapper) GetCollections(
 
 	cols := make([]client.Collection, len(colDesc))
 	for i, v := range colDesc {
-		cols[i] = &Collection{w.cmd, v, txnOpt}
+		cols[i] = &Collection{w, w.cmd, v, txnOpt}
 	}
 	return cols, err
 }
