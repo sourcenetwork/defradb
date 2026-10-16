@@ -86,7 +86,7 @@ type vectorMaintenanceWriter struct {
 	dirty map[vectorIndexRef]struct{}
 	// pending holds an approximate count of pending writes per index (*atomic.Int64). It is used to
 	// slow writers down. It can be too high when a write overwrites an entry that is still pending.
-	// A full drain resets it, and it starts at zero after a restart.
+	// A full drain resets it, and after a restart it starts from the stored count.
 	pending sync.Map
 	// batchSizes holds the batch size of indexes where a smaller one was needed to fit Badger's
 	// transaction limit. Indexes not in the map use deferredBatchSize.
@@ -94,9 +94,6 @@ type vectorMaintenanceWriter struct {
 
 	// wake has room for one signal, so many writes only cause one wake up.
 	wake chan struct{}
-
-	// drainMu makes sure only one drain pass runs at a time, whether from the run loop or a test.
-	drainMu sync.Mutex
 }
 
 func newVectorMaintenanceWriter(db *DB) *vectorMaintenanceWriter {
@@ -186,7 +183,8 @@ func (w *vectorMaintenanceWriter) run(ctx context.Context) {
 			scanned = err == nil
 		}
 
-		failed := w.drainPass(ctx) || !scanned
+		// drainPass logs its own failures, so here the error only decides whether to retry.
+		failed := w.drainPass(ctx) != nil || !scanned
 		if failed {
 			retry.Reset(delay)
 			delay = min(2*delay, vectorMaintenanceMaxRetryDelay)
@@ -271,24 +269,15 @@ func listPending(
 	return ks, entries, true, nil
 }
 
-// drainPass drains each dirty index once. It returns true if any drain failed, and those indexes
-// stay dirty.
-func (w *vectorMaintenanceWriter) drainPass(ctx context.Context) bool {
-	w.drainMu.Lock()
-	defer w.drainMu.Unlock()
-	failed, _ := w.drainPassLocked(ctx)
-	return failed
-}
-
-// drainPassLocked does the work of drainPass. The caller must hold drainMu. It also returns the
-// first error, which tests use.
-func (w *vectorMaintenanceWriter) drainPassLocked(ctx context.Context) (bool, error) {
+// drainPass drains each dirty index once and returns the first error. Indexes that failed stay
+// dirty. Only the run loop calls it, so two passes never overlap.
+func (w *vectorMaintenanceWriter) drainPass(ctx context.Context) error {
 	var firstErr error
 	for _, key := range w.takeDirty() {
 		// The context is only cancelled at shutdown. The dirty set is lost then anyway, and a restart
 		// marks every deferred index dirty again, so there is nothing to keep.
 		if err := ctx.Err(); err != nil {
-			return false, err
+			return err
 		}
 		err := w.drainIndex(ctx, key)
 		if err == nil {
@@ -296,7 +285,7 @@ func (w *vectorMaintenanceWriter) drainPassLocked(ctx context.Context) (bool, er
 		}
 		// A drain cut short by shutdown is normal, so do not report it.
 		if ctx.Err() != nil {
-			return false, ctx.Err()
+			return ctx.Err()
 		}
 		// Keep the index dirty so it gets retried.
 		w.mu.Lock()
@@ -315,7 +304,7 @@ func (w *vectorMaintenanceWriter) drainPassLocked(ctx context.Context) (bool, er
 			corelog.Any("indexID", key.indexID),
 		)
 	}
-	return firstErr != nil, firstErr
+	return firstErr
 }
 
 // batchLimit returns the current batch size of an index.

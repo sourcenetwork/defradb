@@ -30,11 +30,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/vectorindex"
 )
 
-// drainSync drains every dirty index until none is left, returning the first error. Test-only: the
-// run loop does the same in the background, so tests that call it suppress the run loop.
+// drainSync drains every dirty index until none is left, returning the first error. Test-only:
+// the run loop does the same in the background, so tests that call it must suppress the run loop,
+// or two drains could overlap.
 func (w *vectorMaintenanceWriter) drainSync(ctx context.Context) error {
-	w.drainMu.Lock()
-	defer w.drainMu.Unlock()
 	for {
 		w.mu.Lock()
 		empty := len(w.dirty) == 0
@@ -42,7 +41,7 @@ func (w *vectorMaintenanceWriter) drainSync(ctx context.Context) error {
 		if empty {
 			return nil
 		}
-		if _, err := w.drainPassLocked(ctx); err != nil {
+		if err := w.drainPass(ctx); err != nil {
 			return err
 		}
 	}
