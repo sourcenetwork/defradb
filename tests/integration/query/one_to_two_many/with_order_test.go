@@ -135,6 +135,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

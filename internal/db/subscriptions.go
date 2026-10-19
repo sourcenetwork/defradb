@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/extensions"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -78,6 +79,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			}
 			ctx := InitContext(ctx, txn)
 
+			// One accumulator per event, not per subscription. A shared one would
+			// make each event repeat every warning before it.
+			ctx = extensions.WithAccumulator(ctx)
+
 			p := planner.New(
 				ctx,
 				identity.FromContext(ctx),
@@ -113,12 +118,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				}
 			}
 
-			// now that weve filtered empty result sets, lets recheck
-			if len(result) == 0 {
-				txn.Discard()
-				continue
-			}
-
 			// ignore incorrect CID for DocID error. This is specific to
 			// subscription API. Only the DocID is externally configurable for
 			// this API, but the CID comes from the event, which means theres a
@@ -127,7 +126,17 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			if err != nil && !errors.Is(err, planner.ErrIncorrectOrMissingCID) {
 				res.Errors = append(res.Errors, err)
 			}
+
+			// now that weve filtered empty result sets, lets recheck. If the result is
+			// empty AND there is no error to forward, drop. Otherwise (e.g. RunSelection
+			// returned (empty, err)) deliver the GQLResult so the subscriber sees the
+			// error instead of timing out.
+			if len(result) == 0 && len(res.Errors) == 0 {
+				txn.Discard()
+				continue
+			}
 			res.Data = result
+			res.Extensions = extensions.Collect(ctx)
 
 			select {
 			case <-ctx.Done():

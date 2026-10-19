@@ -63,6 +63,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -71,12 +72,13 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "AuthorView",
-						"fields": collection_version.DefaultViewObjFields.Append(
+						"fields": collection_version.DefaultViewObjFields("AuthorView").Append(
 							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Append(
@@ -85,6 +87,10 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 								"type": map[string]any{
 									"kind": "LIST",
 									"name": nil,
+									"ofType": map[string]any{
+										"kind": "OBJECT",
+										"name": "BookView",
+									},
 								},
 							},
 						).Tidy(),
@@ -101,6 +107,7 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -113,12 +120,13 @@ func TestView_OneToMany_GQLIntrospectionTest(t *testing.T) {
 						// although aggregates and `GROUP` should be.
 						// There should also be no `Author` field - the relationship field
 						// should only exist on the parent.
-						"fields": collection_version.DefaultViewObjFields.Append(
+						"fields": collection_version.DefaultViewObjFields("BookView").Append(
 							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),

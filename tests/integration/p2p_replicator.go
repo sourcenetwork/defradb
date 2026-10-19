@@ -12,6 +12,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
@@ -28,6 +30,11 @@ import (
 // however updates in the target node to documents synced from the source node will
 // be synced back to the source node.
 type AddReplicator struct {
+	// Timeout overrides the default wait for backfill completion.
+	//
+	// If timeout is 0 or not provided, we fallback to eventTimeout.
+	Timeout time.Duration
+
 	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
 	//
 	// Note: The request will use identity (if specified) of the Source Node.

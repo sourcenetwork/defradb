@@ -24,9 +24,10 @@ const (
 	errUnexpectedType                        string = "unexpected type"
 	errParsingFailed                         string = "failed to parse argument"
 	errUninitializeProperty                  string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries                         string = "reached maximum transaction reties"
+	errMaxTxnRetries                         string = "reached maximum transaction retries"
 	errCollectionNotFound                    string = "collection not found"
 	errUnknownCRDT                           string = "unknown crdt"
+	errUnknownCRDTString                     string = "unknown crdt string representation"
 	errCRDTKindMismatch                      string = "CRDT type %s can't be assigned to field kind %s"
 	errInvalidCRDTType                       string = "CRDT type not supported"
 	errFailedToUnmarshalCollection           string = "failed to unmarshal collection json"
@@ -54,6 +55,9 @@ const (
 	errOperationRequiresDeveloperMode        string = "operation not permitted whilst development mode is disabled"
 	errDocumentJSONParseFailed               string = "failed to parse document JSON"
 	errSetDocFieldValue                      string = "failed to set document field value"
+	errNullValueForNonNillableField          string = "null value provided for non-nillable field"
+	errMissingRequiredField                  string = "value not provided for non-nillable field"
+	errTransactionNotFound                   string = "transaction not found"
 )
 
 // Errors returnable from this package.
@@ -100,6 +104,9 @@ var (
 	ErrIndexNameRequired                     = errors.New("index name is required")
 	ErrCollectionNameRequired                = errors.New("collection name is required")
 	ErrDocumentJSONParseFailed               = errors.New(errDocumentJSONParseFailed)
+	ErrNullValueForNonNillableField          = errors.New(errNullValueForNonNillableField)
+	ErrMissingRequiredField                  = errors.New(errMissingRequiredField)
+	ErrTransactionNotFound                   = errors.New(errTransactionNotFound)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
@@ -107,10 +114,28 @@ func NewErrFieldNotExist(name string) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
 }
 
+// NewErrNullValueForNonNillableField returns an error indicating that a null value was provided
+// for a field that does not support null values.
+func NewErrNullValueForNonNillableField(name string) error {
+	return errors.New(errNullValueForNonNillableField, errors.NewKV("Name", name))
+}
+
+// NewErrMissingRequiredField returns an error indicating that a required non-nillable field
+// was not provided when creating a document.
+func NewErrMissingRequiredField(name string) error {
+	return errors.New(errMissingRequiredField, errors.NewKV("Name", name))
+}
+
 // NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
 // given location.
 func NewErrFieldIndexNotExist(index int) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Index", index))
+}
+
+// NewErrUnknownIndexKind returns an error indicating that an index descriptor holds a Kind value
+// this build does not know.
+func NewErrUnknownIndexKind(kind uint8) error {
+	return errors.New("unknown index kind", errors.NewKV("Kind", kind))
 }
 
 // NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
@@ -166,8 +191,8 @@ func NewErrUninitializeProperty(host string, propertyName string) error {
 	)
 }
 
-// NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
-// given location.
+// NewErrMaxTxnRetries returns an error indicating that the maximum number of
+// transaction retries was reached.
 func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
@@ -200,6 +225,13 @@ func NewErrUnknownCRDT(cType CType) error {
 	)
 }
 
+func NewErrUnknownCRDTString(s string) error {
+	return errors.New(
+		errUnknownCRDTString,
+		errors.NewKV("Type", s),
+	)
+}
+
 func NewErrInvalidCRDTType(name, crdtType string) error {
 	return errors.New(
 		errInvalidCRDTType,
@@ -208,7 +240,15 @@ func NewErrInvalidCRDTType(name, crdtType string) error {
 	)
 }
 
-func NewErrCRDTKindMismatch(cType, kind string) error {
+func NewErrInvalidCRDTTypeV(name string, crdtType CType) error {
+	return errors.New(
+		errInvalidCRDTType,
+		errors.NewKV("Name", name),
+		errors.NewKV("CRDTType", crdtType),
+	)
+}
+
+func NewErrCRDTKindMismatch(cType CType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
 
@@ -218,7 +258,7 @@ func NewErrInvalidJSONPayload(payload any) error {
 
 func NewErrFailedToParseKind(kind []byte) error {
 	return errors.New(
-		errCRDTKindMismatch,
+		errFailedToParseKind,
 		errors.NewKV("Kind", kind),
 	)
 }
@@ -228,6 +268,8 @@ func NewErrFailedToParseKind(kind []byte) error {
 // is wrapped in a new anonymous error type.
 func ReviveError(message string) error {
 	switch message {
+	case ErrTransactionNotFound.Error():
+		return ErrTransactionNotFound
 	case ErrDocumentNotFoundOrNotAuthorized.Error():
 		return ErrDocumentNotFoundOrNotAuthorized
 	case corekv.ErrTxnConflict.Error():

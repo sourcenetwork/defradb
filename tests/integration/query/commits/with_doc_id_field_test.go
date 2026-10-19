@@ -32,7 +32,7 @@ func TestQueryCommitsWithDocIDAndUnknownField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "not a field"}}
 						) {
 							cid
@@ -62,7 +62,7 @@ func TestQueryCommitsWithDocIDAndUnknownFieldId(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", 
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "999999"}
 						}) {
 							cid
@@ -92,7 +92,7 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "age"}}
 						) {
 							cid
@@ -100,7 +100,10 @@ func TestQueryCommitsWithDocIDAndField(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": testUtils.ValidCID()},
+
+						{
+							"cid": testUtils.ValidCID(),
+						},
 					},
 				},
 			},
@@ -124,7 +127,7 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							docID: "{{.DocID0_0}}",
 							filter: {fieldName: {_eq: "_C"}}
 						) {
 							cid
@@ -132,7 +135,10 @@ func TestQueryCommitsWithDocIDAndCompositeField(t *testing.T) {
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": testUtils.ValidCID()},
+
+						{
+							"cid": testUtils.ValidCID(),
+						},
 					},
 				},
 			},

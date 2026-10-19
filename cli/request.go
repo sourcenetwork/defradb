@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 const (
@@ -33,7 +33,7 @@ func MakeRequestCommand(ctx context.Context) *cobra.Command {
 	var operationName string
 	var variablesJSON string
 	var cmd = &cobra.Command{
-		Use:   "query [-i --identity] [request]",
+		Use:   "query [request]",
 		Short: "Send a DefraDB GraphQL query request",
 		Long: `Send a DefraDB GraphQL query request to the database.
 
@@ -67,8 +67,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			opts := options.WithIdentity(options.ExecRequest(), identity.FromContext(cmd.Context()))
 			if variablesJSON != "" || operationName != "" {
 				if variablesJSON != "" {
-					var variables map[string]any
-					err := json.Unmarshal([]byte(variablesJSON), &variables)
+					variables, err := utils.DecodeJSONVariables([]byte(variablesJSON))
 					if err != nil {
 						return NewErrParsingArgument("variables", err)
 					}

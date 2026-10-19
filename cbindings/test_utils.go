@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -83,14 +83,6 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 		return "", err
 	}
 	return string(jsonBytes), nil
-}
-
-// stringFromImmutableOptionString is a helper function to extract a simple string
-func stringFromImmutableOptionString(s immutable.Option[string]) string {
-	if !s.HasValue() {
-		return ""
-	}
-	return s.Value()
 }
 
 // collectEnumerable is a helper function for wrangling data from an Enumerable:

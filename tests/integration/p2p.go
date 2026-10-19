@@ -13,6 +13,7 @@ package tests
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -58,12 +59,36 @@ type ConnectPeers struct {
 	ExpectedError string
 }
 
+// DisconnectPeers disconnects a source node from one or more target nodes.
+type DisconnectPeers struct {
+	// SourceNodeID is the node ID (index) of the node initiating the disconnect.
+	SourceNodeID int
+
+	// TargetNodeIDs are the node IDs (indexes) of the nodes to disconnect from.
+	TargetNodeIDs []int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
 // WaitForSync is an action that instructs the test framework to wait for all document synchronization
 // to complete before progressing.
 //
 // For example you will likely wish to `WaitForSync` after adding a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct{}
+type WaitForSync struct {
+	// ExcludedDocs are documents that are expected to never sync, for example because the
+	// receiving node rejects them. They are not waited for.
+	ExcludedDocs []state.ColDocIndex
+}
 
 // WaitForSESync waits for SE artifact synchronization to complete.
 type WaitForSESync struct {
@@ -124,45 +149,37 @@ func connectPeers(
 	time.Sleep(10 * time.Millisecond)
 }
 
-// reconnectPeers makes sure that all peers are connected after a node restart action.
-func reconnectPeers(s *state.State) {
-	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
-	for sourceIndex, sourceNode := range nodes {
-		sourceNodeID := nodeIDs[sourceIndex]
-		// Inject every source node's identity into the context while refreshing so the [Connect] & [PeerInfo]
-		// call doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(sourceNodeID)
-		sourceOpts := options.PeerInfo()
-		sourceIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID)
-		if sourceIdent.HasValue() {
-			sourceOpts.SetIdentity(sourceIdent.Value())
+// disconnectPeers disconnects a source node from one or more target nodes.
+func disconnectPeers(
+	s *state.State,
+	cfg DisconnectPeers,
+) {
+	sourceNode := s.Nodes[cfg.SourceNodeID]
+
+	var allTargetAddresses []string
+	for _, targetNodeID := range cfg.TargetNodeIDs {
+		targetNode := s.Nodes[targetNodeID]
+		targetOpts := options.PeerInfo()
+		targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
+		if targetIdent.HasValue() {
+			targetOpts.SetIdentity(targetIdent.Value())
 		}
+		addrs, err := targetNode.PeerInfo(s.Ctx, targetOpts)
+		require.NoError(s.T, err)
+		allTargetAddresses = append(allTargetAddresses, addrs...)
+	}
 
-		for targetIndex := range sourceNode.P2P.Connections {
-			targetNode := nodes[targetIndex]
-			targetNodeID := nodeIDs[targetIndex]
-			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
-			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-			targetOpts := options.PeerInfo()
-			targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
-			if targetIdent.HasValue() {
-				targetOpts.SetIdentity(targetIdent.Value())
-			}
-			sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
-			require.NoError(s.T, err)
-			targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
-			require.NoError(s.T, err)
+	opt := options.WithIdentity(options.Disconnect(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
 
-			log.InfoContext(s.Ctx, "Connect peers",
-				corelog.Any("Source", sourceAddresses),
-				corelog.Any("Target", targetAddresses),
-			)
+	err := sourceNode.Disconnect(s.Ctx, allTargetAddresses, opt)
 
-			opt := options.WithIdentity(options.Connect(),
-				getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID))
-			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
-			require.NoError(s.T, err)
-		}
+	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
+	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
+
+	for _, targetNodeID := range cfg.TargetNodeIDs {
+		delete(s.Nodes[cfg.SourceNodeID].P2P.Connections, targetNodeID)
+		delete(s.Nodes[targetNodeID].P2P.Connections, cfg.SourceNodeID)
 	}
 }
 
@@ -191,6 +208,11 @@ func connectWithRetry(
 }
 
 // syncDocs requests document sync from peers.
+//
+// When action.Concurrency > 1 it fires that many SyncDocuments calls in parallel for the same
+// docIDs and asserts every call's error (used to exercise the concurrent-same-doc sync race);
+// otherwise it does a single sequential sync (with retry) and records the expected DAG heads for a
+// subsequent WaitForSync.
 func syncDocs(s *state.State, action SyncDocs) {
 	node := s.Nodes[action.NodeID]
 
@@ -201,29 +223,46 @@ func syncDocs(s *state.State, action SyncDocs) {
 		s.DocIDsLock.RUnlock()
 	}
 
-	collections := node.Collections
-	collectionName := collections[action.CollectionID].Name()
+	collectionName := node.Collections[action.CollectionID].Name()
 
-	syncOpts := options.SyncDocuments()
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID)
-	if identOption.HasValue() {
-		syncOpts.SetIdentity(identOption.Value())
+
+	// The options builder is a stateful, single-use enumerable, so a fresh one is built per call
+	// rather than shared. Sharing it across the concurrent goroutines below would race on (and
+	// exhaust) its internal cursor.
+	syncOnce := func() error {
+		syncOpts := options.SyncDocuments()
+		if identOption.HasValue() {
+			syncOpts.SetIdentity(identOption.Value())
+		}
+		return node.SyncDocuments(s.Ctx, collectionName, docIDStrings, syncOpts)
 	}
 
-	err := withRetryOnNode(
-		node,
-		func() error {
-			return node.SyncDocuments(
-				s.Ctx,
-				collectionName,
-				docIDStrings,
-				syncOpts,
-			)
-		},
-	)
+	if action.Concurrency > 1 {
+		errs := make([]error, action.Concurrency)
+		var wg sync.WaitGroup
+		wg.Add(action.Concurrency)
+		for i := range action.Concurrency {
+			go func(idx int) {
+				defer wg.Done()
+				errs[idx] = syncOnce()
+			}(i)
+		}
+		wg.Wait()
+
+		for i, err := range errs {
+			expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+			assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+			if action.ExpectedError == "" {
+				require.NoError(s.T, err, "concurrent SyncDocuments call %d/%d failed", i+1, action.Concurrency)
+			}
+		}
+		return
+	}
+
+	err := withRetryOnNode(node, syncOnce)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if !expectedErrorRaised {

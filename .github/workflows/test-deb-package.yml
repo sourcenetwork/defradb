@@ -1,0 +1,53 @@
+# Copyright 2026 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+name: Test Debian Package (Linux)
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - master
+      - develop
+defaults:
+  run:
+    shell: bash
+jobs:
+  test-deb-package:
+    name: Build, install, and test Debian package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Go environment
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+          cache: false
+      - name: Install build dependencies
+        run: sudo apt-get install -y fakeroot
+      - name: Build Go modules
+        run: make deps:modules
+      - name: Build Debian package
+        run: |
+          chmod +x tools/scripts/build-c-shared-linux.sh
+          make build-c-shared-linux:deb
+      - name: Install Debian package
+        run: sudo dpkg -i build/libdefradb_*.deb
+      - name: Compile C test program
+        run: gcc -o c_test tests/c/basic_test.c -ldefradb
+      - name: Run C test program
+        run: ./c_test

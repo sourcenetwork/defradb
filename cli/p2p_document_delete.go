@@ -22,7 +22,7 @@ import (
 
 func MakeP2PDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "delete [docIDs]",
+		Use:   "delete <docIDs>",
 		Short: "Delete P2P documents",
 		Long: `Delete P2P documents from the followed pubsub topics.
 The removed documents will no longer be synchronized between nodes.`,

@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -161,9 +162,11 @@ func TestMutationAddOneToMany_AliasedRelationNameToLinkFromManySide(t *testing.T
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
 	// These IDs MUST be shared by both tests below.
-	bookID := "bae-a2df247a-8bc2-5761-9557-90400f490eef"
+	bookID := "bae-6dfd1924-d27b-55d0-9eaf-152b5d873fc1"
 
 	nonAliasedTest := testUtils.TestCase{
+		// This test asserts on a hardcoded DocID, which changes under signing.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,
@@ -200,6 +203,8 @@ func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDo
 	// Note: Everything should be same, only diff should be the use of alias.
 
 	aliasedTest := testUtils.TestCase{
+		// This test asserts on a hardcoded DocID, which changes under signing.
+		MultiplierExcludes: []string{multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddDoc{
 				CollectionID: 1,

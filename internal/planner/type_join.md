@@ -103,24 +103,24 @@ ROOT EMPTY / SUB FULL
 PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode.filter = NIL
 
 ROOT FULL / SUB EMPTY
-{age: {_gte: 21}}
-PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+{age: {_geq: 21}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_geq: 21}}
 
 ROOT FULL / SUB FULL
-{age: {_gte: 21}, friends: {points: {_gt: 10}}}
-PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+{age: {_geq: 21}, friends: {points: {_gt: 10}}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_geq: 21}}
 																																-> scanNode(friends).filter = NIL
 
 ROOT FULL / SUB EMPTY / SUB SUB FULL
-{age: {_gte: 21}}
+{age: {_geq: 21}}
 friends: {points: {_gt: 10}}
-PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = NIL -> ... -> scanNode(user).filter = {age: {_geq: 21}}
 																									 -> scanNode(friends).filter = {points: {_gt: 10}}
 
 ROOT FULL / SUB FULL / SUB SUB FULL
-{age: {_gte: 21}}
+{age: {_geq: 21}}
 friends: {points: {_gt: 10}}
-PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_gte: 21}}
+PLAN -> selectTopNode.plan -> limit (optional) -> order (optional) -> selectNode.filter = {friends: {points: {_gt: 10}}} -> ... -> scanNode(user).filter = {age: {_geq: 21}}
 																									 							-> scanNode(friends).filter = {points: {_gt: 10}}
 
 

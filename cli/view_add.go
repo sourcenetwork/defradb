@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
@@ -24,7 +25,7 @@ func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var query, sdl, lensCID string
 	var queryFile, sdlFile string
 	cmd := &cobra.Command{
-		Use:   "add [query|query-file] [sdl|sdl-file]",
+		Use:   "add",
 		Short: "Add new view",
 		Long: `Add new database view.
 
@@ -44,7 +45,7 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return NewErrReadingArgument("sdl-file", err)
 			}
 			opt := options.WithIdentity(options.AddView(), identity.FromContext(cmd.Context()))
-			if lensCID != "" {
+			if cmd.Flags().Changed("lens-cid") {
 				opt.SetTransformCID(lensCID)
 			}
 
@@ -52,7 +53,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, defs)
+			display, err := client.DisplayCollectionVersions(defs)
+			if err != nil {
+				return err
+			}
+
+			return writeJSON(cmd, display)
 		},
 	}
 	cmd.Flags().StringVarP(&query, "query", "", "", "Query")

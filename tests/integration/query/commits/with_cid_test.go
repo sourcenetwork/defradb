@@ -24,7 +24,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -44,7 +44,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu"
+							cid: "{{.FieldCID0_0_name_0}}"
 						) {
 							cid
 						}
@@ -52,7 +52,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -64,12 +64,11 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 }
 
 func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
-	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -87,7 +86,7 @@ func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm"
+							cid: "{{.CID0_0_0}}"
 						) {
 							cid
 						}
@@ -95,7 +94,7 @@ func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": testUtils.ValidCID(),
 						},
 					},
 				},
@@ -198,6 +197,8 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 
 func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -217,7 +218,7 @@ func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: ["bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu", "bafyreibrfk6bijtty4vemejailnzvwpsclvyw47mossqgk547uvvawzkc4"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_1_0}}"]
 						) {
 							cid
 						}
@@ -225,10 +226,10 @@ func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": "{{.CID0_0_0}}",
 						},
 						{
-							"cid": "bafyreibrfk6bijtty4vemejailnzvwpsclvyw47mossqgk547uvvawzkc4",
+							"cid": "{{.CID0_1_0}}",
 						},
 					},
 				},
@@ -241,6 +242,8 @@ func TestQueryCommits_MultipleCidsDifferentDocs(t *testing.T) {
 
 func TestQueryCommits_MultipleCidsDifferentDocs_NoAccessToSecondCid(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
@@ -293,17 +296,15 @@ resources:
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: ["bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e", "bafyreig2bqffvdrxc3bzot5m6bcm6qssybzgof6xdllxuy6cg7rtmpuwjy"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_1_0}}"]
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					// The second commit is not readable as it is not public and we are querying without
-					// an identity
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreib7pek5q7pweyljoylz7qusofwls3wnnzik6j5ibo3pe77fz4iw3e",
+							"cid": "{{.CID0_0_0}}",
 						},
 					},
 				},
@@ -316,6 +317,8 @@ resources:
 
 func TestQueryCommits_MultipleCidsSameDoc(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -335,7 +338,7 @@ func TestQueryCommits_MultipleCidsSameDoc(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: ["bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu", "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm"]
+							cid: ["{{.CID0_0_0}}", "{{.CID0_0_1}}"]
 						) {
 							cid
 						}
@@ -343,10 +346,10 @@ func TestQueryCommits_MultipleCidsSameDoc(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": "{{.CID0_0_0}}",
 						},
 						{
-							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"cid": "{{.CID0_0_1}}",
 						},
 					},
 				},
@@ -362,7 +365,7 @@ func TestQueryCommits_ListOfOne(t *testing.T) {
 		// Result CIDs are hardcoded because template placeholders are not
 		// resolved inside Request.Results.
 		// See https://github.com/sourcenetwork/defradb/issues/4745.
-		MultiplierExcludes: []string{multiplier.SignedDocs},
+		MultiplierExcludes: []string{multiplier.SignedDocs, multiplier.EncryptedDocs},
 		Actions: []any{
 			updateUserCollectionSchema(),
 			&action.AddDoc{
@@ -375,7 +378,7 @@ func TestQueryCommits_ListOfOne(t *testing.T) {
 			&action.Request{
 				Request: `query {
 						_commits(
-							cid: ["bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu"]
+							cid: ["{{.CID0_0_0}}"]
 						) {
 							cid
 						}
@@ -383,7 +386,7 @@ func TestQueryCommits_ListOfOne(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"cid": "{{.CID0_0_0}}",
 						},
 					},
 				},

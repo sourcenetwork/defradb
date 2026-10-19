@@ -49,7 +49,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						GROUP(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-1b3c71c0-3632-58b6-9a6a-b3c72713e9fe"]) {
+						GROUP(docID: ["{{.DocID0_0}}", "{{.DocID0_2}}"]) {
 							Name
 						}
 					}

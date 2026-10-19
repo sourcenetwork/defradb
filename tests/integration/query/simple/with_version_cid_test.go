@@ -16,10 +16,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -40,7 +43,7 @@ func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq") {
+					Users(cid: "{{.CID0_1_0}}") {
 						Name
 						_version {
 							fieldName

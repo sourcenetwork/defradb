@@ -11,13 +11,14 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 const (
@@ -29,7 +30,7 @@ const (
 type contextKey string
 
 var (
-	// txsContextKey is the context key for the transaction *sync.Map
+	// txsContextKey is the context key for the transaction cache.
 	txsContextKey = contextKey("txs")
 	// dbContextKey is the context key for the client.TxnStore
 	dbContextKey = contextKey("db")
@@ -40,6 +41,8 @@ var (
 	colContextKey = contextKey("col")
 	// ctxContextKey is the context key for the server context.
 	ctxContextKey = contextKey("ctx")
+	// nodeOptsContextKey is the context key for the node options.
+	nodeOptsContextKey = contextKey("nodeOpts")
 )
 
 // mustGetContextClientCollection returns the client collection from the http request context or panics.
@@ -49,11 +52,11 @@ func mustGetContextClientCollection(req *http.Request) client.Collection {
 	return req.Context().Value(colContextKey).(client.Collection) //nolint:forcetypeassert
 }
 
-// mustGetContextSyncMap returns the sync map from the http request context or panics.
+// mustGetContextTxnCache returns the transaction cache from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextSyncMap(req *http.Request) *sync.Map {
-	return req.Context().Value(txsContextKey).(*sync.Map) //nolint:forcetypeassert
+func mustGetContextTxnCache(req *http.Request) *txnCache {
+	return req.Context().Value(txsContextKey).(*txnCache) //nolint:forcetypeassert
 }
 
 // mustGetContextClientDB returns the DB from the http request context or panics.
@@ -63,17 +66,22 @@ func mustGetContextClientDB(req *http.Request) DB {
 	return req.Context().Value(dbContextKey).(DB) //nolint:forcetypeassert
 }
 
-// mustGetDataStoreTxn returns the datastore transaction or panics.
-//
-// This should only be called from functions within the http package.
-func mustGetDataStoreTxn(tx any) client.Txn {
-	return tx.(client.Txn) //nolint:forcetypeassert
+// tryGetContextNodeOptions returns the node options from the http request context, or nil if absent.
+func tryGetContextNodeOptions(req *http.Request) *options.NodeOptions {
+	opts, _ := req.Context().Value(nodeOptsContextKey).(*options.NodeOptions)
+	return opts
 }
 
-// tryGetContexCtx returns the server context if it exists.
+// isDevMode reports whether the node serving this request has development mode enabled.
+func isDevMode(req *http.Request) bool {
+	opts := tryGetContextNodeOptions(req)
+	return opts != nil && opts.EnableDevelopment
+}
+
+// tryGetContextCtx returns the server context if it exists.
 //
 // This should only be called from functions within the http package.
-func tryGetContexCtx(req *http.Request) (context.Context, bool) {
+func tryGetContextCtx(req *http.Request) (context.Context, bool) {
 	ctx, ok := req.Context().Value(ctxContextKey).(context.Context)
 	return ctx, ok
 }
@@ -84,6 +92,20 @@ func requestJSON(req *http.Request, out any) error {
 		return err
 	}
 	return json.Unmarshal(data, out)
+}
+
+// requestJSONPreserveNumbers behaves like requestJSON, but decodes numbers as json.Number
+// instead of a lossy float64. Needed for endpoints that carry untyped, arbitrary-precision
+// numeric values (e.g. Lens module Arguments, a map[string]any) where the default float64
+// decode can silently round large integers before they're ever stored.
+func requestJSONPreserveNumbers(req *http.Request, out any) error {
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	return decoder.Decode(out)
 }
 
 // responseJSON writes a json response with the given status and data

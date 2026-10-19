@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,10 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result CommitTransaction(uintptr_t txnPtr);
-extern void DiscardTransaction(uintptr_t txnPtr);
+#include "libdefradb.h"
 */
 import "C"
 
@@ -65,6 +62,7 @@ func (txn *Transaction) Discard() {
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PrintDump(ctx)
 }
 
@@ -210,7 +208,7 @@ func (txn *Transaction) GetCollections(
 func (txn *Transaction) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.ListIndexes(ctx, opts...)
 }

@@ -30,6 +30,22 @@ type fileKeyring struct {
 	password []byte
 }
 
+// FileKeyringExists returns true if a file keyring in the given directory
+// already contains any keys.
+func FileKeyringExists(dir string) bool {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	for _, file := range files {
+		// File names are key names
+		if !file.IsDir() {
+			return true
+		}
+	}
+	return false
+}
+
 // OpenFileKeyring opens the keyring in the given directory.
 func OpenFileKeyring(dir string, password []byte) (*fileKeyring, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {

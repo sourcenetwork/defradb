@@ -33,7 +33,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	var yesOverwrite bool
 	var searchableEncryption bool
 	var cmd = &cobra.Command{
-		Use:   "generate --output schema.graphql <input schema files...>",
+		Use:   "generate <input schema files...>",
 		Short: "Generate full GraphQL formatted schema.",
 		Long: `Generates the fully formatted GraphQL schema from a given user type definition(s).
 

@@ -225,7 +225,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 			if err := g.expandInputArgument(obj.OfType.(*gql.Object)); err != nil {
 				return nil, err
 			}
-		case *gql.Scalar:
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[def.Name]; isAggregate {
 				for name, aggregateTarget := range def.Args {
 					expandedField := &gql.InputObjectFieldConfig{
@@ -285,9 +285,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 	}
 
-	// final resolve
-	// resolve types
-	if err := g.manager.ResolveTypes(); err != nil {
+	if err := g.manager.FinalizeTypes(); err != nil {
 		return nil, err
 	}
 
@@ -344,15 +342,14 @@ func (g *Generator) expandInputArgument(obj *gql.Object) error {
 				}
 				obj.AddFieldConfig(f, expandedField)
 			}
-		case *gql.Scalar:
+		// Here, we will check for Scalar and NonNull, because depending on the aggregate operation,
+		// it could be either. COUNT, SUM, and AVG return Int!/Float!, but MIN and MAX return Int/Float.
+		case *gql.Scalar, *gql.NonNull:
 			if _, isAggregate := request.Aggregates[f]; isAggregate {
 				if err := g.createExpandedFieldAggregate(obj, def); err != nil {
 					return err
 				}
 			}
-			// @todo: check if NonNull is possible here
-			//case *gql.NonNull:
-			// get subtype
 		}
 	}
 
@@ -366,8 +363,10 @@ func (g *Generator) createExpandedFieldAggregate(
 	for _, aggregateTarget := range f.Args {
 		target := aggregateTarget.Name()
 		var filterTypeName string
+		var groupByTypeName string
 		if target == request.GroupFieldName {
 			filterTypeName = obj.Name() + filterInputNameSuffix
+			groupByTypeName = obj.Name() + typeFieldEnumSuffix
 		} else {
 			if targeted := obj.Fields()[target]; targeted != nil {
 				if list, isList := targeted.Type.(*gql.List); isList && gql.IsLeafType(list.OfType) {
@@ -380,8 +379,10 @@ func (g *Generator) createExpandedFieldAggregate(
 					} else {
 						filterTypeName = genTypeName(list.OfType, filterInputNameSuffix)
 					}
+					// Inline arrays have no named fields to group by, so groupByTypeName is left empty.
 				} else {
 					filterTypeName = targeted.Type.Name() + filterInputNameSuffix
+					groupByTypeName = targeted.Type.Name() + typeFieldEnumSuffix
 				}
 			} else {
 				return NewErrAggregateTargetNotFound(obj.Name(), target)
@@ -395,6 +396,19 @@ func (g *Generator) createExpandedFieldAggregate(
 				Type:        filterType,
 			}
 			aggregateTarget.Type.(*gql.InputObject).AddFieldConfig("filter", expandedField)
+		}
+
+		// The COUNT aggregate supports groupBy, so we need to add it to the input object
+		if f.Name == request.CountFieldName {
+			// groupByTypeName is only set for real collections, not scalar arrays
+			if groupByType, canHaveGroupBy := g.manager.schema.TypeMap()[groupByTypeName]; canHaveGroupBy {
+				expandedField := &gql.InputObjectFieldConfig{
+					Description: schemaTypes.GroupByArgDescription,
+					Type:        gql.NewList(gql.NewNonNull(groupByType)),
+				}
+				// Add the groupBy argument to the COUNT input object.
+				aggregateTarget.Type.(*gql.InputObject).AddFieldConfig(request.GroupByClause, expandedField)
+			}
 		}
 	}
 
@@ -586,61 +600,65 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 			return NewErrMutationInputTypeAlreadyExist(mutationInputName)
 		}
 
-		mutationObjConf := gql.InputObjectConfig{
-			Name: mutationInputName,
-		}
-
-		// Wrap mutation input object definition in a thunk so we can
-		// handle any embedded object which is defined
-		// at a future point in time.
-		mutationObjConf.Fields = (gql.InputObjectConfigFieldMapThunk)(func() (gql.InputObjectConfigFieldMap, error) {
-			fields := make(gql.InputObjectConfigFieldMap)
-
-			for _, field := range collection.Fields {
-				if field.Kind == client.FieldKind_DocID {
-					if field.Name == request.DocIDFieldName {
-						// This is the system _docID field, users cannot set its value
-						continue
-					}
-					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
-					if isRelationID {
-						ofd, exists := collection.GetFieldByName(objFieldName)
-						if exists && !ofd.IsPrimary {
-							// We do not allow the mutation of relations from the secondary side,
-							// they must not be included in the input type(s)
-							continue
-						}
-					}
-				} else if field.Kind.IsObject() && !field.IsPrimary {
-					// We do not allow the mutation of relations from the secondary side,
-					// they must not be included in the input type(s)
+		fields := make(gql.InputObjectConfigFieldMap)
+		for _, field := range collection.Fields {
+			if field.Kind == client.FieldKind_DocID {
+				if field.Name == request.DocIDFieldName {
+					// This is the system _docID field, users cannot set its value
 					continue
 				}
-
-				var ttype gql.Type
-				if field.Kind.IsObject() {
-					if field.Kind.IsArray() {
-						ttype = gql.NewList(gql.ID)
-					} else {
-						ttype = gql.ID
-					}
-				} else {
-					var ok bool
-					ttype, ok = fieldKindToGQLType[field.Kind]
-					if !ok {
-						return nil, NewErrTypeNotFound(fmt.Sprint(field.Kind))
+				objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
+				if isRelationID {
+					ofd, exists := collection.GetFieldByName(objFieldName)
+					if exists && !ofd.IsPrimary {
+						// We do not allow the mutation of relations from the secondary side,
+						// they must not be included in the input type(s)
+						continue
 					}
 				}
+			} else if field.Kind.IsObject() && !field.IsPrimary {
+				// We do not allow the mutation of relations from the secondary side,
+				// they must not be included in the input type(s)
+				continue
+			}
 
-				fields[field.Name] = &gql.InputObjectFieldConfig{
-					Type: ttype,
+			var ttype gql.Type
+			if field.Kind.IsObject() {
+				if field.Kind.IsArray() {
+					ttype = gql.NewList(gql.ID)
+				} else {
+					ttype = gql.ID
+				}
+			} else {
+				var ok bool
+				ttype, ok = fieldKindToGQLType[field.Kind]
+				if !ok {
+					return NewErrTypeNotFound(fmt.Sprint(field.Kind))
+				}
+				// Mutation inputs must be nullable even for non-nillable fields so
+				// that application code handles null validation and produces
+				// consistent error messages regardless of mutation type.
+				if nonNull, isNonNull := ttype.(*gql.NonNull); isNonNull {
+					ttype = nonNull.OfType
+				} else if list, isList := ttype.(*gql.List); isList {
+					if nonNull, isNonNull := list.OfType.(*gql.NonNull); isNonNull {
+						ttype = gql.NewList(nonNull.OfType)
+					}
 				}
 			}
 
-			return fields, nil
-		})
+			fields[field.Name] = &gql.InputObjectFieldConfig{
+				Type: ttype,
+			}
+		}
 
-		mutationObj := gql.NewInputObject(mutationObjConf)
+		if len(fields) == 0 {
+			continue
+		}
+		mutationObj := gql.NewInputObject(gql.InputObjectConfig{
+			Name:   mutationInputName,
+			Fields: fields,
+		})
 		g.manager.schema.TypeMap()[mutationObj.Name()] = mutationObj
 	}
 
@@ -731,7 +749,7 @@ func genTopLevelCount(topLevelCountInputs map[string]*gql.InputObject) *gql.Fiel
 	topLevelCountField := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.Int,
+		Type:        gql.NewNonNull(gql.Int),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -746,14 +764,14 @@ func genTopLevelNumericAggregates(topLevelNumericAggInputs map[string]*gql.Input
 	topLevelSumField := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
 	topLevelAverageField := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -811,7 +829,7 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.CountFieldName,
 		Description: schemaTypes.CountFieldDescription,
-		Type:        gql.Int,
+		Type:        gql.NewNonNull(gql.Int),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -826,7 +844,7 @@ func (g *Generator) genSumFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SumFieldName,
 		Description: schemaTypes.SumFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -871,7 +889,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.AverageFieldName,
 		Description: schemaTypes.AverageFieldDescription,
-		Type:        gql.Float,
+		Type:        gql.NewNonNull(gql.Float),
 		Args:        gql.FieldConfigArgument{},
 	}
 
@@ -885,7 +903,7 @@ func (g *Generator) genAverageFieldConfig(obj *gql.Object) (gql.Field, error) {
 func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error) {
 	field := gql.Field{
 		Name:        request.SimilarityFieldName,
-		Description: "Returns the cosine similarity between the specified field and the provided vector.",
+		Description: schemaTypes.SimilarityFieldDescription,
 		Type:        gql.Float,
 		Args:        gql.FieldConfigArgument{},
 	}
@@ -902,7 +920,7 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 			Fields: gql.InputObjectConfigFieldMap{
 				schemaTypes.SimilarityArgVector: &gql.InputObjectFieldConfig{
 					Type:        gql.NewNonNull(gql.NewList(listType.OfType)),
-					Description: "A vector of the same type as the field to compute the cosine similarity with.",
+					Description: schemaTypes.SimilarityArgDescription,
 				},
 			},
 		})
@@ -910,7 +928,12 @@ func (g *Generator) genSimilarityFieldConfig(obj *gql.Object) (gql.Field, error)
 		if err != nil {
 			return gql.Field{}, err
 		}
-		field.Args[objectField.Name] = schemaTypes.NewArgConfig(inputObject, objectField.Description)
+		// The field's own description is whatever the user wrote in their schema, usually nothing,
+		// which is why clients showed this argument undocumented.
+		field.Args[objectField.Name] = schemaTypes.NewArgConfig(
+			inputObject,
+			fmt.Sprintf("Compares the given vector against the %s field.", objectField.Name),
+		)
 	}
 
 	return field, nil
@@ -1061,7 +1084,7 @@ func (g *Generator) genNumericAggregateBaseArgInputs(obj *gql.Object) *gql.Input
 			hasSumableFields := false
 			// generate basic filter operator blocks for all the sumable types
 			for _, field := range obj.Fields() {
-				if field.Type == schemaTypes.Float32 || field.Type == schemaTypes.Float64 || field.Type == gql.Int {
+				if isNumeric(field.Type) {
 					hasSumableFields = true
 					fieldsEnumCfg.Values[field.Name] = &gql.EnumValueConfig{Value: field.Name}
 					continue
@@ -1208,13 +1231,31 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		return nil, NewErrTypeNotFound(filterInputName)
 	}
 
+	delete := &gql.Field{
+		Name:        "delete_" + obj.Name(),
+		Description: deleteDocumentsDescription,
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
+			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
+		},
+	}
+
+	truncate := &gql.Field{
+		Name:        "truncate_" + obj.Name(),
+		Description: truncateDocumentsDescription,
+		Type:        gql.NewNonNull(gql.Boolean),
+		Args: gql.FieldConfigArgument{
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), truncateIDsArgDescription),
+			request.FilterClause: schemaTypes.NewArgConfig(filterInput, truncateFilterArgDescription),
+		},
+	}
 	mutationInput, ok := g.manager.schema.TypeMap()[mutationInputName]
 	if !ok {
-		return nil, NewErrTypeNotFound(mutationInputName)
+		return []*gql.Field{delete, truncate}, nil
 	}
 
 	explicitUserFieldsEnum := g.genUserExplicitTypeFieldsEnum(obj)
-
 	g.manager.schema.TypeMap()[explicitUserFieldsEnum.Name()] = explicitUserFieldsEnum
 
 	add := &gql.Field{
@@ -1241,16 +1282,6 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	delete := &gql.Field{
-		Name:        "delete_" + obj.Name(),
-		Description: deleteDocumentsDescription,
-		Type:        gql.NewList(obj),
-		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
-			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
-		},
-	}
-
 	upsert := &gql.Field{
 		Name:        "upsert_" + obj.Name(),
 		Description: upsertDocumentDescription,
@@ -1262,7 +1293,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		},
 	}
 
-	return []*gql.Field{add, update, delete, upsert}, nil
+	return []*gql.Field{add, update, delete, upsert, truncate}, nil
 }
 
 func (g *Generator) genTypeFieldsEnum(obj *gql.Object) *gql.Enum {

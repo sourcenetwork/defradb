@@ -12,6 +12,7 @@
 package action
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -20,7 +21,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -47,6 +50,18 @@ func waitForUpdateEvents(
 		node := s.Nodes[i]
 		if node.Closed {
 			continue // node is closed
+		}
+		if node.IsExternal {
+			// A node in another process emits no events we can read, so there is
+			// nothing to wait for here. The write still has to reach the nodes this
+			// one replicates to, and normally those nodes learn what to expect from
+			// this event. Tell them the document ID directly instead, or they would
+			// wait for nothing and the test would read the data too early.
+			//
+			// A node with no replicators has no one to tell, so this does nothing
+			// when networking is not in use.
+			MarkDocsExpectedOnTargets(s, i, collectionIndex, docIDs, ident)
+			continue
 		}
 
 		expect := make(map[string]struct{}, len(docIDs))
@@ -80,7 +95,22 @@ func waitForUpdateEvents(
 					if node.Composites == nil {
 						node.Composites = make(map[string][]cid.Cid)
 					}
-					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					updateKey := getUpdateEventKey(evt)
+					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+					if node.FieldCIDs == nil {
+						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+					}
+					if node.FieldCIDs[updateKey] == nil {
+						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+					}
+					block, err := coreblock.GetFromBytes(evt.Block)
+					require.NoError(s.T, err)
+					for _, link := range block.Links {
+						node.FieldCIDs[updateKey][link.Name] = append(
+							node.FieldCIDs[updateKey][link.Name],
+							link.Link.Cid,
+						)
+					}
 					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
@@ -104,6 +134,239 @@ func waitForUpdateEvents(
 			}
 		}
 	}
+}
+
+// MarkDocsExpectedOnTargets records that the given documents should reach every
+// node the source syncs to.
+//
+// It is the counterpart of [updateNetworkState] for a source node whose events
+// cannot be read. The head is queried from the node instead of taken from an
+// event, so the nodes downstream wait on the same head either way.
+func MarkDocsExpectedOnTargets(
+	s *state.State,
+	sourceNodeID int,
+	collectionIndex int,
+	docIDs map[string]struct{},
+	ident immutable.Option[state.Identity],
+) {
+	collectionID := collectionIDForIndex(s, sourceNodeID, collectionIndex)
+
+	for docID := range docIDs {
+		// The source node wrote this document, so it must be able to report the
+		// commit. Skipping would record nothing to wait for, letting the
+		// assertions that follow pass against data that never arrived.
+		head, ok := latestHeadCID(s, sourceNodeID, collectionIndex, ident,
+			func(ident immutable.Option[state.Identity]) (cid.Cid, bool) {
+				return compositeCIDAs(s, sourceNodeID, docID, ident)
+			},
+		)
+		require.True(s.T, ok, "node %d could not report the head of %s", sourceNodeID, docID)
+
+		markHeadExpectedOnTargets(s, sourceNodeID, collectionIndex, ident, event.Update{
+			DocID:        docID,
+			Cid:          head,
+			CollectionID: collectionID,
+		})
+	}
+
+	// A write to a branchable collection also adds a collection commit, which
+	// syncs separately. Without waiting for it too, the targets can be read
+	// before it arrives.
+	collections := s.Nodes[sourceNodeID].Collections
+	if len(docIDs) == 0 || collectionIndex < 0 || collectionIndex >= len(collections) ||
+		!collections[collectionIndex].Version().IsBranchable {
+		return
+	}
+	versionID := collections[collectionIndex].Version().VersionID
+	head, ok := latestHeadCID(s, sourceNodeID, collectionIndex, ident,
+		func(ident immutable.Option[state.Identity]) (cid.Cid, bool) {
+			return collectionCIDAs(s, sourceNodeID, versionID, ident)
+		},
+	)
+	require.True(s.T, ok, "node %d could not report the head of collection %s", sourceNodeID, collectionID)
+
+	markHeadExpectedOnTargets(s, sourceNodeID, collectionIndex, ident, event.Update{
+		Cid:          head,
+		CollectionID: collectionID,
+	})
+}
+
+// markHeadExpectedOnTargets records the head in the event as written on the
+// source node and expected on every node the source syncs to.
+func markHeadExpectedOnTargets(
+	s *state.State,
+	sourceNodeID int,
+	collectionIndex int,
+	ident immutable.Option[state.Identity],
+	evt event.Update,
+) {
+	key := getUpdateEventKey(evt)
+	s.Nodes[sourceNodeID].P2P.ActualDAGHeads[key] = state.DocHeadState{CID: evt.Cid}
+
+	for targetID := range s.Nodes[sourceNodeID].P2P.Replicators {
+		s.Nodes[targetID].P2P.ExpectedDAGHeads[key] = append(
+			s.Nodes[targetID].P2P.ExpectedDAGHeads[key],
+			state.ExpectedHead{CID: evt.Cid, SourceNodeID: sourceNodeID},
+		)
+	}
+
+	// Subscribers are reached over connections rather than replicators, so
+	// they need the same walk the native path does.
+	docIndex := -1
+	if evt.DocID != "" {
+		docIndex = docIndexForID(s, collectionIndex, evt.DocID)
+	}
+	updateConnectedNodes(
+		s, sourceNodeID, sourceNodeID, map[int]struct{}{}, ident,
+		collectionIndex, docIndex, evt,
+	)
+}
+
+// collectionIDForIndex returns the collection ID for a collection index on a node.
+func collectionIDForIndex(s *state.State, nodeID int, collectionIndex int) string {
+	collections := s.Nodes[nodeID].Collections
+	if collectionIndex < 0 || collectionIndex >= len(collections) {
+		return ""
+	}
+	return collections[collectionIndex].Version().CollectionID
+}
+
+// docIndexForID returns the index a document was added under, or -1 if unknown.
+func docIndexForID(s *state.State, collectionIndex int, docID string) int {
+	s.DocIDsLock.RLock()
+	defer s.DocIDsLock.RUnlock()
+
+	if collectionIndex < 0 || collectionIndex >= len(s.DocIDs) {
+		return -1
+	}
+	for i, id := range s.DocIDs[collectionIndex] {
+		if id.String() == docID {
+			return i
+		}
+	}
+	return -1
+}
+
+// latestHeadCID asks the node for a head with the given lookup.
+//
+// A merge event reports the head, so this is the same CID the native path takes
+// from that event.
+//
+// This only runs for a node in another process. An in-process node reports its
+// head through an event, which no identity is needed to read.
+//
+// ident is the identity the document was written with. Under document ACP a
+// reader that cannot see the commits gets nothing back, so this falls back to
+// the identity that created the collection.
+func latestHeadCID(
+	s *state.State,
+	nodeID int,
+	collectionIndex int,
+	ident immutable.Option[state.Identity],
+	lookup func(immutable.Option[state.Identity]) (cid.Cid, bool),
+) (cid.Cid, bool) {
+	head, ok := lookup(ident)
+	if ok {
+		return head, true
+	}
+
+	// The write had no identity, or one that cannot read what it wrote. A
+	// branchable collection gates its commits on an object owned by whoever
+	// created the collection, so ask again as them.
+	owner, hasOwner := s.CollectionOwners[collectionIDForIndex(s, nodeID, collectionIndex)]
+	if !hasOwner {
+		return cid.Cid{}, false
+	}
+	return lookup(owner)
+}
+
+// compositeCIDAs asks, as the given identity, for the newest composite commit of
+// a document.
+func compositeCIDAs(
+	s *state.State,
+	nodeID int,
+	docID string,
+	ident immutable.Option[state.Identity],
+) (cid.Cid, bool) {
+	commits := commitsAs(s, nodeID, ident, fmt.Sprintf(
+		`query { _commits(docID: %q, filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
+		docID,
+	))
+	if len(commits) == 0 {
+		return cid.Cid{}, false
+	}
+	return parseCommitCID(commits[0])
+}
+
+// collectionCIDAs asks, as the given identity, for the newest commit of a
+// branchable collection.
+func collectionCIDAs(
+	s *state.State,
+	nodeID int,
+	versionID string,
+	ident immutable.Option[state.Identity],
+) (cid.Cid, bool) {
+	// Collection commits have no field name. Other collections may have them
+	// too, so pick this one's by its version.
+	commits := commitsAs(s, nodeID, ident,
+		`query { _commits(filter: {fieldName: {_eq: null}}, order: {height: DESC}) { cid collectionVersionId } }`,
+	)
+	for _, commit := range commits {
+		if commit["collectionVersionId"] == versionID {
+			return parseCommitCID(commit)
+		}
+	}
+	return cid.Cid{}, false
+}
+
+// commitsAs runs a commits query as the given identity and returns the commits,
+// or nothing if the query fails.
+func commitsAs(
+	s *state.State,
+	nodeID int,
+	ident immutable.Option[state.Identity],
+	request string,
+) []map[string]any {
+	reqOption := options.ExecRequest()
+	identOption := getIdentityForRequestSpecificToNode(s, ident, nodeID)
+	if identOption.HasValue() {
+		reqOption.SetIdentity(identOption.Value())
+	}
+
+	result := s.Nodes[nodeID].ExecRequest(s.Ctx, request, reqOption)
+	if len(result.GQL.Errors) > 0 {
+		return nil
+	}
+
+	data, ok := result.GQL.Data.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	switch commits := data["_commits"].(type) {
+	case []map[string]any:
+		return commits
+	case []any:
+		out := make([]map[string]any, 0, len(commits))
+		for _, c := range commits {
+			if commit, ok := c.(map[string]any); ok {
+				out = append(out, commit)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+// parseCommitCID returns the CID of a commit from a query result.
+func parseCommitCID(commit map[string]any) (cid.Cid, bool) {
+	cidStr, _ := commit["cid"].(string)
+	parsed, err := cid.Decode(cidStr)
+	if err != nil {
+		return cid.Cid{}, false
+	}
+	return parsed, true
 }
 
 // updateNetworkState updates the network state by checking which

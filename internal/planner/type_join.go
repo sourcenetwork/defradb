@@ -459,14 +459,21 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 		return immutable.None[core.Doc](), nil
 	}
 
-	shortID, err := id.GetShortCollectionID(scan.p.ctx, scan.col.Version().CollectionID)
+	collectionShortID, err := id.GetCollectionShortID(scan.p.ctx, scan.col.Version().CollectionID)
 	if err != nil {
 		return immutable.None[core.Doc](), err
 	}
+	docShortID, found, err := id.GetDocShortID(scan.p.ctx, collectionShortID, docID)
+	if err != nil {
+		return immutable.None[core.Doc](), err
+	}
+	if !found {
+		return immutable.None[core.Doc](), nil
+	}
 
 	dsKey := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             docID,
+		CollectionShortID: collectionShortID,
+		DocShortID:        docShortID,
 	}
 
 	prefixes := []keys.Walkable{dsKey}
@@ -540,22 +547,31 @@ func (join *invertibleTypeJoin) Init() error {
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Init()
+	if err := join.parentSide.plan.Init(); err != nil {
+		// Roll back childSide: its Init may have opened resources
+		// (e.g. iterators on the parent txn) that the outer Close
+		// would otherwise miss.
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Start() error {
 	if err := join.childSide.plan.Start(); err != nil {
 		return err
 	}
-	return join.parentSide.plan.Start()
+	if err := join.parentSide.plan.Start(); err != nil {
+		return errors.Join(err, join.childSide.plan.Close())
+	}
+	return nil
 }
 
 func (join *invertibleTypeJoin) Close() error {
-	if err := join.parentSide.plan.Close(); err != nil {
-		return err
-	}
-
-	return join.childSide.plan.Close()
+	// Close both sides regardless of intermediate error so resources
+	// on either side are released.
+	parentErr := join.parentSide.plan.Close()
+	childErr := join.childSide.plan.Close()
+	return errors.Join(parentErr, childErr)
 }
 
 func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
@@ -683,12 +699,15 @@ func (r *primaryObjectsRetriever) collectDocsWithClone(
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	docFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-		r.targetSecondaryDoc.GetID())
+	targetDocID, _, err := docIDForFilterValue(r.primaryScan.p.ctx, r.targetSecondaryDoc.GetID())
+	if err != nil {
+		return nil, err
+	}
+	docFilter := addFilterOnFieldAnyOf(r.filter, r.primarySide.relIDFieldMapIndex.Value(), []any{targetDocID})
 
 	// When the join is inverted, the parent becomes the primary (second) side.
-	// Its scan may still hold scalar filter conditions (e.g., rating > 4.5) that
-	// prepareScanNodeFilterForTypeJoin left there. Since the original scan is not
+	// Its scan may still hold non-relation filter conditions (scalar, JSON, or inline-array
+	// fields, e.g., rating > 4.5) that prepareScanNodeFilterForTypeJoin left there. Since the original scan is not
 	// iterated in the inverted path, merge those conditions so they are applied
 	// during retrieval.
 	if r.primarySide.isParent && r.primaryScan.filter != nil {
@@ -920,7 +939,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		}
 		return join.Next()
 	}
-
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.

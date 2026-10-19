@@ -16,9 +16,10 @@ import (
 	"context"
 	"syscall/js"
 
+	"github.com/sourcenetwork/goji"
+
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/goji"
 )
 
 // SetGlobal sets the global defradb variable so that it is
@@ -30,32 +31,25 @@ func SetGlobal() {
 }
 
 // open creates a new DB client and returns it wrapped in a JS object.
-// acpType is optional and can be:
-// - "sourcehub" to use SourceHub ACP
-// - anything else (including undefined/null) to use Local ACP
+//
+// The first argument is an optional object containing a field for each node.Option.
 func open(this js.Value, args []js.Value) (js.Value, error) {
-	var acpType string
-	if len(args) > 0 && args[0].Type() == js.TypeString {
-		acpType = args[0].String()
-	}
-	ident, err := initKeypairAndGetIdentity()
-	if err != nil {
+	optsVal := optionsValue(args, 0)
+
+	nodeOpts := node.DefaultNodeOptions()
+	nodeOpts.Store.Path = "/defradb"
+	nodeOpts.Store.Store = options.NodeStoreType("level")
+	nodeOpts.P2P.ListenAddresses = []string{"/ip4/0.0.0.0/udp/0/quic-v1/webtransport"}
+
+	if err := parseNodeOptions(optsVal, &nodeOpts); err != nil {
 		return js.Undefined(), err
 	}
-	opts := options.Node().
-		SetDisableP2P(true).
-		SetDisableAPI(true)
-	opts.Store().SetType(options.NodeStoreType("level"))
-	opts.DB().SetNodeIdentity(ident)
-
-	if acpType == "sourcehub" {
-		opts.DocumentACP().SetType(options.NodeSourceHubDocumentACPType)
-	}
-	n, err := node.New(context.Background(), opts)
+	n, err := node.New(context.Background(), asOpts(nodeOpts))
 	if err != nil {
 		return js.Undefined(), err
 	}
 	if err := n.Start(context.Background()); err != nil {
+		_ = n.Close(context.Background())
 		return js.Undefined(), err
 	}
 	return NewClient(n).JSValue(), nil

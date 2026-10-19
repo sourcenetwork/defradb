@@ -23,9 +23,23 @@ type ACPSystemType int
 
 const (
 	LocalDocumentACP ACPSystemType = iota
-	SourceHubDocumentACP
+	RemoteDocumentACP
 	NodeACP
 )
+
+// String returns the user-facing name of the ACP system type.
+func (acpType ACPSystemType) String() string {
+	switch acpType {
+	case LocalDocumentACP:
+		return "Local DAC"
+	case RemoteDocumentACP:
+		return "Remote DAC"
+	case NodeACP:
+		return "Node ACP"
+	default:
+		return "Unknown ACP"
+	}
+}
 
 var _ ResourceInterfacePermission = (*DocumentResourcePermission)(nil)
 var _ ResourceInterfacePermission = (*NodeResourcePermission)(nil)
@@ -100,6 +114,7 @@ const (
 	NodeListEncryptedIndexPerm
 	NodeListAllEncryptedIndexPerm
 	NodeConnectP2PPeerPerm
+	NodeDisconnectP2PPeerPerm
 	NodeGetP2PPeerInfoPerm
 	NodeGetP2PActivePeersPerm
 	NodeAddP2PReplicatorPerm
@@ -117,6 +132,7 @@ const (
 	NodeVerifySignaturePerm
 	NodeAddLensPerm
 	NodeListLensPerm
+	NodeListActionPerm
 	NodeRefreshViewPerm
 	NodeAddViewPerm
 	NodeSetMigrationPerm
@@ -154,6 +170,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"list-encrypted-index",
 	"list-all-encrypted-index",
 	"connect-p2p-peer",
+	"disconnect-p2p-peer",
 	"get-p2p-peer-info",
 	"get-p2p-active-peers",
 	"add-p2p-replicator",
@@ -171,6 +188,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"verify-signature",
 	"add-lens",
 	"list-lens",
+	"list-action",
 	"refresh-view",
 	"add-view",
 	"set-migration",
@@ -248,6 +266,8 @@ resources:
 
   - name: connect-p2p-peer
     expr: admin
+  - name: disconnect-p2p-peer
+    expr: admin
   - name: get-p2p-peer-info
     expr: admin
   - name: get-p2p-active-peers
@@ -285,6 +305,9 @@ resources:
   - name: list-lens
     expr: admin
 
+  - name: list-action
+    expr: admin
+
   - name: refresh-view
     expr: admin
   - name: add-view
@@ -319,7 +342,7 @@ func (resourcePermission NodeResourcePermission) IsForNACOperation() bool {
 	}
 }
 
-// RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core
+// RegistrationResult indicates the result of a RegisterObject call to Vera / ACP Core.
 type RegistrationResult int32
 
 const (

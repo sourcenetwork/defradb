@@ -52,7 +52,7 @@ func TestCollectionVersionUpdatesAddFieldWithAdd(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "John",
 							"email":  nil,
 						},

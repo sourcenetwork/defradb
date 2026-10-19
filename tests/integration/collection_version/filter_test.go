@@ -433,3 +433,71 @@ func TestCollectionVersionFilterInputs_WithJSONField_Succeeds(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestCollectionVersionFilterInputs_WithNonNillableStringField_UsesStringOperatorBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String! }`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type(name: "UsersFilterArg") {
+							inputFields {
+								name
+								type { name }
+							}
+						}
+					}
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"inputFields": []any{
+							map[string]any{
+								"name": "name",
+								"type": map[string]any{"name": "StringOperatorBlock"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionFilterInputs_WithNonNillableJSONField_UsesJSONScalar(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { metadata: JSON! }`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type(name: "UsersFilterArg") {
+							inputFields {
+								name
+								type { name }
+							}
+						}
+					}
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"inputFields": []any{
+							map[string]any{
+								"name": "metadata",
+								"type": map[string]any{"name": "JSON"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

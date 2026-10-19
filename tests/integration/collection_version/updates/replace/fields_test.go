@@ -49,7 +49,7 @@ func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						name: String @default(string: "Bob")
+						name: String @default(value: "Bob")
 					}
 				`,
 			},

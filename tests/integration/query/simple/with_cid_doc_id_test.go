@@ -77,6 +77,8 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -93,8 +95,8 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
-							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
+							cid: "{{.CID0_0_0}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 					}
@@ -115,6 +117,8 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -136,8 +140,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
-							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
+							cid: "{{.CID0_0_0}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 					}
@@ -158,6 +162,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -179,8 +185,8 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
-							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
+							cid: "{{.CID0_0_1}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 					}
@@ -201,6 +207,8 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -227,8 +235,8 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
-							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
+							cid: "{{.CID0_0_1}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 						_version {
@@ -242,10 +250,10 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 							"name": "Johnn",
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
+									"cid": "{{.CID0_0_1}}",
 								},
 								{
-									"cid": "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+									"cid": "{{.CID0_0_0}}",
 								},
 							},
 						},
@@ -261,6 +269,8 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
+		// hardcoded CIDs would change under encryption
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -282,8 +292,8 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
-							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
+							cid: "{{.CID0_0_0}}",
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 						_version {
@@ -297,7 +307,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"collectionVersionId": "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+									"collectionVersionId": "{{.CollectionVersionID0}}",
 								},
 							},
 						},
@@ -315,7 +325,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -344,8 +354,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreiayfkr7etgwpxix7f2kmgawii7nxcb7v4tspz4no6getyk54iapby",
-						docID: "bae-379aa83a-1d36-50c5-9be9-72125861ceef"
+						cid: "{{.CID0_0_0}}",
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						points
@@ -371,7 +381,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -400,8 +410,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreifo5ehnswuh3xk3dchl3uro33rwvzeng7srx7d52v6qtzklsdvnp4",
-						docID: "bae-5b8e1cce-351f-515a-bfa4-4103bdf0cf55"
+						cid: "{{.CID0_0_0}}",
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						points
@@ -427,7 +437,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -451,8 +461,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreigplcraznjztibr63zd3ygq752icmpcfhcw6cggjqns6oeiy4xdpi",
-						docID: "bae-97285e6a-29a7-556b-9550-715ef0173eb7"
+						cid: "{{.CID0_0_0}}",
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						points
@@ -478,7 +488,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -502,8 +512,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreif7pentv7igx2pbzi3xxg3k2rtexpkevt5rc3cj7hkmg5m3yhu3ti",
-						docID: "bae-de9ca81d-1cb0-521e-834a-fcdd3ca2232d"
+						cid: "{{.CID0_0_0}}",
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						points

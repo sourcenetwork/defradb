@@ -70,6 +70,12 @@ func TestCollectionVersionAggregateInlineArrayAddsUsersCount(t *testing.T) {
 													},
 												},
 												map[string]any{
+													"name": "groupBy",
+													"type": map[string]any{
+														"name": nil,
+													},
+												},
+												map[string]any{
 													"name": "limit",
 													"type": map[string]any{
 														"name": "Int",
@@ -434,6 +440,13 @@ func aggregateGroupArg(fieldType string) map[string]any {
 								},
 							},
 						},
+					},
+				},
+				map[string]any{
+					"name": "groupBy",
+					"type": map[string]any{
+						"name":        nil,
+						"inputFields": nil,
 					},
 				},
 				map[string]any{

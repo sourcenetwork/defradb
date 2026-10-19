@@ -13,41 +13,44 @@
 package js
 
 import (
+	"context"
 	"syscall/js"
+
+	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/goji"
 )
 
 type clientCollection struct {
 	col client.Collection
 }
 
-func newCollection(col client.Collection) js.Value {
+func newCollection(col client.Collection, funcs *funcs) js.Value {
 	c := &clientCollection{
 		col: col,
 	}
 	return js.ValueOf(map[string]any{
-		"name":                      goji.Async(c.name),
-		"versionID":                 goji.Async(c.versionID),
-		"version":                   goji.Async(c.version),
-		"collectionID":              goji.Async(c.collectionID),
-		"addDocument":               goji.Async(c.addDocument),
-		"addManyDocuments":          goji.Async(c.addManyDocuments),
-		"updateDocument":            goji.Async(c.updateDocument),
-		"deleteDocument":            goji.Async(c.deleteDocument),
-		"existsDocument":            goji.Async(c.existsDocument),
-		"updateDocumentsWithFilter": goji.Async(c.updateDocumentsWithFilter),
-		"deleteDocumentsWithFilter": goji.Async(c.deleteDocumentsWithFilter),
-		"getDocument":               goji.Async(c.getDocument),
-		"newIndex":                  goji.Async(c.newIndex),
-		"deleteIndex":               goji.Async(c.deleteIndex),
-		"listIndexes":               goji.Async(c.listIndexes),
-		"newEncryptedIndex":         goji.Async(c.newEncryptedIndex),
-		"deleteEncryptedIndex":      goji.Async(c.deleteEncryptedIndex),
-		"listEncryptedIndexes":      goji.Async(c.listEncryptedIndexes),
-		"truncate":                  goji.Async(c.truncate),
+		"name":                      funcs.async(c.name),
+		"versionID":                 funcs.async(c.versionID),
+		"version":                   funcs.async(c.version),
+		"collectionID":              funcs.async(c.collectionID),
+		"addDocument":               funcs.async(c.addDocument),
+		"addManyDocuments":          funcs.async(c.addManyDocuments),
+		"saveDocument":              funcs.async(c.saveDocument),
+		"updateDocument":            funcs.async(c.updateDocument),
+		"deleteDocument":            funcs.async(c.deleteDocument),
+		"existsDocument":            funcs.async(c.existsDocument),
+		"updateDocumentsWithFilter": funcs.async(c.updateDocumentsWithFilter),
+		"deleteDocumentsWithFilter": funcs.async(c.deleteDocumentsWithFilter),
+		"getDocument":               funcs.async(c.getDocument),
+		"newIndex":                  funcs.async(c.newIndex),
+		"deleteIndex":               funcs.async(c.deleteIndex),
+		"listIndexes":               funcs.async(c.listIndexes),
+		"newEncryptedIndex":         funcs.async(c.newEncryptedIndex),
+		"deleteEncryptedIndex":      funcs.async(c.deleteEncryptedIndex),
+		"listEncryptedIndexes":      funcs.async(c.listEncryptedIndexes),
+		"truncate":                  funcs.async(c.truncate),
 	})
 }
 
@@ -72,13 +75,12 @@ func (c *clientCollection) newIndex(this js.Value, args []js.Value) (js.Value, e
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1)
-	if err != nil {
+	optsVal := optionsValue(args, 1)
+	var opt options.NewCollectionIndexOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.NewCollectionIndex()
-	setOptIdentity(opt, args, 1)
-	desc, err := c.col.NewIndex(ctx, request, opt)
+	desc, err := c.col.NewIndex(context.Background(), request, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -90,24 +92,21 @@ func (c *clientCollection) deleteIndex(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1)
-	if err != nil {
+	optsVal := optionsValue(args, 1)
+	var opt options.DeleteCollectionIndexOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteCollectionIndex()
-	setOptIdentity(opt, args, 1)
-	err = c.col.DeleteIndex(ctx, name, opt)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.DeleteIndex(context.Background(), name, asOpts(opt))
 }
 
 func (c *clientCollection) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
-	if err != nil {
+	optsVal := optionsValue(args, 0)
+	var opt options.ListCollectionIndexesOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ListCollectionIndexes()
-	setOptIdentity(opt, args, 0)
-	desc, err := c.col.ListIndexes(ctx, opt)
+	desc, err := c.col.ListIndexes(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -119,13 +118,12 @@ func (c *clientCollection) newEncryptedIndex(this js.Value, args []js.Value) (js
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1)
-	if err != nil {
+	optsVal := optionsValue(args, 1)
+	var opt options.NewEncryptedIndexOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.NewEncryptedIndex()
-	setOptIdentity(opt, args, 1)
-	desc, err := c.col.NewEncryptedIndex(ctx, request, opt)
+	desc, err := c.col.NewEncryptedIndex(context.Background(), request, asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -137,24 +135,21 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1)
-	if err != nil {
+	optsVal := optionsValue(args, 1)
+	var opt options.DeleteEncryptedIndexOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.DeleteEncryptedIndex()
-	setOptIdentity(opt, args, 1)
-	err = c.col.DeleteEncryptedIndex(ctx, fieldName, opt)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.DeleteEncryptedIndex(context.Background(), fieldName, asOpts(opt))
 }
 
 func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
-	if err != nil {
+	optsVal := optionsValue(args, 0)
+	var opt options.ListCollectionEncryptedIndexesOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.ListCollectionEncryptedIndexes()
-	setOptIdentity(opt, args, 0)
-	desc, err := c.col.ListEncryptedIndexes(ctx, opt)
+	desc, err := c.col.ListEncryptedIndexes(context.Background(), asOpts(opt))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -162,12 +157,10 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 }
 
 func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, error) {
-	ctx, err := contextArg(args, 0)
-	if err != nil {
+	optsVal := optionsValue(args, 0)
+	var opt options.TruncateCollectionOptions
+	if err := parseOptions(optsVal, &opt); err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.TruncateCollection()
-	setOptIdentity(opt, args, 0)
-	err = c.col.Truncate(ctx, opt)
-	return js.Undefined(), err
+	return js.Undefined(), c.col.Truncate(context.Background(), asOpts(opt))
 }

@@ -16,6 +16,7 @@ package planner
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -163,6 +164,12 @@ func (n *countNode) Next() (bool, error) {
 					case []immutable.Option[int64]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
+					case []float32:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+					case []immutable.Option[float32]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
 					case []float64:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
@@ -173,6 +180,12 @@ func (n *countNode) Next() (bool, error) {
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
 
 					case []immutable.Option[string]:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+					case []time.Time:
+						arrayCount, err = countItems(array, source.Filter, source.Limit)
+
+					case []immutable.Option[time.Time]:
 						arrayCount, err = countItems(array, source.Filter, source.Limit)
 					}
 					if err != nil {

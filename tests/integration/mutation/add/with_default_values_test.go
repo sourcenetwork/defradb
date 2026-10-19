@@ -28,15 +28,15 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *test
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
-						name: String @default(string: "Bob")
-						age: Int @default(int: 40)
-						points: Float @default(float: 10)
-						points32: Float32 @default(float32: 11)
-						points64: Float64 @default(float64: 12)
-						metadata: JSON @default(json: "{\"one\":1}")
-						image: Blob @default(blob: "ff0099")
+						active: Boolean @default(value: true)
+						created: DateTime @default(value: "2000-07-23T03:00:00-00:00")
+						name: String @default(value: "Bob")
+						age: Int @default(value: 40)
+						points: Float @default(value: 10)
+						points32: Float32 @default(value: 11)
+						points64: Float64 @default(value: 12)
+						metadata: JSON @default(value: "{\"one\":1}")
+						image: Blob @default(value: "ff0099")
 					}
 				`,
 			},
@@ -86,7 +86,7 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValue(t
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						created: DateTime @default(dateTime: UTC_NOW)
+						created: DateTime @default(value: UTC_NOW)
 					}
 				`,
 			},
@@ -120,15 +120,15 @@ func TestMutationAdd_WithDefaultValues_NilValuesProvided_SetsNilValue(t *testing
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
-						name: String @default(string: "Bob")
-						age: Int @default(int: 40)
-						points: Float @default(float: 10)
-						points32: Float32 @default(float32: 11)
-						points64: Float64 @default(float64: 12)
-						metadata: JSON @default(json: "{\"one\":1}")
-						image: Blob @default(blob: "ff0099")
+						active: Boolean @default(value: true)
+						created: DateTime @default(value: "2000-07-23T03:00:00-00:00")
+						name: String @default(value: "Bob")
+						age: Int @default(value: 40)
+						points: Float @default(value: 10)
+						points32: Float32 @default(value: 11)
+						points64: Float64 @default(value: 12)
+						metadata: JSON @default(value: "{\"one\":1}")
+						image: Blob @default(value: "ff0099")
 					}
 				`,
 			},
@@ -187,15 +187,15 @@ func TestMutationAdd_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T) {
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						active: Boolean @default(bool: true)
-						created: DateTime @default(dateTime: "2000-07-23T03:00:00-00:00")
-						name: String @default(string: "Bob")
-						age: Int @default(int: 40)
-						points: Float @default(float: 10)
-						points32: Float @default(float: 11)
-						points64: Float @default(float: 12)
-						metadata: JSON @default(json: "{\"one\":1}")
-						image: Blob @default(blob: "ff0099")
+						active: Boolean @default(value: true)
+						created: DateTime @default(value: "2000-07-23T03:00:00-00:00")
+						name: String @default(value: "Bob")
+						age: Int @default(value: 40)
+						points: Float @default(value: 10)
+						points32: Float @default(value: 11)
+						points64: Float @default(value: 12)
+						metadata: JSON @default(value: "{\"one\":1}")
+						image: Blob @default(value: "ff0099")
 					}
 				`,
 			},
@@ -262,8 +262,8 @@ func TestMutationAdd_WithDefaultValue_NoValueProvided_AddedTwice_ReturnsError(t 
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						name: String @default(string: "Bob")
-						age: Int @default(int: 40)
+						name: String @default(value: "Bob")
+						age: Int @default(value: 40)
 					}
 				`,
 			},
@@ -296,8 +296,8 @@ func TestMutationAdd_WithDefaultValue_NoValueProvided_AddedTwice_UniqueIndex_Ret
 			&action.AddCollection{
 				SDL: `
 					type Users {
-						name: String @default(string: "Bob") @index(unique: true)
-						age: Int @default(int: 40)
+						name: String @default(value: "Bob") @index(unique: true)
+						age: Int @default(value: 40)
 					}
 				`,
 			},
@@ -324,7 +324,7 @@ func TestMutationAdd_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: 1)
+						metadata: JSON @default(value: 1)
 					}
 				`,
 			},
@@ -360,7 +360,7 @@ func TestMutationAdd_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: 1.2)
+						metadata: JSON @default(value: 1.2)
 					}
 				`,
 			},
@@ -396,7 +396,7 @@ func TestMutationAdd_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: true)
+						metadata: JSON @default(value: true)
 					}
 				`,
 			},
@@ -432,7 +432,7 @@ func TestMutationAdd_WithDefaultJSONNullValue_ReturnError(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: null)
+						metadata: JSON @default(value: null)
 					}
 				`,
 				ExpectedError: "default value is invalid",
@@ -450,7 +450,7 @@ func TestMutationAdd_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: {one: 1})
+						metadata: JSON @default(value: {one: 1})
 					}
 				`,
 			},
@@ -486,7 +486,7 @@ func TestMutationAdd_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						metadata: JSON @default(json: {one: {two: {i: 3, f: 1.2, b: true, s: "three", n: null}}})
+						metadata: JSON @default(value: {one: {two: {i: 3, f: 1.2, b: true, s: "three", n: null}}})
 					}
 				`,
 			},
@@ -524,7 +524,7 @@ func TestMutationAdd_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDefaul
 				SDL: `
 					type User {
 						name: String
-						created: DateTime @default(dateTime: UTC_NOW)
+						created: DateTime @default(value: UTC_NOW)
 					}
 				`,
 			},

@@ -41,6 +41,19 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
+// SyncDocumentsParams contains the params for the sync documents request.
+type SyncDocumentsParams struct {
+	// CollectionName is the name of the collection containing the documents to sync.
+	CollectionName string `json:"collectionName"`
+	// DocIDs are the IDs of the documents to sync.
+	DocIDs []string `json:"docIDs"`
+	// Timeout, when set, bounds the whole sync operation (as a duration string, e.g. "10s").
+	Timeout string `json:"timeout,omitempty"`
+	// BlockSyncTimeout, when set, overrides the node's default per-block fetch timeout for this
+	// sync only (as a duration string, e.g. "30s").
+	BlockSyncTimeout string `json:"blockSyncTimeout,omitempty"`
+}
+
 func (c *Client) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -87,6 +100,28 @@ func (c *Client) Connect(
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
+
+	body, err := json.Marshal(addresses)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Client) Disconnect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
+	methodURL := c.http.apiURL.JoinPath("p2p", "disconnect")
 
 	body, err := json.Marshal(addresses)
 	if err != nil {
@@ -309,16 +344,20 @@ func (c *Client) SyncDocuments(
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents", "sync")
 
-	req := map[string]any{
-		"collectionName": collectionName,
-		"docIDs":         docIDs,
+	params := SyncDocumentsParams{
+		CollectionName: collectionName,
+		DocIDs:         docIDs,
+	}
+
+	if blockSyncTimeout := opt.GetBlockSyncTimeout(); blockSyncTimeout.HasValue() {
+		params.BlockSyncTimeout = blockSyncTimeout.Value().String()
 	}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
-		req["timeout"] = time.Until(deadline).String()
+		params.Timeout = time.Until(deadline).String()
 	}
-	body, err := json.Marshal(req)
+	body, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}

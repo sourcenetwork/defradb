@@ -102,6 +102,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 							"name":"Bob"
 						},
 						{
+							"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9",
+							"_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"age":31,
 							"name":"John"
 						}
@@ -137,6 +139,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 							name
 							author {
 								_docID
+								name
 							}
 						}
 					}`,
@@ -145,7 +148,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
-								"_docID": "bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+								"_docID": testUtils.ValidDocID(),
+								"name":   "John",
 							},
 						},
 					},
@@ -178,6 +182,8 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 							"name":"Bob"
 						},
 						{
+							"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9",
+							"_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"age":31,
 							"name":"John"
 						}
@@ -210,7 +216,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				`,
 			},
 			testUtils.ImportBackup{
-				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_favouriteID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
+				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_favouriteID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
 			},
 			&action.Request{
 				Request: `

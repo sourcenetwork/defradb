@@ -19,6 +19,9 @@ type AddCollection struct {
 
 	// The SDL string value to be passed directly to the command (i.e. not via a file)
 	InlineSDL string
+
+	// ExpectError is the expected error string. If empty, no error is expected.
+	ExpectError string
 }
 
 var _ Action = (*AddCollection)(nil)
@@ -32,5 +35,12 @@ func (a *AddCollection) Execute() {
 	args = append(args, a.AdditionalArgs...)
 
 	err := execute(a.s.Ctx, args)
+
+	if a.ExpectError != "" {
+		require.Error(a.s.T, err)
+		require.Contains(a.s.T, err.Error(), a.ExpectError)
+		return
+	}
+
 	require.NoError(a.s.T, err)
 }

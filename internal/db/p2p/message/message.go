@@ -27,6 +27,15 @@ import (
 // so that we can try to be backward compatible
 const messageVersion = "/defradb/0.0.1"
 
+// maxMessageSize is the hard per-frame cap applied by Receive on inbound
+// P2P streams. libp2p does not enforce a per-message limit for custom
+// protocols, so without this cap a peer can stream an arbitrarily large
+// body and io.ReadAll will allocate up to the receiver's entire memory
+// budget before cbor.Unmarshal even runs (#4718). Frames larger than this
+// are rejected with ErrMessageTooLarge. Matches the 16 MiB cap used by the
+// Rust reimplementation in crates/p2p/src/codec.rs.
+const maxMessageSize = 16 * 1024 * 1024
+
 // Message is the interface that protocol messages need to implement
 // in order to be compatible with [Send] and [Receive].
 //
@@ -81,10 +90,28 @@ type proto interface {
 }
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
-func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
-	b, err := io.ReadAll(stream)
+func Receive(stream io.Reader, peerID string, proto proto, m Message) (err error) {
+	// Messages use a separate stream for each request and response. Release the
+	// receiving side too: reading EOF alone does not release libp2p's stream
+	// resources, and leaving them open eventually prevents further requests.
+	if closer, ok := stream.(io.Closer); ok {
+		defer func() {
+			err = errors.Join(err, closer.Close())
+		}()
+	}
+
+	// Cap the read at maxMessageSize. We read one byte past the cap so we
+	// can distinguish a message that exactly fits from one that overflows:
+	// if the body is longer than maxMessageSize we reject it with
+	// ErrMessageTooLarge rather than handing a truncated frame to
+	// cbor.Unmarshal. This prevents an OOM DoS via io.ReadAll on an
+	// unbounded libp2p stream (#4718).
+	b, err := io.ReadAll(io.LimitReader(stream, maxMessageSize+1))
 	if err != nil {
 		return err
+	}
+	if len(b) > maxMessageSize {
+		return ErrMessageTooLarge
 	}
 
 	err = cbor.Unmarshal(b, m)
@@ -154,8 +181,8 @@ func Send[ResponseType Message](
 
 	select {
 	case respMessage := <-responseChan:
-		if m.GetErrMessage() != "" {
-			return resp, errors.New(respMessage.GetErrMessage())
+		if respMessage.GetErrMessage() != "" {
+			return resp, NewErrPeerRejected(respMessage.GetErrMessage())
 		}
 		switch typedResp := respMessage.(type) {
 		case ResponseType:
@@ -286,6 +313,14 @@ func signAndSetMetaData(h client.Host, m Message) error {
 	m.SetVersion()
 	m.SetPubkey(nodePubKey)
 	m.SetSenderID(h.ID())
+	// Explicitly clear the signature before marshaling the signing bytes.
+	// verifyMessage does the same (see SetSignature(nil) below), and the Rust
+	// reimplementation (defradb.rs) clears before signing too. Today every
+	// call site hands us a fresh message where Signature is already nil, but
+	// any future code that reuses a Message struct across sends would fold a
+	// stale signature into the signing bytes and produce a signature that
+	// never verifies on the receiver. See #4719.
+	m.SetSignature(nil)
 
 	forSigning, err := cbor.Marshal(m)
 	if err != nil {

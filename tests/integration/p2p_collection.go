@@ -115,9 +115,13 @@ func addCollectionSubscription(
 			collectionNames = append(collectionNames, NonExistentCollectionRoot)
 			continue
 		}
-
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
-		collectionNames = append(collectionNames, col.Name())
+		// Collections[i] is nil when no version is active on this node, so use a fallback name
+		if col != nil {
+			collectionNames = append(collectionNames, col.Name())
+		} else {
+			collectionNames = append(collectionNames, s.CollectionNames[collectionIndex])
+		}
 	}
 
 	opt := options.WithIdentity(options.AddP2PCollections(),
@@ -153,7 +157,12 @@ func deleteCollectionSubscription(
 		}
 
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
-		collectionNames = append(collectionNames, col.Name())
+		// Collections[i] is nil when no version is active on this node, so use a fallback name
+		if col != nil {
+			collectionNames = append(collectionNames, col.Name())
+		} else {
+			collectionNames = append(collectionNames, s.CollectionNames[collectionIndex])
+		}
 	}
 
 	opt := options.WithIdentity(options.DeleteP2PCollections(),
@@ -183,7 +192,12 @@ func listP2PCollections(
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
 		col := s.Nodes[action.NodeID].Collections[collectionIndex]
-		expectedCollections = append(expectedCollections, col.Name())
+		// Collections[i] is nil when no version is active on this node, so use a fallback name
+		if col != nil {
+			expectedCollections = append(expectedCollections, col.Name())
+		} else {
+			expectedCollections = append(expectedCollections, s.CollectionNames[collectionIndex])
+		}
 	}
 
 	node := s.Nodes[action.NodeID]

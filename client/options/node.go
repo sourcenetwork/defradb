@@ -11,6 +11,8 @@
 package options
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -44,14 +46,10 @@ const (
 type NodeDocumentACPType string
 
 const (
-	// NodeNoDocumentACPType disables the document ACP subsystem.
-	NodeNoDocumentACPType NodeDocumentACPType = "none"
-	// NodeDefaultDocumentACPType uses the default ACP implementation for this build.
-	NodeDefaultDocumentACPType NodeDocumentACPType = ""
-	// NodeLocalDocumentACPType uses the local ACP implementation.
+	// NodeLocalDocumentACPType uses the Local DAC implementation.
 	NodeLocalDocumentACPType NodeDocumentACPType = "local"
-	// NodeSourceHubDocumentACPType uses the SourceHub ACP implementation.
-	NodeSourceHubDocumentACPType NodeDocumentACPType = "source-hub"
+	// NodeRemoteDocumentACPType uses the Remote DAC implementation backed by Vera.
+	NodeRemoteDocumentACPType NodeDocumentACPType = "remote"
 )
 
 // NodeLensRuntimeType represents the lens runtime type.
@@ -89,7 +87,7 @@ type NodeOptions struct {
 	Store NodeStoreOptions
 	// DocumentACP contains document ACP configuration.
 	DocumentACP NodeDocumentACPOptions
-	// NodeACP contains node ACP configuration.
+	// NodeACP contains Local NAC configuration.
 	NodeACP NodeACPOptions
 	// DB contains database configuration.
 	DB NodeDBOptions
@@ -131,6 +129,12 @@ type NodeHTTPOptions struct {
 	WriteTimeout time.Duration
 	// IdleTimeout is the idle timeout for connections.
 	IdleTimeout time.Duration
+	// TxnTTL is the idle timeout for explicit HTTP transactions.
+	TxnTTL time.Duration
+	// TxnTTLTick is the timer resolution used by the HTTP transaction TTL cache.
+	TxnTTLTick time.Duration
+	// TxnTTLBuckets is the number of buckets in the HTTP transaction TTL cache.
+	TxnTTLBuckets int
 }
 
 // NodeStoreOptions contains store configuration values.
@@ -153,21 +157,21 @@ type NodeDocumentACPOptions struct {
 	DocumentACPType NodeDocumentACPType
 	// Path is the filesystem path for the document ACP system.
 	Path string
-	// Signer is the transaction signer for SourceHub ACP.
+	// Signer signs Vera transactions made by the Remote DAC.
 	Signer immutable.Option[NodeTxSigner]
-	// SourceHubChainID is the chain ID for SourceHub.
-	SourceHubChainID string
-	// SourceHubGRPCAddress is the gRPC address for SourceHub.
-	SourceHubGRPCAddress string
-	// SourceHubCometRPCAddress is the Comet RPC address for SourceHub.
-	SourceHubCometRPCAddress string
+	// RemoteDACLogID is the log ID for Vera.
+	RemoteDACLogID string
+	// RemoteDACGRPCAddress is the gRPC address for Vera.
+	RemoteDACGRPCAddress string
+	// RemoteDACCometRPCAddress is the Comet RPC address for Vera.
+	RemoteDACCometRPCAddress string
 }
 
-// NodeACPOptions contains node ACP configuration values.
+// NodeACPOptions contains Local NAC configuration values.
 type NodeACPOptions struct {
-	// IsEnabled specifies whether node ACP is enabled.
+	// IsEnabled specifies whether Local NAC is enabled.
 	IsEnabled bool
-	// Path is the filesystem path for the node ACP system.
+	// Path is the filesystem path for the Local NAC system.
 	Path string
 }
 
@@ -191,6 +195,47 @@ type NodeDBOptions struct {
 	LensPoolSize int
 	// ChunkSize is the chunk size for the blockstore.
 	ChunkSize immutable.Option[int]
+}
+
+// SanitizedMap returns the options as a generic map with sensitive fields replaced
+// by "<redacted>" to indicate their presence without exposing their values.
+func (opts *NodeOptions) SanitizedMap() (map[string]any, error) {
+	data, err := json.Marshal(opts)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(data, &out); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "P2P", "PrivateKey", len(opts.P2P.PrivateKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "Store", "BadgerEncryptionKey", len(opts.Store.BadgerEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "SearchableEncryptionKey", len(opts.DB.SearchableEncryptionKey) > 0); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DB", "Identity", opts.DB.Identity.HasValue()); err != nil {
+		return nil, err
+	}
+	if err := censorField(out, "DocumentACP", "Signer", opts.DocumentACP.Signer.HasValue()); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func censorField(m map[string]any, parent, field string, present bool) error {
+	if !present {
+		return nil
+	}
+	sub, ok := m[parent].(map[string]any)
+	if !ok {
+		return fmt.Errorf("cannot redact %s.%s: parent key missing or wrong type", parent, field)
+	}
+	sub[field] = "<redacted>"
+	return nil
 }
 
 // nodeSubBuilder provides parent linkage, forwarding, and Node() navigation
@@ -567,6 +612,24 @@ func (sb *NodeHTTPOptionsBuilder) SetIdleTimeout(timeout time.Duration) *NodeHTT
 	return sb
 }
 
+// SetTxnTTL sets the idle timeout for explicit HTTP transactions.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTL(ttl time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTL = ttl })
+	return sb
+}
+
+// SetTxnTTLTick sets the timer resolution used by the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLTick(tick time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLTick = tick })
+	return sb
+}
+
+// SetTxnTTLBuckets sets the number of buckets in the HTTP transaction TTL cache.
+func (sb *NodeHTTPOptionsBuilder) SetTxnTTLBuckets(buckets int) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TxnTTLBuckets = buckets })
+	return sb
+}
+
 // SetAll sets all HTTP options from a plain data struct.
 func (sb *NodeHTTPOptionsBuilder) SetAll(httpOpts NodeHTTPOptions) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { *opts = httpOpts })
@@ -602,21 +665,21 @@ func (sb *NodeDocumentACPOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *Node
 	return sb
 }
 
-// SetChainID sets the chainID of the SourceHub chain.
-func (sb *NodeDocumentACPOptionsBuilder) SetChainID(chainID string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubChainID = chainID })
+// SetLogID sets the Vera log ID used by Remote DAC.
+func (sb *NodeDocumentACPOptionsBuilder) SetLogID(logID string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACLogID = logID })
 	return sb
 }
 
-// SetGRPCAddress sets the GRPC address of the SourceHub node.
+// SetGRPCAddress sets the GRPC address of the Vera node.
 func (sb *NodeDocumentACPOptionsBuilder) SetGRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubGRPCAddress = address })
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACGRPCAddress = address })
 	return sb
 }
 
-// SetCometRPCAddress sets the Comet RPC address of the SourceHub node.
+// SetCometRPCAddress sets the Comet RPC address of the Vera node.
 func (sb *NodeDocumentACPOptionsBuilder) SetCometRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
-	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubCometRPCAddress = address })
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.RemoteDACCometRPCAddress = address })
 	return sb
 }
 
@@ -637,19 +700,19 @@ func NodeACP() *NodeACPOptionsBuilder {
 	return &NodeACPOptionsBuilder{}
 }
 
-// SetEnabled sets whether node ACP is enabled.
+// SetEnabled sets whether Local NAC is enabled.
 func (sb *NodeACPOptionsBuilder) SetEnabled(enabled bool) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { opts.IsEnabled = enabled })
 	return sb
 }
 
-// SetPath sets the node ACP system path.
+// SetPath sets the Local NAC system path.
 func (sb *NodeACPOptionsBuilder) SetPath(path string) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { opts.Path = path })
 	return sb
 }
 
-// SetAll sets all node ACP options from a plain data struct.
+// SetAll sets all Local NAC options from a plain data struct.
 func (sb *NodeACPOptionsBuilder) SetAll(nacOpts NodeACPOptions) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { *opts = nacOpts })
 	return sb

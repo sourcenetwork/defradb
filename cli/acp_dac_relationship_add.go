@@ -28,7 +28,7 @@ func MakeDocumentACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	)
 
 	var cmd = &cobra.Command{
-		Use:   "add [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity]",
+		Use:   "add",
 		Short: "Add new relationship",
 		Long: `Add new relationship
 
@@ -46,7 +46,9 @@ Notes:
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the specified relation was not granted the minimum DRI permissions within the policy,
   and a relationship is formed, the subject/actor will still not be able to access the resource.
-  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+  - Learn more about the
+[Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+system.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)

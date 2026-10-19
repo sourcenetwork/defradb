@@ -48,6 +48,7 @@ func TestCollectionVersionUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceNam
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -56,20 +57,22 @@ func TestCollectionVersionUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceNam
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": introspectionUtils.DefaultFields.Append(
+						"fields": introspectionUtils.DefaultFields("Users").Append(
 							introspectionUtils.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							introspectionUtils.Field{
 								"name": "fax",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),

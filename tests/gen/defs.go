@@ -21,4 +21,6 @@ type GeneratedDoc struct {
 	Col *client.CollectionVersion
 	// Doc is the document generated.
 	Doc *client.Document
+	// GeneratedID wires generated relations before docs are saved.
+	GeneratedID string
 }

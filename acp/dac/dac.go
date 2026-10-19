@@ -46,13 +46,15 @@ type DocumentACP interface {
 	// by assuming YAML format if JSON validation fails. Upon success a policyID is returned,
 	// otherwise returns error.
 	//
-	// A policy can not be added without a creator identity (sourcehub address).
+	// A policy cannot be added without a creator identity (a Vera address for Remote DAC).
 	AddPolicy(ctx context.Context, creator identity.Identity, policy string) (string, error)
 
 	// ValidateResourceInterface performs resource interface validation of the linked/matching
 	// resource name that is on the policy (matching policyID), returns an error upon validation failure.
 	//
-	// Learn more about the DefraDB [ACP System](/acp/README.md)
+	// Learn more about the
+	// [Document Access Control](https://docs.source.network/defradb/security/document-access-control/)
+	// system.
 	ValidateResourceInterface(
 		ctx context.Context,
 		policyID string,

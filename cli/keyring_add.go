@@ -24,12 +24,13 @@ func MakeKeyringAddCommand(ctx context.Context) *cobra.Command {
 		Long: `Add a private key.
 Store an externally generated key in the keyring.
 
-The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+The DEFRA_KEYRING_SECRET environment variable is used to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.`,
+defined with the --secret-file flag. If it is not set and the command is run in
+an interactive terminal, you will be prompted to enter it.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			keyring, err := openKeyring(cmd)
+			keyring, err := openKeyring(cmd, false)
 			if err != nil {
 				return err
 			}

@@ -44,6 +44,7 @@ func TestCollectionVersionUpdatesAddFieldIntrospection(t *testing.T) {
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -52,12 +53,13 @@ func TestCollectionVersionUpdatesAddFieldIntrospection(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Users",
-						"fields": introspectionUtils.DefaultFields.Append(
+						"fields": introspectionUtils.DefaultFields("Users").Append(
 							introspectionUtils.Field{
 								"name": "name",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "String",
+									"kind":   "SCALAR",
+									"name":   "String",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -98,6 +100,7 @@ func TestCollectionVersionUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenB
 								type {
 									name
 									kind
+									ofType { name kind }
 								}
 							}
 						}
@@ -107,7 +110,7 @@ func TestCollectionVersionUpdatesAddFieldIntrospectionDoesNotAmendGQLTypesGivenB
 					"__type": map[string]any{
 						"name": "Users",
 						// No fields have been added to the GQL [Users] type.
-						"fields": introspectionUtils.DefaultFields.Tidy(),
+						"fields": introspectionUtils.DefaultFields("Users").Tidy(),
 					},
 				},
 			},

@@ -22,7 +22,7 @@ import (
 
 func MakeP2PDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "add [docIDs]",
+		Use:   "add <docIDs>",
 		Short: "Add P2P documents",
 		Long: `Add P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.`,

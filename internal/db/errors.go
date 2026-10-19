@@ -21,45 +21,53 @@ import (
 )
 
 const (
-	errFailedToGetHeads                          string = "failed to get document heads"
-	errFailedToCreateCollectionQuery             string = "failed to create collection prefix query"
-	errFailedToGetCollection                     string = "failed to get collection"
-	errFailedToGetAllCollections                 string = "failed to get all collections"
-	errDocVerification                           string = "the document verification failed"
-	errAddingP2PCollection                       string = "cannot add collection ID"
-	errRemovingP2PCollection                     string = "cannot remove collection ID"
-	errAddCollectionWithPatch                    string = "adding collections via patch is not supported"
-	errRemoveReferencedCollection                string = "cannot remove a collection while another field references it"
-	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
-	errCollectionRootDoesntMatch                 string = "CollectionRoot does not match existing"
-	errCannotSetVersionID                        string = "setting the VersionID is not supported"
-	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
-	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
-	errRelationalFieldIDInvalidType              string = "relational id field of invalid kind"
-	errDuplicateField                            string = "duplicate field"
-	errCannotMutateField                         string = "mutating an existing field is not supported"
-	errCannotMoveField                           string = "moving fields is not currently supported"
-	errCannotDeleteField                         string = "deleting an existing field is not supported"
-	errFieldKindNotFound                         string = "no type found for given name"
-	errFieldKindDoesNotMatchFieldDefinition      string = "field Kind does not match field definition"
-	errDocumentAlreadyExists                     string = "a document with the given ID already exists"
-	errDocumentDeleted                           string = "a document with the given ID has been deleted"
-	errIndexMissingFields                        string = "index missing fields"
-	errNonZeroIndexIDProvided                    string = "non-zero index ID provided"
-	errIndexFieldMissingName                     string = "index field missing name"
+	errFailedToGetHeads              string = "failed to get document heads"
+	errFailedToCreateCollectionQuery string = "failed to create collection prefix query"
+	errFailedToGetCollection         string = "failed to get collection"
+	errFailedToGetAllCollections     string = "failed to get all collections"
+	errDocVerification               string = "the document verification failed"
+	errAddingP2PCollection           string = "cannot add collection ID"
+	errRemovingP2PCollection         string = "cannot remove collection ID"
+	errAddCollectionWithPatch        string = "adding collections via patch is not supported"
+	errRemoveReferencedCollection    string = "cannot remove a collection while another field references it"
+	errCollectionIDDoesntMatch       string = "CollectionID does not match existing"
+	errCollectionRootDoesntMatch     string = "CollectionRoot does not match existing"
+	errCannotSetVersionID            string = "setting the VersionID is not supported"
+	errRelationalFieldMissingIDField string = "missing id field for relation object field"
+	errRelatedFieldKindMismatch      string = "invalid Kind of the related field"
+	errRelationalFieldIDInvalidType  string = "relational id field of invalid kind"
+	errDuplicateField                string = "duplicate field"
+	errCannotMutateField             string = "mutating an existing field is not supported"
+	errCannotMoveField               string = "moving fields is not currently supported"
+	errCannotDeleteField             string = "deleting an existing field is not supported"
+	errCannotAddNonNillableField     string = "adding a non-nillable field to an existing collection " +
+		"is not supported"
+	errFieldKindNotFound                    string = "no type found for given name"
+	errFieldKindDoesNotMatchFieldDefinition string = "field Kind does not match field definition"
+	errDocumentAlreadyExists                string = "a document with the given ID already exists"
+	errDocumentDeleted                      string = "a document with the given ID has been deleted"
+	errIndexMissingFields                   string = "index missing fields"
+	errNonZeroIndexIDProvided               string = "non-zero index ID provided"
+	errIndexFieldMissingName                string = "index field missing name"
+	errIndexKindConflict                    string = "index request has more than one kind config"
+	errIndexFieldsConflict                  string = "index request sets both the deprecated " +
+		"fields and a kind config naming different fields"
+	errIndexUniqueConflict string = "index request sets both the deprecated " +
+		"unique field and an ordered config that disagrees with it"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
 	errNonExistingFieldForIndex                  string = "making a new index on a non-existing property"
 	errFailedToStoreIndexedField                 string = "failed to store indexed field"
 	errFailedToReadStoredIndexDesc               string = "failed to read stored index description"
-	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
 	errCanNotCreateNewIndexWithPatch             string = "making new indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
+	errUnsupportedVectorIndexFieldType           string = "vector index requires a [Float32!] field"
+	errVectorIndexMissingDimensions              string = "vector index dimensions must be greater than zero"
 	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
@@ -105,6 +113,10 @@ const (
 	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
 	errColNotMaterialized                  string = "non-materialized collections are not supported"
 	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errFilteredTruncateBranchable          string = "filtered truncate is not supported for branchable collections"
+	errFilteredTruncateInTransaction       string = "filtered truncate cannot run in a transaction"
+	errTruncateMutationMustBeStandalone    string = "truncate mutation must be the only field in an operation"
+	errTruncateMutationInTransaction       string = "truncate mutation cannot run in a transaction"
 	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
 	errInvalidDefaultFieldValue            string = "default field value is invalid"
 	errDocIDNotFound                       string = "docID not found"
@@ -125,40 +137,54 @@ const (
 	errNACIsAlreadyEnabled                 string = "node acp is already enabled"
 	errNACIsNotConfigured                  string = "node acp is not configured"
 	errRelationNameEmpty                   string = "relation name cannot be empty"
+	errRelationNameNotUnique               string = "relation name is not unique within collection"
 	errInvalidCID                          string = "invalid CID"
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
+	errIndexBackfillFailed                 string = "index backfill failed"
+	errIndexGCFailed                       string = "index garbage collection failed"
+	errIndexWithIDDoesNotExist             string = "index with id does not exist"
+	errIndexBackfillInterrupted            string = "index backfill interrupted by transaction conflict"
+	errCorruptIndexPayload                 string = "index action payload is not valid JSON"
+	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
+	errVectorDimensionMismatch             string = "vector dimension mismatch"
+	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
+	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
+	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
+	errNonOrderedIndexCannotBeUnique       string = "only an ordered index can be unique"
+	errVectorIndexCannotBeDescending       string = "vector index cannot have a direction"
+	errVectorIndexMetricConflict           string = "field already has a vector index with a different " +
+		"distance metric; drop the existing index and create it again with the new metric"
 
-	errCreateMergeTxn         string = "failed to create merge transaction"
-	errGetShortIDForMerge     string = "failed to get short collection ID for merge"
-	errGetMergeTargetHeads    string = "failed to get merge target heads"
-	errLoadComposites         string = "failed to load composites for merge"
-	errMergeComposites        string = "failed to merge composites"
-	errSyncIndexedDoc         string = "failed to sync indexed document after merge"
-	errLoadBlockForMerge      string = "failed to load block for merge"
-	errDecodeBlockForMerge    string = "failed to decode block for merge"
-	errLoadParentComposite    string = "failed to load parent composite for merge"
-	errLoadMergeTargetBlock   string = "failed to load merge target block"
-	errDecodeMergeTargetBlock string = "failed to decode merge target block"
-	errGenerateMergeLink      string = "failed to generate link for merge composite"
-	errProcessBlockMerge      string = "failed to process block during merge"
-	errProcessEncryptedBlock  string = "failed to process encrypted block"
-	errInitCRDTForMerge       string = "failed to init CRDT for merge"
-	errProcessCRDTBlock       string = "failed to process CRDT block"
-	errLoadChildBlock         string = "failed to load child block for merge"
-	errDecodeChildBlock       string = "failed to decode child block for merge"
-	errProcessChildBlock      string = "failed to process child block for merge"
-	errLoadEncryptionBlock    string = "failed to load encryption block"
-	errGetHeadsForMerge       string = "failed to get heads for merge target"
-	errLoadBlockFromStore     string = "failed to get block from blockstore"
-	errDecodeBlockFromStore   string = "failed to decode block from bytes"
-	errParseDocIDMerge        string = "failed to parse doc ID during merge"
-	errGetShortFieldIDMerge   string = "failed to get short field ID during merge"
-	errGetDocStatus           string = "failed to get document status"
-	errGetShortIDForDoc       string = "failed to get short collection ID for document"
+	errCreateMergeTxn               string = "failed to create merge transaction"
+	errGetCollectionShortIDForMerge string = "failed to get collection short ID for merge"
+	errGetMergeTargetHeads          string = "failed to get merge target heads"
+	errLoadComposites               string = "failed to load composites for merge"
+	errMergeComposites              string = "failed to merge composites"
+	errSyncIndexedDoc               string = "failed to sync indexed document after merge"
+	errLoadBlockForMerge            string = "failed to load block for merge"
+	errDecodeBlockForMerge          string = "failed to decode block for merge"
+	errLoadParentComposite          string = "failed to load parent composite for merge"
+	errLoadMergeTargetBlock         string = "failed to load merge target block"
+	errDecodeMergeTargetBlock       string = "failed to decode merge target block"
+	errGenerateMergeLink            string = "failed to generate link for merge composite"
+	errProcessBlockMerge            string = "failed to process block during merge"
+	errProcessEncryptedBlock        string = "failed to process encrypted block"
+	errInitCRDTForMerge             string = "failed to init CRDT for merge"
+	errProcessCRDTBlock             string = "failed to process CRDT block"
+	errLoadChildBlock               string = "failed to load child block for merge"
+	errDecodeChildBlock             string = "failed to decode child block for merge"
+	errProcessChildBlock            string = "failed to process child block for merge"
+	errGetHeadsForMerge             string = "failed to get heads for merge target"
+	errLoadBlockFromStore           string = "failed to get block from blockstore"
+	errDecodeBlockFromStore         string = "failed to decode block from bytes"
+	errParseDocIDMerge              string = "failed to parse doc ID during merge"
+	errGetShortFieldIDMerge         string = "failed to get short field ID during merge"
+	errGetDocStatus                 string = "failed to get document status"
+	errGetCollectionShortIDForDoc   string = "failed to get collection short ID for document"
 
 	errDeleteNACState             string = "failed to delete NAC state"
 	errCommitNACTransaction       string = "failed to commit NAC transaction"
@@ -173,6 +199,7 @@ const (
 	errTruncateDatastoreKey       string = "failed to delete key during truncate"
 	errTruncateHeadstoreKey       string = "failed to delete headstore key during truncate"
 	errTruncateDeleteBlocks       string = "failed to delete blocks during truncate"
+	errUnsafeDatastoreWriter      string = "datastore does not expose unsafe writer"
 	errDeleteViewCacheItem        string = "failed to delete view cache item"
 	errParseViewCacheKey          string = "failed to parse view cache key"
 	errStoreNACState              string = "failed to store NAC state"
@@ -188,7 +215,8 @@ const (
 	errGetAllDocIDs               string = "failed to get all document IDs"
 	errCreateDeleteIndexIterator  string = "failed to create iterator for index deletion"
 	errCreateViewCacheIterator    string = "failed to create view cache iterator"
-	errTxnDiscarded               string = "this transaction has been discarded. Create a new one"
+	errDematerializePopulatedView string = "cannot dematerialize a materialized view that has data," +
+		" first truncate it and then try again."
 )
 
 var (
@@ -201,9 +229,13 @@ var (
 	ErrCollectionRootEmpty                       = errors.New("collection root can't be empty")
 	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
+	ErrUnexpectedTxnType                         = errors.New("unexpected transaction type")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
+	ErrIndexKindConflict                         = errors.New(errIndexKindConflict)
+	ErrIndexFieldsConflict                       = errors.New(errIndexFieldsConflict)
+	ErrIndexUniqueConflict                       = errors.New(errIndexUniqueConflict)
 	ErrCorruptedIndex                            = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject                        = errors.New(errExpectedJSONObject)
 	ErrExpectedJSONArray                         = errors.New(errExpectedJSONArray)
@@ -233,6 +265,10 @@ var (
 	ErrDocIDNotFound                             = errors.New(errDocIDNotFound)
 	ErrCollectionRootNotFound                    = errors.New(errCollectionRootNotFound)
 	ErrColMutatingIsBranchable                   = errors.New(errColMutatingIsBranchable)
+	ErrFilteredTruncateBranchableCollection      = errors.New(errFilteredTruncateBranchable)
+	ErrFilteredTruncateInTransaction             = errors.New(errFilteredTruncateInTransaction)
+	ErrTruncateMutationMustBeStandalone          = errors.New(errTruncateMutationMustBeStandalone)
+	ErrTruncateMutationInTransaction             = errors.New(errTruncateMutationInTransaction)
 	ErrGetEmbeddingField                         = errors.New(errGetEmbeddingField)
 	ErrFieldNotFound                             = errors.New(errFieldNotFound)
 	ErrGetDocForEmbedding                        = errors.New(errGetDocForEmbedding)
@@ -247,9 +283,11 @@ var (
 	ErrNACIsNotConfigured                        = errors.New(errNACIsNotConfigured)
 	ErrNACRelationshipOperationRequiresIdentity  = errors.New("node acp relationship operation requires identity")
 	ErrRelationNameEmpty                         = errors.New(errRelationNameEmpty)
+	ErrRelationNameNotUnique                     = errors.New(errRelationNameNotUnique)
 	ErrInvalidCID                                = errors.New(errInvalidCID)
 	ErrUnknownCID                                = errors.New(errUnknownCID)
 	ErrNoP2P                                     = errors.New("no p2p system configured")
+	ErrAddressesEmpty                            = errors.New("addresses cannot be empty")
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
@@ -257,10 +295,11 @@ var (
 	ErrDocumentAlreadyExists                     = errors.New(errDocumentAlreadyExists)
 	ErrIndexWithNameAlreadyExists                = errors.New(errIndexWithNameAlreadyExists)
 	ErrIndexWithNameDoesNotExists                = errors.New(errIndexWithNameDoesNotExists)
+	ErrIndexWithIDDoesNotExist                   = errors.New(errIndexWithIDDoesNotExist)
 	ErrEncryptedIndexAlreadyExists               = errors.New(errEncryptedIndexAlreadyExists)
 	ErrEncryptedIndexDoesNotExist                = errors.New(errEncryptedIndexDoesNotExist)
 	ErrReplicatorExists                          = errors.New(errReplicatorExists)
-	ErrTxnDiscarded                              = errors.New(errTxnDiscarded)
+	ErrDematerializePopulatedView                = errors.New(errDematerializePopulatedView)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -303,11 +342,6 @@ func NewErrFailedToStoreIndexedField(key string, inner error) error {
 // description could not be read.
 func NewErrFailedToReadStoredIndexDesc(inner error) error {
 	return errors.Wrap(errFailedToReadStoredIndexDesc, inner)
-}
-
-// NewCanNotDeleteIndexedField returns a new error a failed attempt to delete an indexed field
-func NewCanNotDeleteIndexedField(inner error) error {
-	return errors.Wrap(errCanNotDeleteIndexedField, inner)
 }
 
 // NewErrNonZeroIndexIDProvided returns a new error indicating that a non-zero index ID was
@@ -431,6 +465,14 @@ func NewErrRelationNameEmpty(name string) error {
 	)
 }
 
+func NewErrRelationNameNotUnique(name string, relationName string) error {
+	return errors.New(
+		errRelationNameNotUnique,
+		errors.NewKV("Field", name),
+		errors.NewKV("RelationName", relationName),
+	)
+}
+
 func NewErrFieldKindNotFound(name string, kind string) error {
 	return errors.New(
 		errFieldKindNotFound,
@@ -478,6 +520,13 @@ func NewErrCannotDeleteField(name string) error {
 	)
 }
 
+func NewErrCannotAddNonNillableField(name string) error {
+	return errors.New(
+		errCannotAddNonNillableField,
+		errors.NewKV("Name", name),
+	)
+}
+
 func NewErrDocumentAlreadyExists(docID string) error {
 	return errors.New(
 		errDocumentAlreadyExists,
@@ -519,6 +568,16 @@ func NewErrCorruptedIndex(indexName string) error {
 	)
 }
 
+// NewErrCorruptedVectorIndex is NewErrCorruptedIndex plus the id of the document that exposed the
+// drift, so the bad record can be found.
+func NewErrCorruptedVectorIndex(indexName, docID string) error {
+	return errors.New(
+		errCorruptedIndex,
+		errors.NewKV("Name", indexName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
 // NewErrCannotCreateNewIndexWithPatch returns a new error indicating that making a new index
 // via patch is not supported.
 func NewErrCannotCreateNewIndexWithPatch(proposedName string) error {
@@ -553,6 +612,28 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 	return errors.New(
 		errUnsupportedIndexFieldType,
 		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrUnsupportedVectorIndexFieldType returns a new error indicating that the given field kind is
+// not supported for a vector (ANN) index.
+//
+// Wider numeric arrays are rejected rather than narrowed, because the index stores float32 and
+// narrowing would lose precision the field had. Opting into that is
+// https://github.com/sourcenetwork/defradb/issues/5252
+func NewErrUnsupportedVectorIndexFieldType(kind client.FieldKind) error {
+	return errors.New(
+		errUnsupportedVectorIndexFieldType,
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrVectorIndexMissingDimensions returns a new error indicating that a vector index request has
+// no dimensions.
+func NewErrVectorIndexMissingDimensions(fieldName string) error {
+	return errors.New(
+		errVectorIndexMissingDimensions,
+		errors.NewKV("Field", fieldName),
 	)
 }
 
@@ -953,8 +1034,8 @@ func NewErrCreateMergeTxn(inner error, docID string, cid string) error {
 		errors.NewKV("DocID", docID), errors.NewKV("CID", cid))
 }
 
-func NewErrGetShortIDForMerge(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForMerge(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForMerge, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrGetMergeTargetHeads(inner error, docID string, key string) error {
@@ -1026,10 +1107,6 @@ func NewErrProcessChildBlock(inner error, cid string) error {
 	return errors.Wrap(errProcessChildBlock, inner, errors.NewKV("CID", cid))
 }
 
-func NewErrLoadEncryptionBlock(inner error, cid string) error {
-	return errors.Wrap(errLoadEncryptionBlock, inner, errors.NewKV("CID", cid))
-}
-
 func NewErrGetHeadsForMerge(inner error, key string) error {
 	return errors.Wrap(errGetHeadsForMerge, inner, errors.NewKV("Key", key))
 }
@@ -1055,8 +1132,8 @@ func NewErrGetDocStatus(inner error, docID string) error {
 	return errors.Wrap(errGetDocStatus, inner, errors.NewKV("DocID", docID))
 }
 
-func NewErrGetShortIDForDoc(inner error, collectionID string) error {
-	return errors.Wrap(errGetShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
+func NewErrGetCollectionShortIDForDoc(inner error, collectionID string) error {
+	return errors.Wrap(errGetCollectionShortIDForDoc, inner, errors.NewKV("CollectionID", collectionID))
 }
 
 func NewErrStoreViewCacheItem(inner error) error {
@@ -1146,4 +1223,133 @@ func NewErrDeleteViewCacheItem(inner error) error {
 
 func NewErrParseViewCacheKey(inner error) error {
 	return errors.Wrap(errParseViewCacheKey, inner)
+}
+
+func NewErrDematerializePopulatedView(name string, version string) error {
+	return errors.New(
+		errDematerializePopulatedView,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", version),
+	)
+}
+
+// NewErrIndexBackfillFailed returns a new error indicating that the index backfill failed.
+func NewErrIndexBackfillFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexGCFailed returns a new error indicating that the index GC failed.
+func NewErrIndexGCFailed(inner error, indexName string) error {
+	return errors.Wrap(errIndexGCFailed, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrIndexBackfillInterrupted returns a new error indicating that a backfill could not
+// finish because of transaction conflicts. The index stays building and is resumable.
+func NewErrIndexBackfillInterrupted(inner error, indexName string) error {
+	return errors.Wrap(errIndexBackfillInterrupted, inner, errors.NewKV("Index", indexName))
+}
+
+// NewErrCorruptIndexPayload returns a new error indicating that an index action's payload
+// could not be decoded.
+func NewErrCorruptIndexPayload(value []byte) error {
+	return errors.New(errCorruptIndexPayload, errors.NewKV("Value", string(value)))
+}
+
+// NewErrIndexWithIDDoesNotExist returns a new error indicating that no index with the
+// given ID exists on the collection.
+func NewErrIndexWithIDDoesNotExist(indexID uint32, collectionID string) error {
+	return errors.New(
+		errIndexWithIDDoesNotExist,
+		errors.NewKV("IndexID", indexID),
+		errors.NewKV("CollectionID", collectionID),
+	)
+}
+
+// NewErrVectorIndexFieldNotFloat32Array returns a new error indicating that a vector index's
+// indexed field held a value that could not be read as a float32 array. The doc id is attached so
+// the bad record can be found during a large async backfill.
+func NewErrVectorIndexFieldNotFloat32Array(fieldName, docID string) error {
+	return errors.New(
+		errVectorIndexFieldNotFloat32Array,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorDimensionMismatch returns a new error indicating that a vector's length did not
+// match the dimensions configured on the vector index. The doc id is attached so the bad record
+// can be found during a large async backfill.
+func NewErrVectorDimensionMismatch(expected, actual int, docID string) error {
+	return errors.New(
+		errVectorDimensionMismatch,
+		errors.NewKV("Expected", expected),
+		errors.NewKV("Actual", actual),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexRequiresSingleField returns a new error indicating that a vector index request
+// named a number of fields other than one. Only the first field would be indexed, so extra fields
+// are rejected rather than silently stored.
+func NewErrVectorIndexRequiresSingleField(fieldCount int) error {
+	return errors.New(
+		errVectorIndexRequiresSingleField,
+		errors.NewKV("FieldCount", fieldCount),
+	)
+}
+
+// NewErrNonOrderedIndexCannotBeUnique returns a new error indicating that an index request asked for
+// uniqueness on a kind that does not have it. Uniqueness is enforced by the ordered index's keys, so
+// no other kind can offer it, and without this the flag is silently dropped.
+func NewErrNonOrderedIndexCannotBeUnique(fieldName string, kind string) error {
+	return errors.New(
+		errNonOrderedIndexCannotBeUnique,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Kind", kind),
+	)
+}
+
+// NewErrVectorIndexCannotBeDescending returns a new error indicating that a vector index request
+// asked for a direction. A graph is searched by nearness, not read in key order, so the flag has
+// nothing to act on and would otherwise be stored and ignored.
+func NewErrVectorIndexCannotBeDescending(fieldName string) error {
+	return errors.New(
+		errVectorIndexCannotBeDescending,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrVectorIndexMetricConflict returns a new error indicating that a vector index was requested
+// with a different metric than the one already indexing that field.
+func NewErrVectorIndexMetricConflict(
+	fieldName string,
+	existing, requested client.DistanceMetric,
+) error {
+	return errors.New(
+		errVectorIndexMetricConflict,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("Existing", existing),
+		errors.NewKV("Requested", requested),
+	)
+}
+
+// NewErrVectorIndexEmptyVector returns a new error indicating that a document's vector field held an
+// empty vector, which cannot be indexed. The doc id is attached so the bad record can be found.
+func NewErrVectorIndexEmptyVector(fieldName, docID string) error {
+	return errors.New(
+		errVectorIndexEmptyVector,
+		errors.NewKV("Field", fieldName),
+		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexParamOutOfRange returns a new error indicating that an HNSW parameter on a
+// vector index request exceeded its allowed maximum.
+func NewErrVectorIndexParamOutOfRange(param string, value, max uint32) error {
+	return errors.New(
+		errVectorIndexParamOutOfRange,
+		errors.NewKV("Param", param),
+		errors.NewKV("Value", value),
+		errors.NewKV("Max", max),
+	)
 }

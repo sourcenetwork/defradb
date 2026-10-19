@@ -20,6 +20,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -63,6 +64,44 @@ func ensureContextTxn(ctx context.Context, db *DB, readOnly bool) (context.Conte
 	}
 
 	return InitContext(ctx, txn), txn, nil
+}
+
+func ensureContextTxnShim(ctx context.Context, db *DB) (context.Context, datastore.Txn, error) {
+	var clientTxn datastore.Txn
+	ctxTxn, existsOnCtx := datastore.CtxTryGetTxn(ctx)
+	if !existsOnCtx {
+		txnId := db.previousTxnID.Add(1)
+		txn := datastore.NewTxnShim(txnId)
+		ctxTxn = txn
+	}
+
+	switch txn := ctxTxn.(type) {
+	case *Txn:
+		// If the txn has already been set on the context but it hasn't already been set as explicit,
+		// we create a copy of the txn and mark it as an explicit txn.
+		if !txn.explicit && existsOnCtx {
+			txn = &Txn{
+				BasicTxn: txn.BasicTxn,
+				db:       txn.db,
+				explicit: true,
+				isClosed: txn.isClosed,
+				// We do not need to copy the mutex (or a pointer to it), as if we are doing this,
+				// we can be sure that this txn clone is a child of the parent context, and so
+				// should not be locking anyway.
+			}
+		}
+		clientTxn = txn
+		return InitContext(ctx, txn), clientTxn, nil
+
+	case *datastore.TxnShim:
+		clientTxn = txn
+		ctx = datastore.CtxSetTxn(ctx, txn)
+		ctx = clock.WithTime(ctx, txn.StartTS())
+		return ctx, clientTxn, nil
+
+	default:
+		return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
+	}
 }
 
 func lockForTxn(ctx context.Context, txn *Txn) (context.Context, func()) {
@@ -167,7 +206,7 @@ func (txn *Txn) PrintDump(ctx context.Context) error {
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return printStore(ctx, txn.Rootstore())
@@ -184,7 +223,7 @@ func (txn *Txn) AddDACPolicy(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.AddPolicyResult{}, ErrTxnDiscarded
+		return client.AddPolicyResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddDACPolicy(ctx, policy, opts...)
@@ -204,7 +243,7 @@ func (txn *Txn) AddDACActorRelationship(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.AddActorRelationshipResult{}, ErrTxnDiscarded
+		return client.AddActorRelationshipResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -224,7 +263,7 @@ func (txn *Txn) DeleteDACActorRelationship(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.DeleteActorRelationshipResult{}, ErrTxnDiscarded
+		return client.DeleteActorRelationshipResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -242,7 +281,7 @@ func (txn *Txn) AddNACActorRelationship(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.AddActorRelationshipResult{}, ErrTxnDiscarded
+		return client.AddActorRelationshipResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddNACActorRelationship(ctx, relation, targetActor, opts...)
@@ -260,7 +299,7 @@ func (txn *Txn) DeleteNACActorRelationship(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.DeleteActorRelationshipResult{}, ErrTxnDiscarded
+		return client.DeleteActorRelationshipResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
@@ -273,7 +312,7 @@ func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[opti
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.ReEnableNAC(ctx, opts...)
@@ -286,7 +325,7 @@ func (txn *Txn) DisableNAC(ctx context.Context, opts ...options.Enumerable[optio
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.DisableNAC(ctx, opts...)
@@ -302,7 +341,7 @@ func (txn *Txn) GetNACStatus(
 	defer unlock()
 
 	if txn.isClosed {
-		return client.NACStatusResult{}, ErrTxnDiscarded
+		return client.NACStatusResult{}, client.ErrTransactionNotFound
 	}
 
 	return txn.db.GetNACStatus(ctx, opts...)
@@ -315,7 +354,7 @@ func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdenti
 	defer unlock()
 
 	if txn.isClosed {
-		return immutable.None[acpIdentity.PublicRawIdentity](), ErrTxnDiscarded
+		return immutable.None[acpIdentity.PublicRawIdentity](), client.ErrTransactionNotFound
 	}
 
 	return txn.db.GetNodeIdentity(ctx)
@@ -333,7 +372,7 @@ func (txn *Txn) VerifySignature(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.VerifySignature(ctx, blockCid, pubKey, opts...)
@@ -350,7 +389,7 @@ func (txn *Txn) AddCollection(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddCollection(ctx, sdl, opts...)
@@ -368,7 +407,7 @@ func (txn *Txn) PatchCollection(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
@@ -394,7 +433,7 @@ func (txn *Txn) SetActiveCollectionVersion(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
@@ -412,7 +451,7 @@ func (txn *Txn) AddView(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddView(ctx, gqlQuery, sdl, opts...)
@@ -425,7 +464,7 @@ func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Enumerable[opt
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.RefreshViews(ctx, opts...)
@@ -440,7 +479,7 @@ func (txn *Txn) SetMigration(
 	defer unlock()
 
 	if txn.isClosed {
-		return "", ErrTxnDiscarded
+		return "", client.ErrTransactionNotFound
 	}
 
 	return txn.db.SetMigration(ctx, config, opts...)
@@ -457,7 +496,7 @@ func (txn *Txn) AddLens(
 	defer unlock()
 
 	if txn.isClosed {
-		return "", ErrTxnDiscarded
+		return "", client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddLens(ctx, lens, opts...)
@@ -473,7 +512,7 @@ func (txn *Txn) ListLenses(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListLenses(ctx)
@@ -490,7 +529,7 @@ func (txn *Txn) GetCollectionByName(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	col, err := txn.db.GetCollectionByName(ctx, name, opts...)
@@ -511,7 +550,7 @@ func (txn *Txn) GetCollections(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	cols, err := txn.db.GetCollections(ctx, opts...)
@@ -529,14 +568,14 @@ func (txn *Txn) GetCollections(
 func (txn *Txn) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
-) (map[client.CollectionName][]client.IndexDescription, error) {
+) (map[client.CollectionName][]client.ListIndexesResult, error) {
 	ctx = InitContext(ctx, txn)
 
 	ctx, unlock := lockForTxn(ctx, txn)
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListIndexes(ctx, opts...)
@@ -552,7 +591,7 @@ func (txn *Txn) ListAllEncryptedIndexes(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListAllEncryptedIndexes(ctx, opts...)
@@ -571,7 +610,7 @@ func (txn *Txn) ExecRequest(
 	if txn.isClosed {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
-				Errors: []error{ErrTxnDiscarded},
+				Errors: []error{client.ErrTransactionNotFound},
 			},
 		}
 	}
@@ -586,7 +625,7 @@ func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.BasicImport(ctx, filepath)
@@ -603,10 +642,26 @@ func (txn *Txn) BasicExport(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.BasicExport(ctx, filepath, opts...)
+}
+
+func (txn *Txn) ListActions(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListActionsOptions],
+) ([]client.ActionExecution, error) {
+	ctx = InitContext(ctx, txn)
+
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return nil, client.ErrTransactionNotFound
+	}
+
+	return txn.db.ListActions(ctx, opts...)
 }
 
 func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
@@ -614,7 +669,7 @@ func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.PeerInfo(ctx, opts...)
@@ -627,7 +682,7 @@ func (txn *Txn) ActivePeers(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ActivePeers(ctx, opts...)
@@ -640,10 +695,23 @@ func (txn *Txn) Connect(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.Connect(ctx, addresses, opts...)
+}
+
+func (txn *Txn) Disconnect(
+	ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions],
+) error {
+	ctx, unlock := lockForTxn(ctx, txn)
+	defer unlock()
+
+	if txn.isClosed {
+		return client.ErrTransactionNotFound
+	}
+
+	return txn.db.Disconnect(ctx, addresses, opts...)
 }
 
 func (txn *Txn) AddReplicator(
@@ -657,7 +725,7 @@ func (txn *Txn) AddReplicator(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddReplicator(ctx, addresses, opts...)
@@ -674,7 +742,7 @@ func (txn *Txn) DeleteReplicator(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.DeleteReplicator(ctx, id, opts...)
@@ -690,7 +758,7 @@ func (txn *Txn) ListReplicators(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListReplicators(ctx, opts...)
@@ -707,7 +775,7 @@ func (txn *Txn) AddP2PCollections(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddP2PCollections(ctx, collectionNames, opts...)
@@ -724,7 +792,7 @@ func (txn *Txn) DeleteP2PCollections(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.DeleteP2PCollections(ctx, collectionNames, opts...)
@@ -740,7 +808,7 @@ func (txn *Txn) ListP2PCollections(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListP2PCollections(ctx, opts...)
@@ -757,7 +825,7 @@ func (txn *Txn) AddP2PDocuments(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.AddP2PDocuments(ctx, docIDs, opts...)
@@ -774,7 +842,7 @@ func (txn *Txn) DeleteP2PDocuments(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
@@ -790,7 +858,7 @@ func (txn *Txn) ListP2PDocuments(
 	defer unlock()
 
 	if txn.isClosed {
-		return nil, ErrTxnDiscarded
+		return nil, client.ErrTransactionNotFound
 	}
 
 	return txn.db.ListP2PDocuments(ctx, opts...)
@@ -808,7 +876,7 @@ func (txn *Txn) SyncDocuments(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.SyncDocuments(ctx, collectionName, docIDs, opts...)
@@ -825,7 +893,7 @@ func (txn *Txn) SyncCollectionVersions(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.SyncCollectionVersions(ctx, versionIDs, opts...)
@@ -842,7 +910,7 @@ func (txn *Txn) SyncBranchableCollection(
 	defer unlock()
 
 	if txn.isClosed {
-		return ErrTxnDiscarded
+		return client.ErrTransactionNotFound
 	}
 
 	return txn.db.SyncBranchableCollection(ctx, collectionID, opts...)

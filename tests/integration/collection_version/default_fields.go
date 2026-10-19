@@ -13,8 +13,6 @@ package collection_version
 
 import (
 	"sort"
-
-	"github.com/sourcenetwork/defradb/client/request"
 )
 
 type Field = map[string]any
@@ -60,42 +58,48 @@ func (fieldSet fields) array() []any {
 	return result
 }
 
-// DefaultFields contains the list of fields every
-// defra collection should have.
-var DefaultFields = concat(
-	fields{
-		keyField,
-		versionField,
-		groupField,
-		deletedField,
-		similarityField,
-	},
-	aggregateFields,
-)
+// DefaultFields returns the list of fields every defra collection should have.
+// collectionName is the name of the collection type (used for the GROUP field's ofType).
+func DefaultFields(collectionName string) fields {
+	return concat(
+		fields{
+			keyField,
+			versionField,
+			groupField(collectionName),
+			deletedField,
+			similarityField,
+		},
+		aggregateFields,
+	)
+}
 
-// DefaultViewObjFields contains the list of fields every
-// defra view-object should have.
-var DefaultViewObjFields = concat(
-	fields{
-		groupField,
-		similarityField,
-	},
-	aggregateFields,
-)
+// DefaultViewObjFields returns the list of fields every defra view-object should have.
+// viewName is the name of the view type (used for the GROUP field's ofType).
+func DefaultViewObjFields(viewName string) fields {
+	return concat(
+		fields{
+			groupField(viewName),
+			similarityField,
+		},
+		aggregateFields,
+	)
+}
 
 var keyField = Field{
 	"name": "_docID",
 	"type": map[string]any{
-		"kind": "SCALAR",
-		"name": "ID",
+		"kind":   "SCALAR",
+		"name":   "ID",
+		"ofType": nil,
 	},
 }
 
 var deletedField = Field{
 	"name": "_deleted",
 	"type": map[string]any{
-		"kind": "SCALAR",
-		"name": "Boolean",
+		"kind":   "SCALAR",
+		"name":   "Boolean",
+		"ofType": nil,
 	},
 }
 
@@ -104,14 +108,33 @@ var versionField = Field{
 	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
+		"ofType": map[string]any{
+			"kind": "OBJECT",
+			"name": "Commit",
+		},
 	},
 }
 
-var groupField = Field{
-	"name": "GROUP",
+func groupField(collectionName string) Field {
+	return Field{
+		"name": "GROUP",
+		"type": map[string]any{
+			"kind": "LIST",
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "OBJECT",
+				"name": collectionName,
+			},
+		},
+	}
+}
+
+var similarityField = Field{
+	"name": "SIMILARITY",
 	"type": map[string]any{
-		"kind": "LIST",
-		"name": nil,
+		"kind":   "SCALAR",
+		"name":   "Float",
+		"ofType": nil,
 	},
 }
 
@@ -119,45 +142,51 @@ var aggregateFields = fields{
 	map[string]any{
 		"name": "AVG",
 		"type": map[string]any{
-			"kind": "SCALAR",
-			"name": "Float",
+			"kind": "NON_NULL",
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "SCALAR",
+				"name": "Float",
+			},
 		},
 	},
 	map[string]any{
 		"name": "MAX",
 		"type": map[string]any{
-			"kind": "SCALAR",
-			"name": "Float",
+			"kind":   "SCALAR",
+			"name":   "Float",
+			"ofType": nil,
 		},
 	},
 	map[string]any{
 		"name": "MIN",
 		"type": map[string]any{
-			"kind": "SCALAR",
-			"name": "Float",
+			"kind":   "SCALAR",
+			"name":   "Float",
+			"ofType": nil,
 		},
 	},
 	map[string]any{
 		"name": "COUNT",
 		"type": map[string]any{
-			"kind": "SCALAR",
-			"name": "Int",
+			"kind": "NON_NULL",
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "SCALAR",
+				"name": "Int",
+			},
 		},
 	},
 	map[string]any{
 		"name": "SUM",
 		"type": map[string]any{
-			"kind": "SCALAR",
-			"name": "Float",
+			"kind": "NON_NULL",
+			"name": nil,
+			"ofType": map[string]any{
+				"kind": "SCALAR",
+				"name": "Float",
+			},
 		},
-	},
-}
-
-var similarityField = Field{
-	"name": "SIMILARITY",
-	"type": map[string]any{
-		"kind": "SCALAR",
-		"name": "Float",
 	},
 }
 
@@ -173,7 +202,7 @@ var cidArg = Field{
 	},
 }
 var docIDArg = Field{
-	"name": request.DocIDArgName,
+	"name": "docID",
 	"type": map[string]any{
 		"name":        nil,
 		"inputFields": nil,

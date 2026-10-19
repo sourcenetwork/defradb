@@ -69,7 +69,7 @@ func (c CRDT) GetDelta() Delta {
 		return c.CounterDelta
 	case c.CollectionDelta != nil:
 		return c.CollectionDelta
-	case c.CollectionDelta != nil:
+	case c.CollectionSetDelta != nil:
 		return c.CollectionSetDelta
 	case c.CollectionDefinitionDelta != nil:
 		return c.CollectionDefinitionDelta
@@ -111,21 +111,6 @@ func (c CRDT) GetFieldName() string {
 	return ""
 }
 
-// GetDocID returns the docID of the delta.
-func (c CRDT) GetDocID() []byte {
-	switch {
-	case c.LWWDelta != nil:
-		return c.LWWDelta.DocID
-	case c.DocCompositeDelta != nil:
-		return c.DocCompositeDelta.DocID
-	case c.CounterDelta != nil:
-		return c.CounterDelta.DocID
-	case c.CollectionDelta != nil:
-		return nil
-	}
-	return nil
-}
-
 // GetCollectionVersionID returns the collection version ID of the delta.
 func (c CRDT) GetCollectionVersionID() string {
 	switch {
@@ -147,7 +132,6 @@ func (c CRDT) Clone() CRDT {
 	switch {
 	case c.LWWDelta != nil:
 		cloned.LWWDelta = &LWWDelta{
-			DocID:               c.LWWDelta.DocID,
 			FieldName:           c.LWWDelta.FieldName,
 			Priority:            c.LWWDelta.Priority,
 			CollectionVersionID: c.LWWDelta.CollectionVersionID,
@@ -155,14 +139,12 @@ func (c CRDT) Clone() CRDT {
 		}
 	case c.DocCompositeDelta != nil:
 		cloned.DocCompositeDelta = &DocCompositeDelta{
-			DocID:               c.DocCompositeDelta.DocID,
 			Priority:            c.DocCompositeDelta.Priority,
 			CollectionVersionID: c.DocCompositeDelta.CollectionVersionID,
 			Status:              c.DocCompositeDelta.Status,
 		}
 	case c.CounterDelta != nil:
 		cloned.CounterDelta = &CounterDelta{
-			DocID:               c.CounterDelta.DocID,
 			FieldName:           c.CounterDelta.FieldName,
 			Priority:            c.CounterDelta.Priority,
 			CollectionVersionID: c.CounterDelta.CollectionVersionID,

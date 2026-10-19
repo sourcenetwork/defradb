@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -32,4 +33,9 @@ func TestSetDisableAPI(t *testing.T) {
 func TestSetEnableDevelopment(t *testing.T) {
 	opts := utils.NewOptions(options.Node().SetEnableDevelopment(true))
 	assert.Equal(t, true, opts.EnableDevelopment)
+}
+
+func TestDefaultNodeOptionsHTTPAddress(t *testing.T) {
+	opts := DefaultNodeOptions()
+	assert.Equal(t, http.DefaultHTTPAddress, opts.HTTP.Address)
 }

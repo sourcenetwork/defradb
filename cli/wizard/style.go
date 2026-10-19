@@ -44,8 +44,7 @@ var (
 			Width(80)
 
 	hintStyle = lipgloss.NewStyle().
-			Faint(true).
-			Foreground(lipgloss.Color("240")).
+			Foreground(lipgloss.Color("249")).
 			MarginTop(1)
 
 	singleLineInputBox = lipgloss.NewStyle().

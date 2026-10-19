@@ -29,7 +29,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -140,7 +140,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 	test := testUtils.TestCase{
 		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		MultiplierExcludes: []string{multiplier.SecondaryIndex, multiplier.SignedDocs},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to

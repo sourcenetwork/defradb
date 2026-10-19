@@ -366,7 +366,7 @@ func Test_LocalACP_InMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist(t *test
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExistWithACP)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExist)
 
 	errClose := localACP.Close()
 	require.Nil(t, errClose)
@@ -434,7 +434,7 @@ func Test_LocalACP_PersistentMemory_ValidateResourseExistsOrNot_ErrIfDoesntExist
 		"resourceDoesNotExist",
 	)
 	require.Error(t, errValidateResourceExists)
-	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExistWithACP)
+	require.ErrorIs(t, errValidateResourceExists, acp.ErrPolicyDoesNotExist)
 
 	errClose = localACP2.Close()
 	require.Nil(t, errClose)
@@ -469,7 +469,7 @@ func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOt
 		"",
 	)
 	require.Error(t, errRegisterDoc)
-	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDocWithACP)
+	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDoc)
 
 	// Check if an invalid empty doc and empty resource is registered.
 	isDocRegistered, errDocRegistered := localACP.IsDocRegistered(
@@ -479,7 +479,7 @@ func Test_LocalACP_InMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAndErrorOt
 		"",
 	)
 	require.Error(t, errDocRegistered)
-	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegisteredWithACP)
+	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegistered)
 	require.False(t, isDocRegistered)
 
 	// No documents are registered right now so return false.
@@ -549,7 +549,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 		"",
 	)
 	require.Error(t, errRegisterDoc)
-	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDocWithACP)
+	require.ErrorIs(t, errRegisterDoc, acp.ErrFailedToRegisterDoc)
 
 	// Check if an invalid empty doc and empty resource is registered.
 	isDocRegistered, errDocRegistered := localACP.IsDocRegistered(
@@ -559,7 +559,7 @@ func Test_LocalACP_PersistentMemory_IsDocRegistered_TrueIfRegisteredFalseIfNotAn
 		"",
 	)
 	require.Error(t, errDocRegistered)
-	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegisteredWithACP)
+	require.ErrorIs(t, errDocRegistered, acp.ErrFailedToCheckIfDocIsRegistered)
 	require.False(t, isDocRegistered)
 
 	// No documents are registered right now so return false.
@@ -648,7 +648,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (update).
@@ -661,7 +661,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (delete).
@@ -674,7 +674,7 @@ func Test_LocalACP_InMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErrorOtherw
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Check document accesss for a document that does not exist.
@@ -760,7 +760,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (update).
@@ -773,7 +773,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Invalid empty arguments such that we can't check doc access (delete).
@@ -786,7 +786,7 @@ func Test_LocalACP_PersistentMemory_CheckDocAccess_TrueIfHaveAccessFalseIfNotErr
 		"",
 	)
 	require.Error(t, errCheckDocAccess)
-	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccessWithACP)
+	require.ErrorIs(t, errCheckDocAccess, acp.ErrFailedToVerifyDocAccess)
 	require.False(t, hasAccess)
 
 	// Check document accesss for a document that does not exist.
@@ -1409,7 +1409,7 @@ func Test_LocalACP_InMemory_AddDocActorRelationship_InvalidIdentitiesReturnError
 		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationship)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1450,7 +1450,7 @@ func Test_LocalACP_Persistent_AddDocActorRelationship_InvalidIdentitiesReturnErr
 		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToAddDocActorRelationship)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1488,7 +1488,7 @@ func Test_LocalACP_InMemory_DeleteDocActorRelationship_InvalidIdentitiesReturnEr
 		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationship)
 
 	err = localACP.Close()
 	require.NoError(t, err)
@@ -1529,7 +1529,7 @@ func Test_LocalACP_Persistent_DeleteDocActorRelationship_InvalidIdentitiesReturn
 		invalidIdentity.DID(),
 	)
 	require.False(t, exists)
-	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationshipWithACP)
+	require.ErrorIs(t, err, acp.ErrFailedToDeleteDocActorRelationship)
 
 	err = localACP.Close()
 	require.NoError(t, err)

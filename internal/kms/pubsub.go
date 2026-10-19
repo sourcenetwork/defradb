@@ -14,9 +14,12 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdh"
+	crand "crypto/rand"
 	"encoding/base64"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	grpcpeer "google.golang.org/grpc/peer"
 
@@ -24,10 +27,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -35,6 +38,16 @@ import (
 )
 
 const pubsubTopic = "encryption"
+
+// fetchEncryptionKeyResponseTimeout bounds the wait for a key-holding peer
+// when the request context has no deadline.
+const fetchEncryptionKeyResponseTimeout = 5 * time.Second
+
+// fetchEncryptionKeyRetryInterval bounds how long a single pubsub publish can
+// wait for a valid key response before the request is republished. Pubsub topic
+// membership can lag behind direct peer connections, especially in tests that
+// connect peers and immediately publish an encrypted block.
+const fetchEncryptionKeyRetryInterval = time.Second
 
 type PubSubServer interface {
 	AddPubSubTopic(
@@ -56,6 +69,7 @@ type CollectionRetriever interface {
 		string,
 		immutable.Option[identity.Identity],
 	) (client.Collection, error)
+	ResolveBlockDocIDs(context.Context, cid.Cid) ([]string, error)
 }
 
 type pubSubService struct {
@@ -125,6 +139,7 @@ type fetchEncryptionKeyRequest struct {
 	Identity           []byte
 	Links              [][]byte
 	EphemeralPublicKey []byte
+	RequestID          []byte
 }
 
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
@@ -189,43 +204,192 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return err
 	}
 
-	data, err := cbor.Marshal(req)
+	data, err := marshalFetchEncryptionKeyRequest(req)
 	if err != nil {
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.PublishToTopic(ctx, pubsubTopic, data, false)
+	respChan, cancel, err := s.publishFetchEncryptionKeyRequest(ctx, data)
 	if err != nil {
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
 
-	go func() {
-		s.handleFetchEncryptionKeyResponse(<-respChan, req, ephPrivKey, result)
-	}()
+	go s.handleFetchEncryptionKeyResponses(ctx, cancel, respChan, req, ephPrivKey, result)
 
 	return nil
+}
+
+func marshalFetchEncryptionKeyRequest(req *fetchEncryptionKeyRequest) ([]byte, error) {
+	req.RequestID = make([]byte, 16)
+	if _, err := crand.Read(req.RequestID); err != nil {
+		return nil, err
+	}
+	return cbor.Marshal(req)
+}
+
+func (s *pubSubService) publishFetchEncryptionKeyRequest(
+	ctx context.Context,
+	data []byte,
+) (<-chan client.PubsubResponse, context.CancelFunc, error) {
+	// Cancel signals the go-p2p relay goroutine to stop; without it, it would
+	// block forever on its unbuffered send once we return after the first valid reply.
+	pubCtx, cancel := context.WithCancel(ctx)
+	respChan, err := s.pubsub.PublishToTopic(pubCtx, pubsubTopic, data, true)
+	if err != nil {
+		cancel()
+		return nil, nil, err
+	}
+	return respChan, cancel, nil
 }
 
 type fetchEncryptionKeyReply struct {
 	Links              [][]byte
 	Blocks             [][]byte
 	EphemeralPublicKey []byte
+	Sender             string
 }
 
-// handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
-func (s *pubSubService) handleFetchEncryptionKeyResponse(
-	resp client.PubsubResponse,
+// handleFetchEncryptionKeyResponses consumes peer replies until one carries
+// a non-empty Blocks list, or the deadline fires.
+func (s *pubSubService) handleFetchEncryptionKeyResponses(
+	ctx context.Context,
+	cancelPublish context.CancelFunc,
+	respChan <-chan client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
 ) {
+	// track latest `cancelPublish` func via the closure since the cancel func
+	// is mutated in this function and we need to cancel the latest value at defer
+	// time
+	defer func() {
+		cancelPublish()
+	}()
 	defer close(result)
+
+	waitCtx := ctx
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		waitCtx, cancel = context.WithTimeout(ctx, fetchEncryptionKeyResponseTimeout)
+		defer cancel()
+	}
+
+	retryTimer := time.NewTimer(fetchEncryptionKeyRetryInterval)
+	defer retryTimer.Stop()
+
+	for {
+		select {
+		case resp, ok := <-respChan:
+			if !ok {
+				nextRespChan, nextCancel, err := s.republishFetchEncryptionKeyRequest(waitCtx, req, retryTimer)
+				if err != nil {
+					result <- encryption.Result{Error: ErrNoPeerSuppliedEncryptionKey}
+					return
+				}
+				cancelPublish()
+				cancelPublish = nextCancel
+				respChan = nextRespChan
+				continue
+			}
+			items, ok, err := s.tryHandleFetchEncryptionKeyResponse(resp, req, privateKey, false /* skipVerify */)
+			if !ok {
+				if err != nil {
+					log.ErrorContextE(s.ctx, "Failed handling of encryption key response", err)
+				}
+				continue
+			}
+
+			result <- encryption.Result{Items: items}
+			return
+
+		case <-retryTimer.C:
+			nextRespChan, nextCancel, err := s.republishFetchEncryptionKeyRequest(waitCtx, req, retryTimer)
+			if err != nil {
+				result <- encryption.Result{Error: ErrNoPeerSuppliedEncryptionKey}
+				return
+			}
+			cancelPublish()
+			cancelPublish = nextCancel
+			respChan = nextRespChan
+
+		case <-waitCtx.Done():
+			result <- encryption.Result{Error: ErrNoPeerSuppliedEncryptionKey}
+			return
+		}
+	}
+}
+
+func (s *pubSubService) republishFetchEncryptionKeyRequest(
+	ctx context.Context,
+	req *fetchEncryptionKeyRequest,
+	retryTimer *time.Timer,
+) (<-chan client.PubsubResponse, context.CancelFunc, error) {
+	if ctx.Err() != nil {
+		return nil, nil, ctx.Err()
+	}
+
+	// The pubsub RPC layer keys in-flight responses by a hash of request bytes.
+	// Give each republish distinct bytes so an older canceled attempt cannot
+	// delete the newer attempt's response slot.
+	requestData, err := marshalFetchEncryptionKeyRequest(req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	respChan, cancel, err := s.publishFetchEncryptionKeyRequest(ctx, requestData)
+	if err != nil {
+		log.ErrorContextE(ctx, "failed republishing encryption key request", err)
+		return nil, nil, err
+	}
+	resetTimer(retryTimer, fetchEncryptionKeyRetryInterval)
+	return respChan, cancel, nil
+}
+
+func resetTimer(timer *time.Timer, d time.Duration) {
+	if !timer.Stop() {
+		// drain timer
+		select {
+		case <-timer.C:
+		default:
+		}
+	}
+	timer.Reset(d)
+}
+
+// tryHandleFetchEncryptionKeyResponse returns (items, true) only when the
+// reply actually carried blocks. Empty, malformed, or undecryptable replies
+// return (_, false) so the caller keeps listening.
+func (s *pubSubService) tryHandleFetchEncryptionKeyResponse(
+	resp client.PubsubResponse,
+	req *fetchEncryptionKeyRequest,
+	privateKey *ecdh.PrivateKey,
+	skipVerify bool,
+) ([]encryption.Item, bool, error) {
+	if resp.Err != nil {
+		return nil, false, errors.Join(ErrPeerErrorKeyReply, resp.Err)
+	}
 
 	var keyResp fetchEncryptionKeyReply
 	if err := cbor.Unmarshal(resp.Data, &keyResp); err != nil {
-		log.ErrorContextE(s.ctx, "Failed to unmarshal encryption key response", err)
-		result <- encryption.Result{Error: err}
-		return
+		return nil, false, errors.Join(ErrEncryptionKeyUnmarshal, err)
+	}
+
+	if len(keyResp.Blocks) == 0 {
+		// Peer didn't have the key; keep waiting for the one that does.
+		return nil, false, nil
+	}
+	if len(keyResp.Links) != len(keyResp.Blocks) {
+		return nil, false, NewErrReplyLinksAndBlocksMismatch(len(keyResp.Links), len(keyResp.Blocks))
+	}
+
+	senderID := keyResp.Sender
+	if senderID == "" {
+		senderID = resp.From
+	}
+
+	reqSet := make(map[string]struct{}, len(req.Links))
+	for _, l := range req.Links {
+		reqSet[string(l)] = struct{}{}
 	}
 
 	resultEncItems := make([]encryption.Item, 0, len(keyResp.Blocks))
@@ -233,22 +397,37 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		decryptedData, err := crypto.DecryptECIES(
 			block,
 			privateKey,
-			crypto.WithAAD(makeAssociatedData(req, resp.From)),
+			crypto.WithAAD(makeAssociatedData(req, senderID)),
 			crypto.WithPubKeyBytes(keyResp.EphemeralPublicKey),
 			crypto.WithPubKeyPrepended(false),
 		)
-
 		if err != nil {
-			log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
-			result <- encryption.Result{Error: err}
-			return
+			return nil, false, errors.Join(ErrDecryptEncryptionKey, err)
 		}
 
-		_, err = s.encStore.put(context.Background(), decryptedData)
+		var encBlock coreblock.Encryption
+		err = encBlock.Unmarshal(decryptedData)
 		if err != nil {
-			log.ErrorContextE(s.ctx, "Failed to store encryption key", err)
-			result <- encryption.Result{Error: err}
-			return
+			return nil, false, errors.Join(ErrDecodingEncryptionKey, err)
+		}
+
+		if !skipVerify {
+			link, err := s.encStore.computeBlockLink(s.ctx, encBlock)
+			if err != nil {
+				return nil, false, errors.Join(ErrKeyCIDGeneration, err)
+			}
+
+			if !bytes.Equal(keyResp.Links[i], link) {
+				return nil, false, ErrEncryptionKeyCIDMismatch
+			}
+
+			if _, ok := reqSet[string(link)]; !ok {
+				return nil, false, ErrEncryptionKeyCIDMismatch
+			}
+		}
+
+		if _, err := s.encStore.putBlock(context.Background(), encBlock); err != nil {
+			return nil, false, errors.Join(ErrEncryptionKeyStore, err)
 		}
 
 		resultEncItems = append(resultEncItems, encryption.Item{
@@ -257,9 +436,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 		})
 	}
 
-	result <- encryption.Result{
-		Items: resultEncItems,
-	}
+	return resultEncItems, true, nil
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
@@ -274,7 +451,7 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 	ctx context.Context,
 	req *fetchEncryptionKeyRequest,
 ) (*fetchEncryptionKeyReply, error) {
-	blocks, err := s.getEncryptionKeysLocally(ctx, req)
+	links, blocks, err := s.getEncryptionKeysLocally(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -293,8 +470,9 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 	}
 
 	res := &fetchEncryptionKeyReply{
-		Links:              req.Links,
+		Links:              links,
 		EphemeralPublicKey: privKey.PublicKey().Bytes(),
+		Sender:             s.peerID,
 	}
 
 	res.Blocks = make([][]byte, 0, len(blocks))
@@ -322,57 +500,57 @@ func (s *pubSubService) tryGenEncryptionKeyLocally(
 func (s *pubSubService) getEncryptionKeysLocally(
 	ctx context.Context,
 	req *fetchEncryptionKeyRequest,
-) ([][]byte, error) {
+) ([][]byte, [][]byte, error) {
 	var actorIdentity immutable.Option[identity.Identity]
 	if len(req.Identity) > 0 {
 		actorIdentity = immutable.Some(identity.FromDID(string(req.Identity)))
 	}
 
+	links := make([][]byte, 0, len(req.Links))
 	blocks := make([][]byte, 0, len(req.Links))
 	for _, link := range req.Links {
 		encBlock, err := s.encStore.get(ctx, link)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		// TODO: we should test it somehow. For this this one peer should have some keys and
-		// another one should have the others. https://github.com/sourcenetwork/defradb/issues/2895
 		if encBlock == nil {
 			continue
 		}
 
-		docID := string(encBlock.DocID)
-		if docID != "" {
-			// Doc-scoped block: gate on per-doc DAC.
-			hasPerm, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
+		_, encBlockCID, err := cid.CidFromBytes(link)
+		if err != nil {
+			return nil, nil, err
+		}
+		docIDs, err := s.colRetriever.ResolveBlockDocIDs(ctx, encBlockCID)
+		if err != nil {
+			return nil, nil, err
+		}
+		// An encryption block may be co-owned by several documents; share the key if the
+		// requester may read any one of them.
+		hasPerm := false
+		for _, docID := range docIDs {
+			ok, err := s.doesIdentityHaveDocPermission(ctx, actorIdentity, docID)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
-			if !hasPerm {
-				continue
+			if ok {
+				hasPerm = true
+				break
 			}
-		} else {
-			// Collection-scoped block (e.g. a `@branchable` collection's own head).
-			// The block doesn't carry a CollectionID, so we can't run a per-collection
-			// DAC check. Fall back to a node-level NAC gate: if the requester has no
-			// authorized access on this node, refuse to serve. When NAC is not enabled
-			// this is a no-op, preserving existing behaviour.
-			hasNodeAccess, err := s.doesIdentityHaveNodeReadAccess(ctx, actorIdentity)
-			if err != nil {
-				return nil, err
-			}
-			if !hasNodeAccess {
-				continue
-			}
+		}
+		if !hasPerm {
+			continue
 		}
 
 		encBlockBytes, err := encBlock.Marshal()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
+		links = append(links, link)
 		blocks = append(blocks, encBlockBytes)
 	}
-	return blocks, nil
+	return links, blocks, nil
 }
 
 // doesIdentityHaveDocPermission asks whether actorIdentity may read docID.
@@ -392,45 +570,18 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return acpDB.CheckAccessOfDocOnCollectionWithACP(
+	// Read access to the document gates access to its encryption key. See [acpDB.CheckDocReadAccess]
+	// for the canonical rules (an explicit grant on the document suffices; otherwise a branchable
+	// collection also gates on the collection object, so a private branchable collection gates its
+	// whole DAG).
+	return acpDB.CheckDocReadAccess(
 		ctx,
 		actorIdentity,
 		s.nodeACP(),
 		s.documentACP.Value(),
 		collection,
-		acpTypes.DocumentReadPerm,
 		docID,
 	)
-}
-
-// doesIdentityHaveNodeReadAccess returns true if actorIdentity is authorized to
-// perform a read on this node, used as a fallback gate for encryption blocks
-// that have no DocID (e.g. a `@branchable` collection's own head, where there
-// is no per-doc ACL to consult). Returns true unconditionally when NAC is not
-// enabled.
-func (s *pubSubService) doesIdentityHaveNodeReadAccess(
-	ctx context.Context,
-	actorIdentity immutable.Option[identity.Identity],
-) (bool, error) {
-	var actorDID string
-	if actorIdentity.HasValue() {
-		actorDID = actorIdentity.Value().DID()
-	}
-
-	err := acpDB.CheckNodeOperationAccess(
-		ctx,
-		actorDID,
-		s.nodeACP(),
-		acpTypes.NodeReadDocumentPerm,
-		acpTypes.NodeACPObject,
-	)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
-		return false, nil
-	}
-	return false, err
 }
 
 func encodeToBase64(data []byte) []byte {

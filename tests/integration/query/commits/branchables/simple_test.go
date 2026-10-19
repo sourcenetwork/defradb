@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryCommitsBranchables(t *testing.T) {
@@ -77,6 +78,8 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 	nameCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
+		// asserts plaintext delta bytes; encryption replaces them with ciphertext
+		MultiplierExcludes: []string{multiplier.EncryptedDocs, multiplier.SignedDocs},
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -132,7 +135,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"cid":                 gomega.And(ageCid, uniqueCid),
 							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":               testUtils.CBORValue(21),
-							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"docID":               "{{.DocID0_0}}",
 							"fieldName":           "age",
 							"height":              int64(1),
 							"links":               []map[string]any{},
@@ -142,7 +145,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"cid":                 gomega.And(nameCid, uniqueCid),
 							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":               testUtils.CBORValue("John"),
-							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"docID":               "{{.DocID0_0}}",
 							"fieldName":           "name",
 							"height":              int64(1),
 							"links":               []map[string]any{},
@@ -152,7 +155,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"cid":                 gomega.And(compositeCid, uniqueCid),
 							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":               nil,
-							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"docID":               "{{.DocID0_0}}",
 							"fieldName":           "_C",
 							"height":              int64(1),
 							"links": []map[string]any{

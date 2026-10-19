@@ -52,6 +52,142 @@ func TestCollectionVersionUpdatesTestAddField(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestCollectionVersionUpdatesAddNonNillableBoolField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": 15} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableIntField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": 23} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableFloat64Field_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rating", "Kind": 24} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableFloat32Field_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "weight", "Kind": 25} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableStringField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 26} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableDateTimeField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "createdAt", "Kind": 27} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableBlobField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "avatar", "Kind": 28} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestCollectionVersionUpdatesAddNonNillableJSONField_Error(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type Users { name: String }`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "metadata", "Kind": 29} }]
+				`,
+				ExpectedError: "adding a non-nillable field to an existing collection is not supported",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestCollectionVersionUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

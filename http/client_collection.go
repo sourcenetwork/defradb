@@ -106,7 +106,7 @@ func (c *Collection) DeleteIndex(
 func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
-) ([]client.IndexDescription, error) {
+) ([]client.ListIndexesResult, error) {
 	if c.txn.HasValue() {
 		ctx = datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
 	}
@@ -120,7 +120,7 @@ func (c *Collection) ListIndexes(
 	if err != nil {
 		return nil, err
 	}
-	var indexes []client.IndexDescription
+	var indexes []client.ListIndexesResult
 	if err := c.http.requestJson(req, &indexes); err != nil {
 		return nil, err
 	}
@@ -212,7 +212,20 @@ func (c *Collection) Truncate(
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	var body *bytes.Buffer
+	if opt.Filter != nil {
+		data, err := json.Marshal(TruncateCollectionRequest{
+			Filter: opt.Filter,
+		})
+		if err != nil {
+			return err
+		}
+		body = bytes.NewBuffer(data)
+	} else {
+		body = bytes.NewBuffer(nil)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), body)
 	if err != nil {
 		return err
 	}

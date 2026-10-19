@@ -56,9 +56,8 @@ func (d *Doc) SetID(docID string) {
 
 // Clone returns a deep copy of this document.
 func (d *Doc) Clone() Doc {
-	cp := Doc{
-		Fields: make(DocFields, len(d.Fields)),
-	}
+	cp := *d
+	cp.Fields = make(DocFields, len(d.Fields))
 
 	for i, v := range d.Fields {
 		switch typedFieldValue := v.(type) {

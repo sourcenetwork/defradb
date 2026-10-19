@@ -145,11 +145,12 @@ func (a *ExplainRequest) Execute() {
 		require.Fail(a.s.T, "Expected error should not have other expected results with it.")
 	}
 
-	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		result := node.ExecRequest(
 			a.s.Ctx,
-			a.Request,
+			replace(a.s, nodeID, a.Request),
 		)
 		a.assertExplainRequestResults(&result.GQL)
 	}

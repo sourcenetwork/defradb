@@ -45,3 +45,20 @@ func TestFileKeyring(t *testing.T) {
 	_, err = kr.Get("node_key")
 	assert.ErrorIs(t, err, keyring.ErrNotFound)
 }
+
+func TestFileKeyringExists(t *testing.T) {
+	dir := t.TempDir()
+
+	// A non-existent directory has no keys.
+	assert.False(t, FileKeyringExists(dir+"/does-not-exist"))
+
+	// An empty directory has no keys.
+	assert.False(t, FileKeyringExists(dir))
+
+	// Once a key is stored, the keyring exists.
+	kr, err := OpenFileKeyring(dir, []byte("secret"))
+	require.NoError(t, err)
+	require.NoError(t, kr.Set("peer_key", []byte("abc")))
+
+	assert.True(t, FileKeyringExists(dir))
+}

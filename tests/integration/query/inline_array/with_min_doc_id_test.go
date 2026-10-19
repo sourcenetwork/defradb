@@ -31,7 +31,7 @@ func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
+					Users(docID: "{{.DocID0_0}}") {
 						name
 						MIN(pageRatings: {})
 					}

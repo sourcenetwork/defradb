@@ -122,6 +122,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -232,6 +233,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -347,6 +349,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -461,6 +464,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -583,6 +587,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

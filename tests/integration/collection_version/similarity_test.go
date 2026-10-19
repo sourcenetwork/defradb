@@ -14,6 +14,7 @@ package collection_version
 import (
 	"testing"
 
+	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -310,6 +311,56 @@ func TestCollectionVersionIntrospection_SimilarityCapableFieldsIntArrayAndFloat3
 											},
 											"name": "Users__someVectorInt__SimilaritySelector",
 										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Guards the documentation surfaced by GraphQL clients, which is the whole point of these
+// descriptions existing.
+func TestCollectionVersionIntrospection_SimilarityIsDocumented(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						someVector: [Float32!]
+					}
+				`,
+			},
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							fields {
+								name
+								description
+								args {
+									name
+									description
+								}
+							}
+						}
+					}
+				`,
+				ContainsData: map[string]any{
+					"__type": map[string]any{
+						"fields": []any{
+							map[string]any{
+								"name":        "SIMILARITY",
+								"description": schemaTypes.SimilarityFieldDescription,
+								"args": []any{
+									map[string]any{
+										"name":        "someVector",
+										"description": "Compares the given vector against the someVector field.",
 									},
 								},
 							},

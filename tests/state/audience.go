@@ -17,19 +17,25 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/tests/clients/cli"
-	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
 
+// hostedClient is satisfied by any client wrapper that fronts a node with an
+// HTTP host (the http, cli and external wrappers). Matched structurally
+// rather than by importing those packages' concrete types, to avoid an
+// import cycle (tests/clients/external imports tests/state in its tests).
+type hostedClient interface {
+	Host() string
+}
+
 func GetNodeAudience(s *State, nodeIndex int) immutable.Option[string] {
+	// Only the setup knows where a node being set up answers, so prefer it.
+	if s.CurrentSetupHost != "" && nodeIndex == s.CurrentSetupNodeID {
+		return immutable.Some(strings.TrimPrefix(s.CurrentSetupHost, "http://"))
+	}
 	if nodeIndex >= len(s.Nodes) {
 		return immutable.None[string]()
 	}
-	switch client := s.Nodes[nodeIndex].Client.(type) {
-	case *http.Wrapper:
-		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
-	case *cli.Wrapper:
+	if client, ok := s.Nodes[nodeIndex].Client.(hostedClient); ok {
 		return immutable.Some(strings.TrimPrefix(client.Host(), "http://"))
 	}
 

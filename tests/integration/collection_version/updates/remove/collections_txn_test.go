@@ -63,9 +63,10 @@ func TestColVersionUpdateRemoveCollection_DeadlocksIfOtherTxnWriting(t *testing.
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			// Badger file fails after the tests successfully completes, probably caused by the
 			// leaked database instance.  It is not worth the time to chase down at the moment.
+			//
+			// LevelDB does not support concurrent transactions, and so is skipped for this test
 			testUtils.BadgerIMType,
 			testUtils.DefraIMType,
-			testUtils.LevelStoreType,
 		}),
 		Actions: []any{
 			&action.AddCollection{
@@ -113,9 +114,10 @@ func TestColVersionUpdateRemoveCollection_DeadlockIfDeletingVersionWithNewFieldW
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			// Badger file fails after the tests successfully completes, probably caused by the
 			// leaked database instance.  It is not worth the time to chase down at the moment.
+			//
+			// LevelDB does not support concurrent transactions, and so is skipped for this test
 			testUtils.BadgerIMType,
 			testUtils.DefraIMType,
-			testUtils.LevelStoreType,
 		}),
 		Actions: []any{
 			&action.AddCollection{

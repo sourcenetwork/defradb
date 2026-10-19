@@ -40,7 +40,7 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 						SDL: sameFieldNameGQLSchema,
 					},
 				},
-				test.Actions...,
+				orderInitialDocs(test.Actions)...,
 			),
 		},
 	)
@@ -53,7 +53,7 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{
@@ -95,7 +95,7 @@ func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "{{.DocID1_0}}"
 					}`,
 			},
 			&action.AddDoc{

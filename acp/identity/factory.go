@@ -14,6 +14,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // FromDID returns an Identity with only a DID and no public key.
@@ -54,8 +55,12 @@ func FromPublicKey(publicKey crypto.PublicKey) (Identity, error) {
 // FromToken constructs a new identity from a bearer token.
 // The returned identity implements TokenIdentity which cannot create/update tokens
 // since it doesn't have access to the private key and NewToken/UpdateToken methods.
+//
+// This only reads the identity claims (key type and subject); it does not verify
+// the signature or validate temporal/audience claims. Use VerifyAuthToken for that,
+// so that each verification failure can be reported with its specific cause.
 func FromToken(data []byte) (TokenIdentity, error) {
-	token, err := jwt.Parse(data, jwt.WithVerify(false))
+	token, err := jwt.Parse(data, jwt.WithVerify(false), jwt.WithValidate(false))
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +77,12 @@ func FromToken(data []byte) (TokenIdentity, error) {
 
 	publicKey, err := crypto.PublicKeyFromString(crypto.KeyType(keyTypeValue), token.Subject())
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidSubject, err)
 	}
 
 	did, err := publicKey.DID()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrInvalidSubject, err)
 	}
 
 	return &fullIdentity{

@@ -32,13 +32,14 @@ func MakeKeyringNewCommand(ctx context.Context) *cobra.Command {
 Randomly generate and store private keys in the keyring.
 By default peer and encryption keys will be generated.
 
-The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
+The DEFRA_KEYRING_SECRET environment variable is used to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
+defined with the --secret-file flag. If it is not set and the command is run in
+an interactive terminal, you will be prompted to enter it.
 
 WARNING: This will overwrite existing keys in the keyring.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			k, err := openKeyring(cmd)
+			k, err := openKeyring(cmd, true)
 			if err != nil {
 				return err
 			}
@@ -102,6 +103,6 @@ WARNING: This will overwrite existing keys in the keyring.`,
 		"Skip generating an encryption key. Encryption at rest will be disabled")
 	cmd.Flags().BoolVar(&noPeerKey, "no-peer-key", false,
 		"Skip generating a peer key.")
-	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing keys without confirmation")
+	cmd.Flags().BoolVar(&force, "force", false, "Overwrite existing keys")
 	return cmd
 }

@@ -58,10 +58,34 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
+	// apiHandler is the HTTP API handler.
+	apiHandler *http.Handler
 	// opts is the resolved options
 	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
+	// apiErrCh fires once when the HTTP/API server goroutine exits with a
+	// non-ErrServerClosed error (typically a bad TLS key path, port bind
+	// failure, etc). Callers can select on APIError() to trigger their
+	// shutdown path rather than leaving a half-alive process for the user
+	// to SIGKILL. Buffered so startAPI never blocks on a missing reader.
+	apiErrCh chan error
+}
+
+// APIError returns a buffered, never-closed channel that receives at most one
+// error describing why the API server goroutine stopped unexpectedly. It stays
+// silent on a clean shutdown (http.ErrServerClosed) and only fires once over
+// the lifetime of the Node, so callers should receive with a non-blocking
+// select and must not rely on channel-closed semantics:
+//
+//	select {
+//	case err := <-n.APIError():
+//	    // startup failed
+//	default:
+//	    // still healthy
+//	}
+func (n *Node) APIError() <-chan error {
+	return n.apiErrCh
 }
 
 // DefaultNodeOptions returns default NodeOptions values.
@@ -93,11 +117,16 @@ func DefaultNodeOptions() options.NodeOptions {
 				time.Minute * 16,
 				time.Minute * 32,
 			},
-			P2PBlockSyncTimeout: time.Second * 5,
+			P2PBlockSyncTimeout: time.Second * 30,
 			LensRuntime:         options.NodeDefaultLensRuntime,
 		},
-		P2P:  options.NodeP2POptions{},
-		HTTP: options.NodeHTTPOptions{},
+		P2P: options.NodeP2POptions{},
+		HTTP: options.NodeHTTPOptions{
+			Address:       http.DefaultHTTPAddress,
+			TxnTTL:        http.DefaultTxnTTL,
+			TxnTTLTick:    http.DefaultTxnTTLTick,
+			TxnTTLBuckets: http.DefaultTxnTTLBuckets,
+		},
 	}
 }
 
@@ -106,23 +135,63 @@ func New(ctx context.Context, opts ...options.Enumerable[options.NodeOptions]) (
 	nodeOpts := DefaultNodeOptions()
 	utils.ApplyOptions(&nodeOpts, opts...)
 	n := Node{
-		opts: &nodeOpts,
+		opts:     &nodeOpts,
+		apiErrCh: make(chan error, 1),
 	}
 	return &n, nil
 }
 
+// Options returns the node's resolved options.
+func (n *Node) Options() *options.NodeOptions {
+	return n.opts
+}
+
 // Start starts the node sub-systems.
-func (n *Node) Start(ctx context.Context) error {
-	rootstore, isValueSizeLimited, err := NewStore(ctx, options.NodeStore().SetAll(n.opts.Store))
+func (n *Node) Start(ctx context.Context) (err error) {
+	var (
+		rootstore          corekv.TxnStore
+		isValueSizeLimited bool
+		documentACP        immutable.Option[dac.DocumentACP]
+		nodeACP            acpDB.NACInfo
+	)
+
+	// On failure, release everything Start created so nothing is orphaned (e.g. the store's
+	// directory lock). Once db.NewDB has succeeded n.DB owns rootstore and both ACPs, so Close
+	// covers them, but before that they are still our responsibility.
+	defer func() {
+		if err == nil {
+			return
+		}
+		if n.DB != nil {
+			_ = n.Close(ctx)
+			n.DB = nil
+			return
+		}
+		if n.peer != nil {
+			n.peer.Close()
+			n.peer = nil
+		}
+		if nodeACP.NodeACP != nil {
+			_ = nodeACP.NodeACP.Close()
+		}
+		if documentACP.HasValue() {
+			_ = documentACP.Value().Close()
+		}
+		if rootstore != nil {
+			_ = rootstore.Close()
+		}
+	}()
+
+	rootstore, isValueSizeLimited, err = NewStore(ctx, options.NodeStore().SetAll(n.opts.Store))
 	if err != nil {
 		return err
 	}
-	documentACP, err := NewDocumentACP(ctx, &n.opts.DocumentACP)
+	documentACP, err = NewDocumentACP(ctx, &n.opts.DocumentACP)
 	if err != nil {
 		return err
 	}
 
-	nodeACP, err := NewNodeACP(ctx, &n.opts.NodeACP)
+	nodeACP, err = NewNodeACP(ctx, &n.opts.NodeACP)
 	if err != nil {
 		return err
 	}
@@ -144,10 +213,13 @@ func (n *Node) Start(ctx context.Context) error {
 		dbBuilder.SetP2P(n.peer)
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
+	// Assign to a local first. On failure NewDB returns a nil *DB, which would otherwise become a
+	// non-nil interface value in n.DB.
+	database, err := db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
 	if err != nil {
 		return err
 	}
+	n.DB = database
 
 	return n.startAPI(ctx)
 }
@@ -157,6 +229,9 @@ func (n *Node) Close(ctx context.Context) error {
 	var err error
 	if n.server != nil {
 		err = n.server.Shutdown(ctx)
+	}
+	if n.apiHandler != nil {
+		n.apiHandler.Close()
 	}
 	if n.peer != nil {
 		n.peer.Close()

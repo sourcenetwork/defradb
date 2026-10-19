@@ -1,0 +1,3 @@
+# DateTime inline scalar arrays
+
+One of the integration tests reusable schema was changed adding DateTime array fields which caused some docIDs to change.

@@ -21,7 +21,7 @@ import (
 
 func MakeP2PCollectionSyncVersionsCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "sync-versions [versionID...]",
+		Use:   "sync-versions <versionID...>",
 		Short: "Synchronize specific collection versions from the network",
 		Long: `Synchronize specific collection versions from the network.
 

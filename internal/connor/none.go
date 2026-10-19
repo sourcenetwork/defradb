@@ -1,6 +1,10 @@
 package connor
 
-import "github.com/sourcenetwork/immutable"
+import (
+	"time"
+
+	"github.com/sourcenetwork/immutable"
+)
 
 // none is an operator which allows the evaluation of
 // a number of conditions over a list of values
@@ -32,6 +36,12 @@ func none(condition, data any) (bool, error) {
 		return noneSlice(condition, t)
 
 	case []immutable.Option[float64]:
+		return noneSlice(condition, t)
+
+	case []time.Time:
+		return noneSlice(condition, t)
+
+	case []immutable.Option[time.Time]:
 		return noneSlice(condition, t)
 
 	default:

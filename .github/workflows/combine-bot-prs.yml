@@ -17,7 +17,7 @@ on:
     inputs:
 
       branchPrefix:
-        description: 'Branch prefix to find combinable PRs based on, eg: dependabot/npm_and_yarn/playground'
+        description: 'Branch prefix to find combinable PRs based on, eg: dependabot/npm_and_yarn/explorer'
         required: true
         default: 'dependabot'
 

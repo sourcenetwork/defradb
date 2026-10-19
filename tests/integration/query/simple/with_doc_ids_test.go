@@ -55,7 +55,7 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+						Users(docID: ["{{.DocID0_0}}"]) {
 							Name
 							Age
 						}
@@ -86,7 +86,7 @@ func TestQueryWithDocIDsFilter_DuplicateDocIDs(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+						Users(docID: ["{{.DocID0_0}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}
@@ -123,7 +123,7 @@ func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
+						Users(docID: ["{{.DocID0_0}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}
@@ -166,7 +166,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-0000ef46-9bf6-5a83-9bbf-da288687c830"]) {
+						Users(docID: ["{{.DocID0_1}}", "{{.DocID0_0}}"]) {
 							Name
 							Age
 						}

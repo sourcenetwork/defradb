@@ -22,6 +22,41 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
+// queryableIndexesProvider is implemented by collection types that track
+// index lifecycle status. Indexes returned are safe to plan queries against.
+type queryableIndexesProvider interface {
+	QueryableIndexes() []client.IndexDescription
+}
+
+// queryableIndexes returns the indexes usable for planning on col. Collections
+// that do not track status expose all their indexes (legacy behavior).
+func queryableIndexes(col client.Collection) []client.IndexDescription {
+	if p, ok := col.(queryableIndexesProvider); ok {
+		return p.QueryableIndexes()
+	}
+	return col.Version().Indexes
+}
+
+// firstIndexedField returns the name of the index's first field, or "" if it has none.
+func firstIndexedField(idx client.IndexDescription) string {
+	if fields := idx.GetFields(); len(fields) > 0 {
+		return fields[0].Name
+	}
+	return ""
+}
+
+// queryableIndexesOnField mirrors CollectionVersion.GetIndexesOnField over queryableIndexes:
+// it returns only ready indexes whose first field matches fieldName.
+func queryableIndexesOnField(col client.Collection, fieldName string) []client.IndexDescription {
+	var result []client.IndexDescription
+	for _, idx := range queryableIndexes(col) {
+		if firstIndexedField(idx) == fieldName {
+			result = append(result, idx)
+		}
+	}
+	return result
+}
+
 // indexSource indicates what criteria was used to select an index.
 type indexSource string
 
@@ -61,7 +96,7 @@ func findIndexByFilter(
 			if field.Name != path[0] {
 				continue
 			}
-			indexes := colVersion.GetIndexesOnField(field.Name)
+			indexes := queryableIndexesOnField(col, field.Name)
 			if len(indexes) > 0 {
 				indexCandidates = append(indexCandidates, indexes...)
 				return true
@@ -95,7 +130,7 @@ func findIndexByFieldName(
 		if field.Name != fieldName {
 			continue
 		}
-		indexes := colVersion.GetIndexesOnField(field.Name)
+		indexes := queryableIndexesOnField(col, field.Name)
 		if len(indexes) > 0 {
 			return immutable.Some(indexes[0])
 		}
@@ -115,8 +150,7 @@ func findIndexForOrdering(
 		return immutable.None[client.IndexDescription]()
 	}
 
-	indexes := col.Version().Indexes
-	for _, idx := range indexes {
+	for _, idx := range queryableIndexes(col) {
 		canOrder, _ := fetcher.CanBeOrderedByIndex(ordering, idx, docMapping)
 		if canOrder {
 			return immutable.Some(idx)

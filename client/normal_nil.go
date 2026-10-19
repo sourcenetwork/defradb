@@ -46,6 +46,8 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalFloat32NillableArray(immutable.None[[]float32]()), nil
 	case FieldKind_STRING_ARRAY:
 		return NewNormalStringNillableArray(immutable.None[[]string]()), nil
+	case FieldKind_DATETIME_ARRAY:
+		return NewNormalTimeNillableArray(immutable.None[[]time.Time]()), nil
 	case FieldKind_NILLABLE_BOOL_ARRAY:
 		return NewNormalNillableBoolNillableArray(immutable.None[[]immutable.Option[bool]]()), nil
 	case FieldKind_NILLABLE_INT_ARRAY:
@@ -56,6 +58,8 @@ func NewNormalNil(kind FieldKind) (NormalValue, error) {
 		return NewNormalNillableFloat32NillableArray(immutable.None[[]immutable.Option[float32]]()), nil
 	case FieldKind_NILLABLE_STRING_ARRAY:
 		return NewNormalNillableStringNillableArray(immutable.None[[]immutable.Option[string]]()), nil
+	case FieldKind_NILLABLE_DATETIME_ARRAY:
+		return NewNormalNillableTimeNillableArray(immutable.None[[]immutable.Option[time.Time]]()), nil
 	default:
 		return nil, NewCanNotMakeNormalNilFromFieldKind(kind)
 	}

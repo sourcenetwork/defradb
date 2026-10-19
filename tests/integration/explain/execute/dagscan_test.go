@@ -29,7 +29,7 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_commits (docID: "bae-186c2484-c3ea-5993-95d6-cb886e1b13a1") {
+					_commits (docID: "{{.DocID4_0}}") {
 						links {
 							cid
 						}

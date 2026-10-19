@@ -21,7 +21,7 @@ import (
 
 func MakeP2PCollectionSyncBranchableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "sync-branchable [collection-id]",
+		Use:   "sync-branchable <collection-id>",
 		Short: "Synchronize a branchable collection's DAG from the network",
 		Long: `Synchronize a branchable collection's DAG from the network.
 

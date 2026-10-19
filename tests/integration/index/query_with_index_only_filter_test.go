@@ -126,6 +126,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 						{"age": int64(32)},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
@@ -451,6 +452,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 						{"age": int64(32)},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),

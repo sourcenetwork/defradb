@@ -12,7 +12,9 @@ package fetcher
 
 import (
 	"context"
+	"encoding/binary"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -26,21 +28,59 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
+// ReadIndexEpoch returns the index's current epoch: the value of its epoch sequence.
+//
+// The sequence is seeded when the index is created, so a missing sequence is an inconsistent
+// state and returns an error rather than defaulting, which would scan the wrong namespace.
+func ReadIndexEpoch(ctx context.Context, txn datastore.Txn, collectionID string, indexID uint32) (uint32, error) {
+	collectionShortID, err := id.GetCollectionShortID(ctx, collectionID)
+	if err != nil {
+		return 0, err
+	}
+	epoch, err := ReadIndexEpochByShortID(ctx, txn, collectionShortID, indexID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return 0, NewErrIndexEpochNotFound(err, collectionID, indexID)
+		}
+		return 0, err
+	}
+	return epoch, nil
+}
+
+// ReadIndexEpochByShortID is ReadIndexEpoch given the collection's short ID directly, for callers
+// that already have it (e.g. the stale-epoch marker, which stores it). Returns corekv.ErrNotFound if
+// the sequence is missing.
+func ReadIndexEpochByShortID(
+	ctx context.Context,
+	txn datastore.Txn,
+	collectionShortID, indexID uint32,
+) (uint32, error) {
+	val, err := txn.Systemstore().Get(ctx, keys.NewIndexEpochSequenceKey(collectionShortID, indexID).Bytes())
+	if err != nil {
+		return 0, err
+	}
+	return uint32(binary.BigEndian.Uint64(val)), nil
+}
+
 // indexFetcher is a fetcher that fetches documents by index.
 // It fetches only the indexed field and the rest of the fields are fetched by the internal fetcher.
 type indexFetcher struct {
-	ctx           context.Context
-	txn           datastore.Txn
-	col           client.Collection
-	indexFilter   *mapper.Filter
-	mapping       *core.DocumentMapping
-	indexedFields []client.CollectionFieldDescription
-	fieldsByID    map[uint32]client.CollectionFieldDescription
-	indexDesc     client.IndexDescription
-	indexIter     indexIterator
-	currentDocID  immutable.Option[string]
-	execInfo      *ExecInfo
-	ordering      []mapper.OrderCondition
+	ctx               context.Context
+	txn               datastore.Txn
+	col               client.Collection
+	indexFilter       *mapper.Filter
+	mapping           *core.DocumentMapping
+	indexedFields     []client.CollectionFieldDescription
+	fieldsByID        map[uint32]client.CollectionFieldDescription
+	indexDesc         client.IndexDescription
+	indexIter         indexIterator
+	currentDocID      immutable.Option[string]
+	currentDocShortID immutable.Option[uint64]
+	collectionShortID uint32
+	execInfo          *ExecInfo
+	ordering          []mapper.OrderCondition
+	// epoch is the namespace this fetcher scans, resolved from the index's epoch sequence.
+	epoch uint32
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -65,19 +105,30 @@ func newIndexFetcher(
 		return nil, nil
 	}
 
-	f := &indexFetcher{
-		ctx:        ctx,
-		txn:        txn,
-		col:        col,
-		mapping:    docMapper,
-		indexDesc:  indexDesc,
-		fieldsByID: fieldsByID,
-		execInfo:   execInfo,
-		ordering:   ordering,
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.Version().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+	epoch, err := ReadIndexEpoch(ctx, txn, col.Version().CollectionID, indexDesc.ID)
+	if err != nil {
+		return nil, err
 	}
 
-	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
-	for _, field := range indexDesc.Fields {
+	f := &indexFetcher{
+		ctx:               ctx,
+		txn:               txn,
+		col:               col,
+		mapping:           docMapper,
+		indexDesc:         indexDesc,
+		fieldsByID:        fieldsByID,
+		collectionShortID: collectionShortID,
+		execInfo:          execInfo,
+		ordering:          ordering,
+		epoch:             epoch,
+	}
+
+	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.GetFields()))
+	for _, field := range indexDesc.GetFields() {
 		typeIndex := docMapper.FirstIndexOfName(field.Name)
 		indexField := mapper.Field{Index: typeIndex, Name: field.Name}
 		fieldsToCopy = append(fieldsToCopy, indexField)
@@ -86,7 +137,7 @@ func newIndexFetcher(
 		f.indexFilter = filter.Merge(f.indexFilter, filter.CopyField(docFilter, fieldsToCopy[i]))
 	}
 
-	for _, indexedField := range f.indexDesc.Fields {
+	for _, indexedField := range f.indexDesc.GetFields() {
 		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
@@ -104,6 +155,7 @@ func newIndexFetcher(
 
 func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 	f.currentDocID = immutable.None[string]()
+	f.currentDocShortID = immutable.None[uint64]()
 
 	res, err := f.indexIter.Next()
 	if err != nil {
@@ -118,17 +170,41 @@ func (f *indexFetcher) NextDoc() (immutable.Option[string], error) {
 		hasNilField = hasNilField || res.key.Fields[i].Value.IsNil()
 	}
 
-	if f.indexDesc.Unique && !hasNilField {
-		f.currentDocID = immutable.Some(string(res.value))
-	} else {
-		lastVal := res.key.Fields[len(res.key.Fields)-1].Value
-		if str, ok := lastVal.String(); ok {
-			f.currentDocID = immutable.Some(str)
-		} else {
-			f.currentDocID = immutable.None[string]()
+	if f.indexDesc.GetUnique() && !hasNilField {
+		docShortID, err := keys.DecodeDocShortID(res.value)
+		if err != nil {
+			return immutable.None[string](), err
 		}
+		docID, err := f.docIDFromDocShortID(docShortID)
+		if err != nil {
+			return immutable.None[string](), err
+		}
+		f.currentDocID = immutable.Some(docID)
+		f.currentDocShortID = immutable.Some(docShortID)
+	} else {
+		// Non-unique index entries must carry the doc suffix.
+		if res.key.DocShortID == 0 {
+			return immutable.None[string](), NewErrUnexpectedTypeValue[uint64](res.key.DocShortID)
+		}
+		docID, err := f.docIDFromDocShortID(res.key.DocShortID)
+		if err != nil {
+			return immutable.None[string](), err
+		}
+		f.currentDocID = immutable.Some(docID)
+		f.currentDocShortID = immutable.Some(res.key.DocShortID)
 	}
 	return f.currentDocID, nil
+}
+
+func (f *indexFetcher) docIDFromDocShortID(docShortID uint64) (string, error) {
+	docID, found, err := id.GetDocID(f.ctx, docShortID)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return docID, nil
+	}
+	return "", nil
 }
 
 func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
@@ -136,14 +212,9 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
 
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
-	if err != nil {
-		return immutable.None[EncodedDocument](), err
-	}
-
 	prefix := keys.DataStoreKey{
-		CollectionShortID: shortID,
-		DocID:             f.currentDocID.Value(),
+		CollectionShortID: f.collectionShortID,
+		DocShortID:        f.currentDocShortID.Value(),
 	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)
@@ -175,14 +246,14 @@ func CanBeOrderedByIndex(
 ) (bool, bool) {
 	// if there is no ordering in the query or the query requests ordering on more fields, then index
 	// contains, we can't use index
-	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
+	if len(ordering) == 0 || len(ordering) > len(index.GetFields()) {
 		return false, false
 	}
 
 	orderMismatchCount := 0
 
 	for i := range len(ordering) {
-		fieldIndexes := mapping.IndexesByName[index.Fields[i].Name]
+		fieldIndexes := mapping.IndexesByName[index.GetFields()[i].Name]
 
 		// if indexed field doesn't match the ordering field, we can't use index
 		if len(fieldIndexes) == 0 || fieldIndexes[0] != ordering[i].FieldIndexes[0] {
@@ -190,7 +261,7 @@ func CanBeOrderedByIndex(
 		}
 
 		isDescending := ordering[i].Direction == mapper.DESC
-		if index.Fields[i].Descending != isDescending {
+		if index.GetFields()[i].Descending != isDescending {
 			orderMismatchCount++
 		}
 	}
@@ -218,7 +289,7 @@ func hasOrWithMultipleFields(
 	for _, branch := range branches {
 		hasNonIndexedField := false
 		filter.TraverseProperties(branch, func(prop *mapper.PropertyIndex, _ map[connor.FilterKey]any) bool {
-			for _, field := range indexDesc.Fields {
+			for _, field := range indexDesc.GetFields() {
 				if docMapper.FirstIndexOfName(field.Name) == prop.Index {
 					return true
 				}

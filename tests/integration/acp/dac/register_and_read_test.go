@@ -84,7 +84,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -165,7 +165,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -248,7 +248,7 @@ resources:
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
+							"_docID": "{{.DocID0_0}}",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},

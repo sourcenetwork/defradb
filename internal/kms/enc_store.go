@@ -14,11 +14,13 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
 
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -43,26 +45,38 @@ func (s *ipldEncStorage) get(ctx context.Context, cidBytes []byte) (*coreblock.E
 	nd, err := lsys.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid},
 		coreblock.EncryptionSchemaPrototype)
 	if err != nil {
+		// Not-found is non-fatal: the caller's `if encBlock == nil` branch
+		// handles it, and a peer without the key must reply empty so the
+		// multi-peer fan-out can converge on a holder.
+		if errors.Is(err, ipld.ErrNotFound{}) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
 	return coreblock.GetEncryptionBlockFromNode(nd)
 }
 
-func (s *ipldEncStorage) put(ctx context.Context, blockBytes []byte) ([]byte, error) {
+func (s *ipldEncStorage) putBlock(ctx context.Context, block coreblock.Encryption) ([]byte, error) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(blockstore.NewIPLDStore(s.encstore))
 
-	var encBlock coreblock.Encryption
-	err := encBlock.Unmarshal(blockBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), encBlock.GenerateNode())
+	link, err := lsys.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return nil, err
 	}
 
 	return []byte(link.String()), nil
+}
+
+func (s *ipldEncStorage) computeBlockLink(ctx context.Context, block coreblock.Encryption) ([]byte, error) {
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(s.encstore))
+
+	link, err := lsys.ComputeLink(coreblock.GetLinkPrototype(), block.GenerateNode())
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(link.Binary()), nil
 }

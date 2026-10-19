@@ -72,6 +72,7 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -80,20 +81,22 @@ func TestCollectionVersionSelfReferenceSimple_HasSimpleCollectionID(t *testing.T
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "User",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("User").Append(
 							Field{
 								"name": "_bossID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "boss",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -175,6 +178,13 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hostsID"},
+									},
+								},
 							},
 						},
 					},
@@ -231,6 +241,13 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_walkerID"},
+									},
+								},
 							},
 						},
 					},
@@ -246,6 +263,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 								type {
 								name
 								kind
+								ofType { name kind }
 								}
 							}
 						}
@@ -254,36 +272,40 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "User",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("User").Append(
 							Field{
 								"name": "_hostsID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "hosts",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "Dog",
+									"kind":   "OBJECT",
+									"name":   "Dog",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "_walksID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "walks",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "Dog",
+									"kind":   "OBJECT",
+									"name":   "Dog",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -300,6 +322,7 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 									type {
 									name
 									kind
+									ofType { name kind }
 									}
 								}
 							}
@@ -308,36 +331,40 @@ func TestCollectionVersionSelfReferenceTwoTypes_HasComplexCollectionID(t *testin
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "Dog",
-						"fields": DefaultFields.Append(
+						"fields": DefaultFields("Dog").Append(
 							Field{
 								"name": "_hostID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "host",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "_walkerID",
 								"type": map[string]any{
-									"kind": "SCALAR",
-									"name": "ID",
+									"kind":   "SCALAR",
+									"name":   "ID",
+									"ofType": nil,
 								},
 							},
 						).Append(
 							Field{
 								"name": "walker",
 								"type": map[string]any{
-									"kind": "OBJECT",
-									"name": "User",
+									"kind":   "OBJECT",
+									"name":   "User",
+									"ofType": nil,
 								},
 							},
 						).Tidy(),
@@ -535,6 +562,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hostsID"},
+									},
+								},
 							},
 						},
 					},
@@ -588,6 +622,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_walkerID"},
+									},
 								},
 							},
 						},
@@ -658,6 +699,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_lovesID"},
+									},
+								},
 							},
 							{
 								Name:   "Cat__toleratesID_ASC",
@@ -665,6 +713,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_toleratesID"},
+									},
 								},
 							},
 						},
@@ -719,6 +774,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypes_HaveDifferentComplexCo
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hatesID"},
+									},
 								},
 							},
 						},
@@ -837,6 +899,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_feedsID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_feedsID"},
+									},
+								},
 							},
 							{
 								Name:   "User__hostsID_ASC",
@@ -844,6 +913,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hostsID"},
+									},
 								},
 							},
 						},
@@ -896,6 +972,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_walkerID"},
+									},
 								},
 							},
 						},
@@ -973,6 +1056,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_lovesID"},
+									},
+								},
 							},
 							{
 								Name:   "Cat__toleratesID_ASC",
@@ -980,6 +1070,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_toleratesID"},
+									},
 								},
 							},
 						},
@@ -1032,6 +1129,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircle_All
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hatesID"},
+									},
 								},
 							},
 						},
@@ -1137,6 +1241,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hostsID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hostsID"},
+									},
+								},
 							},
 						},
 					},
@@ -1202,6 +1313,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_licksID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_licksID"},
+									},
+								},
 							},
 							{
 								Name:   "Dog__walkerID_ASC",
@@ -1209,6 +1327,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_walkerID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_walkerID"},
+									},
 								},
 							},
 						},
@@ -1275,6 +1400,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_lovesID"},
 								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_lovesID"},
+									},
+								},
 							},
 							{
 								Name:   "Cat__toleratesID_ASC",
@@ -1282,6 +1414,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_toleratesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_toleratesID"},
+									},
 								},
 							},
 						},
@@ -1345,6 +1484,13 @@ func TestCollectionVersionSelfReferenceTwoPairsOfTwoTypesJoinedByThirdCircleAcro
 								Unique: true,
 								Fields: []client.IndexedFieldDescription{
 									{Name: "_hatesID"},
+								},
+								Kind: client.IndexKindOrdered,
+								KindDescription: &client.OrderedIndexDescription{
+									Unique: true,
+									Fields: []client.IndexedFieldDescription{
+										{Name: "_hatesID"},
+									},
 								},
 							},
 						},
