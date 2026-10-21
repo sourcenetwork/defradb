@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -25,6 +26,12 @@ import (
 // that mattered, causing unnessecary transaction conflicts.
 func TestMutationUpdate_InterleavedTxn(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			// LevelDB does not support concurrent transactions, and so is skipped for this test
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+			testUtils.BadgerFileType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
