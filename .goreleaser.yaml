@@ -32,6 +32,24 @@ builds:
 partial:
   by: target
 
+# Signing and notarization are skipped until the MACOS_SIGN_P12 secret is set,
+# so releases work while the Apple certificates are pending. Once the MACOS_*
+# secrets are added this activates on its own; also remove the quarantine
+# hook from homebrew_casks at that point.
+notarize:
+  macos:
+    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
+      ids:
+        - defradb
+      sign:
+        certificate: '{{ envOrDefault "MACOS_SIGN_P12" "" }}'
+        password: '{{ envOrDefault "MACOS_SIGN_PASSWORD" "" }}'
+      notarize:
+        issuer_id: '{{ envOrDefault "MACOS_NOTARY_ISSUER_ID" "" }}'
+        key_id: '{{ envOrDefault "MACOS_NOTARY_KEY_ID" "" }}'
+        key: '{{ envOrDefault "MACOS_NOTARY_KEY" "" }}'
+        wait: true
+
 archives:
   - id: defradb_lite
     builds:
@@ -53,9 +71,58 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
+  # tar.gz archive consumed by the Homebrew formula.
+  - id: defradb_archive
+    builds:
+      - defradb
+    formats: [tar.gz]
+    name_template: >-
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+dmg:
+  - id: defradb_dmg
+    ids:
+      - defradb
+    name: >-
+      {{ .Binary }}_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    extra_files:
+      - README.md
+      - licenses/BSL.txt
+
+homebrew_casks:
+  - name: defradb
+    ids:
+      - defradb_archive
+    binaries:
+      - defradb
+    repository:
+      owner: sourcenetwork
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/sourcenetwork/defradb
+    description: User-centric database prioritizing data ownership, privacy, and security
+    license: BUSL-1.1
+    skip_upload: auto
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    # The binaries are not yet signed/notarized, so Gatekeeper quarantines
+    # them and macOS reports them as damaged. Strip the quarantine attribute
+    # on install; remove this hook once notarization is enabled.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/defradb"]
+          end
 
 release:
-  target_commitish: '{{ .Commit }}'
+  target_commitish: "{{ .Commit }}"
   header: >
     DefraDB v{{ .Major }}.{{ .Minor }} is a major pre-production release.
     Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases,
@@ -73,22 +140,22 @@ changelog:
   abbrev: -1
   groups:
     - title: Features
-      regexp: '^feat:.*'
+      regexp: "^feat:.*"
       order: 0
     - title: Fix
-      regexp: '^fix:.*'
+      regexp: "^fix:.*"
       order: 1
     - title: Tooling
-      regexp: '^tools:.*'
+      regexp: "^tools:.*"
       order: 2
     - title: Documentation
-      regexp: '^docs:.*'
+      regexp: "^docs:.*"
       order: 3
     - title: Refactoring
-      regexp: '^refactor:.*'
+      regexp: "^refactor:.*"
       order: 4
     - title: Testing
-      regexp: '^test:.*'
+      regexp: "^test:.*"
       order: 5
 
 source:
