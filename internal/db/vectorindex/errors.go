@@ -19,6 +19,8 @@ const (
 	errUnsupportedAlgorithm string = "unsupported vector index algorithm"
 	errUnsupportedMetric    string = "unsupported vector index distance metric"
 	errVectorIndexStore     string = "vector index store operation failed"
+	errMalformedPending     string = "malformed vector pending entry"
+	errUnknownPendingOp     string = "unknown vector pending entry op"
 )
 
 // newErrUnsupportedAlgorithm returns an error indicating the index description asked for a vector
@@ -31,6 +33,18 @@ func newErrUnsupportedAlgorithm(a client.VectorAlgorithm) error {
 // selected algorithm does not support.
 func newErrUnsupportedMetric(m client.DistanceMetric) error {
 	return errors.New(errUnsupportedMetric, errors.NewKV("Metric", m))
+}
+
+// newErrMalformedPending returns an error indicating a stored pending entry for the node could not be
+// decoded because its length does not fit an op byte followed by float32s.
+func newErrMalformedPending(nodeID uint64, length int) error {
+	return errors.New(errMalformedPending, errors.NewKV("NodeID", nodeID), errors.NewKV("Length", length))
+}
+
+// newErrUnknownPendingOp returns an error indicating a stored pending entry for the node carries an op
+// byte that is neither an upsert nor a delete.
+func newErrUnknownPendingOp(nodeID uint64, op PendingOp) error {
+	return errors.New(errUnknownPendingOp, errors.NewKV("NodeID", nodeID), errors.NewKV("Op", op))
 }
 
 // newErrVectorIndexStore returns a new error indicating that a vector index store operation

@@ -525,41 +525,147 @@ func (index *collectionVectorIndex) nodeAndVector(
 // Save indexes doc by inserting its vector. If the document has no value for the indexed field,
 // there is nothing to index and Save does nothing.
 func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Document) error {
+	_, err := index.save(ctx, doc)
+	return err
+}
+
+// save does the work of Save. It reports whether the document had a vector to index.
+func (index *collectionVectorIndex) save(ctx context.Context, doc *client.Document) (bool, error) {
 	idx, collectionShortID, err := index.openIndex(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	nodeID, vec, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !found {
 		// A document being written always has a short id by this point. Not finding one means the
 		// document is missing or the caller cannot access it, which is an error, not a doc to skip.
-		return client.ErrDocumentNotFoundOrNotAuthorized
+		return false, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if vec == nil {
-		return nil
+		return false, nil
 	}
 
 	// Vectors of different lengths in one graph make distances meaningless. Dimensions is set for a
 	// directly-written field, so check against it. It is 0 only for an @embedding field, where the
 	// model fixes the length, so the only guard left is against an empty vector.
 	if index.vectorDesc.Dimensions > 0 && len(vec) != int(index.vectorDesc.Dimensions) {
-		return NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
+		return false, NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
 	}
 	if len(vec) == 0 {
-		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
+		return false, NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
 	}
 
-	return idx.Insert(nodeID, vec)
+	if index.deferNow() {
+		return true, index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingUpsert,
+			Vector: vec,
+		})
+	}
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
+		// Applying inline: either the pending list is full, or this collection object was loaded
+		// while the index was building and has not noticed the build finished. Delete first, as the
+		// writer does, so the graph's vector is replaced.
+		if err := index.applyInline(ctx, collectionShortID, nodeID); err != nil {
+			return false, err
+		}
+		if err := idx.Delete(nodeID); err != nil {
+			return false, err
+		}
+	}
+	return true, idx.Insert(nodeID, vec)
+}
+
+// applyInline prepares an inline write to a deferred index. The node may still have an older
+// pending entry, which the background writer would later apply over this write, so it is removed.
+// The writer is also woken on commit: an inline write usually means the pending list is full, and
+// the writer would otherwise only notice on its next retry.
+func (index *collectionVectorIndex) applyInline(ctx context.Context, collectionShortID uint32, nodeID uint64) error {
+	err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
+	if err != nil {
+		return err
+	}
+	if w := index.maintenanceWriter(); w != nil {
+		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+			key := index.maintenanceKey()
+			txn.OnSuccess(func() { w.markDirty(key) })
+		}
+	}
+	return nil
+}
+
+// isDeferred reports whether writes to this index go to the pending list instead of the graph. An
+// index that is still building stays inline: the backfill reads the documents, so it covers them.
+func (index *collectionVectorIndex) isDeferred() bool {
+	return index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred && !index.building
+}
+
+// maintenanceWriter returns the background writer of the DB this index belongs to, or nil if the
+// collection is not backed by a DB.
+func (index *collectionVectorIndex) maintenanceWriter() *vectorMaintenanceWriter {
+	if c, ok := index.collection.(*collection); ok && c.db != nil {
+		return c.db.vectorMaintenance
+	}
+	return nil
+}
+
+func (index *collectionVectorIndex) maintenanceKey() vectorIndexRef {
+	return vectorIndexRef{index.collection.Version().CollectionID, index.desc.ID}
+}
+
+// deferNow reports whether a write should go to the pending list. An index whose pending list has
+// outgrown the background writer applies writes inline instead, which slows the writers down rather
+// than letting the list grow without bound.
+func (index *collectionVectorIndex) deferNow() bool {
+	if !index.isDeferred() {
+		return false
+	}
+	w := index.maintenanceWriter()
+	return w == nil || !w.overLimit(index.maintenanceKey(), index.vectorDesc)
+}
+
+// putPending records a pending write and arranges for the background writer to be woken once the
+// transaction commits.
+func (index *collectionVectorIndex) putPending(
+	ctx context.Context,
+	collectionShortID uint32,
+	entry vectorindex.PendingEntry,
+) error {
+	err := vectorindex.PutPending(ctx, collectionShortID, index.desc.ID, index.epoch, entry)
+	if err != nil {
+		return err
+	}
+	if w := index.maintenanceWriter(); w != nil {
+		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+			key := index.maintenanceKey()
+			txn.OnSuccess(func() { w.noteWrite(key) })
+		}
+	}
+	return nil
 }
 
 // Update re-indexes a document whose vector changed. A document keeps the same id across an update,
 // so the old and new vectors map to the same node; delete-then-save re-inserts it. (The binding
 // handles the in-place replacement; see the vectorindex package.)
 func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	if index.deferNow() {
+		// A pending upsert already replaces the node's old vector when it is applied, so it is all
+		// we need. Writing a pending delete first would just be overwritten, and the pending count
+		// would go up twice for one entry.
+		saved, err := index.save(ctx, newDoc)
+		if err != nil {
+			return err
+		}
+		if saved {
+			return nil
+		}
+		// The update cleared the vector, so the document must leave the index.
+		return index.Delete(ctx, oldDoc)
+	}
 	if err := index.Delete(ctx, oldDoc); err != nil {
 		return err
 	}
@@ -596,6 +702,19 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 		return NewErrCorruptedVectorIndex(index.desc.Name, doc.ID().String())
 	}
 
+	if index.deferNow() {
+		return index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingDelete,
+		})
+	}
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
+		// Applying inline: either the pending list is full, or this collection object was loaded
+		// while the index was building and has not noticed the build finished.
+		if err := index.applyInline(ctx, collectionShortID, nodeID); err != nil {
+			return err
+		}
+	}
 	return idx.Delete(nodeID)
 }
 

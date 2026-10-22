@@ -119,6 +119,18 @@ func (*OrderedIndexDescription) isIndexKindDescription() {}
 
 var _ IndexKindDescription = (*OrderedIndexDescription)(nil)
 
+// VectorIndexMaintenance selects when a vector index's graph is updated after a write.
+type VectorIndexMaintenance string
+
+const (
+	// VectorIndexMaintenanceSync maintains the graph in the writing transaction. It is the default.
+	VectorIndexMaintenanceSync VectorIndexMaintenance = "SYNC"
+	// VectorIndexMaintenanceDeferred records the change in a pending list in the writing transaction
+	// and a background writer applies it to the graph later. Searches merge the pending list, so a
+	// committed write is searchable right away, as with [VectorIndexMaintenanceSync].
+	VectorIndexMaintenanceDeferred VectorIndexMaintenance = "DEFERRED"
+)
+
 // VectorIndexDescription is the config for a vector (ANN) index.
 type VectorIndexDescription struct {
 	// Fields are the names of the indexed fields. Names only: a graph is searched by nearness, so
@@ -133,6 +145,9 @@ type VectorIndexDescription struct {
 	Dimensions uint32
 	// HNSW holds HNSW-specific parameters. Non-nil when Algorithm == VectorAlgorithmHNSW.
 	HNSW *HNSWParams
+	// Maintenance selects when index changes are applied to the graph. Empty means
+	// [VectorIndexMaintenanceSync].
+	Maintenance VectorIndexMaintenance `json:",omitempty"`
 }
 
 func (*VectorIndexDescription) isIndexKindDescription() {}

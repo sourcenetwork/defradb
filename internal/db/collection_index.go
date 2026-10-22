@@ -640,6 +640,13 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
+	// An empty maintenance means SYNC and is left empty, so existing descriptions stay unchanged.
+	switch desc.Vector.Maintenance {
+	case "", client.VectorIndexMaintenanceSync, client.VectorIndexMaintenanceDeferred:
+	default:
+		return NewErrVectorIndexUnknownMaintenance(string(desc.Vector.Maintenance))
+	}
+
 	if err := validateNoConflictingVectorIndexMetric(def, fieldName, desc.Vector.Metric); err != nil {
 		return err
 	}
