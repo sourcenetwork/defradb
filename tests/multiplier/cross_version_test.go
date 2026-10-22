@@ -34,22 +34,22 @@ func nodeAt(t *testing.T, actions action.Actions, i int) *action.NewNode {
 	return node
 }
 
-func oldSource() *crossVersion {
-	return &crossVersion{name: CrossVersionOldSource, oldNodeFirst: true}
+func oldFirst() *crossVersion {
+	return &crossVersion{name: CrossVersionOldFirst, oldNodeFirst: true}
 }
 
-func newSource() *crossVersion {
-	return &crossVersion{name: CrossVersionNewSource, oldNodeFirst: false}
+func oldLast() *crossVersion {
+	return &crossVersion{name: CrossVersionOldLast, oldNodeFirst: false}
 }
 
 func TestCrossVersionNames_Stable(t *testing.T) {
 	// The names are part of the CI contract, used in DEFRA_MULTIPLIERS and in
 	// MultiplierExcludes. Changing them breaks workflow config and every test
 	// that opts out.
-	assert.Equal(t, "cross-version-old-source", string(CrossVersionOldSource))
-	assert.Equal(t, "cross-version-new-source", string(CrossVersionNewSource))
-	assert.Equal(t, CrossVersionOldSource, oldSource().Name())
-	assert.Equal(t, CrossVersionNewSource, newSource().Name())
+	assert.Equal(t, "cross-version-old-first", string(CrossVersionOldFirst))
+	assert.Equal(t, "cross-version-old-last", string(CrossVersionOldLast))
+	assert.Equal(t, CrossVersionOldFirst, oldFirst().Name())
+	assert.Equal(t, CrossVersionOldLast, oldLast().Name())
 }
 
 func TestCrossVersion_ImplementsInterfaces(t *testing.T) {
@@ -59,50 +59,50 @@ func TestCrossVersion_ImplementsInterfaces(t *testing.T) {
 }
 
 func TestCrossVersion_IsRegistered(t *testing.T) {
-	m.Init("__cross_version_test_unset_env__", CrossVersionOldSource, CrossVersionNewSource)
+	m.Init("__cross_version_test_unset_env__", CrossVersionOldFirst, CrossVersionOldLast)
 	t.Cleanup(func() {
 		m.Init("__cross_version_test_unset_env__")
 	})
 
 	active := m.Get()
-	assert.Contains(t, active, string(CrossVersionOldSource))
-	assert.Contains(t, active, string(CrossVersionNewSource))
+	assert.Contains(t, active, string(CrossVersionOldFirst))
+	assert.Contains(t, active, string(CrossVersionOldLast))
 }
 
 func TestCrossVersionApply_WithEmptyActions_ReturnsEmpty(t *testing.T) {
-	result := oldSource().Apply(action.Actions{})
+	result := oldFirst().Apply(action.Actions{})
 
 	assert.Empty(t, result)
 }
 
 func TestCrossVersionApply_WithNilActions_ReturnsNil(t *testing.T) {
-	result := oldSource().Apply(nil)
+	result := oldFirst().Apply(nil)
 
 	assert.Nil(t, result)
 }
 
-func TestCrossVersionApply_OldSource_VersionsFirstNode(t *testing.T) {
+func TestCrossVersionApply_OldFirst_VersionsFirstNode(t *testing.T) {
 	first := action.RandomNetworkingConfig()
 	second := action.RandomNetworkingConfig()
 	source := action.Actions{first, second}
 
-	result := oldSource().Apply(source)
+	result := oldFirst().Apply(source)
 
 	require.Len(t, result, 2)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 0).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 0).Version)
 	assert.Equal(t, "", nodeAt(t, result, 1).Version)
 }
 
-func TestCrossVersionApply_NewSource_VersionsLastNode(t *testing.T) {
+func TestCrossVersionApply_OldLast_VersionsLastNode(t *testing.T) {
 	first := action.RandomNetworkingConfig()
 	second := action.RandomNetworkingConfig()
 	source := action.Actions{first, second}
 
-	result := newSource().Apply(source)
+	result := oldLast().Apply(source)
 
 	require.Len(t, result, 2)
 	assert.Equal(t, "", nodeAt(t, result, 0).Version)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 1).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 1).Version)
 }
 
 func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
@@ -112,12 +112,12 @@ func TestCrossVersionApply_WithThreeNodes_VersionsOnlyOne(t *testing.T) {
 		action.RandomNetworkingConfig(),
 	}
 
-	result := newSource().Apply(source)
+	result := oldLast().Apply(source)
 
 	require.Len(t, result, 3)
 	assert.Equal(t, "", nodeAt(t, result, 0).Version)
 	assert.Equal(t, "", nodeAt(t, result, 1).Version)
-	assert.Equal(t, CrossVersionTargetVersion, nodeAt(t, result, 2).Version)
+	assert.Equal(t, crossVersionTarget, nodeAt(t, result, 2).Version)
 }
 
 func TestCrossVersionApply_LeavesOtherActionsUntouched(t *testing.T) {
@@ -128,7 +128,7 @@ func TestCrossVersionApply_LeavesOtherActionsUntouched(t *testing.T) {
 		action.RandomNetworkingConfig(),
 	}
 
-	result := oldSource().Apply(source)
+	result := oldFirst().Apply(source)
 
 	require.Len(t, result, 3)
 	assert.Same(t, add, result[1], "non node-config actions must not be replaced")
@@ -140,7 +140,7 @@ func TestCrossVersionApply_DoesNotMutateSource(t *testing.T) {
 	first := action.RandomNetworkingConfig()
 	source := action.Actions{first, action.RandomNetworkingConfig()}
 
-	oldSource().Apply(source)
+	oldFirst().Apply(source)
 
 	assert.Equal(t, "", first.Version, "the original config must be unchanged")
 }
@@ -151,7 +151,7 @@ func TestCrossVersionApply_PreservesNetworkingConfig(t *testing.T) {
 		action.RandomNetworkingConfig(),
 	}
 
-	result := oldSource().Apply(source)
+	result := oldFirst().Apply(source)
 
 	versioned := nodeAt(t, result, 0)
 	assert.True(t, versioned.Network.HasValue(), "networking config must survive the rewrite")
@@ -161,7 +161,7 @@ func TestCrossVersionApply_PreservesNetworkingConfig(t *testing.T) {
 func TestCrossVersionApply_WithSingleNode_ReturnsSourceUnchanged(t *testing.T) {
 	source := action.Actions{action.RandomNetworkingConfig()}
 
-	result := oldSource().Apply(source)
+	result := oldFirst().Apply(source)
 
 	assert.Equal(t, "", nodeAt(t, result, 0).Version)
 }
@@ -170,13 +170,13 @@ func TestCrossVersionShouldSkip_WithSingleNode_Skips(t *testing.T) {
 	// A single node has nothing to check compatibility against.
 	actions := action.Actions{action.RandomNetworkingConfig()}
 
-	assert.True(t, oldSource().ShouldSkip(actions))
+	assert.True(t, oldFirst().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithNoNodes_Skips(t *testing.T) {
 	actions := action.Actions{&action.AddCollection{SDL: "type User { name: String }"}}
 
-	assert.True(t, oldSource().ShouldSkip(actions))
+	assert.True(t, oldFirst().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithTwoNodes_DoesNotSkip(t *testing.T) {
@@ -185,8 +185,8 @@ func TestCrossVersionShouldSkip_WithTwoNodes_DoesNotSkip(t *testing.T) {
 		action.RandomNetworkingConfig(),
 	}
 
-	assert.False(t, oldSource().ShouldSkip(actions))
-	assert.False(t, newSource().ShouldSkip(actions))
+	assert.False(t, oldFirst().ShouldSkip(actions))
+	assert.False(t, oldLast().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithWritesNamingTheirNode_DoesNotSkip(t *testing.T) {
@@ -197,8 +197,8 @@ func TestCrossVersionShouldSkip_WithWritesNamingTheirNode_DoesNotSkip(t *testing
 		&action.UpdateDoc{NodeID: immutable.Some(0), Doc: `{"Name": "Fred"}`},
 	}
 
-	assert.False(t, oldSource().ShouldSkip(actions))
-	assert.False(t, newSource().ShouldSkip(actions))
+	assert.False(t, oldFirst().ShouldSkip(actions))
+	assert.False(t, oldLast().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithWritesNotNamingTheirNode_DoesNotSkip(t *testing.T) {
@@ -212,8 +212,8 @@ func TestCrossVersionShouldSkip_WithWritesNotNamingTheirNode_DoesNotSkip(t *test
 		&action.UpdateDoc{Doc: `{"Name": "Fred"}`},
 	}
 
-	assert.False(t, oldSource().ShouldSkip(actions))
-	assert.False(t, newSource().ShouldSkip(actions))
+	assert.False(t, oldFirst().ShouldSkip(actions))
+	assert.False(t, oldLast().ShouldSkip(actions))
 }
 
 func TestCrossVersionShouldSkip_WithVersionAlreadySet_Skips(t *testing.T) {
@@ -224,12 +224,12 @@ func TestCrossVersionShouldSkip_WithVersionAlreadySet_Skips(t *testing.T) {
 		action.RandomNetworkingConfig().WithVersion("v1.0.0"),
 	}
 
-	assert.True(t, oldSource().ShouldSkip(actions))
+	assert.True(t, oldFirst().ShouldSkip(actions))
 }
 
 func TestMakesNodeExternal_WithCrossVersionMultipliers_ReturnsTrue(t *testing.T) {
-	assert.True(t, MakesNodeExternal(CrossVersionOldSource))
-	assert.True(t, MakesNodeExternal(CrossVersionNewSource))
+	assert.True(t, MakesNodeExternal(CrossVersionOldFirst))
+	assert.True(t, MakesNodeExternal(CrossVersionOldLast))
 }
 
 func TestMakesNodeExternal_WithOtherMultipliers_ReturnsFalse(t *testing.T) {
