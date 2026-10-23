@@ -13,6 +13,7 @@ package graphql
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
@@ -34,7 +35,8 @@ var _ core.Parser = (*parser)(nil)
 var tracer = telemetry.NewTracer()
 
 type parser struct {
-	schemaManager                 *schema.SchemaManager
+	// schemaManager is replaced when a schema change commits, while requests may be reading it.
+	schemaManager                 atomic.Pointer[schema.SchemaManager]
 	isSearchableEncryptionEnabled bool
 	// In the cases of transactions, we need to store a schema manager for each transaction
 	schemaManagerMapLock sync.RWMutex
@@ -48,11 +50,11 @@ func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
 	}
 
 	p := &parser{
-		schemaManager:                 schemaManager,
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 		schemaManagerMapLock:          sync.RWMutex{},
 		schemaManagerMap:              make(map[uint64]*schema.SchemaManager),
 	}
+	p.schemaManager.Store(schemaManager)
 
 	return p, nil
 }
@@ -75,7 +77,7 @@ func (p *parser) BuildRequestAST(ctx context.Context, request string) (*ast.Docu
 }
 
 func (p *parser) IsIntrospection(ast *ast.Document) bool {
-	schema := p.schemaManager.Schema()
+	schema := p.schemaManager.Load().Schema()
 	return defrap.IsIntrospectionQuery(*schema, ast)
 }
 
@@ -83,7 +85,7 @@ func (p *parser) ExecuteIntrospection(ctx context.Context, request string) *clie
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
-	schema := p.schemaManager.Schema()
+	schema := p.schemaManager.Load().Schema()
 	params := gql.Params{Schema: *schema, RequestString: request}
 	r := gql.Do(params)
 
@@ -107,7 +109,7 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	// If there is a transaction, we will check to see if we have a store schema manager for it
 	// If we don't, or if we don't have a transaction at all, then we use the default schema manager
 	gotTxn, hadTxn := datastore.CtxTryGetTxn(ctx)
-	schema := p.schemaManager.Schema()
+	schema := p.schemaManager.Load().Schema()
 	if hadTxn {
 		p.schemaManagerMapLock.RLock()
 		gotSchemaManager, ok := p.schemaManagerMap[gotTxn.ID()]
@@ -115,7 +117,7 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 		if ok {
 			schema = gotSchemaManager.Schema()
 		} else {
-			schema = p.schemaManager.Schema()
+			schema = p.schemaManager.Load().Schema()
 		}
 	}
 
@@ -135,7 +137,7 @@ func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, e
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
-	return p.schemaManager.ParseSDL(sdl)
+	return p.schemaManager.Load().ParseSDL(sdl)
 }
 
 func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionVersion) error {
@@ -164,7 +166,7 @@ func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionV
 
 	txn.OnSuccess(
 		func() {
-			p.schemaManager = schemaManager
+			p.schemaManager.Store(schemaManager)
 			// If the txn ID is in the schema manager map, remove it
 			p.schemaManagerMapLock.Lock()
 			delete(p.schemaManagerMap, txn.ID())
@@ -197,5 +199,5 @@ func (p *parser) NewFilterFromString(
 			return defrap.NewFilterFromString(*gotSchemaManager.Schema(), collectionType, body)
 		}
 	}
-	return defrap.NewFilterFromString(*p.schemaManager.Schema(), collectionType, body)
+	return defrap.NewFilterFromString(*p.schemaManager.Load().Schema(), collectionType, body)
 }
