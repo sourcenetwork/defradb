@@ -47,23 +47,25 @@ func CommitObject(
 	// we need the fieldThunk since we are creating a circular type reference
 	var commitObject *gql.Object
 	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
-		commitLinkType := &gql.Field{
-			Description: commitLinksDescription,
-			Type:        gql.NewList(commitObject),
-			Args: gql.FieldConfigArgument{
-				request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
-				request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
-				"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-				request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),
-				"groupBy": NewArgConfig(
-					gql.NewList(
-						gql.NewNonNull(
-							commitsEnum,
+		newCommitLinkField := func(description string) *gql.Field {
+			return &gql.Field{
+				Description: description,
+				Type:        gql.NewList(commitObject),
+				Args: gql.FieldConfigArgument{
+					request.DocIDArgName: NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitDocIDArgDescription),
+					request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
+					"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+					request.CidArgName:   NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), commitCIDArgDescription),
+					"groupBy": NewArgConfig(
+						gql.NewList(
+							gql.NewNonNull(
+								commitsEnum,
+							),
 						),
+						GroupByArgDescription,
 					),
-					GroupByArgDescription,
-				),
-			},
+				},
+			}
 		}
 
 		fields := gql.Fields{
@@ -91,8 +93,8 @@ func CommitObject(
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
 			},
-			request.LinksFieldName: commitLinkType,
-			request.HeadsFieldName: commitLinkType,
+			request.LinksFieldName: newCommitLinkField(commitLinksDescription),
+			request.HeadsFieldName: newCommitLinkField(commitHeadsDescription),
 			request.SignatureFieldName: &gql.Field{
 				Description: signatureDescription,
 				Type: gql.NewObject(gql.ObjectConfig{
@@ -131,7 +133,7 @@ func CommitObject(
 									Value:       "links",
 								},
 								"heads": &gql.EnumValueConfig{
-									Description: commitLinksDescription,
+									Description: commitHeadsDescription,
 									Value:       "heads",
 								},
 							},

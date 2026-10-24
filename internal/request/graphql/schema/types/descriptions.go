@@ -62,6 +62,12 @@ Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
 `
+	commitHeadsDescription string = `
+Prior commits in the DAG that this commit was built upon to advance history.
+ Composite commits link to prior composite commits for the document.
+ Field commits link to prior field commits for the same field. Collection
+ commits link to prior collection commits.
+`
 	signatureDescription string = `
 The signature of the commit, if one exists. This is used to verify the integrity
  of the commit and the data it contains.
