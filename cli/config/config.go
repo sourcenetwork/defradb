@@ -45,7 +45,7 @@ const (
 
 // ConfigPaths are config keys that will be made relative to the rootdir
 var ConfigPaths = []string{
-	"datastore.badger.path",
+	"datastore.path",
 	"api.pubkeypath",
 	"api.privkeypath",
 	"keyring.path",
@@ -74,6 +74,7 @@ var ConfigFlags = map[string]string{
 	"no-p2p":                     "net.p2pdisabled",
 	"pubsub":                     "net.pubsubenabled",
 	"relay":                      "net.relay",
+	"p2p-block-sync-timeout":     "net.p2pblocksynctimeout",
 	"allowed-origins":            "api.allowed-origins",
 	"pubkeypath":                 "api.pubkeypath",
 	"privkeypath":                "api.privkeypath",
@@ -82,7 +83,7 @@ var ConfigFlags = map[string]string{
 	"keyring-path":               "keyring.path",
 	"no-keyring":                 "keyring.disabled",
 	"document-acp-type":          "acp.document.type",
-	"source-hub-address":         "acp.document.sourceHub.address",
+	"remote-dac-address":         "acp.document.remote.address",
 	"development":                "development",
 	"secret-file":                "secretfile",
 	"no-telemetry":               "telemetry.disabled",
@@ -94,7 +95,7 @@ var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
 	"api.audience":                      "",
 	"api.allowed-origins":               []string{},
-	"datastore.badger.path":             "data",
+	"datastore.path":                    "data",
 	"datastore.maxtxnretries":           5,
 	"datastore.store":                   "badger",
 	"datastore.badger.valuelogfilesize": 1 << 30,
@@ -104,6 +105,7 @@ var ConfigDefaults = map[string]any{
 	"net.peers":                         []string{},
 	"net.pubSubEnabled":                 true,
 	"net.relay":                         false,
+	"net.p2pblocksynctimeout":           30,
 	"keyring.backend":                   "file",
 	"keyring.disabled":                  false,
 	"keyring.namespace":                 "defradb",

@@ -27,7 +27,7 @@ import (
 //
 // Each delivered event triggers a fresh plan run inside handleSubscription so
 // the per-subscriber view can be re-evaluated. On ACP-gated collections that
-// plan does a DAC check, and under the source-hub backend the check takes time.
+// plan does a DAC check, and with Remote DAC that check takes time.
 const subscriptionTimeout = 5 * time.Second
 
 // postActionsGrace is how long we keep listening after all expected events
@@ -81,13 +81,14 @@ func (a *SubscriptionRequest) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
+		nodeID := nodeIDs[index]
 		reqOption := options.ExecRequest()
-		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIDs[index])
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			reqOption.SetIdentity(identOption.Value())
 		}
 
-		result := node.ExecRequest(a.s.Ctx, a.Request, reqOption)
+		result := node.ExecRequest(a.s.Ctx, replace(a.s, nodeID, a.Request), reqOption)
 		if assertErrors(a.s.T, result.GQL.Errors, a.ExpectedError) {
 			return
 		}
@@ -121,8 +122,9 @@ func (a *SubscriptionRequest) Execute() {
 						r,
 						a.ExpectedError,
 						nil,
-						0,
+						nodeID,
 						true,
+						nil,
 					)
 
 					assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

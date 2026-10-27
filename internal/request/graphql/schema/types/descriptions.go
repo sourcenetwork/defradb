@@ -86,8 +86,8 @@ The ID of the collection version that this commit was committed against. This ID
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
-The name of the field that this commit was committed against. If this is a composite
- or a collection the value will be null.
+The name of the field that this commit was committed against. The value is "_C" for composite
+ blocks and null for collection blocks.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
@@ -134,6 +134,15 @@ Returns the maximum of the specified field values within the specified child set
 Returns the minimum of the specified field values within the specified child sets. If
  multiple fields/sets are specified, the combined minimum of all items within each set
  will be returned as a single value.
+`
+	SimilarityFieldDescription string = `
+Returns how similar the given vector is to the specified field's value. The metric is
+ whichever one the field's vector index was created with, defaulting to cosine similarity
+ when the field has no vector index. Higher values are more similar for every metric.
+`
+	SimilarityArgDescription string = `
+The vector to compare the field's value against. It must have the same number of
+ dimensions as the values stored in the field.
 `
 	booleanOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on Boolean

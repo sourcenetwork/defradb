@@ -76,6 +76,9 @@ type UpdateDoc struct {
 
 	// If the given error is received, ignore the error and pretend the action succeeded.
 	IgnoreError string
+
+	// EnableSigning overrides node-level signing for this update.
+	EnableSigning immutable.Option[bool]
 }
 
 var _ Action = (*UpdateDoc)(nil)
@@ -117,7 +120,7 @@ func (a *UpdateDoc) Execute() {
 			doNotWaitForUpdate = true // if using txn, we skip local update wait
 		}
 
-		collections, err := getCanonicallyOrderedCollections(a.s, node, txnOption)
+		collections, err := GetCollectionsCanonically(a.s, node, txnOption, a.Identity)
 		if err != nil {
 			if len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError) {
 				continue
@@ -178,7 +181,7 @@ func updateDocViaColSave(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(replace(s, nodeIndex, action.Doc)))
 	if err != nil {
 		return err
 	}
@@ -186,6 +189,9 @@ func updateDocViaColSave(
 	saveOpts := options.SaveDocument()
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		saveOpts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return collection.SaveDocument(ctx, doc, saveOpts)
 }
@@ -216,7 +222,7 @@ func updateDocViaColUpdate(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(replace(s, nodeIndex, action.Doc)))
 	if err != nil {
 		return err
 	}
@@ -224,6 +230,9 @@ func updateDocViaColUpdate(
 	updateOpts := options.UpdateDocument()
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
+	}
+	if action.EnableSigning.HasValue() {
+		updateOpts.SetEnableSigning(action.EnableSigning.Value())
 	}
 	return collection.UpdateDocument(ctx, doc, updateOpts)
 }
@@ -246,7 +255,7 @@ func updateDocViaGQL(
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
 
-	input, err := jsonToGQL(action.Doc)
+	input, err := jsonToGQL(replace(s, nodeIndex, action.Doc))
 	require.NoError(s.T, err)
 
 	request := fmt.Sprintf(

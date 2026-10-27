@@ -26,6 +26,7 @@ func MakeDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var file string
 	var shouldEncryptDoc bool
 	var encryptedFields []string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "add [<document>]",
 		Short: "Add a new document.",
@@ -81,20 +82,30 @@ Options:
 					SetEncryptedFields(encryptedFields),
 				identity.FromContext(ctx),
 			)
+			// Bool flags are tri-state here: unset means use node config, false means disable.
+			if cmd.Flags().Changed("enable-signing") {
+				addOpt.SetEnableSigning(enableSigning)
+			}
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
 				if err != nil {
 					return NewErrParsingArgument("document", err)
 				}
-				return col.AddManyDocuments(ctx, docs, addOpt)
+				if err := col.AddManyDocuments(ctx, docs, addOpt); err != nil {
+					return err
+				}
+				return writeJSON(cmd, client.DocumentIDs(docs))
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
 				return NewErrParsingArgument("document", err)
 			}
-			return col.AddDocument(cmd.Context(), doc, addOpt)
+			if err := col.AddDocument(cmd.Context(), doc, addOpt); err != nil {
+				return err
+			}
+			return writeJSON(cmd, client.DocumentIDs([]*client.Document{doc}))
 		},
 	}
 
@@ -119,6 +130,7 @@ Options:
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,
 		"Comma-separated list of fields to encrypt")
 	cmd.Flags().StringVarP(&file, "file", "f", "", "File containing document(s)")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

@@ -18,10 +18,10 @@ import "C"
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client/options"
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 //export ExecuteQuery
@@ -41,8 +41,8 @@ func ExecuteQuery(
 	}
 	varsStr := C.GoString(variables)
 	if varsStr != "" {
-		var vars map[string]any
-		if err := json.Unmarshal([]byte(varsStr), &vars); err != nil {
+		vars, err := utils.DecodeJSONVariables([]byte(varsStr))
+		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		opt.SetVariables(vars)

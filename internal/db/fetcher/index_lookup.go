@@ -27,14 +27,14 @@ import (
 // It currently exposes Has for existence checks; a value-returning Fetch/Get can be added later
 // without callers needing to learn the key layout.
 type IndexLookup struct {
-	shortID    uint32
-	indexID    uint32
-	epoch      uint32
-	descending bool
+	collectionShortID uint32
+	indexID           uint32
+	epoch             uint32
+	descending        bool
 }
 
 // NewIndexLookup resolves everything an index lookup needs once: the collection's short ID and the
-// index's live epoch. The index must be single-field; index.Fields[0] supplies the field ordering.
+// index's live epoch. The index must be single-field; its first field supplies the ordering.
 func NewIndexLookup(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -43,7 +43,7 @@ func NewIndexLookup(
 ) (*IndexLookup, error) {
 	collectionID := col.Version().CollectionID
 
-	shortID, err := id.GetShortCollectionID(ctx, collectionID)
+	collectionShortID, err := id.GetCollectionShortID(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +54,10 @@ func NewIndexLookup(
 	}
 
 	return &IndexLookup{
-		shortID:    shortID,
-		indexID:    index.ID,
-		epoch:      epoch,
-		descending: index.Fields[0].Descending,
+		collectionShortID: collectionShortID,
+		indexID:           index.ID,
+		epoch:             epoch,
+		descending:        index.GetFields()[0].Descending,
 	}, nil
 }
 
@@ -65,7 +65,7 @@ func NewIndexLookup(
 // to ctx. The caller owns fetch accounting.
 func (l *IndexLookup) Has(ctx context.Context, value client.NormalValue) (bool, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
-	key := keys.NewIndexDataStoreKey(l.shortID, l.indexID, l.epoch, []keys.IndexedField{
+	key := keys.NewIndexDataStoreKey(l.collectionShortID, l.indexID, l.epoch, []keys.IndexedField{
 		{Value: value, Descending: l.descending},
 	})
 	return txn.Datastore().Has(ctx, &key)

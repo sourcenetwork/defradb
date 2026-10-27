@@ -11,9 +11,11 @@
 package client
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCollectIndexesOnField(t *testing.T) {
@@ -126,4 +128,128 @@ func TestCollectIndexesOnField(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+// A descriptor persisted before the Kind field existed has only a top-level Unique. It must
+// still load, reading that Unique into both the ordered config and the compat Unique field.
+func TestIndexDescription_LegacyUnique_LoadsAsOrdered(t *testing.T) {
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Unique":true}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(json1), &actual)
+	require.NoError(t, err)
+
+	assert.False(t, actual.IsVector())
+	assert.True(t, actual.GetUnique())
+	assert.True(t, actual.Unique) // compat field synced from the resolved config
+	assert.Equal(t, IndexKindOrdered, actual.Kind)
+	// The legacy top-level fields are upgraded onto the config.
+	assert.Equal(t, &OrderedIndexDescription{
+		Unique: true,
+		Fields: []IndexedFieldDescription{{Name: "age"}},
+	}, actual.KindDescription)
+}
+
+// An embedded caller that predates Kind builds the struct with only the top-level Unique. It must
+// behave correctly (GetUnique) and marshal a top-level Unique so an old reader still sees it.
+func TestIndexDescription_CompatUniqueOnly_Works(t *testing.T) {
+	desc := IndexDescription{
+		Name:   "x",
+		ID:     1,
+		Fields: []IndexedFieldDescription{{Name: "age"}},
+		Unique: true, // no Kind set, as old callers do
+	}
+	assert.True(t, desc.GetUnique())
+	assert.False(t, desc.IsVector())
+
+	bytes, err := json.Marshal(desc)
+	require.NoError(t, err)
+
+	// An old reader (no Kind field) must still see the uniqueness at the top level.
+	var oldReader struct{ Unique bool }
+	require.NoError(t, json.Unmarshal(bytes, &oldReader))
+	assert.True(t, oldReader.Unique)
+}
+
+func TestIndexDescription_OrderedDescriptor_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:   "some_unique_index",
+		ID:     1,
+		Fields: []IndexedFieldDescription{{Name: "age"}},
+		// A fully-formed ordered descriptor sets the compat Unique and the config, in sync.
+		Unique:          true,
+		Kind:            IndexKindOrdered,
+		KindDescription: &OrderedIndexDescription{Unique: true},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	err = json.Unmarshal(bytes, &actual)
+	require.NoError(t, err)
+
+	assert.False(t, actual.IsVector())
+	assert.True(t, actual.GetUnique())
+	originalConfig, ok := original.KindDescription.(*OrderedIndexDescription)
+	require.True(t, ok)
+	actualConfig, ok := actual.KindDescription.(*OrderedIndexDescription)
+	require.True(t, ok)
+	// The round trip upgrades the config with the fields; original is left untouched, since
+	// marshalling must not mutate its argument.
+	assert.Nil(t, originalConfig.Fields)
+	assert.Equal(t, original.Fields, actualConfig.Fields)
+	assert.Equal(t, original.Fields, actual.Fields)
+	assert.Equal(t, original.Name, actual.Name)
+	assert.Equal(t, original.ID, actual.ID)
+	assert.Equal(t, original.Kind, actual.Kind)
+}
+
+func TestIndexDescription_VectorDescriptor_RoundTrips(t *testing.T) {
+	original := IndexDescription{
+		Name:   "some_vector_index",
+		ID:     2,
+		Fields: []IndexedFieldDescription{{Name: "embedding"}},
+		Kind:   IndexKindVector,
+		KindDescription: &VectorIndexDescription{
+			Algorithm:  VectorAlgorithmHNSW,
+			Metric:     DistanceMetricCosine,
+			Dimensions: 128,
+			HNSW: &HNSWParams{
+				M:              16,
+				EfConstruction: 200,
+				EfSearch:       50,
+			},
+		},
+	}
+
+	bytes, err := json.Marshal(original)
+	require.NoError(t, err)
+
+	var actual IndexDescription
+	err = json.Unmarshal(bytes, &actual)
+	require.NoError(t, err)
+
+	require.True(t, actual.IsVector())
+	originalConfig, ok := original.KindDescription.(*VectorIndexDescription)
+	require.True(t, ok)
+	actualConfig, ok := actual.KindDescription.(*VectorIndexDescription)
+	require.True(t, ok)
+	// The round trip upgrades the config with the field names; original is left untouched.
+	assert.Nil(t, originalConfig.Fields)
+	assert.Equal(t, []string{"embedding"}, actualConfig.Fields)
+	assert.Equal(t, original.Fields, actual.Fields)
+	assert.Equal(t, original.Name, actual.Name)
+	assert.Equal(t, original.ID, actual.ID)
+	assert.Equal(t, original.Kind, actual.Kind)
+}
+
+// Kind is the sole authority on the index kind, so a descriptor naming a kind this build does not
+// know cannot be loaded: silently defaulting it would misread the index.
+func TestIndexDescription_UnknownKind_Errors(t *testing.T) {
+	json1 := `{"Name":"x","ID":1,"Fields":[{"Name":"age"}],"Kind":42}`
+
+	var actual IndexDescription
+	err := json.Unmarshal([]byte(json1), &actual)
+	require.ErrorContains(t, err, "unknown index kind")
 }

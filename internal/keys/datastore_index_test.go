@@ -563,28 +563,33 @@ func TestIndexDataStoreKey_Decode(t *testing.T) {
 			wantErr: ErrInvalidKey,
 		},
 		{
-			name: "valid with doc ID field",
+			name: "valid with document short ID suffix",
 			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
 				CollectionShortID: 123,
 				IndexID:           456,
 				Fields: []IndexedField{
 					{Value: client.NewNormalString("test"), Descending: false},
-					{Value: client.NewNormalString("docID"), Descending: false},
 				},
+				DocShortID: 7,
 			}),
-			wantErr: nil, // This is valid - second field is treated as doc ID
+			wantErr: nil,
 		},
 		{
 			name: "too many fields",
-			data: EncodeIndexDataStoreKey(&IndexDataStoreKey{
-				CollectionShortID: 123,
-				IndexID:           456,
-				Fields: []IndexedField{
-					{Value: client.NewNormalString("test"), Descending: false},
-					{Value: client.NewNormalString("docID"), Descending: false},
-					{Value: client.NewNormalString("extra"), Descending: false},
-				},
-			}),
+			data: append(
+				append(
+					EncodeIndexDataStoreKey(&IndexDataStoreKey{
+						CollectionShortID: 123,
+						IndexID:           456,
+						Fields: []IndexedField{
+							{Value: client.NewNormalString("test"), Descending: false},
+						},
+						DocShortID: 7,
+					}),
+					'/',
+				),
+				encoding.EncodeStringAscending(nil, "extra")...,
+			),
 			wantErr: ErrInvalidKey,
 		},
 	}

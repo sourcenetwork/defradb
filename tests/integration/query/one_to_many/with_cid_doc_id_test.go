@@ -39,11 +39,11 @@ import (
 // 				`{
 // 					"name": "Painted House",
 // 					"rating": 4.9,
-// 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+// 					"_authorID": "{{.DocID1_0}}"
 // 				}`,
 // 			},
 // 			//authors
-// 			1: { // bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+// 			1: { // {{.DocID1_0}}
 // 				`{
 // 					"name": "John Grisham",
 // 					"age": 65,
@@ -85,16 +85,16 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 0,
-				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
+				// {{.DocID0_0}}
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -105,7 +105,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 				Request: `query {
 					Book (
 							cid: "{{.CID0_0_0}}"
-							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 						author {
@@ -127,6 +127,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -155,16 +156,16 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 0,
-				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
+				// {{.DocID0_0}}
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -181,7 +182,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 				Request: `query {
 					Book (
 							cid: "{{.CID0_0_0}}",
-							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+							docID: "{{.DocID0_0}}"
 						) {
 						name
 						author {
@@ -205,6 +206,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -229,16 +231,16 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 0,
-				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
+				// {{.DocID0_0}}
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -255,7 +257,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 				Request: `query {
 					Book (
 						cid: "{{.CID0_0_0}}",
-						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						rating
@@ -279,6 +281,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }
 
@@ -303,16 +306,16 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			},
 			&action.AddDoc{
 				CollectionID: 0,
-				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
+				// {{.DocID0_0}}
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
 				CollectionID: 1,
-				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
+				// {{.DocID1_0}}
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -329,7 +332,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 				Request: `query {
 					Book (
 						cid: "{{.CID0_0_1}}",
-						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+						docID: "{{.DocID0_0}}"
 					) {
 						name
 						rating
@@ -353,5 +356,6 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 		},
 	}
 
+	test.Actions = orderInitialDocs(test.Actions)
 	testUtils.ExecuteTestCase(t, test)
 }

@@ -183,7 +183,7 @@ func (n *minNode) Next() (bool, error) {
 						case float64:
 							res = res.SetFloat64(v)
 						default:
-							return nil
+							return value
 						}
 						if value == nil || res.Cmp(value) < 0 {
 							return res

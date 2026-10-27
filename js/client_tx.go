@@ -30,58 +30,59 @@ type transaction struct {
 	txn client.Txn
 	// txns is present only temporarily until we reach consensus on
 	// the DX of transactions.
-	txns *sync.Map
+	txns  *sync.Map
+	funcs *funcs
 }
 
-func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
-	wrapper := &transaction{txn, txns}
+func newTransaction(txn client.Txn, txns *sync.Map, funcs *funcs) js.Value {
+	wrapper := &transaction{txn, txns, funcs}
 	return js.ValueOf(map[string]any{
 		"id":                         txn.ID(),
-		"commit":                     goji.Async(wrapper.commit),
-		"discard":                    goji.Async(wrapper.discard),
-		"addCollection":              goji.Async(wrapper.addCollection),
-		"patchCollection":            goji.Async(wrapper.patchCollection),
-		"deleteCollection":           goji.Async(wrapper.deleteCollection),
-		"setActiveCollectionVersion": goji.Async(wrapper.setActiveCollectionVersion),
-		"addView":                    goji.Async(wrapper.addView),
-		"refreshViews":               goji.Async(wrapper.refreshViews),
-		"setMigration":               goji.Async(wrapper.setMigration),
-		"addLens":                    goji.Async(wrapper.addLens),
-		"listLenses":                 goji.Async(wrapper.listLenses),
-		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
-		"getCollections":             goji.Async(wrapper.getCollections),
-		"listIndexes":                goji.Async(wrapper.listIndexes),
-		"listAllEncryptedIndexes":    goji.Async(wrapper.listAllEncryptedIndexes),
-		"execRequest":                goji.Async(wrapper.execRequest),
-		"printDump":                  goji.Async(wrapper.printDump),
-		"basicImport":                goji.Async(wrapper.basicImport),
-		"basicExport":                goji.Async(wrapper.basicExport),
-		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
-		"addDACActorRelationship":    goji.Async(wrapper.addDACActorRelationship),
-		"deleteDACActorRelationship": goji.Async(wrapper.deleteDACActorRelationship),
-		"getNACStatus":               goji.Async(wrapper.getNACStatus),
-		"reEnableNAC":                goji.Async(wrapper.reEnableNAC),
-		"disableNAC":                 goji.Async(wrapper.disableNAC),
-		"addNACActorRelationship":    goji.Async(wrapper.addNACActorRelationship),
-		"deleteNACActorRelationship": goji.Async(wrapper.deleteNACActorRelationship),
-		"getNodeIdentity":            goji.Async(wrapper.getNodeIdentity),
-		"verifySignature":            goji.Async(wrapper.verifySignature),
-		"peerInfo":                   goji.Async(wrapper.peerInfo),
-		"activePeers":                goji.Async(wrapper.activePeers),
-		"connect":                    goji.Async(wrapper.connect),
-		"disconnect":                 goji.Async(wrapper.disconnect),
-		"addReplicator":              goji.Async(wrapper.addReplicator),
-		"deleteReplicator":           goji.Async(wrapper.deleteReplicator),
-		"listReplicators":            goji.Async(wrapper.listReplicators),
-		"addP2PCollections":          goji.Async(wrapper.addP2PCollections),
-		"deleteP2PCollections":       goji.Async(wrapper.deleteP2PCollections),
-		"listP2PCollections":         goji.Async(wrapper.listP2PCollections),
-		"addP2PDocuments":            goji.Async(wrapper.addP2PDocuments),
-		"deleteP2PDocuments":         goji.Async(wrapper.deleteP2PDocuments),
-		"listP2PDocuments":           goji.Async(wrapper.listP2PDocuments),
-		"syncDocuments":              goji.Async(wrapper.syncDocuments),
-		"syncCollectionVersions":     goji.Async(wrapper.syncCollectionVersions),
-		"syncBranchableCollection":   goji.Async(wrapper.syncBranchableCollection),
+		"commit":                     funcs.async(wrapper.commit),
+		"discard":                    funcs.async(wrapper.discard),
+		"addCollection":              funcs.async(wrapper.addCollection),
+		"patchCollection":            funcs.async(wrapper.patchCollection),
+		"deleteCollection":           funcs.async(wrapper.deleteCollection),
+		"setActiveCollectionVersion": funcs.async(wrapper.setActiveCollectionVersion),
+		"addView":                    funcs.async(wrapper.addView),
+		"refreshViews":               funcs.async(wrapper.refreshViews),
+		"setMigration":               funcs.async(wrapper.setMigration),
+		"addLens":                    funcs.async(wrapper.addLens),
+		"listLenses":                 funcs.async(wrapper.listLenses),
+		"getCollectionByName":        funcs.async(wrapper.getCollectionByName),
+		"getCollections":             funcs.async(wrapper.getCollections),
+		"listIndexes":                funcs.async(wrapper.listIndexes),
+		"listAllEncryptedIndexes":    funcs.async(wrapper.listAllEncryptedIndexes),
+		"execRequest":                funcs.async(wrapper.execRequest),
+		"printDump":                  funcs.async(wrapper.printDump),
+		"basicImport":                funcs.async(wrapper.basicImport),
+		"basicExport":                funcs.async(wrapper.basicExport),
+		"addDACPolicy":               funcs.async(wrapper.addDACPolicy),
+		"addDACActorRelationship":    funcs.async(wrapper.addDACActorRelationship),
+		"deleteDACActorRelationship": funcs.async(wrapper.deleteDACActorRelationship),
+		"getNACStatus":               funcs.async(wrapper.getNACStatus),
+		"reEnableNAC":                funcs.async(wrapper.reEnableNAC),
+		"disableNAC":                 funcs.async(wrapper.disableNAC),
+		"addNACActorRelationship":    funcs.async(wrapper.addNACActorRelationship),
+		"deleteNACActorRelationship": funcs.async(wrapper.deleteNACActorRelationship),
+		"getNodeIdentity":            funcs.async(wrapper.getNodeIdentity),
+		"verifySignature":            funcs.async(wrapper.verifySignature),
+		"peerInfo":                   funcs.async(wrapper.peerInfo),
+		"activePeers":                funcs.async(wrapper.activePeers),
+		"connect":                    funcs.async(wrapper.connect),
+		"disconnect":                 funcs.async(wrapper.disconnect),
+		"addReplicator":              funcs.async(wrapper.addReplicator),
+		"deleteReplicator":           funcs.async(wrapper.deleteReplicator),
+		"listReplicators":            funcs.async(wrapper.listReplicators),
+		"addP2PCollections":          funcs.async(wrapper.addP2PCollections),
+		"deleteP2PCollections":       funcs.async(wrapper.deleteP2PCollections),
+		"listP2PCollections":         funcs.async(wrapper.listP2PCollections),
+		"addP2PDocuments":            funcs.async(wrapper.addP2PDocuments),
+		"deleteP2PDocuments":         funcs.async(wrapper.deleteP2PDocuments),
+		"listP2PDocuments":           funcs.async(wrapper.listP2PDocuments),
+		"syncDocuments":              funcs.async(wrapper.syncDocuments),
+		"syncCollectionVersions":     funcs.async(wrapper.syncCollectionVersions),
+		"syncBranchableCollection":   funcs.async(wrapper.syncBranchableCollection),
 	})
 }
 
@@ -245,7 +246,7 @@ func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Va
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return newCollection(col), nil
+	return newCollection(col, t.funcs), nil
 }
 
 func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, error) {
@@ -260,7 +261,7 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 	}
 	wrappers := make([]any, len(cols))
 	for i, col := range cols {
-		wrappers[i] = newCollection(col)
+		wrappers[i] = newCollection(col, t.funcs)
 	}
 	return js.ValueOf(wrappers), nil
 }

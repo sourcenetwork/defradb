@@ -23,9 +23,23 @@ type ACPSystemType int
 
 const (
 	LocalDocumentACP ACPSystemType = iota
-	SourceHubDocumentACP
+	RemoteDocumentACP
 	NodeACP
 )
+
+// String returns the user-facing name of the ACP system type.
+func (acpType ACPSystemType) String() string {
+	switch acpType {
+	case LocalDocumentACP:
+		return "Local DAC"
+	case RemoteDocumentACP:
+		return "Remote DAC"
+	case NodeACP:
+		return "Node ACP"
+	default:
+		return "Unknown ACP"
+	}
+}
 
 var _ ResourceInterfacePermission = (*DocumentResourcePermission)(nil)
 var _ ResourceInterfacePermission = (*NodeResourcePermission)(nil)
@@ -328,7 +342,7 @@ func (resourcePermission NodeResourcePermission) IsForNACOperation() bool {
 	}
 }
 
-// RegistrationResult is an enum type which indicates the result of a RegisterObject call to SourceHub / ACP Core
+// RegistrationResult indicates the result of a RegisterObject call to Vera / ACP Core.
 type RegistrationResult int32
 
 const (

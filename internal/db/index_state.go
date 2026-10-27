@@ -40,14 +40,14 @@ type indexState struct {
 	Status client.ActionStatus
 	// Reason is the action's generic error reason, set when failed.
 	Reason string
-	// Watermark is the last indexed docID, decoded from the action payload while building.
-	Watermark string
+	// Watermark is the last indexed document short ID, decoded from the action payload while building.
+	Watermark uint64
 }
 
 // buildPayload is the opaque payload of a build (backfill) action record.
 type buildPayload struct {
-	// Watermark is the last indexed docID, letting an interrupted build resume.
-	Watermark string
+	// Watermark is the last indexed document short ID, letting an interrupted build resume.
+	Watermark uint64
 }
 
 func (s indexState) isBuilding() bool {
@@ -66,6 +66,7 @@ func (s indexState) isDropping() bool {
 // false for a ready index (no action record), reported as a Completed execution.
 func (s indexState) listResult(
 	collectionID string,
+	collectionName string,
 	desc client.IndexDescription,
 	hasState bool,
 ) client.ListIndexesResult {
@@ -80,7 +81,7 @@ func (s indexState) listResult(
 		exec.Status = s.Status
 		exec.Reason = s.Reason
 	}
-	return client.ListIndexesResult{Description: desc, Execution: exec}
+	return client.ListIndexesResult{CollectionName: collectionName, Description: desc, Execution: exec}
 }
 
 // indexSubject is the action subject segment for an index action: the index ID.
@@ -117,6 +118,23 @@ func getIndexEpoch(ctx context.Context, collectionID string, indexID uint32) (ui
 	return fetcher.ReadIndexEpoch(ctx, datastore.CtxMustGetTxn(ctx), collectionID, indexID)
 }
 
+// readIndexEpochByShortID resolves the live epoch from the epoch sequence keyed by the collection's
+// short ID, for callers that already have it (the stale-epoch marker stores it).
+func readIndexEpochByShortID(ctx context.Context, collectionShortID, indexID uint32) (uint32, error) {
+	return fetcher.ReadIndexEpochByShortID(ctx, datastore.CtxMustGetTxn(ctx), collectionShortID, indexID)
+}
+
+// readIndexBuildEpoch resolves the epoch a backfill fills, in its own short read-only transaction so
+// the caller can pin it for the whole build independent of any batch transaction.
+func (db *DB) readIndexBuildEpoch(ctx context.Context, collectionID string, indexID uint32) (uint32, error) {
+	rawTxn, err := db.NewTxn(true)
+	if err != nil {
+		return 0, err
+	}
+	defer rawTxn.Discard()
+	return getIndexEpoch(InitContext(ctx, rawTxn), collectionID, indexID)
+}
+
 // startIndexBuild records the start of a backfill and publishes an event. The record is
 // written on the transaction bound to ctx, so it commits atomically with any other work on
 // that transaction.
@@ -137,7 +155,7 @@ func (db *DB) startIndexDrop(ctx context.Context, collectionID string, indexID u
 
 // advanceIndexWatermark records build progress on the transaction bound to ctx, without
 // publishing an event since the status is unchanged.
-func (db *DB) advanceIndexWatermark(ctx context.Context, collectionID string, indexID uint32, watermark string) error {
+func (db *DB) advanceIndexWatermark(ctx context.Context, collectionID string, indexID uint32, watermark uint64) error {
 	payload, err := json.Marshal(buildPayload{Watermark: watermark})
 	if err != nil {
 		return err
@@ -164,6 +182,13 @@ func (db *DB) completeIndexBuild(ctx context.Context, collectionID string, index
 // completeIndexDrop deletes the drop action record, marking the index ready.
 func (db *DB) completeIndexDrop(ctx context.Context, collectionID string, indexID uint32) error {
 	return action.CompleteTxn(ctx, db.events, collectionID, client.DropIndexAction, indexSubject(indexID))
+}
+
+// clearIndexBuildRecord deletes any backfill action record (status, reason, payload) for the index
+// without publishing an event. Used when dropping an index to discard a leftover building or failed
+// record, which would otherwise be orphaned once the index definition is gone.
+func (db *DB) clearIndexBuildRecord(ctx context.Context, collectionID string, indexID uint32) error {
+	return action.ClearTxn(ctx, collectionID, client.BackfillIndexAction, indexSubject(indexID))
 }
 
 // indexStateRecord is one index action record: its index identity plus the decoded state. An
@@ -230,7 +255,16 @@ func scanIndexStates(ctx context.Context, prefix []byte, skipCorrupt bool) ([]in
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		state, err := loadIndexState(ctx, k, action.DecodeStatus(val))
+		status, err := action.DecodeStatus(val)
+		if err != nil {
+			if skipCorrupt {
+				log.ErrorE("Skipping index action record with invalid status encoding", err, corelog.String("key", key))
+				continue
+			}
+			return nil, errors.Join(err, iter.Close())
+		}
+
+		state, err := loadIndexState(ctx, k, status)
 		if err != nil {
 			if skipCorrupt {
 				log.ErrorE("Skipping index action record with undecodable data", err, corelog.String("key", key))

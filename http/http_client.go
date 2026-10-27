@@ -25,20 +25,28 @@ import (
 )
 
 type httpClient struct {
-	client  *http.Client
-	baseURL *url.URL
-	apiURL  *url.URL
+	client   *http.Client
+	baseURL  *url.URL
+	apiURL   *url.URL
+	identity identity.TokenIdentity
 }
 
-func newHttpClient(rawURL string) (*httpClient, error) {
+func newHttpClient(rawURL string, opts ...ClientOption) (*httpClient, error) {
 	baseURL, err := parseBaseURL(rawURL)
 	if err != nil {
 		return nil, err
 	}
+	clientOpts := clientOptions{httpClient: http.DefaultClient}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&clientOpts)
+		}
+	}
 	return &httpClient{
-		client:  http.DefaultClient,
-		baseURL: baseURL,
-		apiURL:  baseURL.JoinPath("/api/" + Version),
+		client:   clientOpts.httpClient,
+		baseURL:  baseURL,
+		apiURL:   baseURL.JoinPath("/api/" + Version),
+		identity: clientOpts.identity,
 	}, nil
 }
 
@@ -46,19 +54,14 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 // verification. Only use for loopback health checks against a server whose
 // cert is not trusted by the system CA pool (e.g. self-signed certs).
 func newInsecureHttpClient(rawURL string) (*httpClient, error) {
-	baseURL, err := parseBaseURL(rawURL)
-	if err != nil {
-		return nil, err
-	}
-	return &httpClient{
-		client: &http.Client{
+	return newHttpClient(
+		rawURL,
+		WithHTTPClient(&http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
 			},
-		},
-		baseURL: baseURL,
-		apiURL:  baseURL.JoinPath("/api/" + Version),
-	}, nil
+		}),
+	)
 }
 
 // parseBaseURL normalizes a raw API address into a URL, defaulting to the
@@ -98,11 +101,12 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
 	id := iIdentity.FromContext(req.Context())
-	if !id.HasValue() {
-		return nil
-	}
-	if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
-		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+	if id.HasValue() {
+		if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
+			req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+		}
+	} else if c.identity != nil {
+		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, c.identity.BearerToken()))
 	}
 	return nil
 }

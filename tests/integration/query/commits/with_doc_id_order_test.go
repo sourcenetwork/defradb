@@ -20,8 +20,6 @@ import (
 )
 
 func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -41,18 +39,34 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: DESC}) {
+						_commits(docID: "{{.DocID0_0}}", order: {height: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
+
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
 					},
 				},
 			},
@@ -63,8 +77,6 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -84,18 +96,34 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
+						_commits(docID: "{{.DocID0_0}}", order: {height: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(2)},
+
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
 					},
 				},
 			},
@@ -129,7 +157,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: DESC}) {
+						_commits(docID: "{{.DocID0_0}}", order: {cid: DESC}) {
 							cid
 							height
 						}
@@ -137,24 +165,24 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
 						},
 					},
 				},
@@ -189,7 +217,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: ASC}) {
+						_commits(docID: "{{.DocID0_0}}", order: {cid: ASC}) {
 							cid
 							height
 						}
@@ -197,24 +225,24 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
+							"cid":    testUtils.ValidCID(),
 							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
 						},
 					},
 				},
@@ -226,8 +254,6 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 }
 
 func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -261,22 +287,50 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-						 _commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
+						 _commits(docID: "{{.DocID0_0}}", order: {height: ASC}) {
 							 cid
 							 height
 						 }
 					 }`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(1)},
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(2)},
-						{"cid": uniqueCid, "height": int64(3)},
-						{"cid": uniqueCid, "height": int64(3)},
-						{"cid": uniqueCid, "height": int64(4)},
-						{"cid": uniqueCid, "height": int64(4)},
+
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(1),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(2),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(3),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(3),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(4),
+						},
+						{
+							"cid":    testUtils.ValidCID(),
+							"height": int64(4),
+						},
 					},
 				},
 			},

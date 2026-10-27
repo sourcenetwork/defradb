@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	sse "github.com/vito/go-sse/sse"
 
@@ -47,8 +48,32 @@ type Client struct {
 	http *httpClient
 }
 
-func NewClient(rawURL string) (*Client, error) {
-	httpClient, err := newHttpClient(rawURL)
+type clientOptions struct {
+	httpClient *http.Client
+	identity   acpIdentity.TokenIdentity
+}
+
+// ClientOption configures an HTTP client.
+type ClientOption func(*clientOptions)
+
+// WithHTTPClient uses client for HTTP requests.
+func WithHTTPClient(client *http.Client) ClientOption {
+	return func(opts *clientOptions) {
+		if client != nil {
+			opts.httpClient = client
+		}
+	}
+}
+
+// WithIdentity authenticates requests with identity's bearer token.
+func WithIdentity(identity acpIdentity.TokenIdentity) ClientOption {
+	return func(opts *clientOptions) {
+		opts.identity = identity
+	}
+}
+
+func NewClient(rawURL string, opts ...ClientOption) (*Client, error) {
+	httpClient, err := newHttpClient(rawURL, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +91,21 @@ func NewInsecureClient(rawURL string) (*Client, error) {
 }
 
 func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
+	return c.newTxn(readOnly, immutable.None[time.Duration]())
+}
+
+// NewTxnWithTTL creates a new HTTP transaction with the given idle TTL.
+func (c *Client) NewTxnWithTTL(readOnly bool, txnTTL time.Duration) (client.Txn, error) {
+	return c.newTxn(readOnly, immutable.Some(txnTTL))
+}
+
+func (c *Client) newTxn(readOnly bool, txnTTL immutable.Option[time.Duration]) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
+	}
+	if txnTTL.HasValue() {
+		query.Add("ttl", txnTTL.Value().String())
 	}
 
 	methodURL := c.http.apiURL.JoinPath("tx")

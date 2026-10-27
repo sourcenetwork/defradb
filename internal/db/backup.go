@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -46,6 +47,8 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 	if t != json.Delim('{') {
 		return ErrExpectedJSONObject
 	}
+	importedDocIDs := map[string]string{}
+	pendingRelations := []pendingImportRelation{}
 	for d.More() {
 		t, err := d.Token()
 		if err != nil {
@@ -72,22 +75,8 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 				return NewErrJSONDecode(err)
 			}
 
-			// check if self referencing and remove from docMap for key creation
-			resetMap := map[string]any{}
-			for _, field := range col.Version().Fields {
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					fieldID := request.ToFieldID(field.Name)
-					if val, ok := docMap[fieldID]; ok {
-						if docMap[request.NewDocIDFieldName] == val {
-							resetMap[fieldID] = val
-							delete(docMap, fieldID)
-						}
-					}
-				}
-			}
-
-			delete(docMap, request.DocIDFieldName)
-			delete(docMap, request.NewDocIDFieldName)
+			docIDAliases := importDocIDAliases(docMap)
+			deferredRelations := rewriteImportRelations(col, docMap, importedDocIDs)
 
 			doc, err := client.NewDocFromMap(ctx, docMap, col.Version())
 			if err != nil {
@@ -98,17 +87,27 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			if err != nil {
 				return NewErrDocAdd(err)
 			}
+			for docID := range docIDAliases {
+				err = db.setImportedDocIDAlias(ctx, col, doc, docID)
+				if err != nil {
+					return err
+				}
+			}
 
-			// add back the self referencing fields and update doc.
-			for k, v := range resetMap {
-				err := doc.Set(ctx, k, v)
-				if err != nil {
-					return NewErrDocUpdate(err)
+			docID := doc.ID().String()
+			for docIDAlias := range docIDAliases {
+				importedDocIDs[docIDAlias] = docID
+			}
+			for _, relation := range deferredRelations {
+				relation.docID = docID
+				if docID, ok := importedDocIDs[relation.importedDocID]; ok {
+					err := updateImportedRelation(ctx, col, doc, relation.fieldName, docID)
+					if err != nil {
+						return err
+					}
+					continue
 				}
-				err = col.UpdateDocument(ctx, doc)
-				if err != nil {
-					return NewErrDocUpdate(err)
-				}
+				pendingRelations = append(pendingRelations, relation)
 			}
 		}
 		_, err = d.Token()
@@ -117,13 +116,151 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 		}
 	}
 
+	for _, relation := range pendingRelations {
+		docID, ok := importedDocIDs[relation.importedDocID]
+		if !ok {
+			docID = relation.importedDocID
+		}
+		err := updatePendingImportRelation(ctx, relation, docID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
-	// old key -> new Key
-	keyChangeCache := map[string]string{}
+type pendingImportRelation struct {
+	col           client.Collection
+	docID         string
+	fieldName     string
+	importedDocID string
+}
 
+func importDocIDAliases(docMap map[string]any) map[string]struct{} {
+	aliases := map[string]struct{}{}
+	if docID, ok := docMap[request.DocIDFieldName].(string); ok {
+		aliases[docID] = struct{}{}
+	}
+
+	newDocID, hasNewDocID := docMap[request.NewDocIDFieldName]
+	delete(docMap, request.NewDocIDFieldName)
+	if hasNewDocID {
+		if docID, ok := newDocID.(string); ok {
+			aliases[docID] = struct{}{}
+		}
+		docMap[request.DocIDFieldName] = newDocID
+	}
+	return aliases
+}
+
+func rewriteImportRelations(
+	col client.Collection,
+	docMap map[string]any,
+	importedDocIDs map[string]string,
+) []pendingImportRelation {
+	var deferred []pendingImportRelation
+	for _, field := range col.Version().Fields {
+		if !field.Kind.IsObject() || field.Kind.IsArray() {
+			continue
+		}
+		for _, fieldName := range []string{field.Name, request.ToFieldID(field.Name)} {
+			importedDocID, ok := docMap[fieldName].(string)
+			if !ok {
+				continue
+			}
+			if docID, ok := importedDocIDs[importedDocID]; ok {
+				docMap[fieldName] = docID
+				continue
+			}
+			delete(docMap, fieldName)
+			deferred = append(deferred, pendingImportRelation{
+				col:           col,
+				fieldName:     fieldName,
+				importedDocID: importedDocID,
+			})
+		}
+	}
+	return deferred
+}
+
+func updateImportedRelation(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+	fieldName string,
+	docID string,
+) error {
+	err := doc.Set(ctx, fieldName, docID)
+	if err != nil {
+		return NewErrDocUpdate(err)
+	}
+	err = col.UpdateDocument(ctx, doc)
+	if err != nil {
+		return NewErrDocUpdate(err)
+	}
+	return nil
+}
+
+func updatePendingImportRelation(ctx context.Context, relation pendingImportRelation, docID string) error {
+	relationDocID, err := client.NewDocIDFromString(relation.docID)
+	if err != nil {
+		return err
+	}
+	doc, err := relation.col.GetDocument(ctx, relationDocID)
+	if err != nil {
+		return err
+	}
+	return updateImportedRelation(ctx, relation.col, doc, relation.fieldName, docID)
+}
+
+func (db *DB) setImportedDocIDAlias(
+	ctx context.Context,
+	col client.Collection,
+	doc *client.Document,
+	importedDocID string,
+) error {
+	if importedDocID == "" || importedDocID == doc.ID().String() {
+		return nil
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	collectionShortID, err := id.GetCollectionShortID(ctx, col.CollectionID())
+	if err != nil {
+		return err
+	}
+	docShortID, found, err := id.GetDocShortID(ctx, collectionShortID, doc.ID().String())
+	if err != nil {
+		return err
+	}
+	if !found {
+		return NewErrDocIDNotFound(doc.ID().String())
+	}
+
+	// Aliasing the imported (foreign) DocID to this document must not repoint an existing local
+	// document that already owns that DocID. That would happen when the imported content resolves
+	// to a different local DocID (e.g. signed documents) yet its source DocID collides with one
+	// already in the store, silently hijacking the existing document's resolution.
+	existingRef, found, err := id.GetDocRef(ctx, importedDocID)
+	if err != nil {
+		return err
+	}
+	if found && (existingRef.CollectionShortID != collectionShortID || existingRef.DocShortID != docShortID) {
+		return NewErrDocumentAlreadyExists(importedDocID)
+	}
+
+	if err := id.SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, importedDocID); err != nil {
+		return err
+	}
+	return txn.Commit()
+}
+
+func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err error) {
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
 		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()), true)
@@ -209,77 +346,36 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				return err
 			}
 
-			isSelfReference := false
-			refFieldName := ""
-			// replace any foreign key if it needs to be changed
+			// Clear references to documents that no longer exist. Self-references are exported with
+			// the source DocID and remapped to the new DocID at import time (see rewriteImportRelations).
 			for _, field := range col.Version().Fields {
-				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					fieldID := request.ToFieldID(field.Name)
-					if foreignKey, err := doc.Get(fieldID); err == nil {
-						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(ctx, request.ToFieldID(field.Name), newKey)
-							if err != nil {
-								return err
-							}
-							if foreignKey.(string) == doc.ID().String() {
-								isSelfReference = true
-								refFieldName = fieldID
-							}
-						} else {
-							foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
-							if err != nil {
-								return err
-							}
+				if !field.Kind.IsObject() || field.Kind.IsArray() {
+					continue
+				}
+				fieldID := request.ToFieldID(field.Name)
+				foreignKey, err := doc.Get(fieldID)
+				if err != nil {
+					continue
+				}
 
-							txnOpt := datastore.CtxTryGetTxnOption(ctx)
-							foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
-							if err != nil {
-								return err
-							}
+				foreignDef, _, err := description.GetRelatedCollection(ctx, db.collectionRepository, col.Version(), field.Kind)
+				if err != nil {
+					return err
+				}
 
-							foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
-							if err != nil {
-								return err
-							}
-							foreignDoc, err := foreignCol.GetDocument(ctx, foreignDocID)
-							if err != nil {
-								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
-								if err != nil {
-									return err
-								}
-							} else {
-								oldForeignDoc, err := foreignDoc.ToMap()
-								if err != nil {
-									return err
-								}
+				txnOpt := datastore.CtxTryGetTxnOption(ctx)
+				foreignCol, err := db.newCollection(ctx, foreignDef, txnOpt)
+				if err != nil {
+					return err
+				}
 
-								delete(oldForeignDoc, request.DocIDFieldName)
-								if foreignDoc.ID().String() == foreignDocID.String() {
-									delete(oldForeignDoc, fieldID)
-								}
-
-								if foreignDoc.ID().String() == doc.ID().String() {
-									isSelfReference = true
-									refFieldName = fieldID
-								}
-
-								newForeignDoc, err := client.NewDocFromMap(ctx, oldForeignDoc, foreignCol.Version())
-								if err != nil {
-									return err
-								}
-
-								if foreignDoc.ID().String() != doc.ID().String() {
-									err = doc.Set(ctx, request.ToFieldID(field.Name), newForeignDoc.ID().String())
-									if err != nil {
-										return err
-									}
-								}
-
-								if newForeignDoc.ID().String() != foreignDoc.ID().String() {
-									keyChangeCache[foreignDoc.ID().String()] = newForeignDoc.ID().String()
-								}
-							}
-						}
+				foreignDocID, err := client.NewDocIDFromString(foreignKey.(string))
+				if err != nil {
+					return err
+				}
+				if _, err := foreignCol.GetDocument(ctx, foreignDocID); err != nil {
+					if err := doc.Set(ctx, fieldID, nil); err != nil {
+						return err
 					}
 				}
 			}
@@ -290,26 +386,8 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			}
 
 			delete(docM, request.DocIDFieldName)
-			if isSelfReference {
-				delete(docM, refFieldName)
-			}
-
-			newDoc, err := client.NewDocFromMap(ctx, docM, col.Version())
-			if err != nil {
-				return err
-			}
-			// a new docID is needed to let the user know what will be the docID of the imported document.
-			docM[request.NewDocIDFieldName] = newDoc.ID().String()
-			// NewDocFromMap removes the "_docID" map item so we add it back.
+			docM[request.NewDocIDFieldName] = doc.ID().String()
 			docM[request.DocIDFieldName] = doc.ID().String()
-
-			if isSelfReference {
-				docM[refFieldName] = newDoc.ID().String()
-			}
-
-			if newDoc.ID().String() != doc.ID().String() {
-				keyChangeCache[doc.ID().String()] = newDoc.ID().String()
-			}
 
 			var b []byte
 			if config.Pretty {

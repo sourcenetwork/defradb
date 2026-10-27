@@ -87,6 +87,7 @@ func (a *AddCollection) Execute() {
 		}
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
+			recordCollectionOwner(a.s, result.CollectionID, a.Identity)
 		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

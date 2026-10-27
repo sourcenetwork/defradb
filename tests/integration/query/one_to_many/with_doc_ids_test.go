@@ -26,7 +26,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -34,7 +34,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -42,7 +42,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -50,7 +50,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "The Firm",
 					"rating": 4.5,
-					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "{{.DocID1_0}}"
 				}`,
 			},
 			&action.AddDoc{
@@ -66,7 +66,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 					Author {
 						name
 						published (
-								docID: ["bae-82bbdc18-aa15-57b8-83af-795a752b3b8f", "bae-f4c7cb54-e940-5533-984d-6c8adeaf149a"]
+								docID: ["{{.DocID0_0}}", "{{.DocID0_2}}"]
 							) {
 							name
 						}

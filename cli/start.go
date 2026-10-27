@@ -92,13 +92,16 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetEnableDevelopment(cfg.GetBool("development")).
 				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
 			opts.Store().
-				SetPath(cfg.GetString("datastore.badger.path")).
+				SetPath(cfg.GetString("datastore.path")).
 				SetBadgerInMemory(inMem).
 				SetBadgerFileSize(int64(cfg.GetInt("datastore.badger.valuelogfilesize")))
 			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
 				SetLensRuntime(options.NodeLensRuntimeType(cfg.GetString("lens.runtime")))
+			if p2pBlockSyncTimeout := cfg.GetInt("net.p2pblocksynctimeout"); p2pBlockSyncTimeout > 0 {
+				opts.DB().SetP2PBlockSyncTimeout(time.Duration(p2pBlockSyncTimeout) * time.Second)
+			}
 			opts.P2P().
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
@@ -123,9 +126,9 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetCertPath(tlsCertPath).
 				SetKeyPath(tlsKeyPath)
 			opts.DocumentACP().
-				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
-				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
-				SetCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress"))
+				SetLogID(cfg.GetString("acp.document.remote.LogID")).
+				SetGRPCAddress(cfg.GetString("acp.document.remote.GRPCAddress")).
+				SetCometRPCAddress(cfg.GetString("acp.document.remote.CometRPCAddress"))
 			opts.NodeACP().
 				SetEnabled(enableNAC)
 
@@ -180,10 +183,10 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				}
 				opts.DB().SetNodeIdentity(ident)
 
-				// setup the sourcehub transaction signer
-				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
-				if sourceHubKeyName != "" {
-					signer, err := keyring.NewTxSignerFromKeyringKey(kr, sourceHubKeyName)
+				// Set up the Vera transaction signer used by the Remote DAC.
+				remoteDACKeyName := cfg.GetString("acp.document.remote.KeyName")
+				if remoteDACKeyName != "" {
+					signer, err := keyring.NewTxSignerFromKeyringKey(kr, remoteDACKeyName)
 					if err != nil {
 						return err
 					}
@@ -314,6 +317,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		cfg.GetBool(config.ConfigFlags["relay"]),
 		"Enable the p2p relay",
 	)
+	cmd.PersistentFlags().Int(
+		"p2p-block-sync-timeout",
+		cfg.GetInt(config.ConfigFlags["p2p-block-sync-timeout"]),
+		"Timeout in seconds for fetching each block during P2P DAG sync",
+	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
 		cfg.GetStringSlice(config.ConfigFlags["allowed-origins"]),
@@ -368,18 +376,25 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		&enableNAC,
 		"node-acp-enable",
 		false,
-		"Enable the node access control system.",
+		"Enable the Local Node Access Control (NAC) system.",
 	)
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(config.ConfigFlags["document-acp-type"]),
-		"Specify the document acp engine to use (supported: local (default), source-hub)")
+		"Document Access Control (DAC) backend to use: local (default) or remote")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
 		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),
 		"Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. "+
 			"Example: 10,20,40,80,160,320",
 	)
+	cmd.PersistentFlags().Bool(
+		"no-keyring",
+		cfg.GetBool(config.ConfigFlags["no-keyring"]),
+		"Disable the keyring and generate ephemeral keys",
+	)
+	setClientConnectionFlags(cmd)
+	setKeyringFlags(cmd)
 	return cmd
 }
 

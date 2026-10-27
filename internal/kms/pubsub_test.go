@@ -24,10 +24,12 @@ import (
 	kvblockstore "github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corekv/memory"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestMarshalFetchEncryptionKeyRequest_GeneratesDistinctRequestIDs(t *testing.T) {
@@ -63,8 +65,7 @@ func TestTryHandleFetchEncryptionKeyResponse_UsesReplySenderForAAD(t *testing.T)
 	}
 
 	encBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
+		Key: []byte("doc-key"),
 	}
 	plainBlock, err := encBlock.Marshal()
 	require.NoError(t, err)
@@ -149,20 +150,24 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 	encstore := datastore.EncstoreFrom(rootstore)
+
+	foundBlock := &coreblock.Encryption{
+		Key: []byte("doc-key"),
+	}
+	foundLink := storeEncryptionBlock(t, ctx, encstore, foundBlock)
+	_, foundCID, err := cid.CidFromBytes(foundLink)
+	require.NoError(t, err)
+
 	service := &pubSubService{
 		ctx:      ctx,
 		encStore: newIPLDEncryptionStorage(encstore),
+		colRetriever: testCollectionRetriever{
+			docIDsByBlockCID: map[string]string{foundCID.String(): "doc-id"},
+		},
 	}
-
-	foundBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
-	}
-	foundLink := storeEncryptionBlock(t, ctx, encstore, foundBlock)
 
 	missingBlock := &coreblock.Encryption{
-		DocID: []byte("doc2"),
-		Key:   []byte("other-doc-key"),
+		Key: []byte("other-doc-key"),
 	}
 	missingLink := storeEncryptionBlock(t, ctx, datastore.EncstoreFrom(memory.NewDatastore(ctx)), missingBlock)
 
@@ -179,6 +184,50 @@ func TestGetEncryptionKeysLocally_ReturnsOnlyFoundLinks(t *testing.T) {
 	assert.Equal(t, foundBlockBytes, blocks[0])
 }
 
+func TestGetEncryptionKeysLocally_SkipsBlockWithoutDocMapping(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+	encstore := datastore.EncstoreFrom(rootstore)
+	service := &pubSubService{
+		ctx:          ctx,
+		encStore:     newIPLDEncryptionStorage(encstore),
+		colRetriever: testCollectionRetriever{},
+	}
+
+	block := &coreblock.Encryption{
+		Key: []byte("doc-key"),
+	}
+	link := storeEncryptionBlock(t, ctx, encstore, block)
+
+	links, blocks, err := service.getEncryptionKeysLocally(ctx, &fetchEncryptionKeyRequest{
+		Links: [][]byte{link},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, links)
+	require.Empty(t, blocks)
+}
+
+type testCollectionRetriever struct {
+	docIDsByBlockCID map[string]string
+}
+
+func (testCollectionRetriever) RetrieveCollectionFromDocID(
+	context.Context,
+	string,
+	immutable.Option[identity.Identity],
+) (client.Collection, error) {
+	return nil, nil
+}
+
+func (r testCollectionRetriever) ResolveBlockDocIDs(_ context.Context, blockCID cid.Cid) ([]string, error) {
+	docID, ok := r.docIDsByBlockCID[blockCID.String()]
+	if !ok {
+		return nil, nil
+	}
+	return []string{docID}, nil
+}
+
 func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.T) {
 	ctx := context.Background()
 
@@ -193,8 +242,7 @@ func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.
 	}
 
 	encBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
+		Key: []byte("doc-key"),
 	}
 	plainBlock, err := encBlock.Marshal()
 	require.NoError(t, err)
@@ -220,8 +268,6 @@ func TestTryHandleFetchEncryptionKeyResponse_RejectsUnverifiedBlocks(t *testing.
 		ctx:      ctx,
 		encStore: newIPLDEncryptionStorage(datastore.EncstoreFrom(memory.NewDatastore(ctx))),
 	}
-
-	// service.encStore.computeLink([]byte("encrypted-block"))
 
 	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
 		client.PubsubResponse{
@@ -252,15 +298,13 @@ func TestTryHandleFetchEncryptionKeyResponse_RejectsUnrequestedVerifiedBlocks(t 
 	require.NoError(t, err)
 
 	requestedBlock := coreblock.Encryption{
-		DocID: []byte("requested-doc"),
-		Key:   []byte("requested-doc-key"),
+		Key: []byte("requested-doc-key"),
 	}
 	requestedLink, err := service.encStore.computeBlockLink(ctx, requestedBlock)
 	require.NoError(t, err)
 
 	unrequestedBlock := coreblock.Encryption{
-		DocID: []byte("unrequested-doc"),
-		Key:   []byte("unrequested-doc-key"),
+		Key: []byte("unrequested-doc-key"),
 	}
 	unrequestedLink, err := service.encStore.computeBlockLink(ctx, unrequestedBlock)
 	require.NoError(t, err)
@@ -319,18 +363,17 @@ func TestTryHandleFetchEncryptionKeyResponse_AcceptsVerifiedBlocks(t *testing.T)
 	holderPrivKey, err := crypto.GenerateX25519()
 	require.NoError(t, err)
 
-	link, err := cid.Decode("bafyreidq2l2x5zntplo7hebxmj2w6uyw7srv2psrz6pjfgmaaesrb4jauu")
+	encBlock := coreblock.Encryption{
+		Key: []byte("doc-key"),
+	}
+	link, err := service.encStore.computeBlockLink(ctx, encBlock)
 	require.NoError(t, err)
 
 	req := &fetchEncryptionKeyRequest{
-		Links:              [][]byte{link.Bytes()},
+		Links:              [][]byte{link},
 		EphemeralPublicKey: requesterPrivKey.PublicKey().Bytes(),
 	}
 
-	encBlock := &coreblock.Encryption{
-		DocID: []byte("doc1"),
-		Key:   []byte("doc-key"),
-	}
 	plainBlock, err := encBlock.Marshal()
 	require.NoError(t, err)
 
@@ -350,8 +393,6 @@ func TestTryHandleFetchEncryptionKeyResponse_AcceptsVerifiedBlocks(t *testing.T)
 	}
 	data, err := cbor.Marshal(reply)
 	require.NoError(t, err)
-
-	// service.encStore.computeLink([]byte("encrypted-block"))
 
 	items, ok, err := service.tryHandleFetchEncryptionKeyResponse(
 		client.PubsubResponse{

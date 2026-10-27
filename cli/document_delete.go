@@ -12,18 +12,19 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "delete",
 		Short: "Delete documents by docID or filter.",
@@ -48,17 +49,28 @@ or the showDeleted parameter on GraphQL queries.`,
 				}
 
 				deleteOpt := options.WithIdentity(options.DeleteDocument(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteOpt.SetEnableSigning(enableSigning)
+				}
 
 				_, err = col.DeleteDocument(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
-				var filterValue any
-				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+				filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+				if err != nil {
 					return NewErrParsingArgument("filter", err)
+				}
+				if filterValue == nil {
+					filterValue = map[string]any{}
 				}
 
 				deleteWithFilterOpt := options.WithIdentity(
 					options.DeleteDocumentsWithFilter(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					deleteWithFilterOpt.SetEnableSigning(enableSigning)
+				}
 
 				res, err := col.DeleteDocumentsWithFilter(ctx, filterValue, deleteWithFilterOpt)
 				if err != nil {
@@ -83,6 +95,7 @@ or the showDeleted parameter on GraphQL queries.`,
 
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }

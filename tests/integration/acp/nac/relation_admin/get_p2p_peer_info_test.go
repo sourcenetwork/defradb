@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -47,7 +48,9 @@ func TestNAC_AdminRelation_CanGetP2PPeerInfo(t *testing.T) {
 				Identity:              testUtils.ClientIdentity(2),
 				NodeID:                1,
 				ExpectedNumberOfPeers: 1,
-				ExpectedError:         "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(
+					acpTypes.NodeGetP2PPeerInfoPerm,
+				),
 			},
 
 			// Grant access to user.

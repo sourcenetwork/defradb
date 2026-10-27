@@ -21,6 +21,7 @@ func TestGetCollectionByNameReturnsErrorGivenNonExistantCollection(t *testing.T)
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.GetCollectionByName(ctx, "doesNotExist")
 	assert.EqualError(t, err, "collection not found")
@@ -30,6 +31,7 @@ func TestGetCollectionByNameReturnsErrorGivenEmptyString(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
 
 	_, err = db.GetCollectionByName(ctx, "")
 	assert.EqualError(t, err, "collection name can't be empty")

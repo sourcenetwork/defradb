@@ -142,13 +142,12 @@ func (d *docGenerator) generatePrimary(
 				if err != nil {
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
-				primDoc, err := client.NewDocFromMap(ctx, primDocMap, primType)
+				primDoc, docID, err := gen.NewDocWithGeneratedID(ctx, primDocMap, primType)
 				if err != nil {
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
-				docID := primDoc.ID().String()
 				requestedSecondary[request.ToFieldID(secDocField.Name)] = docID
-				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
+				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc, GeneratedID: docID})
 				result = append(result, subResult...)
 
 				secondaryDocs, err := d.generateSecondaryDocs(
@@ -177,14 +176,14 @@ func (d *docGenerator) generateRelatedDocs(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(ctx, requested, typeDef)
+	doc, docID, err := gen.NewDocWithGeneratedID(ctx, requested, typeDef)
 	if err != nil {
 		return nil, NewErrFailedToGenerateDoc(err)
 	}
 
-	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
+	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc, GeneratedID: docID})
 
-	secondaryDocs, err := d.generateSecondaryDocs(ctx, docMap, doc.ID().String(), &typeDef, "")
+	secondaryDocs, err := d.generateSecondaryDocs(ctx, docMap, docID, &typeDef, "")
 	if err != nil {
 		return nil, err
 	}

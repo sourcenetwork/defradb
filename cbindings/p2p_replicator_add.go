@@ -41,8 +41,6 @@ func AddP2PReplicator(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	opt := options.WithIdentity(
 		options.AddReplicator().SetCollectionNames(colArgs),
 		acpIdentity.FromContext(ctx),

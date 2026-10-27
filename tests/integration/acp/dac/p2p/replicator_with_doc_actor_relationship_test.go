@@ -21,12 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestACP_P2PReplicatorWithPermissionedCollectionAddDocActorRelationship_SourceHubACP(t *testing.T) {
+func TestACP_P2PReplicatorWithPermissionedCollectionAddDocActorRelationship_RemoteDAC(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedDocumentACPTypes: immutable.Some(
 			[]state.DocumentACPType{
-				state.SourceHubDocumentACPType,
+				state.RemoteDocumentACPType,
 			},
 		),
 

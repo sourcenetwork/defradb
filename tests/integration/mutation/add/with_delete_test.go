@@ -18,9 +18,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// docIDs in DefraDB are deterministically derived from the document's
-// field values, so re-adding the same payload after delete collides
-// with the tombstoned docID and must error.
+// Re-adding the same payload after delete collides with the tombstoned
+// genesis docID and must error.
 func TestMutationAdd_GivenPreviouslyDeletedDoc_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

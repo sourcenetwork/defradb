@@ -24,9 +24,12 @@ func MakeIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
-		Use:       "delete",
-		Short:     "Delete a collection's secondary index",
-		Long:      `Delete a collection's secondary index.`,
+		Use:   "delete",
+		Short: "Delete a collection's secondary index",
+		Long: `Delete a collection's secondary index.
+
+The index stops being used for queries immediately. Its entries are removed in the background, so
+this command returns before all of them are gone.`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if nameArg == "" {

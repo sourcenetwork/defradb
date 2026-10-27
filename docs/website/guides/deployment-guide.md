@@ -26,7 +26,7 @@ Follow these steps to build from source:
 1. Run git clone to download the [DefraDB repository](https://github.com/sourcenetwork/defradb#install) to your local machine.
 2. Navigate to the repository using `cd`.
 3. Execute the Make command to build a local DefraDB setup with default configurations.
-4. Set the compiler and build tags for the explorer: `GOFLAGS="-tags=explorer"` 
+4. Set the compiler and build tags for the explorer: `GOFLAGS="-tags=explorer"`
 
 #### Build Explorer
 

@@ -49,11 +49,12 @@ func TestUniqueCompositeIndexNew_IfFieldValuesAreNotUnique_ReturnError(t *testin
 						"email": "another@gmail.com"
 					}`,
 			},
+			// The unique backfill fails on the duplicate values. The action waits for the failed
+			// state, asserted via ListIndexes below.
 			&action.NewIndex{
-				CollectionID:  0,
-				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
-				Unique:        true,
-				ExpectedError: "can not index a doc's field(s) that violates unique index.",
+				CollectionID: 0,
+				Fields:       []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
+				Unique:       true,
 			},
 			&action.ListIndexes{
 				CollectionID: 0,

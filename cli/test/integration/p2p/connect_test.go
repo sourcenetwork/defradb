@@ -58,6 +58,18 @@ func TestConnect_WithInvalidIP_ShouldFail(t *testing.T) {
 	test.Execute(t)
 }
 
+func TestConnect_WithNoAddresses_ShouldFail(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.ConnectP2P{
+				ExpectError: "addresses cannot be empty",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
 // NOTE: This test currently fails because there is no peer listening at the given address.
 // However, it does at least verify that a single address can be passed in.
 //
@@ -86,6 +98,32 @@ func TestConnect_WithMultiplePeers_ShouldSucceed(t *testing.T) {
 		Actions: []action.Action{
 			&action.ConnectP2P{
 				Addresses:   addresses,
+				ExpectError: "connect: connection refused",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
+func TestConnect_WithCommaSeparatedPeers_ShouldSucceed(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.ConnectP2P{
+				Addresses:   []string{addresses[0] + "," + addresses[1]},
+				ExpectError: "connect: connection refused",
+			},
+		},
+	}
+
+	test.Execute(t)
+}
+
+func TestConnect_WithCommaSeparatedPeersAndSpaces_ShouldSucceed(t *testing.T) {
+	test := &integration.Test{
+		Actions: []action.Action{
+			&action.ConnectP2P{
+				Addresses:   []string{addresses[0] + ", " + addresses[1]},
 				ExpectError: "connect: connection refused",
 			},
 		},

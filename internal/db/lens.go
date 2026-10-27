@@ -59,16 +59,14 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 // setMigration registers the migration and stages any resulting index rebuild on the transaction
 // bound to ctx. The returned function runs the rebuilds after that commit; it is a no-op when no
 // reindex is needed.
-func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, func(context.Context) error, error) {
-	noRebuild := func(context.Context) error { return nil }
-
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, db.collectionRepository, cfg.DestinationCollectionVersionID)
 	if err != nil {
 		if errors.Is(err, client.ErrCollectionNotFound) {
 			dstFound = false
 		} else {
-			return "", noRebuild, err
+			return "", err
 		}
 	}
 
@@ -78,7 +76,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		if errors.Is(err, client.ErrCollectionNotFound) {
 			srcFound = false
 		} else {
-			return "", noRebuild, err
+			return "", err
 		}
 	}
 
@@ -92,7 +90,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 		err = description.SaveCollection(ctx, db.collectionRepository, sourceCol)
 		if err != nil {
-			return "", noRebuild, err
+			return "", err
 		}
 	}
 
@@ -107,13 +105,13 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return "", noRebuild, NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
 			cfg.DestinationCollectionVersionID)
 	}
 
 	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
 	if err != nil {
-		return "", noRebuild, err
+		return "", err
 	}
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
@@ -123,23 +121,21 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	err = description.SaveCollection(ctx, db.collectionRepository, dstCol)
 	if err != nil {
-		return "", noRebuild, err
+		return "", err
 	}
 
 	shouldReindex, activeCol, err := db.shouldReindexAfterMigration(ctx, dstCol)
 	if err != nil {
-		return "", noRebuild, err
+		return "", err
 	}
 
 	if shouldReindex {
-		runRebuild, err := db.reindexNewActiveVersion(ctx, activeCol)
-		if err != nil {
-			return "", noRebuild, err
+		if err := db.reindexNewActiveVersion(ctx, activeCol); err != nil {
+			return "", err
 		}
-		return id, runRebuild, nil
 	}
 
-	return id, noRebuild, nil
+	return id, nil
 }
 
 // shouldReindexAfterMigration determines if reindexing is needed after adding a migration.

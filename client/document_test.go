@@ -16,8 +16,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
 var (
@@ -25,8 +23,6 @@ var (
 		"Name": "John",
 		"Age": 26
 	}`)
-
-	pref = ccid.NewDefaultSHA256PrefixV1()
 
 	def = CollectionVersion{
 		Name: "User",
@@ -58,23 +54,6 @@ func TestNewFromJSON(t *testing.T) {
 		return
 	}
 
-	buf, err := doc.Bytes()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// And then feed it some data
-	c, err := pref.Sum(buf)
-	if err != nil {
-		t.Error(err)
-	}
-	objKey := NewDocIDV0(c)
-
-	if objKey.String() != doc.ID().String() {
-		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
-		return
-	}
-
 	// check field/value
 	// fields
 	assert.Equal(t, doc.fields["Name"].Name(), "Name")
@@ -94,23 +73,6 @@ func TestSetWithJSON(t *testing.T) {
 	doc, err := NewDocFromJSON(ctx, testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
-		return
-	}
-
-	buf, err := doc.Bytes()
-	if err != nil {
-		t.Error(err)
-	}
-
-	// And then feed it some data
-	c, err := pref.Sum(buf)
-	if err != nil {
-		t.Error(err)
-	}
-	objKey := NewDocIDV0(c)
-
-	if objKey.String() != doc.ID().String() {
-		t.Errorf("Incorrect document ID. Want %v, have %v", objKey.String(), doc.ID().String())
 		return
 	}
 

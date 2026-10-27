@@ -12,10 +12,50 @@ package message
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"testing"
+	"testing/iotest"
 
 	"github.com/stretchr/testify/require"
 )
+
+type trackedStream struct {
+	io.Reader
+	closed   bool
+	closeErr error
+}
+
+func (s *trackedStream) Close() error {
+	s.closed = true
+	return s.closeErr
+}
+
+func TestReceive_ReadAndCloseErrors_ReturnsBoth(t *testing.T) {
+	readErr := errors.New("read failed")
+	closeErr := errors.New("close failed")
+	stream := &trackedStream{Reader: iotest.ErrReader(readErr), closeErr: closeErr}
+
+	err := Receive(stream, "some peer ID", nil, &MetaData{})
+	require.ErrorIs(t, err, readErr)
+	require.ErrorIs(t, err, closeErr)
+	require.True(t, stream.closed)
+}
+
+func TestReceive_InvalidStreamReleasesResources(t *testing.T) {
+	for name, reader := range map[string]io.Reader{
+		"read error":        iotest.ErrReader(errors.New("read failed")),
+		"invalid encoding":  bytes.NewReader([]byte{0xff}),
+		"oversized message": bytes.NewReader(make([]byte, maxMessageSize+1)),
+	} {
+		t.Run(name, func(t *testing.T) {
+			stream := &trackedStream{Reader: reader}
+			err := Receive(stream, "some peer ID", nil, &MetaData{})
+			require.Error(t, err)
+			require.True(t, stream.closed, "rejected messages must release their stream resources")
+		})
+	}
+}
 
 func TestReceive_StreamLargerThanMax_ReturnsErrMessageTooLarge(t *testing.T) {
 	stream := bytes.NewReader(make([]byte, maxMessageSize+1))

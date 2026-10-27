@@ -51,29 +51,15 @@ func (s *SchemaManager) Schema() *gql.Schema {
 	return &s.schema
 }
 
-// ResolveTypes ensures all necessary types are defined, and
-// resolves any remaining thunks/closures defined on object fields.
+// ResolveTypes resolves object fields needed by the current generation phase.
 // It should be called *after* all dependent types have been added.
 func (s *SchemaManager) ResolveTypes() error {
-	// basically, this function just refreshes the
-	// schema.TypeMap, and runs the internal
-	// typeMapReducer (https://github.com/sourcenetwork/graphql-go/blob/v0.7.9/schema.go#L275)
-	// which ensures all the necessary types are defined in the
-	// typeMap, and if there are any outstanding Thunks/closures
-	// resolve them.
-
-	// ATM, there is no function to easily call the internal
-	// typeMapReducer function, so as a hack, we are just
-	// going to re-add the Query type.
-
 	for _, gqlType := range s.schema.TypeMap() {
-		object, isObject := gqlType.(*gql.Object)
-		if !isObject {
+		object, ok := gqlType.(*gql.Object)
+		if !ok {
 			continue
 		}
-		// We need to make sure the object's fields are resolved
 		object.Fields()
-
 		if object.Error() != nil {
 			return object.Error()
 		}
@@ -81,6 +67,30 @@ func (s *SchemaManager) ResolveTypes() error {
 
 	query := s.schema.QueryType()
 	return s.schema.AppendType(query)
+}
+
+// FinalizeTypes resolves every schema thunk before the schema is shared.
+func (s *SchemaManager) FinalizeTypes() error {
+	if err := s.ResolveTypes(); err != nil {
+		return err
+	}
+	for _, gqlType := range s.schema.TypeMap() {
+		switch gqlType := gqlType.(type) {
+		case *gql.Object:
+			gqlType.Fields()
+			gqlType.Interfaces()
+		case *gql.Interface:
+			gqlType.Fields()
+		case *gql.InputObject:
+			gqlType.Fields()
+		case *gql.Union:
+			gqlType.Types()
+		}
+		if gqlType.Error() != nil {
+			return gqlType.Error()
+		}
+	}
+	return nil
 }
 
 func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {

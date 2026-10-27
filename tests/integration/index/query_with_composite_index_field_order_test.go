@@ -787,6 +787,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

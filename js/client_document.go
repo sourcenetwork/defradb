@@ -38,7 +38,11 @@ func (c *clientCollection) addDocument(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.col.AddDocument(ctx, doc, asOpts(opt))
+	err = c.col.AddDocument(ctx, doc, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(client.DocumentIDs([]*client.Document{doc}))
 }
 
 func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.Value, error) {
@@ -60,7 +64,11 @@ func (c *clientCollection) addManyDocuments(this js.Value, args []js.Value) (js.
 		}
 		docs = append(docs, doc)
 	}
-	return js.Undefined(), c.col.AddManyDocuments(ctx, docs, asOpts(opt))
+	err := c.col.AddManyDocuments(ctx, docs, asOpts(opt))
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(client.DocumentIDs(docs))
 }
 
 // saveDocument applies the given JSON patch to the document with the given
@@ -102,7 +110,10 @@ func (c *clientCollection) saveDocument(this js.Value, args []js.Value) (js.Valu
 	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
 		return js.Undefined(), err
 	}
-	return js.Undefined(), c.col.SaveDocument(ctx, doc, asOpts(opt))
+	if err := c.col.SaveDocument(ctx, doc, asOpts(opt)); err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS([]string{doc.ID().String()})
 }
 
 func (c *clientCollection) updateDocument(this js.Value, args []js.Value) (js.Value, error) {
@@ -182,7 +193,7 @@ func (c *clientCollection) existsDocument(this js.Value, args []js.Value) (js.Va
 }
 
 func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
-	filter, err := stringArg(args, 0, "filter")
+	filter, err := filterArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -203,7 +214,7 @@ func (c *clientCollection) updateDocumentsWithFilter(this js.Value, args []js.Va
 }
 
 func (c *clientCollection) deleteDocumentsWithFilter(this js.Value, args []js.Value) (js.Value, error) {
-	filter, err := stringArg(args, 0, "filter")
+	filter, err := filterArg(args, 0, "filter")
 	if err != nil {
 		return js.Undefined(), err
 	}

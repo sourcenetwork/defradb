@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -29,7 +30,7 @@ import (
 //export AddDocument
 func AddDocument(
 	nodePtr C.uintptr_t,
-	json *C.char,
+	jsonData *C.char,
 	isEncrypted C.int,
 	encryptedFields *C.char,
 	opts C.CollectionOptions,
@@ -69,9 +70,12 @@ func AddDocument(
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
 	addOpt := options.WithIdentity(options.AddDocument(), acpIdentity.FromContext(ctx))
+	if opts.enableSigning != 0 {
+		addOpt.SetEnableSigning(opts.enableSigning > 0)
+	}
 
 	// Determine if JSON is array or object by looking for the first character being [
-	jsonString := strings.TrimSpace(C.GoString(json))
+	jsonString := strings.TrimSpace(C.GoString(jsonData))
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
 		docs, err := client.NewDocsFromJSON(ctx, []byte(jsonString), col.Version())
@@ -82,6 +86,11 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
+		docIDs, err := json.Marshal(client.DocumentIDs(docs))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		return returnC(returnGoC(0, "", string(docIDs)))
 	} else {
 		// Single document
 		doc, err := client.NewDocFromJSON(ctx, []byte(jsonString), col.Version())
@@ -92,6 +101,10 @@ func AddDocument(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
+		docIDs, err := json.Marshal(client.DocumentIDs([]*client.Document{doc}))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		return returnC(returnGoC(0, "", string(docIDs)))
 	}
-	return returnC(returnGoC(0, "", ""))
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -49,12 +50,19 @@ func (db *DB) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.P
 func (db *DB) Connect(
 	ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions],
 ) error {
+	if len(addresses) == 0 {
+		return ErrAddressesEmpty
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeConnectP2PPeerPerm); err != nil {
 		return err
 	}
 
+	if db.p2p == nil {
+		return ErrNoP2P
+	}
 	return db.p2p.Connect(ctx, addresses)
 }
 
@@ -62,6 +70,10 @@ func (db *DB) Connect(
 func (db *DB) Disconnect(
 	ctx context.Context, addresses []string, opts ...options.Enumerable[options.DisconnectOptions],
 ) error {
+	if len(addresses) == 0 {
+		return ErrAddressesEmpty
+	}
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDisconnectP2PPeerPerm); err != nil {
@@ -368,6 +380,10 @@ func (db *DB) SyncDocuments(
 	}
 
 	ctx = identity.WithContext(ctx, opt.Identity)
+
+	if opt.BlockSyncTimeout.HasValue() {
+		ctx = p2p.WithBlockSyncTimeout(ctx, opt.BlockSyncTimeout.Value())
+	}
 
 	if db.p2p == nil {
 		return ErrNoP2P

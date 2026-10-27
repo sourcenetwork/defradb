@@ -85,14 +85,6 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 	return string(jsonBytes), nil
 }
 
-// stringFromImmutableOptionString is a helper function to extract a simple string
-func stringFromImmutableOptionString(s immutable.Option[string]) string {
-	if !s.HasValue() {
-		return ""
-	}
-	return s.Value()
-}
-
 // collectEnumerable is a helper function for wrangling data from an Enumerable:
 // enumerable.Enumerable[map[string]any] -> []map[string]any
 func collectEnumerable(e enumerable.Enumerable[map[string]any]) ([]map[string]any, error) {

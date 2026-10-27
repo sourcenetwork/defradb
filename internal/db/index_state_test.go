@@ -54,13 +54,13 @@ func TestIndexState_BuildThenGet_RoundTripsWatermark(t *testing.T) {
 	db, ctx, cleanup := newIndexStateTestCtx(t)
 	defer cleanup()
 
-	require.NoError(t, db.advanceIndexWatermark(ctx, "col1", 1, "bafkreidoc1"))
+	require.NoError(t, db.advanceIndexWatermark(ctx, "col1", 1, 12))
 
 	got, err := getIndexState(ctx, "col1", 1)
 	require.NoError(t, err)
 
 	assert.True(t, got.isBuilding())
-	assert.Equal(t, "bafkreidoc1", got.Watermark)
+	assert.Equal(t, uint64(12), got.Watermark)
 	assert.Empty(t, got.Reason)
 }
 
@@ -103,7 +103,7 @@ func TestIndexState_GetIndexStates_ReturnsOnlyGivenCollection(t *testing.T) {
 
 	// Seed non-ready index states for collection A. A ready index (index 3) has no record.
 	require.NoError(t, db.markIndexBuildFailed(ctx, "colA", 1, "boom"))
-	require.NoError(t, db.advanceIndexWatermark(ctx, "colA", 2, "w1"))
+	require.NoError(t, db.advanceIndexWatermark(ctx, "colA", 2, 15))
 
 	// Seed for collection B, which must not leak into the colA query.
 	require.NoError(t, db.startIndexDrop(ctx, "colB", 1))
@@ -116,7 +116,7 @@ func TestIndexState_GetIndexStates_ReturnsOnlyGivenCollection(t *testing.T) {
 	assert.True(t, states[1].isFailed())
 	assert.Equal(t, "boom", states[1].Reason)
 	assert.True(t, states[2].isBuilding())
-	assert.Equal(t, "w1", states[2].Watermark)
+	assert.Equal(t, uint64(15), states[2].Watermark)
 }
 
 func TestIndexState_ListIndexStates_ReturnsAll(t *testing.T) {

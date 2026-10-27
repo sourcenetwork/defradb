@@ -59,6 +59,6 @@ func (a *TxnAction[T]) SetState(s *state.State) {
 }
 
 func (a *TxnAction[T]) Execute() {
-	a.Action.AddArgs("tx", fmt.Sprint(a.s.Txns[a.TxnIndex]))
+	a.Action.AddArgs("--tx", fmt.Sprint(a.s.Txns[a.TxnIndex]))
 	a.Action.Execute()
 }

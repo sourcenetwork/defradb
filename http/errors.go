@@ -50,6 +50,8 @@ var (
 	ErrMissingIdentity              = errors.New("required identity is missing")
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
+	ErrInvalidTTL                   = errors.New("invalid ttl value")
+	ErrCollectionSchemaNotGenerated = errors.New("collection schema was not generated")
 )
 
 type errorResponse struct {
@@ -154,7 +156,7 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrCollectionRootNotFound) ||
 		errors.Is(err, db.ErrLensCIDNotFound) ||
 		errors.Is(err, p2p.ErrReplicatorNotFound) ||
-		errors.Is(err, acp.ErrPolicyDoesNotExistWithACP) ||
+		errors.Is(err, acp.ErrPolicyDoesNotExist) ||
 		errors.Is(err, acp.ErrResourceDoesNotExistOnTargetPolicy) {
 		return http.StatusNotFound
 	}
@@ -175,6 +177,7 @@ func httpStatusFromError(err error) int {
 		errors.Is(err, db.ErrMaterializedViewAndACPNotSupported) ||
 		errors.Is(err, db.ErrColNotMaterialized) ||
 		errors.Is(err, db.ErrColMutatingIsBranchable) ||
+		errors.Is(err, db.ErrFilteredTruncateBranchableCollection) ||
 		errors.Is(err, db.ErrP2PColHasPolicy) ||
 		errors.Is(err, db.ErrReplicatorColHasPolicy) ||
 		errors.Is(err, db.ErrCollectionNameMutated) ||

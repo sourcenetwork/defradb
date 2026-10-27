@@ -60,8 +60,6 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 }
 
 func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -94,10 +92,11 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(2),
 							"GROUP": []map[string]any{
 								{
-									"cid": uniqueCid,
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
@@ -105,13 +104,14 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(1),
 							"GROUP": []map[string]any{
 								{
-									"cid": uniqueCid,
+
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 								{
-									"cid": uniqueCid,
+									"cid": testUtils.ValidCID(),
 								},
 							},
 						},
@@ -127,8 +127,6 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 
 // This is an odd test, but we need to make sure it works
 func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
-	uniqueCid := testUtils.NewUniqueValue()
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -151,7 +149,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -159,7 +158,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -167,7 +167,8 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": uniqueCid,
+
+							"cid": testUtils.ValidCID(),
 							"GROUP": []map[string]any{
 								{
 									"height": int64(1),
@@ -225,10 +226,10 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"docID": "{{.DocID0_0}}",
 						},
 						{
-							"docID": "bae-2487fd12-227f-582b-a7ed-3dd5d4b61fce",
+							"docID": "{{.DocID0_1}}",
 						},
 					},
 				},
@@ -349,4 +350,54 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 	}
 
 	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommitsWithGroupByEmptyWithChild(t *testing.T) {
+	testUtils.ExecuteTestCase(t, testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John", "age": 21}`,
+			},
+			&action.Request{
+				Request: `{ _commits(groupBy: []) { GROUP { height } } }`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"GROUP": []map[string]any{
+								{"height": int64(1)},
+								{"height": int64(1)},
+								{"height": int64(1)},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestQueryCommitsWithGroupByRejectsNonGroupFields(t *testing.T) {
+	for name, query := range map[string]string{
+		"cid":          `{ _commits(groupBy: [cid]) { cid height } }`,
+		"empty":        `{ _commits(groupBy: []) { cid } }`,
+		"alias":        `{ _commits(groupBy: [cid]) { cid other: height } }`,
+		"links":        `{ _commits(groupBy: [cid]) { cid links { height } } }`,
+		"heads":        `{ _commits(groupBy: [cid]) { cid heads { height } } }`,
+		"nested links": `{ _commits { links(groupBy: [cid]) { cid height } } }`,
+		"nested heads": `{ _commits { heads(groupBy: []) { height } } }`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			testUtils.ExecuteTestCase(t, testUtils.TestCase{
+				Actions: []any{
+					updateUserCollectionSchema(),
+					&action.Request{
+						Request:       query,
+						ExpectedError: "cannot select a non-group-by field at group-level",
+					},
+				},
+			})
+		})
+	}
 }

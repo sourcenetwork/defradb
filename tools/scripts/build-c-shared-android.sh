@@ -9,10 +9,10 @@ fi
 ANDROID_NDK="$1"
 shift
 
-API_LEVEL=21
+API_LEVEL=24
 
 for arg in "$@"; do
-  if [[ "$arg" =~ ^[0-9]+$ ]] && [ "$API_LEVEL" = 21 ]; then
+  if [[ "$arg" =~ ^[0-9]+$ ]] && [ "$API_LEVEL" = 24 ]; then
     API_LEVEL="$arg"
   fi
 done

@@ -91,6 +91,9 @@ func newIndexTestFixtureBare(t *testing.T) *indexTestFixture {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
+	// Close awaits the background index worker, so it cannot outlive the test and race a later
+	// test that mutates the package-level build tunables (indexBackfillBatchSize, etc.).
+	t.Cleanup(func() { db.Close() })
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
@@ -188,7 +191,8 @@ func TestNewIndex_IfValidInput_NewIndex(t *testing.T) {
 	resultDesc, err := f.newCollectionIndex(desc)
 	assert.NoError(t, err)
 	assert.Equal(t, desc.Name, resultDesc.Name)
-	assert.Equal(t, desc.Fields, resultDesc.Fields)
+	assert.Equal(t, desc.Fields, resultDesc.GetFields()) //nolint:staticcheck // request has no accessor
+	//nolint:staticcheck // asserts the deprecated field is still carried through
 	assert.Equal(t, desc.Unique, resultDesc.Unique)
 }
 
@@ -216,7 +220,7 @@ func TestNewIndex_IfFieldHasNoDirection_DefaultToAsc(t *testing.T) {
 	}
 	newDesc, err := f.newCollectionIndex(desc)
 	assert.NoError(t, err)
-	assert.False(t, newDesc.Fields[0].Descending)
+	assert.False(t, newDesc.GetFields()[0].Descending)
 }
 
 func TestNewIndex_IfIndexWithNameAlreadyExists_ReturnError(t *testing.T) {
@@ -475,12 +479,11 @@ func TestNewCollectionIndex_IfDescriptionHasNoFields_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 	desc := getUsersIndexDescOnName()
-	desc.Fields = nil
+	desc.Fields = nil //nolint:staticcheck // request has no accessor
 	descWithID := client.IndexDescription{
 		Name:   desc.Name,
 		ID:     1,
-		Fields: desc.Fields,
-		Unique: desc.Unique,
+		Fields: desc.Fields, //nolint:staticcheck // request has no accessor
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
 	require.ErrorIs(t, err, NewErrIndexDescHasNoFields(descWithID))
@@ -490,15 +493,14 @@ func TestNewCollectionIndex_IfDescriptionHasNonExistingField_ReturnError(t *test
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 	desc := getUsersIndexDescOnName()
-	desc.Fields[0].Name = "non_existing_field"
+	desc.Fields[0].Name = "non_existing_field" //nolint:staticcheck // request has no accessor
 	descWithID := client.IndexDescription{
 		Name:   desc.Name,
 		ID:     1,
-		Fields: desc.Fields,
-		Unique: desc.Unique,
+		Fields: desc.Fields, //nolint:staticcheck // request has no accessor
 	}
 	_, err := NewCollectionIndex(f.ctx, f.users, descWithID, false)
-	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name))
+	require.ErrorIs(t, err, client.NewErrFieldNotExist(desc.Fields[0].Name)) //nolint:staticcheck // request has no accessor
 }
 
 // TestNewCollectionIndex_IfEpochSequenceMissing_ReturnError checks that constructing an index whose

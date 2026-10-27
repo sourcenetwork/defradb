@@ -46,7 +46,7 @@ func TestMutationUpdate_WithIdAndVersion_ReturnResults(t *testing.T) {
 			},
 			&action.Request{
 				Request: `mutation {
-					update_Users(docID: "bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202", input: {points: 59}) {
+					update_Users(docID: "{{.DocID0_0}}", input: {points: 59}) {
 						name
 						_version {
 							cid

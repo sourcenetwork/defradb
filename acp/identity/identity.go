@@ -23,7 +23,7 @@ const (
 	// field containing the authorized account.
 	//
 	// This must be the same as `AuthorizedAccountClaim`
-	// defined in github.com/sourcenetwork/sourcehub/x/acp/types
+	// defined in github.com/sourcenetwork/vera/x/acp/bearer_token
 	//
 	// The type cannot be directly referenced here due
 	// to compilation issues with JS targets.

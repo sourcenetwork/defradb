@@ -62,14 +62,14 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			},
 			&action.Request{
 				Request: `mutation {
-					delete_Book(docID: "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd") {
+					delete_Book(docID: "{{.DocID0_0}}") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd",
+							"_docID": testUtils.NewDocIndex(0, 0),
 						},
 					},
 				},

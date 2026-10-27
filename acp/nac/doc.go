@@ -9,6 +9,6 @@
 // licenses/APL.txt.
 
 /*
-This package implements admin access control system(s).
+This package implements the Local Node Access Control (NAC) system.
 */
 package nac

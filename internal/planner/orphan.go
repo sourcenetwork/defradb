@@ -200,6 +200,10 @@ func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, e
 // addFilterOnField returns a new filter with a condition that checks if the field equals the given value.
 // It does not mutate the input filter.
 func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {
+	return addFilterOnFieldAnyOf(f, propIndex, []any{value})
+}
+
+func addFilterOnFieldAnyOf(f *mapper.Filter, propIndex int, values []any) *mapper.Filter {
 	result := mapper.NewFilter()
 	if f != nil {
 		maps.Copy(result.Conditions, f.Conditions)
@@ -208,9 +212,17 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 	}
 
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
+	filterOp := mapper.FilterEqOp
+	var filterValue any
+	if len(values) == 1 {
+		filterValue = values[0]
+	} else {
+		filterOp = mapper.FilterInOp
+		filterValue = values
+	}
 	filterConditions := map[connor.FilterKey]any{
 		propertyIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: value,
+			filterOp: filterValue,
 		},
 	}
 

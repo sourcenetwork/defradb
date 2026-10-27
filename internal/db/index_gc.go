@@ -30,19 +30,26 @@ func (r rawBytesKey) Bytes() []byte { return r.b }
 
 // gcIndex deletes all of the index's entries, across every epoch, in batched transactions, then
 // removes the drop record. Used by a whole-index drop. The caller resolves collectionID and
-// shortID while its staging transaction is live.
+// collectionShortID while its staging transaction is live.
 func (db *DB) gcIndex(
 	ctx context.Context,
 	collectionID string,
-	shortID uint32,
+	collectionShortID uint32,
 	indexID uint32,
 	indexName string,
 ) error {
-	if err := db.gcIndexEntries(ctx, shortID, indexID, indexName); err != nil {
+	if err := db.gcIndexEntries(ctx, collectionShortID, indexID, indexName); err != nil {
 		return err
 	}
 
 	if err := db.withTxnRetries(ctx, func(c context.Context) error {
+		// Also clear any backfill record. deleteIndex clears it up front, but a build still in flight
+		// at that point can re-create one (an advanced watermark, or a failed status) after the clear
+		// and before its guard releases the drop. Sweeping it here keeps a deleted index from leaving
+		// an orphaned building or failed record behind.
+		if err := db.clearIndexBuildRecord(c, collectionID, indexID); err != nil {
+			return err
+		}
 		return db.completeIndexDrop(c, collectionID, indexID)
 	}); err != nil {
 		return NewErrIndexGCFailed(err, indexName)
@@ -52,9 +59,9 @@ func (db *DB) gcIndex(
 
 // gcIndexEntries deletes every entry for the index, across every epoch, in batched transactions,
 // leaving the state record untouched. Idempotent, so recovery can repeat it.
-func (db *DB) gcIndexEntries(ctx context.Context, shortID, indexID uint32, indexName string) error {
+func (db *DB) gcIndexEntries(ctx context.Context, collectionShortID, indexID uint32, indexName string) error {
 	// Epoch 0 carries no component, so this prefix covers every epoch of the index.
-	prefixKey := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
+	prefixKey := &keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: indexID}
 
 	for {
 		n, batchErr := db.gcIndexBatch(ctx, datastore.IterOptions{Prefix: prefixKey, KeysOnly: true})
@@ -72,9 +79,9 @@ func (db *DB) gcIndexEntries(ctx context.Context, shortID, indexID uint32, index
 // from the start of the index keyspace up to, but excluding, liveEpoch. Epochs are allocated by a
 // monotonic sequence and encode in ascending order, so all stale epochs sort before the live one
 // and a single range delete removes them. Idempotent, so recovery can repeat it.
-func (db *DB) gcStaleEpochs(ctx context.Context, shortID, indexID, liveEpoch uint32, indexName string) error {
-	start := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID}
-	end := &keys.IndexDataStoreKey{CollectionShortID: shortID, IndexID: indexID, Epoch: liveEpoch}
+func (db *DB) gcStaleEpochs(ctx context.Context, collectionShortID, indexID, liveEpoch uint32, indexName string) error {
+	start := &keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: indexID}
+	end := &keys.IndexDataStoreKey{CollectionShortID: collectionShortID, IndexID: indexID, Epoch: liveEpoch}
 
 	for {
 		n, batchErr := db.gcIndexBatch(ctx, datastore.IterOptions{Start: start, End: end, KeysOnly: true})

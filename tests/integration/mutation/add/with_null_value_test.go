@@ -24,8 +24,7 @@ import (
 func TestMutationAdd_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
-			// Collection.Save would treat the second create as an update, and so
-			// is excluded from this test.
+			// Collection.Save treats the second create as an update.
 			state.CollectionNamedMutationType,
 			state.GQLRequestMutationType,
 		}),
@@ -48,7 +47,27 @@ func TestMutationAdd_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 					"name": "John",
 					"age": null
 				}`,
-				ExpectedError: "a document with the given ID already exist",
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  nil,
+						},
+						{
+							"name": "John",
+							"age":  nil,
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

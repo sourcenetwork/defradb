@@ -61,7 +61,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))
-	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.badger.path"))
+	assert.Equal(t, filepath.Join(rootdir, "data"), cfg.GetString("datastore.path"))
 	assert.Equal(t, 1<<30, cfg.GetInt("datastore.badger.valuelogfilesize"))
 	assert.Equal(t, "badger", cfg.GetString("datastore.store"))
 

@@ -12,19 +12,20 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var updater string
+	var enableSigning bool
 	var cmd = &cobra.Command{
 		Use:   "update",
 		Short: "Update documents by docID or filter.",
@@ -42,13 +43,20 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 
 			switch {
 			case filter != "":
-				var filterValue any
-				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
+				filterValue, err := utils.DecodeJSONFilter([]byte(filter))
+				if err != nil {
 					return NewErrParsingArgument("filter", err)
+				}
+				if filterValue == nil {
+					filterValue = map[string]any{}
 				}
 
 				updateWithFilterOpt := options.WithIdentity(
 					options.UpdateDocumentsWithFilter(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					updateWithFilterOpt.SetEnableSigning(enableSigning)
+				}
 
 				res, err := col.UpdateDocumentsWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
@@ -75,6 +83,10 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 				}
 
 				updateOpt := options.WithIdentity(options.UpdateDocument(), identity.FromContext(ctx))
+				// Bool flags are tri-state here: unset means use node config, false means disable.
+				if cmd.Flags().Changed("enable-signing") {
+					updateOpt.SetEnableSigning(enableSigning)
+				}
 
 				return col.UpdateDocument(ctx, doc, updateOpt)
 			default:
@@ -99,6 +111,7 @@ func MakeDocumentUpdateCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	cmd.Flags().BoolVar(&enableSigning, "enable-signing", false, "Override signing for this operation")
 	setCollectionSelectorFlags(cmd)
 	return cmd
 }
