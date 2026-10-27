@@ -46,10 +46,9 @@ type Publisher {
 //
 //	before the planner fails inside VersionedFetcher.merge().
 //
-// Post-fix: counter is unchanged — CheckCollectionFilter rejected the event
+// Post-fix: counter is unchanged — the collection filter rejected the event
 //
-//	at the docID/CID filter site (subscriptions.go:71) before any
-//	transaction was opened.
+//	alongside the docID/CID filters before any transaction was opened.
 func TestHandleSubscription_WrongCollectionEvent_OpensNoTxn(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

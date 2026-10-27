@@ -14,6 +14,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -25,15 +26,6 @@ type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
 	CheckCIDFilter(cid string) bool
 	CheckDocIDFilter(docID string) bool
-	CheckCollectionFilter(collectionID string) bool
-}
-
-// targetCollectionSetter is implemented by subscription selectors whose
-// target collection can be resolved at subscribe-time. The subscription
-// handler uses this to inject the root CollectionID so CheckCollectionFilter
-// can drop events from other collections without opening a transaction.
-type targetCollectionSetter interface {
-	SetTargetCollectionID(id string)
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -48,20 +40,19 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
 	}
 
-	// Resolve the target collection's root CollectionID once at subscribe-time
-	// so the event loop can reject events from other collections without
-	// opening a transaction. If the target isn't a request.Select we skip the
-	// stamping; CheckCollectionFilter will default to "allow" for such cases.
-	if setter, ok := subRequest.(targetCollectionSetter); ok {
-		selection, ok := r.Subscription[0].Selections[0].(*request.Select)
-		if !ok {
-			return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
-		}
-		col, err := db.GetCollectionByName(ctx, selection.Name)
+	// Resolve the target collection from the selection name, as the planner does,
+	// so the event loop can skip events from other collections without opening a txn.
+	var collectionID string
+	if sel, ok := subRequest.(*request.Select); ok {
+		col, err := db.GetCollectionByName(
+			ctx,
+			sel.Name,
+			options.WithIdentity(options.GetCollectionByName(), identity.FromContext(ctx)),
+		)
 		if err != nil {
 			return nil, err
 		}
-		setter.SetTargetCollectionID(col.Version().CollectionID)
+		collectionID = col.Version().CollectionID
 	}
 
 	sub, err := db.events.Subscribe(event.UpdateName)
@@ -94,7 +85,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			// and cid filters. This is an optimization to avoid running the
 			// selection planner and related query logic when we know the event
 			// will not be relevant to the subscription.
-			if !subRequest.CheckCollectionFilter(evt.CollectionID) ||
+			if (collectionID != "" && evt.CollectionID != collectionID) ||
 				!subRequest.CheckDocIDFilter(evt.DocID) ||
 				!subRequest.CheckCIDFilter(evt.Cid.String()) {
 				continue
