@@ -914,12 +914,41 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_IdentityNewNative(
     return returnDefraIdentityResult(env, res);
 }
 
+JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_NewIdentityFromPrivateKeyNative(
+    JNIEnv* env,
+    jobject thiz,
+    jstring privateKeyHexStr
+) {
+    const char* privateKeyHexC = jstring_to_utf8(env, privateKeyHexStr);
+    NewIdentityResult res = NewIdentityFromPrivateKey((char*)privateKeyHexC);
+    free((void*)privateKeyHexC);
+    return returnDefraIdentityResult(env, res);
+}
+
+JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_ExportIdentityPrivateKeyNative(
+    JNIEnv* env,
+    jobject thiz,
+    jlong identityPtr
+) {
+    Result res = ExportIdentityPrivateKey((uintptr_t)identityPtr);
+    return returnDefraResult(env, res);
+}
+
 JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_GetNodeIdentityNative(
     JNIEnv* env,
     jobject thiz,
     jlong nodePtr
 ) {
     Result res = GetNodeIdentity((uintptr_t)nodePtr);
+    return returnDefraResult(env, res);
+}
+
+JNIEXPORT jobject JNICALL Java_source_defra_DefraNode_GetNodeOptionsNative(
+    JNIEnv* env,
+    jobject thiz,
+    jlong nodePtr
+) {
+    Result res = GetNodeOptions((uintptr_t)nodePtr);
     return returnDefraResult(env, res);
 }
 
@@ -1659,69 +1688,6 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_DeleteIndexNative(
     return returnDefraResult(env, res);
 }
 
-// Transaction P2P Methods
-JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_GetP2PInfoNative(
-    JNIEnv* env,
-    jobject thiz,
-    jlong nodePtr,
-    jlong identityPtr
-) {
-    Result res = GetP2PInfo((uintptr_t)nodePtr, (uintptr_t)identityPtr);
-    return returnDefraResult(env, res);
-}
-
-JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_ListP2PReplicatorsNative(
-    JNIEnv* env,
-    jobject thiz,
-    jlong nodePtr,
-    jlong identityPtr
-) {
-    Result res = ListP2PReplicators((uintptr_t)nodePtr, (uintptr_t)identityPtr);
-    return returnDefraResult(env, res);
-}
-
-JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_AddP2PReplicatorNative(
-    JNIEnv* env,
-    jobject thiz,
-    jlong nodePtr,
-    jstring collectionsStr,
-    jstring addressesStr,
-    jlong identityPtr
-) {
-    const char* collectionsC = jstring_to_utf8(env, collectionsStr);
-    const char* addressesC = jstring_to_utf8(env, addressesStr);
-    Result res = AddP2PReplicator((uintptr_t)nodePtr, (char*)collectionsC, (char*)addressesC, (uintptr_t)identityPtr);
-    free((void*)collectionsC);
-    free((void*)addressesC);
-    return returnDefraResult(env, res);
-}
-
-JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_ConnectP2PPeersNative(
-    JNIEnv* env,
-    jobject thiz,
-    jlong nodePtr,
-    jstring peerAddressesStr,
-    jlong identityPtr
-) {
-    const char* peerAddressesC = jstring_to_utf8(env, peerAddressesStr);
-    Result res = ConnectP2PPeers((uintptr_t)nodePtr, (char*)peerAddressesC, (uintptr_t)identityPtr);
-    free((void*)peerAddressesC);
-    return returnDefraResult(env, res);
-}
-
-JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_DisconnectP2PPeersNative(
-    JNIEnv* env,
-    jobject thiz,
-    jlong nodePtr,
-    jstring peerAddressesStr,
-    jlong identityPtr
-) {
-    const char* peerAddressesC = jstring_to_utf8(env, peerAddressesStr);
-    Result res = DisconnectP2PPeers((uintptr_t)nodePtr, (char*)peerAddressesC, (uintptr_t)identityPtr);
-    free((void*)peerAddressesC);
-    return returnDefraResult(env, res);
-}
-
 // Transaction Query Methods
 JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_ExecuteQueryNative(
     JNIEnv* env,
@@ -1995,6 +1961,15 @@ JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_PrintDumpNative(
     jlong nodePtr
 ) {
     Result res = PrintDump((uintptr_t)nodePtr);
+    return returnDefraResult(env, res);
+}
+
+JNIEXPORT jobject JNICALL Java_source_defra_DefraTransaction_GetNodeIdentityNative(
+    JNIEnv* env,
+    jobject thiz,
+    jlong nodePtr
+) {
+    Result res = GetNodeIdentity((uintptr_t)nodePtr);
     return returnDefraResult(env, res);
 }
 
