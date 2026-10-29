@@ -103,6 +103,7 @@ type Store interface {
 	//
 	// Note:
 	// - The request actor must either be the owner or manager of the node.
+	// - The target actor must not be empty.
 	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
 	AddNACActorRelationship(
 		ctx context.Context,
@@ -119,6 +120,7 @@ type Store interface {
 	//
 	// Note:
 	// - The request actor must either be the owner or manager of the node.
+	// - The target actor must not be empty.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
 	DeleteNACActorRelationship(
