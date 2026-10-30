@@ -521,18 +521,18 @@ defradb keyring add vera-key <secp256k1-private-key-hex>
 For local development, the Vera image can run an isolated chain of its own with `STANDALONE=1`, which is also how the integration tests bring it up:
 
 ```shell
-docker run --rm \
+docker run -d --rm --name vera \
   -e STANDALONE=1 \
   -p 26657:26657 -p 9090:9090 \
   ghcr.io/sourcenetwork/vera:dev
 ```
 
-It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain ID is `vera-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs.
+It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain ID is `vera-dev`. The standalone image also creates a funded `faucet` account in the container's keyring.
 
-The account behind `KeyName` pays for the Vera transactions the node creates, and the faucet does not fund it automatically. Either import the faucet mnemonic as the node's key, or send funds to the address derived from the key already in the keyring:
+The account behind `KeyName` pays for the Vera transactions the node creates, and the faucet does not fund it automatically. Send funds from the faucet to the address derived from the node's key:
 
 ```shell
-docker exec <container> verad tx bank send \
+docker exec vera verad tx bank send \
   faucet <address of the KeyName key> 1000000uopen \
   --keyring-backend test --chain-id vera-dev --yes
 ```
