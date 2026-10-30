@@ -76,6 +76,7 @@ func (proto *IdentityProtocol) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
 	req := IdentityRequest{}
 	err := message.Receive(stream, peerID, proto, &req)
+	closeStream(stream)
 	if err != nil {
 		return
 	}
@@ -99,4 +100,5 @@ func (proto *IdentityProtocol) onRequest(stream io.Reader, peerID string) {
 
 func (proto *IdentityProtocol) onResponse(stream io.Reader, peerID string) {
 	_ = message.Receive(stream, peerID, proto, &IdentityResponse{})
+	closeStream(stream)
 }
