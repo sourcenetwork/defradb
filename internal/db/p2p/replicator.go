@@ -13,6 +13,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -450,6 +451,7 @@ func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
 
 // handleReplicatorRetries manages retries for failed replication attempts.
 func (p *P2P) handleReplicatorRetries(ctx context.Context) {
+	p.clearStaleReplicatorRetrying(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -518,13 +520,13 @@ func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string,
 			}
 		} else {
 			// If there are more docs to retry, set the next retry time to be immediate.
-			err := addReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
+			err := addReplicatorNextRetry(ctx, peerID, []time.Duration{0}, false, p.db.Multistore().Peerstore())
 			if err != nil {
 				return NewErrHandleRetryCompletion(err, peerID)
 			}
 		}
 	} else {
-		err := addReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
+		err := addReplicatorNextRetry(ctx, peerID, p.retryIntervals, false, p.db.Multistore().Peerstore())
 		if err != nil {
 			return NewErrHandleRetryCompletion(err, peerID)
 		}
@@ -702,10 +704,13 @@ func (p *P2P) addReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRe
 	return nil
 }
 
+// addReplicatorNextRetry schedules the next retry from retryIntervals. With restart, the retry
+// count goes back to zero, so the schedule climbs the intervals again from the first one.
 func addReplicatorNextRetry(
 	ctx context.Context,
 	peerID string,
 	retryIntervals []time.Duration,
+	restart bool,
 	peerstore corekv.ReaderWriter,
 ) error {
 	if ctx.Err() != nil {
@@ -720,6 +725,9 @@ func addReplicatorNextRetry(
 	err = cbor.Unmarshal(b, &rInfo)
 	if err != nil {
 		return NewErrUnmarshalRetryInfo(err, peerID)
+	}
+	if restart {
+		rInfo.NumRetries = 0
 	}
 	if rInfo.NumRetries >= len(retryIntervals) {
 		rInfo.NextRetry = time.Now().Add(retryIntervals[len(retryIntervals)-1])
@@ -740,19 +748,102 @@ func addReplicatorNextRetry(
 func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
 	log.InfoContext(ctx, "Retrying replicator", corelog.String("PeerID", peerID))
 
-	ranToCompletion, anyDocsFailed := p.retryReplicatorDocs(ctx, peerID)
+	ranToCompletion, anyDocsFailed, anyDocsDelivered := p.retryReplicatorDocs(ctx, peerID)
 	if !ranToCompletion {
+		p.clearReplicatorRetrying(ctx, peerID)
 		return
 	}
 
-	ranToCompletion, anyColsFailed := p.retryReplicatorCols(ctx, peerID)
+	ranToCompletion, anyColsFailed, anyColsDelivered := p.retryReplicatorCols(ctx, peerID)
 	if !ranToCompletion {
+		p.clearReplicatorRetrying(ctx, peerID)
 		return
 	}
 
-	// If any doc failed, wait before retrying again instead of retrying right away.
-	if err := p.handleCompletedReplicatorRetry(ctx, peerID, !anyDocsFailed && !anyColsFailed); err != nil {
+	var err error
+	switch {
+	case !anyDocsFailed && !anyColsFailed:
+		err = p.handleCompletedReplicatorRetry(ctx, peerID, true)
+	case anyDocsDelivered || anyColsDelivered:
+		// The receiver is taking items; come back at the first interval instead of the
+		// escalated one earned while it was saturated.
+		p.handleRetryMutex.Lock()
+		err = addReplicatorNextRetry(ctx, peerID, p.retryIntervals, true, p.db.Multistore().Peerstore())
+		p.handleRetryMutex.Unlock()
+	default:
+		// If any item failed, wait before retrying again instead of retrying right away.
+		err = p.handleCompletedReplicatorRetry(ctx, peerID, false)
+	}
+	if err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
+	}
+}
+
+// clearReplicatorRetrying clears the Retrying flag of a sweep that ctx cancelled. Nothing else
+// clears it, so retryReplicators would skip this replicator from then on, after a restart too.
+// It writes past the cancel on purpose and schedules the next sweep right away.
+func (p *P2P) clearReplicatorRetrying(ctx context.Context, peerID string) {
+	p.handleRetryMutex.Lock()
+	defer p.handleRetryMutex.Unlock()
+	err := addReplicatorNextRetry(
+		context.WithoutCancel(ctx),
+		peerID,
+		[]time.Duration{0},
+		false,
+		p.db.Multistore().Peerstore(),
+	)
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to clear replicator retrying flag", err)
+	}
+}
+
+// clearStaleReplicatorRetrying clears every Retrying flag left in the peerstore. It runs before the
+// first sweep, so any flag still set belongs to a sweep that a shutdown or crash cut short, and
+// whose own clear may never have reached the store. Next retry times are kept as they are.
+func (p *P2P) clearStaleReplicatorRetrying(ctx context.Context) {
+	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte(keys.REPLICATOR_RETRY_ID),
+	})
+	if err != nil {
+		log.ErrorContextE(ctx, "Failed to iterate replicator retry ID keys", err)
+		return
+	}
+	stale := make(map[string]retryInfo)
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			log.ErrorContextE(ctx, "Failed to get next replicator retry ID key", err)
+			break
+		}
+		if !hasNext {
+			break
+		}
+		value, err := iter.Value()
+		if err != nil {
+			log.ErrorContextE(ctx, "Failed to get replicator retry value", err)
+			continue
+		}
+		rInfo := retryInfo{}
+		if err := cbor.Unmarshal(value, &rInfo); err != nil {
+			// retryReplicators deletes retry info it can't unmarshal.
+			continue
+		}
+		if rInfo.Retrying {
+			stale[string(iter.Key())] = rInfo
+		}
+	}
+	closeQueryResults(iter)
+
+	for key, rInfo := range stale {
+		rInfo.Retrying = false
+		b, err := cbor.Marshal(rInfo)
+		if err != nil {
+			log.ErrorContextE(ctx, "Failed to marshal replicator retry info", err)
+			continue
+		}
+		if err := p.db.Multistore().Peerstore().Set(ctx, []byte(key), b); err != nil {
+			log.ErrorContextE(ctx, "Failed to clear stale replicator retrying flag", err)
+		}
 	}
 }
 
@@ -769,7 +860,10 @@ func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryDoc step, there
 // would be a high chance of unnecessary transaction conflicts.
-func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToCompletion bool, anyFailed bool) {
+func (p *P2P) retryReplicatorDocs(
+	ctx context.Context,
+	peerID string,
+) (ranToCompletion bool, anyFailed bool, anyDelivered bool) {
 	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
@@ -777,14 +871,14 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to iterate replicator retry docID keys", err)
 		// Return true, true so that we delay before retrying
-		return true, true
+		return true, true, false
 	}
 	defer closeQueryResults(iter)
 
 	for {
 		select {
 		case <-ctx.Done():
-			return false, false
+			return false, false, false
 		default:
 		}
 
@@ -803,23 +897,30 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 			log.ErrorContextE(ctx, "Failed to parse retry doc key", err)
 			continue
 		}
-		err = p.retryDoc(ctx, peerID, key.DocID)
+		err = retryWithBackpressure(ctx, func() error { return p.retryDoc(ctx, peerID, key.DocID) })
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to retry doc", err, corelog.String("DocID", key.DocID))
 			anyFailed = true
 			// The peer rejected this doc, but may accept the others, so keep going. Any other
-			// error, like the peer being unreachable, would fail the others too.
-			if errors.Is(err, message.ErrPeerRejected) {
+			// error, like the peer being unreachable or still saturated after the wait budget,
+			// would fail the others too.
+			if _, transient := backpressureWait(err); !transient && errors.Is(err, message.ErrPeerRejected) {
 				continue
 			}
 			break
 		}
+		anyDelivered = true
 		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry docID", err)
 		}
 	}
 
-	return true, anyFailed
+	// A cancel during a backpressure wait ends the loop through the error path above, so it
+	// has to be caught here, or the sweep reports completion with a cancelled ctx.
+	if ctx.Err() != nil {
+		return false, false, false
+	}
+	return true, anyFailed, anyDelivered
 }
 
 // retryReplicatorCols retries all unsycned branchable collections for a replicator.
@@ -835,7 +936,10 @@ func (p *P2P) retryReplicatorDocs(ctx context.Context, peerID string) (ranToComp
 // All action within this function are done outside a transaction to always get the most recent data
 // and post updates as soon as possible. Because of the asyncronous nature of the retryCol step, there
 // would be a high chance of unnecessary transaction conflicts.
-func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToCompletion bool, anyFailed bool) {
+func (p *P2P) retryReplicatorCols(
+	ctx context.Context,
+	peerID string,
+) (ranToCompletion bool, anyFailed bool, anyDelivered bool) {
 	iter, err := p.db.Multistore().Peerstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewReplicatorRetryCollectionIDKey(peerID, "").Bytes(),
 		KeysOnly: true,
@@ -843,14 +947,14 @@ func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToComp
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to iterate replicator retry colID keys", err)
 		// Return true, true so that we delay before retrying
-		return true, true
+		return true, true, false
 	}
 	defer closeQueryResults(iter)
 
 	for {
 		select {
 		case <-ctx.Done():
-			return false, false
+			return false, false, false
 		default:
 		}
 
@@ -869,23 +973,79 @@ func (p *P2P) retryReplicatorCols(ctx context.Context, peerID string) (ranToComp
 			log.ErrorContextE(ctx, "Failed to parse retry col key", err)
 			continue
 		}
-		err = p.retryCol(ctx, peerID, key.CollectionID)
+		err = retryWithBackpressure(ctx, func() error { return p.retryCol(ctx, peerID, key.CollectionID) })
 		if err != nil {
 			log.ErrorContextE(ctx, "Failed to retry col", err, corelog.String("CollectionID", key.CollectionID))
 			anyFailed = true
 			// The peer rejected this block, but may accept the others, so keep going. Any other
-			// error, like the peer being unreachable, would fail the others too.
-			if errors.Is(err, message.ErrPeerRejected) {
+			// error, like the peer being unreachable or still saturated after the wait budget,
+			// would fail the others too.
+			if _, transient := backpressureWait(err); !transient && errors.Is(err, message.ErrPeerRejected) {
 				continue
 			}
 			break
 		}
+		anyDelivered = true
 		if err = p.db.Multistore().Peerstore().Delete(ctx, key.Bytes()); err != nil {
 			log.ErrorContextE(ctx, "Failed to delete retry colID", err)
 		}
 	}
 
-	return true, anyFailed
+	// See retryReplicatorDocs: a cancel during a backpressure wait is caught here.
+	if ctx.Err() != nil {
+		return false, false, false
+	}
+	return true, anyFailed, anyDelivered
+}
+
+// Rejections a defradb.rs receiver sends while under load. The reply carries only an error
+// string, so the full text is matched inside the wrapped error. These must equal
+// RATE_LIMITED_MESSAGE and AT_CAPACITY_MESSAGE in defradb.rs crates/p2p/src/error.rs byte for byte.
+const (
+	peerRateLimitedMessage = "rate limited: too many requests, retry later"
+	peerAtCapacityMessage  = "at capacity: receiver is saturated, back off"
+)
+
+// maxBackpressureRetries caps how many times one item is pushed again while the receiver
+// reports backpressure, before the sweep gives up until the next retry interval.
+const maxBackpressureRetries = 150
+
+// backpressureWait maps a receiver's transient rejection to how long to wait
+// before pushing the same item again.
+func backpressureWait(err error) (time.Duration, bool) {
+	if !errors.Is(err, message.ErrPeerRejected) {
+		return 0, false
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, peerRateLimitedMessage):
+		return 100 * time.Millisecond, true
+	case strings.Contains(msg, peerAtCapacityMessage):
+		return 2 * time.Second, true
+	}
+	return 0, false
+}
+
+// retryWithBackpressure calls push until it succeeds, fails with an error that is not
+// backpressure, or the wait budget runs out, and returns the last error. The receiver's
+// rejections are backpressure, not verdicts: waiting them out and pushing the same item again
+// avoids parking the whole set on the next interval. If ctx is cancelled while waiting, the
+// last error is returned for the caller to log; the item keeps its retry record.
+func retryWithBackpressure(ctx context.Context, push func() error) error {
+	err := push()
+	for attempt := 0; err != nil && attempt < maxBackpressureRetries; attempt++ {
+		wait, transient := backpressureWait(err)
+		if !transient {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(wait):
+		}
+		err = push()
+	}
+	return err
 }
 
 type head struct {
