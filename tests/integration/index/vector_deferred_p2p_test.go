@@ -42,8 +42,8 @@ func TestVectorIndexDeferredP2P_ReplicatedWrites_AreSearchableOnReplica(t *testi
 		// The vectorIndex directive does not exist in the older release.
 		// https://github.com/sourcenetwork/defradb/issues/5121
 		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
+			multiplier.CrossVersionOldFirst,
+			multiplier.CrossVersionOldLast,
 		},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
