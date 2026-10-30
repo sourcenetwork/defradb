@@ -426,6 +426,21 @@ jobs:
           coverage-artifact-name: "coverage_cross_version_${{ matrix.direction }}_${{ matrix.target-version }}"
           coverage-path: coverage.txt
 
+  # The matrix job names change whenever a target version is added, so branch
+  # protection requires this job instead. It fails unless every leg succeeded.
+  test-coverage-cross-version-gate:
+    name: Test coverage cross version gate job
+
+    needs: test-coverage-cross-version
+
+    if: always()
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check that every cross version job succeeded
+        run: test "${{ needs.test-coverage-cross-version.result }}" = "success"
+
   # This job tests the leveldb datastore.
   test-coverage-leveldb:
     name: Test coverage leveldb job
