@@ -35,10 +35,7 @@ import (
 // or two drains could overlap.
 func (w *vectorMaintenanceWriter) drainSync(ctx context.Context) error {
 	for {
-		w.mu.Lock()
-		empty := len(w.dirty) == 0
-		w.mu.Unlock()
-		if empty {
+		if len(w.dirtyIndexes()) == 0 {
 			return nil
 		}
 		if err := w.drainPass(ctx); err != nil {
@@ -259,25 +256,37 @@ func (f *deferredIndexFixture) ref() vectorIndexRef {
 
 // dirty returns how many indexes the writer has marked as needing a drain.
 func (f *deferredIndexFixture) dirty() int {
-	w := f.db.vectorMaintenance
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return len(w.dirty)
+	return len(f.db.vectorMaintenance.dirtyIndexes())
+}
+
+// dirtyIndexes returns the dirty indexes without clearing their flags.
+func (w *vectorMaintenanceWriter) dirtyIndexes() []vectorIndexRef {
+	var out []vectorIndexRef
+	w.indexes.Range(func(k, v any) bool {
+		key, _ := k.(vectorIndexRef)
+		s, _ := v.(*deferredIndexState)
+		if s.dirty.Load() {
+			out = append(out, key)
+		}
+		return true
+	})
+	return out
 }
 
 // hasCounter and hasBatchSize take the ref explicitly because the collection handle no longer lists
 // an index once it is dropped.
 func (f *deferredIndexFixture) hasCounter(ref vectorIndexRef) bool {
-	_, ok := f.db.vectorMaintenance.pending.Load(ref)
+	_, ok := f.db.vectorMaintenance.indexes.Load(ref)
 	return ok
 }
 
 func (f *deferredIndexFixture) hasBatchSize(ref vectorIndexRef) bool {
-	w := f.db.vectorMaintenance
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	_, ok := w.batchSizes[ref]
-	return ok
+	v, ok := f.db.vectorMaintenance.indexes.Load(ref)
+	if !ok {
+		return false
+	}
+	s, ok := v.(*deferredIndexState)
+	return ok && s.batchSize.Load() > 0
 }
 
 // onPendingRead runs fn each time a drain batch has read the pending list, before it commits. fn
@@ -380,8 +389,12 @@ func TestVectorMaintenance_BackPressure_AppliesInlineWhenPendingIsFull(t *testin
 	f.update(docs[0], []float32{0, 0, 1})
 	assert.Equal(t, 1, f.pending())
 
+	// That inline write made room, so the delete is deferred again. Its pending delete replaces the
+	// pending upsert of docs[1].
 	f.delete(docs[1])
-	assert.Equal(t, 0, f.pending())
+	entries := f.pendingAt(1)
+	require.Len(t, entries, 1)
+	assert.Equal(t, vectorindex.PendingDelete, entries[0].Op)
 
 	before := f.search([]float32{0, 0, 1}, 10)
 	require.Len(t, before, 4)
@@ -544,4 +557,117 @@ func TestVectorMaintenance_Update_RemovingVectorWritesPendingDelete(t *testing.T
 	require.Len(t, entries, 1)
 	assert.Equal(t, vectorindex.PendingDelete, entries[0].Op)
 	assert.Empty(t, f.search([]float32{1, 0, 0}, 10))
+}
+
+// newDeferredFixtureSDL is newDeferredFixture with a custom schema, in memory, run loop suppressed.
+func newDeferredFixtureSDL(t *testing.T, sdl string) *deferredIndexFixture {
+	t.Helper()
+	return newDeferredFixtureWith(t, badgerds.DefaultOptions("").WithInMemory(true), sdl, true)
+}
+
+// saveJSON saves a document built from fields.
+func (f *deferredIndexFixture) saveJSON(fields map[string]any) *client.Document {
+	f.t.Helper()
+	data, err := json.Marshal(fields)
+	require.NoError(f.t, err)
+	doc, err := client.NewDocFromJSON(f.ctx, data, f.col.Version())
+	require.NoError(f.t, err)
+	require.NoError(f.t, f.col.SaveDocument(f.ctx, doc))
+	return doc
+}
+
+// Changing another indexed field calls Update on the vector index too. An unchanged vector must not
+// be queued again.
+func TestVectorMaintenance_Update_UnchangedVectorWritesNothing(t *testing.T) {
+	f := newDeferredFixtureSDL(t, `
+		type Users {
+			name: String @index
+			embedding: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
+		}
+	`)
+	var ref vectorIndexRef
+	for _, idx := range f.col.Version().Indexes {
+		if _, ok := idx.GetVector(); ok {
+			ref = vectorIndexRef{f.col.Version().CollectionID, idx.ID}
+		}
+	}
+	doc := f.add("a", []float32{1, 0, 0})
+	f.drain()
+	counter := f.db.vectorMaintenance.pendingCounter(ref)
+	require.Equal(t, int64(0), counter.Load())
+
+	require.NoError(t, doc.Set(f.ctx, "name", "b"))
+	require.NoError(t, f.col.UpdateDocument(f.ctx, doc))
+
+	assert.Equal(t, int64(0), counter.Load())
+	assert.Equal(t, 0, f.dirty())
+}
+
+// A document that never had a vector is not in the graph, so deleting it must not queue anything.
+func TestVectorMaintenance_Delete_DocWithoutVectorWritesNothing(t *testing.T) {
+	f := newDeferredFixture(t, "", true)
+	doc := f.saveJSON(map[string]any{"name": "a"})
+	require.Equal(t, 0, f.pending())
+
+	f.delete(doc)
+
+	assert.Equal(t, 0, f.pending())
+	assert.Equal(t, int64(0), f.db.vectorMaintenance.pendingCounter(f.ref()).Load())
+}
+
+// An inline write that removes a pending entry must lower the count, so writes go back to deferring
+// as soon as there is room, not only after the next full drain.
+func TestVectorMaintenance_BackPressure_InlineWriteReleasesPendingCount(t *testing.T) {
+	f := newDeferredFixture(t, "", true)
+	setForTest(t, &vectorMaintenancePendingLimit, 2)
+	counter := f.db.vectorMaintenance.pendingCounter(f.ref())
+
+	a := f.add("a", []float32{1, 0, 0})
+	f.add("b", []float32{0, 1, 0})
+	require.Equal(t, int64(2), counter.Load())
+
+	// Inline, because the list is full. It removes a's pending entry.
+	f.update(a, []float32{0, 0, 1})
+	require.Equal(t, 1, f.pending())
+	assert.Equal(t, int64(1), counter.Load())
+
+	f.add("c", []float32{1, 1, 0})
+	assert.Equal(t, 2, f.pending(), "the write should have been deferred again")
+}
+
+// One busy index must not keep the writer from the others. A pass applies a bounded number of
+// batches to each dirty index and leaves the rest for the next pass.
+func TestVectorMaintenance_Drain_RoundRobinsBetweenDirtyIndexes(t *testing.T) {
+	f := newDeferredFixtureSDL(t, `
+		type Users {
+			name: String
+			busy: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
+			quiet: [Float32!] @index(vector: {dimensions: 3, maintenance: DEFERRED, hnsw: {metric: COSINE}})
+		}
+	`)
+	refs := map[string]vectorIndexRef{}
+	for _, idx := range f.col.Version().Indexes {
+		vd, ok := idx.GetVector()
+		require.True(t, ok)
+		refs[vd.Fields[0]] = vectorIndexRef{f.col.Version().CollectionID, idx.ID}
+	}
+	w := f.db.vectorMaintenance
+	// One entry per batch, so a pass can apply at most deferredBatchesPerPass entries per index.
+	w.setBatchLimit(refs["busy"], 1)
+	w.setBatchLimit(refs["quiet"], 1)
+
+	busy := deferredBatchesPerPass + 5
+	for i := range busy {
+		f.saveJSON(map[string]any{"name": fmt.Sprint("b", i), "busy": []float32{1, float32(i), 0}})
+	}
+	f.saveJSON(map[string]any{"name": "q", "quiet": []float32{0, 1, 0}})
+
+	require.NoError(t, w.drainPass(f.ctx))
+
+	assert.Equal(t, int64(0), w.pendingCounter(refs["quiet"]).Load())
+	assert.Equal(t, int64(5), w.pendingCounter(refs["busy"]).Load())
+	assert.Equal(t, []vectorIndexRef{refs["busy"]}, w.dirtyIndexes())
+
+	f.drain()
+	assert.Equal(t, int64(0), w.pendingCounter(refs["busy"]).Load())
 }

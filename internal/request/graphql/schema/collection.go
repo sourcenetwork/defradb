@@ -804,14 +804,9 @@ func vectorIndexFromAST(
 			if !ok {
 				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
 			}
-			switch maintenanceVal.Value {
-			case string(client.VectorIndexMaintenanceSync):
-				maintenance = client.VectorIndexMaintenanceSync
-			case string(client.VectorIndexMaintenanceDeferred):
-				maintenance = client.VectorIndexMaintenanceDeferred
-			default:
-				return client.NewIndexRequest{}, NewErrVectorIndexUnknownMaintenance(maintenanceVal.Value)
-			}
+			// The GraphQL enum already rejects unknown values here, and index creation checks them
+			// again for requests that do not come through SDL.
+			maintenance = client.VectorIndexMaintenance(maintenanceVal.Value)
 
 		default:
 			return client.NewIndexRequest{}, ErrIndexWithUnknownArg

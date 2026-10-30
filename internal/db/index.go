@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"slices"
 
 	"github.com/sourcenetwork/corekv"
 
@@ -505,21 +506,36 @@ func (index *collectionVectorIndex) nodeAndVector(
 		return 0, nil, found, err
 	}
 
-	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	vec, err := index.docVector(doc)
 	if err != nil {
 		return 0, nil, false, err
 	}
-	if fieldVal == nil || fieldVal.Value() == nil {
-		// No vector on this doc, so nothing to index.
-		return docShortID, nil, true, nil
-	}
+	return docShortID, vec, true, nil
+}
 
+// docVector returns the vector doc holds for the indexed field, or nil when it has none.
+func (index *collectionVectorIndex) docVector(doc *client.Document) ([]float32, error) {
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return nil, err
+	}
+	if fieldVal == nil || fieldVal.Value() == nil {
+		return nil, nil
+	}
 	vec, ok := fieldVal.NormalValue().Float32Array()
 	if !ok {
-		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
+		return nil, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
 	}
+	return vec, nil
+}
 
-	return docShortID, vec, true, nil
+// hasVector reports whether doc has a value for the indexed field, without decoding it.
+func (index *collectionVectorIndex) hasVector(doc *client.Document) (bool, error) {
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return false, err
+	}
+	return fieldVal != nil && fieldVal.Value() != nil, nil
 }
 
 // Save indexes doc by inserting its vector. If the document has no value for the indexed field,
@@ -585,14 +601,27 @@ func (index *collectionVectorIndex) save(ctx context.Context, doc *client.Docume
 // The writer is also woken on commit: an inline write usually means the pending list is full, and
 // the writer would otherwise only notice on its next retry.
 func (index *collectionVectorIndex) applyInline(ctx context.Context, collectionShortID uint32, nodeID uint64) error {
-	err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
+	hadPending, err := vectorindex.HasPending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
 	if err != nil {
 		return err
+	}
+	if hadPending {
+		err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
+		if err != nil {
+			return err
+		}
 	}
 	if w := index.maintenanceWriter(); w != nil {
 		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
 			key := index.maintenanceKey()
-			txn.OnSuccess(func() { w.markDirty(key) })
+			txn.OnSuccess(func() {
+				// Removing the entry shrinks the list, so count it. Otherwise writes would stay
+				// inline until the next full drain, even with the list nearly empty.
+				if hadPending {
+					subPending(w.pendingCounter(key), 1)
+				}
+				w.markDirty(key)
+			})
 		}
 	}
 	return nil
@@ -624,8 +653,9 @@ func (index *collectionVectorIndex) deferNow() bool {
 	if !index.isDeferred() {
 		return false
 	}
+	// Without a writer nothing would apply the entries or bound the list, so write inline.
 	w := index.maintenanceWriter()
-	return w == nil || !w.overLimit(index.maintenanceKey(), index.vectorDesc)
+	return w != nil && !w.overLimit(index.maintenanceKey())
 }
 
 // putPending records a pending write and arranges for the background writer to be woken once the
@@ -652,6 +682,15 @@ func (index *collectionVectorIndex) putPending(
 // so the old and new vectors map to the same node; delete-then-save re-inserts it. (The binding
 // handles the in-place replacement; see the vectorindex package.)
 func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	// Update is called for every index when any indexed field changes. Re-inserting an unchanged
+	// vector is wasted work, and in deferred mode it would also fill the pending list.
+	unchanged, err := index.sameVector(oldDoc, newDoc)
+	if err != nil {
+		return err
+	}
+	if unchanged {
+		return nil
+	}
 	if index.deferNow() {
 		// A pending upsert already replaces the node's old vector when it is applied, so it is all
 		// we need. Writing a pending delete first would just be overwritten, and the pending count
@@ -670,6 +709,20 @@ func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *
 		return err
 	}
 	return index.Save(ctx, newDoc)
+}
+
+// sameVector reports whether both documents hold the same vector, or both hold none.
+func (index *collectionVectorIndex) sameVector(oldDoc, newDoc *client.Document) (bool, error) {
+	oldVec, err := index.docVector(oldDoc)
+	if err != nil {
+		// The old value cannot be read, so let the normal path deal with it.
+		return false, nil
+	}
+	newVec, err := index.docVector(newDoc)
+	if err != nil {
+		return false, err
+	}
+	return (oldVec == nil) == (newVec == nil) && slices.Equal(oldVec, newVec), nil
 }
 
 // Delete removes doc from the search results. It is a soft delete: the node is marked deleted but
@@ -703,6 +756,15 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 	}
 
 	if index.deferNow() {
+		// A document without a vector is not in the graph, so there is nothing to delete. Queuing
+		// it anyway would fill the pending list with no-ops, which every search then scans.
+		has, err := index.hasVector(doc)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return nil
+		}
 		return index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
 			NodeID: nodeID,
 			Op:     vectorindex.PendingDelete,

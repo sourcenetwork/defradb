@@ -39,10 +39,15 @@ const deferredBatchSize = 32
 // slow inline writes much sooner. It is a var so tests can change it.
 var vectorMaintenancePendingLimit int64 = 1000
 
-// pendingLimit returns the pending count at which the index stops deferring.
-func pendingLimit(_ *client.VectorIndexDescription) int64 {
+// pendingLimit returns the pending count at which an index stops deferring.
+func pendingLimit() int64 {
 	return max(1, vectorMaintenancePendingLimit)
 }
+
+// deferredBatchesPerPass is how many batches the writer applies to one index before it moves on to
+// the next dirty index. Without it, an index with steady writes refills every batch, so the writer
+// never leaves it and the other indexes fill up and fall back to slow inline writes.
+const deferredBatchesPerPass = 8
 
 // vectorMaintenanceRetryDelay is how long the writer waits before it first retries a failed index.
 // Without it the writer would spin on an error. It is a var so tests can shorten it.
@@ -81,58 +86,68 @@ type vectorIndexRef struct {
 type vectorMaintenanceWriter struct {
 	db *DB
 
-	mu sync.Mutex
-	// dirty holds the indexes that might have pending entries.
-	dirty map[vectorIndexRef]struct{}
-	// pending holds an approximate count of pending writes per index (*atomic.Int64). It is used to
-	// slow writers down. It can be too high when a write overwrites an entry that is still pending.
-	// A full drain resets it, and after a restart it starts from the stored count.
-	pending sync.Map
-	// batchSizes holds the batch size of indexes where a smaller one was needed to fit Badger's
-	// transaction limit. Indexes not in the map use deferredBatchSize.
-	batchSizes map[vectorIndexRef]int
+	// indexes holds the *deferredIndexState of every deferred index the writer knows about. Document
+	// writes on any goroutine read and update it, so everything in it is atomic and no write takes
+	// a lock.
+	indexes sync.Map
 
 	// wake has room for one signal, so many writes only cause one wake up.
 	wake chan struct{}
 }
 
+// deferredIndexState is what the writer keeps in memory about one deferred index.
+type deferredIndexState struct {
+	// pending is an approximate count of pending writes. It is used to slow writers down. It can be
+	// too high when a write overwrites an entry that is still pending. A full drain resets it, and
+	// after a restart it starts from the stored count.
+	pending atomic.Int64
+	// dirty is set when the index might have pending entries.
+	dirty atomic.Bool
+	// batchSize is the batch size when a smaller one was needed to fit Badger's transaction limit.
+	// Zero means deferredBatchSize.
+	batchSize atomic.Int64
+}
+
 func newVectorMaintenanceWriter(db *DB) *vectorMaintenanceWriter {
 	return &vectorMaintenanceWriter{
-		db:         db,
-		dirty:      make(map[vectorIndexRef]struct{}),
-		batchSizes: make(map[vectorIndexRef]int),
-		wake:       make(chan struct{}, 1),
+		db:   db,
+		wake: make(chan struct{}, 1),
 	}
+}
+
+// state returns the in-memory state of an index, creating it if needed.
+func (w *vectorMaintenanceWriter) state(key vectorIndexRef) *deferredIndexState {
+	s, ok := w.indexes.Load(key)
+	if !ok {
+		s, _ = w.indexes.LoadOrStore(key, &deferredIndexState{})
+	}
+	// Only *deferredIndexState values are ever stored.
+	state, _ := s.(*deferredIndexState)
+	return state
 }
 
 // pendingCounter returns the pending counter for an index, creating it if needed.
 func (w *vectorMaintenanceWriter) pendingCounter(key vectorIndexRef) *atomic.Int64 {
-	c, ok := w.pending.Load(key)
-	if !ok {
-		c, _ = w.pending.LoadOrStore(key, &atomic.Int64{})
-	}
-	// Only *atomic.Int64 values are ever stored.
-	counter, _ := c.(*atomic.Int64)
-	return counter
+	return &w.state(key).pending
 }
 
 // overLimit reports whether the index has so many pending writes that new writes should update
 // the graph inline instead.
-func (w *vectorMaintenanceWriter) overLimit(key vectorIndexRef, vd *client.VectorIndexDescription) bool {
-	return w.pendingCounter(key).Load() >= pendingLimit(vd)
+func (w *vectorMaintenanceWriter) overLimit(key vectorIndexRef) bool {
+	return w.pendingCounter(key).Load() >= pendingLimit()
 }
 
 // noteWrite is called after a deferred write commits. It counts the write and wakes the writer.
 func (w *vectorMaintenanceWriter) noteWrite(key vectorIndexRef) {
-	w.pendingCounter(key).Add(1)
-	w.markDirty(key)
+	s := w.state(key)
+	s.pending.Add(1)
+	s.dirty.Store(true)
+	w.notify()
 }
 
 // markDirty marks an index as needing a drain and wakes the writer. It never blocks.
 func (w *vectorMaintenanceWriter) markDirty(key vectorIndexRef) {
-	w.mu.Lock()
-	w.dirty[key] = struct{}{}
-	w.mu.Unlock()
+	w.state(key).dirty.Store(true)
 	w.notify()
 }
 
@@ -144,16 +159,18 @@ func (w *vectorMaintenanceWriter) notify() {
 	}
 }
 
-// takeDirty returns the dirty indexes and clears the set. If a write commits while we drain, it
+// takeDirty returns the dirty indexes and clears their flags. If a write commits while we drain, it
 // marks its index dirty again, so the next pass picks it up.
 func (w *vectorMaintenanceWriter) takeDirty() []vectorIndexRef {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	out := make([]vectorIndexRef, 0, len(w.dirty))
-	for k := range w.dirty {
-		out = append(out, k)
-	}
-	clear(w.dirty)
+	var out []vectorIndexRef
+	w.indexes.Range(func(k, v any) bool {
+		key, _ := k.(vectorIndexRef)
+		s, _ := v.(*deferredIndexState)
+		if s.dirty.CompareAndSwap(true, false) {
+			out = append(out, key)
+		}
+		return true
+	})
 	return out
 }
 
@@ -214,6 +231,8 @@ func (w *vectorMaintenanceWriter) markAllDeferredDirty(ctx context.Context) erro
 		return err
 	}
 	txnCtx := InitContext(ctx, rawTxn)
+	// Collection versions share their indexes, so the same index shows up once per version.
+	seen := map[vectorIndexRef]struct{}{}
 	for _, def := range versions {
 		for _, idx := range def.Indexes {
 			vd, ok := idx.GetVector()
@@ -221,13 +240,19 @@ func (w *vectorMaintenanceWriter) markAllDeferredDirty(ctx context.Context) erro
 				continue
 			}
 			key := vectorIndexRef{def.CollectionID, idx.ID}
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
 			// The pending count lives in memory, so after a restart it starts from what is stored.
-			// Otherwise every restart would let another full limit of entries pile up.
-			_, entries, _, err := listPending(txnCtx, key, 0)
+			// Otherwise every restart would let another full limit of entries pile up. Add rather
+			// than set, so writes that committed after this snapshot keep their count. A write
+			// counted twice only makes the count too high until the next full drain.
+			n, err := countPending(txnCtx, key)
 			if err != nil {
 				return err
 			}
-			w.pendingCounter(key).Store(int64(len(entries)))
+			w.pendingCounter(key).Add(int64(n))
 			w.markDirty(key)
 		}
 	}
@@ -240,6 +265,26 @@ type pendingKeyspace struct {
 	epoch   uint32
 }
 
+// pendingKeyspaceOf returns where an index's pending entries are stored. found is false when the
+// collection or index has been removed.
+func pendingKeyspaceOf(ctx context.Context, key vectorIndexRef) (ks pendingKeyspace, found bool, err error) {
+	ks.shortID, err = id.GetCollectionShortID(ctx, key.collectionID)
+	if errors.Is(err, corekv.ErrNotFound) {
+		return ks, false, nil
+	}
+	if err != nil {
+		return ks, false, err
+	}
+	ks.epoch, err = getIndexEpoch(ctx, key.collectionID, key.indexID)
+	if errors.Is(err, fetcher.ErrIndexEpochNotFound) {
+		return ks, false, nil
+	}
+	if err != nil {
+		return ks, false, err
+	}
+	return ks, true, nil
+}
+
 // listPending returns up to limit pending entries of an index (all of them when limit is 0), and
 // where they are stored. found is false when the collection or index has been removed, which
 // callers treat as nothing to do rather than an error.
@@ -248,25 +293,25 @@ func listPending(
 	key vectorIndexRef,
 	limit int,
 ) (ks pendingKeyspace, entries []vectorindex.PendingEntry, found bool, err error) {
-	ks.shortID, err = id.GetCollectionShortID(ctx, key.collectionID)
-	if errors.Is(err, corekv.ErrNotFound) {
-		return ks, nil, false, nil
-	}
-	if err != nil {
-		return ks, nil, false, err
-	}
-	ks.epoch, err = getIndexEpoch(ctx, key.collectionID, key.indexID)
-	if errors.Is(err, fetcher.ErrIndexEpochNotFound) {
-		return ks, nil, false, nil
-	}
-	if err != nil {
-		return ks, nil, false, err
+	ks, found, err = pendingKeyspaceOf(ctx, key)
+	if err != nil || !found {
+		return ks, nil, found, err
 	}
 	entries, err = vectorindex.ListPending(ctx, ks.shortID, key.indexID, ks.epoch, limit)
 	if err != nil {
 		return ks, nil, false, err
 	}
 	return ks, entries, true, nil
+}
+
+// countPending returns how many pending entries an index has, reading keys only. A removed
+// collection or index has none.
+func countPending(ctx context.Context, key vectorIndexRef) (int, error) {
+	ks, found, err := pendingKeyspaceOf(ctx, key)
+	if err != nil || !found {
+		return 0, err
+	}
+	return vectorindex.CountPending(ctx, ks.shortID, key.indexID, ks.epoch)
 }
 
 // drainPass drains each dirty index once and returns the first error. Indexes that failed stay
@@ -288,9 +333,7 @@ func (w *vectorMaintenanceWriter) drainPass(ctx context.Context) error {
 			return ctx.Err()
 		}
 		// Keep the index dirty so it gets retried.
-		w.mu.Lock()
-		w.dirty[key] = struct{}{}
-		w.mu.Unlock()
+		w.state(key).dirty.Store(true)
 		if firstErr == nil {
 			firstErr = err
 		}
@@ -309,23 +352,21 @@ func (w *vectorMaintenanceWriter) drainPass(ctx context.Context) error {
 
 // batchLimit returns the current batch size of an index.
 func (w *vectorMaintenanceWriter) batchLimit(key vectorIndexRef) int {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if n, ok := w.batchSizes[key]; ok {
-		return n
+	if n := w.state(key).batchSize.Load(); n > 0 {
+		return int(n)
 	}
 	return deferredBatchSize
 }
 
 // setBatchLimit remembers a smaller batch size for an index.
 func (w *vectorMaintenanceWriter) setBatchLimit(key vectorIndexRef, n int) {
-	w.mu.Lock()
-	w.batchSizes[key] = n
-	w.mu.Unlock()
+	w.state(key).batchSize.Store(int64(n))
 }
 
-// drainIndex applies the index's pending entries in batches until none are left. If the index is
-// gone or should not be maintained, it is skipped with no error.
+// drainIndex applies the index's pending entries in batches until none are left, or until it has
+// applied deferredBatchesPerPass full batches. In that case it marks the index dirty again and
+// returns, so the writer serves the other dirty indexes before it comes back to this one. If the
+// index is gone or should not be maintained, it is skipped with no error.
 func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorIndexRef) error {
 	_, desc, err := w.db.findIndexDefinition(ctx, keys.IndexStateKey{
 		CollectionID: key.collectionID,
@@ -348,7 +389,12 @@ func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorInde
 
 	limit := w.batchLimit(key)
 	counter := w.pendingCounter(key)
-	for {
+	for batches := 0; ; batches++ {
+		if batches == deferredBatchesPerPass {
+			// markDirty also wakes the run loop, so it starts the next pass right away.
+			w.markDirty(key)
+			return nil
+		}
 		if gate := vectorMaintenanceGate; gate != nil {
 			if err := gate(ctx, key.collectionID, key.indexID); err != nil {
 				return err
@@ -393,13 +439,10 @@ func (w *vectorMaintenanceWriter) drainIndex(ctx context.Context, key vectorInde
 	}
 }
 
-// forget drops the pending counter and batch size of an index the writer no longer maintains.
-// Without this, every dropped index would leave them in memory until the node restarts.
+// forget drops the state of an index the writer no longer maintains. Without this, every dropped
+// index would leave it in memory until the node restarts.
 func (w *vectorMaintenanceWriter) forget(key vectorIndexRef) {
-	w.pending.Delete(key)
-	w.mu.Lock()
-	delete(w.batchSizes, key)
-	w.mu.Unlock()
+	w.indexes.Delete(key)
 }
 
 // subPending subtracts n from the counter and never goes below zero.

@@ -87,3 +87,59 @@ func TestGraph_InsertWhenUpperLayersAreDeleted_KeepsGraphReachable(t *testing.T)
 	// Search is approximate, so allow a few misses. Without the fix almost every node is lost.
 	assert.LessOrEqual(t, missed, len(vecs)/20, "too many nodes unreachable")
 }
+
+// Graphs built before levels came from the node id have every node on one level. Re-inserting the
+// entry point of such a graph, as an update does, must not shrink it below the graph's top layer.
+func TestGraph_ReinsertEntryPointOfSingleLevelGraph_KeepsGraphSearchable(t *testing.T) {
+	const (
+		n     = 60
+		level = 3
+	)
+	store := NewMemStore()
+	g := New(store, Euclidean, DefaultParams(4), 3)
+	rng := rand.New(rand.NewSource(11))
+
+	// Build the graph the old way: every node on the same level, linked to every other node.
+	vecs := map[NodeID][]float32{}
+	for id := NodeID(1); id <= n; id++ {
+		vecs[id] = randomVector(rng, 8)
+	}
+	for id, v := range vecs {
+		layers := make([][]NodeID, level+1)
+		for l := range layers {
+			for other := range vecs {
+				if other != id {
+					layers[l] = append(layers[l], other)
+				}
+			}
+		}
+		require.NoError(t, store.PutNode(Node{ID: id, Vector: vectorForMetric(Euclidean, v), Neighbours: layers}))
+	}
+
+	// Pick an entry point whose own level is lower, so a plain re-insert would shrink it.
+	var entry NodeID
+	for id := NodeID(1); id <= n; id++ {
+		if g.randomLevel(id) < level {
+			entry = id
+			break
+		}
+	}
+	require.NotZero(t, entry)
+	require.NoError(t, store.PutMeta(Meta{EntryPoint: entry, TopLayer: level}))
+
+	vecs[entry] = randomVector(rng, 8)
+	require.NoError(t, g.Delete(entry))
+	require.NoError(t, g.Insert(entry, vecs[entry]))
+
+	node, found, err := store.GetNode(entry)
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Len(t, node.Neighbours, level+1, "entry point lost its upper layers")
+
+	for id, v := range vecs {
+		got, err := g.Search(v, 1, 100)
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, id, got[0])
+	}
+}

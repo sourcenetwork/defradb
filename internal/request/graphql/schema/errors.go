@@ -45,7 +45,6 @@ const (
 	errEncryptedIndexOnNonExistentField string = "encrypted index on non-existent field"
 	errEncryptedIndexAlreadyExists      string = "encrypted index already exists on field"
 	errVectorIndexUnknownMetric         string = "vector index with unknown metric"
-	errVectorIndexUnknownMaintenance    string = "vector index with unknown maintenance"
 )
 
 var (
@@ -236,13 +235,6 @@ func NewErrVectorIndexUnknownMetric(metric string) error {
 	return errors.New(
 		errVectorIndexUnknownMetric,
 		errors.NewKV("Metric", metric),
-	)
-}
-
-func NewErrVectorIndexUnknownMaintenance(maintenance string) error {
-	return errors.New(
-		errVectorIndexUnknownMaintenance,
-		errors.NewKV("Maintenance", maintenance),
 	)
 }
 

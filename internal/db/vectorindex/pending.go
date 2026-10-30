@@ -91,6 +91,43 @@ func DeletePending(ctx context.Context, collectionShortID, indexID, epoch uint32
 	return nil
 }
 
+// HasPending reports whether the node has a pending entry.
+func HasPending(ctx context.Context, collectionShortID, indexID, epoch uint32, nodeID uint64) (bool, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	key := keys.NewVectorPendingKey(collectionShortID, indexID, epoch, nodeID)
+	has, err := txn.Datastore().Has(ctx, &key)
+	if err != nil {
+		return false, newErrVectorIndexStore(err, collectionShortID, indexID, epoch)
+	}
+	return has, nil
+}
+
+// CountPending returns how many pending entries the epoch has. It reads keys only.
+func CountPending(ctx context.Context, collectionShortID, indexID, epoch uint32) (int, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	prefix := keys.NewVectorPendingPrefix(collectionShortID, indexID, epoch)
+
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{Prefix: &prefix, KeysOnly: true})
+	if err != nil {
+		return 0, newErrVectorIndexStore(err, collectionShortID, indexID, epoch)
+	}
+	n := 0
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return 0, newErrVectorIndexStore(errors.Join(err, iter.Close()), collectionShortID, indexID, epoch)
+		}
+		if !hasNext {
+			break
+		}
+		n++
+	}
+	if err := iter.Close(); err != nil {
+		return 0, newErrVectorIndexStore(err, collectionShortID, indexID, epoch)
+	}
+	return n, nil
+}
+
 // ListPending returns up to limit pending entries of the epoch in node id order, reading through the
 // transaction on ctx. A limit of zero or less returns all of them.
 func ListPending(

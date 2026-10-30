@@ -136,3 +136,40 @@ func TestVectorIndex_NewIndexWithUnknownMaintenance_IsRejected(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// An explicit SYNC is stored the same way as leaving it out, so there is one stored form.
+func TestVectorIndex_CreateWithExplicitSyncMaintenance_IsStoredAsDefault(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 3, maintenance: SYNC, hnsw: {metric: COSINE}})
+				}`,
+			},
+			&action.WaitForIndexReady{CollectionID: 0},
+			&action.ListIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: vectorMaintenanceIndex(""),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestVectorIndex_CreateWithUnknownMaintenanceInSDL_IsRejected(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddCollection{
+				SDL: `type User {
+					name: String
+					vector: [Float32!] @index(vector: {dimensions: 3, maintenance: LAZY, hnsw: {metric: COSINE}})
+				}`,
+				ExpectedError: `Expected type "VectorIndexMaintenance", found LAZY`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

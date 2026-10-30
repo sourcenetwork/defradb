@@ -90,6 +90,17 @@ func (g *HNSWIndex) Insert(id NodeID, vector []float32) error {
 		return g.store.PutMeta(Meta{EntryPoint: id, TopLayer: topLevel})
 	}
 
+	// A node that is inserted again keeps at least the height it has. Graphs built before levels came
+	// from the node id have every node on one level, so a re-inserted node would usually get a lower
+	// one. For the entry point that would leave search starting from a node with no upper links.
+	stored, found, err := g.store.GetNode(id)
+	if err != nil {
+		return err
+	}
+	if found {
+		topLevel = max(topLevel, len(stored.Neighbours)-1)
+	}
+
 	// Descent: greedily walk down from the entry point at the top layer
 	// to layer topLevel+1, keeping only the single closest node found so
 	// far (ef=1 search at each layer).
