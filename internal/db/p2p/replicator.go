@@ -776,6 +776,8 @@ func (p *P2P) retryReplicatorItems(ctx context.Context, peerID string) {
 	}
 	if err != nil {
 		log.ErrorContextE(ctx, "Failed to handle completed replicator retry", err)
+		// The failed write may have left Retrying set, which would park this replicator.
+		p.clearReplicatorRetrying(ctx, peerID)
 	}
 }
 
@@ -1010,6 +1012,11 @@ const (
 // reports backpressure, before the sweep gives up until the next retry interval.
 const maxBackpressureRetries = 150
 
+// maxBackpressureDuration caps how long one item can hold the sweep while the receiver reports
+// backpressure, counting the pushes as well as the waits. A slow receiver could otherwise keep
+// the other items for that peer waiting for as long as maxBackpressureRetries request timeouts.
+const maxBackpressureDuration = 5 * time.Minute
+
 // backpressureWait maps a receiver's transient rejection to how long to wait
 // before pushing the same item again.
 func backpressureWait(err error) (time.Duration, bool) {
@@ -1032,10 +1039,15 @@ func backpressureWait(err error) (time.Duration, bool) {
 // avoids parking the whole set on the next interval. If ctx is cancelled while waiting, the
 // last error is returned for the caller to log; the item keeps its retry record.
 func retryWithBackpressure(ctx context.Context, push func() error) error {
+	return retryWithBackpressureFor(ctx, maxBackpressureDuration, push)
+}
+
+func retryWithBackpressureFor(ctx context.Context, budget time.Duration, push func() error) error {
+	deadline := time.Now().Add(budget)
 	err := push()
 	for attempt := 0; err != nil && attempt < maxBackpressureRetries; attempt++ {
 		wait, transient := backpressureWait(err)
-		if !transient {
+		if !transient || time.Now().Add(wait).After(deadline) {
 			return err
 		}
 		select {

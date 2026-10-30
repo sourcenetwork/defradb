@@ -136,6 +136,18 @@ func TestRetryWithBackpressure_CancelledWhileWaiting_ReturnsLastError(t *testing
 	assert.ErrorIs(t, err, message.ErrPeerRejected)
 }
 
+func TestRetryWithBackpressure_StopsWhenBudgetRunsOut(t *testing.T) {
+	calls := 0
+	start := time.Now()
+	err := retryWithBackpressureFor(context.Background(), 250*time.Millisecond, func() error {
+		calls++
+		return message.NewErrPeerRejected(peerRateLimitedMessage)
+	})
+	assert.ErrorIs(t, err, message.ErrPeerRejected)
+	assert.Less(t, time.Since(start), time.Second, "the budget, not the attempt cap, must end the loop")
+	assert.LessOrEqual(t, calls, 4)
+}
+
 func TestAddReplicatorNextRetry_Restart_ReturnsToFirstInterval(t *testing.T) {
 	ctx := context.Background()
 	store := memory.NewDatastore(ctx)
