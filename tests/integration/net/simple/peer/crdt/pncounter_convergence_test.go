@@ -107,14 +107,15 @@ func TestP2PUpdate_WithPNCounterRepeatedSimultaneousUpdates_Converges(t *testing
 		// Counter fields cannot be indexed:
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		// Signing gives each node its own genesis block, so the DocIDs never match.
-		// v1.0.0 still has this bug, so that node reports an inflated total.
 		MultiplierExcludes: []string{
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
 		},
-		Actions: actions,
+		// Releases before v1.2.0 have this bug, so an old node reports a wrong
+		// total. Fixed in https://github.com/sourcenetwork/defradb/issues/5274
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
+		Actions:                          actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
@@ -201,14 +202,14 @@ func TestP2PUpdate_WithPNCounterFiveNodesRepeatedUpdates_AllConverge(t *testing.
 	)
 
 	test := testUtils.TestCase{
-		// As above.
+		// Same exclusions and release as the test above.
 		MultiplierExcludes: []string{
 			multiplier.SecondaryIndex,
 			multiplier.SignedDocs,
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
 		},
-		Actions: actions,
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		OldLastNodeSupportedFromVersion:  "v1.2.0",
+		Actions:                          actions,
 	}
 
 	testUtils.ExecuteTestCase(t, test)
