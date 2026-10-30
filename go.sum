@@ -1771,8 +1771,8 @@ github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e h1:sSvLVomsLBjQ
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/sourcenetwork/corekv v0.3.3 h1:g7i6zzHi2Pf9Y+DWb44djWSDExg+N48+X3RI+HGrXlw=
 github.com/sourcenetwork/corekv v0.3.3/go.mod h1:nNU7JXCroGG0RtW7rEfu/QqppmN1AfSneOA35MjVeaE=
-github.com/sourcenetwork/corekv/badger v0.3.2-0.20261014185324-383cd6446226 h1:qreXQfr5Ru16IOgbaM4A1h3LNjZCee6VETLSI6rfSrc=
-github.com/sourcenetwork/corekv/badger v0.3.2-0.20261014185324-383cd6446226/go.mod h1:VuWiomQoBBe6aW7CwbvUYMS7OHGal/Do+a32Zwig5Ho=
+github.com/sourcenetwork/corekv/badger v0.3.2 h1:t0ImMeCV8/P1y5IblH0K+lMchgnZ2wtA2UWuum9g9po=
+github.com/sourcenetwork/corekv/badger v0.3.2/go.mod h1:VuWiomQoBBe6aW7CwbvUYMS7OHGal/Do+a32Zwig5Ho=
 github.com/sourcenetwork/corekv/blockstore v0.3.1 h1:uBvRaA1MFRZ1XOZCipFQOsBPnaBdVyn8BIyHS9KMuOA=
 github.com/sourcenetwork/corekv/blockstore v0.3.1/go.mod h1:xBNbUMGpDrnvbs39Q+SQTs3MEpUo5jfuc0SH44O0qTs=
 github.com/sourcenetwork/corekv/chunk v0.3.1 h1:XYsrE1DKJgnY+l4JP/ti7xHD+GsUlU09VOnRsDzFosw=
