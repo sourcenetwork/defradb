@@ -36,8 +36,8 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
    * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
    * [Access Control System](#access-control-system)
-      * [Using SourceHub for Document ACP](#using-sourcehub-for-document-acp)
-         * [Running a SourceHub node locally](#running-a-sourcehub-node-locally)
+      * [Using Vera for Remote Document ACP](#using-vera-for-remote-document-acp)
+         * [Running a Vera node locally](#running-a-vera-node-locally)
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
@@ -494,45 +494,47 @@ Because the certificates are self-signed, HTTPS clients must be configured to tr
 ## Access Control System
 Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
-### Using SourceHub for Document ACP
+### Using Vera for Remote Document ACP
 
-By default, Document ACP is local to the node. Setting `acp.document.type` to `source-hub` stores policies and relationships on a [SourceHub](https://github.com/sourcenetwork/sourcehub) chain instead, which is what makes them verifiable across nodes.
+By default, Document ACP is local to the node. Setting `acp.document.type` to `remote` stores policies and relationships in a [Vera](https://github.com/sourcenetwork/vera) log instead (Remote DAC), which is what makes them verifiable across nodes.
 
 Four parameters are required on the node when that type is selected, and one more on the client:
 
 | Parameter | Side | Description |
 | --- | --- | --- |
-| `acp.document.sourceHub.ChainID` | node | ID of the chain to write ACP data to |
-| `acp.document.sourceHub.GRPCAddress` | node | address of the SourceHub gRPC server |
-| `acp.document.sourceHub.CometRPCAddress` | node | address of the SourceHub Comet RPC server |
-| `acp.document.sourceHub.KeyName` | node | keyring entry holding the secp256k1 key that signs and pays for SourceHub transactions |
-| `acp.document.sourceHub.address` | client | SourceHub address allowed to act on the client's behalf |
+| `acp.document.remote.LogID` | node | ID of the Vera log to write ACP data to |
+| `acp.document.remote.GRPCAddress` | node | address of the Vera gRPC server |
+| `acp.document.remote.CometRPCAddress` | node | address of the Vera Comet RPC server |
+| `acp.document.remote.KeyName` | node | keyring entry holding the secp256k1 key that signs and pays for Vera transactions |
+| `acp.document.remote.address` | client | Vera address allowed to act on the client's behalf |
+
+Vera addresses use the `vera` Bech32 prefix. See [docs/config.md](docs/config.md) for the full description of each parameter.
 
 The signing key is a regular keyring entry, so it is added the same way as any other key:
 
 ```shell
-defradb keyring add sourcehub-key <secp256k1-private-key-hex>
+defradb keyring add vera-key <secp256k1-private-key-hex>
 ```
 
-#### Running a SourceHub node locally
+#### Running a Vera node locally
 
-For local development, the SourceHub image can run an isolated chain of its own with `STANDALONE=1`, which is also how the integration tests bring it up:
+For local development, the Vera image can run an isolated chain of its own with `STANDALONE=1`, which is also how the integration tests bring it up:
 
 ```shell
 docker run --rm \
   -e STANDALONE=1 \
   -p 26657:26657 -p 9090:9090 \
-  ghcr.io/sourcenetwork/sourcehub:dev
+  ghcr.io/sourcenetwork/vera:dev
 ```
 
-It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain is `sourcehub-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs.
+It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain ID is `vera-dev`. The standalone image also creates a funded `faucet` account, whose mnemonic is printed in the container logs.
 
-The account behind `KeyName` pays for the SourceHub transactions the node creates, and the faucet does not fund it automatically. Either import the faucet mnemonic as the node's key, or send funds to the address derived from the key already in the keyring:
+The account behind `KeyName` pays for the Vera transactions the node creates, and the faucet does not fund it automatically. Either import the faucet mnemonic as the node's key, or send funds to the address derived from the key already in the keyring:
 
 ```shell
-docker exec <container> sourcehubd tx bank send \
+docker exec <container> verad tx bank send \
   faucet <address of the KeyName key> 1000000uopen \
-  --keyring-backend test --chain-id sourcehub-dev --yes
+  --keyring-backend test --chain-id vera-dev --yes
 ```
 
 A node is pointed at it through the config file at `~/.defradb/config.yaml`:
@@ -540,26 +542,26 @@ A node is pointed at it through the config file at `~/.defradb/config.yaml`:
 ```yaml
 acp:
   document:
-    type: source-hub
-    sourceHub:
-      ChainID: sourcehub-dev
+    type: remote
+    remote:
+      LogID: vera-dev
       GRPCAddress: 127.0.0.1:9090
       CometRPCAddress: 127.0.0.1:26657
-      KeyName: sourcehub-key
+      KeyName: vera-key
 ```
 
-Only `acp.document.type` and `acp.document.sourceHub.address` have CLI flags (`--document-acp-type` and `--source-hub-address`); the rest are set in the config file or through the environment, where `DEFRA_` is prefixed and dots become underscores:
+Only `acp.document.type` and `acp.document.remote.address` have CLI flags (`--document-acp-type` and `--remote-dac-address`); the rest are set in the config file or through the environment, where `DEFRA_` is prefixed and dots become underscores:
 
 ```shell
-export DEFRA_ACP_DOCUMENT_TYPE=source-hub
-export DEFRA_ACP_DOCUMENT_SOURCEHUB_CHAINID=sourcehub-dev
-export DEFRA_ACP_DOCUMENT_SOURCEHUB_GRPCADDRESS=127.0.0.1:9090
-export DEFRA_ACP_DOCUMENT_SOURCEHUB_COMETRPCADDRESS=127.0.0.1:26657
-export DEFRA_ACP_DOCUMENT_SOURCEHUB_KEYNAME=sourcehub-key
+export DEFRA_ACP_DOCUMENT_TYPE=remote
+export DEFRA_ACP_DOCUMENT_REMOTE_LOGID=vera-dev
+export DEFRA_ACP_DOCUMENT_REMOTE_GRPCADDRESS=127.0.0.1:9090
+export DEFRA_ACP_DOCUMENT_REMOTE_COMETRPCADDRESS=127.0.0.1:26657
+export DEFRA_ACP_DOCUMENT_REMOTE_KEYNAME=vera-key
 defradb start
 ```
 
-The SourceHub version DefraDB is built against is pinned in `go.mod`, currently `github.com/sourcenetwork/sourcehub v0.4.1-0.20260128164915-1bce44032618`; use a node built from that revision when running against something other than the `dev` image.
+The Vera version DefraDB is built against is pinned in `go.mod`, currently `github.com/sourcenetwork/vera v0.4.1-0.20260827134642-8c1a760f2f83`; use a node built from that revision when running against something other than the `dev` image.
 
 ## Supporting CORS
 
