@@ -77,7 +77,11 @@ jobs:
         uses: ./.github/composites/setup-defradb
 
       - name: Install Ollama
-        run: make deps:ollama
+        # The installer also starts a systemd service that holds the port and reads models
+        # from its own directory. Stop it so the server `make ollama` starts is the one used.
+        run: |
+          make deps:ollama
+          sudo systemctl disable --now ollama 2>/dev/null || true
 
       - name: Run Ollama
         run: make ollama
