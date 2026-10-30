@@ -1,6 +1,6 @@
 module github.com/sourcenetwork/defradb
 
-go 1.26.9
+go 1.26.10
 
 require (
 	github.com/bits-and-blooms/bitset v1.25.0

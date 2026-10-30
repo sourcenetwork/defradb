@@ -49,6 +49,7 @@ import (
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
@@ -357,6 +358,10 @@ func (a *RemoteDocumentACP) AddActorRelationship(
 ) (bool, error) {
 	objectID = remoteDACObjectID(objectID)
 
+	if err := acp.ValidateActorRelationshipTarget(targetActor); err != nil {
+		return false, err
+	}
+
 	results, err := callJSFunction(
 		"acp_AddActorRelationship",
 		policyID,
@@ -414,6 +419,10 @@ func (a *RemoteDocumentACP) DeleteActorRelationship(
 	creationTime *protoTypes.Timestamp,
 ) (bool, error) {
 	objectID = remoteDACObjectID(objectID)
+
+	if err := acp.ValidateActorRelationshipTarget(targetActor); err != nil {
+		return false, err
+	}
 
 	results, err := callJSFunction(
 		"acp_DeleteActorRelationship",

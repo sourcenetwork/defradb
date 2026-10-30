@@ -28,6 +28,7 @@ import (
 	vera "github.com/sourcenetwork/vera/sdk"
 	veraTypes "github.com/sourcenetwork/vera/x/acp/types"
 
+	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
@@ -321,23 +322,12 @@ func (a *RemoteDocumentACP) AddActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := vera.MsgSet{}
-
-	var newActorRelationship *coreTypes.Relationship
-	if targetActor == "*" {
-		newActorRelationship = coreTypes.NewAllActorsRelationship(
-			resourceName,
-			objectID,
-			relation,
-		)
-	} else {
-		newActorRelationship = coreTypes.NewActorRelationship(
-			resourceName,
-			objectID,
-			relation,
-			targetActor,
-		)
+	newActorRelationship, err := acp.NewActorRelationship(resourceName, objectID, relation, targetActor)
+	if err != nil {
+		return false, err
 	}
+
+	msgSet := vera.MsgSet{}
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
@@ -388,23 +378,12 @@ func (a *RemoteDocumentACP) DeleteActorRelationship(
 		return false, identity.ErrMustBeTokenIdentity
 	}
 
-	msgSet := vera.MsgSet{}
-
-	var newActorRelationship *coreTypes.Relationship
-	if targetActor == "*" {
-		newActorRelationship = coreTypes.NewAllActorsRelationship(
-			resourceName,
-			objectID,
-			relation,
-		)
-	} else {
-		newActorRelationship = coreTypes.NewActorRelationship(
-			resourceName,
-			objectID,
-			relation,
-			targetActor,
-		)
+	newActorRelationship, err := acp.NewActorRelationship(resourceName, objectID, relation, targetActor)
+	if err != nil {
+		return false, err
 	}
+
+	msgSet := vera.MsgSet{}
 
 	cmdMapper := msgSet.WithBearerPolicyCmd(&veraTypes.MsgBearerPolicyCmd{
 		Creator:     a.signer.GetAccAddress(),
