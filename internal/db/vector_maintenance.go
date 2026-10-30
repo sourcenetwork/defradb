@@ -93,6 +93,11 @@ type vectorMaintenanceWriter struct {
 
 	// wake has room for one signal, so many writes only cause one wake up.
 	wake chan struct{}
+
+	// retryDelay and maxRetryDelay are copied from the package vars when the writer is made, so the
+	// run loop never reads those vars while a test changes them for another DB.
+	retryDelay    time.Duration
+	maxRetryDelay time.Duration
 }
 
 // deferredIndexState is what the writer keeps in memory about one deferred index.
@@ -110,8 +115,10 @@ type deferredIndexState struct {
 
 func newVectorMaintenanceWriter(db *DB) *vectorMaintenanceWriter {
 	return &vectorMaintenanceWriter{
-		db:   db,
-		wake: make(chan struct{}, 1),
+		db:            db,
+		wake:          make(chan struct{}, 1),
+		retryDelay:    vectorMaintenanceRetryDelay,
+		maxRetryDelay: vectorMaintenanceMaxRetryDelay,
 	}
 }
 
@@ -184,7 +191,7 @@ func (w *vectorMaintenanceWriter) run(ctx context.Context) {
 	retry.Stop()
 	defer retry.Stop()
 
-	delay := vectorMaintenanceRetryDelay
+	delay := w.retryDelay
 	scanned := false
 	for {
 		// Without the startup scan, work left from before a restart would wait for the next write
@@ -204,9 +211,9 @@ func (w *vectorMaintenanceWriter) run(ctx context.Context) {
 		failed := w.drainPass(ctx) != nil || !scanned
 		if failed {
 			retry.Reset(delay)
-			delay = min(2*delay, vectorMaintenanceMaxRetryDelay)
+			delay = min(2*delay, w.maxRetryDelay)
 		} else {
-			delay = vectorMaintenanceRetryDelay
+			delay = w.retryDelay
 		}
 
 		select {
