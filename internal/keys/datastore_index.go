@@ -187,9 +187,9 @@ func DecodeIndexDataStoreKey(
 
 		i := len(key.Fields)
 		descending := false
-		if i < len(indexDesc.Fields) {
-			descending = indexDesc.Fields[i].Descending
-		} else if i > len(indexDesc.Fields) {
+		if i < len(indexDesc.GetFields()) {
+			descending = indexDesc.GetFields()[i].Descending
+		} else if i > len(indexDesc.GetFields()) {
 			return IndexDataStoreKey{}, ErrInvalidKey
 		} else {
 			if key.DocShortID != 0 {

@@ -39,6 +39,10 @@ const eventTimeout = 1 * time.Second
 //
 // Expected document heads will be updated for the targeted node.
 func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
+	timeout := cfg.Timeout
+	if timeout == 0 {
+		timeout = eventTimeout
+	}
 	// An external node runs in another process, so its completion event fires on a
 	// bus we cannot observe. Skip the wait. The event is published asynchronously
 	// after commit anyway, so skipping it means the follow-up head push may still be
@@ -51,7 +55,7 @@ func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 				require.Fail(s.T, "subscription closed waiting for replicator event")
 			}
 
-		case <-time.After(eventTimeout):
+		case <-time.After(timeout):
 			require.Fail(s.T, "timeout waiting for replicator event")
 		}
 	}
@@ -198,30 +202,7 @@ func waitForUpdateEvents(
 					}
 					evt = msg.Data.(event.Update)
 
-					node.CompositesLock.Lock()
-					// We keep track of the list of cids for all documents in the test
-					// in case we want to use them in subsequent test actions without having
-					// to know in advance what the CID will be.
-					if node.Composites == nil {
-						node.Composites = make(map[string][]cid.Cid)
-					}
-					updateKey := getUpdateEventKey(evt)
-					node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
-					if node.FieldCIDs == nil {
-						node.FieldCIDs = make(map[string]map[string][]cid.Cid)
-					}
-					if node.FieldCIDs[updateKey] == nil {
-						node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
-					}
-					block, err := coreblock.GetFromBytes(evt.Block)
-					require.NoError(s.T, err)
-					for _, link := range block.Links {
-						node.FieldCIDs[updateKey][link.Name] = append(
-							node.FieldCIDs[updateKey][link.Name],
-							link.Link.Cid,
-						)
-					}
-					node.CompositesLock.Unlock()
+					recordUpdateEvent(s, node, evt)
 
 					if !evt.IsRelay {
 						break relayCheck
@@ -246,6 +227,34 @@ func waitForUpdateEvents(
 	}
 }
 
+// recordUpdateEvent records document and field CIDs for later test actions.
+func recordUpdateEvent(s *state.State, node *state.NodeState, evt event.Update) {
+	node.CompositesLock.Lock()
+	defer node.CompositesLock.Unlock()
+	// We keep track of the list of cids for all documents in the test
+	// in case we want to use them in subsequent test actions without having
+	// to know in advance what the CID will be.
+	if node.Composites == nil {
+		node.Composites = make(map[string][]cid.Cid)
+	}
+	updateKey := getUpdateEventKey(evt)
+	node.Composites[updateKey] = append(node.Composites[updateKey], evt.Cid)
+	if node.FieldCIDs == nil {
+		node.FieldCIDs = make(map[string]map[string][]cid.Cid)
+	}
+	if node.FieldCIDs[updateKey] == nil {
+		node.FieldCIDs[updateKey] = make(map[string][]cid.Cid)
+	}
+	block, err := coreblock.GetFromBytes(evt.Block)
+	require.NoError(s.T, err)
+	for _, link := range block.Links {
+		node.FieldCIDs[updateKey][link.Name] = append(
+			node.FieldCIDs[updateKey][link.Name],
+			link.Link.Cid,
+		)
+	}
+}
+
 // Will fail the test if an event is not received within the expected time interval to prevent tests
 // from running forever.
 //
@@ -261,6 +270,13 @@ func waitForUpdateEvents(
 // During pending set construction, for each (key, source) pair we keep only the latest CID
 // (last appended), since earlier CIDs from the same source are ancestors subsumed by the latest.
 func waitForMergeEvents(s *state.State, action WaitForSync) {
+	excluded := make(map[string]struct{}, len(action.ExcludedDocs))
+	s.DocIDsLock.RLock()
+	for _, doc := range action.ExcludedDocs {
+		excluded[s.DocIDs[doc.Col][doc.Doc].String()] = struct{}{}
+	}
+	s.DocIDsLock.RUnlock()
+
 	for nodeID := 0; nodeID < len(s.Nodes); nodeID++ {
 		node := s.Nodes[nodeID]
 		if node.Closed {
@@ -274,6 +290,9 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 		// key → sourceNodeID → latest CID
 		latestPerSource := make(map[string]map[int]cid.Cid)
 		for key, heads := range node.P2P.ExpectedDAGHeads {
+			if _, ok := excluded[key]; ok {
+				continue
+			}
 			for _, head := range heads {
 				if latestPerSource[key] == nil {
 					latestPerSource[key] = make(map[int]cid.Cid)
@@ -313,18 +332,18 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			continue
 		}
 
+		// The timeout restarts on progress, so a slow but moving sync is not cut off.
+		timeout := time.After(30 * eventTimeout)
 		for totalPending > 0 {
-			var evt event.MergeComplete
-			select {
-			case msg, ok := <-node.Event.Merge.Message():
-				if !ok {
-					require.Fail(s.T, "subscription closed waiting for merge complete event")
+			evt, ok := waitForMergeComplete(s, node, timeout)
+			if !ok {
+				if dropped := dropMergedHeads(s, node, pending); dropped > 0 {
+					totalPending -= dropped
+					timeout = time.After(30 * eventTimeout)
 				}
-				evt = msg.Data.(event.MergeComplete)
-
-			case <-time.After(30 * eventTimeout):
-				require.Fail(s.T, "timeout waiting for merge complete event")
+				continue
 			}
+			timeout = time.After(30 * eventTimeout)
 
 			key := getMergeEventKey(evt.Merge)
 			node.P2P.ActualDAGHeads[key] = state.DocHeadState{
@@ -352,6 +371,130 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 	}
 }
 
+// dropMergedHeads removes the pending heads that are already a current head of
+// their document on the node, and returns how many it removed.
+//
+// A merge that finishes while a node is starting, before its events can be
+// read, is never reported. Without this, waiting for it times out even though
+// the data arrived.
+func dropMergedHeads(s *state.State, node *state.NodeState, pending map[string]map[cid.Cid]struct{}) int {
+	dropped := 0
+	for key, cidSet := range pending {
+		if !isDocID(key) {
+			continue
+		}
+		heads, versionUnknown := docHeads(s, node, key)
+		if versionUnknown {
+			// The head was merged from a collection version this node does not
+			// have yet, so it cannot be read. Without this, waiting for it times
+			// out even though it arrived.
+			for c := range cidSet {
+				if hasCommit(s, node, key, c) {
+					heads = append(heads, c)
+				}
+			}
+		}
+		for _, head := range heads {
+			if _, ok := cidSet[head]; !ok {
+				continue
+			}
+			delete(cidSet, head)
+			dropped++
+			node.P2P.ActualDAGHeads[key] = state.DocHeadState{CID: head}
+		}
+		if len(cidSet) == 0 {
+			delete(pending, key)
+		}
+	}
+	return dropped
+}
+
+// docHeads returns the current heads of a document on the node, or nothing if
+// the node cannot read it. versionUnknown reports that the heads were made with
+// a collection version the node does not have.
+func docHeads(s *state.State, node *state.NodeState, docID string) (heads []cid.Cid, versionUnknown bool) {
+	for _, col := range node.Collections {
+		result := node.ExecRequest(
+			s.Ctx,
+			fmt.Sprintf(`query { %s(docID: %q) { _version { cid } } }`, col.Name(), docID),
+		)
+		if len(result.GQL.Errors) > 0 {
+			for _, err := range result.GQL.Errors {
+				if strings.Contains(err.Error(), errCollectionVersionNotFound) {
+					versionUnknown = true
+				}
+			}
+			continue
+		}
+		data, ok := result.GQL.Data.(map[string]any)
+		if !ok {
+			continue
+		}
+		docs := asMaps(data[col.Name()])
+		if len(docs) == 0 {
+			continue
+		}
+		for _, version := range asMaps(docs[0]["_version"]) {
+			cidStr, _ := version["cid"].(string)
+			if head, err := cid.Decode(cidStr); err == nil {
+				heads = append(heads, head)
+			}
+		}
+		return heads, false
+	}
+	return nil, versionUnknown
+}
+
+// asMaps returns a query result list as maps, whichever form the client gave it in.
+func asMaps(v any) []map[string]any {
+	switch list := v.(type) {
+	case []map[string]any:
+		return list
+	case []any:
+		out := make([]map[string]any, 0, len(list))
+		for _, item := range list {
+			if m, ok := item.(map[string]any); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+// waitForMergeComplete waits until a `event.MergeComplete` message is received.
+// It reports false if none arrives within eventTimeout, so the caller can look
+// for merges that were never reported, and fails the test once timeout fires.
+//
+// It skips locally generated `event.Update` messages so that the event buffer does
+// not fill and block future events.
+func waitForMergeComplete(
+	s *state.State,
+	node *state.NodeState,
+	timeout <-chan time.Time,
+) (event.MergeComplete, bool) {
+	idle := time.After(eventTimeout)
+	for {
+		select {
+		case msg, ok := <-node.Event.Merge.Message():
+			require.True(s.T, ok, "subscription closed waiting for merge complete event")
+			return msg.Data.(event.MergeComplete), true
+		case msg, ok := <-node.Event.Update.Message():
+			require.True(s.T, ok, "subscription closed waiting for update event")
+			update := msg.Data.(event.Update)
+			// Write actions consume their own updates. Drain replication
+			// updates here so their buffer cannot block merge notifications.
+			require.True(s.T, update.IsRelay, "unexpected local update while waiting for sync")
+			recordUpdateEvent(s, node, update)
+		case <-idle:
+			return event.MergeComplete{}, false
+		case <-timeout:
+			require.FailNow(s.T, "timeout waiting for merge complete event")
+		}
+	}
+}
+
 // waitForHeadsOnNode waits until every expected head has arrived on the node.
 //
 // It asks the node for its commits instead of reading its event bus, so it works
@@ -365,11 +508,6 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 	}
 	var heads []wanted
 	for key, cidSet := range pending {
-		// A collection level key has no document to ask about, and only a
-		// document ID parses as one.
-		if _, err := client.NewDocIDFromString(key); err != nil {
-			continue
-		}
 		for c := range cidSet {
 			heads = append(heads, wanted{key: key, cid: c})
 		}
@@ -388,7 +526,7 @@ func waitForHeadsOnNode(s *state.State, node *state.NodeState, pending map[strin
 		if _, seen := wantDoc[head.key]; seen {
 			continue
 		}
-		wantDoc[head.key] = anyNodeHasDocExcept(s, node, head.key)
+		wantDoc[head.key] = isDocID(head.key) && anyNodeHasDocExcept(s, node, head.key)
 	}
 
 	deadline := time.Now().Add(30 * eventTimeout)
@@ -471,12 +609,21 @@ func hasDoc(s *state.State, node *state.NodeState, docID string) bool {
 	return false
 }
 
-// hasCommit reports whether the node holds the given commit of a document.
-func hasCommit(s *state.State, node *state.NodeState, docID string, target cid.Cid) bool {
-	result := node.ExecRequest(
-		s.Ctx,
-		fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, docID, target.String()),
-	)
+// isDocID reports whether the key names a document rather than a collection.
+func isDocID(key string) bool {
+	_, err := client.NewDocIDFromString(key)
+	return err == nil
+}
+
+// hasCommit reports whether the node holds the given commit of a document or,
+// for a branchable collection, of the collection.
+func hasCommit(s *state.State, node *state.NodeState, key string, target cid.Cid) bool {
+	// A collection commit belongs to no document, so ask for it by CID alone.
+	request := fmt.Sprintf(`query { _commits(cid: %q) { cid } }`, target.String())
+	if isDocID(key) {
+		request = fmt.Sprintf(`query { _commits(docID: %q, cid: %q) { cid } }`, key, target.String())
+	}
+	result := node.ExecRequest(s.Ctx, request)
 	for _, err := range result.GQL.Errors {
 		// The node holds the block but cannot describe it, so there is nothing
 		// left to ask. Treat it as arrived, since waiting longer never resolves.

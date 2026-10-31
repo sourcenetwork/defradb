@@ -28,6 +28,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/mod/semver"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -76,9 +77,8 @@ var (
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
-	// implemented: the C client (see cbindings/wrapper.go) and the JS client (the Backup API is not
-	// suitable for browser environments).
-	backupUnsupportedClientTypes = []state.ClientType{state.CClientType, state.JSClientType}
+	// implemented: the JS client (the Backup API is not suitable for browser environments).
+	backupUnsupportedClientTypes = []state.ClientType{state.JSClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -172,6 +172,9 @@ func ExecuteTestCase(
 	}
 	if cClient {
 		clients = append(clients, state.CClientType)
+	}
+	if javaClient {
+		clients = append(clients, state.JavaClientType)
 	}
 
 	var databases []state.DatabaseType
@@ -299,6 +302,15 @@ func executeTestCase(
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(s, Close{})
+	// Deferred after closeNodes so it runs first. A transaction left open blocks LevelDB, which only
+	// allows one at a time, so a background store task can hang node shutdown waiting on it.
+	defer func() {
+		for _, txn := range s.Txns {
+			if txn != nil {
+				txn.Discard()
+			}
+		}
+	}()
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -806,6 +818,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			testCase.SupportedClientTypes.Value(), name)
 	}
 
+	skipUnsupportedDirection(t, testCase, activeMultipliers)
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -873,8 +887,36 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
+// skipUnsupportedDirection skips the test when an active cross-version
+// multiplier targets an older release than the test declares for its direction.
+func skipUnsupportedDirection(t testing.TB, testCase *TestCase, activeNames string) {
+	required := map[defraMultiplier.Name]string{
+		defraMultiplier.CrossVersionOldFirst: testCase.OldFirstNodeSupportedFromVersion,
+		defraMultiplier.CrossVersionOldLast:  testCase.OldLastNodeSupportedFromVersion,
+	}
+	for name, version := range required {
+		// A malformed value compares as older than every release, so the test
+		// would quietly run against one that cannot support it.
+		require.True(t, version == "" || semver.IsValid(version),
+			"supported version for %s must be a semver tag with a leading v, got %q", name, version)
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		version := required[name]
+		if version == "" {
+			continue
+		}
+		target := defraMultiplier.TargetVersion(name)
+		if semver.Compare(target, version) < 0 {
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer in this direction",
+				name, target, version)
+		}
+	}
+}
+
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
-	for _, name := range strings.Split(activeNames, ",") {
+	for name := range strings.SplitSeq(activeNames, ",") {
 		switch strings.TrimSpace(name) {
 		case defraMultiplier.SignedDocs:
 			testCase.EnableSigning = true
@@ -1041,7 +1083,7 @@ func setStartingNodes(
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
+			immutable.None[state.Identity](),
 			testCase.nodeSetupConfig(),
 			nodeBuilder,
 			"",
@@ -1074,11 +1116,14 @@ func startNodes(s *state.State, testCase TestCase, start Start) {
 			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 			opts.P2P().SetAll(p2pOpts)
 			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
-			opts.NodeACP().SetEnabled(start.EnableNAC)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
 			return action.SetupNode(
 				s,
-				getIdentityOption(s, start.Identity),
-				testCase.nodeSetupConfig(),
+				start.Identity,
+				setupConfig,
 				opts,
 				s.Nodes[nodeID].Version,
 			)
@@ -1115,7 +1160,10 @@ func restartNodes(
 	}
 	closeNodes(s, Close{})
 	startNodes(s, testCase, Start{})
-	reconnectPeers(s)
+
+	reconnect := &action.ReconnectPeers{}
+	reconnect.SetState(s)
+	reconnect.Execute()
 }
 
 // refreshTokens refreshes all the existing tokens, preserving order.

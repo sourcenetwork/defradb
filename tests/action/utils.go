@@ -150,6 +150,22 @@ func appendCollectionVersion(s *state.State, versionID string) {
 	s.CollectionVersions = append(s.CollectionVersions, versionID)
 }
 
+// recordCollectionOwner remembers the identity a collection was created with, so
+// a later read of that collection can be made as someone allowed to see it.
+//
+// Keyed by collection ID, which a patch or a rename keeps, so the entry made here
+// stays correct for the life of the collection.
+func recordCollectionOwner(
+	s *state.State,
+	collectionID string,
+	identity immutable.Option[state.Identity],
+) {
+	if !identity.HasValue() {
+		return
+	}
+	s.CollectionOwners[collectionID] = identity
+}
+
 // withRetryOnNode attempts to perform the given action, retrying up to a DB-defined
 // maximum attempt count if a transaction conflict error is returned.
 //

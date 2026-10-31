@@ -62,6 +62,12 @@ Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
 `
+	commitHeadsDescription string = `
+Prior commits in the DAG that this commit was built upon to advance history.
+ Composite commits link to prior composite commits for the document.
+ Field commits link to prior field commits for the same field. Collection
+ commits link to prior collection commits.
+`
 	signatureDescription string = `
 The signature of the commit, if one exists. This is used to verify the integrity
  of the commit and the data it contains.
@@ -86,8 +92,8 @@ The ID of the collection version that this commit was committed against. This ID
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
-The name of the field that this commit was committed against. If this is a composite
- or a collection the value will be null.
+The name of the field that this commit was committed against. The value is "_C" for composite
+ blocks and null for collection blocks.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.

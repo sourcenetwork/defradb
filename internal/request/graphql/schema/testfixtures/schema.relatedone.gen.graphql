@@ -934,16 +934,17 @@ type Commit {
     docID: String
     """
     
-    The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
+    The name of the field that this commit was committed against. The value is "_C" for composite
+     blocks and null for collection blocks.
 
     """
     fieldName: String
     """
     
-    Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
+    Prior commits in the DAG that this commit was built upon to advance history.
+     Composite commits link to prior composite commits for the document.
+     Field commits link to prior field commits for the same field. Collection
+     commits link to prior collection commits.
 
     """
     heads(
@@ -1725,14 +1726,52 @@ type Mutation {
         """
         filter: BookFilterArg
     ): [Book]
-    "Remove all or matching documents from this node. Returns true when complete."
+    """
+    
+    Remove all or matching documents from this node. Returns true when complete.
+
+    """
     truncate_Author(
-        "Filter documents to truncate"
+        """
+        
+        An optional set of docID values that will limit the truncate to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be removed. If an empty set is provided, no
+         documents will be removed.
+
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this truncate that will limit the truncate to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be removed.
+
+        """
         filter: AuthorFilterArg
     ): Boolean!
-    "Remove all or matching documents from this node. Returns true when complete."
+    """
+    
+    Remove all or matching documents from this node. Returns true when complete.
+
+    """
     truncate_Book(
-        "Filter documents to truncate"
+        """
+        
+        An optional set of docID values that will limit the truncate to documents with
+         a matching docID. If no matching documents are found, the operation will
+         succeed, but no documents will be removed. If an empty set is provided, no
+         documents will be removed.
+
+        """
+        docID: [ID!]
+        """
+        
+        An optional filter for this truncate that will limit the truncate to documents
+         matching the given criteria. If no matching documents are found, the operation
+         will succeed, but no documents will be removed.
+
+        """
         filter: BookFilterArg
     ): Boolean!
     """
@@ -3172,6 +3211,15 @@ input VectorIndexConfig {
     dimensions: Int
     "Configures the HNSW algorithm."
     hnsw: HNSWIndexConfig
+    "Selects when index changes are applied to the graph. Defaults to SYNC."
+    maintenance: VectorIndexMaintenance
+}
+
+enum VectorIndexMaintenance {
+    "Record the change in a pending list and let a background writer update the graph later. Searches merge the pending list, so committed writes are searchable right away."
+    DEFERRED
+    "Update the graph in the writing transaction (default)."
+    SYNC
 }
 
 """
@@ -3316,9 +3364,10 @@ Returns the total number of items within the specified child sets. If multiple c
 enum commitCountFieldArg {
     """
     
-    Child commits in the DAG that contribute to the composition of this commit.
-     Composite commits will link to the field commits for the fields modified during
-     the single mutation.  Collection commits will link to composites.
+    Prior commits in the DAG that this commit was built upon to advance history.
+     Composite commits link to prior composite commits for the document.
+     Field commits link to prior field commits for the same field. Collection
+     commits link to prior collection commits.
 
     """
     heads
@@ -3353,8 +3402,8 @@ enum commitFields {
     docID
     """
     
-    The name of the field that this commit was committed against. If this is a composite
-     or a collection the value will be null.
+    The name of the field that this commit was committed against. The value is "_C" for composite
+     blocks and null for collection blocks.
 
     """
     fieldName
@@ -3454,7 +3503,7 @@ directive @embedding(
     model: String
     "The provider to use for embedding. (ollama, openAI, etc.)"
     provider: String
-    "The template to use with the fields to create the content to feed the model."
+    "Deprecated: this argument is ignored."
     template: String
     "The URL of the provider API."
     url: String

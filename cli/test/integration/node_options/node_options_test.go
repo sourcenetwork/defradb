@@ -12,7 +12,6 @@ package node_options
 
 import (
 	"testing"
-	"time"
 
 	"github.com/sourcenetwork/defradb/cli/test/action"
 	"github.com/sourcenetwork/defradb/cli/test/integration"
@@ -100,8 +99,6 @@ func TestGetNodeOptions_SetB(t *testing.T) {
 	t.Setenv("DEFRA_ACP_DOCUMENT_REMOTE_LOGID", "log-b")
 
 	test := &integration.Test{
-		// Disk-mode + P2P startup is slower than in-memory; allow more time.
-		Timeout: 10 * time.Second,
 		Actions: []action.Action{
 			action.StartDiskWithArgs([]string{
 				"--no-keyring=false",

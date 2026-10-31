@@ -93,12 +93,25 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 			},
 
 			// Authorized requestor identity but without target identity.
-			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/3796
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     "actor must be a valid did",
+				ExpectedError:     "acp relationship target actor must not be empty",
+			},
+
+			// A delegated admin must receive the same missing-target error as the owner.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.NoIdentity(),
+				Relation:          "admin",
+				ExpectedError:     "acp relationship target actor must not be empty",
 			},
 		},
 	}
@@ -293,6 +306,13 @@ func TestNAC_AddRelationshipStillRequiresIdentityEvenIfAllIdentitiesGivenAccess_
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.ClientIdentity(4),
+				Relation:          "admin",
+				ExpectedError:     "node acp relationship operation requires identity",
+			},
+			// Requestor validation still takes precedence when the target is also missing.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.NoIdentity(),
+				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
 				ExpectedError:     "node acp relationship operation requires identity",
 			},

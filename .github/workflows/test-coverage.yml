@@ -82,7 +82,7 @@ jobs:
         mutation-type: [gql, collection-named, collection-save]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -108,7 +108,13 @@ jobs:
         uses: ./.github/composites/setup-defradb
 
       - name: Install Ollama
-        run: make deps:ollama
+        # The installer also starts a systemd service that holds the port and reads models
+        # from its own directory. Stop it so the server `make ollama` starts is the one used.
+        run: |
+          make deps:ollama
+          if systemctl cat ollama.service >/dev/null 2>&1; then
+            sudo systemctl disable --now ollama
+          fi
 
       - name: Run Ollama
         run: make ollama
@@ -137,7 +143,7 @@ jobs:
         document-acp-type: [remote]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -184,7 +190,7 @@ jobs:
         lens-type: [wazero]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
@@ -213,7 +219,7 @@ jobs:
     name: Test coverage view job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
@@ -242,7 +248,7 @@ jobs:
     name: Test coverage encryption job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
@@ -270,7 +276,7 @@ jobs:
     name: Test coverage telemetry job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
@@ -298,7 +304,7 @@ jobs:
     name: Test coverage JS job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
@@ -336,7 +342,7 @@ jobs:
     name: Test coverage secondary index job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_MULTIPLIERS: secondary-index
@@ -365,7 +371,7 @@ jobs:
     name: Test coverage signed docs job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_MULTIPLIERS: signed-docs
@@ -388,19 +394,25 @@ jobs:
           coverage-artifact-name: "coverage_signed_docs"
           coverage-path: coverage.txt
 
-  # These jobs run the networked tests with one node on an older release, to catch
-  # changes that break compatibility with it. Both directions are run because they
-  # fail differently: old-source has the older node sending, new-source receiving.
-  #
-  # The release binary is a public download over HTTPS, so no token is needed.
-  test-coverage-cross-version-old-source:
-    name: Test coverage cross version old source job
+  # These jobs run the P2P suite with one node on an older release, once per
+  # release and direction: old-first makes the first node old, old-last the last.
+  # A test needing a newer release is skipped and runs in that release's job.
+  # Add a release here once it is published; its binary is a public download.
+  test-coverage-cross-version:
+    name: Test coverage cross version job (${{ matrix.direction }}, ${{ matrix.target-version }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-version: [v1.0.0, v1.1.0]
+        direction: [old-first, old-last]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
-      DEFRA_MULTIPLIERS: cross-version-old-source
+      DEFRA_MULTIPLIERS: cross-version-${{ matrix.direction }}
+      DEFRA_CROSS_VERSION_TARGET: ${{ matrix.target-version }}
 
     steps:
       - name: Enable RunsOn action
@@ -417,42 +429,30 @@ jobs:
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
         with:
-          coverage-artifact-name: "coverage_cross_version_old_source"
+          coverage-artifact-name: "coverage_cross_version_${{ matrix.direction }}_${{ matrix.target-version }}"
           coverage-path: coverage.txt
 
-  test-coverage-cross-version-new-source:
-    name: Test coverage cross version new source job
+  # The matrix job names change whenever a target version is added, so branch
+  # protection requires this job instead. It fails unless every leg succeeded.
+  test-coverage-cross-version-gate:
+    name: Test coverage cross version gate job
 
-    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+    needs: test-coverage-cross-version
 
-    env:
-      DEFRA_MULTIPLIERS: cross-version-new-source
+    if: always()
+
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Enable RunsOn action
-        uses: runs-on/action@v2
-        with:
-          metrics: cpu,network,memory,disk,io
-
-      - name: Checkout code into the directory
-        uses: actions/checkout@v6
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_cross_version_new_source"
-          coverage-path: coverage.txt
+      - name: Check that every cross version job succeeded
+        run: test "${{ needs.test-coverage-cross-version.result }}" = "success"
 
   # This job tests the leveldb datastore.
   test-coverage-leveldb:
     name: Test coverage leveldb job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_LEVEL: true
@@ -490,8 +490,7 @@ jobs:
       - test-coverage-js              #  1 test(s)
       - test-coverage-secondary-index #  1 test(s)
       - test-coverage-signed-docs     #  1 test(s)
-      - test-coverage-cross-version-old-source  #  1 test(s)
-      - test-coverage-cross-version-new-source  #  1 test(s)
+      - test-coverage-cross-version   #  4 test(s)
       - test-coverage-leveldb         #  1 test(s)
 
     # Important to know:

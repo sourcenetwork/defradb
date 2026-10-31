@@ -294,7 +294,7 @@ func TestBackfill_EpochAdvancedMidBuild_LiveEpochComplete(t *testing.T) {
 
 	// Gate: park the initial build at its first batch boundary until released.
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup

@@ -13,8 +13,10 @@ package wizard
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/keyring"
 )
@@ -37,6 +39,9 @@ func unsetEnvForTest(t *testing.T, key string) {
 // setConfigValueForTest is a helper that unsets a value from the wizard's config.yaml file,
 // but which will restore the original value after the test.
 func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value any) {
+	if ctx.RootDir == "" {
+		ctx.RootDir = t.TempDir()
+	}
 	originalValue, ok := getConfigValue(ctx, key).(string)
 	if !ok {
 		t.Fatal("failed to get original value")
@@ -45,6 +50,19 @@ func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value a
 		_ = setConfigValue(ctx, key, originalValue)
 	})
 	_ = setConfigValue(ctx, key, value)
+}
+
+// systemKeyringNamespaceForTest is a helper that returns a unique system keyring namespace for a test,
+// and deletes the keys the wizard may have stored in it once the test is done, even if the test fails.
+func systemKeyringNamespaceForTest(t *testing.T) string {
+	namespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	t.Cleanup(func() {
+		openKeyring := keyring.OpenSystemKeyring(namespace)
+		for _, keyName := range []string{"node-identity-key", "peer-key", "encryption-key", "searchable-encryption-key"} {
+			_ = openKeyring.Delete(keyName)
+		}
+	})
+	return namespace
 }
 
 // setupWorkingDirectoryForTest is a helper that temporarily changes the working directory to a

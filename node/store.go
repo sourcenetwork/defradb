@@ -64,7 +64,12 @@ func NewStore(
 	storeConstructor, ok := storeConstructors[o.Store]
 	if ok {
 		store, err := storeConstructor(ctx, o)
-		return store, isValueSizeLimited, err
+		if err != nil {
+			// A constructor can return a nil store pointer with its error. Wrapped in the interface
+			// it is not nil, so callers that check the store before closing it would panic.
+			return nil, false, err
+		}
+		return store, isValueSizeLimited, nil
 	}
 
 	return nil, false, NewErrStoreTypeNotSupported(o.Store)

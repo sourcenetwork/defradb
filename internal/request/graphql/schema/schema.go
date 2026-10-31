@@ -25,8 +25,13 @@ func defaultSchema() (gql.Schema, error) {
 	explainEnum := types.ExplainEnum()
 	vectorDistanceMetricEnum := types.VectorDistanceMetricEnum()
 	vectorIndexAlgorithmEnum := types.VectorIndexAlgorithmEnum()
+	vectorIndexMaintenanceEnum := types.VectorIndexMaintenanceEnum()
 	hnswIndexConfigInput := types.HNSWIndexConfigInputObject(vectorDistanceMetricEnum)
-	vectorIndexInput := types.VectorIndexInputObject(hnswIndexConfigInput, vectorIndexAlgorithmEnum)
+	vectorIndexInput := types.VectorIndexInputObject(
+		hnswIndexConfigInput,
+		vectorIndexAlgorithmEnum,
+		vectorIndexMaintenanceEnum,
+	)
 
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
@@ -54,6 +59,7 @@ func defaultSchema() (gql.Schema, error) {
 			orderedIndexInput,
 			encryptedSearchResult,
 			vectorIndexAlgorithmEnum,
+			vectorIndexMaintenanceEnum,
 			vectorDistanceMetricEnum,
 			hnswIndexConfigInput,
 			vectorIndexInput,
@@ -164,6 +170,7 @@ func defaultTypes(
 	orderedIndexInput *gql.InputObject,
 	encryptedSearchResult *gql.Object,
 	vectorIndexAlgorithmEnum *gql.Enum,
+	vectorIndexMaintenanceEnum *gql.Enum,
 	vectorDistanceMetricEnum *gql.Enum,
 	hnswIndexConfigInput *gql.InputObject,
 	vectorIndexInput *gql.InputObject,
@@ -258,6 +265,7 @@ func defaultTypes(
 		encryptedSearchResult,
 
 		vectorIndexAlgorithmEnum,
+		vectorIndexMaintenanceEnum,
 		vectorDistanceMetricEnum,
 		hnswIndexConfigInput,
 		vectorIndexInput,

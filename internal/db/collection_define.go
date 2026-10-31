@@ -929,7 +929,7 @@ func findIndexWithFirstField(
 	fieldName string,
 ) (isUnique bool, found bool) {
 	for _, index := range newIndexes {
-		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+		if fields := index.GetFields(); len(fields) > 0 && fields[0].Name == fieldName {
 			if index.Ordered != nil {
 				return index.Ordered.Unique, true
 			}
@@ -939,7 +939,7 @@ func findIndexWithFirstField(
 	}
 	for _, index := range existingIndexes {
 		// Only non-vector indexes carry uniqueness, so skip a vector index here.
-		if !index.IsVector() && len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+		if f := index.GetFields(); !index.IsVector() && len(f) > 0 && f[0].Name == fieldName {
 			return index.GetUnique(), true
 		}
 	}

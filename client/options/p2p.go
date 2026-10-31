@@ -11,6 +11,8 @@
 package options
 
 import (
+	"time"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -482,11 +484,23 @@ func (b *ListP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *List
 type SyncDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+
+	// BlockSyncTimeout, when set, overrides the node's default per-block fetch timeout for this
+	// sync only. It bounds how long the node waits for each linked block to arrive from a peer;
+	// a peer that is slow to authorize or serve a block past this budget causes the sync to fail
+	// with a block-sync timeout. It does not bound the overall operation — use a context deadline
+	// for that.
+	BlockSyncTimeout immutable.Option[time.Duration]
 }
 
 // GetIdentity returns the identity for the operation.
 func (o *SyncDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// GetBlockSyncTimeout returns the per-block fetch timeout override for the operation, if set.
+func (o *SyncDocumentsOptions) GetBlockSyncTimeout() immutable.Option[time.Duration] {
+	return o.BlockSyncTimeout
 }
 
 // SyncDocumentsOptionsBuilder is a builder for SyncDocumentsOptions.
@@ -503,6 +517,14 @@ func SyncDocuments() *SyncDocumentsOptionsBuilder {
 func (b *SyncDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *SyncDocumentsOptionsBuilder {
 	b.append(func(opts *SyncDocumentsOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetBlockSyncTimeout overrides the node's default per-block fetch timeout for this sync.
+func (b *SyncDocumentsOptionsBuilder) SetBlockSyncTimeout(timeout time.Duration) *SyncDocumentsOptionsBuilder {
+	b.append(func(opts *SyncDocumentsOptions) {
+		opts.BlockSyncTimeout = immutable.Some(timeout)
 	})
 	return b
 }

@@ -148,9 +148,10 @@ func (db *DB) fillIndexBatches(
 	desc client.IndexDescription,
 	startAfter immutable.Option[uint64],
 ) (uint32, error) {
-	fields := make([]client.CollectionFieldDescription, 0, len(desc.Fields))
-	for _, f := range desc.Fields {
-		if colField, ok := def.GetFieldByName(f.Name); ok {
+	names := indexFieldNames(desc)
+	fields := make([]client.CollectionFieldDescription, 0, len(names))
+	for _, name := range names {
+		if colField, ok := def.GetFieldByName(name); ok {
 			fields = append(fields, colField)
 		}
 	}

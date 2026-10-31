@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
 	m "github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client/options"
@@ -85,27 +86,37 @@ func TestNodeConfig_ApplyCanRewriteVersion(t *testing.T) {
 	assert.Equal(t, "", second.Version, "only the targeted node should be rewritten")
 }
 
-func TestNodeConfigP2POptions_WithNilNetwork_ReturnsDefaults(t *testing.T) {
+func TestNodeConfigP2POptions_WithNoNetwork_ReturnsDefaults(t *testing.T) {
 	cfg := &NewNode{}
 
 	assert.Equal(t, options.NodeP2POptions{}, cfg.P2POptions())
+	assert.False(t, cfg.P2PDisabled(), "an absent config means the defaults, not p2p off")
 }
 
 func TestNodeConfigP2POptions_WithNetwork_ReturnsConfigured(t *testing.T) {
 	cfg := &NewNode{
-		Network: func() options.NodeP2POptions {
+		Network: immutable.Some[ConfigureNode](func() options.NodeP2POptions {
 			return options.NodeP2POptions{EnablePubSub: true}
-		},
+		}),
 	}
 
 	assert.True(t, cfg.P2POptions().EnablePubSub)
+	assert.False(t, cfg.P2PDisabled())
+}
+
+func TestNodeConfigP2POptions_WithNilNetwork_DisablesP2P(t *testing.T) {
+	cfg := &NewNode{Network: immutable.Some[ConfigureNode](nil)}
+
+	assert.True(t, cfg.P2PDisabled(), "a present but nil config means p2p off")
+	assert.Equal(t, options.NodeP2POptions{}, cfg.P2POptions())
 }
 
 func TestNodeConfigWithVersion_SetsVersion(t *testing.T) {
 	cfg := RandomNetworkingConfig().WithVersion("v1.0.0")
 
 	assert.Equal(t, "v1.0.0", cfg.Version)
-	assert.NotNil(t, cfg.Network, "networking config must be preserved")
+	assert.True(t, cfg.Network.HasValue(), "networking config must be preserved")
+	assert.True(t, cfg.P2POptions().EnablePubSub, "and must still yield the same options")
 }
 
 func TestNodeConfigWithVersion_DoesNotMutateReceiver(t *testing.T) {

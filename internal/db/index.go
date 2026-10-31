@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"slices"
 
 	"github.com/sourcenetwork/corekv"
 
@@ -117,22 +118,25 @@ func buildIndexBase(
 	desc client.IndexDescription,
 	building bool,
 ) (collectionBaseIndex, error) {
-	if len(desc.Fields) == 0 {
+	fields := desc.GetFields()
+	if len(fields) == 0 {
 		return collectionBaseIndex{}, NewErrIndexDescHasNoFields(desc)
 	}
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
 		building:        building,
-		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
-		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(fields)),
+		descending:      make([]bool, len(fields)),
+		fieldGenerators: make([]FieldIndexGenerator, len(fields)),
 	}
-	for i := range desc.Fields {
-		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
+	for i := range fields {
+		field, foundField := collection.Version().GetFieldByName(fields[i].Name)
 		if !foundField {
-			return collectionBaseIndex{}, client.NewErrFieldNotExist(desc.Fields[i].Name)
+			return collectionBaseIndex{}, client.NewErrFieldNotExist(fields[i].Name)
 		}
 		base.fieldsDescs[i] = field
+		base.descending[i] = fields[i].Descending
 		if !isSupportedKind(field.Kind) {
 			return collectionBaseIndex{}, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
@@ -232,7 +236,10 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.CollectionFieldDescription
+	fieldsDescs []client.CollectionFieldDescription
+	// descending is each field's direction, positionally aligned with fieldsDescs. Resolved once at
+	// construction so the write path never reads the deprecated top-level fields.
+	descending      []bool
 	fieldGenerators []FieldIndexGenerator
 	// building is true while the index is being backfilled. deleteIndexKey tolerates
 	// missing entries for documents not yet reached by the backfill.
@@ -277,7 +284,7 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	fields := make([]keys.IndexedField, len(index.fieldsDescs))
 	for i := range index.fieldsDescs {
 		fields[i].Value = fieldValues[i]
-		fields[i].Descending = index.desc.Fields[i].Descending
+		fields[i].Descending = index.descending[i]
 	}
 
 	collectionShortID, err := id.GetCollectionShortID(ctx, index.collection.Version().CollectionID)
@@ -499,65 +506,223 @@ func (index *collectionVectorIndex) nodeAndVector(
 		return 0, nil, found, err
 	}
 
-	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	vec, err := index.docVector(doc)
 	if err != nil {
 		return 0, nil, false, err
 	}
-	if fieldVal == nil || fieldVal.Value() == nil {
-		// No vector on this doc, so nothing to index.
-		return docShortID, nil, true, nil
-	}
+	return docShortID, vec, true, nil
+}
 
+// docVector returns the vector doc holds for the indexed field, or nil when it has none.
+func (index *collectionVectorIndex) docVector(doc *client.Document) ([]float32, error) {
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return nil, err
+	}
+	if fieldVal == nil || fieldVal.Value() == nil {
+		return nil, nil
+	}
 	vec, ok := fieldVal.NormalValue().Float32Array()
 	if !ok {
-		return 0, nil, false, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
+		return nil, NewErrVectorIndexFieldNotFloat32Array(index.fieldsDescs[0].Name, doc.ID().String())
 	}
+	return vec, nil
+}
 
-	return docShortID, vec, true, nil
+// hasVector reports whether doc has a value for the indexed field, without decoding it.
+func (index *collectionVectorIndex) hasVector(doc *client.Document) (bool, error) {
+	fieldVal, err := doc.TryGetValue(index.fieldsDescs[0].Name)
+	if err != nil {
+		return false, err
+	}
+	return fieldVal != nil && fieldVal.Value() != nil, nil
 }
 
 // Save indexes doc by inserting its vector. If the document has no value for the indexed field,
 // there is nothing to index and Save does nothing.
 func (index *collectionVectorIndex) Save(ctx context.Context, doc *client.Document) error {
+	_, err := index.save(ctx, doc)
+	return err
+}
+
+// save does the work of Save. It reports whether the document had a vector to index.
+func (index *collectionVectorIndex) save(ctx context.Context, doc *client.Document) (bool, error) {
 	idx, collectionShortID, err := index.openIndex(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	nodeID, vec, found, err := index.nodeAndVector(ctx, collectionShortID, doc)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !found {
 		// A document being written always has a short id by this point. Not finding one means the
 		// document is missing or the caller cannot access it, which is an error, not a doc to skip.
-		return client.ErrDocumentNotFoundOrNotAuthorized
+		return false, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	if vec == nil {
-		return nil
+		return false, nil
 	}
 
 	// Vectors of different lengths in one graph make distances meaningless. Dimensions is set for a
 	// directly-written field, so check against it. It is 0 only for an @embedding field, where the
 	// model fixes the length, so the only guard left is against an empty vector.
 	if index.vectorDesc.Dimensions > 0 && len(vec) != int(index.vectorDesc.Dimensions) {
-		return NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
+		return false, NewErrVectorDimensionMismatch(int(index.vectorDesc.Dimensions), len(vec), doc.ID().String())
 	}
 	if len(vec) == 0 {
-		return NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
+		return false, NewErrVectorIndexEmptyVector(index.fieldsDescs[0].Name, doc.ID().String())
 	}
 
-	return idx.Insert(nodeID, vec)
+	if index.deferNow() {
+		return true, index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingUpsert,
+			Vector: vec,
+		})
+	}
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
+		// Applying inline: either the pending list is full, or this collection object was loaded
+		// while the index was building and has not noticed the build finished. Delete first, as the
+		// writer does, so the graph's vector is replaced.
+		if err := index.applyInline(ctx, collectionShortID, nodeID); err != nil {
+			return false, err
+		}
+		if err := idx.Delete(nodeID); err != nil {
+			return false, err
+		}
+	}
+	return true, idx.Insert(nodeID, vec)
+}
+
+// applyInline prepares an inline write to a deferred index. The node may still have an older
+// pending entry, which the background writer would later apply over this write, so it is removed.
+// The writer is also woken on commit: an inline write usually means the pending list is full, and
+// the writer would otherwise only notice on its next retry.
+func (index *collectionVectorIndex) applyInline(ctx context.Context, collectionShortID uint32, nodeID uint64) error {
+	hadPending, err := vectorindex.HasPending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
+	if err != nil {
+		return err
+	}
+	if hadPending {
+		err := vectorindex.DeletePending(ctx, collectionShortID, index.desc.ID, index.epoch, nodeID)
+		if err != nil {
+			return err
+		}
+	}
+	if w := index.maintenanceWriter(); w != nil {
+		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+			key := index.maintenanceKey()
+			txn.OnSuccess(func() {
+				// Removing the entry shrinks the list, so count it. Otherwise writes would stay
+				// inline until the next full drain, even with the list nearly empty.
+				if hadPending {
+					subPending(w.pendingCounter(key), 1)
+				}
+				w.markDirty(key)
+			})
+		}
+	}
+	return nil
+}
+
+// isDeferred reports whether writes to this index go to the pending list instead of the graph. An
+// index that is still building stays inline: the backfill reads the documents, so it covers them.
+func (index *collectionVectorIndex) isDeferred() bool {
+	return index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred && !index.building
+}
+
+// maintenanceWriter returns the background writer of the DB this index belongs to, or nil if the
+// collection is not backed by a DB.
+func (index *collectionVectorIndex) maintenanceWriter() *vectorMaintenanceWriter {
+	if c, ok := index.collection.(*collection); ok && c.db != nil {
+		return c.db.vectorMaintenance
+	}
+	return nil
+}
+
+func (index *collectionVectorIndex) maintenanceKey() vectorIndexRef {
+	return vectorIndexRef{index.collection.Version().CollectionID, index.desc.ID}
+}
+
+// deferNow reports whether a write should go to the pending list. An index whose pending list has
+// outgrown the background writer applies writes inline instead, which slows the writers down rather
+// than letting the list grow without bound.
+func (index *collectionVectorIndex) deferNow() bool {
+	if !index.isDeferred() {
+		return false
+	}
+	// Without a writer nothing would apply the entries or bound the list, so write inline.
+	w := index.maintenanceWriter()
+	return w != nil && !w.overLimit(index.maintenanceKey())
+}
+
+// putPending records a pending write and arranges for the background writer to be woken once the
+// transaction commits.
+func (index *collectionVectorIndex) putPending(
+	ctx context.Context,
+	collectionShortID uint32,
+	entry vectorindex.PendingEntry,
+) error {
+	err := vectorindex.PutPending(ctx, collectionShortID, index.desc.ID, index.epoch, entry)
+	if err != nil {
+		return err
+	}
+	if w := index.maintenanceWriter(); w != nil {
+		if txn, ok := datastore.CtxTryGetTxn(ctx); ok {
+			key := index.maintenanceKey()
+			txn.OnSuccess(func() { w.noteWrite(key) })
+		}
+	}
+	return nil
 }
 
 // Update re-indexes a document whose vector changed. A document keeps the same id across an update,
 // so the old and new vectors map to the same node; delete-then-save re-inserts it. (The binding
 // handles the in-place replacement; see the vectorindex package.)
 func (index *collectionVectorIndex) Update(ctx context.Context, oldDoc, newDoc *client.Document) error {
+	// Update is called for every index when any indexed field changes. Re-inserting an unchanged
+	// vector is wasted work, and in deferred mode it would also fill the pending list.
+	unchanged, err := index.sameVector(oldDoc, newDoc)
+	if err != nil {
+		return err
+	}
+	if unchanged {
+		return nil
+	}
+	if index.deferNow() {
+		// A pending upsert already replaces the node's old vector when it is applied, so it is all
+		// we need. Writing a pending delete first would just be overwritten, and the pending count
+		// would go up twice for one entry.
+		saved, err := index.save(ctx, newDoc)
+		if err != nil {
+			return err
+		}
+		if saved {
+			return nil
+		}
+		// The update cleared the vector, so the document must leave the index.
+		return index.Delete(ctx, oldDoc)
+	}
 	if err := index.Delete(ctx, oldDoc); err != nil {
 		return err
 	}
 	return index.Save(ctx, newDoc)
+}
+
+// sameVector reports whether both documents hold the same vector, or both hold none.
+func (index *collectionVectorIndex) sameVector(oldDoc, newDoc *client.Document) (bool, error) {
+	oldVec, err := index.docVector(oldDoc)
+	if err != nil {
+		// The old value cannot be read, so let the normal path deal with it.
+		return false, nil
+	}
+	newVec, err := index.docVector(newDoc)
+	if err != nil {
+		return false, err
+	}
+	return (oldVec == nil) == (newVec == nil) && slices.Equal(oldVec, newVec), nil
 }
 
 // Delete removes doc from the search results. It is a soft delete: the node is marked deleted but
@@ -590,6 +755,28 @@ func (index *collectionVectorIndex) Delete(ctx context.Context, doc *client.Docu
 		return NewErrCorruptedVectorIndex(index.desc.Name, doc.ID().String())
 	}
 
+	if index.deferNow() {
+		// A document without a vector is not in the graph, so there is nothing to delete. Queuing
+		// it anyway would fill the pending list with no-ops, which every search then scans.
+		has, err := index.hasVector(doc)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return nil
+		}
+		return index.putPending(ctx, collectionShortID, vectorindex.PendingEntry{
+			NodeID: nodeID,
+			Op:     vectorindex.PendingDelete,
+		})
+	}
+	if index.vectorDesc.Maintenance == client.VectorIndexMaintenanceDeferred {
+		// Applying inline: either the pending list is full, or this collection object was loaded
+		// while the index was building and has not noticed the build finished.
+		if err := index.applyInline(ctx, collectionShortID, nodeID); err != nil {
+			return err
+		}
+	}
 	return idx.Delete(nodeID)
 }
 
@@ -747,9 +934,9 @@ func (index *collectionUniqueIndex) Update(
 }
 
 func isUpdatingIndexedFields(index client.CollectionIndex, oldDoc, newDoc *client.Document) bool {
-	for _, indexedFields := range index.Description().Fields {
-		oldVal, getOldValErr := oldDoc.GetValue(indexedFields.Name)
-		newVal, getNewValErr := newDoc.GetValue(indexedFields.Name)
+	for _, name := range indexFieldNames(index.Description()) {
+		oldVal, getOldValErr := oldDoc.GetValue(name)
+		newVal, getNewValErr := newDoc.GetValue(name)
 
 		// GetValue will return an error when the field doesn't exist.
 		// This will happen for oldDoc only if the field hasn't been set

@@ -34,7 +34,7 @@ var (
 	ErrNoDocIDOrFilter                  = errors.New("docID or filter must be defined")
 	ErrInvalidExportFormat              = errors.New("invalid export format")
 	ErrNoLensConfig                     = errors.New("lens config cannot be empty")
-	ErrInvalidLensConfig                = errors.New("invalid lens configuration")
+	ErrInvalidLensConfig                = errors.New(errInvalidLensConfig)
 	ErrViewAddMissingArgs               = errors.New("please provide a base query and output SDL for this view")
 	ErrPolicyFileArgCanNotBeEmpty       = errors.New("policy file argument can not be empty")
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")

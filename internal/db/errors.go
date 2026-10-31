@@ -50,7 +50,9 @@ const (
 	errNonZeroIndexIDProvided               string = "non-zero index ID provided"
 	errIndexFieldMissingName                string = "index field missing name"
 	errIndexKindConflict                    string = "index request has more than one kind config"
-	errIndexUniqueConflict                  string = "index request sets both the deprecated " +
+	errIndexFieldsConflict                  string = "index request sets both the deprecated " +
+		"fields and a kind config naming different fields"
+	errIndexUniqueConflict string = "index request sets both the deprecated " +
 		"unique field and an ordered config that disagrees with it"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
@@ -150,6 +152,7 @@ const (
 	errVectorIndexFieldNotFloat32Array     string = "vector index field value is not a float32 array"
 	errVectorDimensionMismatch             string = "vector dimension mismatch"
 	errVectorIndexParamOutOfRange          string = "vector index parameter is out of range"
+	errVectorIndexUnknownMaintenance       string = "vector index with unknown maintenance"
 	errVectorIndexEmptyVector              string = "vector index field value is an empty vector"
 	errVectorIndexRequiresSingleField      string = "vector index must be on exactly one field"
 	errNonOrderedIndexCannotBeUnique       string = "only an ordered index can be unique"
@@ -232,6 +235,7 @@ var (
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
 	ErrIndexFieldMissingName                     = errors.New(errIndexFieldMissingName)
 	ErrIndexKindConflict                         = errors.New(errIndexKindConflict)
+	ErrIndexFieldsConflict                       = errors.New(errIndexFieldsConflict)
 	ErrIndexUniqueConflict                       = errors.New(errIndexUniqueConflict)
 	ErrCorruptedIndex                            = errors.New(errCorruptedIndex)
 	ErrExpectedJSONObject                        = errors.New(errExpectedJSONObject)
@@ -1337,6 +1341,15 @@ func NewErrVectorIndexEmptyVector(fieldName, docID string) error {
 		errVectorIndexEmptyVector,
 		errors.NewKV("Field", fieldName),
 		errors.NewKV("DocID", docID),
+	)
+}
+
+// NewErrVectorIndexUnknownMaintenance returns a new error indicating that a vector index was given an
+// unknown maintenance mode.
+func NewErrVectorIndexUnknownMaintenance(maintenance string) error {
+	return errors.New(
+		errVectorIndexUnknownMaintenance,
+		errors.NewKV("Maintenance", maintenance),
 	)
 }
 

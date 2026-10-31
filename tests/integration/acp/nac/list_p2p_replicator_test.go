@@ -19,19 +19,11 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestNAC_GatesListP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
-		// Restarting a node re-creates the external node as a new process on a new
-		// port, and its auth token is still bound to the old address.
-		// https://github.com/sourcenetwork/defradb/issues/5170
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -70,13 +62,6 @@ func TestNAC_GatesListP2PReplicator_AuthorizedIdentity_AllowAccess(t *testing.T)
 
 func TestNAC_GatesListP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// Restarting a node re-creates the external node as a new process on a new
-		// port, and its auth token is still bound to the old address.
-		// https://github.com/sourcenetwork/defradb/issues/5170
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,
@@ -115,13 +100,6 @@ func TestNAC_GatesListP2PReplicator_NoIdentity_NotAuthorizedError(t *testing.T) 
 
 func TestNAC_GatesListP2PReplicator_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// Restarting a node re-creates the external node as a new process on a new
-		// port, and its auth token is still bound to the old address.
-		// https://github.com/sourcenetwork/defradb/issues/5170
-		MultiplierExcludes: []string{
-			multiplier.CrossVersionOldSource,
-			multiplier.CrossVersionNewSource,
-		},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.HTTPClientType,

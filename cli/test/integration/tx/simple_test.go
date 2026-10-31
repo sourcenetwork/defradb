@@ -20,7 +20,6 @@ import (
 
 func TestCreateTxWithRawTTL(t *testing.T) {
 	test := &integration.Test{
-		Timeout: time.Second * 5, // test wide timeout
 		Actions: []action.Action{
 			&action.CreateTx{
 				TTL: "1", // 1 second
@@ -47,7 +46,6 @@ func TestCreateTxWithRawTTL(t *testing.T) {
 
 func TestCreateTxWithFormattedTTL(t *testing.T) {
 	test := &integration.Test{
-		Timeout: time.Second * 5, // test wide timeout
 		Actions: []action.Action{
 			&action.CreateTx{
 				TTL: "1s", // 1 second

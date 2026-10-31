@@ -49,8 +49,6 @@ func SyncP2PBranchableCollection(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	opts := options.WithIdentity(options.SyncBranchableCollection(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionID), opts)
 	if err != nil {

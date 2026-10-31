@@ -12,17 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result AddDocument(uintptr_t nodePtr, char* json, int isEncrypted,
-char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
-extern Result DeleteDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result GetDocument(uintptr_t nodePtr, char* docIDStr, int showDeleted,
-CollectionOptions options, uintptr_t identityPtr);
-extern Result UpdateDocument(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
-extern void FreeIdentity(uintptr_t identityPtr);
+#include "libdefradb.h"
 */
 import "C"
 
@@ -38,6 +28,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -136,7 +127,7 @@ func (c *Collection) AddManyDocuments(
 	copts.getInactive = 0
 	setCCollectionSigningOption(&copts, addOpts.EnableSigning)
 
-	var jsonDocs []json.RawMessage
+	jsonDocs := make([]json.RawMessage, 0, len(docs))
 	for _, doc := range docs {
 		b, err := doc.MarshalJSON()
 		if err != nil {
@@ -265,6 +256,36 @@ func (c *Collection) SaveDocument(
 		return c.AddDocument(ctx, doc, opts...)
 	}
 
+	ctx = setCtxTxnFromCollection(ctx, c)
+	if _, hadTxn := datastore.CtxTryGetTxn(ctx); hadTxn {
+		return c.saveDocument(ctx, doc, opts...)
+	}
+
+	// Without an explicit transaction, each of the calls made by saveDocument would open and
+	// commit its own, leaving a window in which another writer could add or delete the document
+	// between the existence check and the resulting add/update. Wrapping them in a single
+	// transaction makes the save atomic, matching the Go client.
+	txn, err := c.w.NewTxn(false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	err = c.saveDocument(datastore.CtxSetFromClientTxn(ctx, txn), doc, opts...)
+	if err != nil {
+		return err
+	}
+	return txn.Commit()
+}
+
+// saveDocument adds or updates the document depending on whether it already exists.
+//
+// It is not atomic on its own; the caller must ensure ctx holds a transaction.
+func (c *Collection) saveDocument(
+	ctx context.Context,
+	doc *client.Document,
+	opts ...options.Enumerable[options.SaveDocumentOptions],
+) error {
 	saveOpt := utils.NewOptions(opts...)
 	getOpts := options.GetDocument().SetShowDeleted(true)
 	if saveOpt.Identity.HasValue() {

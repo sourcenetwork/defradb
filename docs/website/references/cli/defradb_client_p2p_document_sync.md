@@ -26,8 +26,9 @@ sync multiple documents:
 ### Options
 
 ```
-  -h, --help               help for sync
-      --timeout duration   Timeout for sync operations
+      --block-sync-timeout duration   Per-block fetch timeout for this sync, overriding the node default (e.g. 30s)
+  -h, --help                          help for sync
+      --timeout duration              Timeout for the whole sync operation
 ```
 
 ### Options inherited from parent commands

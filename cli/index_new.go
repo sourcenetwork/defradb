@@ -42,6 +42,9 @@ The --vector flag makes a vector index (on a single field, never unique). Its va
 config as JSON. Give the config for the algorithm you want under its own key; HNSW is the only one
 today, e.g. '{"Metric":"COSINE","Dimensions":3,"HNSW":{}}'. Metric and Dimensions are the essentials
 (Metric is the distance metric, one of COSINE, EUCLIDEAN or DOT; Dimensions is the vector length).
+Maintenance is optional ("SYNC" by default, or "DEFERRED"). SYNC updates the graph in the writing
+transaction. DEFERRED records the change in a pending list and a background writer updates the graph
+later; searches merge the pending list, so committed writes are searchable right away.
 The metric cannot be changed later without dropping and recreating the index. The HNSW tuning
 params are optional and default if omitted:
   M               links per node (higher = better recall, more memory and slower build); default %d

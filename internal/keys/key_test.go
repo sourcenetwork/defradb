@@ -189,7 +189,7 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedKey := NewIndexDataStoreKey(collectionShortID, indexID, 0, tc.expectedFields)
 			expectedKey.DocShortID = tc.expectedDocShortID
-			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.Fields))
+			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.GetFields()))
 			for i := range tc.fieldKinds {
 				fieldDescs[i] = client.CollectionFieldDescription{Kind: tc.fieldKinds[i]}
 			}

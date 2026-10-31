@@ -116,21 +116,25 @@ func (a *NewIndex) Execute() {
 		}
 
 		if a.FieldName != "" {
+			//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
 			indexDesc.Fields = []client.IndexedFieldDescription{
 				{
 					Name: a.FieldName,
 				},
 			}
 		} else if len(a.Fields) > 0 {
+			fields := make([]client.IndexedFieldDescription, len(a.Fields))
 			for i := range a.Fields {
-				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+				fields[i] = client.IndexedFieldDescription{
 					Name:       a.Fields[i].Name,
 					Descending: a.Fields[i].Descending,
-				})
+				}
 			}
+			//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
+			indexDesc.Fields = fields
 		}
 
-		//nolint:staticcheck // the action exposes both spellings so tests can cover each
+		//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
 		indexDesc.Unique = a.Unique
 		indexDesc.Ordered = a.Ordered
 		indexDesc.Vector = a.Vector

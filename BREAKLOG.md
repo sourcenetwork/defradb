@@ -6,6 +6,23 @@ Unreleased entries are grouped under their release version when they ship.
 
 ## Unreleased
 
+### Index field definitions move onto the kind-specific index configurations
+
+`client.OrderedIndexDescription` and `client.VectorIndexDescription` each gain a `Fields` field, so an index's fields now live on the configuration for its kind. An ordered index keeps a direction per field; a vector index stores names only, since a vector graph is searched by nearness and has nothing to sort by.
+
+The kind-agnostic `Fields` on `client.IndexDescription` and `client.NewIndexRequest` is deprecated and will be removed in v2.0.0. Both are kept in sync until then, so existing code that reads or writes the deprecated field continues to work. Setting both to name different fields is rejected.
+
+Use `GetFields()` on `client.IndexDescription` or `client.NewIndexRequest` to read an index's fields regardless of kind.
+
+#### Go API
+
+Adding a field changes each struct's positional layout, so unkeyed struct literals of these two types no longer compile. Keyed literals are unaffected, and no other migration is required before v2.0.0.
+
+| Previous | Replacement |
+|----------|-------------|
+| `client.OrderedIndexDescription{true}` | `client.OrderedIndexDescription{Unique: true}` |
+| `client.VectorIndexDescription{algorithm, metric, dimensions, hnsw}` | `client.VectorIndexDescription{Algorithm: algorithm, Metric: metric, Dimensions: dimensions, HNSW: hnsw}` |
+
 ### Rename SourceHub to Vera and SourceHub Document ACP to Remote DAC
 
 The SourceHub project has been renamed to [Vera](https://github.com/sourcenetwork/vera). DefraDB now calls the Vera-backed Document ACP implementation Remote DAC, alongside the existing Local DAC. DefraDB does not retain the former configuration values or API names as compatibility aliases.

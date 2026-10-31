@@ -23,8 +23,8 @@ func MakeIndexListCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
 		Use:   "list",
-		Short: "Shows the list indexes in the database or for a specific collection",
-		Long: `Shows the list indexes in the database or for a specific collection.
+		Short: "Show the list of indexes in the database or for a specific collection",
+		Long: `Show the list of indexes in the database or for a specific collection.
 
 If the --collection flag is provided, only the indexes for that collection will be shown.
 Otherwise, all indexes in the database will be shown.
@@ -59,7 +59,7 @@ complete, or "failed" if the build could not finish.`,
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "show all index for 'Users' collection",
+	EmbedCLIExample(ctx, cmd, "show all indexes for 'Users' collection",
 		`defradb client index list --collection Users`)
 
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")

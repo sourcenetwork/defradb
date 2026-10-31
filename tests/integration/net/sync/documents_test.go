@@ -392,3 +392,46 @@ func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestDocSync_ConcurrentSameDocRequests_AllShouldSucceed covers concurrent SyncDocuments calls for
+// the same docID on one node. They must all succeed. Previously they collided on the pubsub-rpc
+// response-channel key (msgID = hash(request bytes), and the request carried no nonce), so one call
+// succeeded while the others blocked until their deadline and returned "timeout while syncing doc".
+func TestDocSync_ConcurrentSameDocRequests_AllShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		// Releases before v1.2.0 have this bug on the requesting node, which is the
+		// last one. Fixed in https://github.com/sourcenetwork/defradb/issues/5020
+		OldLastNodeSupportedFromVersion: "v1.2.0",
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.AddDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.SyncDocs{
+				NodeID:       1,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				Concurrency:  4,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -125,6 +125,7 @@ func TestDeleteWithMapFilter_LargeIntegerStraddling2To53_DeletesOnlyExactMatch(t
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.CClientType,
+				state.JavaClientType,
 			},
 		),
 		// The gql mutation type embeds the doc as a literal in a GraphQL mutation, and

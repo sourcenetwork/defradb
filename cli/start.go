@@ -99,6 +99,9 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
 				SetLensRuntime(options.NodeLensRuntimeType(cfg.GetString("lens.runtime")))
+			if p2pBlockSyncTimeout := cfg.GetInt("net.p2pblocksynctimeout"); p2pBlockSyncTimeout > 0 {
+				opts.DB().SetP2PBlockSyncTimeout(time.Duration(p2pBlockSyncTimeout) * time.Second)
+			}
 			opts.P2P().
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
@@ -313,6 +316,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"relay",
 		cfg.GetBool(config.ConfigFlags["relay"]),
 		"Enable the p2p relay",
+	)
+	cmd.PersistentFlags().Int(
+		"p2p-block-sync-timeout",
+		cfg.GetInt(config.ConfigFlags["p2p-block-sync-timeout"]),
+		"Timeout in seconds for fetching each block during P2P DAG sync",
 	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",

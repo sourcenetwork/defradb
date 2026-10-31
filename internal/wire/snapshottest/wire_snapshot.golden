@@ -89,6 +89,7 @@ github.com/sourcenetwork/defradb/internal/db/p2p.docSyncReply struct
 	sender string
 github.com/sourcenetwork/defradb/internal/db/p2p.docSyncRequest struct
 	docIDs []string
+	requestID []uint8
 github.com/sourcenetwork/defradb/internal/db/p2p.syncBranchableCollectionReply struct
 	collectionID string
 	heads [][]uint8
