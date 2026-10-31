@@ -1,4 +1,16 @@
 
+<a name="v1.1.1"></a>
+## [v1.1.1](https://github.com/sourcenetwork/defradb/compare/v1.1.0...v1.1.1)
+
+> 2026-10-30
+
+### Fixes
+
+* Bump Go to 1.26.10 for eMudhra CA compromise ([#5344](https://github.com/sourcenetwork/defradb/issues/5344))
+* Bump Go to 1.26.9 and x/net to v0.60.0 ([#5333](https://github.com/sourcenetwork/defradb/issues/5333))
+* Bump google.golang.org/grpc to v1.83.2 ([#5223](https://github.com/sourcenetwork/defradb/issues/5223))
+* Bump kin-openapi to v0.149.0 and chi to v5.4.0 ([#5356](https://github.com/sourcenetwork/defradb/issues/5356))
+
 <a name="v1.1.0"></a>
 ## [v1.1.0](https://github.com/sourcenetwork/defradb/compare/v1.0.0...v1.1.0)
 
