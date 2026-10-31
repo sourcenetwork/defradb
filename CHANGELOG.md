@@ -1,4 +1,93 @@
 
+<a name="v1.2.0"></a>
+## [v1.2.0](https://github.com/sourcenetwork/defradb/compare/v1.1.0...v1.2.0)
+
+> 2026-10-30
+
+### Features
+
+* Add deferred maintenance for vector indexes ([#5326](https://github.com/sourcenetwork/defradb/issues/5326))
+* Add BasicImport, BasicExport, PrintDump to C bindings ([#5283](https://github.com/sourcenetwork/defradb/issues/5283))
+* Configurable P2P block-sync timeout ([#5035](https://github.com/sourcenetwork/defradb/issues/5035))
+* Add docID filter to truncate mutation ([#5267](https://github.com/sourcenetwork/defradb/issues/5267))
+
+### Fixes
+
+* Separate commit heads and links schema descriptions ([#5351](https://github.com/sourcenetwork/defradb/issues/5351))
+* Bump AMI Go download to 1.26.10 ([#5346](https://github.com/sourcenetwork/defradb/issues/5346))
+* Close p2p handler streams and finish the retry sweep ([#5266](https://github.com/sourcenetwork/defradb/issues/5266))
+* Prevent LevelDB deadlock on document creation ([#5339](https://github.com/sourcenetwork/defradb/issues/5339))
+* Validate actor in acp relationships ([#5342](https://github.com/sourcenetwork/defradb/issues/5342))
+* Filter subscription events by collection ([#4909](https://github.com/sourcenetwork/defradb/issues/4909))
+* Bump Go to 1.26.10 for eMudhra CA compromise ([#5344](https://github.com/sourcenetwork/defradb/issues/5344))
+* Make SaveDocument atomic across clients ([#5331](https://github.com/sourcenetwork/defradb/issues/5331))
+* Return store open errors instead of panicking ([#5340](https://github.com/sourcenetwork/defradb/issues/5340))
+* Handle filters on secondary relation ID ([#5332](https://github.com/sourcenetwork/defradb/issues/5332))
+* Release js funcs when closing the js client ([#5335](https://github.com/sourcenetwork/defradb/issues/5335))
+* Validate group fields in commit queries ([#5315](https://github.com/sourcenetwork/defradb/issues/5315))
+* Stop losing sync requests after connecting ([#5286](https://github.com/sourcenetwork/defradb/issues/5286))
+* Retry collection blocks in replicator ([#5307](https://github.com/sourcenetwork/defradb/issues/5307))
+* Resolve p2p collections by version id ([#5304](https://github.com/sourcenetwork/defradb/issues/5304))
+* Report peer rejections without blocking replication ([#5302](https://github.com/sourcenetwork/defradb/issues/5302))
+* Handle replicator message errors ([#5299](https://github.com/sourcenetwork/defradb/issues/5299))
+* Replicator backfill drops documents ([#4823](https://github.com/sourcenetwork/defradb/issues/4823))
+* Prevent point-updates from conflicting with adjacent ([#5298](https://github.com/sourcenetwork/defradb/issues/5298))
+* Group by field dependency without selection ([#4966](https://github.com/sourcenetwork/defradb/issues/4966))
+* Remove panics from Java client wrapper ([#5290](https://github.com/sourcenetwork/defradb/issues/5290))
+* Enforce groupBy restriction on relation fields ([#5081](https://github.com/sourcenetwork/defradb/issues/5081))
+* Count a merged counter increment once ([#5274](https://github.com/sourcenetwork/defradb/issues/5274))
+* Two lost-update bugs in peer sync ([#5276](https://github.com/sourcenetwork/defradb/issues/5276))
+* Timeout on concurrent doc-sync for the same doc ([#5021](https://github.com/sourcenetwork/defradb/issues/5021))
+* Make C binding P2P functions properly handle txns ([#5277](https://github.com/sourcenetwork/defradb/issues/5277))
+* Prevent leak during partial node creation ([#5275](https://github.com/sourcenetwork/defradb/issues/5275))
+* Resolve race, panic, and retry drops in replicator ([#5200](https://github.com/sourcenetwork/defradb/issues/5200))
+* Improve CLI index list help text ([#5244](https://github.com/sourcenetwork/defradb/issues/5244))
+
+### Documentation
+
+* Describe running defra against Vera ([#5158](https://github.com/sourcenetwork/defradb/issues/5158))
+* Correct commit fieldName description ([#5312](https://github.com/sourcenetwork/defradb/issues/5312))
+
+### Refactoring
+
+* Make each index kind own its fields ([#5235](https://github.com/sourcenetwork/defradb/issues/5235))
+
+### Testing
+
+* Resolve cli client hitting different nac gates ([#5292](https://github.com/sourcenetwork/defradb/issues/5292))
+* Isolate wizard config files ([#5207](https://github.com/sourcenetwork/defradb/issues/5207))
+* Resolve materialized view refresh nac gates ([#5301](https://github.com/sourcenetwork/defradb/issues/5301))
+* Raise CLI integration test timeout ([#5306](https://github.com/sourcenetwork/defradb/issues/5306))
+* Restore IndexBuildGate after DB close in index tests ([#5297](https://github.com/sourcenetwork/defradb/issues/5297))
+* Move tests for commits with cid and field name ([#5294](https://github.com/sourcenetwork/defradb/issues/5294))
+* Introduce Java Test Client ([#5099](https://github.com/sourcenetwork/defradb/issues/5099))
+* Run cross-version jobs per release ([#5318](https://github.com/sourcenetwork/defradb/issues/5318))
+* Fix wizard system keyring tests ([#5336](https://github.com/sourcenetwork/defradb/issues/5336))
+
+### Continuous integration
+
+* Move RunsOn runners to the v3 stack ([#5354](https://github.com/sourcenetwork/defradb/issues/5354))
+* Authenticate readme toc check ([#5334](https://github.com/sourcenetwork/defradb/issues/5334))
+
+### Chore
+
+* Bump Go to 1.26.9 and x/net to v0.60.0 ([#5333](https://github.com/sourcenetwork/defradb/issues/5333))
+* Bring nativewrapper.c to parity with Java SDK ([#5325](https://github.com/sourcenetwork/defradb/issues/5325))
+* Make linux build support different architectures ([#5319](https://github.com/sourcenetwork/defradb/issues/5319))
+* Remove template field from [@embedding](https://github.com/embedding) directive ([#5317](https://github.com/sourcenetwork/defradb/issues/5317))
+* Make Android API requirement consistent ([#5295](https://github.com/sourcenetwork/defradb/issues/5295))
+* Bump blst version ([#5289](https://github.com/sourcenetwork/defradb/issues/5289))
+* Add MacOS c-binding build script ([#5279](https://github.com/sourcenetwork/defradb/issues/5279))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2026-10-30 ([#5356](https://github.com/sourcenetwork/defradb/issues/5356))
+* Update dependencies (bulk dependabot PRs) 2026-10-05 ([#5313](https://github.com/sourcenetwork/defradb/issues/5313))
+* Bump google.golang.org/grpc from 1.83.0 to 1.83.2 ([#5223](https://github.com/sourcenetwork/defradb/issues/5223))
+* Bump github.com/dgraph-io/badger/v4 from 4.9.5 to 4.9.6 ([#5247](https://github.com/sourcenetwork/defradb/issues/5247))
+* Bump golang.org/x/crypto from 0.54.0 to 0.57.0 ([#5248](https://github.com/sourcenetwork/defradb/issues/5248))
+* Bump go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp from 1.44.0 to 1.45.0 ([#5273](https://github.com/sourcenetwork/defradb/issues/5273))
+
 <a name="v1.1.0"></a>
 ## [v1.1.0](https://github.com/sourcenetwork/defradb/compare/v1.0.0...v1.1.0)
 
