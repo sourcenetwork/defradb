@@ -769,6 +769,7 @@ func vectorIndexFromAST(
 	}
 
 	var dimensions uint32
+	var maintenance client.VectorIndexMaintenance
 	algorithm := client.VectorAlgorithmHNSW
 	metric := client.DistanceMetricCosine
 	hnswParams := client.HNSWParams{
@@ -798,15 +799,25 @@ func vectorIndexFromAST(
 				return client.NewIndexRequest{}, err
 			}
 
+		case types.VectorIndexPropMaintenance:
+			maintenanceVal, ok := field.Value.(*ast.EnumValue)
+			if !ok {
+				return client.NewIndexRequest{}, ErrIndexWithInvalidArg
+			}
+			// The GraphQL enum already rejects unknown values here, and index creation checks them
+			// again for requests that do not come through SDL.
+			maintenance = client.VectorIndexMaintenance(maintenanceVal.Value)
+
 		default:
 			return client.NewIndexRequest{}, ErrIndexWithUnknownArg
 		}
 	}
 
 	vectorDesc := client.VectorIndexDescription{
-		Algorithm:  algorithm,
-		Metric:     metric,
-		Dimensions: dimensions,
+		Algorithm:   algorithm,
+		Metric:      metric,
+		Dimensions:  dimensions,
+		Maintenance: maintenance,
 	}
 	if algorithm == client.VectorAlgorithmHNSW {
 		vectorDesc.HNSW = &hnswParams

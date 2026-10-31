@@ -68,8 +68,9 @@ func TestNewDB(t *testing.T) {
 	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
-	_, err = NewDB(ctx, rootstore, adminInfo)
+	db, err := NewDB(ctx, rootstore, adminInfo)
 	require.NoError(t, err)
+	db.Close()
 }
 
 func TestReserveDocShortID_LevelDBUsesCurrentTxn(t *testing.T) {

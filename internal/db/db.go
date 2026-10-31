@@ -76,6 +76,10 @@ type DB struct {
 	// demand after NewIndex/DeleteIndex. See index_worker.go.
 	indexBuildWorker *indexBuildWorker
 
+	// vectorMaintenance applies the pending lists of deferred vector indexes to their graphs in the
+	// background.
+	vectorMaintenance *vectorMaintenanceWriter
+
 	rootstore corekv.TxnStore
 
 	events event.Bus
@@ -243,6 +247,13 @@ func newDB(
 	} else {
 		db.recoveryWG.Go(func() {
 			worker.run(db.ctx)
+		})
+	}
+
+	db.vectorMaintenance = newVectorMaintenanceWriter(db)
+	if !suppressVectorMaintenanceRun {
+		db.recoveryWG.Go(func() {
+			db.vectorMaintenance.run(db.ctx)
 		})
 	}
 

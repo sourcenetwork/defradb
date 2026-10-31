@@ -640,6 +640,16 @@ func validateVectorIndexDescription(def client.CollectionVersion, desc client.Ne
 		return err
 	}
 
+	// SYNC is stored as empty, the form every index created before maintenance modes has, so there
+	// is one stored form for it.
+	switch desc.Vector.Maintenance {
+	case client.VectorIndexMaintenanceSync:
+		desc.Vector.Maintenance = ""
+	case "", client.VectorIndexMaintenanceDeferred:
+	default:
+		return NewErrVectorIndexUnknownMaintenance(string(desc.Vector.Maintenance))
+	}
+
 	if err := validateNoConflictingVectorIndexMetric(def, fieldName, desc.Vector.Metric); err != nil {
 		return err
 	}

@@ -16,13 +16,28 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
-// A vector index keeps two kinds of entry under its (collectionShortID, indexID, epoch) prefix: one
-// meta entry and many node entries. These bytes mark which is which. A scalar index reuses the same
+// A vector index keeps three kinds of entry under its (collectionShortID, indexID, epoch) prefix: one
+// meta entry, many node entries, and (for a deferred-maintenance index) many pending entries. These
+// bytes mark which is which. A scalar index reuses the same
 // prefix but stores field values there, which are never encoded as one of these marker bytes, so
 // the two kinds of key never clash.
 const (
 	vectorIndexMetaDiscriminator byte = 'm'
 	vectorIndexNodeDiscriminator byte = 'n'
+	// vectorIndexPendingDiscriminator marks a pending entry: a write not yet applied to the graph.
+	vectorIndexPendingDiscriminator byte = 'p'
+)
+
+// VectorIndexKeyKind says which kind of entry a VectorIndexKey addresses.
+type VectorIndexKeyKind uint8
+
+const (
+	// VectorIndexKeyNode addresses a graph node entry. It is the zero value.
+	VectorIndexKeyNode VectorIndexKeyKind = 0
+	// VectorIndexKeyMeta addresses the graph's meta singleton.
+	VectorIndexKeyMeta VectorIndexKeyKind = 1
+	// VectorIndexKeyPending addresses a pending (not yet applied) write of one node.
+	VectorIndexKeyPending VectorIndexKeyKind = 2
 )
 
 // VectorIndexKey points to one entry in a vector index's graph: either the meta entry or a single
@@ -36,12 +51,12 @@ type VectorIndexKey struct {
 	// Epoch namespaces the entries of a single index build; a rebuild fills a fresh epoch
 	// disjoint from the current one.
 	Epoch uint32
-	// IsMeta is true for the graph's meta singleton key, false for a node entry key.
-	IsMeta bool
-	// NodeID is the node this key addresses. Only meaningful when IsMeta is false. Node ids come from
-	// a sequence that starts at 1, so a zero NodeID never addresses a node: it marks a node-prefix key
-	// (`.../n`) that scans every node of the index, as opposed to a full node key (`.../n/<id>`). This
-	// matches how the other keys use a zero component as their prefix.
+	// Kind is which kind of entry this key addresses.
+	Kind VectorIndexKeyKind
+	// NodeID is the node this key addresses. Only meaningful for node and pending keys. Node ids come
+	// from a sequence that starts at 1, so a zero NodeID never addresses a node: it marks a prefix key
+	// (`.../n`, or `.../p` for pending) that scans every entry of that kind, as opposed to a full key
+	// (`.../n/<id>`). This matches how the other keys use a zero component as their prefix.
 	NodeID uint64
 	// offset controls how many times bytesPrefixEnd is applied during encoding; see
 	// IndexDataStoreKey.Offset for the same mechanism.
@@ -57,7 +72,7 @@ func NewVectorMetaKey(collShortID, indexID, epoch uint32) VectorIndexKey {
 		CollectionShortID: collShortID,
 		IndexID:           indexID,
 		Epoch:             epoch,
-		IsMeta:            true,
+		Kind:              VectorIndexKeyMeta,
 	}
 }
 
@@ -67,7 +82,7 @@ func NewVectorNodeKey(collShortID, indexID, epoch uint32, nodeID uint64) VectorI
 		CollectionShortID: collShortID,
 		IndexID:           indexID,
 		Epoch:             epoch,
-		IsMeta:            false,
+		Kind:              VectorIndexKeyNode,
 		NodeID:            nodeID,
 	}
 }
@@ -80,8 +95,52 @@ func NewVectorNodePrefix(collShortID, indexID, epoch uint32) VectorIndexKey {
 		CollectionShortID: collShortID,
 		IndexID:           indexID,
 		Epoch:             epoch,
-		IsMeta:            false,
+		Kind:              VectorIndexKeyNode,
 	}
+}
+
+// NewVectorPendingKey returns the key of the pending entry for one node of a deferred index.
+func NewVectorPendingKey(collShortID, indexID, epoch uint32, nodeID uint64) VectorIndexKey {
+	return VectorIndexKey{
+		CollectionShortID: collShortID,
+		IndexID:           indexID,
+		Epoch:             epoch,
+		Kind:              VectorIndexKeyPending,
+		NodeID:            nodeID,
+	}
+}
+
+// NewVectorPendingPrefix returns a key whose bytes form the common prefix of every pending entry of
+// the given (collection, index, epoch). It is intended for prefix iteration only.
+func NewVectorPendingPrefix(collShortID, indexID, epoch uint32) VectorIndexKey {
+	return VectorIndexKey{
+		CollectionShortID: collShortID,
+		IndexID:           indexID,
+		Epoch:             epoch,
+		Kind:              VectorIndexKeyPending,
+	}
+}
+
+// DecodeVectorPendingNodeID returns the node id of a full pending key's bytes, as produced by
+// Bytes on a NewVectorPendingKey.
+func DecodeVectorPendingNodeID(b []byte) (uint64, error) {
+	rest := b
+	// Skip the three "/<uvarint>" components: collection, index and epoch.
+	for range 3 {
+		if len(rest) == 0 || rest[0] != '/' {
+			return 0, ErrInvalidVectorPendingKey
+		}
+		var err error
+		rest, _, err = encoding.DecodeUvarintAscending(rest[1:])
+		if err != nil {
+			return 0, err
+		}
+	}
+	if len(rest) < 3 || rest[0] != '/' || rest[1] != vectorIndexPendingDiscriminator || rest[2] != '/' {
+		return 0, ErrInvalidVectorPendingKey
+	}
+	_, nodeID, err := encoding.DecodeUvarintAscending(rest[3:])
+	return nodeID, err
 }
 
 // Bytes returns the byte representation of the key.
@@ -91,6 +150,8 @@ func NewVectorNodePrefix(collShortID, indexID, epoch uint32) VectorIndexKey {
 //	/<collShortID>/<indexID>/<epoch>/m               (meta key)
 //	/<collShortID>/<indexID>/<epoch>/n/<nodeID>      (node key)
 //	/<collShortID>/<indexID>/<epoch>/n               (node prefix; no trailing nodeID)
+//	/<collShortID>/<indexID>/<epoch>/p/<nodeID>      (pending key)
+//	/<collShortID>/<indexID>/<epoch>/p               (pending prefix; no trailing nodeID)
 func (k *VectorIndexKey) Bytes() []byte {
 	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(k.CollectionShortID))
 
@@ -101,10 +162,15 @@ func (k *VectorIndexKey) Bytes() []byte {
 	b = encoding.EncodeUvarintAscending(b, uint64(k.Epoch))
 
 	b = append(b, '/')
-	if k.IsMeta {
+	switch k.Kind {
+	case VectorIndexKeyMeta:
 		b = append(b, vectorIndexMetaDiscriminator)
-	} else {
-		b = append(b, vectorIndexNodeDiscriminator)
+	default:
+		if k.Kind == VectorIndexKeyPending {
+			b = append(b, vectorIndexPendingDiscriminator)
+		} else {
+			b = append(b, vectorIndexNodeDiscriminator)
+		}
 		if k.NodeID != 0 {
 			b = append(b, '/')
 			b = encoding.EncodeUvarintAscending(b, k.NodeID)
@@ -140,7 +206,7 @@ func (k *VectorIndexKey) PrefixEnd() Walkable {
 		CollectionShortID: k.CollectionShortID,
 		IndexID:           k.IndexID,
 		Epoch:             k.Epoch,
-		IsMeta:            k.IsMeta,
+		Kind:              k.Kind,
 		NodeID:            k.NodeID,
 		offset:            k.offset + 1,
 	}
