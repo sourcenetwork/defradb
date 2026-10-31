@@ -82,7 +82,7 @@ jobs:
         mutation-type: [gql, collection-named, collection-save]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -108,7 +108,13 @@ jobs:
         uses: ./.github/composites/setup-defradb
 
       - name: Install Ollama
-        run: make deps:ollama
+        # The installer also starts a systemd service that holds the port and reads models
+        # from its own directory. Stop it so the server `make ollama` starts is the one used.
+        run: |
+          make deps:ollama
+          if systemctl cat ollama.service >/dev/null 2>&1; then
+            sudo systemctl disable --now ollama
+          fi
 
       - name: Run Ollama
         run: make ollama
@@ -137,7 +143,7 @@ jobs:
         document-acp-type: [remote]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -184,7 +190,7 @@ jobs:
         lens-type: [wazero]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
@@ -213,7 +219,7 @@ jobs:
     name: Test coverage view job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
@@ -242,7 +248,7 @@ jobs:
     name: Test coverage encryption job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
@@ -270,7 +276,7 @@ jobs:
     name: Test coverage telemetry job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
@@ -298,7 +304,7 @@ jobs:
     name: Test coverage JS job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
@@ -336,7 +342,7 @@ jobs:
     name: Test coverage secondary index job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_MULTIPLIERS: secondary-index
@@ -365,7 +371,7 @@ jobs:
     name: Test coverage signed docs job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_MULTIPLIERS: signed-docs
@@ -402,7 +408,7 @@ jobs:
         direction: [old-first, old-last]
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_MULTIPLIERS: cross-version-${{ matrix.direction }}
@@ -446,7 +452,7 @@ jobs:
     name: Test coverage leveldb job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
-      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+      spot=pco/cpu=16+32/family=c6*+c7*/volume=80gb/env=v3/extras=s3-cache
 
     env:
       DEFRA_LEVEL: true
