@@ -41,7 +41,8 @@ func init() {
 		badgerOpts.InMemory = opts.BadgerInMemory
 		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
 		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
-		badgerOpts.ValueThreshold = 1 << 8
+		// ValueThreshold is left at badger's default so values stay out of the value log,
+		// where value-log GC can bring back values whose keys were deleted.
 		badgerOpts.Compression = badgeropts.ZSTD
 		badgerOpts.ZSTDCompressionLevel = 1
 
