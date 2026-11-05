@@ -212,7 +212,20 @@ func (c *Collection) Truncate(
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	var body *bytes.Buffer
+	if opt.Filter != nil {
+		data, err := json.Marshal(TruncateCollectionRequest{
+			Filter: opt.Filter,
+		})
+		if err != nil {
+			return err
+		}
+		body = bytes.NewBuffer(data)
+	} else {
+		body = bytes.NewBuffer(nil)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), body)
 	if err != nil {
 		return err
 	}

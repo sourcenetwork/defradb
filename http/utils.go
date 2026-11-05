@@ -11,6 +11,7 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -77,10 +78,10 @@ func isDevMode(req *http.Request) bool {
 	return opts != nil && opts.EnableDevelopment
 }
 
-// tryGetContexCtx returns the server context if it exists.
+// tryGetContextCtx returns the server context if it exists.
 //
 // This should only be called from functions within the http package.
-func tryGetContexCtx(req *http.Request) (context.Context, bool) {
+func tryGetContextCtx(req *http.Request) (context.Context, bool) {
 	ctx, ok := req.Context().Value(ctxContextKey).(context.Context)
 	return ctx, ok
 }
@@ -91,6 +92,20 @@ func requestJSON(req *http.Request, out any) error {
 		return err
 	}
 	return json.Unmarshal(data, out)
+}
+
+// requestJSONPreserveNumbers behaves like requestJSON, but decodes numbers as json.Number
+// instead of a lossy float64. Needed for endpoints that carry untyped, arbitrary-precision
+// numeric values (e.g. Lens module Arguments, a map[string]any) where the default float64
+// decode can silently round large integers before they're ever stored.
+func requestJSONPreserveNumbers(req *http.Request, out any) error {
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	return decoder.Decode(out)
 }
 
 // responseJSON writes a json response with the given status and data

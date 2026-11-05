@@ -24,7 +24,7 @@ const (
 	errUnexpectedType                        string = "unexpected type"
 	errParsingFailed                         string = "failed to parse argument"
 	errUninitializeProperty                  string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries                         string = "reached maximum transaction reties"
+	errMaxTxnRetries                         string = "reached maximum transaction retries"
 	errCollectionNotFound                    string = "collection not found"
 	errUnknownCRDT                           string = "unknown crdt"
 	errUnknownCRDTString                     string = "unknown crdt string representation"
@@ -132,6 +132,12 @@ func NewErrFieldIndexNotExist(index int) error {
 	return errors.New(errFieldNotExist, errors.NewKV("Index", index))
 }
 
+// NewErrUnknownIndexKind returns an error indicating that an index descriptor holds a Kind value
+// this build does not know.
+func NewErrUnknownIndexKind(kind uint8) error {
+	return errors.New("unknown index kind", errors.NewKV("Kind", kind))
+}
+
 // NewErrUnexpectedType returns an error indicating that the given value is of an unexpected type.
 func NewErrUnexpectedType[TExpected any](property string, actual any) error {
 	var expected TExpected
@@ -185,8 +191,8 @@ func NewErrUninitializeProperty(host string, propertyName string) error {
 	)
 }
 
-// NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
-// given location.
+// NewErrMaxTxnRetries returns an error indicating that the maximum number of
+// transaction retries was reached.
 func NewErrMaxTxnRetries(inner error) error {
 	return errors.Wrap(errMaxTxnRetries, inner)
 }
@@ -234,7 +240,15 @@ func NewErrInvalidCRDTType(name, crdtType string) error {
 	)
 }
 
-func NewErrCRDTKindMismatch(cType, kind string) error {
+func NewErrInvalidCRDTTypeV(name string, crdtType CType) error {
+	return errors.New(
+		errInvalidCRDTType,
+		errors.NewKV("Name", name),
+		errors.NewKV("CRDTType", crdtType),
+	)
+}
+
+func NewErrCRDTKindMismatch(cType CType, kind string) error {
 	return errors.New(fmt.Sprintf(errCRDTKindMismatch, cType, kind))
 }
 
@@ -244,7 +258,7 @@ func NewErrInvalidJSONPayload(payload any) error {
 
 func NewErrFailedToParseKind(kind []byte) error {
 	return errors.New(
-		errCRDTKindMismatch,
+		errFailedToParseKind,
 		errors.NewKV("Kind", kind),
 	)
 }

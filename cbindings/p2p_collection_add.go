@@ -37,8 +37,6 @@ func AddP2PCollection(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	addP2PColOpt := options.WithIdentity(options.AddP2PCollections(), acpIdentity.FromContext(ctx))
 	err = node.DB.AddP2PCollections(ctx, colArgs, addP2PColOpt)
 	if err != nil {

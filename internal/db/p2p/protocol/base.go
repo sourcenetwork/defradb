@@ -11,6 +11,7 @@
 package protocol
 
 import (
+	"io"
 	"sync"
 
 	"github.com/sourcenetwork/corelog"
@@ -19,6 +20,17 @@ import (
 )
 
 var log = corelog.NewLogger("p2p")
+
+// closeStream releases an inbound stream once its message has been read. Messages use a
+// separate stream for each request and response, and reading EOF alone does not release
+// libp2p's stream resources; leaving them open eventually prevents further requests.
+func closeStream(stream io.Reader) {
+	if closer, ok := stream.(io.Closer); ok {
+		if err := closer.Close(); err != nil {
+			log.ErrorE("Failed to close inbound stream", err)
+		}
+	}
+}
 
 // baseProto contains the minimum fields that protocols should contain.
 type baseProto struct {

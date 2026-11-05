@@ -1,0 +1,119 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// This file is part of the DefraDB test suite.
+//
+// The DefraDB test suite is licensed under either:
+//
+//   (1) GNU Affero General Public License v3
+//   (2) Business Source License 1.1
+//
+// See tests/LICENSE for details.
+
+package multiplier
+
+import (
+	"github.com/sourcenetwork/testo/multiplier"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+)
+
+func init() {
+	multiplier.Register(&crossVersion{name: CrossVersionOldFirst, oldNodeFirst: true})
+	multiplier.Register(&crossVersion{name: CrossVersionOldLast, oldNodeFirst: false})
+}
+
+// CrossVersionTargetVersion is the old release tested when
+// DEFRA_CROSS_VERSION_TARGET is not set.
+const CrossVersionTargetVersion = "v1.0.0"
+
+// CrossVersionOldFirst runs the first node on the older release, so data starts
+// on the old node.
+const CrossVersionOldFirst Name = "cross-version-old-first"
+
+// CrossVersionOldLast runs the last node on the older release, so data starts
+// on the current build.
+const CrossVersionOldLast Name = "cross-version-old-last"
+
+// crossVersion runs one node of a networked test on an older release, so the
+// existing P2P suite also checks compatibility with that release.
+//
+// Both directions are worth running because they fail differently: a new node
+// sending to an old one relies on the old node ignoring fields it does not know,
+// and an old node sending to a new one relies on the new node reading a missing
+// field as a zero value. Each direction is registered separately because a
+// multiplier applies one transformation per run.
+type crossVersion struct {
+	name Name
+	// oldNodeFirst picks which node carries the older version. Node 0 is the
+	// source in most of the suite, so this sets the direction.
+	oldNodeFirst bool
+}
+
+var _ Multiplier = (*crossVersion)(nil)
+var _ multiplier.ActionAwareSkipper = (*crossVersion)(nil)
+
+func (m *crossVersion) Name() Name {
+	return m.name
+}
+
+// ShouldSkip implements [multiplier.ActionAwareSkipper].
+//
+// A test with one node has nothing to check compatibility against, and a test
+// that already sets a version is checking something specific that this would
+// overwrite.
+func (m *crossVersion) ShouldSkip(actions action.Actions) bool {
+	nodes := nodeActions(actions)
+	if len(nodes) < 2 {
+		return true
+	}
+
+	for _, node := range nodes {
+		if node.Version != "" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *crossVersion) Apply(source action.Actions) action.Actions {
+	nodes := nodeActions(source)
+	if len(nodes) < 2 {
+		return source
+	}
+
+	target := nodes[len(nodes)-1]
+	if m.oldNodeFirst {
+		target = nodes[0]
+	}
+
+	result := make(action.Actions, len(source))
+	for i, a := range source {
+		if cfg, ok := a.(*action.NewNode); ok && cfg == target {
+			result[i] = cfg.WithVersion(TargetVersion(m.name))
+			continue
+		}
+		result[i] = a
+	}
+
+	return result
+}
+
+// nodeActions returns the node creation actions in the action set, in order.
+func nodeActions(actions action.Actions) []*action.NewNode {
+	var configs []*action.NewNode
+	for _, a := range actions {
+		if cfg, ok := a.(*action.NewNode); ok {
+			configs = append(configs, cfg)
+		}
+	}
+	return configs
+}
+
+// MakesNodeExternal reports whether the named multiplier runs one of the nodes as a
+// separate process.
+//
+// Such a node is reached over HTTP whatever the run-wide client type.
+func MakesNodeExternal(name Name) bool {
+	return name == CrossVersionOldFirst || name == CrossVersionOldLast
+}

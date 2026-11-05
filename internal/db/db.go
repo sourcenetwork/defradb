@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	_ "github.com/sourcenetwork/corekv/chunk"
+	"github.com/sourcenetwork/corekv/leveldb"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 	lensNode "github.com/sourcenetwork/lens/host-go/node"
@@ -75,6 +76,10 @@ type DB struct {
 	// demand after NewIndex/DeleteIndex. See index_worker.go.
 	indexBuildWorker *indexBuildWorker
 
+	// vectorMaintenance applies the pending lists of deferred vector indexes to their graphs in the
+	// background.
+	vectorMaintenance *vectorMaintenanceWriter
+
 	rootstore corekv.TxnStore
 
 	events event.Bus
@@ -116,6 +121,7 @@ type DB struct {
 
 	docMergeQueue *mergeQueue
 	colMergeQueue *mergeQueue
+	docShortIDMu  sync.Mutex
 
 	p2p *p2p.P2P
 	// Retry intervals when a replicator failure occurs.
@@ -244,6 +250,13 @@ func newDB(
 		})
 	}
 
+	db.vectorMaintenance = newVectorMaintenanceWriter(db)
+	if !suppressVectorMaintenanceRun {
+		db.recoveryWG.Go(func() {
+			db.vectorMaintenance.run(db.ctx)
+		})
+	}
+
 	return db, nil
 }
 
@@ -260,6 +273,38 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
+}
+
+// reserveDocShortID commits the node-wide sequence separately from document writes so concurrent
+// document transactions do not contend on the sequence key. Failed document transactions may leave
+// gaps; short IDs only need to be unique. The lock spans transaction creation through commit so each
+// transaction sees the last committed reservation.
+//
+// LevelDB only allows one open transaction at a time, so opening a second one here would block
+// forever on the caller's transaction. Its transactions are already serialized, so there is no
+// contention to avoid and the ID is reserved in the caller's transaction instead.
+func (db *DB) reserveDocShortID(ctx context.Context) (uint64, error) {
+	db.docShortIDMu.Lock()
+	defer db.docShortIDMu.Unlock()
+
+	if _, ok := db.rootstore.(*leveldb.Datastore); ok {
+		return id.NextDocShortID(ctx)
+	}
+
+	txn, err := db.NewTxn(false)
+	if err != nil {
+		return 0, err
+	}
+	defer txn.Discard()
+
+	docShortID, err := id.NextDocShortID(InitContext(ctx, txn))
+	if err != nil {
+		return 0, err
+	}
+	if err := txn.Commit(); err != nil {
+		return 0, err
+	}
+	return docShortID, nil
 }
 
 // publishDocUpdateEvent publishes an update event for a document.

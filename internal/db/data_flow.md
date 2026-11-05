@@ -226,7 +226,7 @@ When a document field is modified, DefraDB creates a Conflict-free Replicated Da
 
 **Creation Process:**
 1. The field type determines which CRDT implementation to use
-2. `FieldLevelCRDTWithStore` instantiates the appropriate CRDT (e.g., `NewLWW`, `NewCounter`)
+2. `FieldLevelCRDT` instantiates the appropriate CRDT (e.g., `NewLWW`, `NewCounter`)
 3. The CRDT's `Delta()` method generates a change record
 4. This delta is passed to `AddDelta` for storage and distribution
 

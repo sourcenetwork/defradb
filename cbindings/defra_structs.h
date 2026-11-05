@@ -79,11 +79,11 @@ typedef struct {
     int64_t httpIdleTimeoutMs;          // 0 = use default
 
     // Document ACP options
-    const char* documentACPType;        // "none" | "local" | "source-hub" | "" (default)
+    const char* documentACPType;        // "none" | "local" | "remote" | "" (default)
     const char* documentACPPath;
-    const char* sourceHubChainID;
-    const char* sourceHubGRPCAddress;
-    const char* sourceHubCometRPCAddress;
+    const char* remoteDACLogID;
+    const char* remoteDACGRPCAddress;
+    const char* remoteDACCometRPCAddress;
 
     // Node ACP options
     const char* nodeACPPath;

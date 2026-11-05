@@ -12,14 +12,18 @@ package id
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -186,6 +190,90 @@ func TestBlockDocIDMappings(t *testing.T) {
 	require.Empty(t, docIDs)
 }
 
+func TestBlockHasOwners(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("field value")).Cid()
+
+	has, err := BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.False(t, has, "a block with no recorded owners has none")
+
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), cid.Undef)
+	require.NoError(t, err)
+	require.False(t, has, "an undefined CID has no owners")
+
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-one"))
+	require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, "bae-doc-two"))
+
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	// One of two owners removed: the block is still owned.
+	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-one"))
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+
+	require.NoError(t, DeleteBlockDocIDMapping(ctx, txn.Systemstore(), fieldCID, "bae-doc-two"))
+	has, err = BlockHasOwners(ctx, txn.Systemstore(), fieldCID)
+	require.NoError(t, err)
+	require.False(t, has)
+}
+
+func TestBlockHasOwnersStopsAtFirstOwner(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	fieldCID := blocks.NewBlock([]byte("shared field value")).Cid()
+	const owners = 500
+	for i := range owners {
+		require.NoError(t, SetBlockDocIDMapping(ctx, fieldCID, fmt.Sprintf("bae-doc-%d", i)))
+	}
+
+	var hasReads int
+	has, err := BlockHasOwners(ctx, countingReader{txn.Systemstore(), &hasReads}, fieldCID)
+	require.NoError(t, err)
+	require.True(t, has)
+	require.Equal(t, 1, hasReads, "BlockHasOwners must stop at the first owner")
+
+	var listReads int
+	all, err := GetDocIDsForBlockFromStore(ctx, countingReader{txn.Systemstore(), &listReads}, fieldCID)
+	require.NoError(t, err)
+	require.Len(t, all, owners)
+	require.Greater(t, listReads, owners, "GetDocIDsForBlockFromStore reads every owner")
+}
+
+// countingReader counts iterator advances.
+type countingReader struct {
+	corekv.Reader
+	nextCalls *int
+}
+
+func (r countingReader) Iterator(ctx context.Context, opts corekv.IterOptions) (corekv.Iterator, error) {
+	iter, err := r.Reader.Iterator(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &countingIterator{Iterator: iter, nextCalls: r.nextCalls}, nil
+}
+
+type countingIterator struct {
+	corekv.Iterator
+	nextCalls *int
+}
+
+func (it *countingIterator) Next() (bool, error) {
+	*it.nextCalls++
+	return it.Iterator.Next()
+}
+
 func TestDeleteDocRefMappings(t *testing.T) {
 	ctx := context.Background()
 	txn := newDocumentIDTestTxn(ctx)
@@ -204,8 +292,11 @@ func TestDeleteDocRefMappings(t *testing.T) {
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, docID))
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, docShortID, legacyDocID))
 	require.NoError(t, SetDocIDToDocRefMapping(ctx, collectionShortID, otherDocShortID, otherDocID))
+	aliases, err := GetDocIDAliasesFromStore(ctx, txn.Systemstore(), docShortID)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{docID, legacyDocID}, aliases)
 
-	err := DeleteDocRefMappings(ctx, txn.Systemstore(), docShortID)
+	err = DeleteDocRefMappings(ctx, txn.Systemstore(), docShortID)
 	require.NoError(t, err)
 
 	_, found, err := GetDocRef(ctx, docID)
@@ -220,4 +311,23 @@ func TestDeleteDocRefMappings(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, collectionShortID, gotDocRef.CollectionShortID)
 	require.Equal(t, otherDocShortID, gotDocRef.DocShortID)
+}
+
+func TestGetDocIDAliasesFromStoreIncludesPrimaryWithoutAliasMapping(t *testing.T) {
+	ctx := context.Background()
+	txn := newDocumentIDTestTxn(ctx)
+	defer txn.Discard()
+	ctx = datastore.CtxSetTxn(ctx, txn)
+
+	const docShortID = uint64(1)
+	const docID = "bae-primary"
+	require.NoError(t, txn.Systemstore().Set(
+		ctx,
+		keys.NewDocShortIDToDocIDKey(docShortID).Bytes(),
+		[]byte(docID),
+	))
+
+	docIDs, err := GetDocIDAliasesFromStore(ctx, txn.Systemstore(), docShortID)
+	require.NoError(t, err)
+	require.Equal(t, []string{docID}, docIDs)
 }

@@ -131,3 +131,65 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 
 	assert.Len(t, collections, 0)
 }
+
+// TestStartFailureReleasesStore ensures a Start that fails after the store has been opened does not
+// orphan it, which would otherwise keep the store's directory lock held.
+func TestStartFailureReleasesStore(t *testing.T) {
+	ctx := context.Background()
+	path := t.TempDir()
+
+	failing, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			Store().SetPath(path).
+			Node().
+			P2P().SetListenAddresses("not-a-multiaddr").
+			Node(),
+	)
+	require.NoError(t, err)
+	require.Error(t, failing.Start(ctx))
+	require.Nil(t, failing.DB)
+
+	// This should fail iff a directory lock cannot be acquired. Therefore, it implicitly
+	// tests that the store's directory lock was released before.
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(path).
+			Node(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, n.Start(ctx))
+	defer n.Close(ctx)
+}
+
+// TestStartWithStoreOpenFailure_ReturnsError ensures a store that fails to open makes Start return
+// the error. Opening an encrypted store without its key (e.g. starting with --no-keyring after a
+// start with the keyring) used to panic while cleaning up instead.
+func TestStartWithStoreOpenFailure_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+	path := t.TempDir()
+
+	encrypted, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(path).SetBadgerEncryptionKey(make([]byte, 32)).
+			Node(),
+	)
+	require.NoError(t, err)
+	require.NoError(t, encrypted.Start(ctx))
+	require.NoError(t, encrypted.Close(ctx))
+
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(path).
+			Node(),
+	)
+	require.NoError(t, err)
+	require.Error(t, n.Start(ctx))
+	require.Nil(t, n.DB)
+}

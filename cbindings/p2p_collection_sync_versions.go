@@ -57,8 +57,6 @@ func SyncP2PCollectionVersions(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx = attachTxnFromPointer(nodePtr, ctx)
-
 	opts := options.WithIdentity(options.SyncCollectionVersions(), acpIdentity.FromContext(ctx))
 	err = node.DB.SyncCollectionVersions(ctx, versionArgs, opts)
 	if err != nil {

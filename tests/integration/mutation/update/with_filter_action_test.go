@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -142,6 +143,184 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{"name": "John"},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithMapFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID: 0,
+				Filter: map[string]any{
+					"name": map[string]any{"_eq": "John"},
+				},
+				Updater: `{"name": "Eric"}`,
+			},
+			&action.Request{
+				Request: `query{
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Eric"},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithMapFilter_LargeIntegerStraddling2To53_UpdatesOnlyExactMatch(t *testing.T) {
+	test := testUtils.TestCase{
+		// JS numbers are IEEE-754 doubles, so an integer filter condition above 2^53 has
+		// already lost precision before it reaches Go.
+		// To do: https://github.com/sourcenetwork/defradb/issues/5176.
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
+				state.CClientType,
+				state.JavaClientType,
+			},
+		),
+		// The gql mutation type embeds the doc as a literal in a GraphQL mutation, and
+		// GraphQL's Int scalar is 32-bit, too small for the values used here.
+		SupportedMutationTypes: immutable.Some(
+			[]state.MutationType{
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+			},
+		),
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Fred",
+					"age": 9007199254740992
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 9007199254740993
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID: 0,
+				Filter: map[string]any{
+					"age": map[string]any{"_eq": int64(9007199254740993)},
+				},
+				Updater: `{"name": "Eric"}`,
+			},
+			&action.Request{
+				Request: `query{
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Eric"},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithSomeOptionFilter_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID: 0,
+				Filter: immutable.Some(request.Filter{
+					Conditions: map[string]any{
+						"name": map[string]any{"_eq": "John"},
+					},
+				}),
+				Updater: `{"name": "Eric"}`,
+			},
+			&action.Request{
+				Request: `query{
+					Users {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "Eric"},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestUpdateWithNoneOptionFilter_UpdatesAllDocuments(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "John",
+					"age": 21
+				}`,
+			},
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "Fred",
+					"age": 25
+				}`,
+			},
+			testUtils.UpdateWithFilter{
+				CollectionID:         0,
+				Filter:               immutable.None[request.Filter](),
+				Updater:              `{"verified": true}`,
+				SkipLocalUpdateEvent: true,
+			},
+			&action.Request{
+				Request: `query{
+					Users {
+						name
+						verified
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"name": "John", "verified": true},
+						{"name": "Fred", "verified": true},
 					},
 				},
 			},

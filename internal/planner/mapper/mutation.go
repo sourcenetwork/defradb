@@ -10,6 +10,8 @@
 
 package mapper
 
+import "github.com/sourcenetwork/immutable"
+
 type MutationType int
 
 const (
@@ -18,6 +20,7 @@ const (
 	UpdateObjects
 	DeleteObjects
 	UpsertObjects
+	TruncateObjects
 )
 
 // Mutation represents a request to mutate data stored in Defra.
@@ -39,4 +42,6 @@ type Mutation struct {
 
 	// EncryptFields is a list of fields from the input data that should be encrypted.
 	EncryptFields []string
+
+	TruncateFilter immutable.Option[map[string]any]
 }

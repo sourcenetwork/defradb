@@ -33,15 +33,17 @@ func SplitByFields(filter *mapper.Filter, fields ...mapper.Field) (*mapper.Filte
 		return filter, nil
 	}
 
-	splitF := CopyField(filter, fields[0])
-	RemoveField(filter, fields[0])
-
-	for _, field := range fields[1:] {
+	var splitF *mapper.Filter
+	for _, field := range fields {
 		newSplitF := CopyField(filter, field)
 		if newSplitF == nil {
 			continue
 		}
-		splitF.Conditions = MergeConditions(splitF.Conditions, newSplitF.Conditions)
+		if splitF == nil {
+			splitF = newSplitF
+		} else {
+			splitF.Conditions = MergeConditions(splitF.Conditions, newSplitF.Conditions)
+		}
 		RemoveField(filter, field)
 	}
 

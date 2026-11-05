@@ -351,3 +351,53 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommitsWithGroupByEmptyWithChild(t *testing.T) {
+	testUtils.ExecuteTestCase(t, testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.AddDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John", "age": 21}`,
+			},
+			&action.Request{
+				Request: `{ _commits(groupBy: []) { GROUP { height } } }`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"GROUP": []map[string]any{
+								{"height": int64(1)},
+								{"height": int64(1)},
+								{"height": int64(1)},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestQueryCommitsWithGroupByRejectsNonGroupFields(t *testing.T) {
+	for name, query := range map[string]string{
+		"cid":          `{ _commits(groupBy: [cid]) { cid height } }`,
+		"empty":        `{ _commits(groupBy: []) { cid } }`,
+		"alias":        `{ _commits(groupBy: [cid]) { cid other: height } }`,
+		"links":        `{ _commits(groupBy: [cid]) { cid links { height } } }`,
+		"heads":        `{ _commits(groupBy: [cid]) { cid heads { height } } }`,
+		"nested links": `{ _commits { links(groupBy: [cid]) { cid height } } }`,
+		"nested heads": `{ _commits { heads(groupBy: []) { height } } }`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			testUtils.ExecuteTestCase(t, testUtils.TestCase{
+				Actions: []any{
+					updateUserCollectionSchema(),
+					&action.Request{
+						Request:       query,
+						ExpectedError: "cannot select a non-group-by field at group-level",
+					},
+				},
+			})
+		})
+	}
+}

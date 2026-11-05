@@ -12,20 +12,24 @@ package cli
 
 import (
 	"context"
+	"errors"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/identity"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
+	var filter string
 	var cmd = &cobra.Command{
 		Use:   "truncate",
 		Short: "Truncate the given collection",
-		Long: `Truncate the given collection, removing all document data within it from the local node.
- Does not propagate the deletion to other Defra nodes in the peer network.`,
+		Long: `Truncate the given collection, removing document data from the local node.
+Without a filter all documents are removed. With a filter only matching documents and their
+unshared history are removed. Changes do not propagate to other nodes.`,
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
@@ -34,9 +38,28 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 			}
 
 			opt := options.WithIdentity(options.TruncateCollection(), identity.FromContext(cmd.Context()))
+			if filter != "" {
+				filterValue, err := parseTruncateFilter(filter)
+				if err != nil {
+					return NewErrParsingArgument("filter", err)
+				}
+				opt.SetFilter(filterValue)
+			}
 			return col.Truncate(cmd.Context(), opt)
 		},
 	}
+	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	setCollectionSelectorFlags(cmd)
 	return cmd
+}
+
+func parseTruncateFilter(value string) (any, error) {
+	filter, err := utils.DecodeJSONFilter([]byte(value))
+	if err != nil {
+		return nil, err
+	}
+	if filter == nil {
+		return nil, errors.New("filter cannot be null")
+	}
+	return filter, nil
 }

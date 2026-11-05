@@ -12,7 +12,6 @@
 package tests
 
 import (
-	"os"
 	"slices"
 
 	"github.com/stretchr/testify/require"
@@ -20,39 +19,19 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
-	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
-	sourcehubImageEnvName  = "DEFRA_SOURCEHUB_IMAGE"
-)
-
-var (
-	documentACPType state.DocumentACPType
-	sourcehubImage  string
-)
-
-const (
 	// NoneKMSType is the none KMS type. It is used to indicate that no KMS should be used.
-	NoneKMSType state.KMSType = "none"
+	NoneKMSType = action.NoneKMSType
 	// PubSubKMSType is the PubSub KMS type.
-	PubSubKMSType state.KMSType = "pubsub"
+	PubSubKMSType = action.PubSubKMSType
 )
 
 func getKMSTypes() []state.KMSType {
 	return []state.KMSType{PubSubKMSType}
-}
-
-func init() {
-	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
-	if documentACPType == "" {
-		documentACPType = state.LocalDocumentACPType
-	}
-	sourcehubImage = os.Getenv(sourcehubImageEnvName)
-	if sourcehubImage == "" {
-		sourcehubImage = "ghcr.io/sourcenetwork/sourcehub:dev"
-	}
 }
 
 // AddDACPolicy will attempt to add the given policy using DefraDB's Document ACP system.
@@ -60,7 +39,7 @@ type AddDACPolicy struct {
 	// NodeID may hold the ID (index) of the node we want to add policy to.
 	//
 	// If a value is not provided the policy will be added in all nodes, unless testing with
-	// sourcehub ACP, in which case the policy will only be defined once.
+	// Remote DAC, in which case the policy will only be defined once.
 	NodeID immutable.Option[int]
 
 	// The raw policy string.
@@ -124,11 +103,11 @@ func addDACPolicy(
 			s.PolicyIDs[nodeID] = append(s.PolicyIDs[nodeID], policyResult.PolicyID)
 		}
 
-		// The policy should only be added to a SourceHub chain once - there is no need to loop through
+		// The policy should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
-		if s.DocumentACPType == state.SourceHubDocumentACPType {
+		if s.DocumentACPType == state.RemoteDocumentACPType {
 			// Note: If we break here the state will only preserve the policyIDs result on the
-			// first node if acp type is sourcehub, make sure to replicate the policyIDs state
+			// first node if Remote DAC is selected, replicate the policy ID state
 			// on all the nodes, so we don't have to handle all the edge cases later in actions.
 			for otherIndexes := index + 1; otherIndexes < len(nodes); otherIndexes++ {
 				s.PolicyIDs[nodeIDs[otherIndexes]] = s.PolicyIDs[nodeID]
@@ -143,7 +122,7 @@ type AddDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to add doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be added in all nodes, unless testing with
-	// sourcehub ACP, in which case the relationship will only be defined once.
+	// Remote DAC, in which case the relationship will only be defined once.
 	NodeID immutable.Option[int]
 
 	// The collection in which this document we want to add a relationship for exists.
@@ -216,9 +195,9 @@ func addDACActorRelationship(
 			require.Equal(s.T, action.ExpectedExistence, exists.ExistedAlready)
 		}
 
-		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// The relationship should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
-		if s.DocumentACPType == state.SourceHubDocumentACPType {
+		if s.DocumentACPType == state.RemoteDocumentACPType {
 			actionNodeID = immutable.Some(0)
 			break
 		}
@@ -238,7 +217,7 @@ type DeleteDACActorRelationship struct {
 	// NodeID may hold the ID (index) of the node we want to delete doc actor relationship on.
 	//
 	// If a value is not provided the relationship will be deleted on all nodes, unless testing with
-	// sourcehub document ACP, in which case the relationship will only be deleted once.
+	// Remote DAC, in which case the relationship will only be deleted once.
 	NodeID immutable.Option[int]
 
 	// The collection in which the target document we want to delete relationship for exists.
@@ -309,9 +288,9 @@ func deleteDACActorRelationship(
 			require.Equal(s.T, action.ExpectedRecordFound, deleteActorRelationshipResult.RecordFound)
 		}
 
-		// The relationship should only be added to a SourceHub chain once - there is no need to loop through
+		// The relationship should only be added to a Vera log once - there is no need to loop through
 		// the nodes.
-		if s.DocumentACPType == state.SourceHubDocumentACPType {
+		if s.DocumentACPType == state.RemoteDocumentACPType {
 			break
 		}
 	}

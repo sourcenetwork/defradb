@@ -14,9 +14,11 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/extensions"
 	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -37,6 +39,21 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 	subRequest, ok := r.Subscription[0].Selections[0].(subscriptionSelector)
 	if !ok {
 		return nil, client.NewErrUnexpectedType[request.Selection]("SubscriptionSelection", subRequest)
+	}
+
+	// Resolve the target collection from the selection name, as the planner does,
+	// so the event loop can skip events from other collections without opening a txn.
+	var collectionID string
+	if sel, ok := subRequest.(*request.Select); ok {
+		col, err := db.GetCollectionByName(
+			ctx,
+			sel.Name,
+			options.WithIdentity(options.GetCollectionByName(), identity.FromContext(ctx)),
+		)
+		if err != nil {
+			return nil, err
+		}
+		collectionID = col.Version().CollectionID
 	}
 
 	sub, err := db.events.Subscribe(event.UpdateName)
@@ -65,10 +82,13 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-			// Skip events that do not pass the subscription's docID and cid filters
-			// This is an optimization to avoid running the selection planner and
-			// related query logic when we know the event will not be relevant to the subscription.
-			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
+			// Skip events that do not pass the subscription's collection, docID,
+			// and cid filters. This is an optimization to avoid running the
+			// selection planner and related query logic when we know the event
+			// will not be relevant to the subscription.
+			if (collectionID != "" && evt.CollectionID != collectionID) ||
+				!subRequest.CheckDocIDFilter(evt.DocID) ||
+				!subRequest.CheckCIDFilter(evt.Cid.String()) {
 				continue
 			}
 			txn, err := db.NewTxn(false)
@@ -77,6 +97,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				continue
 			}
 			ctx := InitContext(ctx, txn)
+
+			// One accumulator per event, not per subscription. A shared one would
+			// make each event repeat every warning before it.
+			ctx = extensions.WithAccumulator(ctx)
 
 			p := planner.New(
 				ctx,
@@ -131,6 +155,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				continue
 			}
 			res.Data = result
+			res.Extensions = extensions.Collect(ctx)
 
 			select {
 			case <-ctx.Done():

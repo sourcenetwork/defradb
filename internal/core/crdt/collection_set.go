@@ -10,12 +10,6 @@
 
 package crdt
 
-import (
-	"context"
-
-	"github.com/sourcenetwork/defradb/internal/keys"
-)
-
 type CollectionSetDelta struct {
 	Priority uint64
 }
@@ -33,34 +27,16 @@ func (d *CollectionSetDelta) GetPriority() uint64 {
 	return d.Priority
 }
 
-func (d *CollectionSetDelta) SetPriority(priority uint64) {
-	d.Priority = priority
+type CollectionSetDefinition struct{}
+
+func NewCollectionSet() *CollectionSetDefinition {
+	return &CollectionSetDefinition{}
 }
 
-type CollectionSetDefinition struct {
-	headstorePrefix keys.HeadstoreCollectionSetDefinition
-}
-
-var _ ReplicatedData = (*Collection)(nil)
-
-func NewCollectionSet(
-	firstCollectionID string,
-) *CollectionSetDefinition {
-	return &CollectionSetDefinition{
-		headstorePrefix: keys.HeadstoreCollectionSetDefinition{
-			FirstCollectionID: firstCollectionID,
-		},
+func (c *CollectionSetDefinition) Mutate(
+	priority uint64,
+) *CollectionSetDelta {
+	return &CollectionSetDelta{
+		Priority: priority,
 	}
-}
-
-func (c *CollectionSetDefinition) HeadstorePrefix() keys.HeadstoreKey {
-	return c.headstorePrefix
-}
-
-func (c *CollectionSetDefinition) Delta() *CollectionSetDelta {
-	return &CollectionSetDelta{}
-}
-
-func (c *CollectionSetDefinition) Merge(ctx context.Context, other Delta) error {
-	return nil
 }

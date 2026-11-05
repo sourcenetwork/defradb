@@ -233,7 +233,7 @@ func (col CollectionVersion) Equal(other CollectionVersion) bool {
 // VectorEmbeddingDescription hold the relevant information to generate embeddings.
 //
 // Embeddings are AI/ML specific vector representations of some content.
-// In the case of DefraDB, that content is one or multiple fields, optionally added to a template.
+// In the case of DefraDB, that content is one or multiple fields.
 type VectorEmbeddingDescription struct {
 	// FieldName is the name of the field on the collection that this embedding description applies to.
 	FieldName string
@@ -261,6 +261,8 @@ type VectorEmbeddingDescription struct {
 	// ```
 	// {{ .name }} is {{ .age }} years old.
 	// ```
+	//
+	// Deprecated: Template is not used when generating embeddings.
 	Template string
 	// URL is the url enpoint of the provider's API.
 	// For example: https://api.openai.com/v1

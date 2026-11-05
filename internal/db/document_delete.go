@@ -174,23 +174,36 @@ func (c *collection) applyDelete(
 		return err
 	}
 
-	txn := datastore.CtxMustGetTxn(ctx)
-
 	signingCtx := c.contextForSigning(ctx)
 
-	merkleCRDT := crdt.NewDocComposite(
-		txn.Datastore(),
-		c.Version().VersionID,
-		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
-	)
+	txn := datastore.CtxMustGetTxn(ctx)
+	headstoreKey := keys.HeadstoreDocKey{
+		DocShortID: primaryKey.DocShortID,
+		FieldID:    core.COMPOSITE_NAMESPACE,
+	}
+	headset := coreblock.NewHeadSet(txn.Headstore(), headstoreKey)
+	heads, height, err := headset.List(ctx)
+	if err != nil {
+		return coreblock.NewErrGettingHeads(err)
+	}
+	height = height + 1
+
+	merkleCRDT := crdt.NewDocComposite()
+	delta := merkleCRDT.Delete(c.Version().VersionID, height)
+
+	err = merkleCRDT.Merge(ctx, txn.Datastore(), primaryKey, delta)
+	if err != nil {
+		return err
+	}
 
 	link, b, err := coreblock.AddDeltaWithOptions(
 		signingCtx,
-		merkleCRDT,
-		merkleCRDT.DeleteDelta(),
+		headstoreKey,
+		delta,
 		coreblock.AddDeltaOptions{
 			EncryptionDocKey: keys.EncodeDocRef(primaryKey.CollectionShortID, primaryKey.DocShortID),
 		},
+		heads,
 	)
 	if err != nil {
 		return err
@@ -225,15 +238,21 @@ func (c *collection) applyDelete(
 			return err
 		}
 
-		collectionCRDT := crdt.NewCollection(
-			c.Version().VersionID,
-			keys.NewHeadstoreColKey(collectionShortID),
-		)
+		headset := coreblock.NewHeadSet(txn.Headstore(), keys.NewHeadstoreColKey(collectionShortID))
+		heads, height, err := headset.List(ctx)
+		if err != nil {
+			return coreblock.NewErrGettingHeads(err)
+		}
+		height = height + 1
+
+		collectionCRDT := crdt.NewCollection()
+		delta := collectionCRDT.Mutate(c.Version().VersionID, height)
 
 		link, headNode, err := coreblock.AddDelta(
 			signingCtx,
-			collectionCRDT,
-			collectionCRDT.Delta(),
+			keys.NewHeadstoreColKey(collectionShortID),
+			delta,
+			heads,
 			[]coreblock.DAGLink{{Link: link}}...,
 		)
 		if err != nil {

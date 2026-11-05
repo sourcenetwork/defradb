@@ -209,7 +209,11 @@ func assertIndexCollectionNames(
 func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t require.TestingT) {
 	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
 	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
-	assert.Equal(t, expectedIndex.Unique, actualIndex.Unique, "index unique mismatch")
+	assert.Equal(t, expectedIndex.Kind, actualIndex.Kind, "index kind mismatch")
+	assert.Equal(t, expectedIndex.GetUnique(), actualIndex.GetUnique(), "index unique mismatch")
+	expectedVec, _ := expectedIndex.GetVector()
+	actualVec, _ := actualIndex.GetVector()
+	assert.Equal(t, expectedVec, actualVec, "index vector description mismatch")
 
 	toNames := func(fields []client.IndexedFieldDescription) []string {
 		names := make([]string, len(fields))
@@ -219,7 +223,8 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t re
 		return names
 	}
 
-	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), "index fields' names mismatch")
+	require.ElementsMatch(t, toNames(expectedIndex.GetFields()), toNames(actualIndex.GetFields()),
+		"index fields' names mismatch")
 
 	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {
 		resultMap := map[string]client.IndexedFieldDescription{}
@@ -229,8 +234,8 @@ func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t re
 		return resultMap
 	}
 
-	expectedFieldsMap := toMap(expectedIndex.Fields)
-	actualFieldsMap := toMap(actualIndex.Fields)
+	expectedFieldsMap := toMap(expectedIndex.GetFields())
+	actualFieldsMap := toMap(actualIndex.GetFields())
 	for fieldName := range expectedFieldsMap {
 		assert.Equal(t, expectedFieldsMap[fieldName].Descending, actualFieldsMap[fieldName].Descending,
 			"index field %s descending mismatch", fieldName)

@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (c *Collection) AddDocument(
@@ -145,7 +146,8 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	res, err := execute(ctx, c.client, "updateDocumentsWithFilter", filter, updater, jsOpts(opts))
+	res, err := execute(ctx, c.client, "updateDocumentsWithFilter",
+		utils.NormalizeFilterForJSON(filter), updater, jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +163,8 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter", filter, jsOpts(opts))
+	res, err := execute(ctx, c.client, "deleteDocumentsWithFilter",
+		utils.NormalizeFilterForJSON(filter), jsOpts(opts))
 	if err != nil {
 		return nil, err
 	}

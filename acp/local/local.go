@@ -272,20 +272,9 @@ func (l *LocalACP) AddActorRelationship(
 
 	ctx = auth.InjectPrincipal(ctx, principal)
 
-	var newActorRelationship *types.Relationship
-	if targetActor == "*" {
-		newActorRelationship = types.NewAllActorsRelationship(
-			resourceName,
-			objectID,
-			relation,
-		)
-	} else {
-		newActorRelationship = types.NewActorRelationship(
-			resourceName,
-			objectID,
-			relation,
-			targetActor,
-		)
+	newActorRelationship, err := acp.NewActorRelationship(resourceName, objectID, relation, targetActor)
+	if err != nil {
+		return false, err
 	}
 
 	setRelationshipRequest := types.SetRelationshipRequest{
@@ -318,20 +307,9 @@ func (l *LocalACP) DeleteActorRelationship(
 
 	ctx = auth.InjectPrincipal(ctx, principal)
 
-	var newActorRelationship *types.Relationship
-	if targetActor == "*" {
-		newActorRelationship = types.NewAllActorsRelationship(
-			resourceName,
-			objectID,
-			relation,
-		)
-	} else {
-		newActorRelationship = types.NewActorRelationship(
-			resourceName,
-			objectID,
-			relation,
-			targetActor,
-		)
+	newActorRelationship, err := acp.NewActorRelationship(resourceName, objectID, relation, targetActor)
+	if err != nil {
+		return false, err
 	}
 
 	deleteRelationshipRequest := types.DeleteRelationshipRequest{

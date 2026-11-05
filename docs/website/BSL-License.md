@@ -33,8 +33,8 @@ The license design provides a balance between open-source principles and commerc
 
 ### Production Use Criteria
 As you can see, the non-production use of the source code does not benefit the community's financial sustainability. Thus, to allow running DefraDB in production, we created the following four criteria under the Additional Use Grant Conditions. In summary, the production use is allowed if:
-1.	The application is connected to the Source Hub Mainnet, with ongoing support through the OPEN utility token.
-2.	The application is connected to any sidechain protocol integrated with the Source Hub Mainnet.
+1.	The application is connected to the Vera Mainnet, with ongoing support through the OPEN utility token.
+2.	The application is connected to any sidechain protocol integrated with the Vera Mainnet.
 3.	The applications use the Source Network Access Control Policy on any public protocols.
 4.	The project is a non-profit project.
 If none of the above criteria apply to your use case, you can obtain commercial licensing by contacting Source.

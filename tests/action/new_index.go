@@ -52,7 +52,17 @@ type NewIndex struct {
 	Fields []client.IndexedFieldDescription
 
 	// If Unique is true, the index will be added as a unique index.
+	//
+	// Deprecated: use Ordered.
 	Unique bool
+
+	// Ordered, when set, carries the ordered index config.
+	Ordered *client.OrderedIndexDescription
+
+	// Vector, when set, creates a vector (ANN) index instead of a secondary index. It carries the
+	// algorithm, metric, dimensions and params. Used to create a vector index through the index API on
+	// a collection that already holds documents, so the async backfill builds the graph.
+	Vector *client.VectorIndexDescription
 
 	// Async, when true, returns without waiting for the backfill. The index stays building until
 	// the worker completes it.
@@ -106,21 +116,28 @@ func (a *NewIndex) Execute() {
 		}
 
 		if a.FieldName != "" {
+			//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
 			indexDesc.Fields = []client.IndexedFieldDescription{
 				{
 					Name: a.FieldName,
 				},
 			}
 		} else if len(a.Fields) > 0 {
+			fields := make([]client.IndexedFieldDescription, len(a.Fields))
 			for i := range a.Fields {
-				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
+				fields[i] = client.IndexedFieldDescription{
 					Name:       a.Fields[i].Name,
 					Descending: a.Fields[i].Descending,
-				})
+				}
 			}
+			//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
+			indexDesc.Fields = fields
 		}
 
+		//nolint:staticcheck // set on purpose: tests need to cover the deprecated field too
 		indexDesc.Unique = a.Unique
+		indexDesc.Ordered = a.Ordered
+		indexDesc.Vector = a.Vector
 
 		opts := options.NewCollectionIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

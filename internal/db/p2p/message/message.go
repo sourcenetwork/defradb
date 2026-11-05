@@ -20,7 +20,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // messageVersion is used to keep track of message format changes
@@ -90,6 +89,8 @@ type proto interface {
 }
 
 // Receive takes in a network stream and store the unmarshalled message in the provided [Message]
+//
+// Receive does not close the stream; the stream handler that owns it does.
 func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
 	// Cap the read at maxMessageSize. We read one byte past the cap so we
 	// can distinguish a message that exactly fits from one that overflows:
@@ -119,7 +120,12 @@ func Receive(stream io.Reader, peerID string, proto proto, m Message) error {
 
 	messageChan, ok := proto.GetResponseChan(m.GetMessageID())
 	if ok {
-		messageChan <- m
+		// The channel holds one reply. Drop a duplicate rather than block, which
+		// would also keep the handler from closing its stream.
+		select {
+		case messageChan <- m:
+		default:
+		}
 		proto.DeleteResponseChan(m.GetMessageID())
 	}
 
@@ -166,14 +172,13 @@ func Send[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
 	select {
 	case respMessage := <-responseChan:
-		if m.GetErrMessage() != "" {
-			return resp, errors.New(respMessage.GetErrMessage())
+		if respMessage.GetErrMessage() != "" {
+			return resp, NewErrPeerRejected(respMessage.GetErrMessage())
 		}
 		switch typedResp := respMessage.(type) {
 		case ResponseType:
@@ -183,7 +188,6 @@ func Send[ResponseType Message](
 		}
 	case <-ctx.Done():
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, ErrResponseTimeout
 	}
 }
@@ -212,7 +216,6 @@ func SendAsync[ResponseType Message](
 	err = send(ctx, proto, m, peerID, protoID)
 	if err != nil {
 		proto.DeleteResponseChan(m.GetMessageID())
-		close(responseChan)
 		return resp, err
 	}
 
@@ -230,7 +233,6 @@ func SendAsync[ResponseType Message](
 		case <-ctx.Done():
 			close(funcResponseChan)
 			proto.DeleteResponseChan(m.GetMessageID())
-			close(responseChan)
 		}
 	}()
 

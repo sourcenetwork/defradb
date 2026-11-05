@@ -4,7 +4,26 @@ set -euo pipefail
 # Optional: allow passing in build flags from the Makefile
 BUILD_FLAGS="${1:-}"
 
-echo "Building c-shared library for Linux..."
+# Default to the host architecture. A native build uses the system C compiler,
+# a cross build uses the matching GNU cross compiler. Either can be overridden
+# by setting GOARCH or CC.
+HOST_ARCH=$(go env GOHOSTARCH)
+GOARCH="${GOARCH:-$HOST_ARCH}"
+case "$GOARCH" in
+  amd64) CROSS_CC=x86_64-linux-gnu-gcc ;;
+  arm64) CROSS_CC=aarch64-linux-gnu-gcc ;;
+  *)
+    echo "Unsupported architecture: $GOARCH (expected amd64 or arm64)" >&2
+    exit 1
+    ;;
+esac
+if [[ "$GOARCH" == "$HOST_ARCH" ]]; then
+  CC="${CC:-cc}"
+else
+  CC="${CC:-$CROSS_CC}"
+fi
+
+echo "Building c-shared library for Linux ($GOARCH, using $CC)..."
 
 search="package cbindings"
 replace="package main"
@@ -33,7 +52,7 @@ rm -rf build
 mkdir -p build
 
 echo "Building shared object..."
-CGO_ENABLED=1 GOARCH=amd64 GOOS=linux \
+CGO_ENABLED=1 GOARCH="$GOARCH" GOOS=linux CC="$CC" \
 go build \
   -tags "cshared ${BUILD_TAGS:-}" \
   $BUILD_FLAGS \
@@ -58,8 +77,9 @@ if [[ "${MAKE_DEB:-}" == "1" ]]; then
   # Stage and build entirely in /tmp so that chmod works (bind mounts such as
   # Docker volumes, WSL mounts, and CIFS shares ignore permission changes).
   # Only move the finished .deb back to build/ at the very end.
-  DEB_DIR="/tmp/libdefradb_${DEB_VERSION}_amd64"
-  DEB_TMP="/tmp/libdefradb_${DEB_VERSION}_amd64.deb"
+  # Debian's architecture names match Go's for the supported architectures.
+  DEB_DIR="/tmp/libdefradb_${DEB_VERSION}_${GOARCH}"
+  DEB_TMP="/tmp/libdefradb_${DEB_VERSION}_${GOARCH}.deb"
 
   echo "Building .deb package (version ${DEB_VERSION})..."
 
@@ -77,7 +97,7 @@ if [[ "${MAKE_DEB:-}" == "1" ]]; then
   cat > "${DEB_DIR}/DEBIAN/control" <<EOF
 Package: libdefradb
 Version: ${DEB_VERSION}
-Architecture: amd64
+Architecture: ${GOARCH}
 Maintainer: Democratized Data Foundation <support@source.network>
 Description: DefraDB C shared library
  Provides the libdefradb shared library and C headers for embedding
@@ -86,8 +106,8 @@ EOF
   chmod 0644 "${DEB_DIR}/DEBIAN/control"
 
   fakeroot dpkg-deb --build "${DEB_DIR}" "${DEB_TMP}"
-  mv "${DEB_TMP}" "build/libdefradb_${DEB_VERSION}_amd64.deb"
+  mv "${DEB_TMP}" "build/libdefradb_${DEB_VERSION}_${GOARCH}.deb"
   rm -rf "${DEB_DIR}"
 
-  echo "Build complete: build/libdefradb_${DEB_VERSION}_amd64.deb"
+  echo "Build complete: build/libdefradb_${DEB_VERSION}_${GOARCH}.deb"
 fi

@@ -114,6 +114,27 @@ func TestParseIndexOnStruct(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "Nested ordered config is equivalent to legacy ordered config",
+			sdl: `type user @index(name: "userIndex", ordered: {
+				unique: true,
+				direction: DESC,
+				includes: [{field: "name"}, {field: "age", direction: ASC}]
+			}) {
+				name: String
+				age: Int
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Name: "userIndex",
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name", Descending: true},
+						{Name: "age"},
+					},
+					Unique: true,
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {
@@ -319,6 +340,54 @@ func TestParseIndexOnField(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "ordered kind uses field index defaults",
+			sdl: `type user {
+				name: String @index(kind: ordered)
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{
+						{Name: "name"},
+					},
+				},
+			},
+		},
+		{
+			description: "matching kind and ordered config are allowed",
+			sdl: `type user {
+				name: String @index(kind: ordered, ordered: {direction: DESC})
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{{Name: "name", Descending: true}},
+				},
+			},
+		},
+		{
+			description: "matching kind and legacy ordered config are allowed",
+			sdl: `type user {
+				name: String @index(kind: ordered, unique: true)
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{{Name: "name"}},
+					Unique: true,
+				},
+			},
+		},
+		{
+			description: "nested and legacy ordered configs merge when they do not overlap",
+			sdl: `type user {
+				name: String @index(ordered: {unique: true}, direction: DESC)
+			}`,
+			targetDescriptions: []client.NewIndexRequest{
+				{
+					Fields: []client.IndexedFieldDescription{{Name: "name", Descending: true}},
+					Unique: true,
+				},
+			},
+		},
 	}
 
 	for _, test := range cases {
@@ -376,6 +445,27 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 				name: String @index(unique: "true") 
 			}`,
 			expectedErr: `Argument "unique" has invalid value "true"`,
+		},
+		{
+			description: "ordered kind conflicts with vector config",
+			sdl: `type user {
+				name: String @index(kind: ordered, vector: {})
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "ordered and vector configs are competing kind selectors",
+			sdl: `type user {
+				name: String @index(ordered: {}, vector: {})
+			}`,
+			expectedErr: errIndexInvalidArgument,
+		},
+		{
+			description: "nested and legacy ordered configs cannot set the same property",
+			sdl: `type user {
+				name: String @index(ordered: {unique: true}, unique: false)
+			}`,
+			expectedErr: errIndexInvalidArgument,
 		},
 	}
 

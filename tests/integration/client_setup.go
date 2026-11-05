@@ -13,84 +13,18 @@
 
 package tests
 
-import (
-	"context"
-	"fmt"
-
-	"github.com/sourcenetwork/immutable"
-
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	cbindings "github.com/sourcenetwork/defradb/cbindings"
-	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/clients"
-	"github.com/sourcenetwork/defradb/tests/clients/cli"
-	"github.com/sourcenetwork/defradb/tests/clients/http"
-	"github.com/sourcenetwork/defradb/tests/state"
-)
-
 func init() {
-	if !goClient && !httpClient && !cliClient && !cClient && !rustFFIClient {
+	if !goClient && !httpClient && !cliClient && !cClient && !javaClient && !rustFFIClient {
 		// Default is to test go client type.
 		goClient = true
 	}
 	if cClient {
 		skipNetworkTests = false
-		skipBackupTests = true
+	}
+	if javaClient {
+		skipNetworkTests = false
 	}
 	if rustFFIClient {
-		// Don't skip any tests - let them fail so we can track progress
 		skipNetworkTests = false
-		skipBackupTests = false
 	}
-}
-
-// setupClient returns the client implementation for the current
-// testing state. The client type on the test state is used to
-// select the client implementation to use.
-//
-// The identity and node configuration arguments are used by the Rust FFI
-// client to mirror the Go node's startup state.
-func setupClient(
-	s *state.State,
-	nodeObj *node.Node,
-	identity immutable.Option[acpIdentity.Identity],
-	nodeIndex int,
-	enableSigning bool,
-	dbPath string,
-) (clients.Client, error) {
-	switch s.ClientType {
-	case state.HTTPClientType:
-		return http.NewWrapper(nodeObj)
-
-	case state.CLIClientType:
-		return cli.NewWrapper(nodeObj, s.SourcehubAddress)
-
-	case state.GoClientType:
-		return newGoClientWrapper(nodeObj), nil
-
-	case state.CClientType:
-		return cbindings.NewCWrapper(nodeObj)
-
-	case state.RustFFIClientType:
-		return setupRustFFIClient(s, nodeObj, identity, nodeIndex, enableSigning, dbPath)
-
-	default:
-		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
-	}
-}
-
-type goClientWrapper struct {
-	node.DB
-	node *node.Node
-}
-
-func newGoClientWrapper(n *node.Node) *goClientWrapper {
-	return &goClientWrapper{
-		DB:   n.DB,
-		node: n,
-	}
-}
-
-func (w *goClientWrapper) Close() {
-	_ = w.node.Close(context.Background())
 }

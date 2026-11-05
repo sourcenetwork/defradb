@@ -93,12 +93,25 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 			},
 
 			// Authorized requestor identity but without target identity.
-			// TODO-ACP: https://github.com/sourcenetwork/defradb/issues/3796
 			testUtils.DeleteNACActorRelationship{
-				RequestorIdentity:   testUtils.ClientIdentity(1),
-				TargetIdentity:      testUtils.NoIdentity(),
-				Relation:            "admin",
-				ExpectedRecordFound: false,
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NoIdentity(),
+				Relation:          "admin",
+				ExpectedError:     "acp relationship target actor must not be empty",
+			},
+
+			// A delegated admin must receive the same missing-target error as the owner.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+			testUtils.DeleteNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(2),
+				TargetIdentity:    testUtils.NoIdentity(),
+				Relation:          "admin",
+				ExpectedError:     "acp relationship target actor must not be empty",
 			},
 		},
 	}
@@ -257,6 +270,18 @@ func TestNAC_DeleteRelationshipForAllIdentities_AllImplicitIdentitiesAccessRevok
 				ExpectedExistence: false,
 			},
 
+			// An empty target must not revoke the wildcard relationship.
+			testUtils.DeleteNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.NoIdentity(),
+				Relation:          "admin",
+				ExpectedError:     "acp relationship target actor must not be empty",
+			},
+			testUtils.GetNACStatus{
+				Identity:       testUtils.NoIdentity(),
+				ExpectedStatus: client.NACEnabled,
+			},
+
 			// Should work, and ofcourse find a record that was deleted.
 			testUtils.DeleteNACActorRelationship{
 				RequestorIdentity:   testUtils.ClientIdentity(1),
@@ -322,6 +347,13 @@ func TestNAC_DeleteRelationshipStillRequiresIdentityEvenIfAllIdentitiesGivenAcce
 			testUtils.DeleteNACActorRelationship{
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.ClientIdentity(3),
+				Relation:          "admin",
+				ExpectedError:     "node acp relationship operation requires identity",
+			},
+			// Requestor validation still takes precedence when the target is also missing.
+			testUtils.DeleteNACActorRelationship{
+				RequestorIdentity: testUtils.NoIdentity(),
+				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
 				ExpectedError:     "node acp relationship operation requires identity",
 			},

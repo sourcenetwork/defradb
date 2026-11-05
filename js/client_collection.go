@@ -26,31 +26,31 @@ type clientCollection struct {
 	col client.Collection
 }
 
-func newCollection(col client.Collection) js.Value {
+func newCollection(col client.Collection, funcs *funcs) js.Value {
 	c := &clientCollection{
 		col: col,
 	}
 	return js.ValueOf(map[string]any{
-		"name":                      goji.Async(c.name),
-		"versionID":                 goji.Async(c.versionID),
-		"version":                   goji.Async(c.version),
-		"collectionID":              goji.Async(c.collectionID),
-		"addDocument":               goji.Async(c.addDocument),
-		"addManyDocuments":          goji.Async(c.addManyDocuments),
-		"saveDocument":              goji.Async(c.saveDocument),
-		"updateDocument":            goji.Async(c.updateDocument),
-		"deleteDocument":            goji.Async(c.deleteDocument),
-		"existsDocument":            goji.Async(c.existsDocument),
-		"updateDocumentsWithFilter": goji.Async(c.updateDocumentsWithFilter),
-		"deleteDocumentsWithFilter": goji.Async(c.deleteDocumentsWithFilter),
-		"getDocument":               goji.Async(c.getDocument),
-		"newIndex":                  goji.Async(c.newIndex),
-		"deleteIndex":               goji.Async(c.deleteIndex),
-		"listIndexes":               goji.Async(c.listIndexes),
-		"newEncryptedIndex":         goji.Async(c.newEncryptedIndex),
-		"deleteEncryptedIndex":      goji.Async(c.deleteEncryptedIndex),
-		"listEncryptedIndexes":      goji.Async(c.listEncryptedIndexes),
-		"truncate":                  goji.Async(c.truncate),
+		"name":                      funcs.async(c.name),
+		"versionID":                 funcs.async(c.versionID),
+		"version":                   funcs.async(c.version),
+		"collectionID":              funcs.async(c.collectionID),
+		"addDocument":               funcs.async(c.addDocument),
+		"addManyDocuments":          funcs.async(c.addManyDocuments),
+		"saveDocument":              funcs.async(c.saveDocument),
+		"updateDocument":            funcs.async(c.updateDocument),
+		"deleteDocument":            funcs.async(c.deleteDocument),
+		"existsDocument":            funcs.async(c.existsDocument),
+		"updateDocumentsWithFilter": funcs.async(c.updateDocumentsWithFilter),
+		"deleteDocumentsWithFilter": funcs.async(c.deleteDocumentsWithFilter),
+		"getDocument":               funcs.async(c.getDocument),
+		"newIndex":                  funcs.async(c.newIndex),
+		"deleteIndex":               funcs.async(c.deleteIndex),
+		"listIndexes":               funcs.async(c.listIndexes),
+		"newEncryptedIndex":         funcs.async(c.newEncryptedIndex),
+		"deleteEncryptedIndex":      funcs.async(c.deleteEncryptedIndex),
+		"listEncryptedIndexes":      funcs.async(c.listEncryptedIndexes),
+		"truncate":                  funcs.async(c.truncate),
 	})
 }
 

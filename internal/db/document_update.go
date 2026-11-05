@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -162,6 +163,30 @@ func (c *collection) makeSelectionPlan(
 	ctx context.Context,
 	filter any,
 ) (planner.RequestPlan, error) {
+	return c.makeSelectionPlanWithOptions(ctx, filter, c.db.documentACP, false, false)
+}
+
+func (c *collection) makeUnpermissionedSelectionPlan(
+	ctx context.Context,
+	filter any,
+	showDeleted bool,
+) (planner.RequestPlan, error) {
+	return c.makeSelectionPlanWithOptions(
+		ctx,
+		filter,
+		immutable.None[dac.DocumentACP](),
+		showDeleted,
+		true,
+	)
+}
+
+func (c *collection) makeSelectionPlanWithOptions(
+	ctx context.Context,
+	filter any,
+	documentACP immutable.Option[dac.DocumentACP],
+	showDeleted bool,
+	docIDOnly bool,
+) (planner.RequestPlan, error) {
 	var f immutable.Option[request.Filter]
 	var err error
 	switch fval := filter.(type) {
@@ -186,12 +211,16 @@ func (c *collection) makeSelectionPlan(
 	if err != nil {
 		return nil, err
 	}
+	slct.ShowDeleted = showDeleted
+	if docIDOnly {
+		slct.Fields = []request.Selection{&request.Field{Name: request.DocIDFieldName}}
+	}
 
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
 		c.db.nodeACP,
-		c.db.documentACP,
+		documentACP,
 		c.db,
 		c.db.p2p,
 		c.db.getLensStore(ctx),

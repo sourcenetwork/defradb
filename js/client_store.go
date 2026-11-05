@@ -232,7 +232,7 @@ func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	return newCollection(col), nil
+	return newCollection(col, c.funcs), nil
 }
 
 func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error) {
@@ -251,7 +251,7 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 	}
 	wrappers := make([]any, len(cols))
 	for i, col := range cols {
-		wrappers[i] = newCollection(col)
+		wrappers[i] = newCollection(col, c.funcs)
 	}
 	return js.ValueOf(wrappers), nil
 }

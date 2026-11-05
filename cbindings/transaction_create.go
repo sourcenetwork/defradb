@@ -16,16 +16,12 @@ package cbindings
 */
 import "C"
 
-import (
-	"runtime/cgo"
-
-	"github.com/sourcenetwork/defradb/node"
-)
-
 //export CreateTransaction
 func CreateTransaction(nodePtr C.uintptr_t, isReadOnly C.int) C.NewTxnResult {
-	h := cgo.Handle(nodePtr)
-	n := h.Value().(*node.Node) //nolint:forcetypeassert
+	n, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnNewTxnResultC(1, err.Error(), nil)
+	}
 
 	tx, err := n.DB.NewTxn(isReadOnly != 0)
 	if err != nil {

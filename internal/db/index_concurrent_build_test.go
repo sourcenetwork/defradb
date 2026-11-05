@@ -53,7 +53,7 @@ func TestConcurrentBuilds_SameCollection_BothComplete(t *testing.T) {
 	// once. entered fires once per distinct index (tracked in seen), so a build re-entering the gate
 	// across batches cannot over-signal the WaitGroup regardless of batch count.
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup
@@ -218,7 +218,7 @@ func TestDeleteIndex_WhileBuilding_NoOrphanEntries(t *testing.T) {
 
 	// Gate: hold the build at its first batch boundary until released.
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup
@@ -321,7 +321,7 @@ func TestDeleteIndex_WhileFailingBuild_NoOrphanRecord(t *testing.T) {
 
 	// Gate: hold the build at its first batch boundary until released.
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup
@@ -394,7 +394,7 @@ func TestBuild_ConflictWithLiveWrite_ConvergesToReady(t *testing.T) {
 	setForTest(t, &indexBuildRetryDelay, 10*time.Millisecond)
 
 	origGate := IndexBuildGate
-	defer func() { IndexBuildGate = origGate }()
+	t.Cleanup(func() { IndexBuildGate = origGate })
 	release := make(chan struct{})
 	var releaseOnce sync.Once
 	var entered sync.WaitGroup

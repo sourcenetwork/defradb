@@ -67,6 +67,7 @@ func TestHttpStatusFromError(t *testing.T) {
 		{"materialized view and ACP", db.ErrMaterializedViewAndACPNotSupported, http.StatusUnprocessableEntity},
 		{"col not materialized", db.ErrColNotMaterialized, http.StatusUnprocessableEntity},
 		{"col mutating is branchable", db.ErrColMutatingIsBranchable, http.StatusUnprocessableEntity},
+		{"filtered truncate branchable collection", db.ErrFilteredTruncateBranchableCollection, http.StatusUnprocessableEntity},
 		{"p2p col has policy", db.ErrP2PColHasPolicy, http.StatusUnprocessableEntity},
 		{"replicator col has policy", db.ErrReplicatorColHasPolicy, http.StatusUnprocessableEntity},
 		{"collection name mutated", db.ErrCollectionNameMutated, http.StatusUnprocessableEntity},

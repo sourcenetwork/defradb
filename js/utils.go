@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 const (
@@ -75,6 +76,36 @@ func boolArg(args []js.Value, index int, name string) (bool, error) {
 		return false, fmt.Errorf("%s argument must be a bool", name)
 	}
 	return args[index].Bool(), nil
+}
+
+// filterArg returns the document filter at the given argument index, accepting either a
+// GraphQL-style filter string or a plain filter conditions object. An object is decoded
+// with the same number handling as UnmarshalJS. A missing/null/undefined object filter
+// means "match all documents". Note that JS numbers are IEEE-754 doubles, so an integer
+// filter condition above 2^53 will already have lost precision before reaching Go.
+// To do: https://github.com/sourcenetwork/defradb/issues/5176
+func filterArg(args []js.Value, index int, name string) (any, error) {
+	if len(args) <= index {
+		return nil, fmt.Errorf("%s argument is required", name)
+	}
+	arg := args[index]
+	switch arg.Type() {
+	case js.TypeString:
+		return arg.String(), nil
+	case js.TypeNull, js.TypeUndefined:
+		return map[string]any{}, nil
+	case js.TypeObject:
+		filter, err := utils.DecodeJSONFilter([]byte(goji.JSON.Stringify(arg)))
+		if err != nil {
+			return nil, fmt.Errorf("%s argument is invalid: %w", name, err)
+		}
+		if filter == nil {
+			filter = map[string]any{}
+		}
+		return filter, nil
+	default:
+		return nil, fmt.Errorf("%s argument must be a string or object", name)
+	}
 }
 
 func structArg(args []js.Value, index int, name string, out any) error {

@@ -96,6 +96,12 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 		mut.Type = request.UpsertObjects
 		parseUpsertMutationArgs(mut, arguments)
 
+	case "truncate":
+		mut.Type = request.TruncateObjects
+		if err := parseTruncateMutationArgs(mut, arguments); err != nil {
+			return nil, err
+		}
+
 	default:
 		return nil, ErrUnknownMutationName
 	}
@@ -116,6 +122,37 @@ func parseMutation(exe *gql.ExecutionContext, parent *gql.Object, field *ast.Fie
 	}
 
 	return mut, err
+}
+
+func parseTruncateMutationArgs(mut *request.ObjectMutation, args map[string]any) error {
+	for name, value := range args {
+		switch name {
+		case request.FilterClause:
+			if value == nil {
+				return ErrTruncateFilterNull
+			}
+			v, ok := value.(map[string]any)
+			if !ok {
+				return ErrInvalidFilterConditions
+			}
+			mut.Filter = immutable.Some(request.Filter{Conditions: v})
+
+		case request.DocIDArgName:
+			if value == nil {
+				return ErrTruncateDocIDNull
+			}
+			v, ok := value.([]any)
+			if !ok {
+				continue // value is nil
+			}
+			docIDs := make([]string, len(v))
+			for i, v := range v {
+				docIDs[i] = v.(string)
+			}
+			mut.DocIDs = immutable.Some(docIDs)
+		}
+	}
+	return nil
 }
 
 func parseAddMutationArgs(mut *request.ObjectMutation, args map[string]any) {

@@ -62,6 +62,12 @@ Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
 `
+	commitHeadsDescription string = `
+Prior commits in the DAG that this commit was built upon to advance history.
+ Composite commits link to prior composite commits for the document.
+ Field commits link to prior field commits for the same field. Collection
+ commits link to prior collection commits.
+`
 	signatureDescription string = `
 The signature of the commit, if one exists. This is used to verify the integrity
  of the commit and the data it contains.
@@ -86,8 +92,8 @@ The ID of the collection version that this commit was committed against. This ID
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
-The name of the field that this commit was committed against. If this is a composite
- or a collection the value will be null.
+The name of the field that this commit was committed against. The value is "_C" for composite
+ blocks and null for collection blocks.
 `
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
@@ -134,6 +140,15 @@ Returns the maximum of the specified field values within the specified child set
 Returns the minimum of the specified field values within the specified child sets. If
  multiple fields/sets are specified, the combined minimum of all items within each set
  will be returned as a single value.
+`
+	SimilarityFieldDescription string = `
+Returns how similar the given vector is to the specified field's value. The metric is
+ whichever one the field's vector index was created with, defaulting to cosine similarity
+ when the field has no vector index. Higher values are more similar for every metric.
+`
+	SimilarityArgDescription string = `
+The vector to compare the field's value against. It must have the same number of
+ dimensions as the values stored in the field.
 `
 	booleanOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on Boolean

@@ -38,6 +38,7 @@ func SetLens(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.c
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
 	decoder.DisallowUnknownFields()
+	decoder.UseNumber()
 	var lensCfg model.Lens
 	if err := decoder.Decode(&lensCfg); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

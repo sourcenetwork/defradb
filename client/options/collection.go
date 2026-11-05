@@ -410,6 +410,8 @@ func (b *ExistsDocumentOptionsBuilder) SetIdentity(id identity.Identity) *Exists
 type TruncateCollectionOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// Filter limits the truncate to matching documents. A nil filter truncates the full collection.
+	Filter any
 }
 
 // GetIdentity returns the identity for the operation.
@@ -431,6 +433,14 @@ func TruncateCollection() *TruncateCollectionOptionsBuilder {
 func (b *TruncateCollectionOptionsBuilder) SetIdentity(id identity.Identity) *TruncateCollectionOptionsBuilder {
 	b.append(func(opts *TruncateCollectionOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetFilter limits the truncate to matching documents.
+func (b *TruncateCollectionOptionsBuilder) SetFilter(filter any) *TruncateCollectionOptionsBuilder {
+	b.append(func(opts *TruncateCollectionOptions) {
+		opts.Filter = filter
 	})
 	return b
 }

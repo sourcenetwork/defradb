@@ -64,6 +64,11 @@ func TestHasIndexDirective_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
 	assert.True(t, hasIndexDirective(sdl))
 }
 
+func TestHasIndexDirective_WithVectorIndexDirective_ReturnsTrue(t *testing.T) {
+	sdl := `type User { embedding: [Float32!] @vectorIndex(dimensions: 3) }`
+	assert.True(t, hasIndexDirective(sdl))
+}
+
 func TestHasIndexDirective_WithNoDirective_ReturnsFalse(t *testing.T) {
 	sdl := `type User { name: String }`
 	assert.False(t, hasIndexDirective(sdl))
@@ -542,6 +547,16 @@ func TestShouldSkip_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
 
 	actions := action.Actions{
 		&action.AddCollection{SDL: "type User { email: String @index(unique: true) }"},
+	}
+
+	assert.True(t, m.ShouldSkip(actions))
+}
+
+func TestShouldSkip_WithVectorIndexDirective_ReturnsTrue(t *testing.T) {
+	m := &secondaryIndex{}
+
+	actions := action.Actions{
+		&action.AddCollection{SDL: "type User { embedding: [Float32!] @vectorIndex(dimensions: 3) }"},
 	}
 
 	assert.True(t, m.ShouldSkip(actions))

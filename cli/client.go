@@ -62,8 +62,8 @@ func setClientConnectionFlags(cmd *cobra.Command) {
 		"Audience to set on minted auth tokens. Defaults to the host of --url",
 	)
 	cmd.PersistentFlags().String(
-		"source-hub-address",
-		cfg.GetString(config.ConfigFlags["source-hub-address"]),
-		"The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor",
+		"remote-dac-address",
+		cfg.GetString(config.ConfigFlags["remote-dac-address"]),
+		"Vera address authorized to make Remote DAC transactions on behalf of the actor",
 	)
 }

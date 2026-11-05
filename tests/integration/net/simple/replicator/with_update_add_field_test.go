@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultistep(t *testing.T) {
@@ -83,8 +84,11 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultist
 					},
 				},
 			},
-			&action.Request{
-				// The second update should still be received by the second node, updating Name
+			// The second update should still be received by the second node,
+			// updating Name. That node may be on an older release, which can hold
+			// the document without being able to report the commit that carried
+			// it, so there is nothing for WaitForSync to observe. Poll instead.
+			action.NewEventually(&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -98,7 +102,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersionMultist
 						},
 					},
 				},
-			},
+			}),
 		},
 	}
 
@@ -161,7 +165,11 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 					},
 				},
 			},
-			&action.Request{
+			// The second node may be on an older release, which can hold this
+			// document without being able to report the commit that carried it.
+			// There is nothing for WaitForSync to observe in that case, so poll
+			// the result instead.
+			action.NewEventually(&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -172,6 +180,84 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderCollectionVersion(t *tes
 					"Users": []map[string]any{
 						{
 							"Name": "Shahzad",
+						},
+					},
+				},
+			}),
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// A push that fails is retried from the document's heads, which carry the id of the collection version
+// they were authored against rather than the collection's root id.
+func TestP2PReplicatorUpdateWithNewFieldWithTargetNodeTemporarilyOffline_SyncsUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		// Releases before v1.2.0 fail every retry of this update, so an old sender
+		// never delivers it. Fixed in https://github.com/sourcenetwork/defradb/pull/5304
+		OldFirstNodeSupportedFromVersion: "v1.2.0",
+		SupportedDatabaseTypes: immutable.Some(
+			[]state.DatabaseType{
+				// This test only supports file type databases since it requires the ability to
+				// stop and start a node without losing data.
+				testUtils.BadgerFileType,
+			},
+		),
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddCollection{
+				SDL: `
+					type Users {
+						Name: String
+					}
+				`,
+			},
+			testUtils.AddReplicator{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.AddDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.PatchCollection{
+				NodeID: immutable.Some(0),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "Email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.Close{
+				NodeID: immutable.Some(1),
+			},
+			&action.UpdateDoc{
+				// The push to the offline target fails, so this update can only arrive by retry.
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			testUtils.Start{
+				NodeID: immutable.Some(1),
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
 						},
 					},
 				},

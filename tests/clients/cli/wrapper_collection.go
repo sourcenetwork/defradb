@@ -53,6 +53,7 @@ func appendTxnArg(args []string, txn immutable.Option[client.Txn]) []string {
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
+	w   *Wrapper
 	cmd *cliWrapper
 	def client.CollectionVersion
 	txn immutable.Option[client.Txn]
@@ -84,16 +85,31 @@ func (c *Collection) NewIndex(
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
 	}
-	if indexDesc.Unique {
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	if indexDesc.Unique || (indexDesc.Ordered != nil && indexDesc.Ordered.Unique) {
 		args = append(args, "--unique")
 	}
+	if indexDesc.Vector != nil {
+		vectorJSON, err := json.Marshal(indexDesc.Vector)
+		if err != nil {
+			return index, err
+		}
+		args = append(args, "--vector", string(vectorJSON))
+	}
 
-	fields := make([]string, len(indexDesc.Fields))
-	orders := make([]bool, len(indexDesc.Fields))
+	// The deprecated Fields wins when set, so the server still sees it disagreeing with the kind
+	// config and rejects it.
+	//nolint:staticcheck // the deprecated field is still supported until v2.0.0
+	requested := indexDesc.Fields
+	if len(requested) == 0 {
+		requested = indexDesc.GetFields()
+	}
+	fields := make([]string, len(requested))
+	orders := make([]bool, len(requested))
 
-	for i := range indexDesc.Fields {
-		fields[i] = indexDesc.Fields[i].Name
-		orders[i] = indexDesc.Fields[i].Descending
+	for i := range requested {
+		fields[i] = requested[i].Name
+		orders[i] = requested[i].Descending
 	}
 
 	orderedFields := make([]string, len(fields))
@@ -231,6 +247,13 @@ func (c *Collection) Truncate(
 	args = append(args, "--collection-name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
+	if opt.Filter != nil {
+		filter, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		args = append(args, "--filter", string(filter))
+	}
 	args = appendIdentityArg(args, opt.GetIdentity())
 	args = appendTxnArg(args, c.txn)
 

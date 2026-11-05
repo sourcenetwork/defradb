@@ -14,7 +14,6 @@ package action
 import (
 	"github.com/stretchr/testify/require"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -86,26 +85,26 @@ func (a *RefreshViews) Execute() {
 	}
 }
 
-// refreshViews refreshes views for all collection names in state.
-// This is used by the Request action when view type is materialized.
+// refreshViews refreshes views for all collection names in state as test-harness setup.
+// This is used by the Request action when view type is materialized. It deliberately uses the
+// node identity, and cache maintenance is not part of the request under test and must not intercept
+// that request at the refresh-view NAC gate. Use [RefreshViews] to test refresh authorization.
 func refreshViews(
 	s *state.State,
 	node *state.NodeState,
-	identity immutable.Option[acpIdentity.Identity],
-	expectedError string,
-) bool {
+	nodeID int,
+) {
 	if s.ViewType != state.MaterializedViewType {
-		return false
+		return
 	}
+
+	identity := getIdentityForRequestSpecificToNode(s, NodeIdentity(nodeID), nodeID)
 	for _, colName := range s.CollectionNames {
 		opts := options.RefreshViews().SetCollectionName(colName)
 		if identity.HasValue() {
 			opts.SetIdentity(identity.Value())
 		}
 		err := node.RefreshViews(s.Ctx, opts)
-		if assertError(s.T, err, expectedError) {
-			return true
-		}
+		require.NoError(s.T, err)
 	}
-	return false
 }

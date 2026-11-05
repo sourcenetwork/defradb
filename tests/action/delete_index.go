@@ -102,8 +102,10 @@ func (a *DeleteIndex) Execute() {
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
 		// Unless the test wants to observe the dropping window, wait for the drop record to clear
-		// so a following raw-entry assertion sees them gone.
-		if err == nil && !a.Async && hadIndex {
+		// so a following raw-entry assertion sees them gone. A drop made in a transaction only
+		// starts once it commits, and waiting while it is still open blocks stores like LevelDB
+		// that only allow one transaction at a time.
+		if err == nil && !a.Async && hadIndex && !a.TransactionID.HasValue() {
 			waitForIndexDropped(a.s, node, collection.Version().CollectionID, indexID)
 		}
 	}

@@ -11,7 +11,7 @@
   </picture>
 </p>
 
-DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
+DefraDB is a zero-trust database that prioritizes data verifiability, privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the Vera network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
@@ -36,9 +36,13 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
    * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
    * [Access Control System](#access-control-system)
+      * [Using Vera for Remote Document ACP](#using-vera-for-remote-document-acp)
+         * [Running a Vera node locally](#running-a-vera-node-locally)
    * [Supporting CORS](#supporting-cors)
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
+   * [Embedded DefraDB](#embedded-defradb)
+   * [Versioning](#versioning)
    * [Community](#community)
    * [Explorer](#explorer)
    * [Licensing](#licensing)
@@ -71,7 +75,7 @@ Building DefraDB from source requires significant system resources. If you encou
 
 ### Prerequisites
 
-- [Go](https://golang.org/) 1.24 or later
+- [Go](https://golang.org/) 1.26 or later
 - [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
 - Git
 
@@ -490,6 +494,75 @@ Because the certificates are self-signed, HTTPS clients must be configured to tr
 ## Access Control System
 Learn more about the [Document Access Control](https://docs.source.network/defradb/security/document-access-control/) system.
 
+### Using Vera for Remote Document ACP
+
+By default, Document ACP is local to the node. Setting `acp.document.type` to `remote` stores policies and relationships in a [Vera](https://github.com/sourcenetwork/vera) log instead (Remote DAC), which is what makes them verifiable across nodes.
+
+Four parameters are required on the node when that type is selected, and one more on the client:
+
+| Parameter | Side | Description |
+| --- | --- | --- |
+| `acp.document.remote.LogID` | node | ID of the Vera log to write ACP data to |
+| `acp.document.remote.GRPCAddress` | node | address of the Vera gRPC server |
+| `acp.document.remote.CometRPCAddress` | node | address of the Vera Comet RPC server |
+| `acp.document.remote.KeyName` | node | keyring entry holding the secp256k1 key that signs and pays for Vera transactions |
+| `acp.document.remote.address` | client | Vera address allowed to act on the client's behalf |
+
+Vera addresses use the `vera` Bech32 prefix. See [docs/config.md](docs/config.md) for the full description of each parameter.
+
+The signing key is a regular keyring entry, so it is added the same way as any other key:
+
+```shell
+defradb keyring add vera-key <secp256k1-private-key-hex>
+```
+
+#### Running a Vera node locally
+
+For local development, the Vera image can run an isolated chain of its own with `STANDALONE=1`, which is also how the integration tests bring it up:
+
+```shell
+docker run -d --rm --name vera \
+  -e STANDALONE=1 \
+  -p 26657:26657 -p 9090:9090 \
+  ghcr.io/sourcenetwork/vera:dev
+```
+
+It exposes gRPC on `9090` and Comet RPC on `26657`, and the chain ID is `vera-dev`. The standalone image also creates a funded `faucet` account in the container's keyring.
+
+The account behind `KeyName` pays for the Vera transactions the node creates, and the faucet does not fund it automatically. Send funds from the faucet to the address derived from the node's key:
+
+```shell
+docker exec vera verad tx bank send \
+  faucet <address of the KeyName key> 1000000uopen \
+  --keyring-backend test --chain-id vera-dev --yes
+```
+
+A node is pointed at it through the config file at `~/.defradb/config.yaml`:
+
+```yaml
+acp:
+  document:
+    type: remote
+    remote:
+      LogID: vera-dev
+      GRPCAddress: 127.0.0.1:9090
+      CometRPCAddress: 127.0.0.1:26657
+      KeyName: vera-key
+```
+
+Only `acp.document.type` and `acp.document.remote.address` have CLI flags (`--document-acp-type` and `--remote-dac-address`); the rest are set in the config file or through the environment, where `DEFRA_` is prefixed and dots become underscores:
+
+```shell
+export DEFRA_ACP_DOCUMENT_TYPE=remote
+export DEFRA_ACP_DOCUMENT_REMOTE_LOGID=vera-dev
+export DEFRA_ACP_DOCUMENT_REMOTE_GRPCADDRESS=127.0.0.1:9090
+export DEFRA_ACP_DOCUMENT_REMOTE_COMETRPCADDRESS=127.0.0.1:26657
+export DEFRA_ACP_DOCUMENT_REMOTE_KEYNAME=vera-key
+defradb start
+```
+
+The Vera version DefraDB is built against is pinned in `go.mod`, currently `github.com/sourcenetwork/vera v0.4.1-0.20260827134642-8c1a760f2f83`; use a node built from that revision when running against something other than the `dev` image.
+
 ## Supporting CORS
 
 When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
@@ -531,6 +604,28 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 [Trace exporter documentation](https://pkg.go.dev/go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp)
 
+## Embedded DefraDB
+
+Besides running as a standalone node, DefraDB can be embedded into an application through its C bindings, built from the [`cbindings`](./cbindings) package. The shared library exposes the operations implemented there, so an embedding application works against a local database in process.
+
+Build the library with one of the following targets:
+
+```shell
+make build-c-shared-linux      # build/libdefradb.so plus the C headers
+make build-c-shared-macos      # build/libdefradb.dylib plus the C headers (macOS host)
+make build-c-shared-linux:deb  # the same, packaged as a .deb
+make build-c-static-windows
+make build-c-shared-android ANDROID_NDK=/path/to/android-ndk API_LEVEL=24
+```
+
+The Linux build writes `libdefradb.so`, `libdefradb.h` and `defra_structs.h` into `build/`, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a Linux architecture; a cross build uses `aarch64-linux-gnu-gcc` or `x86_64-linux-gnu-gcc` unless `CC` is set. The macOS target requires Xcode Command Line Tools and writes `libdefradb.dylib` and the same headers, defaulting to the host architecture. Set `GOARCH=arm64` or `GOARCH=amd64` to select a macOS architecture, and `BUILD_TAGS=silent` to disable logging. The Android target requires the [Android NDK](https://developer.android.com/ndk); `API_LEVEL` defaults to 24, which is the minimum supported.
+
+For JVM applications the bindings are wrapped by the [DefraDB Java SDK](https://github.com/sourcenetwork/defradb-java-sdk).
+
+## Versioning
+
+Please refer to our [versioning policy](./VERSIONING.md).
+
 ## Community
 
 Discuss on [Discord](https://source.network/discord) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [X](https://x.com/edgeofsource).
@@ -541,7 +636,7 @@ Instructions for the explorer can be found [here](./explorer/README.md).
 
 ## Licensing
 
-DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
+DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make production and non-production use of it provided such use is not in connection with the operation or provision of a Managed Service. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete [license](licenses/BSL.txt) before usage.
 
 ## Contributors
 

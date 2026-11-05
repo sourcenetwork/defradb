@@ -28,6 +28,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/mod/semver"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -39,7 +40,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -76,8 +76,9 @@ var (
 	viewType state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
-	// skipBackupTests will skip any tests that involve backup actions
-	skipBackupTests = false
+	// backupUnsupportedClientTypes lists the client types whose BasicImport/BasicExport are not
+	// implemented: the JS client (the Backup API is not suitable for browser environments).
+	backupUnsupportedClientTypes = []state.ClientType{state.JSClientType}
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
 )
@@ -85,9 +86,6 @@ var (
 const (
 	// subscriptionTimeout is the maximum time to wait for subscription results to be returned.
 	subscriptionTimeout = 1 * time.Second
-	// Instantiating lenses is expensive, and our tests do not benefit from a large number of them,
-	// so we explicitly set it to a low value.
-	lensPoolSize = 2
 )
 
 const testJSONFile = "/test.json"
@@ -156,7 +154,6 @@ func ExecuteTestCase(
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
 	skipIfDocumentACPTypeUnsupported(t, testCase.SupportedDocumentACPTypes)
 	skipIfNetworkTest(t, testCase.Actions)
-	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
@@ -175,6 +172,9 @@ func ExecuteTestCase(
 	}
 	if cClient {
 		clients = append(clients, state.CClientType)
+	}
+	if javaClient {
+		clients = append(clients, state.JavaClientType)
 	}
 	if rustFFIClient {
 		clients = append(clients, state.RustFFIClientType)
@@ -212,6 +212,7 @@ func ExecuteTestCase(
 
 	databases = skipIfDatabaseTypeUnsupported(t, databases, testCase.SupportedDatabaseTypes)
 	clients = skipIfClientTypeUnsupported(t, clients, testCase.SupportedClientTypes)
+	clients = skipIfBackupTest(t, clients, testCase.Actions)
 
 	for _, ct := range clients {
 		for _, dbt := range databases {
@@ -229,7 +230,7 @@ func ExecuteTestCase(
 						kms,
 						dbt,
 						ct,
-						documentACPType,
+						action.DocumentACPType,
 					)
 				}
 
@@ -304,6 +305,15 @@ func executeTestCase(
 	// It is very important that the databases are always closed, otherwise resources will leak
 	// as tests run.  This is particularly important for file based datastores.
 	defer closeNodes(s, Close{})
+	// Deferred after closeNodes so it runs first. A transaction left open blocks LevelDB, which only
+	// allows one at a time, so a background store task can hang node shutdown waiting on it.
+	defer func() {
+		for _, txn := range s.Txns {
+			if txn != nil {
+				txn.Discard()
+			}
+		}
+	}()
 
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
@@ -363,10 +373,8 @@ func performAction(
 
 	switch action := act.(type) {
 	case action.Action:
+		// [action.NewNode] is an action, so node setup runs from here too.
 		action.Execute()
-
-	case ConfigureNode:
-		configureNode(s, testCase, action)
 
 	case Restart:
 		restartNodes(s, testCase)
@@ -808,6 +816,13 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 			defraMultiplier.SignedDocs)
 	}
 
+	if name, ok := externalNodeMultiplierUnsupported(testCase, activeMultipliers); ok {
+		t.Skipf("test supports client types %v, but the %q multiplier runs a node over HTTP",
+			testCase.SupportedClientTypes.Value(), name)
+	}
+
+	skipUnsupportedDirection(t, testCase, activeMultipliers)
+
 	modified := multiplier.Apply(actions)
 
 	for i, idx := range actionIndices {
@@ -815,6 +830,28 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 	}
 
 	applyTestCaseLevelMultipliers(testCase, activeMultipliers)
+}
+
+// externalNodeMultiplierUnsupported reports whether an active multiplier would run
+// a node the test cannot drive, and names it.
+//
+// A node in another process is reached over HTTP whatever the run-wide client type,
+// so a test that lists its clients without HTTP cannot run under such a multiplier.
+// Listing no clients means any client will do.
+func externalNodeMultiplierUnsupported(testCase *TestCase, activeNames string) (string, bool) {
+	if !testCase.SupportedClientTypes.HasValue() ||
+		slices.Contains(testCase.SupportedClientTypes.Value(), state.HTTPClientType) {
+		return "", false
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		if defraMultiplier.MakesNodeExternal(name) {
+			return name, true
+		}
+	}
+
+	return "", false
 }
 
 // applyTestCaseLevelMultipliers mutates TestCase fields based on the given
@@ -837,7 +874,8 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	nodeCount := 0
 	for _, a := range testCase.Actions {
-		if _, ok := a.(ConfigureNode); ok {
+		switch a.(type) {
+		case *action.NewNode:
 			nodeCount++
 		}
 	}
@@ -852,8 +890,36 @@ func createsDocsOnMultipleNodes(testCase *TestCase) bool {
 	return false
 }
 
+// skipUnsupportedDirection skips the test when an active cross-version
+// multiplier targets an older release than the test declares for its direction.
+func skipUnsupportedDirection(t testing.TB, testCase *TestCase, activeNames string) {
+	required := map[defraMultiplier.Name]string{
+		defraMultiplier.CrossVersionOldFirst: testCase.OldFirstNodeSupportedFromVersion,
+		defraMultiplier.CrossVersionOldLast:  testCase.OldLastNodeSupportedFromVersion,
+	}
+	for name, version := range required {
+		// A malformed value compares as older than every release, so the test
+		// would quietly run against one that cannot support it.
+		require.True(t, version == "" || semver.IsValid(version),
+			"supported version for %s must be a semver tag with a leading v, got %q", name, version)
+	}
+
+	for name := range strings.SplitSeq(activeNames, ",") {
+		name = strings.TrimSpace(name)
+		version := required[name]
+		if version == "" {
+			continue
+		}
+		target := defraMultiplier.TargetVersion(name)
+		if semver.Compare(target, version) < 0 {
+			t.Skipf("skipping, multiplier %s targets %s but the test needs %s or newer in this direction",
+				name, target, version)
+		}
+	}
+}
+
 func applyTestCaseLevelMultipliers(testCase *TestCase, activeNames string) {
-	for _, name := range strings.Split(activeNames, ",") {
+	for name := range strings.SplitSeq(activeNames, ",") {
 		switch strings.TrimSpace(name) {
 		case defraMultiplier.SignedDocs:
 			testCase.EnableSigning = true
@@ -996,15 +1062,19 @@ func actionTransactionID(a any) (int, bool) {
 
 // setStartingNodes adds a set of initial Defra nodes for the test to execute against.
 //
-// If a node(s) has been explicitly configured via a `ConfigureNode` action then no new
+// If a node(s) has been explicitly configured via a [action.NewNode] action then no new
 // nodes will be added.
 func setStartingNodes(
 	s *state.State,
 	testCase TestCase,
 ) {
-	for _, action := range testCase.Actions {
-		switch action.(type) {
-		case ConfigureNode:
+	setupConfig := testCase.nodeSetupConfig()
+	for _, a := range testCase.Actions {
+		switch cfg := a.(type) {
+		case *action.NewNode:
+			// Node setup needs a few test-level settings that the action cannot
+			// reach on its own.
+			cfg.SetupConfig = setupConfig
 			s.IsNetworkEnabled = true
 		}
 	}
@@ -1012,53 +1082,66 @@ func setStartingNodes(
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
 		s.CurrentSetupNodeID = 0
-		nodeBuilder := defaultNodeOpts()
+		nodeBuilder := action.DefaultNodeOpts(testCase.nodeSetupConfig())
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		st, err := setupNode(
+		st, err := action.SetupNode(
 			s,
-			acpIdentity.None,
-			testCase,
+			immutable.None[state.Identity](),
+			testCase.nodeSetupConfig(),
 			nodeBuilder,
+			"",
 		)
 
 		require.Nil(s.T, err)
+		st.DisableP2P = true
 		s.Nodes = append(s.Nodes, st)
 	}
 }
 
-func startNodes(s *state.State, testCase TestCase, action Start) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+func startNodes(s *state.State, testCase TestCase, start Start) {
+	nodeIDs, nodes := getNodesWithIDs(start.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
 	for index := len(nodes) - 1; index >= 0; index-- {
 		nodeID := nodeIDs[index]
-		originalPath := databaseDir
-		databaseDir = s.Nodes[nodeID].DbPath
 
-		s.CurrentSetupNodeID = nodeID
-		p2pOpts := s.Nodes[nodeID].P2POpts
-		withListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
-		opts := defaultNodeOpts()
-		opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		opts.P2P().SetAll(p2pOpts)
-		opts.NodeACP().SetEnabled(action.EnableNAC)
-		node, err := setupNode(
-			s,
-			getIdentityOption(s, action.Identity),
-			testCase,
-			opts,
-		)
+		// databaseDir points a restarting node at its existing store. Restore it
+		// with a defer: node setup asserts with require, which ends the goroutine
+		// on failure and would otherwise leave the path set for every later test.
+		node, err := func() (*state.NodeState, error) {
+			originalPath := databaseDir
+			defer func() { databaseDir = originalPath }()
+			databaseDir = s.Nodes[nodeID].DbPath
 
-		databaseDir = originalPath
+			s.CurrentSetupNodeID = nodeID
+			p2pOpts := s.Nodes[nodeID].P2POpts
+			action.WithListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
+			opts := action.DefaultNodeOpts(testCase.nodeSetupConfig())
+			opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+			opts.P2P().SetAll(p2pOpts)
+			opts.SetDisableP2P(s.Nodes[nodeID].DisableP2P)
+			nacOpts := options.NodeACPOptions{IsEnabled: start.EnableNAC}
+			opts.NodeACP().SetAll(nacOpts)
+			setupConfig := testCase.nodeSetupConfig()
+			setupConfig.NodeACP = immutable.Some(nacOpts)
+			setupConfig.DisableP2P = s.Nodes[nodeID].DisableP2P
+			return action.SetupNode(
+				s,
+				start.Identity,
+				setupConfig,
+				opts,
+				s.Nodes[nodeID].Version,
+			)
+		}()
 
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+		expectedErrorRaised := AssertError(s.T, err, start.ExpectedError)
+		assertExpectedErrorRaised(s.T, start.ExpectedError, expectedErrorRaised)
 		if expectedErrorRaised {
 			// If we are testing for failure on start of a node, there will be panics if we don't return
 			// when there are errors, so we exit here to assert errors on start.
 			return
 		}
 
-		require.Equal(s.T, action.ExpectedError, "")
+		require.Equal(s.T, start.ExpectedError, "")
 		node.P2P = s.Nodes[nodeID].P2P
 		s.Nodes[nodeID] = node
 	}
@@ -1071,8 +1154,11 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 	// will reference the old (closed) database instances.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
 
-	// Reconnect peers after node restart to re-establish P2P connections.
-	reconnectPeers(s)
+	// A Rust FFI node does not redial its peers when it starts again, so every
+	// start reconnects them, not only a restart.
+	if s.ClientType == state.RustFFIClientType {
+		reconnectPeers(s)
+	}
 }
 
 func restartNodes(
@@ -1084,6 +1170,15 @@ func restartNodes(
 	}
 	closeNodes(s, Close{})
 	startNodes(s, testCase, Start{})
+	if s.ClientType != state.RustFFIClientType {
+		reconnectPeers(s)
+	}
+}
+
+func reconnectPeers(s *state.State) {
+	reconnect := &action.ReconnectPeers{}
+	reconnect.SetState(s)
+	reconnect.Execute()
 }
 
 // refreshTokens refreshes all the existing tokens, preserving order.
@@ -1099,7 +1194,7 @@ func refreshTokens(
 					err := fullIdentityToUpdate.UpdateToken(
 						action.AuthTokenExpiration,
 						audience,
-						immutable.Some(s.SourcehubAddress),
+						immutable.Some(s.RemoteDACAddress),
 					)
 					require.NoError(s.T, err)
 					nodeTokensToUpdate[nodeKey] = fullIdentityToUpdate.BearerToken()
@@ -1248,41 +1343,6 @@ func refreshCollections(
 			}
 		}
 	}
-}
-
-// configureNode configures and starts a new Defra node using the provided configuration.
-//
-// It returns the new node, and its peer address. Any errors generated during configuration
-// will result in a test failure.
-func configureNode(
-	s *state.State,
-	testCase TestCase,
-	action ConfigureNode,
-) {
-	if changeDetector.Enabled {
-		// We do not yet support the change detector for tests running across multiple nodes.
-		s.T.SkipNow()
-		return
-	}
-
-	privateKey, err := crypto.GenerateEd25519()
-	require.NoError(s.T, err)
-
-	p2pOpts := action()
-	withPrivateKey(&p2pOpts, privateKey)
-
-	s.CurrentSetupNodeID = len(s.Nodes)
-	opts := defaultNodeOpts()
-	opts.DB().
-		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
-		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-	opts.P2P().SetAll(p2pOpts)
-
-	node, err := setupNode(s, acpIdentity.None, testCase, opts)
-	require.NoError(s.T, err)
-
-	node.P2POpts = p2pOpts
-	s.Nodes = append(s.Nodes, node)
 }
 
 func refreshDocuments(
@@ -2334,14 +2394,14 @@ func skipIfDocumentACPTypeUnsupported(t testing.TB, supportedACPTypes immutable.
 	if supportedACPTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedType := range supportedACPTypes.Value() {
-			if supportedType == documentACPType {
+			if supportedType == action.DocumentACPType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given acp type. Type: %s", documentACPType)
+			t.Skipf("test does not support given acp type. Type: %s", action.DocumentACPType)
 		}
 	}
 }
@@ -2377,7 +2437,7 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	hasNetworkAction := false
 	for _, act := range actions {
 		switch act.(type) {
-		case ConfigureNode:
+		case *action.NewNode:
 			hasNetworkAction = true
 		}
 	}
@@ -2386,9 +2446,9 @@ func skipIfNetworkTest(t testing.TB, actions []any) {
 	}
 }
 
-// skipIfBackupTest skips the current test if the given actions
-// contain backup actions and skipBackupTests is true.
-func skipIfBackupTest(t testing.TB, actions []any) {
+// skipIfBackupTest removes any client type that doesn't support the Backup API from clients, if the
+// given actions contain backup actions. Skips the test entirely if no client type remains.
+func skipIfBackupTest(t testing.TB, clients []state.ClientType, actions []any) []state.ClientType {
 	hasBackupAction := false
 	for _, act := range actions {
 		switch act.(type) {
@@ -2398,9 +2458,20 @@ func skipIfBackupTest(t testing.TB, actions []any) {
 			hasBackupAction = true
 		}
 	}
-	if skipBackupTests && hasBackupAction {
-		t.Skip("test involves backup actions")
+	if !hasBackupAction {
+		return clients
 	}
+
+	filteredClients := make([]state.ClientType, 0, len(clients))
+	for _, ct := range clients {
+		if !slices.Contains(backupUnsupportedClientTypes, ct) {
+			filteredClients = append(filteredClients, ct)
+		}
+	}
+	if len(filteredClients) == 0 {
+		t.Skip("test involves backup actions, but no selected client type supports them")
+	}
+	return filteredClients
 }
 
 // skipIfVectorEmbeddingTest skips the current test if the given actions

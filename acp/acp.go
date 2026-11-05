@@ -92,6 +92,7 @@ type ACPSystemClient interface {
 	//
 	// Note: The requester identity must either be the owner of the object (being shared) or
 	// the manager (i.e. the relation has `manages` defined in the policy).
+	// The target actor must not be empty; "*" applies the relationship to all actors.
 	AddActorRelationship(
 		ctx context.Context,
 		policyID string,
@@ -113,6 +114,7 @@ type ACPSystemClient interface {
 	//
 	// Note: The requester identity must either be the owner of the object (being shared) or
 	// the manager (i.e. the relation has `manages` defined in the policy).
+	// The target actor must not be empty; "*" removes the relationship with all actors.
 	DeleteActorRelationship(
 		ctx context.Context,
 		policyID string,

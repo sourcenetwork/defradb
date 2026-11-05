@@ -12,10 +12,7 @@ package cbindings
 
 /*
 #include <stdlib.h>
-#include <stdint.h>
-#include "defra_structs.h"
-extern Result CommitTransaction(uintptr_t txnPtr);
-extern void DiscardTransaction(uintptr_t txnPtr);
+#include "libdefradb.h"
 */
 import "C"
 
@@ -65,6 +62,7 @@ func (txn *Transaction) Discard() {
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.CWrapper.PrintDump(ctx)
 }
 

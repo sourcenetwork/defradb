@@ -273,7 +273,7 @@ func (c *Client) newTxn(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	c.txns.Store(txn.ID(), txn)
-	return newTransaction(txn, c.txns), nil
+	return newTransaction(txn, c.txns, c.funcs), nil
 }
 
 func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, error) {
@@ -306,5 +306,5 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 }
 
 func (c *Client) close(this js.Value, args []js.Value) (js.Value, error) {
-	return js.Undefined(), c.node.Close(context.Background())
+	return js.Undefined(), c.Close(context.Background())
 }

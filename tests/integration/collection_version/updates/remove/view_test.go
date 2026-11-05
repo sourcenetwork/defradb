@@ -212,6 +212,9 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 
 func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.CachelessViewType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -262,9 +265,9 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 
 func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 	test := testUtils.TestCase{
-		// The view multiplier currently refreshes views as part of the `Request`
-		// action - this changes the test definition in a way that we do not want here.
-		SupportedViewTypes: immutable.Some([]testUtils.ViewType{}),
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
 		Actions: []any{
 			&action.AddCollection{
 				SDL: `
@@ -300,6 +303,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{
+				DoNotRefreshViews: true,
 				Request: `query {
 					UserView {
 						name
@@ -310,7 +314,8 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				},
 			},
 			&action.RefreshViews{
-				ExpectedError: "key not found",
+				FilterOptions: options.RefreshViews().SetCollectionName("UserView"),
+				ExpectedError: "collection not found",
 			},
 		},
 	}

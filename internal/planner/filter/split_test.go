@@ -90,6 +90,19 @@ func TestSplitFilter(t *testing.T) {
 			},
 		},
 		{
+			name: "split by fields where the first is not present",
+			inputFilter: map[string]any{
+				"name":     m("_eq", "John"),
+				"verified": m("_eq", false),
+			},
+			inputFields: []mapper.Field{
+				{Index: authorAgeInd},
+				{Index: authorNameInd},
+			},
+			expectedFilter1: m("verified", m("_eq", false)),
+			expectedFilter2: m("name", m("_eq", "John")),
+		},
+		{
 			name: "filter with two []any slices",
 			inputFilter: map[string]any{
 				"age":  m("_in", []any{10, 20, 30}),

@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -39,8 +40,8 @@ type collection struct {
 	indexesCounter uint64
 	// shortID caches the collection's short ID, which is stable for the collection's life. Resolved
 	// once on first use so the write path does not re-read it every time. Zero means not yet resolved,
-	// since a valid short ID starts at 1.
-	shortID uint32
+	// since a valid short ID starts at 1. Document writes may access the cache concurrently.
+	shortID atomic.Uint32
 	// indexBuildStates holds the build (backfill) state of the collection's indexes that have one,
 	// keyed by index ID: an index is present while it is building or failed, and absent once ready.
 	// Presence therefore means "not yet queryable". Populated at construction time from the index
@@ -225,8 +226,12 @@ func (db *DB) getCollections(
 			// GetActiveCollectionByCollectionID is quite a lot more efficient than GetCollectionsByCollectionID
 			// so we use it when we can.
 			col, err := description.GetActiveCollectionByCollectionID(ctx, db.collectionRepository, opts.CollectionID.Value())
-			if err != nil && !errors.Is(err, client.ErrCollectionNotFound) {
-				return nil, err
+			if err != nil {
+				if errors.Is(err, client.ErrCollectionNotFound) {
+					return []client.Collection{}, nil
+				} else {
+					return nil, err
+				}
 			}
 			cols = append(cols, col)
 		}

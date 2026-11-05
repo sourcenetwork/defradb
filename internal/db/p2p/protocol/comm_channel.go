@@ -103,6 +103,7 @@ func (c *commChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peer
 	var req Req
 	reqPtr := ReqP(&req)
 	err := message.Receive(stream, peerID, c, reqPtr)
+	closeStream(stream)
 	if err != nil {
 		return
 	}
@@ -131,6 +132,7 @@ func (c *commChannel[Req, Reply, ReqP, ReplyP]) onResponse(stream io.Reader, pee
 	var reply Reply
 	replyPtr := ReplyP(&reply)
 	err := message.Receive(stream, peerID, c, replyPtr)
+	closeStream(stream)
 	if err != nil {
 		log.ErrorE("Failed to receive response message.", err)
 	}

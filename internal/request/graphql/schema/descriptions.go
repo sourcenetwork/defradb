@@ -181,6 +181,20 @@ An optional filter for this delete that will limit the delete to documents
  matching the given criteria. If no matching documents are found, the operation
  will succeed, but no documents will be deleted.
 `
+	truncateDocumentsDescription string = `
+Remove all or matching documents from this node. Returns true when complete.
+`
+	truncateIDsArgDescription string = `
+An optional set of docID values that will limit the truncate to documents with
+ a matching docID. If no matching documents are found, the operation will
+ succeed, but no documents will be removed. If an empty set is provided, no
+ documents will be removed.
+`
+	truncateFilterArgDescription string = `
+An optional filter for this truncate that will limit the truncate to documents
+ matching the given criteria. If no matching documents are found, the operation
+ will succeed, but no documents will be removed.
+`
 	groupFieldDescription string = `
 The group field may be used to return a set of records belonging to the group.
  It must be used alongside a 'groupBy' argument on the parent selector. It may
