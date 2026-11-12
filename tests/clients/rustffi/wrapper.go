@@ -560,13 +560,9 @@ func (w *Wrapper) GetCollections(
 		return nil, err
 	}
 
-	txn := immutable.None[client.Txn]()
-	if ctxTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok {
-		txn = immutable.Some(ctxTxn)
-	}
 	cols := make([]client.Collection, len(versions))
 	for i, version := range versions {
-		cols[i] = &Collection{def: version, w: w, txn: txn}
+		cols[i] = &Collection{def: version, w: w}
 	}
 	return cols, nil
 }

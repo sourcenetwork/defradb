@@ -42,7 +42,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
@@ -134,13 +133,8 @@ func newIdentityHandle(ident identity.Identity) (C.uintptr_t, error) {
 	switch typed := ident.(type) {
 	case identity.FullIdentity:
 		key := typed.PrivateKey()
-		raw := key.Raw()
-		// Go keeps an ed25519 key as seed and public key; the C API takes the seed.
-		if key.Type() == crypto.KeyTypeEd25519 && len(raw) == 64 {
-			raw = raw[:32]
-		}
 		cResult = C.defra_identity_new_from_typed_private_key(
-			args.str(string(key.Type())), args.str(hex.EncodeToString(raw)))
+			args.str(string(key.Type())), args.str(hex.EncodeToString(key.Raw())))
 	case identity.TokenIdentity:
 		cResult = C.defra_identity_new_from_bearer_token(
 			args.str(typed.DID()), args.str(typed.BearerToken()))

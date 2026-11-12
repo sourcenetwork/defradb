@@ -42,6 +42,10 @@ type RemoteDACConfig struct {
 	SignerKey []byte
 }
 
+// defaultMaxTxnRetries is Go's db default. The harness runs each action
+// MaxTxnRetries times at most, so zero would run none.
+const defaultMaxTxnRetries = 5
+
 // Config is how a Rust node starts: what C.NodeInitOptions carries.
 type Config struct {
 	// DBPath is the store directory; empty keeps the store in memory.
@@ -54,7 +58,9 @@ type Config struct {
 	// NodeIdentity is the node's identity, and its NAC owner.
 	NodeIdentity identity.Identity
 	// EnableNAC turns node access control on at startup.
-	EnableNAC               bool
+	EnableNAC bool
+	// MaxTxnRetries is how many times a conflicting transaction is tried;
+	// zero takes Go's default.
 	MaxTxnRetries           int
 	SearchableEncryptionKey []byte
 	StoreEncryptionKey      []byte
@@ -74,6 +80,10 @@ type Wrapper struct {
 func NewWrapper(cfg Config) (*Wrapper, error) {
 	var args cstrings
 	defer args.free()
+
+	if cfg.MaxTxnRetries == 0 {
+		cfg.MaxTxnRetries = defaultMaxTxnRetries
+	}
 
 	var opts C.struct_NodeInitOptions
 	opts.disable_api = 1

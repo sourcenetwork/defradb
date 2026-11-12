@@ -963,7 +963,7 @@ struct DefraResult defra_encrypted_index_list(uintptr_t node_ptr,
 struct DefraNewIdentityResult defra_identity_new(const char *key_type);
 
 /*
- Imports an identity from a hex-encoded 32-byte secp256k1 private key, as
+ Imports an identity from a hex-encoded 32-byte secp256k1 private key as
  Go's `NewIdentityFromPrivateKey` does. Other key types import with
  [`defra_identity_new_from_typed_private_key`].
 
@@ -1567,4 +1567,39 @@ struct DefraResult defra_view_add(uintptr_t node_ptr,
                                   const char *query,
                                   const char *sdl,
                                   const char *transform_cid,
-                               
+                                  uintptr_t identity_ptr);
+
+/*
+ Refresh view caches.
+
+ Refreshes the caches of all materialized views matching the given options.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `options` - JSON string with optional "Names" field (null for all views)
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `options` must be null or a valid null-terminated UTF-8 string.
+ Refreshes the materialized views `opts` selects, every one for empty
+ options.
+
+ # Safety
+
+ Every non-null string in `opts` must be a valid null-terminated string.
+ */
+struct DefraResult defra_view_refresh(uintptr_t node_ptr,
+                                      struct CollectionOptions opts,
+                                      uintptr_t identity_ptr);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif  // __cplusplus
+
+#endif  /* DEFRA_H */

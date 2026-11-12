@@ -39,7 +39,6 @@ func (c *Collection) addDocuments(
 	docJSON []byte,
 	opt *options.AddDocumentOptions,
 ) error {
-	ctx = c.context(ctx)
 	encrypted := C.int(0)
 	if opt.EncryptDoc {
 		encrypted = 1
@@ -106,7 +105,6 @@ func (c *Collection) UpdateDocument(
 	doc *client.Document,
 	opts ...options.Enumerable[options.UpdateDocumentOptions],
 ) error {
-	ctx = c.context(ctx)
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
@@ -135,7 +133,6 @@ func (c *Collection) SaveDocument(
 		return c.AddDocument(ctx, doc, opts...)
 	}
 
-	ctx = c.context(ctx)
 	if _, hadTxn := datastore.CtxTryGetClientTxn(ctx); hadTxn {
 		return c.saveDocument(ctx, doc, opts...)
 	}
@@ -187,7 +184,6 @@ func (c *Collection) DeleteDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.DeleteDocumentOptions],
 ) (bool, error) {
-	ctx = c.context(ctx)
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
@@ -207,7 +203,6 @@ func (c *Collection) ExistsDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.ExistsDocumentOptions],
 ) (bool, error) {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	copts := collectionOptions{Version: c.def.VersionID, CollectionID: c.def.CollectionID}.c(&args)
@@ -226,7 +221,6 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	updater string,
 	opts ...options.Enumerable[options.UpdateDocumentsWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	ctx = c.context(ctx)
 	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
@@ -251,7 +245,6 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	filter any,
 	opts ...options.Enumerable[options.DeleteDocumentsWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	ctx = c.context(ctx)
 	filterJSON, err := json.Marshal(utils.NormalizeFilterForJSON(filter))
 	if err != nil {
 		return nil, err
@@ -276,7 +269,6 @@ func (c *Collection) GetDocument(
 	docID client.DocID,
 	opts ...options.Enumerable[options.GetDocumentOptions],
 ) (*client.Document, error) {
-	ctx = c.context(ctx)
 	opt := utils.NewOptions(opts...)
 	showDeleted := C.int(0)
 	if opt.ShowDeleted {

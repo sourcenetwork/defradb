@@ -24,22 +24,19 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
 
-// Collection is one version of a collection on a Rust node, and the
-// transaction it was read in, if any.
+// Collection is one version of a collection on a Rust node. Like Go's
+// collections it holds no transaction: each call runs in the one its context
+// carries, if any.
 type Collection struct {
 	def client.CollectionVersion
 	w   *Wrapper
-	txn immutable.Option[client.Txn]
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -58,14 +55,6 @@ func (c *Collection) CollectionID() string {
 	return c.def.CollectionID
 }
 
-// context carries the collection's transaction, when it has one.
-func (c *Collection) context(ctx context.Context) context.Context {
-	if c.txn.HasValue() {
-		return datastore.CtxSetFromClientTxn(ctx, c.txn.Value())
-	}
-	return ctx
-}
-
 // byName selects this collection by name.
 func (c *Collection) byName() collectionOptions {
 	return collectionOptions{Name: c.def.Name}
@@ -76,7 +65,6 @@ func (c *Collection) NewIndex(
 	indexDesc client.NewIndexRequest,
 	opts ...options.Enumerable[options.NewCollectionIndexOptions],
 ) (client.IndexDescription, error) {
-	ctx = c.context(ctx)
 
 	// The deprecated Fields wins when set, so the node still sees it disagree
 	// with the kind config and rejects it.
@@ -124,7 +112,6 @@ func (c *Collection) DeleteIndex(
 	indexName string,
 	opts ...options.Enumerable[options.DeleteCollectionIndexOptions],
 ) error {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	copts := c.byName().c(&args)
@@ -137,7 +124,6 @@ func (c *Collection) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListCollectionIndexesOptions],
 ) ([]client.ListIndexesResult, error) {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	copts := c.byName().c(&args)
@@ -152,7 +138,6 @@ func (c *Collection) NewEncryptedIndex(
 	req client.EncryptedIndexDescription,
 	opts ...options.Enumerable[options.NewEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
@@ -167,7 +152,6 @@ func (c *Collection) DeleteEncryptedIndex(
 	fieldName string,
 	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
 ) error {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
@@ -179,7 +163,6 @@ func (c *Collection) DeleteEncryptedIndex(
 func (c *Collection) ListEncryptedIndexes(
 	ctx context.Context, opts ...options.Enumerable[options.ListCollectionEncryptedIndexesOptions],
 ) ([]client.EncryptedIndexDescription, error) {
-	ctx = c.context(ctx)
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
@@ -191,7 +174,6 @@ func (c *Collection) ListEncryptedIndexes(
 func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.TruncateCollectionOptions],
 ) error {
-	ctx = c.context(ctx)
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()

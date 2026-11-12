@@ -136,7 +136,9 @@ func mirrorNAC(
 	nodeIdentity acpIdentity.Identity,
 	starter immutable.Option[acpIdentity.Identity],
 ) error {
-	if goStatus == "" || !starter.HasValue() {
+	nacOn := goStatus == client.NACEnabled.String() ||
+		goStatus == client.NACDisabledTemporarily.String()
+	if !nacOn || !starter.HasValue() {
 		return nil
 	}
 	if nodeIdentity == nil || starter.Value().DID() != nodeIdentity.DID() {
