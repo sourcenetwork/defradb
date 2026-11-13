@@ -123,6 +123,10 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 		return nil, errs
 	}
 
+	if errs := defrap.ValidateUniqueInputFieldNames(ast); len(errs) > 0 {
+		return nil, errs
+	}
+
 	validationResult := gql.ValidateDocument(schema, ast, nil)
 	if !validationResult.IsValid {
 		errors := make([]error, len(validationResult.Errors))

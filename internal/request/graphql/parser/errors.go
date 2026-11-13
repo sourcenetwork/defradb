@@ -32,7 +32,19 @@ var (
 	ErrSimilarityMissingTarget        = errors.New("similarity requires a target field argument")
 )
 
-const errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"
+const (
+	errSimilarityOnNonVectorField string = "similarity can only target a numeric array field"
+	errDuplicateInputField        string = "there can be only one input field with a given name"
+)
+
+// NewErrDuplicateInputField returns an error indicating that an input object literal
+// declared the same field name more than once.
+func NewErrDuplicateInputField(name string) error {
+	return errors.New(
+		errDuplicateInputField,
+		errors.NewKV("Name", name),
+	)
+}
 
 // NewErrSimilarityOnNonVectorField returns an error indicating that similarity was given a field
 // that cannot hold a vector.
