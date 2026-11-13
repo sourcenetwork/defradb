@@ -14,11 +14,14 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
+	"time"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
+	"github.com/libp2p/go-libp2p/x/rate"
 	ma "github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corekv"
@@ -96,15 +99,26 @@ func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, e
 	}
 
 	rmOpts := []rcmgr.Option{rcmgr.WithTraceReporter(newBlockedScopeReporter())}
+	var allowedPrefixes []netip.Prefix
 	if len(opts.AllowlistCIDRs) > 0 {
 		allowlist, err := cidrsToMultiaddrs(opts.AllowlistCIDRs)
 		if err != nil {
 			return nil, err
 		}
 		rmOpts = append(rmOpts, rcmgr.WithAllowlistedMultiaddrs(allowlist))
+		for _, cidr := range opts.AllowlistCIDRs {
+			prefix, err := netip.ParsePrefix(cidr)
+			if err != nil {
+				return nil, NewErrInvalidAllowlistCIDR(cidr, err)
+			}
+			allowedPrefixes = append(allowedPrefixes, prefix.Masked())
+		}
 	}
 	if opts.MaxConnsPerIP > 0 {
 		rmOpts = append(rmOpts, rcmgr.WithLimitPerSubnet(connLimitsPerSubnet(opts.MaxConnsPerIP)))
+	}
+	if len(allowedPrefixes) > 0 || opts.MaxConnsPerIP > 0 {
+		rmOpts = append(rmOpts, rcmgr.WithConnRateLimiters(connRateLimiter(allowedPrefixes, opts.MaxConnsPerIP)))
 	}
 
 	limits := rcmgr.DefaultLimits
@@ -150,6 +164,46 @@ func connLimitsPerSubnet(maxConnsPerIP int) (ipv4, ipv6 []rcmgr.ConnLimitPerSubn
 		{PrefixLength: 48, ConnCount: 8 * maxConnsPerIP},
 	}
 	return ipv4, ipv6
+}
+
+// libp2pDefaultMaxConnsPerIP is go-libp2p's per-address connection cap, from which its default
+// connection rate-limit bursts are derived.
+const libp2pDefaultMaxConnsPerIP = 8
+
+// connRateLimiter rebuilds libp2p's default new-connection rate limiter with two changes.
+//
+// Allowlisted prefixes are exempt. libp2p checks this limiter before the allowlist, and
+// WithAllowlistedMultiaddrs does not touch it, so without this an allowlisted NAT address would
+// still be refused after a burst of 16 new connections and then admitted at one every 5s.
+//
+// The bursts scale with maxConnsPerIP in libp2p's own ratio (2x per /32 and /56, 10x per /48), so
+// raising the concurrent cap does not leave the rate limit as the tighter bound. Zero keeps the
+// libp2p defaults. Loopback stays exempt, as in libp2p.
+func connRateLimiter(allowlisted []netip.Prefix, maxConnsPerIP int) *rate.Limiter {
+	n := maxConnsPerIP
+	if n <= 0 {
+		n = libp2pDefaultMaxConnsPerIP
+	}
+	prefixes := []rate.PrefixLimit{
+		{Prefix: netip.MustParsePrefix("127.0.0.0/8")},
+		{Prefix: netip.MustParsePrefix("::1/128")},
+	}
+	for _, p := range allowlisted {
+		prefixes = append(prefixes, rate.PrefixLimit{Prefix: p}) // zero Limit: unlimited
+	}
+	return &rate.Limiter{
+		NetworkPrefixLimits: prefixes,
+		SubnetRateLimiter: rate.SubnetLimiter{
+			IPv4SubnetLimits: []rate.SubnetLimit{
+				{PrefixLength: 32, Limit: rate.Limit{RPS: 0.2, Burst: 2 * n}},
+			},
+			IPv6SubnetLimits: []rate.SubnetLimit{
+				{PrefixLength: 56, Limit: rate.Limit{RPS: 0.2, Burst: 2 * n}},
+				{PrefixLength: 48, Limit: rate.Limit{RPS: 0.5, Burst: 10 * n}},
+			},
+			GracePeriod: time.Minute,
+		},
+	}
 }
 
 // cidrsToMultiaddrs converts CIDRs such as "10.244.0.0/16" or "fd00::/8" into the
