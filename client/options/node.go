@@ -123,6 +123,13 @@ type NodeP2POptions struct {
 	// Past the cap libp2p resets the stream with StreamResourceLimitExceeded rather than queueing
 	// it. Zero keeps libp2p's own default, which scales with the memory budget.
 	MaxStreamsPerPeer int
+	// AllowlistCIDRs are IPv4 or IPv6 CIDRs, such as "10.244.0.0/16", whose connections are exempt
+	// from the resource manager's normal limits, including the per-IP connection cap. Use it for
+	// trusted hosts that share one source address, such as in-cluster peers behind a NAT.
+	AllowlistCIDRs []string
+	// MaxConnsPerIP caps the concurrent connections from a single IPv4 address (/32) or IPv6 /56
+	// subnet, with eight times that per IPv6 /48. Zero keeps libp2p's default of 8.
+	MaxConnsPerIP int
 }
 
 // NodeHTTPOptions contains HTTP API server configuration values.
@@ -562,6 +569,19 @@ func (sb *NodeP2POptionsBuilder) SetResourceFileDescriptors(fds int) *NodeP2POpt
 // SetMaxStreamsPerPeer sets the concurrent streams a single peer may open in each direction.
 func (sb *NodeP2POptionsBuilder) SetMaxStreamsPerPeer(streams int) *NodeP2POptionsBuilder {
 	sb.append(func(opts *NodeP2POptions) { opts.MaxStreamsPerPeer = streams })
+	return sb
+}
+
+// SetAllowlistCIDRs sets the CIDRs whose connections bypass the resource manager's limits.
+func (sb *NodeP2POptionsBuilder) SetAllowlistCIDRs(cidrs ...string) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.AllowlistCIDRs = cidrs })
+	return sb
+}
+
+// SetMaxConnsPerIP sets the concurrent connections allowed from a single IP. Zero keeps libp2p's
+// default of 8.
+func (sb *NodeP2POptionsBuilder) SetMaxConnsPerIP(conns int) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.MaxConnsPerIP = conns })
 	return sb
 }
 

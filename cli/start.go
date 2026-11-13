@@ -106,6 +106,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				SetResourceMemoryMiB(cfg.GetInt("net.resourceMemoryMiB")).
 				SetResourceFileDescriptors(cfg.GetInt("net.resourceFileDescriptors")).
 				SetMaxStreamsPerPeer(cfg.GetInt("net.maxStreamsPerPeer")).
+				SetAllowlistCIDRs(cfg.GetStringSlice("net.allowlistCIDRs")...).
+				SetMaxConnsPerIP(cfg.GetInt("net.maxConnsPerIP")).
 				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
 			// TLS is enabled when both the certificate (pubkeypath) and key
 			// (privkeypath) paths are set, either explicitly (flag/config/env) or

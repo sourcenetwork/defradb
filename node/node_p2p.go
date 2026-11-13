@@ -13,11 +13,13 @@ package node
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
+	ma "github.com/multiformats/go-multiaddr"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -88,8 +90,21 @@ func (n *Node) startP2P(ctx context.Context, store corekv.TxnReaderWriter, chunk
 const maxProtocolPeers = 8
 
 func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, error) {
-	if opts.ResourceMemoryMiB <= 0 && opts.MaxStreamsPerPeer <= 0 {
+	if opts.ResourceMemoryMiB <= 0 && opts.MaxStreamsPerPeer <= 0 &&
+		len(opts.AllowlistCIDRs) == 0 && opts.MaxConnsPerIP <= 0 {
 		return nil, nil
+	}
+
+	rmOpts := []rcmgr.Option{rcmgr.WithTraceReporter(newBlockedScopeReporter())}
+	if len(opts.AllowlistCIDRs) > 0 {
+		allowlist, err := cidrsToMultiaddrs(opts.AllowlistCIDRs)
+		if err != nil {
+			return nil, err
+		}
+		rmOpts = append(rmOpts, rcmgr.WithAllowlistedMultiaddrs(allowlist))
+	}
+	if opts.MaxConnsPerIP > 0 {
+		rmOpts = append(rmOpts, rcmgr.WithLimitPerSubnet(connLimitsPerSubnet(opts.MaxConnsPerIP)))
 	}
 
 	limits := rcmgr.DefaultLimits
@@ -123,10 +138,43 @@ func p2pResourceManager(opts options.NodeP2POptions) (network.ResourceManager, e
 		}
 		scaled = limits.Scale(int64(opts.ResourceMemoryMiB)*mib, fds)
 	}
-	return rcmgr.NewResourceManager(
-		rcmgr.NewFixedLimiter(scaled),
-		rcmgr.WithTraceReporter(newBlockedScopeReporter()),
-	)
+	return rcmgr.NewResourceManager(rcmgr.NewFixedLimiter(scaled), rmOpts...)
+}
+
+// connLimitsPerSubnet returns per-subnet connection caps that mirror libp2p's defaults with the
+// per-address count replaced: one IPv4 address (/32), one IPv6 /56, and eight times that per /48.
+func connLimitsPerSubnet(maxConnsPerIP int) (ipv4, ipv6 []rcmgr.ConnLimitPerSubnet) {
+	ipv4 = []rcmgr.ConnLimitPerSubnet{{PrefixLength: 32, ConnCount: maxConnsPerIP}}
+	ipv6 = []rcmgr.ConnLimitPerSubnet{
+		{PrefixLength: 56, ConnCount: maxConnsPerIP},
+		{PrefixLength: 48, ConnCount: 8 * maxConnsPerIP},
+	}
+	return ipv4, ipv6
+}
+
+// cidrsToMultiaddrs converts CIDRs such as "10.244.0.0/16" or "fd00::/8" into the
+// /ip4/<net>/ipcidr/<bits> or /ip6/<net>/ipcidr/<bits> multiaddrs the resource manager's allowlist
+// takes. A bare address is not accepted, so a missing prefix length fails here rather than
+// silently allowlisting nothing.
+func cidrsToMultiaddrs(cidrs []string) ([]ma.Multiaddr, error) {
+	out := make([]ma.Multiaddr, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		_, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, NewErrInvalidAllowlistCIDR(cidr, err)
+		}
+		bits, _ := ipNet.Mask.Size()
+		proto := "ip6"
+		if ip4 := ipNet.IP.To4(); ip4 != nil {
+			proto = "ip4"
+		}
+		addr, err := ma.NewMultiaddr(fmt.Sprintf("/%s/%s/ipcidr/%d", proto, ipNet.IP, bits))
+		if err != nil {
+			return nil, NewErrInvalidAllowlistCIDR(cidr, err)
+		}
+		out = append(out, addr)
+	}
+	return out, nil
 }
 
 // blockedScopeReporter names the resource-manager scope that refused a stream, connection or

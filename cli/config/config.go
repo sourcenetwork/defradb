@@ -107,6 +107,8 @@ var ConfigDefaults = map[string]any{
 	"net.resourcememorymib":             0,
 	"net.resourcefiledescriptors":       0,
 	"net.maxstreamsperpeer":             0,
+	"net.allowlistcidrs":                []string{},
+	"net.maxconnsperip":                 0,
 	"keyring.backend":                   "file",
 	"keyring.disabled":                  false,
 	"keyring.namespace":                 "defradb",
