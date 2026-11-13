@@ -19,6 +19,7 @@ const (
 	errStoreTypeNotSupported   string = "the selected store type is not supported by this build"
 	errACPTypeNotSupported     string = "the selected acp type is not supported by this build"
 	errNodeACPTypeNotSupported string = "the selected node acp type is not supported by this build"
+	errInvalidAllowlistCIDR    string = "invalid p2p allowlist CIDR"
 )
 
 var (
@@ -34,4 +35,8 @@ func NewErrStoreTypeNotSupported(store options.NodeStoreType) error {
 
 func NewErrACPTypeNotSupported(acp options.NodeDocumentACPType) error {
 	return errors.New(errACPTypeNotSupported, errors.NewKV("ACP", acp))
+}
+
+func NewErrInvalidAllowlistCIDR(cidr string, inner error) error {
+	return errors.Wrap(errInvalidAllowlistCIDR, inner, errors.NewKV("CIDR", cidr))
 }
