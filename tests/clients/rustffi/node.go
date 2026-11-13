@@ -86,7 +86,6 @@ func NewWrapper(cfg Config) (*Wrapper, error) {
 	}
 
 	var opts C.struct_NodeInitOptions
-	opts.disable_api = 1
 	opts.max_transaction_retries = C.int(cfg.MaxTxnRetries)
 	if cfg.DBPath == "" {
 		opts.in_memory = 1
@@ -102,8 +101,8 @@ func NewWrapper(cfg Config) (*Wrapper, error) {
 	if cfg.ReplicatorRetryIntervals != "" {
 		opts.replicator_retry_intervals = args.str(cfg.ReplicatorRetryIntervals)
 	}
-	if cfg.EnableSigning {
-		opts.enable_signing = 1
+	if !cfg.EnableSigning {
+		opts.disable_signing = 1
 	}
 	if cfg.EnableNAC {
 		opts.enable_node_acp = 1
