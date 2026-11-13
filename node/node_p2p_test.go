@@ -15,7 +15,9 @@ package node
 import (
 	"testing"
 
+	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -130,4 +132,91 @@ func TestP2PResourceManager_ConnsPerIP(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+// TestP2PResourceManager_AllowlistBeyondDefaultCap is the k8s setup: only the pod network is
+// allowlisted and max_conns_per_ip is left at libp2p's default of 8. Distinct peers behind the
+// shared NAT address fill its 8 connections and keep being admitted past them, while a public
+// address that is not allowlisted is still refused at its 9th connection at the same time.
+func TestP2PResourceManager_AllowlistBeyondDefaultCap(t *testing.T) {
+	const (
+		defaultCap   = 8
+		natAddr      = "/ip4/10.244.1.75/tcp/4001" // in-cluster SNAT address, allowlisted
+		publicAddr   = "/ip4/203.0.113.7/tcp/4001" // public host, not allowlisted
+		clusterConns = 3 * defaultCap
+	)
+
+	rm, err := p2pResourceManager(options.NodeP2POptions{AllowlistCIDRs: []string{"10.244.0.0/16"}})
+	require.NoError(t, err)
+	require.NotNil(t, rm)
+	t.Cleanup(func() { _ = rm.Close() })
+
+	// open accepts an inbound connection and completes the handshake as a fresh peer, as each
+	// in-cluster pod would. SetPeer moves the connection out of the transient scope, which only
+	// holds connections still mid-handshake (and caps allowlisted ones at 16 when autoscaled).
+	open := func(addr string) bool {
+		scope, err := rm.OpenConnection(network.DirInbound, true, ma.StringCast(addr))
+		if err != nil {
+			return false
+		}
+		t.Cleanup(scope.Done)
+		priv, _, err := crypto.GenerateEd25519Key(nil)
+		require.NoError(t, err)
+		id, err := peer.IDFromPrivateKey(priv)
+		require.NoError(t, err)
+		return scope.SetPeer(id) == nil
+	}
+
+	// The allowlisted address fills the default cap first...
+	for i := range defaultCap {
+		require.True(t, open(natAddr), "cluster conn %d of the first %d", i+1, defaultCap)
+	}
+	// ...and is still admitted well past it while those 8 stay open.
+	for i := defaultCap; i < clusterConns; i++ {
+		require.True(t, open(natAddr), "cluster conn %d, beyond the default cap of %d", i+1, defaultCap)
+	}
+
+	// Meanwhile a non-allowlisted address keeps libp2p's default cap.
+	for i := range defaultCap {
+		require.True(t, open(publicAddr), "public conn %d", i+1)
+	}
+	assert.False(t, open(publicAddr), "public conn %d must be refused", defaultCap+1)
+
+	// And the allowlisted address is unaffected by the public one being at its cap.
+	assert.True(t, open(natAddr), "cluster conn %d after public cap reached", clusterConns+1)
+}
+
+// TestP2PResourceManager_AllowlistExemptFromConnRateLimit churns connections (open, then close)
+// so the concurrent cap never binds and only libp2p's new-connection rate limiter can refuse
+// them. That limiter allows a burst of 16 per IPv4 address and runs before the allowlist check,
+// so allowlisted addresses must be exempted from it explicitly, e.g. for a reconnect storm after
+// a restart, when every in-cluster peer redials through the same NAT address at once.
+func TestP2PResourceManager_AllowlistExemptFromConnRateLimit(t *testing.T) {
+	const (
+		natAddr    = "/ip4/10.244.1.75/tcp/4001"
+		publicAddr = "/ip4/203.0.113.7/tcp/4001"
+		burst      = 2 * libp2pDefaultMaxConnsPerIP
+	)
+
+	rm, err := p2pResourceManager(options.NodeP2POptions{AllowlistCIDRs: []string{"10.244.0.0/16"}})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = rm.Close() })
+
+	churn := func(addr string) bool {
+		scope, err := rm.OpenConnection(network.DirInbound, true, ma.StringCast(addr))
+		if err != nil {
+			return false
+		}
+		scope.Done()
+		return true
+	}
+
+	for i := range 5 * burst {
+		require.True(t, churn(natAddr), "allowlisted reconnect %d", i+1)
+	}
+
+	for i := range burst {
+		require.True(t, churn(publicAddr), "public reconnect %d", i+1)
+	}
+	assert.False(t, churn(publicAddr), "public reconnect %d must be rate limited", burst+1)
 }
