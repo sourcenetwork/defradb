@@ -26,17 +26,32 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
 
-// Collection is one version of a collection on a Rust node. Like Go's
-// collections it holds no transaction: each call runs in the one its context
-// carries, if any.
+// Collection is one version of a collection on a Rust node. A collection
+// fetched through a transaction keeps it, as Go's do: each call runs in the
+// transaction its context carries, else in that one, else on the node.
 type Collection struct {
 	def client.CollectionVersion
 	w   *Wrapper
+	txn *Transaction
+}
+
+// in is ctx carrying the collection's transaction when it carries none.
+func (c *Collection) in(ctx context.Context) context.Context {
+	if _, ok := datastore.CtxTryGetClientTxn(ctx); ok || c.txn == nil {
+		return ctx
+	}
+	return c.txn.in(ctx)
+}
+
+// target is the handle a call made with ctx runs on.
+func (c *Collection) target(ctx context.Context) C.uintptr_t {
+	return c.w.target(c.in(ctx))
 }
 
 func (c *Collection) Version() client.CollectionVersion {
@@ -101,7 +116,7 @@ func (c *Collection) NewIndex(
 	defer args.free()
 	copts := c.byName().c(&args)
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_new(c.w.target(ctx), args.str(indexDesc.Name),
+		return take(C.defra_index_new(c.target(ctx), args.str(indexDesc.Name),
 			args.str(strings.Join(fields, ",")), unique, args.str(vectorJSON), copts, ident))
 	})
 	return unmarshalResult[client.IndexDescription](res)
@@ -116,7 +131,7 @@ func (c *Collection) DeleteIndex(
 	defer args.free()
 	copts := c.byName().c(&args)
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_delete(c.w.target(ctx), args.str(indexName), copts, ident))
+		return take(C.defra_index_delete(c.target(ctx), args.str(indexName), copts, ident))
 	}).err()
 }
 
@@ -128,7 +143,7 @@ func (c *Collection) ListIndexes(
 	defer args.free()
 	copts := c.byName().c(&args)
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_list(c.w.target(ctx), copts, ident))
+		return take(C.defra_index_list(c.target(ctx), copts, ident))
 	})
 	return unmarshalResult[[]client.ListIndexesResult](res)
 }
@@ -141,7 +156,7 @@ func (c *Collection) NewEncryptedIndex(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_new(c.w.target(ctx), args.str(c.def.Name),
+		return take(C.defra_encrypted_index_new(c.target(ctx), args.str(c.def.Name),
 			args.str(req.FieldName), args.str(string(req.Type)), ident))
 	})
 	return unmarshalResult[client.EncryptedIndexDescription](res)
@@ -155,7 +170,7 @@ func (c *Collection) DeleteEncryptedIndex(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_delete(c.w.target(ctx), args.str(c.def.Name),
+		return take(C.defra_encrypted_index_delete(c.target(ctx), args.str(c.def.Name),
 			args.str(fieldName), ident))
 	}).err()
 }
@@ -166,7 +181,7 @@ func (c *Collection) ListEncryptedIndexes(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_list(c.w.target(ctx), args.str(c.def.Name), ident))
+		return take(C.defra_encrypted_index_list(c.target(ctx), args.str(c.def.Name), ident))
 	})
 	return unmarshalResult[[]client.EncryptedIndexDescription](res)
 }
@@ -180,7 +195,7 @@ func (c *Collection) Truncate(
 	copts := c.byName().c(&args)
 	if opt.Filter == nil {
 		return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-			return take(C.defra_collection_truncate(c.w.target(ctx), copts, ident))
+			return take(C.defra_collection_truncate(c.target(ctx), copts, ident))
 		}).err()
 	}
 	filter, err := json.Marshal(opt.Filter)
@@ -188,7 +203,7 @@ func (c *Collection) Truncate(
 		return err
 	}
 	return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_truncate_with_filter(c.w.target(ctx), copts, ident,
+		return take(C.defra_collection_truncate_with_filter(c.target(ctx), copts, ident,
 			args.str(string(filter))))
 	}).err()
 }

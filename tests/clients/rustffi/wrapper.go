@@ -560,9 +560,14 @@ func (w *Wrapper) GetCollections(
 		return nil, err
 	}
 
+	// A collection fetched in a transaction keeps it.
+	var txn *Transaction
+	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok {
+		txn, _ = clientTxn.(*Transaction)
+	}
 	cols := make([]client.Collection, len(versions))
 	for i, version := range versions {
-		cols[i] = &Collection{def: version, w: w}
+		cols[i] = &Collection{def: version, w: w, txn: txn}
 	}
 	return cols, nil
 }

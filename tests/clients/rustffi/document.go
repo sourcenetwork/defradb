@@ -47,7 +47,7 @@ func (c *Collection) addDocuments(
 	defer args.free()
 	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_add(c.w.target(ctx), args.str(string(docJSON)), encrypted,
+		return take(C.defra_document_add(c.target(ctx), args.str(string(docJSON)), encrypted,
 			args.str(strings.Join(opt.EncryptedFields, ",")), copts, ident))
 	})
 	docIDs, err := unmarshalResult[[]string](res)
@@ -114,7 +114,7 @@ func (c *Collection) UpdateDocument(
 	defer args.free()
 	copts := collectionOptions{CollectionID: c.def.CollectionID, Signing: opt.EnableSigning}.c(&args)
 	err = as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_update(c.w.target(ctx), args.str(doc.ID().String()),
+		return take(C.defra_document_update(c.target(ctx), args.str(doc.ID().String()),
 			args.str(""), args.str(string(patch)), copts, ident))
 	}).err()
 	if err != nil {
@@ -133,6 +133,7 @@ func (c *Collection) SaveDocument(
 		return c.AddDocument(ctx, doc, opts...)
 	}
 
+	ctx = c.in(ctx)
 	if _, hadTxn := datastore.CtxTryGetClientTxn(ctx); hadTxn {
 		return c.saveDocument(ctx, doc, opts...)
 	}
@@ -189,7 +190,7 @@ func (c *Collection) DeleteDocument(
 	defer args.free()
 	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
 	err := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_delete(c.w.target(ctx), args.str(docID.String()),
+		return take(C.defra_document_delete(c.target(ctx), args.str(docID.String()),
 			args.str(""), copts, ident))
 	}).err()
 	if err != nil {
@@ -207,7 +208,7 @@ func (c *Collection) ExistsDocument(
 	defer args.free()
 	copts := collectionOptions{Version: c.def.VersionID, CollectionID: c.def.CollectionID}.c(&args)
 	err := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_get(c.w.target(ctx), args.str(docID.String()), 0, copts, ident))
+		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()), 0, copts, ident))
 	}).err()
 	if err != nil {
 		return false, err
@@ -230,7 +231,7 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	defer args.free()
 	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_update(c.w.target(ctx), args.str(""),
+		return take(C.defra_document_update(c.target(ctx), args.str(""),
 			args.str(string(filterJSON)), args.str(updater), copts, ident))
 	})
 	updated, err := unmarshalResult[client.UpdateResult](res)
@@ -254,7 +255,7 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	defer args.free()
 	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_delete(c.w.target(ctx), args.str(""),
+		return take(C.defra_document_delete(c.target(ctx), args.str(""),
 			args.str(string(filterJSON)), copts, ident))
 	})
 	deleted, err := unmarshalResult[client.DeleteResult](res)
@@ -278,7 +279,7 @@ func (c *Collection) GetDocument(
 	defer args.free()
 	copts := c.byName().c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_get(c.w.target(ctx), args.str(docID.String()), showDeleted, copts, ident))
+		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()), showDeleted, copts, ident))
 	})
 	if err := res.err(); err != nil {
 		return nil, err
