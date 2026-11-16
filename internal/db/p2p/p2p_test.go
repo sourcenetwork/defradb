@@ -12,15 +12,19 @@ package p2p
 
 import (
 	"context"
+	"errors"
 	"math"
 	"runtime/debug"
 	"testing"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 )
 
@@ -37,6 +41,46 @@ func withReasonMaps(p *P2P) *P2P {
 
 func (m *SimpleMockHost) ID() string {
 	return "peerID"
+}
+
+// publishFailingHost fails every publish it makes itself.
+type publishFailingHost struct {
+	SimpleMockHost
+}
+
+func (h *publishFailingHost) PublishToTopicAsync(context.Context, string, []byte) error {
+	return errors.New("publish failed")
+}
+
+// A write whose document-topic publish fails is still announced on its collection topic, the only
+// topic a peer subscribed to the collection hears it on.
+func TestSendUpdateAnnouncesCollectionWhenDocumentTopicFails(t *testing.T) {
+	announced := make(chan string, 1)
+	p := &P2P{
+		ctx:  context.Background(),
+		host: &publishFailingHost{},
+		db:   &ingestDB{bus: &recordingBus{}},
+		batcher: newPubsubBatcher("peerID", func(topic string, _ []byte) error {
+			announced <- topic
+			return nil
+		}),
+	}
+	t.Cleanup(p.batcher.Close)
+
+	err := p.SendUpdate(event.Update{
+		DocID:        "doc",
+		Cid:          blocks.NewBlock([]byte("block")).Cid(),
+		CollectionID: "collection",
+	})
+
+	// WithStack keeps only the joined message, so errors.Is cannot find the sentinel.
+	require.ErrorContains(t, err, errPublishingToDocIDTopic.Error())
+	select {
+	case topic := <-announced:
+		assert.Equal(t, "collection", topic)
+	case <-time.After(time.Second):
+		t.Fatal("the update was not announced on its collection topic")
+	}
 }
 
 func TestPubSubMessageHandler_ContextCanceled(t *testing.T) {

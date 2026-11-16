@@ -1406,19 +1406,23 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			return err
 		}
 
+		var docTopicErr error
 		if evt.DocID != "" {
 			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
-				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
-			}
-			p.topicPeerMu.RLock()
-			noPeers := p.topicPeerCounts[evt.DocID] == 0
-			p.topicPeerMu.RUnlock()
-			if noPeers {
-				p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
-					DocID:        evt.DocID,
-					CollectionID: evt.CollectionID,
-					Topic:        evt.DocID,
-				}))
+				// A failure on the document topic must not stop the collection topic announce: a
+				// peer subscribed to the collection learns about this block only through that topic.
+				docTopicErr = NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
+			} else {
+				p.topicPeerMu.RLock()
+				noPeers := p.topicPeerCounts[evt.DocID] == 0
+				p.topicPeerMu.RUnlock()
+				if noPeers {
+					p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
+						DocID:        evt.DocID,
+						CollectionID: evt.CollectionID,
+						Topic:        evt.DocID,
+					}))
+				}
 			}
 		}
 
@@ -1438,6 +1442,9 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 				CollectionID: evt.CollectionID,
 				Topic:        evt.CollectionID,
 			}))
+		}
+		if docTopicErr != nil {
+			return docTopicErr
 		}
 	}
 
