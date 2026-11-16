@@ -40,7 +40,6 @@ func newOnDiskDB(b *testing.B, ctx context.Context) (*DB, func()) {
 	// Mirrors node/store_badger.go. ZSTDCompressionLevel is left alone because badger
 	// already defaults it to the value a node sets.
 	opts := badgerds.DefaultOptions(dir)
-	opts.ValueThreshold = 1 << 8
 	opts.Compression = badgeropts.ZSTD
 
 	rootstore, err := badger.NewDatastore(dir, opts)
