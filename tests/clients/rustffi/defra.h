@@ -23,13 +23,6 @@
 #include <stdlib.h>
 
 /*
- The version of the C API's options structs. Raised whenever an options
- struct gains a field, so a caller can check that the library knows every
- field it sets.
- */
-#define ABI_VERSION 1
-
-/*
  The status an asynchronous signature completes with when the request did
  not reach the signer or its answer did not come back. Signing the same
  bytes again is safe, so DefraDB may ask again.
@@ -2235,11 +2228,6 @@ struct DefraResult defra_node_close(uintptr_t node_ptr);
  could locate or unlock the node redacted.
  */
 struct DefraResult defra_node_options(uintptr_t node_ptr);
-
-/*
- The API version of this library's options structs.
- */
-uint32_t defra_abi_version(void);
 
 struct DefraResult defra_profiling_start(const char *output_path);
 
