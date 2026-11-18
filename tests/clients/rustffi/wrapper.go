@@ -48,12 +48,14 @@ func as(ident immutable.Option[identity.Identity], call func(C.uintptr_t) result
 	return call(handle)
 }
 
-// timeout is the time left before ctx's deadline, as the C API takes it.
-func timeout(ctx context.Context) string {
-	if deadline, ok := ctx.Deadline(); ok {
-		return time.Until(deadline).String()
+// timeout is the time left before ctx's deadline in milliseconds, as the C
+// API takes it: 0 for no deadline, and at least 1 once one has passed.
+func timeout(ctx context.Context) C.int64_t {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return 0
 	}
-	return ""
+	return C.int64_t(max(time.Until(deadline).Milliseconds(), 1))
 }
 
 func (w *Wrapper) PeerInfo(
@@ -61,7 +63,7 @@ func (w *Wrapper) PeerInfo(
 	opts ...options.Enumerable[options.PeerInfoOptions],
 ) ([]string, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_info(w.node, ident))
+		return take(C.defra_p2p_info(w.node, C.DefraP2POptions{identity: ident}))
 	})
 	return unmarshalResult[[]string](res)
 }
@@ -71,7 +73,7 @@ func (w *Wrapper) ActivePeers(
 	opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_peer_list(w.node, ident))
+		return take(C.defra_p2p_peer_list(w.node, C.DefraP2POptions{identity: ident}))
 	})
 	return unmarshalResult[[]string](res)
 }
@@ -88,7 +90,7 @@ func (w *Wrapper) AddReplicator(
 		return take(C.defra_p2p_replicator_add(w.node,
 			args.str(strings.Join(opt.CollectionNames, ",")),
 			args.str(strings.Join(addresses, ",")),
-			ident))
+			C.DefraReplicatorAddOptions{identity: ident}))
 	}).err()
 }
 
@@ -101,8 +103,11 @@ func (w *Wrapper) DeleteReplicator(
 	defer args.free()
 	opt := utils.NewOptions(opts...)
 	return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_replicator_delete(w.node,
-			args.str(strings.Join(opt.CollectionNames, ",")), args.str(id), ident))
+		return take(C.defra_p2p_replicator_delete(w.node, args.str(id),
+			C.DefraReplicatorDeleteOptions{
+				identity:    ident,
+				collections: args.str(strings.Join(opt.CollectionNames, ",")),
+			}))
 	}).err()
 }
 
@@ -111,7 +116,7 @@ func (w *Wrapper) ListReplicators(
 	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_replicator_list(w.node, ident))
+		return take(C.defra_p2p_replicator_list(w.node, C.DefraP2POptions{identity: ident}))
 	})
 	return unmarshalResult[[]client.Replicator](res)
 }
@@ -124,7 +129,7 @@ func (w *Wrapper) AddP2PCollections(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_collection_add(w.node, args.str(strings.Join(collectionIDs, ",")), ident))
+		return take(C.defra_p2p_collection_add(w.node, args.str(strings.Join(collectionIDs, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
@@ -136,7 +141,7 @@ func (w *Wrapper) DeleteP2PCollections(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_collection_delete(w.node, args.str(strings.Join(collectionIDs, ",")), ident))
+		return take(C.defra_p2p_collection_delete(w.node, args.str(strings.Join(collectionIDs, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
@@ -145,7 +150,7 @@ func (w *Wrapper) ListP2PCollections(
 	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_collection_list(w.node, ident))
+		return take(C.defra_p2p_collection_list(w.node, C.DefraP2POptions{identity: ident}))
 	})
 	return unmarshalResult[[]string](res)
 }
@@ -158,7 +163,7 @@ func (w *Wrapper) AddP2PDocuments(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_document_add(w.node, args.str(strings.Join(docIDs, ",")), ident))
+		return take(C.defra_p2p_document_add(w.node, args.str(strings.Join(docIDs, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
@@ -170,7 +175,7 @@ func (w *Wrapper) DeleteP2PDocuments(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_document_delete(w.node, args.str(strings.Join(docIDs, ",")), ident))
+		return take(C.defra_p2p_document_delete(w.node, args.str(strings.Join(docIDs, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
@@ -179,7 +184,7 @@ func (w *Wrapper) ListP2PDocuments(
 	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_document_list(w.node, ident))
+		return take(C.defra_p2p_document_list(w.node, C.DefraP2POptions{identity: ident}))
 	})
 	return unmarshalResult[[]string](res)
 }
@@ -194,7 +199,8 @@ func (w *Wrapper) SyncDocuments(
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
 		return take(C.defra_p2p_document_sync(w.node, args.str(collectionName),
-			args.str(strings.Join(docIDs, ",")), args.str(timeout(ctx)), ident))
+			args.str(strings.Join(docIDs, ",")),
+			C.DefraP2PSyncOptions{identity: ident, timeout_ms: timeout(ctx)}))
 	}).err()
 }
 
@@ -207,7 +213,8 @@ func (w *Wrapper) SyncCollectionVersions(
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
 		return take(C.defra_p2p_collection_sync_versions(w.node,
-			args.str(strings.Join(versionIDs, ",")), args.str(timeout(ctx)), ident))
+			args.str(strings.Join(versionIDs, ",")),
+			C.DefraP2PSyncOptions{identity: ident, timeout_ms: timeout(ctx)}))
 	}).err()
 }
 
@@ -219,8 +226,8 @@ func (w *Wrapper) SyncBranchableCollection(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_collection_sync_branchable(w.node,
-			args.str(collectionID), args.str(timeout(ctx)), ident))
+		return take(C.defra_p2p_collection_sync_branchable(w.node, args.str(collectionID),
+			C.DefraP2PSyncOptions{identity: ident, timeout_ms: timeout(ctx)}))
 	}).err()
 }
 
@@ -232,7 +239,7 @@ func (w *Wrapper) Connect(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_connect(w.target(ctx), args.str(strings.Join(addresses, ",")), ident))
+		return take(C.defra_p2p_connect(w.target(ctx), args.str(strings.Join(addresses, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
@@ -244,14 +251,15 @@ func (w *Wrapper) Disconnect(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_p2p_disconnect(w.target(ctx), args.str(strings.Join(addresses, ",")), ident))
+		return take(C.defra_p2p_disconnect(w.target(ctx), args.str(strings.Join(addresses, ",")), C.DefraP2POptions{identity: ident}))
 	}).err()
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	var args cstrings
 	defer args.free()
-	return take(C.defra_backup_import(w.target(ctx), args.str(filepath))).err()
+	return take(C.defra_backup_import(w.target(ctx), args.str(filepath),
+		C.DefraBackupImportOptions{})).err()
 }
 
 func (w *Wrapper) BasicExport(
@@ -267,7 +275,11 @@ func (w *Wrapper) BasicExport(
 		pretty = 1
 	}
 	return take(C.defra_backup_export(w.target(ctx), args.str(filepath),
-		args.str(strings.Join(opt.Collections, ",")), args.str(opt.Format), pretty)).err()
+		C.DefraBackupExportOptions{
+			collections: args.str(strings.Join(opt.Collections, ",")),
+			format:      args.str(opt.Format),
+			pretty:      pretty,
+		})).err()
 }
 
 func (w *Wrapper) AddCollection(
@@ -292,7 +304,7 @@ func (w *Wrapper) AddCollection(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_add(w.target(ctx), args.str(sdl), ident))
+		return take(C.defra_collection_add(w.target(ctx), args.str(sdl), C.DefraCollectionAddOptions{identity: ident}))
 	})
 	return unmarshalResult[[]client.CollectionVersion](res)
 }
@@ -305,7 +317,8 @@ func (w *Wrapper) AddDACPolicy(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_dac_policy_add(w.target(ctx), ident, args.str(policy)))
+		return take(C.defra_acp_dac_policy_add(w.target(ctx), args.str(policy),
+			C.DefraDacPolicyAddOptions{identity: ident}))
 	})
 	return unmarshalResult[client.AddPolicyResult](res)
 }
@@ -321,8 +334,9 @@ func (w *Wrapper) AddDACActorRelationship(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_dac_relationship_add(w.target(ctx), ident,
-			args.str(collectionName), args.str(docID), args.str(relation), args.str(targetActor)))
+		return take(C.defra_acp_dac_relationship_add(w.target(ctx),
+			args.str(collectionName), args.str(docID), args.str(relation), args.str(targetActor),
+			C.DefraDacRelationshipOptions{identity: ident}))
 	})
 	return unmarshalResult[client.AddActorRelationshipResult](res)
 }
@@ -338,8 +352,9 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_dac_relationship_delete(w.target(ctx), ident,
-			args.str(collectionName), args.str(docID), args.str(relation), args.str(targetActor)))
+		return take(C.defra_acp_dac_relationship_delete(w.target(ctx),
+			args.str(collectionName), args.str(docID), args.str(relation), args.str(targetActor),
+			C.DefraDacRelationshipOptions{identity: ident}))
 	})
 	return unmarshalResult[client.DeleteActorRelationshipResult](res)
 }
@@ -349,20 +364,20 @@ func (w *Wrapper) GetNACStatus(
 	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_nac_status(w.target(ctx), ident))
+		return take(C.defra_acp_nac_status(w.target(ctx), C.DefraNacOptions{identity: ident}))
 	})
 	return unmarshalResult[client.NACStatusResult](res)
 }
 
 func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_nac_re_enable(w.target(ctx), ident))
+		return take(C.defra_acp_nac_re_enable(w.target(ctx), C.DefraNacOptions{identity: ident}))
 	}).err()
 }
 
 func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_nac_disable(w.target(ctx), ident))
+		return take(C.defra_acp_nac_disable(w.target(ctx), C.DefraNacOptions{identity: ident}))
 	}).err()
 }
 
@@ -375,8 +390,8 @@ func (w *Wrapper) AddNACActorRelationship(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_nac_relationship_add(w.target(ctx), ident,
-			args.str(relation), args.str(targetActor)))
+		return take(C.defra_acp_nac_relationship_add(w.target(ctx),
+			args.str(relation), args.str(targetActor), C.DefraNacRelationshipOptions{identity: ident}))
 	})
 	return unmarshalResult[client.AddActorRelationshipResult](res)
 }
@@ -390,8 +405,8 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_acp_nac_relationship_delete(w.target(ctx), ident,
-			args.str(relation), args.str(targetActor)))
+		return take(C.defra_acp_nac_relationship_delete(w.target(ctx),
+			args.str(relation), args.str(targetActor), C.DefraNacRelationshipOptions{identity: ident}))
 	})
 	return unmarshalResult[client.DeleteActorRelationshipResult](res)
 }
@@ -409,7 +424,8 @@ func (w *Wrapper) PatchCollection(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_patch(w.target(ctx), args.str(patch), args.str(migrationJSON), ident))
+		return take(C.defra_collection_patch(w.target(ctx), args.str(patch),
+			C.DefraCollectionPatchOptions{identity: ident, lens_config: args.str(migrationJSON)}))
 	}).err()
 }
 
@@ -426,7 +442,8 @@ func (w *Wrapper) DeleteCollection(
 		activeOnly = 1
 	}
 	return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_delete(w.target(ctx), args.str(strings.Join(names, ",")), activeOnly, ident))
+		return take(C.defra_collection_delete(w.target(ctx), args.str(strings.Join(names, ",")),
+			C.DefraCollectionDeleteOptions{identity: ident, active_only: activeOnly}))
 	}).err()
 }
 
@@ -437,9 +454,9 @@ func (w *Wrapper) SetActiveCollectionVersion(
 ) error {
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Version: collectionVersionID}.c(&args)
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_set_active(w.target(ctx), copts, ident))
+		return take(C.defra_collection_set_active(w.target(ctx), args.str(collectionVersionID),
+			C.DefraCollectionSetActiveOptions{identity: ident}))
 	}).err()
 }
 
@@ -457,7 +474,8 @@ func (w *Wrapper) AddView(
 		transformCID = args.str(opt.TransformCID.Value())
 	}
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_view_add(w.target(ctx), args.str(query), args.str(sdl), transformCID, ident))
+		return take(C.defra_view_add(w.target(ctx), args.str(query), args.str(sdl),
+			C.DefraViewAddOptions{identity: ident, transform_cid: transformCID}))
 	})
 	return unmarshalResult[[]client.CollectionVersion](res)
 }
@@ -466,9 +484,15 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	var args cstrings
 	defer args.free()
 	opt := utils.NewOptions(opts...)
-	copts := getCollectionsOptions(opt).c(&args)
+	sel := getCollectionsOptions(opt).c(&args)
 	return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_view_refresh(w.target(ctx), copts, ident))
+		return take(C.defra_view_refresh(w.target(ctx), C.DefraViewRefreshOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+		}))
 	}).err()
 }
 
@@ -477,7 +501,7 @@ func (w *Wrapper) ListActions(
 	opts ...options.Enumerable[options.ListActionsOptions],
 ) ([]client.ActionExecution, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_action_list(w.target(ctx), ident))
+		return take(C.defra_action_list(w.target(ctx), C.DefraActionListOptions{identity: ident}))
 	})
 	return unmarshalResult[[]client.ActionExecution](res)
 }
@@ -492,8 +516,9 @@ func (w *Wrapper) SetMigration(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_lens_set(w.target(ctx), ident, args.str(config.SourceCollectionVersionID),
-			args.str(config.DestinationCollectionVersionID), args.str(string(lens))))
+		return take(C.defra_lens_set(w.target(ctx), args.str(config.SourceCollectionVersionID),
+			args.str(config.DestinationCollectionVersionID), args.str(string(lens)),
+			C.DefraLensOptions{identity: ident}))
 	})
 	return res.Value, res.err()
 }
@@ -510,7 +535,8 @@ func (w *Wrapper) AddLens(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_lens_add(w.target(ctx), ident, args.str(string(lensJSON))))
+		return take(C.defra_lens_add(w.target(ctx), args.str(string(lensJSON)),
+			C.DefraLensOptions{identity: ident}))
 	})
 	return res.Value, res.err()
 }
@@ -520,7 +546,7 @@ func (w *Wrapper) ListLenses(
 	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_lens_list(w.target(ctx), ident))
+		return take(C.defra_lens_list(w.target(ctx), C.DefraLensOptions{identity: ident}))
 	})
 	return unmarshalResult[map[string]model.Lens](res)
 }
@@ -551,9 +577,15 @@ func (w *Wrapper) GetCollections(
 	var args cstrings
 	defer args.free()
 	opt := utils.NewOptions(opts...)
-	copts := getCollectionsOptions(opt).c(&args)
+	sel := getCollectionsOptions(opt).c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_describe(w.target(ctx), copts, ident))
+		return take(C.defra_collection_describe(w.target(ctx), C.DefraCollectionDescribeOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+		}))
 	})
 	versions, err := unmarshalResult[[]client.CollectionVersion](res)
 	if err != nil {
@@ -576,11 +608,8 @@ func (w *Wrapper) ListIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.ListIndexesResult, error) {
-	var args cstrings
-	defer args.free()
-	copts := collectionOptions{}.c(&args)
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_list(w.target(ctx), copts, ident))
+		return take(C.defra_index_list(w.target(ctx), C.DefraIndexListOptions{identity: ident}))
 	})
 	return unmarshalResult[map[client.CollectionName][]client.ListIndexesResult](res)
 }
@@ -589,10 +618,9 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
 	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	var args cstrings
-	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_list(w.target(ctx), args.str(""), ident))
+		return take(C.defra_encrypted_index_list(w.target(ctx),
+			C.DefraEncryptedIndexListOptions{identity: ident}))
 	})
 	return unmarshalResult[map[client.CollectionName][]client.EncryptedIndexDescription](res)
 }
@@ -610,8 +638,11 @@ func (w *Wrapper) ExecRequest(
 	var args cstrings
 	defer args.free()
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_query_execute(w.target(ctx), args.str(query), ident,
-			args.str(operation), args.str(variables)))
+		return take(C.defra_query_execute(w.target(ctx), args.str(query), C.DefraQueryOptions{
+			identity:       ident,
+			operation_name: args.str(operation),
+			variables:      args.str(variables),
+		}))
 	})
 	if res.Status == subscriptionPending {
 		return &client.RequestResult{Subscription: subscriptionChannel(ctx, res.Value)}
@@ -653,11 +684,7 @@ func subscriptionChannel(ctx context.Context, id string) <-chan client.GQLResult
 }
 
 func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
-	readOnlyFlag := C.int(0)
-	if readOnly {
-		readOnlyFlag = 1
-	}
-	cResult := C.defra_transaction_create(w.node, readOnlyFlag)
+	cResult := C.defra_transaction_create(w.node, C.DefraTransactionOptions{read_only: cBool(readOnly)})
 	handle := cResult.txn_ptr
 	message := C.GoString(cResult.error)
 	failed := cResult.status != 0
@@ -673,7 +700,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 }
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return take(C.defra_print_dump(w.target(ctx))).err()
+	return take(C.defra_print_dump(w.target(ctx), C.DefraPrintDumpOptions{})).err()
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -700,7 +727,8 @@ func (w *Wrapper) VerifySignature(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_block_verify(w.target(ctx), args.str(string(pubKey.Type())),
-			args.str(pubKey.String()), args.str(blockCid), ident))
+		return take(C.defra_block_verify(w.target(ctx), args.str(blockCid),
+			args.str(string(pubKey.Type())), args.str(pubKey.String()),
+			C.DefraBlockVerifyOptions{identity: ident}))
 	}).err()
 }

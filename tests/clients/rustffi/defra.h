@@ -3,11 +3,14 @@
  *
  * The functions cover the calls of Go DefraDB's cbindings (libdefradb.h),
  * named defra_<noun>_<verb>. Names and types are prefixed and
- * NodeInitOptions adds fields after Go's, so this header is not a drop-in
- * for libdefradb.h. A call that works on a store takes a handle
- * naming a node or one of its transactions, and an identity handle naming
- * the caller (0 for none). Free every result a call returns with its free
- * function: defra_result_free, or defra_new_<kind>_result_free.
+ * DefraNodeInitOptions adds fields after Go's, so this header is not a
+ * drop-in for libdefradb.h. A call that works on a store takes a handle
+ * naming a node or one of its transactions. Each call that can grow takes
+ * its options as a struct, by value, whose zero value is every default; the
+ * caller's identity (0 for none) is one of its fields. Fields are only ever
+ * appended, so code built against an older header keeps working. Free every
+ * result a call returns with its free function: defra_result_free, or
+ * defra_new_<kind>_result_free.
  */
 
 
@@ -18,6 +21,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+/*
+ The version of the C API's options structs. Raised whenever an options
+ struct gains a field, so a caller can check that the library knows every
+ field it sets.
+ */
+#define ABI_VERSION 1
 
 /*
  The status an asynchronous signature completes with when the request did
@@ -36,7 +46,9 @@
    whose ID is in the value field; read its events with
    `defra_subscription_poll` and end it with `defra_subscription_close`
 
- The caller owns its strings and frees them with [`defra_result_free`].
+ Both strings are always set, as Go's `returnC` sets them: the one a result
+ does not use is empty, never null, so a host may read both. The caller
+ owns them and frees them with [`defra_result_free`].
  */
 typedef struct DefraResult {
   /*
@@ -44,14 +56,366 @@ typedef struct DefraResult {
    */
   int status;
   /*
-   Error message (null on success). Freed with the result.
+   Error message; empty, never null, on success. Freed with the result.
    */
   char *error;
   /*
-   JSON value (null on error). Freed with the result.
+   JSON value; empty, never null, on error or when there is none. Freed
+   with the result.
    */
   char *value;
 } DefraResult;
+
+/*
+ Options of `defra_acp_dac_policy_add`.
+ */
+typedef struct DefraDacPolicyAddOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraDacPolicyAddOptions;
+
+/*
+ Options of `defra_acp_dac_relationship_add` and
+ `defra_acp_dac_relationship_delete`.
+ */
+typedef struct DefraDacRelationshipOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraDacRelationshipOptions;
+
+/*
+ Options of the node access control calls status, disable, re-enable and
+ purge.
+ */
+typedef struct DefraNacOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraNacOptions;
+
+/*
+ Options of `defra_acp_nac_relationship_add` and
+ `defra_acp_nac_relationship_delete`.
+ */
+typedef struct DefraNacRelationshipOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraNacRelationshipOptions;
+
+/*
+ Options of `defra_action_list`.
+ */
+typedef struct DefraActionListOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraActionListOptions;
+
+/*
+ Options of `defra_batch_start` and `defra_batch_sign`.
+ */
+typedef struct DefraBatchOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraBatchOptions;
+
+/*
+ Options of `defra_block_verify`.
+ */
+typedef struct DefraBlockVerifyOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraBlockVerifyOptions;
+
+/*
+ Options of `defra_collection_add`.
+ */
+typedef struct DefraCollectionAddOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraCollectionAddOptions;
+
+/*
+ Options of `defra_collection_delete`.
+ */
+typedef struct DefraCollectionDeleteOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Delete only the active versions (1=true, 0=false).
+   */
+  int active_only;
+} DefraCollectionDeleteOptions;
+
+/*
+ Options of `defra_collection_describe`. With no collection chosen,
+ every active collection is described.
+ */
+typedef struct DefraCollectionDescribeOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraCollectionDescribeOptions;
+
+/*
+ Options of `defra_collection_patch`.
+ */
+typedef struct DefraCollectionPatchOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   The migration for the versions the patch adds, a lens configuration
+   (null or empty for none).
+   */
+  const char *lens_config;
+} DefraCollectionPatchOptions;
+
+/*
+ Options of `defra_collection_set_active`.
+ */
+typedef struct DefraCollectionSetActiveOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraCollectionSetActiveOptions;
+
+/*
+ Options of `defra_collection_truncate`.
+ */
+typedef struct DefraCollectionTruncateOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   A GraphQL filter as a JSON object; null removes every document.
+   */
+  const char *filter_json;
+} DefraCollectionTruncateOptions;
+
+/*
+ Options of `defra_document_add` and `defra_document_save_many`.
+ */
+typedef struct DefraDocumentAddOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   Encrypt every field (1=true, 0=false).
+   */
+  int encrypt;
+  /*
+   Comma-separated fields to encrypt (null or empty for none).
+   */
+  const char *encrypted_fields;
+  /*
+   Block signing: 0 node default, 1 sign, -1 do not sign.
+   */
+  int signing;
+} DefraDocumentAddOptions;
+
+/*
+ Options of `defra_document_get`.
+ */
+typedef struct DefraDocumentGetOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   Answer a deleted document too (1=true, 0=false).
+   */
+  int show_deleted;
+} DefraDocumentGetOptions;
+
+/*
+ Options of `defra_document_update`: the documents are `doc_id`, or those
+ `filter_json` matches.
+ */
+typedef struct DefraDocumentUpdateOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   The document to update.
+   */
+  const char *doc_id;
+  /*
+   A GraphQL filter choosing the documents to update, as JSON.
+   */
+  const char *filter_json;
+  /*
+   Block signing: 0 node default, 1 sign, -1 do not sign.
+   */
+  int signing;
+} DefraDocumentUpdateOptions;
+
+/*
+ Options of `defra_document_delete`: the documents are `doc_id`, or those
+ `filter_json` matches.
+ */
+typedef struct DefraDocumentDeleteOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   The document to delete.
+   */
+  const char *doc_id;
+  /*
+   A GraphQL filter choosing the documents to delete, as JSON.
+   */
+  const char *filter_json;
+  /*
+   Block signing: 0 node default, 1 sign, -1 do not sign.
+   */
+  int signing;
+} DefraDocumentDeleteOptions;
+
+/*
+ Options of `defra_document_purge`.
+ */
+typedef struct DefraDocumentPurgeOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraDocumentPurgeOptions;
 
 /*
  FFI result for identity creation, containing an identity handle.
@@ -65,7 +429,7 @@ typedef struct DefraNewIdentityResult {
    */
   int status;
   /*
-   Error message (null on success). Freed with the result.
+   Error message; empty, never null, on success. Freed with the result.
    */
   char *error;
   /*
@@ -75,33 +439,249 @@ typedef struct DefraNewIdentityResult {
 } DefraNewIdentityResult;
 
 /*
- Which collection a call acts on, and how it signs.
-
- Matches Go's CollectionOptions struct. Every string is optional: null or
- empty leaves that criterion out.
+ Options of `defra_identity_new` and `defra_identity_new_from_private_key`.
  */
-typedef struct CollectionOptions {
+typedef struct DefraIdentityNewOptions {
+  /*
+   "secp256k1" (the default, for null or empty), "secp256r1" or "ed25519".
+   */
+  const char *key_type;
+} DefraIdentityNewOptions;
+
+/*
+ Options of `defra_identity_new_from_bearer_token`. Nothing is optional
+ yet; the struct is where options will go.
+ */
+typedef struct DefraIdentityBearerOptions {
+  /*
+   Reserved: leave zero.
+   */
+  int32_t reserved;
+} DefraIdentityBearerOptions;
+
+/*
+ Options of `defra_identity_new_remote`: the public key as hex or as
+ bytes, and exactly one of the two signing callbacks.
+ */
+typedef struct DefraRemoteIdentityOptions {
+  /*
+   The key's type (null or empty for "secp256r1").
+   */
+  const char *key_type;
+  /*
+   The public key, hex-encoded.
+   */
+  const char *public_key_hex;
+  /*
+   The public key's bytes, used when `public_key_hex` is null.
+   */
+  const uint8_t *public_key;
+  /*
+   Length of `public_key` in bytes.
+   */
+  uintptr_t public_key_len;
+  /*
+   Passed back to the callback on every signing request.
+   */
+  uintptr_t signer_handle;
+  /*
+   A signer that answers before it returns: a `DefraRemoteSignCallback`,
+   spelled out so C sees a nullable function pointer.
+   */
+  int (*sign)(uintptr_t signer_handle,
+              const char *did,
+              const char *key_type,
+              const uint8_t *payload_ptr,
+              uintptr_t payload_len,
+              uint8_t *out_signature_ptr,
+              uintptr_t out_signature_capacity,
+              uintptr_t *out_signature_len);
+  /*
+   A signer that answers later, through `defra_remote_sign_complete`: a
+   `DefraRemoteSignAsyncCallback`, spelled out as `sign` is.
+   */
+  int (*sign_async)(uintptr_t signer_handle,
+                    const char *did,
+                    const char *key_type,
+                    const uint8_t *payload_ptr,
+                    uintptr_t payload_len,
+                    uintptr_t completion);
+} DefraRemoteIdentityOptions;
+
+/*
+ Options of `defra_index_new`.
+ */
+typedef struct DefraIndexNewOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
   /*
    Collection version ID.
    */
-  const char *version;
+  const char *collection_version_id;
   /*
    Collection ID.
    */
   const char *collection_id;
   /*
-   Collection name.
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   The index name (null or empty to generate one).
    */
   const char *name;
   /*
+   A unique index (1=true, 0=false).
+   */
+  int unique;
+  /*
+   A vector index description as JSON (null or empty for an ordered index).
+   */
+  const char *vector_json;
+} DefraIndexNewOptions;
+
+/*
+ Options of `defra_index_delete`.
+ */
+typedef struct DefraIndexDeleteOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
    Include inactive collection versions (1=true, 0=false).
    */
-  int get_inactive;
+  int collection_get_inactive;
+} DefraIndexDeleteOptions;
+
+/*
+ Options of `defra_index_list`. With no collection chosen, every
+ collection's indexes are listed.
+ */
+typedef struct DefraIndexListOptions {
   /*
-   Block signing for this call: 0 node default, 1 enabled, -1 disabled.
+   The caller's identity (0 for none).
    */
-  int enable_signing;
-} CollectionOptions;
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraIndexListOptions;
+
+/*
+ Options of `defra_encrypted_index_new`. Encrypted indexes choose their
+ collection by name.
+ */
+typedef struct DefraEncryptedIndexNewOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+  /*
+   The index type (null or empty for "equality").
+   */
+  const char *index_type;
+} DefraEncryptedIndexNewOptions;
+
+/*
+ Options of `defra_encrypted_index_delete`.
+ */
+typedef struct DefraEncryptedIndexDeleteOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraEncryptedIndexDeleteOptions;
+
+/*
+ Options of `defra_encrypted_index_list`. With no collection named, every
+ collection's encrypted indexes are listed.
+ */
+typedef struct DefraEncryptedIndexListOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraEncryptedIndexListOptions;
 
 /*
  FFI result for node creation, containing a node handle.
@@ -115,7 +695,7 @@ typedef struct DefraNewNodeResult {
    */
   int status;
   /*
-   Error message (null on success). Freed with the result.
+   Error message; empty, never null, on success. Freed with the result.
    */
   char *error;
   /*
@@ -127,10 +707,11 @@ typedef struct DefraNewNodeResult {
 /*
  Options for node initialization.
 
- Go's NodeInitOptions struct, field for field: an all-zero struct (null
- strings, zero numbers) is the default node, and every opt-out is a
- `disable_` flag. The fields after Go's are this implementation's own, so
- the struct is larger than Go's: a caller passes this header's struct,
+ Go's NodeInitOptions struct, field for field except `disable_api`: this
+ library serves no HTTP API yet, so it has no API to disable. An all-zero
+ struct (null strings, zero numbers) is the default node, and every opt-out
+ is a `disable_` flag. The fields after Go's are this implementation's own,
+ so the layout differs from Go's: a caller passes this header's struct,
  never one laid out by Go's `defra_structs.h`.
 
  Go's Badger options name the store regolith replaced, so they are named
@@ -138,14 +719,15 @@ typedef struct DefraNewNodeResult {
  option this implementation does not support yet fails `defra_node_new`
  when it is set, rather than being ignored.
  */
-typedef struct NodeInitOptions {
+typedef struct DefraNodeInitOptions {
   /*
    Path to the store directory. Null or empty keeps the store in memory.
    */
   const char *db_path;
   /*
    Comma-separated P2P listen multiaddrs. Empty listens on
-   `/ip4/0.0.0.0/tcp/9171`, as Go does.
+   `/ip4/0.0.0.0/tcp/9171`, as Go does; `disable_p2p_listen` listens on
+   nothing.
    */
   const char *listening_addresses;
   /*
@@ -169,11 +751,6 @@ typedef struct NodeInitOptions {
    Run without P2P (1=true, 0=false).
    */
   int disable_p2p;
-  /*
-   Run without the HTTP API (1=true, 0=false). An embedded node does not
-   serve the HTTP API yet.
-   */
-  int disable_api;
   /*
    Enable node access control at startup, owned by the node identity
    (1=true, 0=false).
@@ -202,10 +779,11 @@ typedef struct NodeInitOptions {
    */
   int store_encryption_key_len;
   /*
-   Sign blocks (1=true, 0=false), with the node identity, or with a
-   generated secp256k1 key when there is none.
+   Run without signing blocks (1=true, 0=false). Signing is on by
+   default, as in Go: with the node identity, or with a generated
+   secp256k1 key when there is none.
    */
-  int enable_signing;
+  int disable_signing;
   /*
    32-byte searchable encryption key, or null.
    */
@@ -240,7 +818,11 @@ typedef struct NodeInitOptions {
    */
   int enable_clear_backoff_on_retry;
   /*
-   The libp2p Ed25519 private key, or null for the node's stored key.
+   The Ed25519 private key the node's peer identity uses for this start
+   (its 32-byte seed, or seed and public key), or null for the node's
+   stored key. As Go's `P2PPrivateKey`, it applies to this start only: it
+   is never checked against or recorded in the store, so a later start
+   without it, or with another key, works and uses that start's key.
    */
   const uint8_t *p2p_private_key;
   /*
@@ -375,7 +957,160 @@ typedef struct NodeInitOptions {
    Per-peer rate limit refill rate (tokens/sec). 0 means use default (50).
    */
   double rate_limit_rate;
-} NodeInitOptions;
+  /*
+   Optional replication filter, asked whether to keep each replicated
+   document before its commit stores anything; a
+   `DefraReplicationFilterCallback`, spelled out so C sees a nullable
+   function pointer. Null keeps everything.
+   */
+  int (*replication_filter)(uintptr_t context,
+                            const char *collection_id,
+                            const char *collection_name,
+                            const char *doc_id,
+                            const char *fields_json);
+  /*
+   Passed back to `replication_filter` on every call.
+   */
+  uintptr_t replication_filter_context;
+  /*
+   libp2p resource manager memory budget in MiB; zero keeps the default.
+   */
+  uint64_t p2p_resource_memory_mib;
+  /*
+   libp2p resource manager file-descriptor budget, used only together
+   with `p2p_resource_memory_mib`; zero keeps the default.
+   */
+  uint64_t p2p_resource_file_descriptors;
+  /*
+   Streams one peer may hold open; zero keeps the default.
+   */
+  uintptr_t p2p_max_streams_per_peer;
+  /*
+   Run libp2p without listening (1=true, 0=false): a dial-only host that
+   connects out to peers and replicators but accepts no connections, as a
+   mobile embedder runs it. Several such nodes run in one process without
+   competing for a port. Refused together with `listening_addresses`.
+   */
+  int disable_p2p_listen;
+} DefraNodeInitOptions;
+
+/*
+ FFI result for transaction creation, containing a transaction handle.
+
+ Matches Go's NewTxnResult struct. The caller frees it with
+ [`defra_new_txn_result_free`].
+ */
+typedef struct DefraNewTxnResult {
+  /*
+   Status code: 0=success, 1=error
+   */
+  int status;
+  /*
+   Error message; empty, never null, on success. Freed with the result.
+   */
+  char *error;
+  /*
+   Handle to the transaction (0 on error).
+   */
+  uintptr_t txn_ptr;
+} DefraNewTxnResult;
+
+/*
+ Options of `defra_transaction_create`.
+ */
+typedef struct DefraTransactionOptions {
+  /*
+   A transaction that only reads (1=true, 0=false).
+   */
+  int read_only;
+} DefraTransactionOptions;
+
+/*
+ Options of `defra_version_get`.
+ */
+typedef struct DefraVersionOptions {
+  /*
+   Include build details (1=true, 0=false).
+   */
+  int full;
+  /*
+   Answer as JSON (1=true, 0=false).
+   */
+  int json;
+} DefraVersionOptions;
+
+/*
+ Options of every P2P and mobile call that needs nothing but the caller.
+ */
+typedef struct DefraP2POptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraP2POptions;
+
+/*
+ Options of the three sync calls.
+ */
+typedef struct DefraP2PSyncOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   How long the sync may take, in milliseconds (0 for no limit).
+   */
+  int64_t timeout_ms;
+} DefraP2PSyncOptions;
+
+/*
+ Options of `defra_p2p_replicator_add`.
+ */
+typedef struct DefraReplicatorAddOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Replication filters as JSON (null or empty to replicate every
+   document).
+   */
+  const char *filters_json;
+} DefraReplicatorAddOptions;
+
+/*
+ Options of `defra_p2p_replicator_delete`.
+ */
+typedef struct DefraReplicatorDeleteOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Comma-separated collections to stop replicating (null or empty for
+   every one).
+   */
+  const char *collections;
+} DefraReplicatorDeleteOptions;
+
+/*
+ Options of `defra_query_execute` and `defra_query_execute_async`.
+ */
+typedef struct DefraQueryOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   The operation to run, for a request with several (null or empty for
+   the only one).
+   */
+  const char *operation_name;
+  /*
+   The request's variables as a JSON object (null or empty for none).
+   */
+  const char *variables;
+} DefraQueryOptions;
 
 /*
  Receives the result of an asynchronous call, exactly once.
@@ -392,13 +1127,150 @@ typedef struct NodeInitOptions {
 typedef void (*DefraResultCallback)(uintptr_t context, struct DefraResult result);
 
 /*
+ Options of `defra_event_subscribe`.
+ */
+typedef struct DefraEventSubscribeOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraEventSubscribeOptions;
+
+/*
+ Options of `defra_view_add`.
+ */
+typedef struct DefraViewAddOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   The CID of a lens to apply to the view's rows (null or empty for none).
+   */
+  const char *transform_cid;
+} DefraViewAddOptions;
+
+/*
+ Options of `defra_view_refresh`. With no collection chosen, every view is
+ refreshed.
+ */
+typedef struct DefraViewRefreshOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Collection name.
+   */
+  const char *collection_name;
+  /*
+   Collection version ID.
+   */
+  const char *collection_version_id;
+  /*
+   Collection ID.
+   */
+  const char *collection_id;
+  /*
+   Include inactive collection versions (1=true, 0=false).
+   */
+  int collection_get_inactive;
+} DefraViewRefreshOptions;
+
+/*
+ Options of the three lens calls.
+ */
+typedef struct DefraLensOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraLensOptions;
+
+/*
+ Options of `defra_backup_export`.
+ */
+typedef struct DefraBackupExportOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+  /*
+   Comma-separated collections to export (null or empty for every one).
+   */
+  const char *collections;
+  /*
+   The format (null or empty for "json", the only one).
+   */
+  const char *format;
+  /*
+   Indent the JSON (1=true, 0=false).
+   */
+  int pretty;
+} DefraBackupExportOptions;
+
+/*
+ Options of `defra_backup_import`.
+ */
+typedef struct DefraBackupImportOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraBackupImportOptions;
+
+/*
+ Options of `defra_print_dump`.
+ */
+typedef struct DefraPrintDumpOptions {
+  /*
+   The caller's identity (0 for none).
+   */
+  uintptr_t identity;
+} DefraPrintDumpOptions;
+
+/*
+ Host callback that starts a signature and returns without waiting for it.
+
+ Contract:
+ - `signer_handle`, `did` and `key_type` are as for
+   [`DefraRemoteSignCallback`], and so is how long `signer_handle` and the
+   callback must stay valid: until every node using the DID is closed or
+   given another identity, not just until the handle is freed.
+ - `payload_ptr` / `payload_len` are the exact message bytes to sign. They,
+   `did` and `key_type` are valid only until the callback returns: copy the
+   payload if the signature is made later.
+ - `completion` names this one request. Return `0` once the signature is
+   under way, then report its result exactly once, from any thread, with
+   `defra_remote_sign_complete(completion, ...)`; reporting it from inside
+   the callback is fine too. Return any other value when the signature
+   cannot be started; the request then fails at once and must not be
+   reported.
+ - The callback runs on a DefraDB thread that serves other work: it must
+   return promptly and must not call another DefraDB function that waits.
+
+ Signature format: as for [`DefraRemoteSignCallback`].
+ */
+typedef int (*DefraRemoteSignAsyncCallback)(uintptr_t signer_handle,
+                                            const char *did,
+                                            const char *key_type,
+                                            const uint8_t *payload_ptr,
+                                            uintptr_t payload_len,
+                                            uintptr_t completion);
+
+/*
  Host callback used for non-exportable signing keys.
 
  The host app keeps the private key and signs the payload on demand. This is
  intended for device-bound keys such as Secure Enclave-backed P-256 keys.
 
  Contract:
- - `signer_handle` is an opaque host-managed context value.
+ - `signer_handle` is an opaque host-managed context value. It must stay
+   valid, and the callback callable, until every node using the DID is
+   closed or given another identity, not just until the identity's handle
+   is freed: a node keeps its hold on the identity, and signs through the
+   callback, after `defra_identity_free`. Freeing the context together with
+   the handle leaves such a node calling into freed memory.
  - `did` is the registered signing DID for this key.
  - `key_type` is the registered Defra key type, for example `secp256r1`.
  - `payload_ptr` / `payload_len` describe the exact message bytes to sign.
@@ -426,152 +1298,31 @@ typedef int (*DefraRemoteSignCallback)(uintptr_t signer_handle,
                                        uintptr_t *out_signature_len);
 
 /*
- Host callback that starts a signature and returns without waiting for it.
+ Whether to keep a replicated document: called with
+ `replication_filter_context`, the collection ID, the collection name (the
+ key a Go filter matches on; the ID stays the same across a rename), the
+ DocID and the values the document's commit writes as a JSON object that
+ keeps each value's kind: an integer as a JSON integer (any `i64` or
+ `u64`), a float always with a fraction or exponent (`3.0`, never `3`), bytes
+ as base64. An encrypted field, one that has not arrived, or one JSON cannot
+ carry, such as a NaN, is absent. Return non-zero to keep it, 0 to refuse it.
 
- Contract:
- - `signer_handle`, `did` and `key_type` are as for
-   [`DefraRemoteSignCallback`].
- - `payload_ptr` / `payload_len` are the exact message bytes to sign. They,
-   `did` and `key_type` are valid only until the callback returns: copy the
-   payload if the signature is made later.
- - `completion` names this one request. Return `0` once the signature is
-   under way, then report its result exactly once, from any thread, with
-   `defra_remote_sign_complete(completion, ...)`; reporting it from inside
-   the callback is fine too. Return any other value when the signature
-   cannot be started; the request then fails at once and must not be
-   reported.
- - The callback runs on a DefraDB thread that serves other work: it must
-   return promptly and must not call another DefraDB function that waits.
-
- Signature format: as for [`DefraRemoteSignCallback`].
+ It is called on the node's database workers and on its network threads,
+ from several threads at once, so it must be thread-safe, and it must not
+ block or call back into DefraDB. One document may be asked about more
+ than once (when it arrives, when it merges, and on a merge retry), so it
+ must decide from its arguments alone. An ID or name holding a NUL, which
+ no valid collection or DocID does, is refused without calling it.
  */
-typedef int (*DefraRemoteSignAsyncCallback)(uintptr_t signer_handle,
-                                            const char *did,
-                                            const char *key_type,
-                                            const uint8_t *payload_ptr,
-                                            uintptr_t payload_len,
-                                            uintptr_t completion);
-
-/*
- FFI result for transaction creation, containing a transaction handle.
-
- Matches Go's NewTxnResult struct. The caller frees it with
- [`defra_new_txn_result_free`].
- */
-typedef struct DefraNewTxnResult {
-  /*
-   Status code: 0=success, 1=error
-   */
-  int status;
-  /*
-   Error message (null on success). Freed with the result.
-   */
-  char *error;
-  /*
-   Handle to the transaction (0 on error).
-   */
-  uintptr_t txn_ptr;
-} DefraNewTxnResult;
+typedef int (*DefraReplicationFilterCallback)(uintptr_t context,
+                                              const char *collection_id,
+                                              const char *collection_name,
+                                              const char *doc_id,
+                                              const char *fields_json);
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-/*
- Add a DAC policy.
-
- Accepts a policy definition in YAML or JSON format.
- Returns a JSON object with the policy ID:
- ```json
- { "PolicyID": "sha256_hash_of_policy" }
- ```
-
- # Safety
-
- `policy` must be a valid null-terminated UTF-8 string containing
- the policy definition in YAML or JSON format.
- Adds the document access-control policy `policy` (YAML), created by the
- identity `identity_ptr` names, and answers with `{"PolicyID": ...}`.
-
- # Safety
-
- `policy` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_acp_dac_policy_add(uintptr_t node_ptr,
-                                            uintptr_t identity_ptr,
-                                            const char *policy);
-
-/*
- Add a DAC actor relationship (share document access with target).
-
- The requestor must be the document owner. Relation can be:
- - "reader" - read access
- - "updater" - read + update access
- - "deleter" - read + delete access
-
- Returns JSON with success status:
- ```json
- { "added": true }  // or false if already exists
- ```
-
- # Safety
-
- All string parameters must be valid null-terminated UTF-8 strings.
- Adds the relation `relation` between `actor` and document `doc_id` of
- collection `collection`, as the identity `identity_ptr` names, and
- answers with the result as JSON.
-
- # Safety
-
- Every string must be null or a valid null-terminated string.
- */
-struct DefraResult defra_acp_dac_relationship_add(uintptr_t node_ptr,
-                                                  uintptr_t identity_ptr,
-                                                  const char *collection,
-                                                  const char *doc_id,
-                                                  const char *relation,
-                                                  const char *actor);
-
-/*
- Delete a DAC actor relationship (revoke document access from target).
-
- The requestor must be the document owner.
-
- Returns JSON with success status:
- ```json
- { "deleted": true }  // or false if didn't exist
- ```
-
- # Safety
-
- All string parameters must be valid null-terminated UTF-8 strings.
- Deletes the relation `relation` between `actor` and document `doc_id` of
- collection `collection`, as the identity `identity_ptr` names, and
- answers with the result as JSON.
-
- # Safety
-
- Every string must be null or a valid null-terminated string.
- */
-struct DefraResult defra_acp_dac_relationship_delete(uintptr_t node_ptr,
-                                                     uintptr_t identity_ptr,
-                                                     const char *collection,
-                                                     const char *doc_id,
-                                                     const char *relation,
-                                                     const char *actor);
-
-/*
- Creates an identity for the logical DID `did`, acting by the bearer token
- the host provides instead of a key of its own: the token may be signed by
- a device-bound key authorized to act on behalf of `did`. Answers with the
- identity's handle.
-
- # Safety
-
- `did` and `bearer_token` must be null or valid null-terminated strings.
- */
-struct DefraNewIdentityResult defra_identity_new_from_bearer_token(const char *did,
-                                                                   const char *bearer_token);
 
 /*
  Sets the node's identity, which signs the node's blocks when signing is
@@ -580,414 +1331,875 @@ struct DefraNewIdentityResult defra_identity_new_from_bearer_token(const char *d
 struct DefraResult defra_node_set_identity(uintptr_t node_ptr, uintptr_t identity_ptr);
 
 /*
- Get the current NAC status.
-
- Returns a JSON object with NAC status information:
- ```json
- {
-   "status": "enabled" | "disabled temporarily" | "not configured",
-   "configured_enabled": true | false,
-   "dev_mode": true | false,
-   "owner": "did:key:..." | null
- }
- ```
-
- This function is NAC-gated with the `NacStatus` permission.
+ Adds a document access control policy, YAML or JSON.
 
  # Safety
 
- Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
- Answers with the node access-control status as JSON.
+ Every string must be null or a valid null-terminated string; `opts` must
+ be null or point to `opts_size` readable bytes.
  */
-struct DefraResult defra_acp_nac_status(uintptr_t node_ptr, uintptr_t identity_ptr);
+struct DefraResult defra_acp_dac_policy_add_sized(uintptr_t target,
+                                                  const char *policy,
+                                                  const struct DefraDacPolicyAddOptions *opts,
+                                                  uint32_t opts_size);
 
 /*
- Temporarily disable NAC.
-
- The requestor_did must be an admin. Returns success on completion.
+ Gives `actor` `relation` on document `doc_id` of `collection`.
 
  # Safety
 
- `requestor_did` must be a valid null-terminated UTF-8 string.
- Disables node access control, as the identity `identity_ptr` names.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_acp_nac_disable(uintptr_t node_ptr, uintptr_t identity_ptr);
+struct DefraResult defra_acp_dac_relationship_add_sized(uintptr_t target,
+                                                        const char *collection,
+                                                        const char *doc_id,
+                                                        const char *relation,
+                                                        const char *actor,
+                                                        const struct DefraDacRelationshipOptions *opts,
+                                                        uint32_t opts_size);
 
 /*
- Re-enable NAC after temporary disable.
-
- The requestor_did must be an admin. Returns success on completion.
+ Takes `relation` on document `doc_id` of `collection` from `actor`.
 
  # Safety
 
- `requestor_did` must be a valid null-terminated UTF-8 string.
- Re-enables node access control, as the identity `identity_ptr` names.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_acp_nac_re_enable(uintptr_t node_ptr, uintptr_t identity_ptr);
+struct DefraResult defra_acp_dac_relationship_delete_sized(uintptr_t target,
+                                                           const char *collection,
+                                                           const char *doc_id,
+                                                           const char *relation,
+                                                           const char *actor,
+                                                           const struct DefraDacRelationshipOptions *opts,
+                                                           uint32_t opts_size);
 
 /*
- Add a NAC actor relationship.
-
- The requestor must be an admin. The relation can be "admin" or a
- specific permission name (e.g., "read-document").
-
- Returns JSON with success status:
- ```json
- { "added": true }  // or false if already exists
- ```
+ Answers node access control's status.
 
  # Safety
 
- All string parameters must be valid null-terminated UTF-8 strings.
- Adds the node access-control relation `relation` ("admin" for null or
- empty) of `actor`, as the identity `identity_ptr` names.
+ As [`defra_acp_dac_policy_add_sized`].
+ */
+struct DefraResult defra_acp_nac_status_sized(uintptr_t target,
+                                              const struct DefraNacOptions *opts,
+                                              uint32_t opts_size);
+
+/*
+ Turns node access control off for now.
 
  # Safety
 
- `relation` and `actor` must be null or valid null-terminated strings.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_acp_nac_relationship_add(uintptr_t node_ptr,
-                                                  uintptr_t identity_ptr,
-                                                  const char *relation,
-                                                  const char *actor);
+struct DefraResult defra_acp_nac_disable_sized(uintptr_t target,
+                                               const struct DefraNacOptions *opts,
+                                               uint32_t opts_size);
 
 /*
- Delete a NAC actor relationship.
-
- The requestor must be an admin. The owner cannot be removed.
-
- Returns JSON with success status:
- ```json
- { "deleted": true }  // or false if didn't exist
- ```
+ Turns node access control back on.
 
  # Safety
 
- All string parameters must be valid null-terminated UTF-8 strings.
- Deletes the node access-control relation `relation` ("admin" for null or
- empty) of `actor`, as the identity `identity_ptr` names.
+ As [`defra_acp_dac_policy_add_sized`].
+ */
+struct DefraResult defra_acp_nac_re_enable_sized(uintptr_t target,
+                                                 const struct DefraNacOptions *opts,
+                                                 uint32_t opts_size);
+
+/*
+ Removes every node access control relationship (development mode only).
 
  # Safety
 
- `relation` and `actor` must be null or valid null-terminated strings.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_acp_nac_relationship_delete(uintptr_t node_ptr,
-                                                     uintptr_t identity_ptr,
-                                                     const char *relation,
-                                                     const char *actor);
+struct DefraResult defra_acp_nac_purge_sized(uintptr_t target,
+                                             const struct DefraNacOptions *opts,
+                                             uint32_t opts_size);
 
 /*
- List actions that are in progress or ended with an error.
-
- */
-struct DefraResult defra_action_list(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Exports the documents of the comma-separated `collections` (every
- collection for null or empty) to the file `filepath`, as JSON (`format`
- "json", the default for null or empty), indented when `pretty` is set.
+ Gives `actor` (a DID, or `*` for everyone) `relation` on the node.
 
  # Safety
 
- Every string must be null or a valid null-terminated string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_backup_export(uintptr_t node_ptr,
-                                       const char *filepath,
-                                       const char *collections,
-                                       const char *format,
-                                       int pretty);
+struct DefraResult defra_acp_nac_relationship_add_sized(uintptr_t target,
+                                                        const char *relation,
+                                                        const char *actor,
+                                                        const struct DefraNacRelationshipOptions *opts,
+                                                        uint32_t opts_size);
 
 /*
- Import documents from a JSON backup file.
-
- The file must be a JSON object mapping collection names to arrays of documents:
- ```json
- {
-     "User": [{"_docID": "...", "_docIDNew": "...", "name": "John", "age": 30}],
-     "Address": [{"_docID": "...", "_docIDNew": "...", "street": "...", "city": "..."}]
- }
- ```
-
- Self-referencing FK fields are stripped before creation and applied
- via update afterward, matching Go DefraDB behavior.
+ Takes `relation` on the node from `actor`.
 
  # Safety
 
- `filepath` must be null or a valid null-terminated string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_backup_import(uintptr_t node_ptr, const char *filepath);
+struct DefraResult defra_acp_nac_relationship_delete_sized(uintptr_t target,
+                                                           const char *relation,
+                                                           const char *actor,
+                                                           const struct DefraNacRelationshipOptions *opts,
+                                                           uint32_t opts_size);
 
 /*
- Starts (or restarts) collecting the blocks the identity `identity_ptr`
- names (0 for the node's) signs.
- */
-struct DefraResult defra_batch_start(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Sign all collected batch CIDs and return the batch signature as JSON.
-
- Returns JSON with fields: sig_type, identity, value (hex), merkle_root (hex), cid_count.
-
- The identity is the one `defra_batch_start` was given.
- */
-struct DefraResult defra_batch_sign(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Verifies that block `cid` was signed by `public_key`, of type `key_type`
- ("secp256k1", the default for null or empty, "secp256r1" or "ed25519"),
- on a node or in a transaction.
+ Lists the actions running or ended with an error.
 
  # Safety
 
- Every string must be null or a valid null-terminated string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_block_verify(uintptr_t node_ptr,
-                                      const char *key_type,
-                                      const char *public_key,
-                                      const char *cid,
-                                      uintptr_t identity_ptr);
+struct DefraResult defra_action_list_sized(uintptr_t target,
+                                           const struct DefraActionListOptions *opts,
+                                           uint32_t opts_size);
 
 /*
- Adds the collections an SDL document defines, on a node or in a
- transaction, and answers with the created collection versions as JSON.
+ Starts collecting the blocks the caller's writes create, to sign them
+ together.
 
  # Safety
 
- `sdl` must be null or a valid null-terminated UTF-8 string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_collection_add(uintptr_t node_ptr,
-                                        const char *sdl,
-                                        uintptr_t identity_ptr);
+struct DefraResult defra_batch_start_sized(uintptr_t target,
+                                           const struct DefraBatchOptions *opts,
+                                           uint32_t opts_size);
 
 /*
- Deletes the comma-separated collections `names`, on a node or in a
- transaction; with `active_only` set, only their active versions.
+ Signs the blocks collected since `defra_batch_start`.
 
  # Safety
 
- `names` must be null or a valid null-terminated string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_collection_delete(uintptr_t node_ptr,
-                                           const char *names,
-                                           int active_only,
-                                           uintptr_t identity_ptr);
+struct DefraResult defra_batch_sign_sized(uintptr_t target,
+                                          const struct DefraBatchOptions *opts,
+                                          uint32_t opts_size);
 
 /*
- Answers with the collection versions `opts` selects as JSON, on a node or
- in a transaction.
+ Checks that block `cid` was signed by `public_key`, of `key_type`.
 
  # Safety
 
- Every non-null string in `opts` must be a valid null-terminated string.
+ As [`defra_acp_dac_policy_add_sized`].
  */
-struct DefraResult defra_collection_describe(uintptr_t node_ptr,
-                                             struct CollectionOptions opts,
-                                             uintptr_t identity_ptr);
+struct DefraResult defra_block_verify_sized(uintptr_t target,
+                                            const char *cid,
+                                            const char *key_type,
+                                            const char *public_key,
+                                            const struct DefraBlockVerifyOptions *opts,
+                                            uint32_t opts_size);
 
 /*
- Applies a JSON Patch (RFC 6902) to the collection definitions, with an
- optional migration lens (`{"Lenses": [...]}`, null or empty for none).
- The patch's first operation names the collection: `/Users/Fields/-`
- patches `Users`.
+ Adds the collections an SDL document defines. `defra_collection_add` in
+ `defra.h` passes the size.
 
  # Safety
 
- `patch` and `lens_config` must be null or valid null-terminated strings.
+ `sdl` must be null or a valid null-terminated string; `opts` must be null
+ or point to `opts_size` readable bytes whose strings are valid.
  */
-struct DefraResult defra_collection_patch(uintptr_t node_ptr,
-                                          const char *patch,
-                                          const char *lens_config,
-                                          uintptr_t identity_ptr);
+struct DefraResult defra_collection_add_sized(uintptr_t target,
+                                              const char *sdl,
+                                              const struct DefraCollectionAddOptions *opts,
+                                              uint32_t opts_size);
 
 /*
- Makes the collection version `opts.version` names active, deactivating
- the other versions of its collection, on a node or in a transaction.
+ Deletes the collections named in `names`, comma-separated.
 
  # Safety
 
- Every non-null string in `opts` must be a valid null-terminated string.
+ As [`defra_collection_add_sized`].
  */
-struct DefraResult defra_collection_set_active(uintptr_t node_ptr,
-                                               struct CollectionOptions opts,
-                                               uintptr_t identity_ptr);
+struct DefraResult defra_collection_delete_sized(uintptr_t target,
+                                                 const char *names,
+                                                 const struct DefraCollectionDeleteOptions *opts,
+                                                 uint32_t opts_size);
 
 /*
- Deletes every document in the collection `opts` selects, keeping the
+ Describes the collection versions the options choose.
+
+ # Safety
+
+ As [`defra_collection_add_sized`].
+ */
+struct DefraResult defra_collection_describe_sized(uintptr_t target,
+                                                   const struct DefraCollectionDescribeOptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Applies a JSON Patch to the collection definitions.
+
+ # Safety
+
+ As [`defra_collection_add_sized`].
+ */
+struct DefraResult defra_collection_patch_sized(uintptr_t target,
+                                                const char *patch,
+                                                const struct DefraCollectionPatchOptions *opts,
+                                                uint32_t opts_size);
+
+/*
+ Makes collection version `version_id` its collection's active one.
+
+ # Safety
+
+ As [`defra_collection_add_sized`].
+ */
+struct DefraResult defra_collection_set_active_sized(uintptr_t target,
+                                                     const char *version_id,
+                                                     const struct DefraCollectionSetActiveOptions *opts,
+                                                     uint32_t opts_size);
+
+/*
+ Deletes the documents of the collection the options choose: every one,
+ or those `filter_json` matches.
+
+ # Safety
+
+ As [`defra_collection_add_sized`].
+ */
+struct DefraResult defra_collection_truncate_sized(uintptr_t target,
+                                                   const struct DefraCollectionTruncateOptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Adds the document, or the JSON array of documents, in `json`.
+
+ # Safety
+
+ `json` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes whose strings are valid.
+ */
+struct DefraResult defra_document_add_sized(uintptr_t target,
+                                            const char *json,
+                                            const struct DefraDocumentAddOptions *opts,
+                                            uint32_t opts_size);
+
+/*
+ Saves each document in the JSON array `json`: added if new, updated if
+ it exists.
+
+ # Safety
+
+ As [`defra_document_add_sized`].
+ */
+struct DefraResult defra_document_save_many_sized(uintptr_t target,
+                                                  const char *json,
+                                                  const struct DefraDocumentAddOptions *opts,
+                                                  uint32_t opts_size);
+
+/*
+ Answers document `doc_id`.
+
+ # Safety
+
+ As [`defra_document_add_sized`].
+ */
+struct DefraResult defra_document_get_sized(uintptr_t target,
+                                            const char *doc_id,
+                                            const struct DefraDocumentGetOptions *opts,
+                                            uint32_t opts_size);
+
+/*
+ Applies the JSON `updater` to the documents the options choose.
+
+ # Safety
+
+ As [`defra_document_add_sized`].
+ */
+struct DefraResult defra_document_update_sized(uintptr_t target,
+                                               const char *updater,
+                                               const struct DefraDocumentUpdateOptions *opts,
+                                               uint32_t opts_size);
+
+/*
+ Deletes the documents the options choose.
+
+ # Safety
+
+ As [`defra_document_add_sized`].
+ */
+struct DefraResult defra_document_delete_sized(uintptr_t target,
+                                               const struct DefraDocumentDeleteOptions *opts,
+                                               uint32_t opts_size);
+
+/*
+ Removes the documents in `doc_ids`, comma-separated, and their history
+ from this node.
+
+ # Safety
+
+ As [`defra_document_add_sized`].
+ */
+struct DefraResult defra_document_purge_sized(uintptr_t target,
+                                              const char *doc_ids,
+                                              const struct DefraDocumentPurgeOptions *opts,
+                                              uint32_t opts_size);
+
+/*
+ Creates an identity with a new key.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes whose strings
+ are valid.
+ */
+struct DefraNewIdentityResult defra_identity_new_sized(const struct DefraIdentityNewOptions *opts,
+                                                       uint32_t opts_size);
+
+/*
+ Imports an identity from the hex-encoded private key
+ `defra_identity_export_private_key` gave.
+
+ # Safety
+
+ `private_key_hex` must be null or a valid null-terminated string; `opts`
+ as [`defra_identity_new_sized`].
+ */
+struct DefraNewIdentityResult defra_identity_new_from_private_key_sized(const char *private_key_hex,
+                                                                        const struct DefraIdentityNewOptions *opts,
+                                                                        uint32_t opts_size);
+
+/*
+ An identity for `did` that signs with `bearer_token`.
+
+ # Safety
+
+ `did` and `bearer_token` must be null or valid null-terminated strings;
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraNewIdentityResult defra_identity_new_from_bearer_token_sized(const char *did,
+                                                                         const char *bearer_token,
+                                                                         const struct DefraIdentityBearerOptions *opts,
+                                                                         uint32_t opts_size);
+
+/*
+ Registers identity `did`, whose private key the host keeps and signs
+ with through the callback the options give.
+
+ # Safety
+
+ `did` must be null or a valid null-terminated string; `opts` must be null
+ or point to `opts_size` readable bytes, whose strings are valid and whose
+ `public_key` is null or `public_key_len` readable bytes.
+ */
+struct DefraNewIdentityResult defra_identity_new_remote_sized(const char *did,
+                                                              const struct DefraRemoteIdentityOptions *opts,
+                                                              uint32_t opts_size);
+
+/*
+ Creates an index over `fields`: comma-separated field names, each
+ optionally `:ASC` (the default) or `:DESC`.
+
+ # Safety
+
+ `fields` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes whose strings are valid.
+ */
+struct DefraResult defra_index_new_sized(uintptr_t target,
+                                         const char *fields,
+                                         const struct DefraIndexNewOptions *opts,
+                                         uint32_t opts_size);
+
+/*
+ Deletes index `name`.
+
+ # Safety
+
+ As [`defra_index_new_sized`].
+ */
+struct DefraResult defra_index_delete_sized(uintptr_t target,
+                                            const char *name,
+                                            const struct DefraIndexDeleteOptions *opts,
+                                            uint32_t opts_size);
+
+/*
+ Lists the indexes of the collection the options choose, or of every
  collection.
 
  # Safety
 
- Every non-null string in `opts` must be a valid null-terminated string.
+ As [`defra_index_new_sized`].
  */
-struct DefraResult defra_collection_truncate(uintptr_t node_ptr,
-                                             struct CollectionOptions opts,
-                                             uintptr_t identity_ptr);
+struct DefraResult defra_index_list_sized(uintptr_t target,
+                                          const struct DefraIndexListOptions *opts,
+                                          uint32_t opts_size);
 
 /*
- Deletes the documents of the collection `opts` selects that match
- `filter_json`, a GraphQL filter as a JSON object, keeping the collection.
+ Creates an encrypted index on `field`.
 
  # Safety
 
- `filter_json` must be null or a valid null-terminated string; every
- non-null string in `opts` must be one too.
+ As [`defra_index_new_sized`].
  */
-struct DefraResult defra_collection_truncate_with_filter(uintptr_t node_ptr,
-                                                         struct CollectionOptions opts,
-                                                         uintptr_t identity_ptr,
-                                                         const char *filter_json);
+struct DefraResult defra_encrypted_index_new_sized(uintptr_t target,
+                                                   const char *field,
+                                                   const struct DefraEncryptedIndexNewOptions *opts,
+                                                   uint32_t opts_size);
 
 /*
- Adds a JSON document, or a JSON array of documents, to the collection
- `opts` selects, and answers with the new document IDs as a JSON array.
- `is_encrypted` encrypts every field; otherwise `encrypted_fields`, a
- comma-separated list, names the fields to encrypt.
+ Deletes the encrypted index on `field`.
 
  # Safety
 
- `json_data` and `encrypted_fields` must be null or valid null-terminated
- strings; every non-null string in `opts` must be one too.
+ As [`defra_index_new_sized`].
  */
-struct DefraResult defra_document_add(uintptr_t node_ptr,
-                                      const char *json_data,
-                                      int is_encrypted,
-                                      const char *encrypted_fields,
-                                      struct CollectionOptions opts,
-                                      uintptr_t identity_ptr);
+struct DefraResult defra_encrypted_index_delete_sized(uintptr_t target,
+                                                      const char *field,
+                                                      const struct DefraEncryptedIndexDeleteOptions *opts,
+                                                      uint32_t opts_size);
 
 /*
- Deletes the document `doc_id` of the collection `opts` selects, answering
- with no value; or, without a document ID, every document matching the
- JSON `filter`, answering with `{"Count": ..., "DocIDs": [...]}`.
+ Lists the encrypted indexes of the collection named, or of every
+ collection.
 
  # Safety
 
- `doc_id` and `filter` must be null or valid null-terminated strings;
- every non-null string in `opts` must be one too.
+ As [`defra_index_new_sized`].
  */
-struct DefraResult defra_document_delete(uintptr_t node_ptr,
-                                         const char *doc_id,
-                                         const char *filter,
-                                         struct CollectionOptions opts,
-                                         uintptr_t identity_ptr);
+struct DefraResult defra_encrypted_index_list_sized(uintptr_t target,
+                                                    const struct DefraEncryptedIndexListOptions *opts,
+                                                    uint32_t opts_size);
 
 /*
- Answers with the document `doc_id` of the collection `opts` selects as a
- JSON object of its fields and `_docID`; with `show_deleted` set, a
- deleted document too.
+ Starts a node. `defra_node_new` in `defra.h` passes the size.
 
  # Safety
 
- `doc_id` must be null or a valid null-terminated string; every non-null
- string in `opts` must be one too.
+ `opts` must be null or point to `opts_size` readable bytes, whose strings
+ and byte buffers are valid as `NodeInitOptions` describes.
  */
-struct DefraResult defra_document_get(uintptr_t node_ptr,
-                                      const char *doc_id,
-                                      int show_deleted,
-                                      struct CollectionOptions opts,
-                                      uintptr_t identity_ptr);
+struct DefraNewNodeResult defra_node_new_sized(const struct DefraNodeInitOptions *opts,
+                                               uint32_t opts_size);
 
 /*
- Applies the JSON `updater` to the document `doc_id` of the collection
- `opts` selects, answering with no value; or, without a document ID, to
- every document matching the JSON `filter`, answering with
- `{"Count": ..., "DocIDs": [...]}`.
+ Creates a transaction on node `node`. Its handle stands in for the node
+ in any call that takes a target.
 
  # Safety
 
- `doc_id`, `filter` and `updater` must be null or valid null-terminated
- strings; every non-null string in `opts` must be one too.
+ `opts` must be null or point to `opts_size` readable bytes.
  */
-struct DefraResult defra_document_update(uintptr_t node_ptr,
-                                         const char *doc_id,
-                                         const char *filter,
-                                         const char *updater,
-                                         struct CollectionOptions opts,
-                                         uintptr_t identity_ptr);
+struct DefraNewTxnResult defra_transaction_create_sized(uintptr_t node,
+                                                        const struct DefraTransactionOptions *opts,
+                                                        uint32_t opts_size);
+
+/*
+ Answers the library's version.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_version_get_sized(const struct DefraVersionOptions *opts,
+                                           uint32_t opts_size);
+
+/*
+ Connects to the peers at `peer_addresses`, comma-separated.
+
+ # Safety
+
+ `peer_addresses` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_connect_sized(uintptr_t target,
+                                           const char *peer_addresses,
+                                           const struct DefraP2POptions *opts,
+                                           uint32_t opts_size);
+
+/*
+ Disconnects from the peers at `peer_addresses`, comma-separated.
+
+ # Safety
+
+ `peer_addresses` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_disconnect_sized(uintptr_t target,
+                                              const char *peer_addresses,
+                                              const struct DefraP2POptions *opts,
+                                              uint32_t opts_size);
+
+/*
+ Answers this node's peer information.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_info_sized(uintptr_t target,
+                                        const struct DefraP2POptions *opts,
+                                        uint32_t opts_size);
+
+/*
+ Lists the connected peers.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_peer_list_sized(uintptr_t target,
+                                             const struct DefraP2POptions *opts,
+                                             uint32_t opts_size);
+
+/*
+ Starts replicating the collections in `collections`, comma-separated.
+
+ # Safety
+
+ `collections` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_collection_add_sized(uintptr_t target,
+                                                  const char *collections,
+                                                  const struct DefraP2POptions *opts,
+                                                  uint32_t opts_size);
+
+/*
+ Stops replicating the collections in `collections`, comma-separated.
+
+ # Safety
+
+ `collections` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_collection_delete_sized(uintptr_t target,
+                                                     const char *collections,
+                                                     const struct DefraP2POptions *opts,
+                                                     uint32_t opts_size);
+
+/*
+ Lists the collections this node replicates.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_collection_list_sized(uintptr_t target,
+                                                   const struct DefraP2POptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Starts replicating the documents in `doc_ids`, comma-separated.
+
+ # Safety
+
+ `doc_ids` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_document_add_sized(uintptr_t target,
+                                                const char *doc_ids,
+                                                const struct DefraP2POptions *opts,
+                                                uint32_t opts_size);
+
+/*
+ Stops replicating the documents in `doc_ids`, comma-separated.
+
+ # Safety
+
+ `doc_ids` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_document_delete_sized(uintptr_t target,
+                                                   const char *doc_ids,
+                                                   const struct DefraP2POptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Lists the documents this node replicates.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_document_list_sized(uintptr_t target,
+                                                 const struct DefraP2POptions *opts,
+                                                 uint32_t opts_size);
+
+/*
+ Retries every replicator that failed to receive updates.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_replicator_retry_sized(uintptr_t target,
+                                                    const struct DefraP2POptions *opts,
+                                                    uint32_t opts_size);
+
+/*
+ Lists the replicators.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_replicator_list_sized(uintptr_t target,
+                                                   const struct DefraP2POptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Answers an address another device can connect to this node at.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_mobile_shareable_address_sized(uintptr_t target,
+                                                        const struct DefraP2POptions *opts,
+                                                        uint32_t opts_size);
+
+/*
+ Answers how far this node's sync has got.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_mobile_sync_status_sized(uintptr_t target,
+                                                  const struct DefraP2POptions *opts,
+                                                  uint32_t opts_size);
+
+/*
+ Tells the node its network changed, so it reconnects.
+
+ # Safety
+
+ `opts` must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_mobile_notify_network_change_sized(uintptr_t target,
+                                                            const struct DefraP2POptions *opts,
+                                                            uint32_t opts_size);
+
+/*
+ Answers what this node knows of peer `peer_id`.
+
+ # Safety
+
+ `peer_id` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_mobile_peer_details_sized(uintptr_t target,
+                                                   const char *peer_id,
+                                                   const struct DefraP2POptions *opts,
+                                                   uint32_t opts_size);
+
+/*
+ Syncs branchable collection `collection_id` from connected peers.
+
+ # Safety
+
+ `collection_id` must be null or a valid null-terminated string; `opts`
+ must be null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_p2p_collection_sync_branchable_sized(uintptr_t target,
+                                                              const char *collection_id,
+                                                              const struct DefraP2PSyncOptions *opts,
+                                                              uint32_t opts_size);
+
+/*
+ Syncs the collection versions in `version_ids`, comma-separated, from
+ connected peers.
+
+ # Safety
+
+ As [`defra_p2p_collection_sync_branchable_sized`].
+ */
+struct DefraResult defra_p2p_collection_sync_versions_sized(uintptr_t target,
+                                                            const char *version_ids,
+                                                            const struct DefraP2PSyncOptions *opts,
+                                                            uint32_t opts_size);
+
+/*
+ Syncs the documents in `doc_ids`, comma-separated, of `collection` from
+ connected peers.
+
+ # Safety
+
+ As [`defra_p2p_collection_sync_branchable_sized`].
+ */
+struct DefraResult defra_p2p_document_sync_sized(uintptr_t target,
+                                                 const char *collection,
+                                                 const char *doc_ids,
+                                                 const struct DefraP2PSyncOptions *opts,
+                                                 uint32_t opts_size);
+
+/*
+ Adds a replicator at `addresses` for `collections`, both comma-separated.
+
+ # Safety
+
+ Every string must be null or a valid null-terminated string; `opts` must
+ be null or point to `opts_size` readable bytes whose strings are valid.
+ */
+struct DefraResult defra_p2p_replicator_add_sized(uintptr_t target,
+                                                  const char *collections,
+                                                  const char *addresses,
+                                                  const struct DefraReplicatorAddOptions *opts,
+                                                  uint32_t opts_size);
+
+/*
+ Deletes replicator `id`, or stops it replicating the collections named.
+
+ # Safety
+
+ As [`defra_p2p_replicator_add_sized`].
+ */
+struct DefraResult defra_p2p_replicator_delete_sized(uintptr_t target,
+                                                     const char *id,
+                                                     const struct DefraReplicatorDeleteOptions *opts,
+                                                     uint32_t opts_size);
+
+/*
+ Runs the GraphQL request `query` and answers with its JSON response.
+
+ # Safety
+
+ `query` must be null or a valid null-terminated UTF-8 string; `opts` must
+ be null or point to `opts_size` readable bytes whose strings are valid.
+ */
+struct DefraResult defra_query_execute_sized(uintptr_t target,
+                                             const char *query,
+                                             const struct DefraQueryOptions *opts,
+                                             uint32_t opts_size);
+
+/*
+ `defra_query_execute` for a caller called back instead of waiting:
+ `callback` receives `context` and the result exactly once. Options it
+ cannot read are reported to `callback` before this returns.
+
+ # Safety
+
+ As [`defra_query_execute_sized`]; the strings are read only before this
+ returns.
+ */
+void defra_query_execute_async_sized(uintptr_t target,
+                                     const char *query,
+                                     DefraResultCallback callback,
+                                     uintptr_t context,
+                                     const struct DefraQueryOptions *opts,
+                                     uint32_t opts_size);
+
+/*
+ Subscribes to the node events named in `names`, comma-separated, and
+ answers with the subscription's ID for `defra_subscription_poll`.
+
+ # Safety
+
+ `names` must be null or a valid null-terminated string; `opts` must be
+ null or point to `opts_size` readable bytes.
+ */
+struct DefraResult defra_event_subscribe_sized(uintptr_t target,
+                                               const char *names,
+                                               const struct DefraEventSubscribeOptions *opts,
+                                               uint32_t opts_size);
+
+/*
+ Adds a view: the collection `sdl` defines, whose documents `query`
+ answers.
+
+ # Safety
+
+ Every string must be null or a valid null-terminated string; `opts` must
+ be null or point to `opts_size` readable bytes whose strings are valid.
+ */
+struct DefraResult defra_view_add_sized(uintptr_t target,
+                                        const char *query,
+                                        const char *sdl,
+                                        const struct DefraViewAddOptions *opts,
+                                        uint32_t opts_size);
+
+/*
+ Refreshes the materialized views the options choose.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_view_refresh_sized(uintptr_t target,
+                                            const struct DefraViewRefreshOptions *opts,
+                                            uint32_t opts_size);
+
+/*
+ Adds the lens `config` describes, and answers with its CID.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_lens_add_sized(uintptr_t target,
+                                        const char *config,
+                                        const struct DefraLensOptions *opts,
+                                        uint32_t opts_size);
+
+/*
+ Lists the lenses.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_lens_list_sized(uintptr_t target,
+                                         const struct DefraLensOptions *opts,
+                                         uint32_t opts_size);
+
+/*
+ Sets the migration from collection version `src` to `dst` to the lens
+ `config` describes.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_lens_set_sized(uintptr_t target,
+                                        const char *src,
+                                        const char *dst,
+                                        const char *config,
+                                        const struct DefraLensOptions *opts,
+                                        uint32_t opts_size);
+
+/*
+ Exports the documents the caller can read to the JSON file `filepath`.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_backup_export_sized(uintptr_t target,
+                                             const char *filepath,
+                                             const struct DefraBackupExportOptions *opts,
+                                             uint32_t opts_size);
+
+/*
+ Imports the documents in the JSON backup file `filepath`.
+
+ # Safety
+
+ As [`defra_view_add_sized`].
+ */
+struct DefraResult defra_backup_import_sized(uintptr_t target,
+                                             const char *filepath,
+                                             const struct DefraBackupImportOptions *opts,
+                                             uint32_t opts_size);
 
 /*
  Logs every key of the node's store, with its value's size. Unwise on a
  large database.
- */
-struct DefraResult defra_print_dump(uintptr_t node_ptr);
-
-/*
- Creates an encrypted index of type `index_type` ("equality", the default
- for null or empty) on field `field_name` of collection `collection_name`,
- and answers with its description as JSON.
 
  # Safety
 
- Every string must be null or a valid null-terminated string.
+ `opts` must be null or point to `opts_size` readable bytes.
  */
-struct DefraResult defra_encrypted_index_new(uintptr_t node_ptr,
-                                             const char *collection_name,
-                                             const char *field_name,
-                                             const char *index_type_name,
-                                             uintptr_t identity_ptr);
+struct DefraResult defra_print_dump_sized(uintptr_t target,
+                                          const struct DefraPrintDumpOptions *opts,
+                                          uint32_t opts_size);
 
 /*
- Deletes the encrypted index on field `field_name` of collection
- `collection_name`.
-
- # Safety
-
- Every string must be null or a valid null-terminated string.
- */
-struct DefraResult defra_encrypted_index_delete(uintptr_t node_ptr,
-                                                const char *collection_name,
-                                                const char *field_name,
-                                                uintptr_t identity_ptr);
-
-/*
- Answers with the encrypted indexes of collection `collection_name` as a
- JSON array, or, for null or empty, every collection's as a JSON object
- keyed by collection name.
-
- # Safety
-
- `collection_name` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_encrypted_index_list(uintptr_t node_ptr,
-                                              const char *collection_name,
-                                              uintptr_t identity_ptr);
-
-/*
- Creates an identity with a new key of type `key_type`: "secp256k1" (the
- default, for null or empty), "secp256r1" or "ed25519".
-
- # Safety
-
- `key_type` must be null or a valid null-terminated string.
- */
-struct DefraNewIdentityResult defra_identity_new(const char *key_type);
-
-/*
- Imports an identity from a hex-encoded 32-byte secp256k1 private key as
- Go's `NewIdentityFromPrivateKey` does. Other key types import with
- [`defra_identity_new_from_typed_private_key`].
-
- # Safety
-
- `private_key_hex` must be null or a valid null-terminated string.
- */
-struct DefraNewIdentityResult defra_identity_new_from_private_key(const char *private_key_hex);
-
-/*
- Imports an identity of `key_type` (as [`defra_identity_new`] names it)
- from the hex-encoded private key [`defra_identity_export_private_key`]
- gave. Not in Go's C API, which imports secp256k1 keys only.
-
- # Safety
-
- `key_type` and `private_key_hex` must be null or valid null-terminated
- strings.
- */
-struct DefraNewIdentityResult defra_identity_new_from_typed_private_key(const char *key_type,
-                                                                        const char *private_key_hex);
-
-/*
- Returns the identity's private key, hex-encoded.
+ Returns the identity's private key, hex-encoded. The key leaves no unwiped
+ copy behind, and [`defra_result_free`](crate::types::defra_result_free)
+ wipes it before freeing it.
  */
 struct DefraResult defra_identity_export_private_key(uintptr_t identity_ptr);
 
@@ -1013,90 +2225,6 @@ void defra_identity_free(uintptr_t identity_ptr);
 struct DefraResult defra_node_identity(uintptr_t node_ptr);
 
 /*
- Creates the index `index_name` on the collection `opts.name` names, over
- `fields`: comma-separated field names, each optionally `:ASC` (the
- default) or `:DESC`. `vector_json`, a vector index description, makes it a
- vector index (null or empty for none). Answers with the index
- description as JSON.
-
- # Safety
-
- `index_name`, `fields` and `vector_json` must be null or valid
- null-terminated strings; every non-null string in `opts` must be one too.
- */
-struct DefraResult defra_index_new(uintptr_t node_ptr,
-                                   const char *index_name,
-                                   const char *fields,
-                                   int is_unique,
-                                   const char *vector_json,
-                                   struct CollectionOptions opts,
-                                   uintptr_t identity_ptr);
-
-/*
- Deletes the index `index_name` from the collection `opts.name` names.
-
- # Safety
-
- `index_name` must be null or a valid null-terminated string; every
- non-null string in `opts` must be one too.
- */
-struct DefraResult defra_index_delete(uintptr_t node_ptr,
-                                      const char *index_name,
-                                      struct CollectionOptions opts,
-                                      uintptr_t identity_ptr);
-
-/*
- Answers with the indexes of the collection `opts.name` names as a JSON
- array, or, when it names none, with every collection's indexes as a JSON
- object keyed by collection name.
-
- # Safety
-
- Every non-null string in `opts` must be a valid null-terminated string.
- */
-struct DefraResult defra_index_list(uintptr_t node_ptr,
-                                    struct CollectionOptions opts,
-                                    uintptr_t identity_ptr);
-
-/*
- Adds a lens, on a node or in a transaction, and answers with its ID.
-
- # Safety
-
- `cfg` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_lens_add(uintptr_t node_ptr, uintptr_t identity_ptr, const char *cfg);
-
-/*
- Answers with the node's lenses as JSON, on a node or in a transaction.
- */
-struct DefraResult defra_lens_list(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Sets the lens `cfg` as the migration from collection version `src` to
- `dst`, on a node or in a transaction, and answers with the lens ID.
-
- # Safety
-
- `src`, `dst` and `cfg` must be null or valid null-terminated strings.
- */
-struct DefraResult defra_lens_set(uintptr_t node_ptr,
-                                  uintptr_t identity_ptr,
-                                  const char *src,
-                                  const char *dst,
-                                  const char *cfg);
-
-/*
- Creates and starts an embedded DefraDB node.
-
- # Safety
-
- Every non-null pointer in `options` must be valid for the call: strings
- null-terminated, byte buffers at least their stated length.
- */
-struct DefraNewNodeResult defra_node_new(struct NodeInitOptions options);
-
-/*
  Closes the node and releases its handle, with every transaction and
  subscription still open on it.
  */
@@ -1109,255 +2237,13 @@ struct DefraResult defra_node_close(uintptr_t node_ptr);
 struct DefraResult defra_node_options(uintptr_t node_ptr);
 
 /*
- Adds the comma-separated `collections` to the collections the node
- replicates.
-
- # Safety
-
- `collections` must be null or a valid null-terminated string.
+ The API version of this library's options structs.
  */
-struct DefraResult defra_p2p_collection_add(uintptr_t node_ptr,
-                                            const char *collections,
-                                            uintptr_t identity_ptr);
-
-/*
- Removes the comma-separated `collections` from the collections the node
- replicates.
-
- # Safety
-
- `collections` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_collection_delete(uintptr_t node_ptr,
-                                               const char *collections,
-                                               uintptr_t identity_ptr);
-
-/*
- Answers with the collections the node replicates as a JSON array.
- */
-struct DefraResult defra_p2p_collection_list(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Synchronizes the branchable collection `collection_id` from connected
- peers, within `timeout_str`, a Go duration (null or empty for none).
-
- # Safety
-
- `collection_id` and `timeout_str` must be null or valid null-terminated
- strings.
- */
-struct DefraResult defra_p2p_collection_sync_branchable(uintptr_t node_ptr,
-                                                        const char *collection_id,
-                                                        const char *timeout_str,
-                                                        uintptr_t identity_ptr);
-
-/*
- Synchronizes the comma-separated collection versions `version_ids` from
- connected peers, within `timeout_str`, a Go duration (null or empty for
- none).
-
- # Safety
-
- `version_ids` and `timeout_str` must be null or valid null-terminated
- strings.
- */
-struct DefraResult defra_p2p_collection_sync_versions(uintptr_t node_ptr,
-                                                      const char *version_ids,
-                                                      const char *timeout_str,
-                                                      uintptr_t identity_ptr);
-
-/*
- Adds the comma-separated document IDs `doc_ids` to the documents the
- node replicates.
-
- # Safety
-
- `doc_ids` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_document_add(uintptr_t node_ptr,
-                                          const char *doc_ids,
-                                          uintptr_t identity_ptr);
-
-/*
- Removes the comma-separated document IDs `doc_ids` from the documents the
- node replicates.
-
- # Safety
-
- `doc_ids` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_document_delete(uintptr_t node_ptr,
-                                             const char *doc_ids,
-                                             uintptr_t identity_ptr);
-
-/*
- Answers with the IDs of the documents the node replicates as a JSON
- array.
- */
-struct DefraResult defra_p2p_document_list(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Synchronizes the comma-separated documents `doc_ids` of collection
- `collection` from connected peers, within `timeout_str`, a Go duration
- (null or empty for none).
-
- # Safety
-
- Every string must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_document_sync(uintptr_t node_ptr,
-                                           const char *collection,
-                                           const char *doc_ids,
-                                           const char *timeout_str,
-                                           uintptr_t identity_ptr);
-
-/*
- Answers with the best address to share with another peer so it can dial
- this node, as a JSON string, or JSON `null` while there is none yet (the
- node runs without P2P, or its transport has no dialable address).
- */
-struct DefraResult defra_mobile_shareable_address(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Answers with the node's live P2P sync status as JSON: its outbound push
- backlog, the DAGs it is still fetching, and its retry and overload
- counters.
- */
-struct DefraResult defra_mobile_sync_status(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Answers with everything the node knows about the peer `peer_id`, a raw
- transport peer ID, as JSON: whether it is connected, what was pushed to
- it, and its retry state.
-
- # Safety
-
- `peer_id` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_mobile_peer_details(uintptr_t node_ptr,
-                                             const char *peer_id,
-                                             uintptr_t identity_ptr);
-
-/*
- Tells the node its network may have changed (Wi-Fi to cellular, a new
- address, waking up), so the iroh transport looks for new paths to its
- peers at once instead of waiting to notice. With libp2p it does nothing.
- */
-struct DefraResult defra_mobile_notify_network_change(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Connects to the comma-separated peer multiaddrs `peer_addresses`.
-
- # Safety
-
- `peer_addresses` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_connect(uintptr_t node_ptr,
-                                     const char *peer_addresses,
-                                     uintptr_t identity_ptr);
-
-/*
- Disconnects from the comma-separated peer multiaddrs `peer_addresses`.
-
- # Safety
-
- `peer_addresses` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_p2p_disconnect(uintptr_t node_ptr,
-                                        const char *peer_addresses,
-                                        uintptr_t identity_ptr);
-
-/*
- Answers with the addresses other peers reach this node at, as a JSON
- array: each multiaddr with this node's peer ID appended. A node without
- P2P answers `null`, as Go's does, rather than an error.
- */
-struct DefraResult defra_p2p_info(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Answers with the peers the node is connected to as a JSON array.
- */
-struct DefraResult defra_p2p_peer_list(uintptr_t node_ptr, uintptr_t identity_ptr);
-
-/*
- Replicates the comma-separated `collections` to the peer the
- comma-separated multiaddrs `addresses` name.
-
- # Safety
-
- `collections` and `addresses` must be null or valid null-terminated
- strings.
- */
-struct DefraResult defra_p2p_replicator_add(uintptr_t node_ptr,
-                                            const char *collections,
-                                            const char *addresses,
-                                            uintptr_t identity_ptr);
-
-/*
- Stops replicating the comma-separated `collections` (every collection for
- null or empty) to the replicator `id`.
-
- # Safety
-
- `collections` and `id` must be null or valid null-terminated strings.
- */
-struct DefraResult defra_p2p_replicator_delete(uintptr_t node_ptr,
-                                               const char *collections,
-                                               const char *id,
-                                               uintptr_t identity_ptr);
-
-/*
- Answers with the node's replicators as a JSON array of Go's
- `client.Replicator`.
- */
-struct DefraResult defra_p2p_replicator_list(uintptr_t node_ptr, uintptr_t identity_ptr);
+uint32_t defra_abi_version(void);
 
 struct DefraResult defra_profiling_start(const char *output_path);
 
 struct DefraResult defra_profiling_stop(void);
-
-/*
- Executes a GraphQL request on a node, or in a transaction, as the
- identity `identity_ptr` names (0 for none).
-
- A query or mutation answers with status 0 and its GraphQL result as JSON,
- `{"data": ..., "errors": [...]}`; GraphQL errors are part of that result.
- A subscription answers with status 2 and the subscription's ID, which
- `defra_subscription_poll` reads and `defra_subscription_close` ends.
- Status 1 reports a request that could not run.
-
- # Safety
-
- Every string must be null or a valid null-terminated UTF-8 string;
- `operation_name` and `variables` may be null or empty for none.
- */
-struct DefraResult defra_query_execute(uintptr_t node_ptr,
-                                       const char *query,
-                                       uintptr_t identity_ptr,
-                                       const char *operation_name,
-                                       const char *variables);
-
-/*
- [`defra_query_execute`] for a caller that is called back instead of
- waiting: returns once the request is admitted to the node's worker pool,
- and `callback` receives `context` and the result exactly once, as
- [`defra_query_execute`] would return it, on the DefraDB thread that ran
- the request. A request refused before it runs (an invalid argument, a
- denied permission) and a subscription, which answers at once with its ID,
- call it on the caller's thread before this returns.
-
- # Safety
-
- As for [`defra_query_execute`]; the strings are read only before this
- returns.
- */
-void defra_query_execute_async(uintptr_t node_ptr,
-                               const char *query,
-                               uintptr_t identity_ptr,
-                               const char *operation_name,
-                               const char *variables,
-                               DefraResultCallback callback,
-                               uintptr_t context);
 
 /*
  Report the result of a signature that a `DefraRemoteSignAsyncCallback`
@@ -1384,64 +2270,6 @@ int defra_remote_sign_complete(uintptr_t completion,
                                uintptr_t signature_len);
 
 /*
- Register an identity whose private key stays outside DefraDB.
-
- The host provides the DID, public key, key type, and a signing callback.
- This supports device-bound keys (for example Secure Enclave P-256 keys) and
- remote identity providers such as Orbis without exporting private key bytes.
-
- Swift can import this symbol directly from the generated Apple package.
- The callback is required and uses a plain C function-pointer ABI.
- */
-struct DefraNewIdentityResult defra_identity_new_remote(const char *did,
-                                                        const char *public_key_hex,
-                                                        const char *key_type,
-                                                        uintptr_t signer_handle,
-                                                        DefraRemoteSignCallback callback);
-
-/*
- Register an identity whose public key is already available as raw bytes.
-
- This is intended for Swift and Objective-C callers that already have the
- device public key as `Data` or `UnsafePointer<UInt8>`. The callback contract
- matches [`defra_identity_new_remote`].
-
- Public key format:
- - `secp256r1` / `secp256k1`: uncompressed SEC1 / X9.63 bytes
- - `ed25519`: raw 32-byte public key
- */
-struct DefraNewIdentityResult defra_identity_new_remote_bytes(const char *did,
-                                                              const uint8_t *public_key_ptr,
-                                                              uintptr_t public_key_len,
-                                                              const char *key_type,
-                                                              uintptr_t signer_handle,
-                                                              DefraRemoteSignCallback callback);
-
-/*
- [`defra_identity_new_remote`] for a host whose signer answers later: the
- callback starts each signature and returns at once, and the host reports
- the result with `defra_remote_sign_complete`. No DefraDB thread waits
- while the host signs, so this is the form for a host that signs on its
- own queue or over the network, and for a node running a single worker.
- */
-struct DefraNewIdentityResult defra_identity_new_remote_async(const char *did,
-                                                              const char *public_key_hex,
-                                                              const char *key_type,
-                                                              uintptr_t signer_handle,
-                                                              DefraRemoteSignAsyncCallback callback);
-
-/*
- [`defra_identity_new_remote_bytes`] with an asynchronous callback, as
- [`defra_identity_new_remote_async`].
- */
-struct DefraNewIdentityResult defra_identity_new_remote_bytes_async(const char *did,
-                                                                    const uint8_t *public_key_ptr,
-                                                                    uintptr_t public_key_len,
-                                                                    const char *key_type,
-                                                                    uintptr_t signer_handle,
-                                                                    DefraRemoteSignAsyncCallback callback);
-
-/*
  Returns the next pending result of subscription `id`: status 0 with the
  GraphQL result as JSON, or status 2 with no value when none is pending.
  A subscription that has ended reports status 1 and is closed.
@@ -1463,43 +2291,15 @@ struct DefraResult defra_subscription_poll(const char *id);
 struct DefraResult defra_subscription_close(const char *id);
 
 /*
- Subscribes to node `node_ptr`'s events named in `names`, comma-separated
- (`"update,merge-complete"`; `"*"` names them all), as the identity
- `identity_ptr` names, and answers with status 2 and the subscription's
- ID.
-
- Each `defra_subscription_poll` of the ID yields the next event as a JSON
- object whose `name` is the event's name, with that event's fields
- beside it. Events carry documents without document access control, so
- when node access control is on, only an identity allowed to bypass
- document access control may subscribe.
-
- # Safety
-
- `names` must be null or a valid null-terminated string.
- */
-struct DefraResult defra_event_subscribe(uintptr_t node_ptr,
-                                         const char *names,
-                                         uintptr_t identity_ptr);
-
-/*
- Creates a database transaction on node `node_ptr`.
-
- The returned handle stands in for the node in any call that takes a node
- or a transaction, which then runs in the transaction. It is released by
- [`defra_transaction_commit`] or [`defra_transaction_discard`].
- */
-struct DefraNewTxnResult defra_transaction_create(uintptr_t node_ptr, int is_read_only);
-
-/*
  Commits the transaction and releases its handle, whether or not the
- commit succeeds.
+ commit succeeds. It runs after every call made on the transaction before
+ it, asynchronous queries still queued included.
  */
 struct DefraResult defra_transaction_commit(uintptr_t txn_ptr);
 
 /*
- Discards the transaction and releases its handle. Discarding a handle
- that is already released does nothing.
+ Discards the transaction and releases its handle, after every call made
+ on it before. Discarding a handle that is already released does nothing.
  */
 void defra_transaction_discard(uintptr_t txn_ptr);
 
@@ -1545,61 +2345,288 @@ void defra_new_txn_result_free(struct DefraNewTxnResult *result);
  */
 void defra_new_identity_result_free(struct DefraNewIdentityResult *result);
 
-/*
- Returns DefraDB version information: as JSON when `flag_json` is set,
- otherwise as text, with full build information when `flag_full` is set.
- The same output as `defradb version`.
- */
-struct DefraResult defra_version_get(int flag_full, int flag_json);
-
-/*
- Adds the views an SDL document defines over the GraphQL `query`, with an
- optional lens `transform_cid` (null or empty for none), and answers with
- the created collection versions as JSON. A materialized view is
- refreshed once created.
-
- # Safety
-
- `query`, `sdl` and `transform_cid` must be null or valid null-terminated
- strings.
- */
-struct DefraResult defra_view_add(uintptr_t node_ptr,
-                                  const char *query,
-                                  const char *sdl,
-                                  const char *transform_cid,
-                                  uintptr_t identity_ptr);
-
-/*
- Refresh view caches.
-
- Refreshes the caches of all materialized views matching the given options.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `options` - JSON string with optional "Names" field (null for all views)
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `options` must be null or a valid null-terminated UTF-8 string.
- Refreshes the materialized views `opts` selects, every one for empty
- options.
-
- # Safety
-
- Every non-null string in `opts` must be a valid null-terminated string.
- */
-struct DefraResult defra_view_refresh(uintptr_t node_ptr,
-                                      struct CollectionOptions opts,
-                                      uintptr_t identity_ptr);
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
 
 #endif  /* DEFRA_H */
+
+static inline struct DefraResult defra_acp_dac_policy_add(uintptr_t target, const char *policy, DefraDacPolicyAddOptions opts) {
+    return defra_acp_dac_policy_add_sized(target, policy, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_dac_relationship_add(uintptr_t target, const char *collection, const char *doc_id, const char *relation, const char *actor, DefraDacRelationshipOptions opts) {
+    return defra_acp_dac_relationship_add_sized(target, collection, doc_id, relation, actor, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_dac_relationship_delete(uintptr_t target, const char *collection, const char *doc_id, const char *relation, const char *actor, DefraDacRelationshipOptions opts) {
+    return defra_acp_dac_relationship_delete_sized(target, collection, doc_id, relation, actor, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_status(uintptr_t target, DefraNacOptions opts) {
+    return defra_acp_nac_status_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_disable(uintptr_t target, DefraNacOptions opts) {
+    return defra_acp_nac_disable_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_re_enable(uintptr_t target, DefraNacOptions opts) {
+    return defra_acp_nac_re_enable_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_purge(uintptr_t target, DefraNacOptions opts) {
+    return defra_acp_nac_purge_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_relationship_add(uintptr_t target, const char *relation, const char *actor, DefraNacRelationshipOptions opts) {
+    return defra_acp_nac_relationship_add_sized(target, relation, actor, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_acp_nac_relationship_delete(uintptr_t target, const char *relation, const char *actor, DefraNacRelationshipOptions opts) {
+    return defra_acp_nac_relationship_delete_sized(target, relation, actor, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_action_list(uintptr_t target, DefraActionListOptions opts) {
+    return defra_action_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_batch_start(uintptr_t target, DefraBatchOptions opts) {
+    return defra_batch_start_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_batch_sign(uintptr_t target, DefraBatchOptions opts) {
+    return defra_batch_sign_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_block_verify(uintptr_t target, const char *cid, const char *key_type, const char *public_key, DefraBlockVerifyOptions opts) {
+    return defra_block_verify_sized(target, cid, key_type, public_key, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_add(uintptr_t target, const char *sdl, DefraCollectionAddOptions opts) {
+    return defra_collection_add_sized(target, sdl, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_delete(uintptr_t target, const char *names, DefraCollectionDeleteOptions opts) {
+    return defra_collection_delete_sized(target, names, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_describe(uintptr_t target, DefraCollectionDescribeOptions opts) {
+    return defra_collection_describe_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_patch(uintptr_t target, const char *patch, DefraCollectionPatchOptions opts) {
+    return defra_collection_patch_sized(target, patch, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_set_active(uintptr_t target, const char *version_id, DefraCollectionSetActiveOptions opts) {
+    return defra_collection_set_active_sized(target, version_id, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_collection_truncate(uintptr_t target, DefraCollectionTruncateOptions opts) {
+    return defra_collection_truncate_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_add(uintptr_t target, const char *json, DefraDocumentAddOptions opts) {
+    return defra_document_add_sized(target, json, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_save_many(uintptr_t target, const char *json, DefraDocumentAddOptions opts) {
+    return defra_document_save_many_sized(target, json, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_get(uintptr_t target, const char *doc_id, DefraDocumentGetOptions opts) {
+    return defra_document_get_sized(target, doc_id, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_update(uintptr_t target, const char *updater, DefraDocumentUpdateOptions opts) {
+    return defra_document_update_sized(target, updater, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_delete(uintptr_t target, DefraDocumentDeleteOptions opts) {
+    return defra_document_delete_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_document_purge(uintptr_t target, const char *doc_ids, DefraDocumentPurgeOptions opts) {
+    return defra_document_purge_sized(target, doc_ids, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewIdentityResult defra_identity_new(DefraIdentityNewOptions opts) {
+    return defra_identity_new_sized(&opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewIdentityResult defra_identity_new_from_private_key(const char *private_key_hex, DefraIdentityNewOptions opts) {
+    return defra_identity_new_from_private_key_sized(private_key_hex, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewIdentityResult defra_identity_new_from_bearer_token(const char *did, const char *bearer_token, DefraIdentityBearerOptions opts) {
+    return defra_identity_new_from_bearer_token_sized(did, bearer_token, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewIdentityResult defra_identity_new_remote(const char *did, DefraRemoteIdentityOptions opts) {
+    return defra_identity_new_remote_sized(did, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_index_new(uintptr_t target, const char *fields, DefraIndexNewOptions opts) {
+    return defra_index_new_sized(target, fields, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_index_delete(uintptr_t target, const char *name, DefraIndexDeleteOptions opts) {
+    return defra_index_delete_sized(target, name, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_index_list(uintptr_t target, DefraIndexListOptions opts) {
+    return defra_index_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_encrypted_index_new(uintptr_t target, const char *field, DefraEncryptedIndexNewOptions opts) {
+    return defra_encrypted_index_new_sized(target, field, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_encrypted_index_delete(uintptr_t target, const char *field, DefraEncryptedIndexDeleteOptions opts) {
+    return defra_encrypted_index_delete_sized(target, field, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_encrypted_index_list(uintptr_t target, DefraEncryptedIndexListOptions opts) {
+    return defra_encrypted_index_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewNodeResult defra_node_new(DefraNodeInitOptions opts) {
+    return defra_node_new_sized(&opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraNewTxnResult defra_transaction_create(uintptr_t node, DefraTransactionOptions opts) {
+    return defra_transaction_create_sized(node, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_version_get(DefraVersionOptions opts) {
+    return defra_version_get_sized(&opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_connect(uintptr_t target, const char *peer_addresses, DefraP2POptions opts) {
+    return defra_p2p_connect_sized(target, peer_addresses, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_disconnect(uintptr_t target, const char *peer_addresses, DefraP2POptions opts) {
+    return defra_p2p_disconnect_sized(target, peer_addresses, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_info(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_info_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_peer_list(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_peer_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_collection_add(uintptr_t target, const char *collections, DefraP2POptions opts) {
+    return defra_p2p_collection_add_sized(target, collections, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_collection_delete(uintptr_t target, const char *collections, DefraP2POptions opts) {
+    return defra_p2p_collection_delete_sized(target, collections, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_collection_list(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_collection_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_document_add(uintptr_t target, const char *doc_ids, DefraP2POptions opts) {
+    return defra_p2p_document_add_sized(target, doc_ids, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_document_delete(uintptr_t target, const char *doc_ids, DefraP2POptions opts) {
+    return defra_p2p_document_delete_sized(target, doc_ids, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_document_list(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_document_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_replicator_retry(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_replicator_retry_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_replicator_list(uintptr_t target, DefraP2POptions opts) {
+    return defra_p2p_replicator_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_mobile_shareable_address(uintptr_t target, DefraP2POptions opts) {
+    return defra_mobile_shareable_address_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_mobile_sync_status(uintptr_t target, DefraP2POptions opts) {
+    return defra_mobile_sync_status_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_mobile_notify_network_change(uintptr_t target, DefraP2POptions opts) {
+    return defra_mobile_notify_network_change_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_mobile_peer_details(uintptr_t target, const char *peer_id, DefraP2POptions opts) {
+    return defra_mobile_peer_details_sized(target, peer_id, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_collection_sync_branchable(uintptr_t target, const char *collection_id, DefraP2PSyncOptions opts) {
+    return defra_p2p_collection_sync_branchable_sized(target, collection_id, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_collection_sync_versions(uintptr_t target, const char *version_ids, DefraP2PSyncOptions opts) {
+    return defra_p2p_collection_sync_versions_sized(target, version_ids, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_document_sync(uintptr_t target, const char *collection, const char *doc_ids, DefraP2PSyncOptions opts) {
+    return defra_p2p_document_sync_sized(target, collection, doc_ids, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_replicator_add(uintptr_t target, const char *collections, const char *addresses, DefraReplicatorAddOptions opts) {
+    return defra_p2p_replicator_add_sized(target, collections, addresses, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_p2p_replicator_delete(uintptr_t target, const char *id, DefraReplicatorDeleteOptions opts) {
+    return defra_p2p_replicator_delete_sized(target, id, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_query_execute(uintptr_t target, const char *query, DefraQueryOptions opts) {
+    return defra_query_execute_sized(target, query, &opts, (uint32_t)sizeof opts);
+}
+
+static inline void defra_query_execute_async(uintptr_t target, const char *query, DefraResultCallback callback, uintptr_t context, DefraQueryOptions opts) {
+    defra_query_execute_async_sized(target, query, callback, context, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_event_subscribe(uintptr_t target, const char *names, DefraEventSubscribeOptions opts) {
+    return defra_event_subscribe_sized(target, names, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_view_add(uintptr_t target, const char *query, const char *sdl, DefraViewAddOptions opts) {
+    return defra_view_add_sized(target, query, sdl, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_view_refresh(uintptr_t target, DefraViewRefreshOptions opts) {
+    return defra_view_refresh_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_lens_add(uintptr_t target, const char *config, DefraLensOptions opts) {
+    return defra_lens_add_sized(target, config, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_lens_list(uintptr_t target, DefraLensOptions opts) {
+    return defra_lens_list_sized(target, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_lens_set(uintptr_t target, const char *src, const char *dst, const char *config, DefraLensOptions opts) {
+    return defra_lens_set_sized(target, src, dst, config, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_backup_export(uintptr_t target, const char *filepath, DefraBackupExportOptions opts) {
+    return defra_backup_export_sized(target, filepath, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_backup_import(uintptr_t target, const char *filepath, DefraBackupImportOptions opts) {
+    return defra_backup_import_sized(target, filepath, &opts, (uint32_t)sizeof opts);
+}
+
+static inline struct DefraResult defra_print_dump(uintptr_t target, DefraPrintDumpOptions opts) {
+    return defra_print_dump_sized(target, &opts, (uint32_t)sizeof opts);
+}

@@ -46,7 +46,7 @@ type RemoteDACConfig struct {
 // MaxTxnRetries times at most, so zero would run none.
 const defaultMaxTxnRetries = 5
 
-// Config is how a Rust node starts: what C.NodeInitOptions carries.
+// Config is how a Rust node starts: what C.DefraNodeInitOptions carries.
 type Config struct {
 	// DBPath is the store directory; empty keeps the store in memory.
 	DBPath string
@@ -85,7 +85,7 @@ func NewWrapper(cfg Config) (*Wrapper, error) {
 		cfg.MaxTxnRetries = defaultMaxTxnRetries
 	}
 
-	var opts C.struct_NodeInitOptions
+	var opts C.DefraNodeInitOptions
 	opts.max_transaction_retries = C.int(cfg.MaxTxnRetries)
 	if cfg.DBPath == "" {
 		opts.in_memory = 1
@@ -171,8 +171,8 @@ func (w *Wrapper) GrantNACAdmin(ident identity.Identity) error {
 		return err
 	}
 	defer freeIdentity(owner)
-	return take(C.defra_acp_nac_relationship_add(
-		w.node, owner, args.str("admin"), args.str(ident.DID()))).err()
+	return take(C.defra_acp_nac_relationship_add(w.node, args.str("admin"), args.str(ident.DID()),
+		C.DefraNacRelationshipOptions{identity: owner})).err()
 }
 
 // DisableNACAsNode turns node access control off for now, as the node
@@ -183,7 +183,7 @@ func (w *Wrapper) DisableNACAsNode() error {
 		return err
 	}
 	defer freeIdentity(owner)
-	return take(C.defra_acp_nac_disable(w.node, owner)).err()
+	return take(C.defra_acp_nac_disable(w.node, C.DefraNacOptions{identity: owner})).err()
 }
 
 func (w *Wrapper) Close() {
