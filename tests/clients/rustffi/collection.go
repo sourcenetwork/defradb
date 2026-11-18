@@ -114,10 +114,19 @@ func (c *Collection) NewIndex(
 
 	var args cstrings
 	defer args.free()
-	copts := c.byName().c(&args)
+	sel := c.byName().c(&args)
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_new(c.target(ctx), args.str(indexDesc.Name),
-			args.str(strings.Join(fields, ",")), unique, args.str(vectorJSON), copts, ident))
+		return take(C.defra_index_new(c.target(ctx), args.str(strings.Join(fields, ",")),
+			C.DefraIndexNewOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+				name:                    args.str(indexDesc.Name),
+				unique:                  unique,
+				vector_json:             args.str(vectorJSON),
+			}))
 	})
 	return unmarshalResult[client.IndexDescription](res)
 }
@@ -129,9 +138,16 @@ func (c *Collection) DeleteIndex(
 ) error {
 	var args cstrings
 	defer args.free()
-	copts := c.byName().c(&args)
+	sel := c.byName().c(&args)
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_delete(c.target(ctx), args.str(indexName), copts, ident))
+		return take(C.defra_index_delete(c.target(ctx), args.str(indexName),
+			C.DefraIndexDeleteOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+			}))
 	}).err()
 }
 
@@ -141,9 +157,15 @@ func (c *Collection) ListIndexes(
 ) ([]client.ListIndexesResult, error) {
 	var args cstrings
 	defer args.free()
-	copts := c.byName().c(&args)
+	sel := c.byName().c(&args)
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_index_list(c.target(ctx), copts, ident))
+		return take(C.defra_index_list(c.target(ctx), C.DefraIndexListOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+		}))
 	})
 	return unmarshalResult[[]client.ListIndexesResult](res)
 }
@@ -156,8 +178,12 @@ func (c *Collection) NewEncryptedIndex(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_new(c.target(ctx), args.str(c.def.Name),
-			args.str(req.FieldName), args.str(string(req.Type)), ident))
+		return take(C.defra_encrypted_index_new(c.target(ctx), args.str(req.FieldName),
+			C.DefraEncryptedIndexNewOptions{
+				identity:        ident,
+				collection_name: args.str(c.def.Name),
+				index_type:      args.str(string(req.Type)),
+			}))
 	})
 	return unmarshalResult[client.EncryptedIndexDescription](res)
 }
@@ -170,8 +196,8 @@ func (c *Collection) DeleteEncryptedIndex(
 	var args cstrings
 	defer args.free()
 	return as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_delete(c.target(ctx), args.str(c.def.Name),
-			args.str(fieldName), ident))
+		return take(C.defra_encrypted_index_delete(c.target(ctx), args.str(fieldName),
+			C.DefraEncryptedIndexDeleteOptions{identity: ident, collection_name: args.str(c.def.Name)}))
 	}).err()
 }
 
@@ -181,7 +207,8 @@ func (c *Collection) ListEncryptedIndexes(
 	var args cstrings
 	defer args.free()
 	res := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_encrypted_index_list(c.target(ctx), args.str(c.def.Name), ident))
+		return take(C.defra_encrypted_index_list(c.target(ctx),
+			C.DefraEncryptedIndexListOptions{identity: ident, collection_name: args.str(c.def.Name)}))
 	})
 	return unmarshalResult[[]client.EncryptedIndexDescription](res)
 }
@@ -192,18 +219,23 @@ func (c *Collection) Truncate(
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
-	copts := c.byName().c(&args)
-	if opt.Filter == nil {
-		return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-			return take(C.defra_collection_truncate(c.target(ctx), copts, ident))
-		}).err()
-	}
-	filter, err := json.Marshal(opt.Filter)
-	if err != nil {
-		return err
+	sel := c.byName().c(&args)
+	var filter *C.char
+	if opt.Filter != nil {
+		data, err := json.Marshal(opt.Filter)
+		if err != nil {
+			return err
+		}
+		filter = args.str(string(data))
 	}
 	return as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_collection_truncate_with_filter(c.target(ctx), copts, ident,
-			args.str(string(filter))))
+		return take(C.defra_collection_truncate(c.target(ctx), C.DefraCollectionTruncateOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+			filter_json:             filter,
+		}))
 	}).err()
 }

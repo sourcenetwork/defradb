@@ -133,11 +133,12 @@ func newIdentityHandle(ident identity.Identity) (C.uintptr_t, error) {
 	switch typed := ident.(type) {
 	case identity.FullIdentity:
 		key := typed.PrivateKey()
-		cResult = C.defra_identity_new_from_typed_private_key(
-			args.str(string(key.Type())), args.str(hex.EncodeToString(key.Raw())))
+		cResult = C.defra_identity_new_from_private_key(
+			args.str(hex.EncodeToString(key.Raw())),
+			C.DefraIdentityNewOptions{key_type: args.str(string(key.Type()))})
 	case identity.TokenIdentity:
 		cResult = C.defra_identity_new_from_bearer_token(
-			args.str(typed.DID()), args.str(typed.BearerToken()))
+			args.str(typed.DID()), args.str(typed.BearerToken()), C.DefraIdentityBearerOptions{})
 	default:
 		return 0, fmt.Errorf("identity %s has neither a private key nor a bearer token", ident.DID())
 	}
@@ -159,7 +160,8 @@ func freeIdentity(handle C.uintptr_t) {
 	}
 }
 
-// collectionOptions selects a collection, as C.CollectionOptions does.
+// collectionOptions selects a collection, as the collection fields of the C
+// options structs do, with the call's signing choice.
 type collectionOptions struct {
 	Version      string
 	CollectionID string
@@ -168,23 +170,44 @@ type collectionOptions struct {
 	Signing      immutable.Option[bool]
 }
 
-// c lays the options out for C, its strings in args.
-func (o collectionOptions) c(args *cstrings) C.struct_CollectionOptions {
-	var copts C.struct_CollectionOptions
-	copts.version = args.str(o.Version)
-	copts.collection_id = args.str(o.CollectionID)
-	copts.name = args.str(o.Name)
+// cSelector is a collection as the C options structs' four collection
+// fields take it, its strings in args.
+type cSelector struct {
+	name, version, id *C.char
+	inactive          C.int
+}
+
+// c lays the selector out for C, its strings in args.
+func (o collectionOptions) c(args *cstrings) cSelector {
+	selector := cSelector{
+		name:    args.str(o.Name),
+		version: args.str(o.Version),
+		id:      args.str(o.CollectionID),
+	}
 	if o.GetInactive {
-		copts.get_inactive = 1
+		selector.inactive = 1
 	}
-	if o.Signing.HasValue() {
-		if o.Signing.Value() {
-			copts.enable_signing = 1
-		} else {
-			copts.enable_signing = -1
-		}
+	return selector
+}
+
+// signing is the call's signing choice as C takes it: 0 for the node's
+// default, 1 to sign, -1 not to.
+func (o collectionOptions) signing() C.int {
+	if !o.Signing.HasValue() {
+		return 0
 	}
-	return copts
+	if o.Signing.Value() {
+		return 1
+	}
+	return -1
+}
+
+// cBool is b as C takes a flag.
+func cBool(b bool) C.int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // getCollectionsOptions reads Go's collection lookup options.

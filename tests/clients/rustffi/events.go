@@ -84,7 +84,8 @@ func newEventBridge(w *Wrapper) (*eventBridge, error) {
 	}
 	defer freeIdentity(owner)
 
-	res := take(C.defra_event_subscribe(w.node, args.str(strings.Join(names, ",")), owner))
+	res := take(C.defra_event_subscribe(w.node, args.str(strings.Join(names, ",")),
+		C.DefraEventSubscribeOptions{identity: owner}))
 	if err := res.err(); err != nil {
 		return nil, err
 	}

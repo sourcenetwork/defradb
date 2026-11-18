@@ -45,10 +45,20 @@ func (c *Collection) addDocuments(
 	}
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
+	chosen := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}
+	sel := chosen.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_add(c.target(ctx), args.str(string(docJSON)), encrypted,
-			args.str(strings.Join(opt.EncryptedFields, ",")), copts, ident))
+		return take(C.defra_document_add(c.target(ctx), args.str(string(docJSON)),
+			C.DefraDocumentAddOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+				encrypt:                 encrypted,
+				encrypted_fields:        args.str(strings.Join(opt.EncryptedFields, ",")),
+				signing:                 chosen.signing(),
+			}))
 	})
 	docIDs, err := unmarshalResult[[]string](res)
 	if err != nil {
@@ -112,10 +122,19 @@ func (c *Collection) UpdateDocument(
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{CollectionID: c.def.CollectionID, Signing: opt.EnableSigning}.c(&args)
+	chosen := collectionOptions{CollectionID: c.def.CollectionID, Signing: opt.EnableSigning}
+	sel := chosen.c(&args)
 	err = as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_update(c.target(ctx), args.str(doc.ID().String()),
-			args.str(""), args.str(string(patch)), copts, ident))
+		return take(C.defra_document_update(c.target(ctx), args.str(string(patch)),
+			C.DefraDocumentUpdateOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+				doc_id:                  args.str(doc.ID().String()),
+				signing:                 chosen.signing(),
+			}))
 	}).err()
 	if err != nil {
 		return err
@@ -188,10 +207,18 @@ func (c *Collection) DeleteDocument(
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
+	chosen := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}
+	sel := chosen.c(&args)
 	err := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_delete(c.target(ctx), args.str(docID.String()),
-			args.str(""), copts, ident))
+		return take(C.defra_document_delete(c.target(ctx), C.DefraDocumentDeleteOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+			doc_id:                  args.str(docID.String()),
+			signing:                 chosen.signing(),
+		}))
 	}).err()
 	if err != nil {
 		return false, err
@@ -206,9 +233,16 @@ func (c *Collection) ExistsDocument(
 ) (bool, error) {
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Version: c.def.VersionID, CollectionID: c.def.CollectionID}.c(&args)
+	sel := collectionOptions{Version: c.def.VersionID, CollectionID: c.def.CollectionID}.c(&args)
 	err := as(utils.NewOptions(opts...).GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()), 0, copts, ident))
+		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()),
+			C.DefraDocumentGetOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+			}))
 	}).err()
 	if err != nil {
 		return false, err
@@ -229,10 +263,19 @@ func (c *Collection) UpdateDocumentsWithFilter(
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
+	chosen := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}
+	sel := chosen.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_update(c.target(ctx), args.str(""),
-			args.str(string(filterJSON)), args.str(updater), copts, ident))
+		return take(C.defra_document_update(c.target(ctx), args.str(updater),
+			C.DefraDocumentUpdateOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+				filter_json:             args.str(string(filterJSON)),
+				signing:                 chosen.signing(),
+			}))
 	})
 	updated, err := unmarshalResult[client.UpdateResult](res)
 	if err != nil {
@@ -253,10 +296,18 @@ func (c *Collection) DeleteDocumentsWithFilter(
 	opt := utils.NewOptions(opts...)
 	var args cstrings
 	defer args.free()
-	copts := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}.c(&args)
+	chosen := collectionOptions{Name: c.def.Name, Signing: opt.EnableSigning}
+	sel := chosen.c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_delete(c.target(ctx), args.str(""),
-			args.str(string(filterJSON)), copts, ident))
+		return take(C.defra_document_delete(c.target(ctx), C.DefraDocumentDeleteOptions{
+			identity:                ident,
+			collection_name:         sel.name,
+			collection_version_id:   sel.version,
+			collection_id:           sel.id,
+			collection_get_inactive: sel.inactive,
+			filter_json:             args.str(string(filterJSON)),
+			signing:                 chosen.signing(),
+		}))
 	})
 	deleted, err := unmarshalResult[client.DeleteResult](res)
 	if err != nil {
@@ -277,9 +328,17 @@ func (c *Collection) GetDocument(
 	}
 	var args cstrings
 	defer args.free()
-	copts := c.byName().c(&args)
+	sel := c.byName().c(&args)
 	res := as(opt.GetIdentity(), func(ident C.uintptr_t) result {
-		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()), showDeleted, copts, ident))
+		return take(C.defra_document_get(c.target(ctx), args.str(docID.String()),
+			C.DefraDocumentGetOptions{
+				identity:                ident,
+				collection_name:         sel.name,
+				collection_version_id:   sel.version,
+				collection_id:           sel.id,
+				collection_get_inactive: sel.inactive,
+				show_deleted:            showDeleted,
+			}))
 	})
 	if err := res.err(); err != nil {
 		return nil, err
