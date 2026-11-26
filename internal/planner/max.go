@@ -145,9 +145,9 @@ func (n *maxNode) Next() (bool, error) {
 				var res *big.Float
 				switch v := childCollection.(type) {
 				case int:
-					res = big.NewFloat(float64(v))
+					res = new(big.Float).SetInt64(int64(v))
 				case int64:
-					res = big.NewFloat(float64(v))
+					res = new(big.Float).SetInt64(v)
 				case float32:
 					res = big.NewFloat(float64(v))
 				case float64:

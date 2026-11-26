@@ -132,6 +132,49 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithMinAndMaxOnLargeScalarInts_PreservesPrecision(t *testing.T) {
+	const (
+		aboveFloatPrecision = int64(1<<53 + 1)
+		belowFloatPrecision = -aboveFloatPrecision
+		nearMaxInt64        = int64(math.MaxInt64 - 1)
+	)
+
+	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
+		}),
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+		}),
+		Actions: []any{
+			&action.AddDoc{DocMap: map[string]any{"Age": belowFloatPrecision}},
+			&action.AddDoc{DocMap: map[string]any{"Age": aboveFloatPrecision}},
+			&action.AddDoc{DocMap: map[string]any{"Age": nearMaxInt64}},
+			&action.Request{
+				Request: `query {
+					Users(order: {Age: ASC}) {
+						Age
+						MIN(Age: {})
+						MAX(Age: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{"Age": belowFloatPrecision, "MIN": belowFloatPrecision, "MAX": belowFloatPrecision},
+						{"Age": aboveFloatPrecision, "MIN": aboveFloatPrecision, "MAX": aboveFloatPrecision},
+						{"Age": nearMaxInt64, "MIN": nearMaxInt64, "MAX": nearMaxInt64},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
