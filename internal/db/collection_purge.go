@@ -186,6 +186,7 @@ func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID u
 	headstore := datastore.NewMultistore(c.db.rootstore, c.db.lockSet, c.db.blockStoreChunkSize).Headstore()
 
 	hasMore := true
+	keysToDelete := make([][]byte, 0)
 	for hasMore {
 		prefix := keys.HeadstoreDocKey{DocShortID: docShortID}
 
@@ -197,7 +198,7 @@ func (c *collection) hardDeleteHeadstoreForDoc(ctx context.Context, docShortID u
 			return NewErrCreateTruncateIterator(err)
 		}
 
-		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+		keysToDelete = keysToDelete[:0]
 
 		for range hardDeleteChunkSize {
 			hasNext, err := iter.Next()
