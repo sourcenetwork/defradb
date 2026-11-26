@@ -12,6 +12,7 @@ package db
 
 import (
 	"context"
+	"encoding/binary"
 
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
@@ -352,14 +353,15 @@ func (c *collection) hardDeleteDocumentBlocks(
 		}
 
 		iter, err := headstore.Iterator(ctx, corekv.IterOptions{
-			Prefix:   prefix.Bytes(),
-			KeysOnly: true,
+			Prefix: prefix.Bytes(),
 		})
 		if err != nil {
 			return NewErrCreateTruncateIterator(err)
 		}
 
 		keysToDelete = keysToDelete[:0]
+		// Whether every head listed is a create block: height 1, so no earlier versions.
+		writtenOnce := true
 
 		for i := 0; i < hardDeleteChunkSize; i++ {
 			hasNext, err := iter.Next()
@@ -376,6 +378,15 @@ func (c *collection) hardDeleteDocumentBlocks(
 				return errors.Join(err, iter.Close())
 			}
 
+			if writtenOnce {
+				value, err := iter.Value()
+				if err != nil {
+					return errors.Join(err, iter.Close())
+				}
+				height, n := binary.Uvarint(value)
+				writtenOnce = n > 0 && height == 1
+			}
+
 			keysToDelete = append(keysToDelete, key)
 		}
 
@@ -384,8 +395,10 @@ func (c *collection) hardDeleteDocumentBlocks(
 			return err
 		}
 
+		skipWalk := writtenOnce && !hasMore
+
 		for _, key := range keysToDelete {
-			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners, visited)
+			err = c.deleteBlocks(ctx, systemstore, docID, key.Cid, prunedOwners, visited, skipWalk)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -461,7 +474,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			// the document blocks and their owner edges are deleted earlier in truncate (see the
 			// hardDeleteDocKeysAndHeadstore pass), so the collection-commit DAG walked here only
 			// re-encounters already-deleted document composites.
-			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil, make(map[cid.Cid]struct{}))
+			err = c.deleteBlocks(ctx, nil, "", key.Cid, nil, make(map[cid.Cid]struct{}), false)
 			if err != nil {
 				return NewErrTruncateDeleteBlocks(err, key.Cid.String())
 			}
@@ -491,6 +504,9 @@ func (c *collection) hardDeleteCollectionBlocks(
 // Links to blocks already in visited are not followed. visited may span one document's walks but
 // not several documents, because each document's walk must reach a shared block to remove its own
 // owner edge.
+//
+// With skipWalk the block is not read and its links are not followed: the caller passes every
+// block of the document itself.
 func (c *collection) deleteBlocks(
 	ctx context.Context,
 	systemstore corekv.ReaderWriter,
@@ -498,6 +514,7 @@ func (c *collection) deleteBlocks(
 	currentCid cid.Cid,
 	prunedOwners map[string]struct{},
 	visited map[cid.Cid]struct{},
+	skipWalk bool,
 ) error {
 	visited[currentCid] = struct{}{}
 
@@ -549,6 +566,10 @@ func (c *collection) deleteBlocks(
 			return err
 		}
 		return nil
+	}
+
+	if skipWalk {
+		return deleteBlock(currentCid)
 	}
 
 	type block struct {
