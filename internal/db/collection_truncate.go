@@ -183,6 +183,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 		// If there are more keys than we wish to load into memory at once, this will be set to
 		// true, and we'll continue the delete in another pass.
 		hasMore := true
+		keysToDelete := make([]keys.DataStoreKey, 0)
 
 		for hasMore {
 			iter, err := ds.Iterator(ctx, datastore.IterOptions{
@@ -193,7 +194,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 				return NewErrCreateTruncateIterator(err)
 			}
 
-			keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
+			keysToDelete = keysToDelete[:0]
 
 			for i := 0; i < hardDeleteChunkSize; i++ {
 				hasNext, err := iter.Next()
@@ -265,7 +266,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
-
+	keysToDelete := make([][]byte, 0)
 	for hasMore {
 		iter, err := ds.Iterator(ctx, datastore.IterOptions{
 			Prefix:   prefix,
@@ -275,7 +276,7 @@ func (c *collection) hardDeleteDatastorePrefix(
 			return NewErrCreateTruncateIterator(err)
 		}
 
-		keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+		keysToDelete = keysToDelete[:0]
 
 		for i := 0; i < hardDeleteChunkSize; i++ {
 			hasNext, err := iter.Next()
@@ -344,7 +345,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
-
+	keysToDelete := make([]keys.HeadstoreDocKey, 0)
 	for hasMore {
 		prefix := keys.HeadstoreDocKey{
 			DocShortID: docShortID,
@@ -358,7 +359,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 			return NewErrCreateTruncateIterator(err)
 		}
 
-		keysToDelete := make([]keys.HeadstoreDocKey, 0, hardDeleteChunkSize)
+		keysToDelete = keysToDelete[:0]
 
 		for i := 0; i < hardDeleteChunkSize; i++ {
 			hasNext, err := iter.Next()
